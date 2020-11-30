@@ -259,9 +259,6 @@ public class MediaStore_Video_MediaTest {
 
     @Test
     public void testIsoLocationRedaction() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
-
         // These videos have all had their ISO location metadata (in the (c)xyz box) artificially
         // modified to +58.0000+011.0000 (middle of Skagerrak).
         int[] videoIds = new int[] {
