@@ -22,11 +22,11 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.pm.PackageInstaller;
 import android.os.SystemClock;
 import android.util.Log;
-import android.util.SparseArray;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -39,34 +39,24 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class LocalIntentSender extends BroadcastReceiver {
     private static final String TAG = "cts.install.lib";
-    private static final String EXTRA_REQUEST_ID = LocalIntentSender.class.getName() + ".ID";
-    // Access to this member must be synchronized because it is used by multiple threads
-    private static final SparseArray<BlockingQueue<Intent>> sResults = new SparseArray<>();
-
-    // Generate a unique id to ensure each LocalIntentSender gets its own results.
-    private final int mRequestId = (int) SystemClock.elapsedRealtime();
+    private final BlockingQueue<Intent> mResults = new LinkedBlockingQueue<>();
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, "Received intent " + prettyPrint(intent));
-        int id = intent.getIntExtra(EXTRA_REQUEST_ID, 0);
-        BlockingQueue<Intent> queue = getQueue(id);
-        // queue will be null if this broadcast comes from the session staged in previous tests
-        if (queue != null) {
-            queue.add(intent);
-        }
+        mResults.add(intent);
     }
 
     /**
      * Get a LocalIntentSender.
      */
     public IntentSender getIntentSender() {
-        addQueue(mRequestId);
         Context context = InstrumentationRegistry.getContext();
-        Intent intent = new Intent(context, LocalIntentSender.class);
-        intent.putExtra(EXTRA_REQUEST_ID, mRequestId);
-        PendingIntent pending =
-                PendingIntent.getBroadcast(context, mRequestId, intent, FLAG_MUTABLE);
+        // Generate a unique string to ensure each LocalIntentSender gets its own results.
+        String action = LocalIntentSender.class.getName() + SystemClock.elapsedRealtime();
+        context.registerReceiver(this, new IntentFilter(action));
+        Intent intent = new Intent(action);
+        PendingIntent pending = PendingIntent.getBroadcast(context, 0, intent, FLAG_MUTABLE);
         return pending.getIntentSender();
     }
 
@@ -74,34 +64,20 @@ public class LocalIntentSender extends BroadcastReceiver {
      * Returns and remove the most early Intent received by this LocalIntentSender.
      */
     public Intent getResult() throws InterruptedException {
-        Intent intent = getQueue(mRequestId).take();
+        Intent intent = mResults.take();
         Log.i(TAG, "Taking intent " + prettyPrint(intent));
         return intent;
-    }
-
-    private static BlockingQueue<Intent> getQueue(int requestId) {
-        synchronized (sResults) {
-            return sResults.get(requestId);
-        }
-    }
-
-    private static void addQueue(int requestId) {
-        synchronized (sResults) {
-            sResults.append(requestId, new LinkedBlockingQueue<>());
-        }
     }
 
     private static String prettyPrint(Intent intent) {
         int sessionId = intent.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1);
         int status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS,
                 PackageInstaller.STATUS_FAILURE);
-        int id = intent.getIntExtra(EXTRA_REQUEST_ID, 0);
         String message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
         return String.format("%s: {\n"
-                + "requestId = %d\n"
                 + "sessionId = %d\n"
                 + "status = %d\n"
                 + "message = %s\n"
-                + "}", intent, id, sessionId, status, message);
+                + "}", intent, sessionId, status, message);
     }
 }
