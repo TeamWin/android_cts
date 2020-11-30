@@ -79,14 +79,6 @@ public class LocalIntentSender extends BroadcastReceiver {
         return intent;
     }
 
-    /**
-     * Returns the most recent Intent sent by a LocalIntentSender.
-     * TODO(b/136260017): To be removed when all callers are cleaned up.
-     */
-    public static Intent getIntentSenderResult() throws InterruptedException {
-        return null;
-    }
-
     private static BlockingQueue<Intent> getQueue(int requestId) {
         synchronized (sResults) {
             return sResults.get(requestId);
