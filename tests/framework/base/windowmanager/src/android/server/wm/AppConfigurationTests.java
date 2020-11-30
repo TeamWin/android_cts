@@ -600,8 +600,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Start resizeable activity that handles configuration changes.
         separateTestJournal();
-        launchActivity(TEST_ACTIVITY);
-        launchActivity(RESIZEABLE_ACTIVITY);
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
 
         final int displayId = mWmState.getDisplayByActivity(RESIZEABLE_ACTIVITY);
@@ -647,8 +647,10 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         TestActivitySession<ConfigChangeHandlingActivity> activitySession
                 = createManagedTestActivitySession();
-        activitySession.launchTestActivityOnDisplaySync(ConfigChangeHandlingActivity.class,
-                Display.DEFAULT_DISPLAY);
+        activitySession.launchTestActivityOnDisplaySync(
+                ConfigChangeHandlingActivity.class,
+                Display.DEFAULT_DISPLAY,
+                WINDOWING_MODE_FULLSCREEN);
         final ConfigChangeHandlingActivity activity = activitySession.getActivity();
 
         VirtualDisplaySession virtualDisplaySession = createManagedVirtualDisplaySession();

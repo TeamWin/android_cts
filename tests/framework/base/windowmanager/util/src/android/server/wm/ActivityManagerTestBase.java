@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -401,27 +402,45 @@ public abstract class ActivityManagerTestBase {
             launchTestActivityOnDisplaySync(new Intent(mContext, activityClass), displayId);
         }
 
+        void launchTestActivityOnDisplaySync(
+                Class<T> activityClass, int displayId, int windowingMode) {
+            launchTestActivityOnDisplaySync(
+                    new Intent(mContext, activityClass), displayId, windowingMode);
+        }
+
         void launchTestActivityOnDisplaySync(Intent intent, int displayId) {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                mTestActivity = launchActivityOnDisplay(intent, displayId);
-                // Check activity is launched and resumed.
-                final ComponentName testActivityName = mTestActivity.getComponentName();
-                waitAndAssertTopResumedActivity(testActivityName, displayId,
-                        "Activity must be resumed");
-            });
+            launchTestActivityOnDisplaySync(intent, displayId, WINDOWING_MODE_UNDEFINED);
+        }
+
+        void launchTestActivityOnDisplaySync(Intent intent, int displayId, int windowingMode) {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> {
+                        mTestActivity = launchActivityOnDisplay(intent, displayId, windowingMode);
+                        // Check activity is launched and resumed.
+                        final ComponentName testActivityName = mTestActivity.getComponentName();
+                        waitAndAssertTopResumedActivity(
+                                testActivityName, displayId, "Activity must be resumed");
+                    });
         }
 
         void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                mTestActivity = launchActivityOnDisplay(new Intent(mContext, activityClass)
-                        .addFlags(FLAG_ACTIVITY_NEW_TASK), displayId);
-                assertNotNull(mTestActivity);
-            });
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> {
+                        mTestActivity =
+                                launchActivityOnDisplay(
+                                        new Intent(mContext, activityClass)
+                                                .addFlags(FLAG_ACTIVITY_NEW_TASK),
+                                        displayId,
+                                        WINDOWING_MODE_UNDEFINED);
+                        assertNotNull(mTestActivity);
+                    });
         }
 
-        private T launchActivityOnDisplay(Intent intent, int displayId) {
-            final Bundle bundle = ActivityOptions.makeBasic()
-                    .setLaunchDisplayId(displayId).toBundle();
+        private T launchActivityOnDisplay(Intent intent, int displayId, int windowingMode) {
+            final ActivityOptions launchOptions = ActivityOptions.makeBasic();
+            launchOptions.setLaunchDisplayId(displayId);
+            launchOptions.setLaunchWindowingMode(windowingMode);
+            final Bundle bundle = launchOptions.toBundle();
             final ActivityMonitor monitor = mInstrumentation.addMonitor((String) null, null, false);
             mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
             // Wait for activity launch with timeout.
