@@ -420,6 +420,9 @@ public class PermissionPolicyTest {
                 case "retailDemo": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_RETAIL_DEMO;
                 } break;
+                case "recents": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_RECENTS;
+                } break;
             }
         }
         return protectionLevel;
