@@ -56,7 +56,6 @@ import com.android.internal.util.ToBooleanFunction;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
@@ -86,11 +85,10 @@ public class TvInputServiceTest {
 
     /** The maximum time to wait for an operation. */
     private static final long TIME_OUT = 5000L;
-    private static final String DUMMT_TRACK_ID = "dummyTrackId";
-    private static final TvTrackInfo DUMMY_TRACK =
-            new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, DUMMT_TRACK_ID)
+    private static final TvTrackInfo TEST_TV_TRACK =
+            new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "testTrackId")
                     .setVideoWidth(1920).setVideoHeight(1080).setLanguage("und").build();
-    private static Bundle sDummyBundle;
+
 
     private TvRecordingClient mTvRecordingClient;
     private Instrumentation mInstrumentation;
@@ -215,11 +213,10 @@ public class TvInputServiceTest {
         }
     }
 
-
-    @BeforeClass
-    public static void initDummyBundle() {
-        sDummyBundle = new Bundle();
-        sDummyBundle.putString("stringKey", new String("Test String"));
+    private static Bundle createTestBundle() {
+        Bundle b = new Bundle();
+        b.putString("stringKey", new String("Test String"));
+        return b;
     }
 
     @Before
@@ -268,13 +265,14 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandTuneForRecordingWithBundle() {
-        final Uri fakeChannelUri = tuneForRecording(sDummyBundle);
+        final Bundle bundle = createTestBundle();
+        final Uri fakeChannelUri = tuneForRecording(bundle);
         final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
         assertThat(CountingTvInputService.sTvInputSessionId).isNotEmpty();
         assertThat(session.mTuneCount).isEqualTo(1);
         assertThat(session.mTuneWithBundleCount).isEqualTo(1);
         assertThat(session.mTunedChannelUri).isEqualTo(fakeChannelUri);
-        assertThat(bundleEquals(session.mTuneWithBundleData, sDummyBundle)).isTrue();
+        assertThat(bundleEquals(session.mTuneWithBundleData, bundle)).isTrue();
     }
 
     @Test
@@ -308,9 +306,10 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandStartRecordingWithBundle() {
-        Uri fakeChannelUri = tuneForRecording(sDummyBundle);
+        Bundle bundle = createTestBundle();
+        Uri fakeChannelUri = tuneForRecording(bundle);
         notifyTuned(fakeChannelUri);
-        mTvRecordingClient.startRecording(fakeChannelUri, sDummyBundle);
+        mTvRecordingClient.startRecording(fakeChannelUri, bundle);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
@@ -319,7 +318,7 @@ public class TvInputServiceTest {
                         && session.mStartRecordingCount > 0
                         && session.mStartRecordingWithBundleCount > 0
                         && Objects.equals(session.mProgramHint, fakeChannelUri)
-                        && bundleEquals(session.mStartRecordingWithBundleData, sDummyBundle);
+                        && bundleEquals(session.mStartRecordingWithBundleData, bundle);
             }
         }.run();
     }
@@ -341,16 +340,17 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandSendAppPrivateCommandForRecording() {
+        Bundle bundle = createTestBundle();
         tuneForRecording();
         final String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
-        mTvRecordingClient.sendAppPrivateCommand(action, sDummyBundle);
+        mTvRecordingClient.sendAppPrivateCommand(action, bundle);
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
                 final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
                 return session != null
                         && session.mAppPrivateCommandCount > 0
-                        && bundleEquals(session.mAppPrivateCommandData, sDummyBundle)
+                        && bundleEquals(session.mAppPrivateCommandData, bundle)
                         && TextUtils.equals(session.mAppPrivateCommandAction, action);
             }
         }.run();
@@ -444,10 +444,11 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandTuneWithBundle() {
+        Bundle bundle = createTestBundle();
         resetCounts();
         resetPassedValues();
         final Uri fakeChannelUri = TvContract.buildChannelUri(0);
-        onTvView(tvView -> tvView.tune(mStubInfo.getId(), fakeChannelUri, sDummyBundle));
+        onTvView(tvView -> tvView.tune(mStubInfo.getId(), fakeChannelUri, bundle));
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
@@ -458,7 +459,7 @@ public class TvInputServiceTest {
                         && session.mTuneCount > 0
                         && session.mTuneWithBundleCount > 0
                         && Objects.equals(session.mTunedChannelUri, fakeChannelUri)
-                        && bundleEquals(session.mTuneWithBundleData, sDummyBundle);
+                        && bundleEquals(session.mTuneWithBundleData, bundle);
             }
         }.run();
         final CountingSession session = CountingTvInputService.sSession;
@@ -505,8 +506,8 @@ public class TvInputServiceTest {
         tune();
         resetPassedValues();
         verifyCallbackTracksChanged();
-        final int dummyTrackType = DUMMY_TRACK.getType();
-        final String dummyTrackId = DUMMY_TRACK.getId();
+        final int dummyTrackType = TEST_TV_TRACK.getType();
+        final String dummyTrackId = TEST_TV_TRACK.getId();
         onTvView(tvView -> tvView.selectTrack(dummyTrackType, dummyTrackId));
         mInstrumentation.waitForIdleSync();
         new PollingCheck(TIME_OUT) {
@@ -765,9 +766,10 @@ public class TvInputServiceTest {
 
     @Test
     public void verifyCommandSendAppPrivateCommand() throws Exception {
+        Bundle bundle = createTestBundle();
         tune();
         final String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
-        onTvView(tvView -> tvView.sendAppPrivateCommand(action, sDummyBundle));
+        onTvView(tvView -> tvView.sendAppPrivateCommand(action, bundle));
         mInstrumentation.waitForIdleSync();
         new PollingCheck(TIME_OUT) {
             @Override
@@ -775,7 +777,7 @@ public class TvInputServiceTest {
                 final CountingSession session = CountingTvInputService.sSession;
                 return session != null
                         && session.mAppPrivateCommandCount > 0
-                        && bundleEquals(session.mAppPrivateCommandData, sDummyBundle)
+                        && bundleEquals(session.mAppPrivateCommandData, bundle)
                         && TextUtils.equals(session.mAppPrivateCommandAction, action);
             }
         }.run();
@@ -837,7 +839,7 @@ public class TvInputServiceTest {
         final CountingSession session = CountingTvInputService.sSession;
         assertThat(session).isNotNull();
         ArrayList<TvTrackInfo> tracks = new ArrayList<>();
-        tracks.add(DUMMY_TRACK);
+        tracks.add(TEST_TV_TRACK);
         session.notifyTracksChanged(tracks);
         new PollingCheck(TIME_OUT) {
             @Override
@@ -856,7 +858,7 @@ public class TvInputServiceTest {
         final CountingSession session = CountingTvInputService.sSession;
         assertThat(session).isNotNull();
         ArrayList<TvTrackInfo> tracks = new ArrayList<>();
-        tracks.add(DUMMY_TRACK);
+        tracks.add(TEST_TV_TRACK);
         session.notifyTracksChanged(tracks);
         mInstrumentation.waitForIdleSync();
         new PollingCheck(TIME_OUT) {
@@ -873,13 +875,13 @@ public class TvInputServiceTest {
         resetPassedValues();
         final CountingSession session = CountingTvInputService.sSession;
         assertThat(session).isNotNull();
-        session.notifyTrackSelected(DUMMY_TRACK.getType(), DUMMY_TRACK.getId());
+        session.notifyTrackSelected(TEST_TV_TRACK.getType(), TEST_TV_TRACK.getId());
         new PollingCheck(TIME_OUT) {
             @Override
             protected boolean check() {
                 return mCallback.mTrackSelectedCount > 0
-                        && mCallback.mTrackSelectedType == DUMMY_TRACK.getType()
-                        && TextUtils.equals(DUMMY_TRACK.getId(), mCallback.mTrackSelectedTrackId);
+                        && mCallback.mTrackSelectedType == TEST_TV_TRACK.getType()
+                        && TextUtils.equals(TEST_TV_TRACK.getId(), mCallback.mTrackSelectedTrackId);
             }
         }.run();
     }
@@ -1549,6 +1551,4 @@ public class TvInputServiceTest {
             mError = null;
         }
     }
-
-
 }
