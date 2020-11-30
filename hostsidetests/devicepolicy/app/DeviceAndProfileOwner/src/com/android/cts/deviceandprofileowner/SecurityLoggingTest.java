@@ -16,6 +16,7 @@
 package com.android.cts.deviceandprofileowner;
 
 import static android.app.admin.DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT;
+import static android.app.admin.DevicePolicyManager.PASSWORD_COMPLEXITY_HIGH;
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
 import static android.app.admin.SecurityLog.LEVEL_ERROR;
 import static android.app.admin.SecurityLog.LEVEL_INFO;
@@ -45,6 +46,7 @@ import static android.app.admin.SecurityLog.TAG_MEDIA_MOUNT;
 import static android.app.admin.SecurityLog.TAG_MEDIA_UNMOUNT;
 import static android.app.admin.SecurityLog.TAG_OS_SHUTDOWN;
 import static android.app.admin.SecurityLog.TAG_OS_STARTUP;
+import static android.app.admin.SecurityLog.TAG_PASSWORD_COMPLEXITY_REQUIRED;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_COMPLEXITY_SET;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_EXPIRATION_SET;
 import static android.app.admin.SecurityLog.TAG_PASSWORD_HISTORY_LENGTH_SET;
@@ -137,6 +139,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
                     .put(TAG_KEY_INTEGRITY_VIOLATION, of(S, I))
                     .put(TAG_CERT_VALIDATION_FAILURE, of(S))
                     .put(TAG_CAMERA_POLICY_SET, of(S, I, I, I))
+                    .put(TAG_PASSWORD_COMPLEXITY_REQUIRED, of(S, I, I, I))
                     .build();
 
     private static final String GENERATED_KEY_ALIAS = "generated_key_alias";
@@ -270,6 +273,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private void verifyAdminEventsPresent(List<SecurityEvent> events) {
         if (mHasSecureLockScreen) {
             verifyPasswordComplexityEventsPresent(events);
+            verifyNewStylePasswordComplexityEventPresent(events);
         }
         verifyLockingPolicyEventsPresent(events);
         verifyUserRestrictionEventsPresent(events);
@@ -333,6 +337,7 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private void generateAdminEvents() {
         if (mHasSecureLockScreen) {
             generatePasswordComplexityEvents();
+            generateNewStylePasswordComplexityEvents();
         }
         generateLockingPolicyEvents();
         generateUserRestrictionEvents();
@@ -635,6 +640,10 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setPasswordMinimumSymbols(ADMIN_RECEIVER_COMPONENT, TEST_PWD_CHARS);
     }
 
+    private void generateNewStylePasswordComplexityEvents() {
+        mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
+    }
+
     private void verifyPasswordComplexityEventsPresent(List<SecurityEvent> events) {
         final int userId = Process.myUserHandle().getIdentifier();
         // This reflects default values for password complexity event payload fields.
@@ -670,6 +679,19 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
         findPasswordComplexityEvent("set pwd min numeric", events, expectedPayload);
         expectedPayload[SYMBOLS_INDEX] = TEST_PWD_CHARS;
         findPasswordComplexityEvent("set pwd min symbols", events, expectedPayload);
+    }
+
+    private void verifyNewStylePasswordComplexityEventPresent(List<SecurityEvent> events) {
+        final int userId = Process.myUserHandle().getIdentifier();
+        // This reflects default values for password complexity event payload fields.
+        final Object[] expectedPayload = new Object[] {
+                ADMIN_RECEIVER_COMPONENT.getPackageName(), // admin package
+                userId,                    // admin user
+                userId,                    // target user
+                PASSWORD_COMPLEXITY_HIGH   // password complexity
+        };
+
+        findNewStylePasswordComplexityEvent("require password complexity", events, expectedPayload);
     }
 
     private void generateLockingPolicyEvents() {
@@ -737,6 +759,13 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
             String description, List<SecurityEvent> events, Object[] expectedPayload) {
         findEvent(description, events,
                 e -> e.getTag() == TAG_PASSWORD_COMPLEXITY_SET &&
+                        Arrays.equals((Object[]) e.getData(), expectedPayload));
+    }
+
+    private void findNewStylePasswordComplexityEvent(
+            String description, List<SecurityEvent> events, Object[] expectedPayload) {
+        findEvent(description, events,
+                e -> e.getTag() == TAG_PASSWORD_COMPLEXITY_REQUIRED &&
                         Arrays.equals((Object[]) e.getData(), expectedPayload));
     }
 
