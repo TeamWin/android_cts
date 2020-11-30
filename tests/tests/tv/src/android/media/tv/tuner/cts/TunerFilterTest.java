@@ -43,12 +43,14 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerFilterTest {
     private static final String TAG = "MediaTunerFilterTest";
 
