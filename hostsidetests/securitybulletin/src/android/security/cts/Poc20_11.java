@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc20_11 extends SecurityTestCase {
@@ -32,6 +33,7 @@ public class Poc20_11 extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2020-11")
     public void testPocCVE_2020_0437() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.cellbroadcast"));
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runCommandLine(
             "am broadcast " +
