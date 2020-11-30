@@ -16,7 +16,7 @@
 
 package android.view.cts;
 
-import static android.view.OnReceiveContentListener.Payload.SOURCE_CLIPBOARD;
+import static android.view.ContentInfo.SOURCE_CLIPBOARD;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -30,8 +30,8 @@ import android.content.ClipData;
 import android.content.ClipDescription;
 import android.content.Context;
 import android.net.Uri;
+import android.view.ContentInfo;
 import android.view.OnReceiveContentListener;
-import android.view.OnReceiveContentListener.Payload;
 import android.view.View;
 
 import androidx.test.InstrumentationRegistry;
@@ -115,8 +115,8 @@ public class ViewOnReceiveContentTest {
     public void testPerformReceiveContent() {
         View view = new View(mActivity);
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
-        Payload samplePayloadGif = sampleUriPayload("image/gif");
-        Payload samplePayloadPdf = sampleUriPayload("application/pdf");
+        ContentInfo samplePayloadGif = sampleUriPayload("image/gif");
+        ContentInfo samplePayloadPdf = sampleUriPayload("application/pdf");
 
         // Calling performReceiveContent() returns the payload if there's no listener (default)
         assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
@@ -139,7 +139,7 @@ public class ViewOnReceiveContentTest {
     public void testOnReceiveContent() {
         View view = new View(mActivity);
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
-        Payload samplePayloadGif = sampleUriPayload("image/gif");
+        ContentInfo samplePayloadGif = sampleUriPayload("image/gif");
 
         // Calling onReceiveContent() returns the payload if there's no listener
         assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
@@ -150,10 +150,10 @@ public class ViewOnReceiveContentTest {
         assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
     }
 
-    private static Payload sampleUriPayload(String ... mimeTypes) {
+    private static ContentInfo sampleUriPayload(String ... mimeTypes) {
         ClipData clip = new ClipData(
                 new ClipDescription("test", mimeTypes),
                 new ClipData.Item(Uri.parse("content://example/1")));
-        return new Payload.Builder(clip, SOURCE_CLIPBOARD).build();
+        return new ContentInfo.Builder(clip, SOURCE_CLIPBOARD).build();
     }
 }
