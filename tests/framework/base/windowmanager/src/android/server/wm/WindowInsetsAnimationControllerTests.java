@@ -65,6 +65,7 @@ import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.test.filters.FlakyTest;
 
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
@@ -250,6 +251,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 174445559)
     public void testControl_immediately_hide() throws Throwable {
         setVisibilityAndWait(mType, true);
 
@@ -290,6 +292,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 174445559)
     public void testControl_transition_hide() throws Throwable {
         setVisibilityAndWait(mType, true);
 
@@ -329,6 +332,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 174445559)
     public void testControl_transition_hide_interpolator() throws Throwable {
         mInterpolator = new AccelerateInterpolator();
         setVisibilityAndWait(mType, true);
