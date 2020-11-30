@@ -152,6 +152,7 @@ public class LocationManagerTest extends InstrumentationTestCase {
             location.setElapsedRealtimeNanos(elapsed);
             location.setTime(1);
             mManager.setTestProviderLocation(providerName, location);
+            Thread.sleep(200);
             assertTrue(SystemClock.currentGnssTimeClock().millis() < 1000);
 
             location.setTime(java.lang.System.currentTimeMillis());
