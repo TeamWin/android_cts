@@ -54,6 +54,8 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.internal.util.ToBooleanFunction;
 
+import com.google.common.truth.Truth;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -65,7 +67,6 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -272,7 +273,7 @@ public class TvInputServiceTest {
         assertThat(session.mTuneCount).isEqualTo(1);
         assertThat(session.mTuneWithBundleCount).isEqualTo(1);
         assertThat(session.mTunedChannelUri).isEqualTo(fakeChannelUri);
-        assertThat(bundleEquals(session.mTuneWithBundleData, bundle)).isTrue();
+        assertBundlesAreEqual(session.mTuneWithBundleData, bundle);
     }
 
     @Test
@@ -310,17 +311,13 @@ public class TvInputServiceTest {
         Uri fakeChannelUri = tuneForRecording(bundle);
         notifyTuned(fakeChannelUri);
         mTvRecordingClient.startRecording(fakeChannelUri, bundle);
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-                return session != null
-                        && session.mStartRecordingCount > 0
-                        && session.mStartRecordingWithBundleCount > 0
-                        && Objects.equals(session.mProgramHint, fakeChannelUri)
-                        && bundleEquals(session.mStartRecordingWithBundleData, bundle);
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT,
+                recordingSessionCheck(s -> s.mStartRecordingWithBundleCount > 0));
+        final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+        assertThat(session.mStartRecordingCount).isEqualTo(1);
+        assertThat(session.mStartRecordingWithBundleCount).isEqualTo(1);
+        assertThat(session.mProgramHint).isEqualTo(fakeChannelUri);
+        assertBundlesAreEqual(session.mStartRecordingWithBundleData, bundle);
     }
 
     @Test
@@ -344,16 +341,11 @@ public class TvInputServiceTest {
         tuneForRecording();
         final String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
         mTvRecordingClient.sendAppPrivateCommand(action, bundle);
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
-                return session != null
-                        && session.mAppPrivateCommandCount > 0
-                        && bundleEquals(session.mAppPrivateCommandData, bundle)
-                        && TextUtils.equals(session.mAppPrivateCommandAction, action);
-            }
-        }.run();
+        PollingCheck.waitFor(TIME_OUT, recordingSessionCheck(s -> s.mAppPrivateCommandCount > 0));
+        final CountingRecordingSession session = CountingTvInputService.sRecordingSession;
+        assertThat(session.mAppPrivateCommandCount).isEqualTo(1);
+        assertBundlesAreEqual(session.mAppPrivateCommandData, bundle);
+        assertThat(session.mAppPrivateCommandAction).isEqualTo(action);
     }
 
     @Test
@@ -431,7 +423,6 @@ public class TvInputServiceTest {
         resetCounts();
         resetPassedValues();
         final Uri fakeChannelUri = tune();
-
         final CountingSession session = CountingTvInputService.sSession;
         final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
         assertWithMessage("session").that(session).isNotNull();
@@ -449,22 +440,11 @@ public class TvInputServiceTest {
         resetPassedValues();
         final Uri fakeChannelUri = TvContract.buildChannelUri(0);
         onTvView(tvView -> tvView.tune(mStubInfo.getId(), fakeChannelUri, bundle));
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                final CountingSession session = CountingTvInputService.sSession;
-                final String tvInputSessionId = CountingTvInputService.sTvInputSessionId;
-                return session != null
-                        && tvInputSessionId != null
-                        && session.mTuneCount > 0
-                        && session.mTuneWithBundleCount > 0
-                        && Objects.equals(session.mTunedChannelUri, fakeChannelUri)
-                        && bundleEquals(session.mTuneWithBundleData, bundle);
-            }
-        }.run();
-        final CountingSession session = CountingTvInputService.sSession;
-        assertThat(session).isNotNull();
+        final CountingSession session = waitForSessionCheck(s -> s.mTuneWithBundleCount > 0);
+        assertThat(session.mTuneCount).isEqualTo(1);
         assertThat(session.mTuneWithBundleCount).isEqualTo(1);
+        assertThat(session.mTunedChannelUri).isEqualTo(fakeChannelUri);
+        assertBundlesAreEqual(session.mTuneWithBundleData, bundle);
     }
 
     @Test
@@ -771,17 +751,14 @@ public class TvInputServiceTest {
         final String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
         onTvView(tvView -> tvView.sendAppPrivateCommand(action, bundle));
         mInstrumentation.waitForIdleSync();
-        new PollingCheck(TIME_OUT) {
-            @Override
-            protected boolean check() {
-                final CountingSession session = CountingTvInputService.sSession;
-                return session != null
-                        && session.mAppPrivateCommandCount > 0
-                        && bundleEquals(session.mAppPrivateCommandData, bundle)
-                        && TextUtils.equals(session.mAppPrivateCommandAction, action);
-            }
-        }.run();
+        final CountingSession session = waitForSessionCheck(s -> s.mAppPrivateCommandCount > 0);
+        assertThat(session.mAppPrivateCommandCount).isEqualTo(1);
+        assertBundlesAreEqual(session.mAppPrivateCommandData, bundle);
+        assertThat(session.mAppPrivateCommandAction).isEqualTo(action);
+
+
     }
+
 
     @Test
     public void verifyCallbackChannelRetuned() throws Exception {
@@ -1011,21 +988,17 @@ public class TvInputServiceTest {
                 && param.getSpeed() == other.getSpeed();
     }
 
-    public static boolean bundleEquals(Bundle b, Bundle other) {
-        if (b == other) return true;
-        if (b == null || other == null) return false;
-        if (b.size() != other.size()) return false;
-
-        Set<String> keys = b.keySet();
-        for (String key : keys) {
-            if (!other.containsKey(key)) return false;
-            Object objOne = b.get(key);
-            Object objTwo = other.get(key);
-            if (!Objects.equals(objOne, objTwo)) {
-                return false;
+    private static void assertBundlesAreEqual(Bundle actual, Bundle expected) {
+        if (expected != null && actual != null) {
+            if ((expected == null) != (actual == null)) {
+                // Fail miss matched nulls early using the Standard
+                Truth.assertThat(actual).isEqualTo(expected);
+            }
+            assertThat(actual.keySet()).isEqualTo(expected.keySet());
+            for (String key : expected.keySet()) {
+                assertThat(actual.get(key)).isEqualTo(expected.get(key));
             }
         }
-        return true;
     }
 
     private void notifyTuned(Uri fakeChannelUri) {
@@ -1106,6 +1079,12 @@ public class TvInputServiceTest {
     private static ActivityScenario.ActivityAction<TvViewStubActivity> viewAction(
             Consumer<TvView> consumer) {
         return activity -> consumer.accept(activity.getTvView());
+    }
+
+    private static CountingSession waitForSessionCheck(
+            ToBooleanFunction<CountingSession> countingSessionToBooleanFunction) {
+        PollingCheck.waitFor(TIME_OUT, sessionCheck(countingSessionToBooleanFunction));
+        return CountingTvInputService.sSession;
     }
 
     public static class CountingTvInputService extends StubTvInputService {
