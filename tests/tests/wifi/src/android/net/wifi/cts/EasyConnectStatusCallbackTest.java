@@ -18,8 +18,10 @@ package android.net.wifi.cts;
 
 import static android.net.wifi.EasyConnectStatusCallback.EASY_CONNECT_EVENT_FAILURE_TIMEOUT;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_PSK;
+import static android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT;
 import static android.net.wifi.WifiManager.EASY_CONNECT_NETWORK_ROLE_STA;
 
+import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.net.wifi.EasyConnectStatusCallback;
@@ -48,6 +50,9 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
             "DPP:C:81/1,117/40;I:Easy_Connect_Demo;M:000102030405;"
                     + "K:MDkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDIgACDmtXD1Sz6/5B4YRdmTkbkkFLDwk8f0yRnfm1Go"
                     + "kpx/0=;;";
+    private static final String TEST_DEVICE_INFO = "DPP_RESPONDER_TESTER";
+    // As per spec semicolon is not allowed in device info
+    private static final String TEST_WRONG_DEVICE_INFO = "DPP_;RESPONDER_TESTER";
     private final HandlerThread mHandlerThread = new HandlerThread("EasyConnectTest");
     protected final Executor mExecutor;
     {
@@ -56,6 +61,7 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     }
     private final Object mLock = new Object();
     private boolean mOnFailureCallback = false;
+    private boolean mOnBootstrapUriGeneratedCallback = false;
     private int mErrorCode;
 
     @Override
@@ -99,6 +105,7 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
             }
         }
 
+        @Override
         public void onFailure(int code, String ssid, SparseArray<int[]> channelListArray,
                 int[] operatingClassArray) {
             synchronized (mLock) {
@@ -106,6 +113,15 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
                 mErrorCode = code;
                 mLock.notify();
             }
+        }
+
+        @Override
+        public void onBootstrapUriGenerated(@NonNull String uri) {
+            synchronized (mLock) {
+                mOnBootstrapUriGeneratedCallback = true;
+                mLock.notify();
+            }
+
         }
     };
 
@@ -179,5 +195,64 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Tests {@link android.net.wifi.EasyConnectStatusCallback#onBootstrapUriGenerated} callback.
+     *
+     * Since Easy Connect requires 2 devices, start Easy Connect responder session and expect a
+     * DPP URI
+     */
+    public void testEnrolleeResponderUriGeneration() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isEasyConnectSupported()) {
+            // skip the test if Easy Connect is not supported
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            synchronized (mLock) {
+                mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_DEVICE_INFO,
+                        EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
+                        mEasyConnectStatusCallback);
+                // Wait for supplicant to generate DPP URI and trigger the callback function to
+                // provide the generated URI.
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertTrue(mOnBootstrapUriGeneratedCallback);
+            mWifiManager.stopEasyConnectSession();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test that {@link WifiManager#startEasyConnectAsEnrolleeResponder(String, int, Executor,
+     * EasyConnectStatusCallback)} throws illegal argument exception on passing a wrong device
+     * info.
+     *
+     */
+    public void
+           testStartEasyConnectAsEnrolleeResponderThrowsIllegalArgumentExceptionOnWrongDeviceInfo()
+           throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!mWifiManager.isEasyConnectSupported()) {
+            // skip the test if Easy Connect is not supported
+            return;
+        }
+        try {
+            mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_WRONG_DEVICE_INFO,
+                    EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
+                    mEasyConnectStatusCallback);
+            fail("startEasyConnectAsEnrolleeResponder did not throw an IllegalArgumentException"
+                    + "on passing a wrong device info!");
+        } catch (IllegalArgumentException expected) {}
     }
 }
