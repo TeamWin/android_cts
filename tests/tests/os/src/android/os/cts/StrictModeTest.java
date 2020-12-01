@@ -56,6 +56,7 @@ import android.os.strictmode.UntaggedSocketViolation;
 import android.os.strictmode.Violation;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.Presubmit;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
@@ -632,6 +633,7 @@ public class StrictModeTest {
         }
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_Application_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -659,6 +661,7 @@ public class StrictModeTest {
         });
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_DisplayContext_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -688,6 +691,7 @@ public class StrictModeTest {
         });
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_WindowContext_NoViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -711,6 +715,7 @@ public class StrictModeTest {
         });
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_Activity_NoViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -736,6 +741,7 @@ public class StrictModeTest {
         });
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_UiDerivedContext_NoViolation() throws Exception {
         StrictMode.setVmPolicy(
@@ -779,6 +785,7 @@ public class StrictModeTest {
         });
     }
 
+    @Presubmit
     @Test
     public void testIncorrectContextUse_UiDerivedDisplayContext_ThrowViolation() throws Exception {
         StrictMode.setVmPolicy(
