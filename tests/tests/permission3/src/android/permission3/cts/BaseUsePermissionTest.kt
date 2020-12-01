@@ -88,108 +88,54 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     protected val isAutomotive = packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
 
     private val platformResources = context.createPackageContext("android", 0).resources
-    private val permissionToLabelResNameMap =
-        if (!packageManager.arePermissionsIndividuallyControlled()) {
-            mapOf(
-                // Contacts
-                android.Manifest.permission.READ_CONTACTS
+    private val permissionToLabelResNameMap = mapOf(
+            // Contacts
+            android.Manifest.permission.READ_CONTACTS
                     to "@android:string/permgrouplab_contacts",
-                android.Manifest.permission.WRITE_CONTACTS
+            android.Manifest.permission.WRITE_CONTACTS
                     to "@android:string/permgrouplab_contacts",
-                // Calendar
-                android.Manifest.permission.READ_CALENDAR
+            // Calendar
+            android.Manifest.permission.READ_CALENDAR
                     to "@android:string/permgrouplab_calendar",
-                android.Manifest.permission.WRITE_CALENDAR
+            android.Manifest.permission.WRITE_CALENDAR
                     to "@android:string/permgrouplab_calendar",
-                // SMS
-                android.Manifest.permission.SEND_SMS to "@android:string/permgrouplab_sms",
-                android.Manifest.permission.RECEIVE_SMS to "@android:string/permgrouplab_sms",
-                android.Manifest.permission.READ_SMS to "@android:string/permgrouplab_sms",
-                android.Manifest.permission.RECEIVE_WAP_PUSH to "@android:string/permgrouplab_sms",
-                android.Manifest.permission.RECEIVE_MMS to "@android:string/permgrouplab_sms",
-                "android.permission.READ_CELL_BROADCASTS" to "@android:string/permgrouplab_sms",
-                // Storage
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
+            // SMS
+            android.Manifest.permission.SEND_SMS to "@android:string/permgrouplab_sms",
+            android.Manifest.permission.RECEIVE_SMS to "@android:string/permgrouplab_sms",
+            android.Manifest.permission.READ_SMS to "@android:string/permgrouplab_sms",
+            android.Manifest.permission.RECEIVE_WAP_PUSH to "@android:string/permgrouplab_sms",
+            android.Manifest.permission.RECEIVE_MMS to "@android:string/permgrouplab_sms",
+            "android.permission.READ_CELL_BROADCASTS" to "@android:string/permgrouplab_sms",
+            // Storage
+            android.Manifest.permission.READ_EXTERNAL_STORAGE
                     to "@android:string/permgrouplab_storage",
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
+            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
                     to "@android:string/permgrouplab_storage",
-                // Location
-                android.Manifest.permission.ACCESS_FINE_LOCATION
+            // Location
+            android.Manifest.permission.ACCESS_FINE_LOCATION
                     to "@android:string/permgrouplab_location",
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
+            android.Manifest.permission.ACCESS_COARSE_LOCATION
                     to "@android:string/permgrouplab_location",
-                // Phone
-                android.Manifest.permission.READ_PHONE_STATE
+            // Phone
+            android.Manifest.permission.READ_PHONE_STATE
                     to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.CALL_PHONE to "@android:string/permgrouplab_phone",
-                "android.permission.ACCESS_IMS_CALL_SERVICE"
+            android.Manifest.permission.CALL_PHONE to "@android:string/permgrouplab_phone",
+            "android.permission.ACCESS_IMS_CALL_SERVICE"
                     to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.READ_CALL_LOG to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.WRITE_CALL_LOG to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.ADD_VOICEMAIL to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.USE_SIP to "@android:string/permgrouplab_phone",
-                android.Manifest.permission.PROCESS_OUTGOING_CALLS
+            android.Manifest.permission.READ_CALL_LOG to "@android:string/permgrouplab_phone",
+            android.Manifest.permission.WRITE_CALL_LOG to "@android:string/permgrouplab_phone",
+            android.Manifest.permission.ADD_VOICEMAIL to "@android:string/permgrouplab_phone",
+            android.Manifest.permission.USE_SIP to "@android:string/permgrouplab_phone",
+            android.Manifest.permission.PROCESS_OUTGOING_CALLS
                     to "@android:string/permgrouplab_phone",
-                // Microphone
-                android.Manifest.permission.RECORD_AUDIO
+            // Microphone
+            android.Manifest.permission.RECORD_AUDIO
                     to "@android:string/permgrouplab_microphone",
-                // Camera
-                android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
-                // Body sensors
-                android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors"
-            )
-        } else {
-            mapOf(
-                // Contacts
-                android.Manifest.permission.READ_CONTACTS to "@android:string/permlab_readContacts",
-                android.Manifest.permission.WRITE_CONTACTS
-                    to "@android:string/permlab_writeContacts",
-                // Calendar
-                android.Manifest.permission.READ_CALENDAR
-                    to "@android:string/permgrouplab_calendar",
-                android.Manifest.permission.WRITE_CALENDAR
-                    to "@android:string/permgrouplab_calendar",
-                // SMS
-                android.Manifest.permission.SEND_SMS to "@android:string/permlab_sendSms",
-                android.Manifest.permission.RECEIVE_SMS to "@android:string/permlab_receiveSms",
-                android.Manifest.permission.READ_SMS to "@android:string/permlab_readSms",
-                android.Manifest.permission.RECEIVE_WAP_PUSH
-                    to "@android:string/permlab_receiveWapPush",
-                android.Manifest.permission.RECEIVE_MMS to "@android:string/permlab_receiveMms",
-                "android.permission.READ_CELL_BROADCASTS"
-                    to "@android:string/permlab_readCellBroadcasts",
-                // Storage
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-                    to "@android:string/permgrouplab_storage",
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-                    to "@android:string/permgrouplab_storage",
-                // Location
-                android.Manifest.permission.ACCESS_FINE_LOCATION
-                    to "@android:string/permgrouplab_location",
-                android.Manifest.permission.ACCESS_COARSE_LOCATION
-                    to "@android:string/permgrouplab_location",
-                // Phone
-                android.Manifest.permission.READ_PHONE_STATE
-                    to "@android:string/permlab_readPhoneState",
-                android.Manifest.permission.CALL_PHONE to "@android:string/permlab_callPhone",
-                "android.permission.ACCESS_IMS_CALL_SERVICE"
-                    to "@android:string/permlab_accessImsCallService",
-                android.Manifest.permission.READ_CALL_LOG to "@android:string/permlab_readCallLog",
-                android.Manifest.permission.WRITE_CALL_LOG
-                    to "@android:string/permlab_writeCallLog",
-                android.Manifest.permission.ADD_VOICEMAIL to "@android:string/permlab_addVoicemail",
-                android.Manifest.permission.USE_SIP to "@android:string/permlab_use_sip",
-                android.Manifest.permission.PROCESS_OUTGOING_CALLS
-                    to "@android:string/permlab_processOutgoingCalls",
-                // Microphone
-                android.Manifest.permission.RECORD_AUDIO
-                    to "@android:string/permgrouplab_microphone",
-                // Camera
-                android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
-                // Body sensors
-                android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors"
-            )
-        }
+            // Camera
+            android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
+            // Body sensors
+            android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors"
+    )
 
     @Before
     @After
