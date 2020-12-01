@@ -1578,8 +1578,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 testSoftApConfig.getAllowedClientList());
         assertEquals(currentConfig.getBlockedClientList(),
                 testSoftApConfig.getBlockedClientList());
-        assertEquals(currentConfig.getMacRandomizationSetting(),
-                testSoftApConfig.getMacRandomizationSetting());
+        if (BuildCompat.isAtLeastS()) {
+            assertEquals(currentConfig.getMacRandomizationSetting(),
+                    testSoftApConfig.getMacRandomizationSetting());
+        }
     }
 
     private void turnOffWifiAndTetheredHotspotIfEnabled() throws Exception {
@@ -1699,10 +1701,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 
-
-            int[] supportedChannelList = callback.getCurrentSoftApCapability()
-                    .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
-            assertNotEquals(supportedChannelList.length, 0);
+            if (BuildCompat.isAtLeastS()) {
+                int[] supportedChannelList = callback.getCurrentSoftApCapability()
+                        .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
+                assertNotEquals(supportedChannelList.length, 0);
+            }
             boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
                     .areFeaturesSupported(
                     SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
@@ -1757,9 +1760,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                                 0 == callback.getCurrentSoftApInfo().getBandwidth() &&
                                 0 == callback.getCurrentSoftApInfo().getFrequency();
                     });
-            assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
-            assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
-                    callback.getCurrentSoftApInfo().getWifiStandard());
+            if (BuildCompat.isAtLeastS()) {
+                assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
+                assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
+                        callback.getCurrentSoftApInfo().getWifiStandard());
+            }
             mWifiManager.unregisterSoftApCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
         }
