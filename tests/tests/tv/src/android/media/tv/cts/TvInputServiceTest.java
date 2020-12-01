@@ -404,7 +404,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTune() throws Exception {
+    public void verifyCommandTune() {
         resetCounts();
         resetPassedValues();
 
@@ -433,7 +433,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandSetStreamVolume() throws Exception {
+    public void verifyCommandSetStreamVolume() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final float volume = 0.8f;
@@ -447,7 +447,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandSetCaptionEnabled() throws Exception {
+    public void verifyCommandSetCaptionEnabled() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final boolean enable = true;
@@ -459,7 +459,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandSelectTrack() throws Exception {
+    public void verifyCommandSelectTrack() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         verifyCallbackTracksChanged();
@@ -476,7 +476,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchKeyDown() throws Exception {
+    public void verifyCommandDispatchKeyDown() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int keyCode = KeyEvent.KEYCODE_Q;
@@ -492,7 +492,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchKeyMultiple() throws Exception {
+    public void verifyCommandDispatchKeyMultiple() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int keyCode = KeyEvent.KEYCODE_Q;
@@ -508,7 +508,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchKeyUp() throws Exception {
+    public void verifyCommandDispatchKeyUp() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int keyCode = KeyEvent.KEYCODE_Q;
@@ -525,7 +525,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchTouchEvent() throws Exception {
+    public void verifyCommandDispatchTouchEvent() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final long now = SystemClock.uptimeMillis();
@@ -542,7 +542,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchTrackballEvent() throws Exception {
+    public void verifyCommandDispatchTrackballEvent() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final long now = SystemClock.uptimeMillis();
@@ -558,7 +558,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandDispatchGenericMotionEvent() throws Exception {
+    public void verifyCommandDispatchGenericMotionEvent() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final long now = SystemClock.uptimeMillis();
@@ -573,7 +573,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTimeShiftPause() throws Exception {
+    public void verifyCommandTimeShiftPause() {
         final CountingSession session = tune(CHANNEL_0);
         onTvView(tvView -> tvView.timeShiftPause());
         mInstrumentation.waitForIdleSync();
@@ -583,7 +583,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTimeShiftResume() throws Exception {
+    public void verifyCommandTimeShiftResume() {
         final CountingSession session = tune(CHANNEL_0);
 
         onTvView(tvView -> {
@@ -596,7 +596,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTimeShiftSeekTo() throws Exception {
+    public void verifyCommandTimeShiftSeekTo() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final long timeMs = 0;
@@ -610,7 +610,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTimeShiftSetPlaybackParams() throws Exception {
+    public void verifyCommandTimeShiftSetPlaybackParams() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final PlaybackParams param = new PlaybackParams().setSpeed(2.0f)
@@ -625,7 +625,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandTimeShiftPlay() throws Exception {
+    public void verifyCommandTimeShiftPlay() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final Uri fakeRecordedProgramUri = TvContract.buildRecordedProgramUri(0);
@@ -639,7 +639,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandSetTimeShiftPositionCallback() throws Exception {
+    public void verifyCommandSetTimeShiftPositionCallback() {
         tune(CHANNEL_0);
 
         onTvView(tvView -> tvView.setTimeShiftPositionCallback(mTimeShiftPositionCallback));
@@ -654,7 +654,7 @@ public class TvInputServiceTest {
 
     @Test
     @Ignore("b/174076887")
-    public void verifyCommandOverlayViewSizeChanged() throws Exception {
+    public void verifyCommandOverlayViewSizeChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int width = 10;
@@ -673,7 +673,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandSendAppPrivateCommand() throws Exception {
+    public void verifyCommandSendAppPrivateCommand() {
         Bundle bundle = createTestBundle();
         tune(CHANNEL_0);
         final String action = "android.media.tv.cts.TvInputServiceTest.privateCommand";
@@ -688,7 +688,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackChannelRetuned() throws Exception {
+    public void verifyCallbackChannelRetuned() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
 
@@ -701,7 +701,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackVideoAvailable() throws Exception {
+    public void verifyCallbackVideoAvailable() {
         final CountingSession session = tune(CHANNEL_0);
         resetCounts();
 
@@ -712,7 +712,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackVideoUnavailable() throws Exception {
+    public void verifyCallbackVideoUnavailable() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int reason = TvInputManager.VIDEO_UNAVAILABLE_REASON_TUNING;
@@ -725,7 +725,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackTracksChanged() throws Exception {
+    public void verifyCallbackTracksChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         ArrayList<TvTrackInfo> tracks = new ArrayList<>();
@@ -741,7 +741,7 @@ public class TvInputServiceTest {
 
     @Test
     @Ignore("b/174076887")
-    public void verifyCallbackVideoSizeChanged() throws Exception {
+    public void verifyCallbackVideoSizeChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetCounts();
         ArrayList<TvTrackInfo> tracks = new ArrayList<>();
@@ -755,7 +755,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackTrackSelected() throws Exception {
+    public void verifyCallbackTrackSelected() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
 
@@ -768,7 +768,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackContentAllowed() throws Exception {
+    public void verifyCallbackContentAllowed() {
         final CountingSession session = tune(CHANNEL_0);
         resetCounts();
 
@@ -779,7 +779,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackContentBlocked() throws Exception {
+    public void verifyCallbackContentBlocked() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final TvContentRating rating = TvContentRating.createRating("android.media.tv", "US_TVPG",
@@ -794,7 +794,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCallbackTimeShiftStatusChanged() throws Exception {
+    public void verifyCallbackTimeShiftStatusChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int status = TvInputManager.TIME_SHIFT_STATUS_AVAILABLE;
@@ -808,7 +808,7 @@ public class TvInputServiceTest {
 
     @Test
     @Ignore("b/174076887")
-    public void verifyCallbackLayoutSurface() throws Exception {
+    public void verifyCallbackLayoutSurface() {
         final CountingSession session = tune(CHANNEL_0);
         final int left = 10;
         final int top = 20;
