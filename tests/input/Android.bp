@@ -22,15 +22,10 @@ android_test {
     ],
     compile_multilib: "both",
     srcs: ["src/**/*.kt"],
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
     static_libs: [
         "androidx.test.core",
         "androidx.test.ext.junit",
         "compatibility-device-util-axt",
-        "ctstestrunner-axt",
     ],
     sdk_version: "test_current",
 }

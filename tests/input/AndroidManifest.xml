@@ -23,7 +23,8 @@
         <activity android:name=".OverlayActivity"
                   android:label="Overlay activity"
                   android:process=":externalProcess"
-                  android:theme="@android:style/Theme.Dialog">
+                  android:theme="@android:style/Theme.Dialog"
+                  android:exported="true">
             <layout android:defaultHeight="100dp"
                     android:defaultWidth="100dp"
                     android:gravity="bottom"
