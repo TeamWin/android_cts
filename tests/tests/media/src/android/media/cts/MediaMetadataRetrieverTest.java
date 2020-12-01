@@ -1033,6 +1033,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testGetImageAtIndex() throws Exception {
+        if (!MediaUtils.hasDecoder(MediaFormat.MIMETYPE_VIDEO_HEVC)) {
+            MediaUtils.skipTest("no video decoders for resource");
+            return;
+        }
+
         testGetImage("heifwriter_input.heic", 1920, 1080, 0 /*rotation*/,
                 4 /*imageCount*/, 3 /*primary*/, true /*useGrid*/, true /*checkColor*/);
     }
