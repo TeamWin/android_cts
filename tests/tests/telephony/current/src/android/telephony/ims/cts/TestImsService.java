@@ -342,6 +342,12 @@ public class TestImsService extends Service {
         }
     }
 
+    public TestSipTransport getSipTransport() {
+        synchronized (mLock) {
+            return mTestSipTransport;
+        }
+    }
+
     public ImsRegistrationImplBase getImsRegistration() {
         synchronized (mLock) {
             return sImsRegistrationImplBase;
