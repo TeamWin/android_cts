@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
+import android.content.res.Resources;
 import android.view.DisplayInfo;
 
 import java.util.concurrent.CountDownLatch;
@@ -71,8 +72,15 @@ public class OrientationTestUtils {
 
     /** Checks whether the display dimension is close to square. */
     public static boolean isCloseToSquareDisplay(final Activity activity) {
-        final float closeToSquareMaxAspectRatio = activity.getResources().getFloat(
-                com.android.internal.R.dimen.config_closeToSquareDisplayMaxAspectRatio);
+        final Resources resources = activity.getResources();
+        final float closeToSquareMaxAspectRatio;
+        try {
+            closeToSquareMaxAspectRatio = resources.getFloat(resources.getIdentifier(
+                    "config_closeToSquareDisplayMaxAspectRatio", "dimen", "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume device is not close to square.
+            return false;
+        }
         final DisplayInfo displayInfo = new DisplayInfo();
         activity.getDisplay().getDisplayInfo(displayInfo);
         final int w = displayInfo.logicalWidth;
