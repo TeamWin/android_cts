@@ -33,6 +33,7 @@ import android.util.ArraySet;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.CommonTestUtils;
 import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.UserUtils;
 
@@ -49,9 +50,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
-    private static final long MAX_WAIT_TIME = 2 * 1000;
-
-    private static final long WAIT_TIME_INCR = 100;
+    private static final long MAX_WAIT_TIME_SECS = 2;
+    private static final long MAX_WAIT_TIME_MS = MAX_WAIT_TIME_SECS * 1000;
+    private static final long WAIT_TIME_INCR_MS = 100;
 
     private UiModeManager mUiModeManager;
 
@@ -63,6 +64,8 @@ public class UiModeManagerTest extends AndroidTestCase {
         // reset nightMode
         setNightMode(UiModeManager.MODE_NIGHT_YES);
         setNightMode(UiModeManager.MODE_NIGHT_NO);
+        // Make sure automotive projection is not set by this package at the beginning of the test.
+        releaseAutomotiveProjection();
     }
 
     public void testUiMode() throws Exception {
@@ -324,6 +327,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         Set<String> projectingPackages = new ArraySet<>();
         AtomicInteger callbackInvocations = new AtomicInteger();
         UiModeManager.OnProjectionStateChangeListener listener = (t, pkgs) -> {
+            Log.i(TAG, "onProjectionStateChanged(" + t + "," + pkgs + ")");
             activeProjectionTypes.set(t);
             projectingPackages.clear();
             projectingPackages.addAll(pkgs);
@@ -334,41 +338,46 @@ public class UiModeManagerTest extends AndroidTestCase {
         runWithShellPermissionIdentity(() -> mUiModeManager.addOnProjectionStateChangeListener(
                 UiModeManager.PROJECTION_TYPE_ALL, MoreExecutors.directExecutor(), listener),
                 Manifest.permission.READ_PROJECTION_STATE);
-        // Should have called back immediately.
+
+        // Should have called back immediately, but the call might not have gotten here yet.
+        CommonTestUtils.waitUntil("Callback wasn't invoked on listener addition!",
+                MAX_WAIT_TIME_SECS, () -> callbackInvocations.get() == 1);
         assertEquals(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE, activeProjectionTypes.get());
         assertEquals(1, projectingPackages.size());
         assertTrue(projectingPackages.contains(getContext().getPackageName()));
-        assertEquals(1, callbackInvocations.get());
 
         // Callback should not be invoked again.
         requestAutomotiveProjection();
+        Thread.sleep(MAX_WAIT_TIME_MS);
         assertEquals(1, callbackInvocations.get());
 
         releaseAutomotiveProjection();
+        CommonTestUtils.waitUntil("Callback wasn't invoked on projection release!",
+                MAX_WAIT_TIME_SECS, () -> callbackInvocations.get() == 2);
         assertEquals(UiModeManager.PROJECTION_TYPE_NONE, activeProjectionTypes.get());
         assertEquals(0, projectingPackages.size());
-        assertEquals(2, callbackInvocations.get());
 
         // Again, no callback for noop call.
         releaseAutomotiveProjection();
+        Thread.sleep(MAX_WAIT_TIME_MS);
         assertEquals(2, callbackInvocations.get());
 
         // Test the case that isn't at time of registration.
         requestAutomotiveProjection();
+        CommonTestUtils.waitUntil("Callback wasn't invoked on projection set!",
+                MAX_WAIT_TIME_SECS, () -> callbackInvocations.get() == 3);
         assertEquals(UiModeManager.PROJECTION_TYPE_AUTOMOTIVE, activeProjectionTypes.get());
         assertEquals(1, projectingPackages.size());
         assertTrue(projectingPackages.contains(getContext().getPackageName()));
-        assertEquals(3, callbackInvocations.get());
 
         // Unregister and shouldn't receive further callbacks.
         runWithShellPermissionIdentity(() -> mUiModeManager.removeOnProjectionStateChangeListener(
                 listener), Manifest.permission.READ_PROJECTION_STATE);
 
         releaseAutomotiveProjection();
-        assertEquals(3, callbackInvocations.get());
         requestAutomotiveProjection();
-        assertEquals(3, callbackInvocations.get());
         releaseAutomotiveProjection(); // Just to clean up.
+        Thread.sleep(MAX_WAIT_TIME_MS);
         assertEquals(3, callbackInvocations.get());
     }
 
@@ -608,12 +617,12 @@ public class UiModeManagerTest extends AndroidTestCase {
     private void assertStoredNightModeSetting(int mode) {
         int storedModeInt = -1;
         // Settings.Secure.UI_NIGHT_MODE
-        for (int i = 0; i < MAX_WAIT_TIME; i += WAIT_TIME_INCR) {
+        for (int i = 0; i < MAX_WAIT_TIME_MS; i += WAIT_TIME_INCR_MS) {
             String storedMode = getUiNightModeFromSetting();
             storedModeInt = Integer.parseInt(storedMode);
             if (mode == storedModeInt) break;
             try {
-                Thread.sleep(WAIT_TIME_INCR);
+                Thread.sleep(WAIT_TIME_INCR_MS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
