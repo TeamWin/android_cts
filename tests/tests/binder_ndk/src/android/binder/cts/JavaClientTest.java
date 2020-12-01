@@ -607,6 +607,9 @@ public class JavaClientTest {
 
         foo.u = SimpleUnion.e(new byte[]{ByteEnum.FOO, ByteEnum.FOO});
 
+        foo.shouldSetBit0AndBit2 = Foo.BIT0 | Foo.BIT2;
+        foo.shouldBeConstS1 = SimpleUnion.c(SimpleUnion.S1);
+
         Foo repeatedFoo = mInterface.repeatFoo(foo);
 
         assertEquals(foo.a, repeatedFoo.a);
@@ -620,6 +623,8 @@ public class JavaClientTest {
         Assert.assertArrayEquals(foo.shouldContainTwoIntFoos, repeatedFoo.shouldContainTwoIntFoos);
         Assert.assertArrayEquals(foo.shouldContainTwoLongFoos, repeatedFoo.shouldContainTwoLongFoos);
         Assert.assertArrayEquals(foo.u.getE(), repeatedFoo.u.getE());
+        assertEquals(foo.shouldSetBit0AndBit2, repeatedFoo.shouldSetBit0AndBit2);
+        assertEquals(foo.shouldBeConstS1.getC(), repeatedFoo.shouldBeConstS1.getC());
     }
 
     @Test

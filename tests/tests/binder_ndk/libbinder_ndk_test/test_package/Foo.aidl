@@ -21,4 +21,11 @@ parcelable Foo {
     LongEnum[] shouldContainTwoLongFoos;
     @nullable String[] g;
     @nullable SimpleUnion u;
+
+    const int BIT0 = 0x1;
+    const int BIT1 = 0x1 << 1;
+    const int BIT2 = 0x1 << 2;
+    int shouldSetBit0AndBit2;
+
+    @nullable SimpleUnion shouldBeConstS1;
 }
