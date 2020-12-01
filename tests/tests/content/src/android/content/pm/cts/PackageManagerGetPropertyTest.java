@@ -36,7 +36,8 @@ import com.android.cts.install.lib.Install;
 import com.android.cts.install.lib.TestApp;
 import com.android.cts.install.lib.Uninstall;
 
-import org.junit.AfterClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,12 +50,16 @@ public class PackageManagerGetPropertyTest {
     private static PackageManager sPackageManager;
     private static final String PROPERTY_APP1_PACKAGE_NAME = "com.android.cts.packagepropertyapp1";
     private static final String PROPERTY_APP2_PACKAGE_NAME = "com.android.cts.packagepropertyapp2";
+    private static final String PROPERTY_APP3_PACKAGE_NAME = "com.android.cts.packagepropertyapp3";
     private static final TestApp PROPERTY_APP1 =
             new TestApp("PackagePropertyTestApp1", PROPERTY_APP1_PACKAGE_NAME, 30,
                     false, "PackagePropertyTestApp1.apk");
     private static final TestApp PROPERTY_APP2 =
             new TestApp("PackagePropertyTestApp2", PROPERTY_APP2_PACKAGE_NAME, 30,
                     false, "PackagePropertyTestApp2.apk");
+    private static final TestApp PROPERTY_APP3 =
+            new TestApp("PackagePropertyTestApp3", PROPERTY_APP3_PACKAGE_NAME, 30,
+                    false, "PackagePropertyTestApp3.apk");
 
     private static void adoptShellPermissions() {
         InstrumentationRegistry
@@ -77,6 +82,10 @@ public class PackageManagerGetPropertyTest {
                 .getInstrumentation()
                 .getContext()
                 .getPackageManager();
+    }
+
+    @Before
+    public void setup() throws Exception {
         adoptShellPermissions();
         Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME);
         Uninstall.packages(PROPERTY_APP2_PACKAGE_NAME);
@@ -85,11 +94,12 @@ public class PackageManagerGetPropertyTest {
         dropShellPermissions();
     }
 
-    @AfterClass
-    public static void teardownClass() throws Exception {
+    @After
+    public void teardown() throws Exception {
         adoptShellPermissions();
         Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME);
         Uninstall.packages(PROPERTY_APP2_PACKAGE_NAME);
+        Uninstall.packages(PROPERTY_APP3_PACKAGE_NAME);
         dropShellPermissions();
     }
 
@@ -319,6 +329,48 @@ public class PackageManagerGetPropertyTest {
         try {
             final ComponentName component = new ComponentName(PROPERTY_APP1_PACKAGE_NAME,
                     "com.android.cts.packagepropertyapp.NotFound");
+            Property testProperty = sPackageManager.getProperty(
+                    "android.cts.PROPERTY_NOT_FOUND", component);
+            fail("getProperty() did not throw NameNotFoundException");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
+    @Test
+    public void testPackageRemoval() throws Exception {
+        adoptShellPermissions();
+        Install.single(PROPERTY_APP3).commit();
+        dropShellPermissions();
+
+        try {
+            final Property testPropertyList = sPackageManager.getProperty(
+                    "android.cts.PROPERTY_NOT_FOUND", PROPERTY_APP3_PACKAGE_NAME);
+            fail("getProperty() did not throw NameNotFoundException");
+        } catch (NameNotFoundException expected) {
+        }
+        try {
+            final ComponentName component = new ComponentName(PROPERTY_APP3_PACKAGE_NAME,
+                    "com.android.cts.packagepropertyapp.MyService");
+            Property testProperty = sPackageManager.getProperty(
+                    "android.cts.PROPERTY_NOT_FOUND", component);
+            fail("getProperty() did not throw NameNotFoundException");
+        } catch (NameNotFoundException expected) {
+        }
+
+        adoptShellPermissions();
+        Uninstall.packages(PROPERTY_APP1_PACKAGE_NAME);
+        Uninstall.packages(PROPERTY_APP2_PACKAGE_NAME);
+        dropShellPermissions();
+
+        try {
+            final Property testPropertyList = sPackageManager.getProperty(
+                    "android.cts.PROPERTY_NOT_FOUND", PROPERTY_APP3_PACKAGE_NAME);
+            fail("getProperty() did not throw NameNotFoundException");
+        } catch (NameNotFoundException expected) {
+        }
+        try {
+            final ComponentName component = new ComponentName(PROPERTY_APP3_PACKAGE_NAME,
+                    "com.android.cts.packagepropertyapp.MyService");
             Property testProperty = sPackageManager.getProperty(
                     "android.cts.PROPERTY_NOT_FOUND", component);
             fail("getProperty() did not throw NameNotFoundException");

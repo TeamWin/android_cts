@@ -93,77 +93,10 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
         executeShellCommand("rm -r /sdcard/Android/data/com.android.shell");
     }
 
-    @Test
-    public void testReadWriteFilesInOtherAppExternalDir() throws Exception {
-        runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
-    }
-
-    @Test
-    public void testCantDeleteOtherAppsContents() throws Exception {
-        runDeviceTest("testCantDeleteOtherAppsContents");
-    }
-
-    @Test
-    public void testDeleteAlreadyUnlinkedFile() throws Exception {
-        runDeviceTest("testDeleteAlreadyUnlinkedFile");
-
-    }
-
-    @Test
-    public void testListDirectoriesWithNonMediaFiles() throws Exception {
-        runDeviceTest("testListDirectoriesWithNonMediaFiles");
-    }
-
-    @Test
-    public void testListFilesFromExternalFilesDirectory() throws Exception {
-        runDeviceTest("testListFilesFromExternalFilesDirectory");
-    }
 
     @Test
     public void testListUnsupportedFileType() throws Exception {
         runDeviceTest("testListUnsupportedFileType");
-    }
-
-    @Test
-    public void testCallingIdentityCacheInvalidation() throws Exception {
-        // General IO access
-        runDeviceTest("testReadStorageInvalidation");
-        runDeviceTest("testWriteStorageInvalidation");
-        // File manager access
-        runDeviceTest("testManageStorageInvalidation");
-        // Default gallery
-        runDeviceTest("testWriteImagesInvalidation");
-        runDeviceTest("testWriteVideoInvalidation");
-        // EXIF access
-        runDeviceTest("testAccessMediaLocationInvalidation");
-
-        runDeviceTest("testAppUpdateInvalidation");
-        runDeviceTest("testAppReinstallInvalidation");
-    }
-
-    @Test
-    public void testRenameFile() throws Exception {
-        runDeviceTest("testRenameFile");
-    }
-
-    @Test
-    public void testRenameFileType() throws Exception {
-        runDeviceTest("testRenameFileType");
-    }
-
-    @Test
-    public void testRenameFileNotOwned() throws Exception {
-        runDeviceTest("testRenameFileNotOwned");
-    }
-
-    @Test
-    public void testRenameDirectoryNotOwned() throws Exception {
-        runDeviceTest("testRenameDirectoryNotOwned");
-    }
-
-    @Test
-    public void testRenameEmptyDirectory() throws Exception {
-        runDeviceTest("testRenameEmptyDirectory");
     }
 
     @Test
@@ -202,46 +135,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
-    public void testCantAccessOtherAppsContents() throws Exception {
-        runDeviceTest("testCantAccessOtherAppsContents");
-    }
-
-    @Test
-    public void testSystemGalleryCanRenameImagesAndVideos() throws Exception {
-        runDeviceTest("testSystemGalleryCanRenameImagesAndVideos");
-    }
-
-    @Test
-    public void testCanWriteToDCIMCameraWithNomedia() throws Exception {
-        runDeviceTest("testCanWriteToDCIMCameraWithNomedia");
-    }
-
-    @Test
-    public void testHiddenDirectory_nomedia() throws Exception {
-        runDeviceTest("testHiddenDirectory_nomedia");
-    }
-
-    @Test
-    public void testListHiddenFile() throws Exception {
-        runDeviceTest("testListHiddenFile");
-    }
-
-    @Test
-    public void testOpenPendingAndTrashed() throws Exception {
-        runDeviceTest("testOpenPendingAndTrashed");
-    }
-
-    @Test
-    public void testDeletePendingAndTrashed() throws Exception {
-        runDeviceTest("testDeletePendingAndTrashed");
-    }
-
-    @Test
-    public void testListPendingAndTrashed() throws Exception {
-        runDeviceTest("testListPendingAndTrashed");
-    }
-
-    @Test
     public void testCanCreateDefaultDirectory() throws Exception {
         runDeviceTest("testCanCreateDefaultDirectory");
     }
@@ -257,26 +150,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
-    public void testSystemGalleryQueryOtherAppsFiles() throws Exception {
-        runDeviceTest("testSystemGalleryQueryOtherAppsFiles");
-    }
-
-    @Test
-    public void testCantCreateOrRenameFileWithInvalidName() throws Exception {
-        runDeviceTest("testCantCreateOrRenameFileWithInvalidName");
-    }
-
-    @Test
-    public void testRenameWithSpecialChars() throws Exception {
-        runDeviceTest("testRenameWithSpecialChars");
-    }
-
-    @Test
-    public void testPendingFromFuse() throws Exception {
-        runDeviceTest("testPendingFromFuse");
-    }
-
-    @Test
     public void testOpenOtherPendingFilesFromFuse() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {
@@ -284,11 +157,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
         } finally {
             revokePermissions("android.permission.READ_EXTERNAL_STORAGE");
         }
-    }
-
-    @Test
-    public void testCantSetAttrOtherAppsFile() throws Exception {
-        runDeviceTest("testCantSetAttrOtherAppsFile");
     }
 
     @Test
@@ -338,11 +206,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
                 "testNoIsolatedStorageCantReadWriteOtherAppExternalDir");
         runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageStorageReaddir");
         runDeviceTestWithDisabledIsolatedStorage("testNoIsolatedStorageQueryOtherAppsFile");
-
-        // Check that appop is revoked after instrumentation is over.
-        runDeviceTest("testCreateFileInAppExternalDir");
-        runDeviceTest("testCreateFileInOtherAppExternalDir");
-        runDeviceTest("testReadWriteFilesInOtherAppExternalDir");
     }
 
     @Test
@@ -359,11 +222,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
                 device.enableAdbRoot();
             }
         }
-    }
-
-    @Test
-    public void testScanUpdatesMetadataForRenamedHiddenFile() throws Exception {
-        runDeviceTest("testScanUpdatesMetadataForRenamedHiddenFile");
     }
 
     @Test

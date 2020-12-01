@@ -76,6 +76,9 @@
         <option name="push" value="CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk->/data/local/tmp/cts/permissions/CtsAppThatAlsoDefinesPermissionGroupADifferentCert30.apk" />
         <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup.apk" />
         <option name="push" value="CtsAppThatDefinesPermissionWithInvalidGroup30.apk->/data/local/tmp/cts/permissions/CtsAppThatDefinesPermissionWithInvalidGroup30.apk" />
+        <option name="push" value="CtsStorageEscalationApp28.apk->/data/local/tmp/cts/permission3/CtsStorageEscalationApp28.apk" />
+        <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permission3/CtsStorageEscalationApp29Full.apk" />
+        <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permission3/CtsStorageEscalationApp29Scoped.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->

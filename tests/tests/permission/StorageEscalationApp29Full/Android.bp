@@ -1,4 +1,5 @@
-// Copyright (C) 2018 The Android Open Source Project
+//
+// Copyright (C) 2016 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -11,20 +12,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
 
-cc_test {
-    name: "CVE-2017-0479",
-    defaults: ["cts_hostsidetests_securitybulletin_defaults"],
-    srcs: ["poc.cpp"],
-    shared_libs: [
-        "audioclient-types-aidl-unstable-cpp",
-        "audioflinger-aidl-unstable-cpp",
-        "libmedia",
-        "libutils",
-        "libbinder",
-        "libandroid",
-        "libaudioclient",
-        "libaudioclient_aidl_conversion",
-        "libaudiofoundation",
+android_test_helper_app {
+    name: "CtsStorageEscalationApp29Full",
+    certificate: ":cts-testkey2",
+    test_suites: [
+        "cts",
+        "general-tests",
     ],
 }
