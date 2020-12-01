@@ -248,7 +248,6 @@ public class MockImeSession implements AutoCloseable {
             @NonNull Context context,
             @NonNull UiAutomation uiAutomation,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
-        MockImeSession.setEnabledFinishInputNoFallbackConnection(true);
         final String unavailabilityReason = getUnavailabilityReason(context);
         if (unavailabilityReason != null) {
             throw new AssumptionViolatedException(unavailabilityReason);
@@ -288,30 +287,6 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
-     * Whether {@link MockIme} enables compatibility changes or remains the old behavior of the
-     * input connection lifecycle callback when the device interactive state changed.
-     *
-     * Set {@code true} when wanting to finish the current started input connection and callback
-     * {@link InputMethodService#onFinishInput} when receiving the device non-interactive state
-     * (e.g. screen-off), or start the new input connection and callback
-     * {@link InputMethodService#onStartInput} when receiving the device interactive state.
-     *
-     * Set {@code false} means to remain the compatibility behavior to finish the started input
-     * connection with {@link InputMethodService#onFinishInput} callback and start a fallback
-     * input connection with {@link InputMethodService#onStartInput} when the device is
-     * non-interactive state, or finish the fallback input connection with
-     * {@link InputMethodService#onFinishInput} callback and start a new input connection with
-     * {@link InputMethodService#onStartInput} when the device is in interactive state.
-     */
-    public static void setEnabledFinishInputNoFallbackConnection(boolean enable) {
-        runWithShellPermissionIdentity(() -> {
-            runShellCommand("am compat " + (enable ? "enable " : "disable ")
-                    + FINISH_INPUT_NO_FALLBACK_CONNECTION + " "
-                    + MockIme.getComponentName().getPackageName());
-        });
-    }
-
-    /**
      * @return {@link ImeEventStream} object that stores events sent from {@link MockIme} since the
      *         session is created.
      */
@@ -331,11 +306,6 @@ public class MockImeSession implements AutoCloseable {
                         .getEnabledInputMethodList()
                         .stream()
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
-
-        runWithShellPermissionIdentity(() -> {
-            runShellCommand("am compat reset " + FINISH_INPUT_NO_FALLBACK_CONNECTION + " "
-                    + getMockImeComponentName().getPackageName());
-        });
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
         mContext.getContentResolver().call(SettingsProvider.AUTHORITY, "delete", null, null);

@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
+import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
 import static android.view.View.VISIBLE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
@@ -60,6 +61,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.TestWebView;
@@ -114,6 +116,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final RequireImeCompatFlagRule mRequireImeCompatFlagRule = new RequireImeCompatFlagRule(
+            FINISH_INPUT_NO_FALLBACK_CONNECTION, true);
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.KeyboardVisibilityControlTest";
