@@ -92,18 +92,35 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testInstallMissingDependency_full() throws Exception {
-        testInstallMissingDependency(false);
+    public void testInstallMissingDependency_usesSplit_full() throws Exception {
+        testInstallMissingDependency_usesSplit(false);
     }
 
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testInstallMissingDependency_instant() throws Exception {
-        testInstallMissingDependency(true);
+    public void testInstallMissingDependency_usesSplit_instant() throws Exception {
+        testInstallMissingDependency_usesSplit(true);
     }
 
-    private void testInstallMissingDependency(boolean instant) throws Exception {
+    private void testInstallMissingDependency_usesSplit(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_B).runExpectingFailure();
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testInstallMissingDependency_configForSplit_full() throws Exception {
+        testInstallMissingDependency_configForSplit(false);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testInstallMissingDependency_configForSplit_instant() throws Exception {
+        testInstallMissingDependency_configForSplit(true);
+    }
+
+    private void testInstallMissingDependency_configForSplit(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(
+                APK_FEATURE_A_pl).runExpectingFailure();
     }
 
     @Test
