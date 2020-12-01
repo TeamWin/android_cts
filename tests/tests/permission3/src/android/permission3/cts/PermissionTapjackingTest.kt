@@ -17,6 +17,7 @@
 package android.permission3.cts
 
 import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.support.test.uiautomator.By
 import com.android.compatibility.common.util.SystemUtil
@@ -42,26 +43,46 @@ class PermissionTapjackingTest : BaseUsePermissionTest() {
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
         requestAppPermissionsForNoResult(ACCESS_FINE_LOCATION) {}
 
+        val buttonCenter = waitFindObject(By.text(
+                getPermissionControllerString(ALLOW_FOREGROUND_BUTTON_TEXT))).visibleCenter
+
         // Wait for overlay to hide the dialog
+        context.sendBroadcast(Intent(ACTION_SHOW_OVERLAY))
         waitFindObject(By.res("android.permission3.cts.usepermission:id/overlay_description"))
+
         try {
             // Try to grant the permission, this should fail
             SystemUtil.eventually({
                 if (packageManager.checkPermission(ACCESS_FINE_LOCATION, APP_PACKAGE_NAME) ==
                         PackageManager.PERMISSION_DENIED) {
-                    clickPermissionRequestAllowForegroundButton(100)
+                    uiDevice.click(buttonCenter.x, buttonCenter.y)
+                    Thread.sleep(100)
                 }
                 assertAppHasPermission(ACCESS_FINE_LOCATION, true)
             }, 10000)
         } catch (e: RuntimeException) {
             // expected
         }
-        // Permission should not be granted and dialog should still be showing
+        // Permission should not be granted
         assertAppHasPermission(ACCESS_FINE_LOCATION, false)
 
         // On Automotive the dialog gets closed by the tapjacking activity popping up
         if (!isAutomotive) {
-            clickPermissionRequestAllowForegroundButton()
+            // Verify that clicking the dialog without the overlay still works
+            context.sendBroadcast(Intent(ACTION_HIDE_OVERLAY))
+            SystemUtil.eventually({
+                if (packageManager.checkPermission(ACCESS_FINE_LOCATION, APP_PACKAGE_NAME) ==
+                        PackageManager.PERMISSION_DENIED) {
+                    uiDevice.click(buttonCenter.x, buttonCenter.y)
+                    Thread.sleep(100)
+                }
+                assertAppHasPermission(ACCESS_FINE_LOCATION, true)
+            }, 10000)
         }
+    }
+
+    companion object {
+        const val ACTION_SHOW_OVERLAY = "android.permission3.cts.usepermission.ACTION_SHOW_OVERLAY"
+        const val ACTION_HIDE_OVERLAY = "android.permission3.cts.usepermission.ACTION_HIDE_OVERLAY"
     }
 }
