@@ -21,7 +21,9 @@ java_test_host {
         "tradefed",
         "guava",
     ],
-    static_libs:["CompatChangeGatingTestBase"],
+    static_libs:[
+        "CompatChangeGatingTestBase",
+    ],
     // tag this module as a cts test artifact
     test_suites: [
         "cts",
