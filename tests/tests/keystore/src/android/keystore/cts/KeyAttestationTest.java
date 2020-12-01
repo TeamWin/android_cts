@@ -235,7 +235,8 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertEquals(1, certificates.length);
 
                 X509Certificate attestationCert = (X509Certificate) certificates[0];
-                assertNull(attestationCert.getExtensionValue(Attestation.KEY_DESCRIPTION_OID));
+                assertNull(attestationCert.getExtensionValue(Attestation.ASN1_OID));
+                assertNull(attestationCert.getExtensionValue(Attestation.EAT_OID));
             } finally {
                 keyStore.deleteEntry(keystoreAlias);
             }
@@ -274,7 +275,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
-            checkDeviceLocked(new Attestation(attestationCert));
+            checkDeviceLocked(Attestation.loadFromCertificate(attestationCert));
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
@@ -405,7 +406,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertEquals(1, certificates.length);
 
                 X509Certificate attestationCert = (X509Certificate) certificates[0];
-                assertNull(attestationCert.getExtensionValue(Attestation.KEY_DESCRIPTION_OID));
+                assertNull(attestationCert.getExtensionValue(Attestation.ASN1_OID));
             } finally {
                 keyStore.deleteEntry(keystoreAlias);
             }
@@ -444,7 +445,7 @@ public class KeyAttestationTest extends AndroidTestCase {
             verifyCertificateChain(certificates, TestUtils.hasStrongBox(getContext()));
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
-            checkDeviceLocked(new Attestation(attestationCert));
+            checkDeviceLocked(Attestation.loadFromCertificate(attestationCert));
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
@@ -562,12 +563,13 @@ public class KeyAttestationTest extends AndroidTestCase {
             verifyCertificateChain(certificates, false /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
-            Attestation attestation = new Attestation(attestationCert);
+            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
 
-            checkRsaKeyDetails(attestation, keySize, purposes, ImmutableSet.copyOf(paddingModes));
+            checkRsaKeyDetails(attestation, keySize, purposes,
+                ImmutableSet.copyOf(paddingModes));
             checkKeyUsage(attestationCert, purposes);
-            checkKeyIndependentAttestationInfo(challenge, purposes, startTime, includeValidityDates,
-                    devicePropertiesAttestation, attestation);
+            checkKeyIndependentAttestationInfo(challenge, purposes, startTime,
+                includeValidityDates, devicePropertiesAttestation, attestation);
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
@@ -621,12 +623,12 @@ public class KeyAttestationTest extends AndroidTestCase {
             verifyCertificateChain(certificates, false /* expectStrongBox */);
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
-            Attestation attestation = new Attestation(attestationCert);
+            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
 
             checkEcKeyDetails(attestation, ecCurve, keySize);
             checkKeyUsage(attestationCert, purposes);
-            checkKeyIndependentAttestationInfo(challenge, purposes, startTime, includeValidityDates,
-                    devicePropertiesAttestation, attestation);
+            checkKeyIndependentAttestationInfo(challenge, purposes, startTime,
+                includeValidityDates, devicePropertiesAttestation, attestation);
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
@@ -638,6 +640,7 @@ public class KeyAttestationTest extends AndroidTestCase {
         int kmVersion = attestation.getKeymasterVersion();
         assertNull(attestation.getTeeEnforced().getAttestationApplicationId());
         aaid = attestation.getSoftwareEnforced().getAttestationApplicationId();
+
         if (kmVersion >= 3) {
             // must be present and correct
             assertNotNull(aaid);
@@ -698,9 +701,11 @@ public class KeyAttestationTest extends AndroidTestCase {
         checkUnexpectedOids(attestation);
         checkAttestationSecurityLevelDependentParams(attestation);
         assertNotNull(attestation.getAttestationChallenge());
-        assertTrue(Arrays.equals(challenge, attestation.getAttestationChallenge()));
-        assertNotNull(attestation.getUniqueId());
-        assertEquals(0, attestation.getUniqueId().length);
+        assertThat(attestation.getAttestationChallenge(), is(challenge));
+        // In EAT, this is null if not filled in. In ASN.1, this is an array with length 0.
+        if (attestation.getUniqueId() != null) {
+            assertEquals(0, attestation.getUniqueId().length);
+        }
         checkPurposes(attestation, purposes);
         checkDigests(attestation,
                 ImmutableSet.of(KM_DIGEST_NONE, KM_DIGEST_SHA_2_256, KM_DIGEST_SHA_2_512));
@@ -922,8 +927,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @SuppressWarnings("unchecked")
     private void checkAttestationSecurityLevelDependentParams(Attestation attestation) {
-        assertThat("Attestation version must be 1, 2, 3, or 4", attestation.getAttestationVersion(),
-               either(is(1)).or(is(2)).or(is(3)).or(is(4)));
+        assertThat("Attestation version must be 1, 2, 3, 4 or 5", attestation.getAttestationVersion(),
+               either(is(1)).or(is(2)).or(is(3)).or(is(4)).or(is(5)));
 
         AuthorizationList teeEnforced = attestation.getTeeEnforced();
         AuthorizationList softwareEnforced = attestation.getSoftwareEnforced();
@@ -1000,7 +1005,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     }
 
     private void checkRootOfTrust(Attestation attestation, boolean requireLocked) {
-        RootOfTrust rootOfTrust = attestation.getTeeEnforced().getRootOfTrust();
+        RootOfTrust rootOfTrust = attestation.getRootOfTrust();
         assertNotNull(rootOfTrust);
         assertNotNull(rootOfTrust.getVerifiedBootKey());
         assertTrue("Verified boot key is only " + rootOfTrust.getVerifiedBootKey().length +
