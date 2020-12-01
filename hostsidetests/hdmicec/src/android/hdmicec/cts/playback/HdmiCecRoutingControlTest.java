@@ -99,14 +99,17 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     /**
      * Test 11.2.2-4
      * Tests that the device sends a <INACTIVE_SOURCE> message when put on standby.
-     * This test depends on One Touch Play, and will pass only if One Touch Play passes.
      */
     @Test
     public void cect_11_2_2_4_InactiveSourceOnStandby() throws Exception {
         ITestDevice device = getDevice();
         try {
             int dumpsysPhysicalAddress = getDumpsysPhysicalAddress();
-            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            hdmiCecClient.sendCecMessage(
+                    LogicalAddress.TV,
+                    LogicalAddress.BROADCAST,
+                    CecOperand.SET_STREAM_PATH,
+                    CecMessage.formatParams(dumpsysPhysicalAddress));
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
