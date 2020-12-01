@@ -290,7 +290,7 @@ public class TunerFrontendTest {
                         .setStandard(DvbsFrontendSettings.STANDARD_S2)
                         .setVcmMode(DvbsFrontendSettings.VCM_MODE_MANUAL)
                         .setScanType(DvbsFrontendSettings.SCAN_TYPE_DIRECT)
-                        .setCouldHandleDiseqcRxMessage(true)
+                        .setCanHandleDiseqcRxMessage(true)
                         .build();
 
         settings.setSpectralInversion(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL);
@@ -307,13 +307,13 @@ public class TunerFrontendTest {
         assertEquals(DvbsFrontendSettings.VCM_MODE_MANUAL, settings.getVcmMode());
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
             assertEquals(DvbsFrontendSettings.SCAN_TYPE_DIRECT, settings.getScanType());
-            assertTrue(settings.getCouldHandleDiseqcRxMessage());
+            assertTrue(settings.canHandleDiseqcRxMessage());
             assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_NORMAL,
                     settings.getFrontendSpectralInversion());
             assertEquals(100, settings.getEndFrequency());
         } else {
             assertEquals(DvbsFrontendSettings.SCAN_TYPE_UNDEFINED, settings.getScanType());
-            assertFalse(settings.getCouldHandleDiseqcRxMessage());
+            assertFalse(settings.canHandleDiseqcRxMessage());
             assertEquals(FrontendSettings.FRONTEND_SPECTRAL_INVERSION_UNDEFINED,
                     settings.getFrontendSpectralInversion());
             assertEquals(Tuner.INVALID_FRONTEND_SETTING_FREQUENCY, settings.getEndFrequency());
