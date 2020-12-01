@@ -70,6 +70,7 @@ import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -692,9 +693,19 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         final Class<? extends Activity> activityClass = activity.getClass();
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
-                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass);
+                new ArrayList<LifecycleLog.ActivityCallback>(
+                        LifecycleVerifier.getSplitScreenTransitionSequence(activityClass));
         final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
                 LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
+
+        final int displayWindowingMode =
+                getDisplayWindowingModeByActivity(getComponentName(activityClass));
+        if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
+            // For non-fullscreen display mode, there won't be a multi-window callback.
+            expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+            expectedTransitionForMinimizedDock.removeAll(
+                    Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+        }
 
         mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
         LifecycleVerifier.assertSequenceMatchesOneOf(

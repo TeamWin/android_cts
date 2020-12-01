@@ -768,6 +768,10 @@ public abstract class ActivityManagerTestBase {
         return null;
     }
 
+    protected int getDisplayWindowingModeByActivity(ComponentName activity) {
+        return mWmState.getDisplay(mWmState.getDisplayByActivity(activity)).getWindowingMode();
+    }
+
     /**
      * Launches the home activity directly. If there is no specific reason to simulate a home key
      * (which will trigger stop-app-switches), it is the recommended method to go home.
