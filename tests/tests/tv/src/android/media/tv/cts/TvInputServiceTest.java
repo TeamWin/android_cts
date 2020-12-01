@@ -656,21 +656,20 @@ public class TvInputServiceTest {
     }
 
     @Test
-    @Ignore("b/174076887")
     public void verifyCommandOverlayViewSizeChanged() {
         final CountingSession session = tune(CHANNEL_0);
         resetPassedValues();
         final int width = 10;
         final int height = 20;
 
+        // There is a first OverlayViewSizeChange called on initial tune.
+        assertThat(session.mOverlayViewSizeChangedCount).isEqualTo(1);
+
         onTvView(tvView -> tvView.setLayoutParams(new LinearLayout.LayoutParams(width, height)));
 
-        PollingCheck.waitFor(TIME_OUT, () -> {
-            mInstrumentation.waitForIdleSync();
-            return session.mOverlayViewSizeChangedCount > 0;
-        });
+        PollingCheck.waitFor(TIME_OUT, () -> session.mOverlayViewSizeChangedCount > 1);
 
-        assertThat(session.mOverlayViewSizeChangedCount).isEqualTo(1);
+        assertThat(session.mOverlayViewSizeChangedCount).isEqualTo(2);
         assertThat(session.mOverlayViewSizeChangedWidth).isEqualTo(width);
         assertThat(session.mOverlayViewSizeChangedHeight).isEqualTo(height);
     }
@@ -810,7 +809,6 @@ public class TvInputServiceTest {
     }
 
     @Test
-    @Ignore("b/174076887")
     public void verifyCallbackLayoutSurface() {
         final CountingSession session = tune(CHANNEL_0);
         final int left = 10;
