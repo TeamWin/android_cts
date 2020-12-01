@@ -94,9 +94,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 .setFlags(FLAG_ACTIVITY_MULTIPLE_TASK | FLAG_ACTIVITY_NEW_TASK)
                 .launch();
 
-        // Wait for SecondActivity in primary split screen leave minimize dock.
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
-
         // Finish top activity
         secondActivity.finish();
 
@@ -129,11 +126,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
-        // Wait for first activity to resume after being moved to split-screen.
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_RESUME), "launchToSide");
-
         // Launch third activity on top of second
         getLifecycleLog().clear();
         new Launcher(ThirdActivity.class)
@@ -159,11 +151,6 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
         final Activity secondActivity = new Launcher(SecondActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
-
-        // Wait for first activity to resume after being moved to split-screen.
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_RESUME), "launchToSide");
 
         // Launch translucent activity on top of second
         getLifecycleLog().clear();

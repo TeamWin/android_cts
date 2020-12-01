@@ -687,11 +687,20 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId());
+        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
 
         final Class<? extends Activity> activityClass = activity.getClass();
-        waitAndAssertActivityTransitions(activityClass,
-                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass),
+
+        final List<LifecycleLog.ActivityCallback> expectedTransitions =
+                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass);
+        final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
+                LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
+
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        LifecycleVerifier.assertSequenceMatchesOneOf(
+                activityClass,
+                getLifecycleLog(),
+                Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
                 "enterSplitScreen");
     }
 
