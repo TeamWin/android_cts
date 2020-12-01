@@ -17,6 +17,7 @@ java_library {
     static_libs: [
         "bouncycastle-unbundled",
         "bouncycastle-bcpkix-unbundled",
+        "cbor-java",
         "guava",
         "truth-prebuilt",
         "testng",
