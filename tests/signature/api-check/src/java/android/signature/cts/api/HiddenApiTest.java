@@ -32,6 +32,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -42,6 +44,7 @@ public class HiddenApiTest extends AbstractApiTest {
 
     private String[] hiddenapiFiles;
     private String[] hiddenapiTestFlags;
+    private final Set<String> hiddenapiFilterSet = new HashSet<>();
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
@@ -53,6 +56,10 @@ public class HiddenApiTest extends AbstractApiTest {
     protected void setUp() throws Exception {
         super.setUp();
         DexMemberChecker.init();
+        // Ignore two specific Conscrypt methods which may or may not be accessible on Android 10
+        // depending on whether the Conscrypt Mainline module is installed, b/162322796
+        hiddenapiFilterSet.add("Lcom/android/org/conscrypt/ConscryptEngineSocket;->setHostname(Ljava/lang/String;)V");
+        hiddenapiFilterSet.add("Lcom/android/org/conscrypt/ConscryptEngineSocket;->setUseSessionTickets(Z)V");
     }
 
     // We have four methods to split up the load, keeping individual test runs small.
@@ -148,7 +155,8 @@ public class HiddenApiTest extends AbstractApiTest {
                 String line = reader.readLine();
                 while (line != null) {
                     DexMember dexMember = DexApiDocumentParser.parseLine(line, lineIndex);
-                    if (memberFilter.test(dexMember) && shouldTestMember(dexMember)) {
+                    if (memberFilter.test(dexMember) && shouldTestMember(dexMember)
+                        &&!isFiltered(line)) {
                         DexMemberChecker.checkSingleMember(dexMember, reflection, jni,
                                 observer);
                     }
@@ -170,4 +178,19 @@ public class HiddenApiTest extends AbstractApiTest {
         return false;
     }
 
+    /**
+     * Checks whether this method/field is included in the filter set. If so, we should not test
+     * it. If not, we should test it.
+     *
+     * @param line is the line indicating which method/field to check
+     * @return true if the method/field is to be filtered out, false otherwise
+     */
+     private boolean isFiltered(String line) {
+         if (line == null) {
+             return false;
+         }
+         // Need to remove which list the method/field is a part of (at the end of the line)
+         int commaIndex = line.indexOf(',');
+         return commaIndex > 0 && hiddenapiFilterSet.contains(line.substring(0, commaIndex));
+    }
 }
