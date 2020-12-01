@@ -263,11 +263,11 @@ public class VibratorTest {
         mVibrator.cancel();
         assertIsVibrating(false);
 
-        reset(mListener1);
-        reset(mListener2);
         // Remove listener1 & listener2
         mVibrator.removeVibratorStateListener(mListener1);
         mVibrator.removeVibratorStateListener(mListener2);
+        reset(mListener1);
+        reset(mListener2);
 
         mVibrator.vibrate(1000);
         assertIsVibrating(true);
