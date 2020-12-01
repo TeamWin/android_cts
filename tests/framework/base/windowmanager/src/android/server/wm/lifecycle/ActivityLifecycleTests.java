@@ -20,6 +20,7 @@ import static android.app.Instrumentation.ActivityMonitor;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
@@ -39,6 +40,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 import static android.view.Surface.ROTATION_0;
@@ -988,5 +990,35 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Verify the result have been sent back to original activity
         LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
                 transition(SingleTopActivity.class, ON_ACTIVITY_RESULT),"activityResult");
+    }
+
+    @Test
+    public void testLaunchOnUserLeaveHint() throws Exception {
+        new Launcher(FirstActivity.class)
+                .setExtraFlags(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT)
+                .launch();
+
+        getLifecycleLog().clear();
+        launchActivityAndWait(SecondActivity.class);
+        waitAndAssertActivityStates(state(FirstActivity.class, ON_STOP));
+
+        LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
+                transition(FirstActivity.class, ON_USER_LEAVE_HINT),"userLeaveHint");
+    }
+
+    @Test
+    public void testLaunchOnUserLeaveHintWithNoUserAction() throws Exception {
+        new Launcher(FirstActivity.class)
+                .setExtraFlags(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT)
+                .launch();
+
+        getLifecycleLog().clear();
+        new Launcher(SecondActivity.class)
+                .setFlags(FLAG_ACTIVITY_NO_USER_ACTION | FLAG_ACTIVITY_NEW_TASK)
+                .launch();
+        waitAndAssertActivityStates(state(FirstActivity.class, ON_STOP));
+
+        LifecycleVerifier.assertTransitionNotObserved(getLifecycleLog(),
+                transition(FirstActivity.class, ON_USER_LEAVE_HINT),"userLeaveHint");
     }
 }

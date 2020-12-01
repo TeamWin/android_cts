@@ -34,6 +34,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -91,6 +92,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
     static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
     static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
+    static final String EXTRA_ACTIVITY_ON_USER_LEAVE_HINT = "activity_on_user_leave_hint";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -413,6 +415,15 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onRestart() {
             super.onRestart();
             mLifecycleLogClient.onActivityCallback(ON_RESTART);
+        }
+
+        @Override
+        protected void onUserLeaveHint() {
+            super.onUserLeaveHint();
+
+            if (getIntent().getBooleanExtra(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT, false)) {
+                mLifecycleLogClient.onActivityCallback(ON_USER_LEAVE_HINT);
+            }
         }
     }
 
