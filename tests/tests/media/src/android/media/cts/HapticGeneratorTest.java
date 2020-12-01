@@ -43,6 +43,17 @@ public class HapticGeneratorTest extends PostProcTestBase {
         effect.release();
     }
 
+    // Test case 0.1: test constructor and close
+    public void test0_1ConstructorAndClose() throws Exception {
+        if (!HapticGenerator.isAvailable()) {
+            // HapticGenerator will only be created on devices supporting haptic playback
+            return;
+        }
+        HapticGenerator effect = createHapticGenerator();
+        // If the effect is null, it must fail creation.
+        effect.close();
+    }
+
     //-----------------------------------------------------------------
     // 1 - Effect enable/disable
     //----------------------------------
