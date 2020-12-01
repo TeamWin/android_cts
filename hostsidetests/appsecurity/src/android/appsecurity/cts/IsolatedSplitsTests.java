@@ -44,6 +44,7 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     private static final String APK_FEATURE_B_pl = "CtsIsolatedSplitAppFeatureB_pl.apk";
     private static final String APK_FEATURE_C = "CtsIsolatedSplitAppFeatureC.apk";
     private static final String APK_FEATURE_C_pl = "CtsIsolatedSplitAppFeatureC_pl.apk";
+    private static final String APK_FEATURE_A_DiffRev = "CtsIsolatedSplitAppFeatureADiffRev.apk";
 
     @Before
     public void setUp() throws Exception {
@@ -245,5 +246,51 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
                 "shouldLoadFeatureBDefault");
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldLoadFeatureCDefault");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testSplitsInheritInstall_full() throws Exception {
+        testSplitsInheritInstall(false);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testSplitsInheritInstall_instant() throws Exception {
+        testSplitsInheritInstall(true);
+    }
+
+    private void testSplitsInheritInstall(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B)
+                .addFile(APK_FEATURE_C).run();
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
+                "shouldLoadFeatureADefault");
+
+        new InstallMultiple(instant).inheritFrom(PKG).addFile(APK_FEATURE_A_DiffRev).run();
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
+                "shouldLoadFeatureADiffRevision");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testSplitsRemoved_full() throws Exception {
+        testSplitsRemoved(false);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testSplitsRemoved_instant() throws Exception {
+        testSplitsRemoved(true);
+    }
+
+    private void testSplitsRemoved(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK_BASE).addFile(APK_FEATURE_A).addFile(APK_FEATURE_B)
+                .addFile(APK_FEATURE_C).run();
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
+                "shouldLoadFeatureCDefault");
+
+        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("feature_c").run();
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
+                "shouldNotFoundFeatureC");
     }
 }
