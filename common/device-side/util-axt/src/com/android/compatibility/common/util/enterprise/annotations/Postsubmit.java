@@ -16,27 +16,25 @@
 
 package com.android.compatibility.common.util.enterprise.annotations;
 
-import com.android.compatibility.common.util.enterprise.DeviceState;
-
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on a secondary user.
+ * Marks that a test method should not be run as part of multi-user presubmit, as defined by
+ * tests using multi-user annotations that opt them into presubmit, like
+ * {@link RequireRunOnWorkProfile}.
  *
- * <p>Your test configuration should be such that this test is only run where a secondary user is
- * created and the test is being run on that user.
+ * <p>This annotation should be used on any new tests running in a multi-user module. Only after
+ * the test has been in postsubmit for some time, demonstrating it is fast and reliable, should the
+ * annotation be removed to allow it to run as part of presubmit.
  *
- * <p>Optionally, you can guarantee that these methods do not run outside of a secondary user by
- * using {@link DeviceState}.
- *
- * <p>This annotation by default opts a test into multi-user presubmit. New tests should also be
- * annotated {@link Postsubmit} until they are shown to meet the multi-user presubmit
- * requirements.
+ * <p>It can also be used for tests which don't meet the requirements to be part of multi-user
+ * presubmits.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnSecondaryUser {
+public @interface Postsubmit {
+    String reason();
 }
