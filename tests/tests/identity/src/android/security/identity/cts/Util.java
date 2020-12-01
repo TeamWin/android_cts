@@ -37,6 +37,7 @@ import java.security.InvalidKeyException;
 import java.security.KeyStore;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.PrivateKey;
@@ -1002,15 +1003,10 @@ Certificate:
 
             byte[] sessionTranscriptBytes =
                     Util.prependSemanticTagForEncodedCbor(encodedSessionTranscript);
-            byte[] sharedSecretWithSessionTranscriptBytes =
-                    Util.concatArrays(sharedSecret, sessionTranscriptBytes);
 
-            byte[] salt = new byte[1];
-            byte[] info = new byte[0];
-
-            salt[0] = 0x00;
-            byte[] derivedKey = Util.computeHkdf("HmacSha256",
-                    sharedSecretWithSessionTranscriptBytes, salt, info, 32);
+            byte[] salt = MessageDigest.getInstance("SHA-256").digest(sessionTranscriptBytes);
+            byte[] info = new byte[] {'E', 'M', 'a', 'c', 'K', 'e', 'y'};
+            byte[] derivedKey = Util.computeHkdf("HmacSha256", sharedSecret, salt, info, 32);
             SecretKey secretKey = new SecretKeySpec(derivedKey, "");
             return secretKey;
         } catch (InvalidKeyException
