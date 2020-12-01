@@ -56,6 +56,7 @@ class ImsServiceConnector {
     private static final String COMMAND_BASE = "cmd phone ";
     private static final String COMMAND_SET_IMS_SERVICE = "ims set-ims-service ";
     private static final String COMMAND_GET_IMS_SERVICE = "ims get-ims-service ";
+    private static final String COMMAND_CLEAR_SERVICE_OVERRIDE = "ims clear-ims-service-override";
     private static final String COMMAND_CARRIER_SERVICE_IDENTIFIER = "-c ";
     private static final String COMMAND_DEVICE_SERVICE_IDENTIFIER = "-d ";
     private static final String COMMAND_SLOT_IDENTIFIER = "-s ";
@@ -140,6 +141,7 @@ class ImsServiceConnector {
         }
 
         boolean overrideService(ImsFeatureConfiguration config) throws Exception {
+            mIsServiceOverridden = true;
             switch (mConnectionType) {
                 case CONNECTION_TYPE_IMS_SERVICE_CARRIER: {
                     return bindCarrierImsService(config, PACKAGE_NAME);
@@ -148,8 +150,7 @@ class ImsServiceConnector {
                     return bindDeviceImsService(config, EXTERNAL_PACKAGE_NAME);
                 }
                 case CONNECTION_TYPE_DEFAULT_SMS_APP: {
-                    setDefaultSmsApp(PACKAGE_NAME);
-                    break;
+                    return setDefaultSmsApp(PACKAGE_NAME);
                 }
             }
             return false;
@@ -159,6 +160,7 @@ class ImsServiceConnector {
             if (!mIsServiceOverridden) {
                 return;
             }
+            mIsServiceOverridden = false;
 
             if (mOrigRcsServicePackage == null) {
                 mOrigRcsServicePackage = "";
@@ -170,8 +172,7 @@ class ImsServiceConnector {
 
             switch (mConnectionType) {
                 case CONNECTION_TYPE_IMS_SERVICE_CARRIER: {
-                    setCarrierImsService(mOrigMmTelServicePackage, ImsFeature.FEATURE_MMTEL);
-                    setCarrierImsService(mOrigRcsServicePackage, ImsFeature.FEATURE_RCS);
+                    clearCarrierImsServiceOverride();
                     break;
                 }
                 case CONNECTION_TYPE_IMS_SERVICE_DEVICE: {
@@ -255,7 +256,8 @@ class ImsServiceConnector {
             mFeatureTypeToPackageOverrideMap.put(ImsFeature.FEATURE_RCS, packageName);
             String result = TelephonyUtils.executeShellCommand(mInstrumentation,
                     constructSetImsServiceOverrideCommand(true, packageName, new int[] {
-                            ImsFeature.FEATURE_MMTEL, ImsFeature.FEATURE_RCS}));
+                            ImsFeature.FEATURE_EMERGENCY_MMTEL, ImsFeature.FEATURE_MMTEL,
+                            ImsFeature.FEATURE_RCS}));
             if (ImsUtils.VDBG) {
                 Log.d(TAG, "setCarrierMmTelImsService result: " + result);
             }
@@ -284,7 +286,19 @@ class ImsServiceConnector {
             return "true".equals(result);
         }
 
-        private void setDefaultSmsApp(String packageName) throws Exception {
+        private boolean clearCarrierImsServiceOverride() throws Exception {
+            String result = TelephonyUtils.executeShellCommand(mInstrumentation,
+                    constructClearCarrierImsServiceOverrideCommand());
+            if (ImsUtils.VDBG) {
+                Log.d(TAG, "clearCarrierImsServiceOverride result: " + result);
+            }
+            return "true".equals(result);
+        }
+
+        private boolean setDefaultSmsApp(String packageName) throws Exception {
+            if (packageName == null) {
+                return false;
+            }
             RoleManager roleManager = mInstrumentation.getContext()
                     .getSystemService(RoleManager.class);
             Boolean result;
@@ -298,6 +312,7 @@ class ImsServiceConnector {
             if (ImsUtils.VDBG) {
                 Log.d(TAG, "setDefaultSmsApp result: " + result);
             }
+            return result;
         }
 
         private String getDefaultSmsApp() throws Exception {
@@ -376,6 +391,11 @@ class ImsServiceConnector {
                     + (isCarrierService
                         ? COMMAND_CARRIER_SERVICE_IDENTIFIER : COMMAND_DEVICE_SERVICE_IDENTIFIER)
                     + COMMAND_FEATURE_IDENTIFIER + featureType;
+        }
+
+        private String constructClearCarrierImsServiceOverrideCommand() {
+            return COMMAND_BASE + COMMAND_CLEAR_SERVICE_OVERRIDE + COMMAND_SLOT_IDENTIFIER
+                    + mSlotId;
         }
 
         private String getFeatureTypesString(int[] featureTypes) {
@@ -459,8 +479,12 @@ class ImsServiceConnector {
         return mDeviceServiceConnection.overrideService(config);
     }
 
-    void setDefaultSmsApp() throws Exception {
-        mDefaultSmsAppConnection.overrideService(null);
+    boolean setDefaultSmsApp() throws Exception {
+        return mDefaultSmsAppConnection.overrideService(null);
+    }
+
+    void restoreDefaultSmsApp() throws Exception {
+        mDefaultSmsAppConnection.restoreOriginalPackage();
     }
 
     void disconnectCarrierImsService() throws Exception {
