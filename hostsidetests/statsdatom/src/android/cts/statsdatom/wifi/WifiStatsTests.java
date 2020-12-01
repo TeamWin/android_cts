@@ -20,6 +20,7 @@ import static android.cts.statsdatom.statsd.AtomTestCase.FEATURE_PC;
 import static android.cts.statsdatom.statsd.AtomTestCase.FEATURE_WIFI;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
@@ -34,6 +35,7 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
 import com.google.common.collect.Range;
+import com.google.protobuf.AbstractMessage;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -178,7 +180,10 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         // If device had Wifi connected, we'll see two atoms: disconnect, connect.
         // If it was not connected, we'll see three: connect, disconnect, connect.
         // We're only interested in the disconnect-connect pair.
-        assertThat(data.size()).isIn(Range.closed(2, 3));
+        assertWithMessage(
+                "Expected disconnected and connected atoms, got: \n" +
+                        data.stream().map(AbstractMessage::toString).reduce((acc, i) -> acc + i)
+        ).that(data.size()).isIn(Range.closed(2, 3));
 
         AtomsProto.WifiDisconnectReported a0 =
                 data.get(data.size() - 2).getAtom().getWifiDisconnectReported();
@@ -211,7 +216,7 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
 
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data.size()).isEqualTo(2);
+        assertThat(data).hasSize(2);
 
         AtomsProto.WifiScanReported a0 = data.get(0).getAtom().getWifiScanReported();
         AtomsProto.WifiScanReported a1 = data.get(1).getAtom().getWifiScanReported();
