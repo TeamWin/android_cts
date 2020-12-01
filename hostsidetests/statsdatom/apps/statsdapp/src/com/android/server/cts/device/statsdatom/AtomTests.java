@@ -17,6 +17,7 @@
 package com.android.server.cts.device.statsdatom;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.accounts.Account;
@@ -61,7 +62,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.os.Process;
 import android.os.SystemClock;
@@ -73,11 +73,18 @@ import android.util.ArrayMap;
 import android.util.Log;
 import android.util.StatsEvent;
 import android.util.StatsLog;
+
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.utils.blob.FakeBlobData;
+
 import com.google.common.io.BaseEncoding;
+
+import org.junit.Test;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
@@ -87,7 +94,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
-import org.junit.Test;
 
 public class AtomTests {
     private static final String TAG = AtomTests.class.getSimpleName();
@@ -854,6 +860,15 @@ public class AtomTests {
     }
 
     @Test
+    public void testWifiReconnect() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        wifiReconnect(context);
+        wifiDisconnect(context);
+        wifiReconnect(context);
+        sleep(500);
+    }
+
+    @Test
     public void testSimpleCpu() {
         long timestamp = System.currentTimeMillis();
         for (int i = 0; i < 10000; i ++) {
@@ -1064,5 +1079,25 @@ public class AtomTests {
             assertWithMessage("Session failed to commit within timeout").that(
                     callback.get(BLOB_COMMIT_CALLBACK_TIMEOUT_SEC, TimeUnit.SECONDS)).isEqualTo(0);
         }
+    }
+
+    private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
+
+    public void wifiDisconnect(Context context) throws Exception {
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.disconnect());
+        PollingCheck.check(
+                "Wifi not disconnected",
+                WIFI_CONNECT_TIMEOUT_MILLIS,
+                () -> wifiManager.getConnectionInfo().getNetworkId() == -1);
+    }
+
+    public void wifiReconnect(Context context) throws Exception {
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
+        ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.reconnect());
+        PollingCheck.check(
+                "Wifi not connected",
+                WIFI_CONNECT_TIMEOUT_MILLIS,
+                () -> wifiManager.getConnectionInfo().getNetworkId() != -1);
     }
 }

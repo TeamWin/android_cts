@@ -32,6 +32,7 @@ java_test_host {
         "src/**/permissionstate/*.java",
         "src/**/statsd/*.java",
         "src/**/telephony/*.java",
+        "src/**/wifi/*.java",
     ],
 
     test_suites: [
