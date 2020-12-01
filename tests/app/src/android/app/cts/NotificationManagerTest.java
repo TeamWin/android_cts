@@ -70,6 +70,7 @@ import android.app.NotificationManager.Policy;
 import android.app.PendingIntent;
 import android.app.Person;
 import android.app.UiAutomation;
+import android.app.cts.android.app.cts.tools.FutureServiceConnection;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
@@ -147,7 +148,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -3863,21 +3863,6 @@ public class NotificationManagerTest extends AndroidTestCase {
                 fail(pkg.packageName + " can't hold "
                         + Manifest.permission.MANAGE_NOTIFICATION_LISTENERS);
             }
-        }
-    }
-
-    private static class FutureServiceConnection implements ServiceConnection {
-        public final CompletableFuture<IBinder> future = new CompletableFuture<>();
-        public IBinder get(long timeoutMs) throws Exception {
-            return future.get(timeoutMs, TimeUnit.MILLISECONDS);
-        }
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            future.complete(service);
-        }
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            fail(name + " disconnected");
         }
     }
 

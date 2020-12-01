@@ -31,7 +31,8 @@ android_test {
         "androidx.test.rules",
         "platform-test-annotations",
         "platformprotosnano",
-        "permission-test-util-lib"
+        "permission-test-util-lib",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",
