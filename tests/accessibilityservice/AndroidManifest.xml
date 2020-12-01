@@ -65,6 +65,7 @@
         <activity
             android:label="Full screen activity for gesture dispatch testing"
             android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"
+            android:theme="@style/Theme_NoSwipeDismiss"
             android:screenOrientation="locked" />
 
         <activity
