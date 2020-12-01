@@ -135,6 +135,23 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testCheckInstallerAppAccessToObbDirs() throws Exception {
+        allowAppOps("android:request_install_packages");
+        grantPermissions("android.permission.WRITE_EXTERNAL_STORAGE");
+        try {
+            runDeviceTest("testCheckInstallerAppAccessToObbDirs");
+        } finally {
+            denyAppOps("android:request_install_packages");
+            revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
+        }
+    }
+
+    @Test
+    public void testCantAccessOtherAppsExternalDirs() throws Exception {
+        runDeviceTest("testCantAccessOtherAppsExternalDirs");
+    }
+
+    @Test
     public void testCanCreateDefaultDirectory() throws Exception {
         runDeviceTest("testCanCreateDefaultDirectory");
     }
