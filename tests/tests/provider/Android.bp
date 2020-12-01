@@ -23,6 +23,8 @@ android_test {
         "junit",
         "truth-prebuilt",
         "mockito-target-minus-junit4",
+        // TODO: remove testng once Android migrates to JUnit 4.12, which provides assertThrows
+        "testng",
     ],
 
     jni_libs: [
