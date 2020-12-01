@@ -40,6 +40,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -78,6 +79,8 @@ import java.util.function.Consumer;
  */
 @RunWith(AndroidJUnit4.class)
 public class TvInputServiceTest {
+
+    private static final String TAG = "TvInputServiceTest";
 
     @ClassRule
     public static RequiredFeatureRule featureRule = new RequiredFeatureRule(
@@ -993,6 +996,7 @@ public class TvInputServiceTest {
     }
 
     public static class CountingTvInputService extends StubTvInputService {
+
         static CountingSession sSession;
         static CountingRecordingSession sRecordingSession;
 
@@ -1003,6 +1007,9 @@ public class TvInputServiceTest {
 
         @Override
         public Session onCreateSession(String inputId, String tvInputSessionId) {
+            if(sSession != null){
+                Log.w(TAG,"onCreateSession called with sSession set to "+ sSession);
+            }
             sSession = new CountingSession(this, tvInputSessionId);
             sSession.setOverlayViewEnabled(true);
             return sSession;
@@ -1015,6 +1022,10 @@ public class TvInputServiceTest {
 
         @Override
         public RecordingSession onCreateRecordingSession(String inputId, String tvInputSessionId) {
+            if (sRecordingSession != null) {
+                Log.w(TAG, "onCreateRecordingSession called with sRecordingSession set to "
+                        + sRecordingSession);
+            }
             sRecordingSession = new CountingRecordingSession(this, tvInputSessionId);
             return sRecordingSession;
         }
