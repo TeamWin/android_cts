@@ -21,6 +21,7 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_INDIVIDUAL_ATTESTATI
 import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 import static android.keystore.cts.CertificateUtils.createCertificate;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -41,7 +42,9 @@ import android.security.keystore.KeyProperties;
 import android.security.keystore.StrongBoxUnavailableException;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
+
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -67,10 +70,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
 import javax.security.auth.x500.X500Principal;
 
 public class KeyManagementTest extends BaseDeviceAdminTest {
     private static final long KEYCHAIN_TIMEOUT_MINS = 6;
+    private PrivateKey mFakePrivKey;
+    private Certificate mFakeCert;
 
     private static class SupportedKeyAlgorithm {
         public final String keyAlgorithm;
@@ -98,6 +104,10 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        mFakePrivKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
+        mFakeCert = getCertificate(FAKE_RSA_1.caCertificate);
+
         final UiDevice device = UiDevice.getInstance(getInstrumentation());
         mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
                 KeyManagementActivity.class, null);
@@ -112,11 +122,10 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testCanInstallAndRemoveValidRsaKeypair() throws Exception {
         final String alias = "com.android.test.valid-rsa-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
-        assertThat(mDevicePolicyManager.installKeyPair(getWho(), privKey, cert, alias)).isTrue();
+        assertThat(mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, mFakeCert, alias))
+                .isTrue();
         try {
             // Request and retrieve using the alias.
             assertGranted(alias, false);
@@ -136,17 +145,15 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     public void testCanInstallWithAutomaticAccess() throws Exception {
         final String grant = "com.android.test.autogrant-key-1";
         final String withhold = "com.android.test.nongrant-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypairs.
         assertThat(
                 mDevicePolicyManager.installKeyPair(
-                        getWho(), privKey, new Certificate[] {cert}, grant, true))
+                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, grant, true))
                 .isTrue();
         assertThat(
                 mDevicePolicyManager.installKeyPair(
-                        getWho(), privKey, new Certificate[] {cert}, withhold, false))
+                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, withhold, false))
                 .isTrue();
         try {
             // Verify only the requested key was actually granted.
@@ -205,13 +212,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testGrantsDoNotPersistBetweenInstallations() throws Exception {
         final String alias = "com.android.test.persistent-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
         assertThat(
                 mDevicePolicyManager.installKeyPair(
-                        getWho(), privKey, new Certificate[] {cert}, alias, true))
+                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, alias, true))
                 .isTrue();
         try {
             assertGranted(alias, true);
@@ -224,7 +229,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         // Install again.
         assertThat(
                 mDevicePolicyManager.installKeyPair(
-                        getWho(), privKey, new Certificate[] {cert}, alias, false))
+                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, alias, false))
                 .isTrue();
         try {
             assertGranted(alias, false);
@@ -236,15 +241,13 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testNullKeyParamsFailPredictably() throws Exception {
         final String alias = "com.android.test.null-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
         try {
-            mDevicePolicyManager.installKeyPair(getWho(), null, cert, alias);
+            mDevicePolicyManager.installKeyPair(getWho(), null, mFakeCert, alias);
             fail("Exception should have been thrown for null PrivateKey");
         } catch (NullPointerException expected) {
         }
         try {
-            mDevicePolicyManager.installKeyPair(getWho(), privKey, null, alias);
+            mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, null, alias);
             fail("Exception should have been thrown for null Certificate");
         } catch (NullPointerException expected) {
         }
@@ -252,10 +255,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testNullAdminComponentIsDenied() throws Exception {
         final String alias = "com.android.test.null-admin-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
         try {
-            mDevicePolicyManager.installKeyPair(null, privKey, cert, alias);
+            mDevicePolicyManager.installKeyPair(null, mFakePrivKey, mFakeCert, alias);
             fail("Exception should have been thrown for null ComponentName");
         } catch (SecurityException expected) {
         }
@@ -263,13 +264,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testNotUserSelectableAliasCanBeChosenViaPolicy() throws Exception {
         final String alias = "com.android.test.not-selectable-key-1";
-        final PrivateKey privKey = getPrivateKey(FAKE_RSA_1.privateKey, "RSA");
-        final Certificate cert = getCertificate(FAKE_RSA_1.caCertificate);
 
         // Install keypair.
         assertThat(
                 mDevicePolicyManager.installKeyPair(
-                        getWho(), privKey, new Certificate[] {cert}, alias, 0))
+                        getWho(), mFakePrivKey, new Certificate[] {mFakeCert}, alias, 0))
                 .isTrue();
         try {
             // Request and retrieve using the alias.
@@ -743,7 +742,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
 
-        public void testCanSetKeyPairCert() throws Exception {
+    public void testCanSetKeyPairCert() throws Exception {
         final String alias = "com.android.test.set-ec-1";
         try {
             KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
@@ -799,6 +798,33 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         } finally {
             assertThat(mDevicePolicyManager.removeKeyPair(getWho(), alias)).isTrue();
         }
+    }
+
+    public void testHasKeyPair_NonExistent() {
+        assertThat(mDevicePolicyManager.hasKeyPair("no-such-key-for-sure")).isFalse();
+    }
+
+    public void testHasKeyPair_Installed() throws Exception {
+        final String alias = "delegated-cert-installer-test-key-9000";
+
+        mDevicePolicyManager.installKeyPair(
+                getWho(), mFakePrivKey, new Certificate[]{mFakeCert}, alias, true);
+
+        try {
+            assertThat(mDevicePolicyManager.hasKeyPair(alias)).isTrue();
+        } finally {
+            mDevicePolicyManager.removeKeyPair(getWho(), alias);
+        }
+    }
+
+    public void testHasKeyPair_Removed() throws Exception {
+        final String alias = "delegated-cert-installer-test-key-9001";
+
+        mDevicePolicyManager.installKeyPair(
+                getWho(), mFakePrivKey, new Certificate[]{mFakeCert}, alias, true);
+        mDevicePolicyManager.removeKeyPair(getWho(), alias);
+
+        assertThat(mDevicePolicyManager.hasKeyPair(alias)).isFalse();
     }
 
     private void assertGranted(String alias, boolean expected)
@@ -876,7 +902,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    protected ComponentName getWho() {
+    private ComponentName getWho() {
         return ADMIN_RECEIVER_COMPONENT;
     }
 

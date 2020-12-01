@@ -16,8 +16,8 @@
 
 package com.android.cts.certinstaller;
 
-import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
@@ -25,7 +25,6 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
-import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.telephony.TelephonyManager;
@@ -117,10 +116,14 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
                     "wZmUCAoTka4hmoaOCj7cqt/IkmxozQ==\n";
 
     private DevicePolicyManager mDpm;
+    private PrivateKey mTestPrivateKey;
+    private Certificate mTestCertificate;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        mTestPrivateKey = rsaKeyFromString(TEST_KEY);
+        mTestCertificate = certificateFromString(TEST_CERT);
         mDpm = getContext().getSystemService(DevicePolicyManager.class);
     }
 
@@ -162,20 +165,11 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
                 mDpm.hasCaCertInstalled(null, cert)).isFalse();
     }
 
-    public void testInstallKeyPair()
-            throws GeneralSecurityException, KeyChainException, InterruptedException {
+    public void testInstallKeyPair() throws Exception {
         final String alias = "delegated-cert-installer-test-key";
 
-        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(
-                Base64.decode(TEST_KEY, Base64.DEFAULT));
-        PrivateKey privatekey = KeyFactory.getInstance("RSA").generatePrivate(keySpec);
-
-        Certificate certificate = CertificateFactory.getInstance("X.509")
-                .generateCertificate(
-                        new Base64InputStream(new ByteArrayInputStream(TEST_CERT.getBytes()),
-                                Base64.DEFAULT));
-        assertThat(mDpm.installKeyPair(null, privatekey, new Certificate[]{certificate}, alias,
-                true)).isTrue();
+        assertThat(mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
+                alias, true)).isTrue();
 
         // Test that the installed private key can be obtained.
         PrivateKey obtainedKey = KeyChain.getPrivateKey(getContext(), alias);
@@ -229,6 +223,44 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         } catch (SecurityException e) {
             fail("Should have permission to access IMEI: " + e);
         }
+    }
+
+    public void testHasKeyPair_NonExistent() {
+        assertThat(mDpm.hasKeyPair("NobodyWouldCallAKeyLikeThat")).isFalse();
+    }
+
+    public void testHasKeyPair_Installed() throws Exception {
+        final String alias = "delegated-cert-installer-test-key-9000";
+
+        mDpm.installKeyPair(
+                null, mTestPrivateKey, new Certificate[]{mTestCertificate}, alias, true);
+
+        try {
+            assertThat(mDpm.hasKeyPair(alias)).isTrue();
+        } finally {
+            mDpm.removeKeyPair(null, alias);
+        }
+    }
+
+    public void testHasKeyPair_Removed() throws Exception {
+        final String alias = "delegated-cert-installer-test-key-9001";
+
+        mDpm.installKeyPair(
+                null, mTestPrivateKey, new Certificate[]{mTestCertificate}, alias, true);
+        mDpm.removeKeyPair(null, alias);
+
+        assertThat(mDpm.hasKeyPair(alias)).isFalse();
+    }
+
+    private PrivateKey rsaKeyFromString(String key) throws Exception {
+        final PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(
+                Base64.decode(key, Base64.DEFAULT));
+        return KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+    }
+
+    private Certificate certificateFromString(String cert) throws Exception {
+        return CertificateFactory.getInstance("X.509").generateCertificate(
+                new Base64InputStream(new ByteArrayInputStream(cert.getBytes()), Base64.DEFAULT));
     }
 
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
