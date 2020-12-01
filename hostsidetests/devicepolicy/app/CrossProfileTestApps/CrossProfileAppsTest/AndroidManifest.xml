@@ -59,6 +59,12 @@
 
         <activity android:name=".CrossProfileSameTaskLauncherActivity"
              android:exported="true"/>
+
+        <activity android:name=".CrossProfileResultCheckerActivity"
+             android:exported="true"/>
+
+        <activity android:name=".CrossProfileResultReturnerActivity"
+             android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
