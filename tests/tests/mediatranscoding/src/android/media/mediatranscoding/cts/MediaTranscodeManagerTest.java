@@ -24,6 +24,7 @@ import android.content.Context;
 import android.media.ApplicationMediaCapabilities;
 import android.media.MediaFormat;
 import android.media.MediaTranscodeManager;
+import android.media.MediaTranscodeManager.TranscodingRequest;
 import android.media.MediaTranscodeManager.TranscodingSession;
 import android.net.Uri;
 import android.os.Bundle;
@@ -148,8 +149,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingRequestWithNullDestinationUri() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(null)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -164,8 +165,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingWithInvalidClientPid() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(mDestinationUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -181,8 +182,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingWithInvalidClientUid() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(mDestinationUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -198,8 +199,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingRequestWithNullSourceUri() throws Exception {
         assertThrows(IllegalArgumentException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(null)
                             .setDestinationUri(mDestinationUri)
                             .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
@@ -213,8 +214,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingRequestWithoutSourceUri() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setDestinationUri(mDestinationUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
                             .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
@@ -228,8 +229,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingRequestWithoutDestinationUri() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
                             .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
@@ -244,8 +245,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
      */
     public void testCreateTranscodingRequestWithoutVideoFormat() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(mDestinationUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -258,8 +259,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             throws Exception {
         Semaphore transcodeCompleteSemaphore = new Semaphore(0);
 
-        MediaTranscodeManager.TranscodingRequest request =
-                new MediaTranscodeManager.TranscodingRequest.Builder()
+        TranscodingRequest request =
+                new TranscodingRequest.Builder()
                         .setSourceUri(srcUri)
                         .setDestinationUri(dstUri)
                         .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -268,7 +269,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        MediaTranscodeManager.TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -287,7 +288,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         }
 
         File dstFile = new File(dstUri.getPath());;
-        if (expectedResult == MediaTranscodeManager.TranscodingSession.RESULT_SUCCESS) {
+        if (expectedResult == TranscodingSession.RESULT_SUCCESS) {
             // Checks the destination file get generated.
             assertTrue("Failed to create destination file", dstFile.exists());
         }
@@ -307,7 +308,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Log.d(TAG, "Transcoding " + invalidSrcUri + "to destination: " + destinationUri);
 
         testTranscodingWithExpectResult(invalidSrcUri, destinationUri,
-                MediaTranscodeManager.TranscodingSession.RESULT_ERROR);
+                TranscodingSession.RESULT_ERROR);
     }
 
     // Tests transcoding to a uri in res folder and expects failure as test could not write to res
@@ -319,7 +320,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Log.d(TAG, "Transcoding to destination: " + destinationUri);
 
         testTranscodingWithExpectResult(mSourceHEVCVideoUri, destinationUri,
-                MediaTranscodeManager.TranscodingSession.RESULT_ERROR);
+                TranscodingSession.RESULT_ERROR);
     }
 
     // Tests transcoding to a uri in internal cache folder and expects success.
@@ -330,7 +331,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Log.d(TAG, "Transcoding to cache: " + destinationUri);
 
         testTranscodingWithExpectResult(mSourceHEVCVideoUri, destinationUri,
-                MediaTranscodeManager.TranscodingSession.RESULT_SUCCESS);
+                TranscodingSession.RESULT_SUCCESS);
     }
 
     // Tests transcoding to a uri in internal files directory and expects success.
@@ -340,7 +341,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Log.i(TAG, "Transcoding to files dir: " + destinationUri);
 
         testTranscodingWithExpectResult(mSourceHEVCVideoUri, destinationUri,
-                MediaTranscodeManager.TranscodingSession.RESULT_SUCCESS);
+                TranscodingSession.RESULT_SUCCESS);
     }
 
     public void testTranscodingFromHevcToAvc() throws Exception {
@@ -353,8 +354,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         ApplicationMediaCapabilities clientCaps =
                 new ApplicationMediaCapabilities.Builder().build();
 
-        MediaTranscodeManager.TranscodingRequest.MediaFormatResolver
-                resolver = new MediaTranscodeManager.TranscodingRequest.MediaFormatResolver()
+        TranscodingRequest.MediaFormatResolver
+                resolver = new TranscodingRequest.MediaFormatResolver()
                 .setSourceVideoFormatHint(MediaFormat.createVideoFormat(
                         MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT))
                 .setClientCapabilities(clientCaps);
@@ -365,8 +366,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         int pid = android.os.Process.myPid();
         int uid = android.os.Process.myUid();
 
-        MediaTranscodeManager.TranscodingRequest request =
-                new MediaTranscodeManager.TranscodingRequest.Builder()
+        TranscodingRequest request =
+                new TranscodingRequest.Builder()
                         .setSourceUri(mSourceHEVCVideoUri)
                         .setDestinationUri(destinationUri)
                         .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -381,7 +382,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         Log.d(TAG, "transcoding to format: " + videoTrackFormat);
 
-        MediaTranscodeManager.TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -416,8 +417,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
 
-        MediaTranscodeManager.TranscodingRequest request =
-                new MediaTranscodeManager.TranscodingRequest.Builder()
+        TranscodingRequest request =
+                new TranscodingRequest.Builder()
                         .setSourceUri(mSourceHEVCVideoUri)
                         .setDestinationUri(destinationUri)
                         .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -426,7 +427,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-        MediaTranscodeManager.TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
+        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(
                 request,
                 listenerExecutor,
                 transcodingSession -> {
@@ -467,8 +468,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             // Use init dameon's pid and uid.
             int pid = 1;
             int uid = 0;
-            MediaTranscodeManager.TranscodingRequest request =
-                    new MediaTranscodeManager.TranscodingRequest.Builder()
+            TranscodingRequest request =
+                    new TranscodingRequest.Builder()
                             .setSourceUri(mSourceHEVCVideoUri)
                             .setDestinationUri(mDestinationUri)
                             .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
@@ -479,7 +480,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                             .build();
             Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
-            MediaTranscodeManager.TranscodingSession session =
+            TranscodingSession session =
                     mMediaTranscodeManager.enqueueRequest(
                             request,
                             listenerExecutor,
@@ -489,5 +490,56 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         });
     }
 
-    // TODO(hkuang): Add test for progress update.
+    public void testTranscodingProgressUpdate() throws Exception {
+        Log.d(TAG, "Starting: testTranscodingProgressUpdate");
+
+        Semaphore transcodeCompleteSemaphore = new Semaphore(0);
+
+        // Create a file Uri: file:///data/user/0/android.media.mediatranscoding.cts/cache/HevcTranscode.mp4
+        Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
+                + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
+
+         TranscodingRequest request =
+                new TranscodingRequest.Builder()
+                        .setSourceUri(mSourceHEVCVideoUri)
+                        .setDestinationUri(destinationUri)
+                        .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
+                        .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
+                        .setVideoTrackFormat(createMediaFormat())
+                        .build();
+        Executor listenerExecutor = Executors.newSingleThreadExecutor();
+
+        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(request,
+                listenerExecutor,
+                TranscodingSession -> {
+                    Log.d(TAG,
+                            "Transcoding completed with result: " + TranscodingSession.getResult());
+                    assertEquals(TranscodingSession.RESULT_SUCCESS, TranscodingSession.getResult());
+                    transcodeCompleteSemaphore.release();
+                });
+        assertNotNull(session);
+
+        AtomicInteger progressUpdateCount = new AtomicInteger(0);
+
+        // Set progress update executor and use the same executor as result listener.
+        session.setOnProgressUpdateListener(listenerExecutor,
+                new TranscodingSession.OnProgressUpdateListener() {
+                    int mPreviousProgress = 0;
+
+                    @Override
+                    public void onProgressUpdate(TranscodingSession session, int newProgress) {
+                        assertTrue("Invalid proress update", newProgress > mPreviousProgress);
+                        assertTrue("Invalid proress update", newProgress <= 100);
+                        mPreviousProgress = newProgress;
+                        progressUpdateCount.getAndIncrement();
+                        Log.i(TAG, "Get progress update " + newProgress);
+                    }
+                });
+
+        boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
+                TRANSCODE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        assertTrue("Transcode failed to complete in time.", finishedOnTime);
+        assertTrue("Failed to receive at least 10 progress updates",
+                progressUpdateCount.get() > 10);
+    }
 }
