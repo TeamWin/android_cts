@@ -66,9 +66,9 @@ LOCAL_PACKAGE_SPLITS := v7
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
-LOCAL_MANIFEST_FILE := revision/AndroidManifest.xml
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundredRevisionTwelve --replace-version
+LOCAL_AAPT_FLAGS += --revision-code 12
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
