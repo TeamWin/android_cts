@@ -29,6 +29,7 @@ import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillResponse;
 import android.util.Log;
 
@@ -191,6 +192,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         Helper.resetApplicationAutofillOptions(sContext);
     }
 
+    @Presubmit
     @Test
     public void testDisableApp() throws Exception {
         // Set service.
@@ -259,6 +261,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
         launchPreSimpleSaveActivity(PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
     }
 
+    @Presubmit
     @Test
     public void testDisableActivity() throws Exception {
         // Set service.

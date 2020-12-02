@@ -58,6 +58,7 @@ import android.autofillservice.cts.testcore.OneTimeCancellationSignalListener;
 import android.content.ComponentName;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObject2;
 import android.util.ArraySet;
 import android.view.View;
@@ -86,6 +87,7 @@ public class AugmentedLoginActivityTest
         };
     }
 
+    @Presubmit
     @Test
     public void testServiceLifecycle() throws Exception {
         enableService();
@@ -289,6 +291,7 @@ public class AugmentedLoginActivityTest
         assertTextAndValue(passwordNode, "malkovich");
     }
 
+    @Presubmit
     @Test
     public void testAutoFill_mainServiceReturnedNull_augmentedAutofillOneField() throws Exception {
         // Set services
@@ -327,6 +330,7 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiGone();
     }
 
+    @Presubmit
     @Test
     public void testAutoFill_augmentedFillRequestCancelled() throws Exception {
         // Set services
@@ -603,6 +607,7 @@ public class AugmentedLoginActivityTest
         assertViewAutofillState(mActivity.getUsername(), false);
     }
 
+    @Presubmit
     @Test
     public void testAugmentedAutoFill_callback() throws Exception {
         // Set services
@@ -781,6 +786,7 @@ public class AugmentedLoginActivityTest
         currentActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testAugmentedAutoFill_noPreviousRequest_requestAutofill() throws Exception {
         // Set services
@@ -795,6 +801,7 @@ public class AugmentedLoginActivityTest
         assertThat(requestResult).isFalse();
     }
 
+    @Presubmit
     @Test
     public void testAugmentedAutoFill_hasPreviousRequestViewFocused_requestAutofill()
             throws Exception {
@@ -839,6 +846,7 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiShown(usernameId, "Augment Me");
     }
 
+    @Presubmit
     @Test
     public void testAugmentedAutoFill_hasPreviousRequestViewNotFocused_requestAutofill()
             throws Exception {

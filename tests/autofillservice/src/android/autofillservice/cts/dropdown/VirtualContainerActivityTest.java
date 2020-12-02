@@ -50,6 +50,7 @@ import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequ
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.text.InputType;
@@ -114,6 +115,7 @@ public class VirtualContainerActivityTest
         return mActivityRule;
     }
 
+    @Presubmit
     @Test
     public void testAutofillSync() throws Exception {
         autofillTest(true);
@@ -127,6 +129,7 @@ public class VirtualContainerActivityTest
         autofillTest(false);
     }
 
+    @Presubmit
     @Test
     public void testAutofill_appContext() throws Exception {
         mActivity.mCustomView.setAutofillManager(mActivity.getApplicationContext());
@@ -298,12 +301,14 @@ public class VirtualContainerActivityTest
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testAutofillOverrideDispatchProvideAutofillStructure() throws Exception {
         mActivity.mCustomView.setOverrideDispatchProvideAutofillStructure(true);
         autofillTest(true);
     }
 
+    @Presubmit
     @Test
     public void testAutofillManuallyOneDataset() throws Exception {
         skipTestOnCompatMode(); // TODO(b/73557072): not supported yet
@@ -382,6 +387,7 @@ public class VirtualContainerActivityTest
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testAutofillCallbacks() throws Exception {
         // Set service.
@@ -470,6 +476,7 @@ public class VirtualContainerActivityTest
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    @Presubmit
     @Test
     public void testSaveDialogNotShownWhenBackIsPressed() throws Exception {
         // Set service.
@@ -496,11 +503,13 @@ public class VirtualContainerActivityTest
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    @Presubmit
     @Test
     public void testSave_childViewsGone_notifyAfm() throws Throwable {
         saveTest(CommitType.CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API);
     }
 
+    @Presubmit
     @Test
     public void testSave_childViewsGone_updateView() throws Throwable {
         saveTest(CommitType.CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API);
@@ -512,11 +521,13 @@ public class VirtualContainerActivityTest
         saveTest(CommitType.PARENT_VIEW_GONE);
     }
 
+    @Presubmit
     @Test
     public void testSave_appCallsCommit() throws Throwable {
         saveTest(CommitType.EXPLICIT_COMMIT);
     }
 
+    @Presubmit
     @Test
     public void testSave_submitButtonClicked() throws Throwable {
         saveTest(CommitType.SUBMIT_BUTTON_CLICKED);
@@ -614,6 +625,7 @@ public class VirtualContainerActivityTest
     // We could still test them by explicitly committing and then checking that the Save UI is not
     // shown again, but then we wouldn't be effectively testing that the context was committed
 
+    @Presubmit
     @Test
     public void testSaveNotShown_noUserInput() throws Throwable {
         // Set service.
@@ -721,6 +733,7 @@ public class VirtualContainerActivityTest
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
+    @Presubmit
     @Test
     public void testDatasetFiltering() throws Throwable {
         final String aa = "Two A's";

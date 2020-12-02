@@ -56,6 +56,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
@@ -75,6 +76,7 @@ import java.util.regex.Pattern;
  * This is the common test cases with {@link FillEventHistoryTest} and
  * {@link InlineFillEventHistoryTest}.
  */
+@Presubmit
 @AppModeFull(reason = "Service-specific test")
 public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivityTestCase {
 

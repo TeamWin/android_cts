@@ -32,6 +32,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObject2;
 
 import androidx.annotation.NonNull;
@@ -39,6 +40,7 @@ import androidx.annotation.NonNull;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
+@Presubmit
 public class InlineSimpleSaveActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<SimpleSaveActivity> {
 

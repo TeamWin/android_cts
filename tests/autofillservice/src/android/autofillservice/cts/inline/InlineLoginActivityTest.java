@@ -47,6 +47,7 @@ import android.os.Binder;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.support.test.uiautomator.Direction;
 
@@ -56,6 +57,7 @@ import com.android.cts.mockime.MockImeSession;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 
+@Presubmit
 public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
 
     private static final String TAG = "InlineLoginActivityTest";

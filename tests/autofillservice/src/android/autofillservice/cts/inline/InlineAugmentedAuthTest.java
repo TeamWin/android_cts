@@ -31,6 +31,7 @@ import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedAugmentedFillResponse;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.content.IntentSender;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.Dataset;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillValue;
@@ -38,6 +39,7 @@ import android.widget.EditText;
 
 import org.junit.Test;
 
+@Presubmit
 public class InlineAugmentedAuthTest
         extends AugmentedAutofillAutoActivityLaunchTestCase<AugmentedLoginActivity> {
 
