@@ -30,16 +30,11 @@ import android.stats.devicepolicy.EventId;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
-import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -1006,6 +1001,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         } finally {
             getDevice().uninstallPackage(SIMPLE_APP_APK);
         }
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testAllOperations");
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
