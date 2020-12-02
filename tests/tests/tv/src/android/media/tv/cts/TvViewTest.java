@@ -167,7 +167,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        if (!Utils.hasTvInputFramework(mActivity)) {
+        if (!Utils.assumeHasTvInputFramework(mActivity)) {
             return;
         }
         mInstrumentation = getInstrumentation();
@@ -190,7 +190,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
 
     @Override
     protected void tearDown() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             super.tearDown();
             return;
         }
@@ -212,7 +212,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
 
     @UiThreadTest
     public void testConstructor() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         new TvView(mActivity);
@@ -253,14 +253,14 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testSimpleTune() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         tryTuneAllChannels(null, null);
     }
 
     public void testSimpleTuneWithBundle() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         Bundle params = new Bundle();
@@ -324,7 +324,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testTrackChange() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         TvTrackInfo videoTrack1 = new TvTrackInfo.Builder(TvTrackInfo.TYPE_VIDEO, "video-HD")
@@ -390,7 +390,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testOnUnhandledInputEventListener() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         final InputEvent[] unhandledEvent = { null };
@@ -436,7 +436,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testConnectionFailed() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         mCallback.resetCount();
@@ -451,7 +451,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testDisconnected() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         mCallback.resetCount();
@@ -466,7 +466,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testSetZOrderMediaOverlay() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         // Verifying the z-order from app is not possible. Here we just check if calling APIs does
@@ -478,7 +478,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
     }
 
     public void testSetZOrderOnTop() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         // Verifying the z-order from app is not possible. Here we just check if calling APIs does
@@ -491,7 +491,7 @@ public class TvViewTest extends ActivityInstrumentationTestCase2<TvViewStubActiv
 
     @UiThreadTest
     public void testUnhandledInputEvent() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         boolean result = mTvView.dispatchUnhandledInputEvent(null);

@@ -115,7 +115,7 @@ public class TvContractTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         mInputId = TvContract.buildInputId(
@@ -126,7 +126,7 @@ public class TvContractTest extends AndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             super.tearDown();
             return;
         }
@@ -355,7 +355,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTable() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
@@ -383,7 +383,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTableForModifyChannelType() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         ContentValues values = createDummyChannelValues(mInputId, true);
@@ -408,7 +408,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTableForInputId() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Non-preview channels should not be inserted without input ID
@@ -438,7 +438,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTableForModifyIdAndPackageName() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         ContentValues baseValues = createDummyChannelValues(mInputId, false);
@@ -471,7 +471,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTableForIllegalAccess() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         ContentValues baseValues = createDummyChannelValues(mInputId, false);
@@ -535,7 +535,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsTableForNonExistingColumns() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         ContentValues values = createDummyChannelValues(mInputId, false);
@@ -685,7 +685,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelLogo() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a channel.
@@ -712,7 +712,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void verifyProgramsTable(Uri programsUri, long channelId) {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
@@ -739,7 +739,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void verifyPreviewProgramsTable(Uri previewProgramsUri, long channelId) {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
@@ -774,7 +774,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void verifyWatchNextProgramsTable(Uri watchNextProgramsUri) {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
@@ -809,7 +809,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void verifyProgramsTableWithDeprecatedColumns(Uri programsUri, long channelId) {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test: insert
@@ -848,7 +848,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsTable() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a channel.
@@ -865,7 +865,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testPreviewProgramsTable() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a preview type channel.
@@ -877,14 +877,14 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testWatchNextProgramsTable() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         verifyWatchNextProgramsTable(WatchNextPrograms.CONTENT_URI);
     }
 
     public void testPreviewProgramsTableForIllegalAccess() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a channel and preview program.
@@ -911,7 +911,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testPreviewProgramsTableForModifyChannelId() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a channel and preview program.
@@ -964,7 +964,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsScheduleOverlap() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final long programStartMillis = 1403712000000l;  // Jun 25 2014 16:00 UTC
@@ -1083,7 +1083,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testRecordedProgramsTable() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Set-up: add a channel.
@@ -1133,7 +1133,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testAllEpgPermissionBlocksSortOrderOnQuery_Channels() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final String[] projection = { Channels._ID };
@@ -1141,7 +1141,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testAllEpgPermissionBlocksSelectionOnQuery_Channels() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final String[] projection = { Channels._ID };
@@ -1149,21 +1149,21 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testAllEpgPermissionBlocksSelectionOnUpdate_Channels() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         verifyUpdateWithSelection(Channels.CONTENT_URI, Channels._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnDelete_Channels() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         verifyDeleteWithSelection(Channels.CONTENT_URI, Channels._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSortOrderOnQuery_Programs() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final String[] projection = { Programs._ID };
@@ -1171,7 +1171,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testAllEpgPermissionBlocksSelectionOnQuery_Programs() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final String[] projection = { Channels._ID };
@@ -1179,21 +1179,21 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testAllEpgPermissionBlocksSelectionOnUpdate_Programs() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         verifyUpdateWithSelection(Programs.CONTENT_URI, Programs._ID + ">0");
     }
 
     public void testAllEpgPermissionBlocksSelectionOnDelete_Programs() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         verifyDeleteWithSelection(Programs.CONTENT_URI, Programs._ID + ">0");
     }
 
     public void testDefaultValues() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         ContentValues values = new ContentValues();
@@ -1212,7 +1212,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testChannelsGetVideoResolution() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertEquals(Channels.VIDEO_RESOLUTION_SD, Channels.getVideoResolution(
@@ -1237,7 +1237,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresDecode() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         List genres = Arrays.asList(Genres.decode(ENCODED_GENRE_STRING));
@@ -1257,7 +1257,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresEncode() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertEquals(ENCODED_GENRE_STRING, Genres.encode(Genres.ANIMAL_WILDLIFE,
@@ -1266,7 +1266,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresEncodeDecode_empty() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         String[] genres = new String[] {EMPTY_GENRE};
@@ -1279,7 +1279,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresEncodeDecode_simpleDelimiter() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         String[] genres = new String[] {EMPTY_GENRE,
@@ -1304,7 +1304,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresEncodeDecode_delimiterWithWhiteSpace() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         String[] genres = new String[] {EMPTY_GENRE,
@@ -1325,7 +1325,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testProgramsGenresEncodeDecode_all() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         String[] genres = new String[] {EMPTY_GENRE,
@@ -1393,7 +1393,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testBroadcastGenreEncodeDecode() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         String[] broadcastGenre = new String[] {"Animation", "Classic, opera"};
@@ -1408,7 +1408,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testBroadcastGenreQueryChannel() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // "Animation" is mapped to Genres.MOVIES
@@ -1423,7 +1423,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testGenresIsCanonical() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertTrue(Genres.isCanonical(Genres.DRAMA));
@@ -1431,7 +1431,7 @@ public class TvContractTest extends AndroidTestCase {
     }
 
     public void testUriUtils() {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         final Uri CHANNEL_URI_FOR_TUNER = TvContract.buildChannelUri(0);
