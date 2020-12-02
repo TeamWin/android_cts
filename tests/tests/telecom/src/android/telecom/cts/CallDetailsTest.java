@@ -29,9 +29,11 @@ import static org.junit.Assert.assertThat;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.Icon;
+import android.location.Location;
 import android.media.AudioManager;
-import android.os.Bundle;
 import android.net.Uri;
+import android.os.Bundle;
+import android.os.ParcelUuid;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.Connection;
@@ -477,6 +479,29 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         Bundle exampleExtras = new Bundle();
         exampleExtras.putString(Connection.EXTRA_CALL_SUBJECT, TEST_SUBJECT);
+
+        // EXTRA_PRIORITY
+        exampleExtras.putInt(TelecomManager.EXTRA_PRIORITY, TelecomManager.PRIORITY_URGENT);
+
+        // EXTRA_CALL_LOCATION
+        Location testLocation = new Location("CallDetailsTest");
+        double latitude = 123;
+        double longitude = 456;
+        testLocation.setLatitude(latitude);
+        testLocation.setLongitude(longitude);
+        exampleExtras.putParcelable(TelecomManager.EXTRA_LOCATION, testLocation);
+
+        // EXTRA_HAS_PICTURE
+        exampleExtras.putBoolean(TelecomManager.EXTRA_HAS_PICTURE, true);
+
+        // EXTRA_INCOMING_PICTURE
+        Uri testIncomingPictureUrl = Uri.parse("content://carrier.xyz/picture1");
+        exampleExtras.putParcelable(TelecomManager.EXTRA_INCOMING_PICTURE, testIncomingPictureUrl);
+
+        // EXTRA_OUTGOING_PICTURE
+        ParcelUuid testOutgoingPicture = ParcelUuid.fromString("11111111-2222-3333-4444-55555555");
+        exampleExtras.putParcelable(TelecomManager.EXTRA_OUTGOING_PICTURE, testOutgoingPicture);
+
         exampleExtras.putString(Connection.EXTRA_CHILD_ADDRESS, TEST_CHILD_NUMBER);
         exampleExtras.putString(Connection.EXTRA_LAST_FORWARDED_NUMBER, TEST_FORWARDED_NUMBER);
         exampleExtras.putInt(TEST_EXTRA_KEY, TEST_EXTRA_VALUE);
@@ -500,6 +525,17 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
                 callExtras.getFloat(Connection.EXTRA_AUDIO_CODEC_BITRATE_KBPS), 0.01);
         assertEquals(TEST_EXTRA_BANDWIDTH,
                 callExtras.getFloat(Connection.EXTRA_AUDIO_CODEC_BANDWIDTH_KHZ), 0.01);
+
+        assertEquals(TelecomManager.PRIORITY_URGENT, exampleExtras.getInt(
+                TelecomManager.EXTRA_PRIORITY));
+        Location testGetLocation = exampleExtras.getParcelable(TelecomManager.EXTRA_LOCATION);
+        assertEquals(latitude, testGetLocation.getLatitude(), 0);
+        assertEquals(longitude, testGetLocation.getLongitude(), 0);
+        assertEquals(true, exampleExtras.getBoolean(TelecomManager.EXTRA_HAS_PICTURE));
+        assertEquals(testIncomingPictureUrl,
+                exampleExtras.getParcelable(TelecomManager.EXTRA_INCOMING_PICTURE));
+        assertEquals(testOutgoingPicture,
+                exampleExtras.getParcelable(TelecomManager.EXTRA_OUTGOING_PICTURE));
     }
 
     /**
