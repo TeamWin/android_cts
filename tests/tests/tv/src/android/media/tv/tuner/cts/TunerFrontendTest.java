@@ -531,7 +531,7 @@ public class TunerFrontendTest {
     public void testFrontendInfo() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
-        List<FrontendInfo> infos = mTuner.getFrontendInfoList();
+        List<FrontendInfo> infos = mTuner.getAvailableFrontendInfos();
         Map<Integer, FrontendInfo> infoMap = new HashMap<>();
         for (FrontendInfo info : infos) {
             infoMap.put(info.getId(), info);
