@@ -118,7 +118,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private WifiLock mWifiLock;
     private static MySync mMySync;
     private List<ScanResult> mScanResults = null;
-    private NetworkInfo mNetworkInfo;
+    private NetworkInfo mNetworkInfo =
+            new NetworkInfo(ConnectivityManager.TYPE_WIFI, TelephonyManager.NETWORK_TYPE_UNKNOWN,
+                    "wifi", "unknown");
     private final Object mLock = new Object();
     private UiDevice mUiDevice;
     private boolean mWasVerboseLoggingEnabled;
