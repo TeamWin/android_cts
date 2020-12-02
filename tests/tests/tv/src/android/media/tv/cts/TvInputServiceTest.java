@@ -82,7 +82,7 @@ public class TvInputServiceTest {
     private static final String TAG = "TvInputServiceTest";
 
     @Rule
-    public static RequiredFeatureRule featureRule = new RequiredFeatureRule(
+    public RequiredFeatureRule featureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_LIVE_TV);
 
     @Rule
