@@ -23,7 +23,6 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.SystemClock
-import com.android.compatibility.common.util.PollingCheck
 import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
@@ -33,12 +32,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
+import com.android.compatibility.common.util.PollingCheck
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.concurrent.thread
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 private const val OVERLAY_ACTIVITY_FOCUSED = "android.input.cts.action.OVERLAY_ACTIVITY_FOCUSED"
 
