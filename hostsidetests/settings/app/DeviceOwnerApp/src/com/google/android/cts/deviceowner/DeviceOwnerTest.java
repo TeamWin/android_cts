@@ -15,6 +15,8 @@
  */
 package com.google.android.cts.deviceowner;
 
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -23,6 +25,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.RemoteException;
 import android.provider.Settings;
+import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
@@ -106,8 +109,15 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
     private void launchSettingsPage(Context ctx, String pageName) throws Exception {
         Intent intent = new Intent(pageName);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        ComponentName componentName =
+                ctx.getPackageManager()
+                        .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+                        .getComponentInfo()
+                        .getComponentName();
         ctx.startActivity(intent);
-        Thread.sleep(TIMEOUT * 2);
+
+        new WindowManagerStateHelper().waitForActivityState(componentName, STATE_RESUMED);
     }
 
     private void disableWorkPolicyInfoActivity() {
