@@ -16,6 +16,7 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.app.Notification.VISIBILITY_PRIVATE;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
 import static android.app.NotificationManager.IMPORTANCE_MAX;
 import static android.app.NotificationManager.IMPORTANCE_NONE;
@@ -51,13 +52,13 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
+import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
@@ -131,6 +132,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new SnoozeNotificationForTimeCancelTest());
         tests.add(new GetSnoozedNotificationTest());
         tests.add(new EnableHintsTest());
+        tests.add(new LockscreenVisibilityTest());
         tests.add(new ReceiveAppBlockNoticeTest());
         tests.add(new ReceiveAppUnblockNoticeTest());
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
@@ -294,7 +296,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             }
             Notification.Builder builder = new Notification.Builder(
                     mContext, NOTIFICATION_CHANNEL_ID)
-                    .setSmallIcon(android.R.id.icon)
+                    .setSmallIcon(R.drawable.ic_stat_alice)
                     .setContentTitle("This is an long notification")
                     .setContentText("Innocuous content")
                     .setStyle(new Notification.MessagingStyle("Fake person")
@@ -494,6 +496,85 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
             return new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName());
+        }
+    }
+
+    /**
+     * Creates a notification channel. Sends the user to settings to disallow the channel from
+     * showing on the lockscreen. Sends a notification, checks the lockscreen setting in the
+     * ranking object.
+     */
+    protected class LockscreenVisibilityTest extends InteractiveTestCase {
+        private int mRetries = 3;
+        private View mView;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            mView = createNlsSettingsItem(parent, R.string.nls_visibility);
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(false);
+            return mView;
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            status = READY;
+            Button button = mView.findViewById(R.id.nls_action_button);
+            button.setEnabled(true);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            NotificationChannel channel = mNm.getNotificationChannel(NOTIFICATION_CHANNEL_ID);
+            if (channel.getLockscreenVisibility() == VISIBILITY_PRIVATE) {
+                if (mRetries == 3) {
+                    sendNotifications();
+                }
+
+                NotificationListenerService.Ranking rank =
+                        new NotificationListenerService.Ranking();
+                StatusBarNotification sbn = MockListener.getInstance().getPosted(mTag1);
+                if (sbn != null) {
+                    MockListener.getInstance().getCurrentRanking().getRanking(sbn.getKey(), rank);
+                    if (rank.getLockscreenVisibilityOverride() == VISIBILITY_PRIVATE) {
+                        status = PASS;
+                    } else {
+                        logFail("Actual visibility:" + rank.getLockscreenVisibilityOverride());
+                        status = FAIL;
+                    }
+                } else {
+                    if (mRetries > 0) {
+                        mRetries--;
+                        status = RETEST;
+                    } else {
+                        logFail("Notification wasn't posted");
+                        status = FAIL;
+                    }
+                 }
+
+            } else {
+                // user hasn't jumped to settings  yet
+                status = WAIT_FOR_USER;
+            }
+
+            next();
+        }
+
+        protected void tearDown() {
+            MockListener.getInstance().resetData();
+            deleteChannels();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(EXTRA_APP_PACKAGE, mContext.getPackageName())
+                    .putExtra(EXTRA_CHANNEL_ID, NOTIFICATION_CHANNEL_ID);
         }
     }
 
