@@ -25,12 +25,14 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 
 /**
  * Test for {@link android.media.tv.TvInputInfo}.
  */
+@Presubmit
 public class TvInputInfoTest extends AndroidTestCase {
     private TvInputInfo mStubInfo;
     private PackageManager mPackageManager;
