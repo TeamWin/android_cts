@@ -54,7 +54,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerDvrTest {
     private static final String TAG = "MediaTunerDvrTest";
 
@@ -79,6 +78,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrSettings() throws Exception {
         if (!hasTuner()) return;
         DvrSettings settings = getDvrSettings();
@@ -91,6 +92,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrRecorder() throws Exception {
         if (!hasTuner()) return;
         DvrRecorder d = mTuner.openDvrRecorder(1000, getExecutor(), getRecordListener());
@@ -136,6 +139,8 @@ public class TunerDvrTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrPlayback() throws Exception {
         if (!hasTuner()) return;
         DvrPlayback d = mTuner.openDvrPlayback(1000, getExecutor(), getPlaybackListener());
