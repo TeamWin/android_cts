@@ -247,12 +247,15 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
             // skip the test if Easy Connect is not supported
             return;
         }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
+            uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_WRONG_DEVICE_INFO,
                     EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
                     mEasyConnectStatusCallback);
             fail("startEasyConnectAsEnrolleeResponder did not throw an IllegalArgumentException"
                     + "on passing a wrong device info!");
         } catch (IllegalArgumentException expected) {}
+        uiAutomation.dropShellPermissionIdentity();
     }
 }
