@@ -18,6 +18,8 @@ package android.hardware.input.cts.tests;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
+import static org.junit.Assume.assumeFalse;
+
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -115,8 +117,18 @@ public class UsbVoiceCommandTest extends InputHidTestCase {
     }
 
     @Test
-    public void testAllKeys() {
-        testInputEvents(R.raw.google_gamepad_keyeventtests);
+    public void testMediaKeys() {
+        testInputEvents(R.raw.google_gamepad_keyevent_media_tests);
+    }
+
+    @Test
+    public void testVolumeKeys() {
+        // {@link PhoneWindowManager} in interceptKeyBeforeDispatching, on TVs platform,
+        // volume keys never go to the foreground app.
+        // Skip the key test for TV platform.
+        assumeFalse("TV platform doesn't send volume keys to app, test should be skipped",
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+        testInputEvents(R.raw.google_gamepad_keyevent_volume_tests);
     }
 
     /**
