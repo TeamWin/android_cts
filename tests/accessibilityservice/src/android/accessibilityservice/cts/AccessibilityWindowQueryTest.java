@@ -590,6 +590,8 @@ public class AccessibilityWindowQueryTest {
                             || windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
                 });
 
+        sUiAutomation.waitForIdle(TIMEOUT_WINDOW_STATE_IDLE, DEFAULT_TIMEOUT_MS);
+
         assertTrue(
                 sUiAutomation.performGlobalAction(
                         AccessibilityService.GLOBAL_ACTION_TOGGLE_SPLIT_SCREEN));
