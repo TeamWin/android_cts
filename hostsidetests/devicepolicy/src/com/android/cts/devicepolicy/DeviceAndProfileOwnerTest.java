@@ -1749,7 +1749,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_MINIMUM_SYMBOLS_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setInt(19)
-                    .build());
+                    .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_PASSWORD_COMPLEXITY_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setInt(0x50000)
+                        .setBoolean(false)
+                        .build());
     }
 
     @Test
