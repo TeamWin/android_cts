@@ -73,6 +73,7 @@ import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
@@ -932,7 +933,7 @@ public class PackageManagerTest {
     }
 
     @Test
-    public void testSetSystemAppHiddenUntilInstalled() {
+    public void testSetSystemAppHiddenUntilInstalled() throws Exception {
         String packageToManipulate = "com.android.cts.ctsshim";
         try {
             mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
@@ -949,11 +950,25 @@ public class PackageManagerTest {
                     mPackageManager.setSystemAppState(packageToManipulate,
                             PackageManager.SYSTEM_APP_STATE_HIDDEN_UNTIL_INSTALLED_HIDDEN));
 
-            try {
-                mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
+            // Setting the state to SYSTEM_APP_STATE_UNINSTALLED is an async operation in
+            // PackageManagerService with no way to listen for completion, so poll until the
+            // app is no longer found.
+            int pollingPeriodMs = 100;
+            int timeoutMs = 1000;
+            long startTimeMs = SystemClock.elapsedRealtime();
+            boolean isAppStillVisible = true;
+            while (SystemClock.elapsedRealtime() < startTimeMs + timeoutMs) {
+                try {
+                    mPackageManager.getPackageInfo(packageToManipulate, MATCH_SYSTEM_ONLY);
+                } catch (NameNotFoundException e) {
+                    // expected, stop polling
+                    isAppStillVisible = false;
+                    break;
+                }
+                Thread.sleep(pollingPeriodMs);
+            }
+            if (isAppStillVisible) {
                 fail(packageToManipulate + " should not be found via getPackageInfo.");
-            } catch (NameNotFoundException e) {
-                // expected
             }
         } finally {
             SystemUtil.runWithShellPermissionIdentity(() ->
