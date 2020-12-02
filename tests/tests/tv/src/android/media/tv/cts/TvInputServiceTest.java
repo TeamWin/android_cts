@@ -62,7 +62,6 @@ import com.google.common.truth.Truth;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,7 +81,7 @@ public class TvInputServiceTest {
 
     private static final String TAG = "TvInputServiceTest";
 
-    @ClassRule
+    @Rule
     public static RequiredFeatureRule featureRule = new RequiredFeatureRule(
             PackageManager.FEATURE_LIVE_TV);
 
