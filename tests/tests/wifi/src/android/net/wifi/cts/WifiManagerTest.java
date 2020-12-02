@@ -2147,13 +2147,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         boolean isStaApConcurrencySupported = mWifiManager.isStaApConcurrencySupported();
         // start local only hotspot.
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
-        if (isStaApConcurrencySupported) {
-            assertTrue(mWifiManager.isWifiEnabled());
-        } else {
-            // no concurrency, wifi should be disabled.
-            assertFalse(mWifiManager.isWifiEnabled());
+        try {
+            if (isStaApConcurrencySupported) {
+                assertTrue(mWifiManager.isWifiEnabled());
+            } else {
+                // no concurrency, wifi should be disabled.
+                assertFalse(mWifiManager.isWifiEnabled());
+            }
+        } finally {
+            // clean up local only hotspot no matter if assertion passed or failed
+            stopLocalOnlyHotspot(callback, true);
         }
-        stopLocalOnlyHotspot(callback, true);
 
         assertTrue(mWifiManager.isWifiEnabled());
     }
