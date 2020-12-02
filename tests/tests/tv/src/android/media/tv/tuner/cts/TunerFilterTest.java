@@ -50,7 +50,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerFilterTest {
     private static final String TAG = "MediaTunerFilterTest";
 
@@ -75,6 +74,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSettings() throws Exception {
         if (!hasTuner()) return;
         AvSettings settings =
@@ -106,6 +107,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDownloadSettings() throws Exception {
         if (!hasTuner()) return;
         DownloadSettings settings =
@@ -118,6 +121,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testPesSettings() throws Exception {
         if (!hasTuner()) return;
         PesSettings settings =
@@ -132,6 +137,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testRecordSettings() throws Exception {
         if (!hasTuner()) return;
         RecordSettings settings =
@@ -152,6 +159,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithSectionBits() throws Exception {
         if (!hasTuner()) return;
         SectionSettingsWithSectionBits settings =
@@ -174,6 +183,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithTableInfo() throws Exception {
         if (!hasTuner()) return;
         SectionSettingsWithTableInfo settings =
@@ -194,6 +205,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAlpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         AlpFilterConfiguration config =
@@ -212,6 +225,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         IpFilterConfiguration config =
@@ -245,6 +260,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testMmtpFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         MmtpFilterConfiguration config =
@@ -260,6 +277,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTlvFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
         TlvFilterConfiguration config =
@@ -279,6 +298,8 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTsFilterConfiguration() throws Exception {
         if (!hasTuner()) return;
 

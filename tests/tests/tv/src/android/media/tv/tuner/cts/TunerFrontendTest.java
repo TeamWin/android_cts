@@ -69,7 +69,6 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerFrontendTest {
     private static final String TAG = "MediaTunerFrontendTest";
 
@@ -94,6 +93,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAnalogFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         AnalogFrontendSettings settings =
@@ -132,6 +133,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAtsc3FrontendSettings() throws Exception {
         if (!hasTuner()) return;
 
@@ -199,6 +202,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAtscFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         AtscFrontendSettings settings =
@@ -226,6 +231,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvbcFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         DvbcFrontendSettings settings =
@@ -267,6 +274,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvbsFrontendSettings() throws Exception {
         if (!hasTuner()) return;
 
@@ -330,6 +339,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvbtFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         DvbtFrontendSettings settings =
@@ -385,6 +396,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIsdbs3FrontendSettings() throws Exception {
         if (!hasTuner()) return;
         Isdbs3FrontendSettings settings =
@@ -422,6 +435,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIsdbsFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         IsdbsFrontendSettings settings =
@@ -460,6 +475,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIsdbtFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         IsdbtFrontendSettings settings =
@@ -497,6 +514,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDtmbFrontendSettings() throws Exception {
         if (!hasTuner()) return;
         if (!TunerVersionChecker.checkHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1,
@@ -528,6 +547,8 @@ public class TunerFrontendTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testFrontendInfo() throws Exception {
         if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
