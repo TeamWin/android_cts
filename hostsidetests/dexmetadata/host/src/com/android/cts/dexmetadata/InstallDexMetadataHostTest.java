@@ -32,9 +32,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.zip.Inflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import org.junit.After;
@@ -198,6 +201,28 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
     }
 
+    static class ProfileReader {
+      byte[] data;
+
+      ProfileReader(byte[] bytes) throws Exception {
+        ByteBuffer bb = ByteBuffer.wrap(bytes);
+
+        // Read header.
+        bb.order(ByteOrder.LITTLE_ENDIAN);
+        assertEquals(0x006f7270 /* LE "pro\0" */, bb.getInt());
+        assertEquals(0x00303130 /* LE "010\0" */, bb.getInt());
+        bb.get(); // Skip dex file count.
+        int uncompressed_size = bb.getInt();
+        int compressed_size = bb.getInt();
+
+        // Decompress profile.
+        Inflater inflater = new Inflater();
+        inflater.setInput(bb.array(), bb.arrayOffset() + bb.position(), bb.remaining());
+        data = new byte[uncompressed_size];
+        assertEquals(uncompressed_size, inflater.inflate(data));
+      }
+    }
+
     @Test
     public void testProfileSnapshotAfterInstall() throws Exception {
         assumeProfilesAreEnabled();
@@ -211,8 +236,9 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assertTrue(result.trim().isEmpty());
 
         // Extract the profile bytes from the dex metadata and from the profile snapshot.
-        byte[] snapshotProfileBytes = extractProfileSnapshotFromDevice();
-        byte[] expectedProfileBytes = extractProfileFromDexMetadata(mDmBaseFile);
+        byte[] snapshotProfileBytes = new ProfileReader(extractProfileSnapshotFromDevice()).data;
+        byte[] expectedProfileBytes =
+                new ProfileReader(extractProfileFromDexMetadata(mDmBaseFile)).data;
 
         assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
     }
