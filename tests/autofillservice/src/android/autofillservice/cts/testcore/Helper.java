@@ -1544,8 +1544,8 @@ public final class Helper {
     }
 
     public static InlinePresentation createInlinePresentation(String message) {
-        final PendingIntent dummyIntent =
-                PendingIntent.getActivity(getContext(), 0, new Intent(), 0);
+        final PendingIntent dummyIntent = PendingIntent.getActivity(getContext(), 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         return createInlinePresentation(message, dummyIntent, false);
     }
 
@@ -1555,8 +1555,8 @@ public final class Helper {
     }
 
     public static InlinePresentation createPinnedInlinePresentation(String message) {
-        final PendingIntent dummyIntent =
-                PendingIntent.getActivity(getContext(), 0, new Intent(), 0);
+        final PendingIntent dummyIntent = PendingIntent.getActivity(getContext(), 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         return createInlinePresentation(message, dummyIntent, true);
     }
 

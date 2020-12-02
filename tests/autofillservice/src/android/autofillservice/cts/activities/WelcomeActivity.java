@@ -121,7 +121,8 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
         final Intent intent = new Intent(context, WelcomeActivity.class)
                 .putExtra(EXTRA_MESSAGE, message)
                 .setFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-        sPendingIntent = PendingIntent.getActivity(context, sPendingIntentId, intent, 0);
+        sPendingIntent = PendingIntent.getActivity(context, sPendingIntentId, intent,
+                PendingIntent.FLAG_IMMUTABLE);
         return sPendingIntent.getIntentSender();
     }
 }

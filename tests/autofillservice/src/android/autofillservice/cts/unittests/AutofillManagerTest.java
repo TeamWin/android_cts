@@ -110,7 +110,7 @@ public class AutofillManagerTest {
         outsideActivity.setFlags(FLAG_ACTIVITY_NEW_TASK);
         final Intent broadcastIntent = new Intent(actionAutofillStatusActivityFinish);
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(sContext, 0, broadcastIntent,
-                0);
+                PendingIntent.FLAG_IMMUTABLE);
         outsideActivity.putExtra("finishBroadcast", pendingIntent);
         sContext.startActivity(outsideActivity);
 

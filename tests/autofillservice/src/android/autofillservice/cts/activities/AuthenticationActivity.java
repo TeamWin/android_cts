@@ -139,7 +139,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
             Log.d(TAG, "Create with " + outClientState + " as " + EXTRA_OUTPUT_CLIENT_STATE);
             intent.putExtra(EXTRA_OUTPUT_CLIENT_STATE, outClientState);
         }
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, id, intent, 0);
+        final PendingIntent pendingIntent =
+                PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_MUTABLE);
         sPendingIntents.add(pendingIntent);
         return pendingIntent.getIntentSender();
     }
@@ -151,7 +152,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         Preconditions.checkArgument(id > 0, "id must be positive");
         return PendingIntent
                 .getActivity(context, id, new Intent(context, AuthenticationActivity.class),
-                        PendingIntent.FLAG_CANCEL_CURRENT)
+                        PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE)
                 .getIntentSender();
     }
 

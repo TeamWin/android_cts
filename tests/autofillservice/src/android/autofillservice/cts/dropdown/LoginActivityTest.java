@@ -1974,8 +1974,8 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         final String intentAction = "android.autofillservice.cts.CUSTOM_ACTION";
 
         // Configure the save UI.
-        final IntentSender listener = PendingIntent.getBroadcast(
-                mContext, 0, new Intent(intentAction), 0).getIntentSender();
+        final IntentSender listener = PendingIntent.getBroadcast(mContext, 0,
+                new Intent(intentAction), PendingIntent.FLAG_IMMUTABLE).getIntentSender();
 
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
@@ -2502,15 +2502,15 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
 
         Intent intent = new Intent(mContext, EmptyActivity.class);
         IntentSender sender = PendingIntent.getActivity(mContext, 0, intent,
-                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT)
-                .getIntentSender();
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_CANCEL_CURRENT
+                        | PendingIntent.FLAG_IMMUTABLE).getIntentSender();
 
         RemoteViews presentation = new RemoteViews(mPackageName, R.layout.list_item);
         presentation.setTextViewText(R.id.text1, "Poke");
         Intent firstIntent = new Intent(mContext, DummyActivity.class);
         presentation.setOnClickPendingIntent(R.id.text1, PendingIntent.getActivity(
                 mContext, 0, firstIntent, PendingIntent.FLAG_ONE_SHOT
-                        | PendingIntent.FLAG_CANCEL_CURRENT));
+                        | PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE));
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()

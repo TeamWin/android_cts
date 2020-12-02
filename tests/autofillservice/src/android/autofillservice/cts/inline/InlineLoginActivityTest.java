@@ -247,7 +247,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         enableService();
 
         Intent intent = new Intent(mContext, DummyActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
@@ -423,7 +424,8 @@ public class InlineLoginActivityTest extends LoginActivityCommonTestCase {
         enableService();
 
         Intent intent = new Intent(mContext, DummyActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
 
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
