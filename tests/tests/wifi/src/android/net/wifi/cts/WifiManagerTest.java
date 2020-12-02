@@ -817,8 +817,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             int securityType = softApConfig.getSecurityType();
             if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
                 || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
-                 assertNotNull(softApConfig.toWifiConfiguration());
-            } else {
+                // TODO: b/165504232, add WPA3_SAE_TRANSITION assert check
+                assertNotNull(softApConfig.toWifiConfiguration());
+            } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE) {
                 assertNull(softApConfig.toWifiConfiguration());
             }
             if (!hasAutomotiveFeature()) {
@@ -976,7 +977,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    public void testStartLocalOnlyHotspotWithConfig() throws Exception {
+    public void testStartLocalOnlyHotspotWithConfigBssid() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -998,8 +999,58 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             boolean wifiEnabled = mWifiManager.isWifiEnabled();
             mWifiManager.startLocalOnlyHotspot(customConfig, executor, callback);
-            Log.d(TAG, "Sleeping for 2 seconds");
-            Thread.sleep(2000);
+            // now wait for callback
+            Thread.sleep(TEST_WAIT_DURATION_MS);
+
+            // Verify callback is run on the supplied executor
+            assertFalse(callback.onStartedCalled);
+            executor.runAll();
+            if (callback.onFailedCalled) {
+                // TODO: b/160752000, customize bssid might not support.
+                // Allow the specific error code.
+                assertEquals(callback.failureReason,
+                        WifiManager.SAP_START_FAILURE_UNSUPPORTED_CONFIGURATION);
+            } else {
+                assertTrue(callback.onStartedCalled);
+
+                assertNotNull(callback.reservation);
+                SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
+                assertNotNull(softApConfig);
+                assertEquals(TEST_MAC, softApConfig.getBssid());
+                assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
+                assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
+
+                // clean up
+                stopLocalOnlyHotspot(callback, wifiEnabled);
+            }
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    public void testStartLocalOnlyHotspotWithNullBssidConfig() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // check that softap mode is supported by the device
+        if (!mWifiManager.isPortableHotspotSupported()) {
+            return;
+        }
+        SoftApConfiguration customConfig = new SoftApConfiguration.Builder()
+                .setSsid(TEST_SSID_UNQUOTED)
+                .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
+                .build();
+        TestExecutor executor = new TestExecutor();
+        TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            boolean wifiEnabled = mWifiManager.isWifiEnabled();
+            mWifiManager.startLocalOnlyHotspot(customConfig, executor, callback);
+            // now wait for callback
+            Thread.sleep(TEST_WAIT_DURATION_MS);
 
             // Verify callback is run on the supplied executor
             assertFalse(callback.onStartedCalled);
@@ -1009,7 +1060,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(callback.reservation);
             SoftApConfiguration softApConfig = callback.reservation.getSoftApConfiguration();
             assertNotNull(softApConfig);
-            assertEquals(TEST_MAC, softApConfig.getBssid());
             assertEquals(TEST_SSID_UNQUOTED, softApConfig.getSsid());
             assertEquals(TEST_PASSPHRASE, softApConfig.getPassphrase());
 

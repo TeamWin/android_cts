@@ -1023,6 +1023,12 @@ public final class CommandSession {
             sizeInfo = new SizeInfo(display, metrics, config);
         }
 
+        public ConfigInfo(Resources res) {
+            final DisplayMetrics metrics = res.getDisplayMetrics();
+            final Configuration config = res.getConfiguration();
+            sizeInfo = new SizeInfo(null /* display */, metrics, config);
+        }
+
         @Override
         public String toString() {
             return "ConfigInfo: {displayId=" + displayId + " rotation=" + rotation

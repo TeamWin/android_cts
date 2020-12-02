@@ -18,7 +18,6 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -45,12 +44,10 @@ import org.junit.runner.RunWith;
 public class FocusFinderTest {
     private FocusFinder mFocusFinder;
     private ViewGroup mLayout;
-    private ViewGroup mInflateLayout;
     private Button mTopLeft;
     private Button mTopRight;
     private Button mBottomLeft;
     private Button mBottomRight;
-    private Button mBottom;
 
     @Rule
     public ActivityTestRule<FocusFinderCtsActivity> mActivityRule =
@@ -62,17 +59,14 @@ public class FocusFinderTest {
 
         mFocusFinder = FocusFinder.getInstance();
         mLayout = activity.layout;
-        mInflateLayout = activity.inflateLayout;
         mTopLeft = activity.topLeftButton;
         mTopRight = activity.topRightButton;
         mBottomLeft = activity.bottomLeftButton;
         mBottomRight = activity.bottomRightButton;
-        mBottom = activity.bottomButton;
         mTopLeft.setNextFocusLeftId(View.NO_ID);
         mTopRight.setNextFocusLeftId(View.NO_ID);
         mBottomLeft.setNextFocusLeftId(View.NO_ID);
         mBottomRight.setNextFocusLeftId(View.NO_ID);
-        mBottom.setNextFocusLeftId(View.NO_ID);
     }
 
     @Test
@@ -461,18 +455,5 @@ public class FocusFinderTest {
         view.setTop(top);
         view.setRight(right);
         view.setBottom(bottom);
-    }
-
-    @Test
-    public void testFindNextFocusDoesNotReturnItself() {
-        View nextFocus = mFocusFinder.findNextFocus(mInflateLayout, mBottom, View.FOCUS_FORWARD);
-        assertNull(nextFocus);
-    }
-
-    @Test
-    public void testFindPreviousFocusDoesNotReturnItself() {
-        View previousFocus =
-                mFocusFinder.findNextFocus(mInflateLayout, mBottom, View.FOCUS_BACKWARD);
-        assertNull(previousFocus);
     }
 }

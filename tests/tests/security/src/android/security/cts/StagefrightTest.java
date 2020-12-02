@@ -40,12 +40,15 @@ import android.opengl.GLES20;
 import android.opengl.GLES11Ext;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 import android.view.Surface;
 import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.CrashUtils;
+import com.android.compatibility.common.util.mainline.MainlineModule;
+import com.android.compatibility.common.util.mainline.ModuleDetector;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -94,6 +97,7 @@ import static org.junit.Assert.*;
  * Verify that the device is not vulnerable to any known Stagefright
  * vulnerabilities.
  */
+@AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class StagefrightTest {
     static final String TAG = "StagefrightTest";
@@ -1254,8 +1258,213 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2016-09")
+    public void testStagefright_cve_2016_3880() throws Exception {
+        Thread server = new Thread() {
+            @Override
+            public void run() {
+                try (ServerSocket serverSocket = new ServerSocket(8080) {
+                        {setSoTimeout(10_000);} // time out after 10 seconds
+                    };
+                    Socket conn = serverSocket.accept()
+                ) {
+                    OutputStream outputstream = conn.getOutputStream();
+                    InputStream inputStream = conn.getInputStream();
+                    byte input[] = new byte[65536];
+                    inputStream.read(input, 0, 65536);
+                    String inputStr = new String(input);
+                    if (inputStr.contains("DESCRIBE rtsp://127.0.0.1:8080/cve_2016_3880")) {
+                        byte http[] = ("RTSP/1.0 200 OK\r\n"
+                        + "Server: stagefright/1.2 (Linux;Android 9)\r\n"
+                        + "Content-Type: application/sdp\r\n"
+                        + "Content-Base: rtsp://127.0.0.1:8080/cve_2016_3880\r\n"
+                        + "Content-Length: 379\r\n"
+                        + "Cache-Control: no-cache\r\nCSeq: 1\r\n\r\n").getBytes();
+
+                        byte sdp[] = ("v=0\r\no=- 64 233572944 IN IP4 127.0.0.0\r\n"
+                        + "s=QuickTime\r\nt=0 0\r\na=range:npt=now-\r\n"
+                        + "m=video 5434 RTP/AVP 96123456\r\nc=IN IP4 127.0.0.1\r\n"
+                        + "b=AS:320000\r\na=rtpmap:96123456 H264/90000\r\n"
+                        + "a=fmtp:96123456 packetization-mode=1;profile-level-id=42001E;"
+                        + "sprop-parameter-sets=Z0IAHpZUBaHogA==,aM44gA==\r\n"
+                        + "a=cliprect:0,0,480,270\r\na=framesize:96123456 720-480\r\n"
+                        + "a=control:track1\r\n").getBytes();
+
+                        outputstream.write(http);
+                        outputstream.write(sdp);
+                        outputstream.flush();
+                    }
+                } catch (IOException e) {
+                }
+            }
+        };
+        server.start();
+        String uri = "rtsp://127.0.0.1:8080/cve_2016_3880";
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(new CrashUtils.Config()
+                .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
+                RenderTarget renderTarget = RenderTarget.create();
+                Surface surface = renderTarget.getSurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    mp.setDataSource(uri);
+                    mp.prepareAsync();
+                } catch (IOException e) {
+                    Log.e(TAG, e.toString());
+                } finally {
+                    closeQuietly(fd);
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        t.start();
+        assertFalse("Device *IS* vulnerable to CVE-2016-3880",
+                mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        t.stopLooper();
+        t.join();
+        server.join();
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-05")
+    public void testStagefright_cve_2020_3641() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3641);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-04")
+    public void testStagefright_cve_2019_14127() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14127);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-04")
+    public void testStagefright_cve_2019_14132() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14132);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_10591() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10591);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-02")
+    public void testStagefright_cve_2019_10590() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10590);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14004() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14004);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14003() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14003);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-02")
+    public void testStagefright_cve_2019_14057() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14057);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10532() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10532);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10578() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10578);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_14061() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14061, 180000);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10611() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10611);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-08")
+    public void testStagefright_cve_2019_10489() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_10489);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-03")
+    public void testStagefright_cve_2019_14048() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14048);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testStagefright_cve_2019_2253() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_2253);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_10579() throws Exception {
+        doStagefrightTestANR(R.raw.cve_2019_10579);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14005() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14005);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14006() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14006);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_CVE_2019_14016() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14016);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_CVE_2019_14017() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14017);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2018-07")
+    public void testStagefright_cve_2018_9412() throws Exception {
+        doStagefrightTest(R.raw.cve_2018_9412, 180000);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "Unknown")
     public void testStagefright_bug_142641801() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
         doStagefrightTest(R.raw.bug_142641801);
     }
 
@@ -1457,8 +1666,35 @@ public class StagefrightTest {
         doStagefrightTest(R.raw.cve_2016_3879, new CrashUtils.Config().checkMinAddress(false));
     }
 
+    /***********************************************************
+     to prevent merge conflicts, add P tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-12")
+    public void testStagefright_cve_2019_2222() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.cve_2019_2222_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2019_2222_hevc, "video/hevc", 320, 240, frameSizes);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTest(rid, null);
+    }
+
+    /***********************************************************
+     to prevent merge conflicts, add Q tests below this comment,
+     before any existing test methods
+     ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-03")
+    public void testStagefright_cve_2019_1989() throws Exception {
+        Object obj[] = getFrameInfo(R.raw.cve_2019_1989_info);
+        int[] isHeader = (int[])obj [0];
+        int[] frameSizes = (int[])obj [1];
+        doStagefrightTestRawBlob(R.raw.cve_2019_1989_h264, "video/avc",
+                1920, 1080, frameSizes, isHeader, new CrashUtils.Config());
     }
 
     private void doStagefrightTest(final int rid, CrashUtils.Config config) throws Exception {
@@ -2249,6 +2485,25 @@ public class StagefrightTest {
         return frameSizes;
     }
 
+    private Object[] getFrameInfo(int rid) throws IOException {
+        final Context context = getInstrumentation().getContext();
+        final Resources resources = context.getResources();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        FileInputStream fis = fd.createInputStream();
+        byte[] frameInfo = new byte[(int) fd.getLength()];
+        fis.read(frameInfo);
+        fis.close();
+        String[] lines = new String(frameInfo).trim().split("\\r?\\n");
+        int isHeader[] = new int[lines.length];
+        int frameSizes[] = new int[lines.length];
+        for (int i = 0; i < lines.length; i++) {
+            String[] values = lines[i].trim().split("\\s+");
+            isHeader[i] = Integer.parseInt(values[0]);
+            frameSizes[i] = Integer.parseInt(values[1]);
+        }
+        return new Object[] {isHeader, frameSizes};
+    }
+
     private void runWithTimeout(Runnable runner, int timeout) {
         Thread t = new Thread(runner);
         t.start();
@@ -2529,6 +2784,136 @@ public class StagefrightTest {
         String cve = rname.replace("_", "-").toUpperCase();
         assertFalse("Device *IS* vulnerable to " + cve,
                     mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
+        thr.join();
+    }
+
+    private void doStagefrightTestRawBlob(int rid, String mime, int initWidth, int initHeight,
+            int frameSizes[], int isHeader[], CrashUtils.Config config) throws Exception {
+
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener(config);
+        final Context context = getInstrumentation().getContext();
+        final Resources resources = context.getResources();
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                AssetFileDescriptor fd = null;
+                try {
+                    fd = resources.openRawResourceFd(R.raw.good);
+                    // the onErrorListener won't receive MEDIA_ERROR_SERVER_DIED until
+                    // setDataSource has been called
+                    mp.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+                    fd.close();
+                } catch (Exception e) {
+                    // this is a known-good file, so no failure should occur
+                    fail("setDataSource of known-good file failed");
+                }
+                synchronized (mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        // wait until the thread has initialized the MediaPlayer
+        synchronized (mpcl) {
+            mpcl.wait();
+        }
+
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        byte[] blob = new byte[(int) fd.getLength()];
+        FileInputStream fis = fd.createInputStream();
+        int numRead = fis.read(blob);
+        fis.close();
+
+        // find all the available decoders for this format
+        ArrayList<String> matchingCodecs = new ArrayList<String>();
+        int numCodecs = MediaCodecList.getCodecCount();
+        for (int i = 0; i < numCodecs; i++) {
+            MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
+            if (info.isEncoder()) {
+                continue;
+            }
+            try {
+                MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                if (caps != null) {
+                    matchingCodecs.add(info.getName());
+                }
+            } catch (IllegalArgumentException e) {
+                // type is not supported
+            }
+        }
+
+        if (matchingCodecs.size() == 0) {
+            Log.w(TAG, "no codecs for mime type " + mime);
+        }
+        String rname = resources.getResourceEntryName(rid);
+        // decode this blob once with each matching codec
+        for (String codecName : matchingCodecs) {
+            Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
+            MediaCodec codec = MediaCodec.createByCodecName(codecName);
+            MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
+            try {
+                codec.configure(format, null, null, 0);
+                codec.start();
+            } catch (Exception e) {
+                Log.i(TAG, "Exception from codec " + codecName);
+                releaseCodec(codec);
+                continue;
+            }
+            try {
+                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                ByteBuffer[] inputBuffers = codec.getInputBuffers();
+                int numFrames = 0;
+                if (frameSizes != null) {
+                    numFrames = frameSizes.length;
+                }
+                if (0 == numFrames) {
+                    fail("Improper picture length file");
+                }
+                int offset = 0;
+                int j = 0;
+                while (j < numFrames) {
+                    int flags = 0;
+                    int bufidx = codec.dequeueInputBuffer(5000);
+                    if (bufidx >= 0) {
+                        inputBuffers[bufidx].rewind();
+                        Log.i(TAG, "Got buffer index " + bufidx + " with length "
+                                + inputBuffers[bufidx].capacity());
+                        if (isHeader[j] == 1) {
+                            flags = MediaCodec.BUFFER_FLAG_CODEC_CONFIG;
+                        }
+                        if (j == (numFrames - 1)) {
+                            flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        }
+                        Log.i(TAG, "Feeding frame " + j + " with framelen " + frameSizes[j]
+                                + " offset " + offset + " and flags " + flags);
+                        inputBuffers[bufidx].put(blob, offset, frameSizes[j]);
+                        codec.queueInputBuffer(bufidx, 0, frameSizes[j], 0, flags);
+                        offset = offset + frameSizes[j];
+                        j++;
+                    } else {
+                        Log.i(TAG, "no input buffer");
+                    }
+                    bufidx = codec.dequeueOutputBuffer(info, 5000);
+                    if (bufidx >= 0) {
+                        codec.releaseOutputBuffer(bufidx, false);
+                    } else {
+                        Log.i(TAG, "no output buffer");
+                    }
+                }
+            } catch (Exception e) {
+                // ignore, not a security issue
+            } finally {
+                releaseCodec(codec);
+            }
+        }
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
         thr.stopLooper();
         thr.join();
     }

@@ -61,6 +61,7 @@ import android.graphics.PointF;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
 import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -86,7 +87,7 @@ import org.junit.runner.RunWith;
 @AppModeFull
 public class TouchExplorerTest {
     // Constants
-    private static final float GESTURE_LENGTH_INCHES = 1.0f;
+    private static final float GESTURE_LENGTH_MMS = 10.0f;
     private TouchExplorationStubAccessibilityService mService;
     private Instrumentation mInstrumentation;
     private UiAutomation mUiAutomation;
@@ -114,8 +115,7 @@ public class TouchExplorerTest {
     public final RuleChain mRuleChain =
             RuleChain.outerRule(mActivityRule).around(mServiceRule).around(mDumpOnFailureRule);
 
-    Point mCenter; // Center of screen. Gestures all start from this point.
-    PointF mTapLocation;
+    PointF mTapLocation; // Center of activity. Gestures all start from around this point.
     float mSwipeDistance;
     View mView;
 
@@ -129,17 +129,19 @@ public class TouchExplorerTest {
         mHasTouchscreen =
                 pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                         || pm.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
-        // Find screen size, check that it is big enough for gestures.
-        // Gestures will start in the center of the screen, so we need enough horiz/vert space.
+        // Find window size, check that it is big enough for gestures.
+        // Gestures will start in the center of the window, so we need enough horiz/vert space.
+        mService = mServiceRule.enableService();
+        mView = mActivityRule.getActivity().findViewById(R.id.full_screen_text_view);
         WindowManager windowManager =
                 (WindowManager)
                         mInstrumentation.getContext().getSystemService(Context.WINDOW_SERVICE);
         final DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getRealMetrics(metrics);
-        mScreenBigEnough = (metrics.widthPixels / (2 * metrics.xdpi) > GESTURE_LENGTH_INCHES);
+        mScreenBigEnough = mView.getWidth() / 2 >  TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_MM, GESTURE_LENGTH_MMS, metrics);
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        mService = mServiceRule.enableService();
-        mView = mActivityRule.getActivity().findViewById(R.id.full_screen_text_view);
+
         mView.setOnHoverListener(mHoverListener);
         mView.setOnTouchListener(mTouchListener);
         mInstrumentation.runOnMainSync(
@@ -149,9 +151,8 @@ public class TouchExplorerTest {
                     final int midX = mView.getWidth() / 2;
                     final int midY = mView.getHeight() / 2;
                     mView.getLocationOnScreen(viewLocation);
-                    mCenter = new Point(viewLocation[0] + midX, viewLocation[1] + midY);
-                    mTapLocation = new PointF(mCenter);
-                    mSwipeDistance = (viewLocation[0] + mView.getWidth()) / 4;
+                    mTapLocation = new PointF(viewLocation[0] + midX, viewLocation[1] + midY);
+                    mSwipeDistance = mView.getWidth() / 4;
                     mSwipeTimeMillis = (long) mSwipeDistance * 4;
                     mView.setOnClickListener(mClickListener);
                     mView.setOnLongClickListener(mLongClickListener);
@@ -482,7 +483,7 @@ public class TouchExplorerTest {
     @AppModeFull
     public void testGestureDetectionPassthrough_initiatesTouchExploration() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        setRightSideOfScreenGestureDetectionPassthrough();
+        setRightSideOfActivityWindowGestureDetectionPassthrough();
         // Swipe in the passthrough region. This should generate hover events.
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
         mHoverListener.assertPropagated(ACTION_HOVER_ENTER, ACTION_HOVER_MOVE, ACTION_HOVER_EXIT);
@@ -524,7 +525,7 @@ public class TouchExplorerTest {
     @AppModeFull
     public void testTouchExplorationPassthrough_sendsTouchEvents() {
         if (!mHasTouchscreen || !mScreenBigEnough) return;
-        setRightSideOfScreenTouchExplorationPassthrough();
+        setRightSideOfActivityWindowTouchExplorationPassthrough();
         // Swipe in the passthrough region. This should generate  touch events.
         dispatch(swipe(mTapLocation, add(mTapLocation, mSwipeDistance, 0)));
         mTouchListener.assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
@@ -576,16 +577,16 @@ public class TouchExplorerTest {
                 });
     }
 
-    private void setRightSideOfScreenGestureDetectionPassthrough() {
-        Region region = getRightSideOfScreenRegion();
+    private void setRightSideOfActivityWindowGestureDetectionPassthrough() {
+        Region region = getRightSideOfActivityWindowRegion();
         mService.runOnServiceSync(
                 () -> {
                     mService.setGestureDetectionPassthroughRegion(Display.DEFAULT_DISPLAY, region);
                 });
     }
 
-    private void setRightSideOfScreenTouchExplorationPassthrough() {
-        Region region = getRightSideOfScreenRegion();
+    private void setRightSideOfActivityWindowTouchExplorationPassthrough() {
+        Region region = getRightSideOfActivityWindowRegion();
         mService.runOnServiceSync(
                 () -> {
                     mService.setTouchExplorationPassthroughRegion(Display.DEFAULT_DISPLAY, region);
@@ -602,16 +603,14 @@ public class TouchExplorerTest {
                 });
     }
 
-    private Region getRightSideOfScreenRegion() {
-        WindowManager windowManager =
-                (WindowManager)
-                        mInstrumentation.getContext().getSystemService(Context.WINDOW_SERVICE);
-        final DisplayMetrics metrics = new DisplayMetrics();
-        windowManager.getDefaultDisplay().getRealMetrics(metrics);
-        int top = 0;
-        int left = metrics.widthPixels / 2;
-        int right = metrics.widthPixels;
-        int bottom = metrics.heightPixels;
+    private Region getRightSideOfActivityWindowRegion() {
+        int[] viewLocation = new int[2];
+        mView.getLocationOnScreen(viewLocation);
+
+        int top = viewLocation[1];
+        int left = viewLocation[0]  + mView.getWidth() / 2;
+        int right = viewLocation[0]  + mView.getWidth();
+        int bottom = viewLocation[1] + mView.getHeight();
         Region region = new Region(left, top, right, bottom);
         return region;
     }

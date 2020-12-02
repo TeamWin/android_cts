@@ -23,6 +23,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -38,7 +39,11 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
 
     private static final int BUFFER_SIZE_SEC = 3;
-    private static final int PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
+    private static final long DATA_REQUEST_TIMEOUT_MS = 6 * 1000; // 6s
+    private static final long DATA_REQUEST_POLL_PERIOD_MS = 1 * 1000; // 1s
+    private static final long PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
+    private static final int AUDIOTRACK_DEFAULT_SAMPLE_RATE = 44100;
+    private static final int AUDIOTRACK_DEFAULT_CHANNEL_MASK = AudioFormat.CHANNEL_OUT_STEREO;
 
     private static final AudioAttributes DEFAULT_ATTR = new AudioAttributes.Builder().build();
 
@@ -124,21 +129,23 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             while (written < read) {
                 int wrote = track.write(data, written, read - written,
                         AudioTrack.WRITE_BLOCKING);
-                Log.i(TAG, String.format("wrote %dbytes (%d out of %d)", wrote, written, read));
+                Log.i(TAG, String.format("wrote %d bytes (%d out of %d)", wrote, written, read));
                 if (wrote < 0) {
                     fail("Unable to write all read data, wrote " + written + " bytes");
                 }
                 written += wrote;
             }
+
             try {
-                Thread.sleep(BUFFER_SIZE_SEC * 1000);
-                synchronized(mPresEndLock) {
+                final long elapsed = checkDataRequest(DATA_REQUEST_TIMEOUT_MS);
+                synchronized (mPresEndLock) {
+                    track.setOffloadEndOfStream();
+
                     track.stop();
-                    mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS);
+                    mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS - elapsed);
                 }
-            } catch (InterruptedException e) { fail("Error while sleeping"); }
-            synchronized (mEventCallbackLock) {
-                assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
+            } catch (InterruptedException e) {
+                fail("Error while sleeping");
             }
             synchronized (mPresEndLock) {
                 // we are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
@@ -154,14 +161,30 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 track.unregisterStreamEventCallback(mCallback);
                 track.release();
             }
+        };
+    }
+
+    private long checkDataRequest(long timeout) throws Exception {
+        long checkStart = SystemClock.uptimeMillis();
+        boolean calledback = false;
+        while (SystemClock.uptimeMillis() - checkStart < timeout) {
+            synchronized (mEventCallbackLock) {
+                if (mCallback.mDataRequestCount > 0) {
+                    calledback = true;
+                    break;
+                }
+            }
+            Thread.sleep(DATA_REQUEST_POLL_PERIOD_MS);
         }
+        assertTrue("onDataRequest not called", calledback);
+        return (SystemClock.uptimeMillis() - checkStart);
     }
 
     private static AudioFormat getAudioFormatWithEncoding(int encoding) {
        return new AudioFormat.Builder()
             .setEncoding(encoding)
-            .setSampleRate(44100)
-            .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+            .setSampleRate(AUDIOTRACK_DEFAULT_SAMPLE_RATE)
+            .setChannelMask(AUDIOTRACK_DEFAULT_CHANNEL_MASK)
             .build();
     }
 
