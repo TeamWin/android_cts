@@ -31,6 +31,9 @@ import java.lang.annotation.Target;
  *
  * <p>Optionally, you can guarantee that these methods do not run outside of a work
  * profile by using {@link DeviceState}.
+ *
+ * <p>This annotation by default opts a test into multi-user presubmit. New tests should also be
+ * annotated {@link Postsubmit} until they are shown to meet the multi-user presubmit requirements.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

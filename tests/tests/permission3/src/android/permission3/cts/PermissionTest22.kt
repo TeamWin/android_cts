@@ -26,12 +26,9 @@ import org.junit.Test
 class PermissionTest22 : BaseUsePermissionTest() {
 
     @Before
-    fun assumeNotIndividuallyControlled() {
-        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
-    }
-
-    @Before
     fun installApp22AndApprovePermissionReview() {
+        Assume.assumeFalse(packageManager.arePermissionsIndividuallyControlled())
+
         installPackage(APP_APK_PATH_22)
         approvePermissionReview()
     }

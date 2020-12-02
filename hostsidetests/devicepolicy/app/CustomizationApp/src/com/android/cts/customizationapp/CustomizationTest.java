@@ -16,18 +16,11 @@
 
 package com.android.cts.customizationapp;
 
-import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
-
-import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.UserManager;
 import android.test.AndroidTestCase;
-import android.util.Log;
-
-import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BitmapUtils;
 import com.android.cts.customizationapp.R;
@@ -40,23 +33,6 @@ import com.android.cts.customizationapp.R;
  */
 public class CustomizationTest extends AndroidTestCase {
     private static final int WAITING_TIME_MS = 3 * 1000;
-    private static final String LOG_TAG = CustomizationTest.class.getName();
-    private static final int MAX_UI_AUTOMATION_RETRIES = 5;
-
-    private UiAutomation mUiAutomation;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mUiAutomation = getAutomation();
-        mUiAutomation.adoptShellPermissionIdentity("android.permission.INTERACT_ACROSS_USERS");
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-        mUiAutomation.dropShellPermissionIdentity();
-    }
 
     public void testSetWallpaper_disallowed() throws Exception {
         final WallpaperManager wallpaperManager = WallpaperManager.getInstance(mContext);
@@ -83,26 +59,5 @@ public class CustomizationTest extends AndroidTestCase {
         Thread.sleep(WAITING_TIME_MS);
         newWallpaper = BitmapUtils.getWallpaperBitmap(mContext);
         assertTrue(BitmapUtils.compareBitmaps(newWallpaper, originalWallpaper));
-    }
-
-    private UiAutomation getAutomation() {
-        if (mUiAutomation != null) {
-            return mUiAutomation;
-        }
-
-        int retries = MAX_UI_AUTOMATION_RETRIES;
-        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation = instrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
-        while (mUiAutomation == null && retries > 0) {
-            Log.e(LOG_TAG, "Failed to get UiAutomation");
-            retries--;
-            mUiAutomation = instrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
-        }
-
-        if (mUiAutomation == null) {
-            throw new AssertionError("Could not get UiAutomation");
-        }
-
-        return mUiAutomation;
     }
 }

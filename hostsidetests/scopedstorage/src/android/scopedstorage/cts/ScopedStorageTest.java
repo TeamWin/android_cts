@@ -207,7 +207,74 @@ public class ScopedStorageTest {
         }
     }
 
-   /**
+    /**
+     * Test that Installer packages can access app's private directories in Android/obb
+     */
+    @Test
+    public void testCheckInstallerAppAccessToObbDirs() throws Exception {
+        File[] obbDirs = getContext().getObbDirs();
+        try {
+            installApp(TEST_APP_A);
+            for (File obbDir : obbDirs) {
+                final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
+                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+                final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
+                try {
+                    assertThat(file.exists()).isFalse();
+
+                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
+                    assertFileAccess_readWrite(file);
+
+                    assertThat(file.delete()).isTrue();
+                    assertThat(file.exists()).isFalse();
+                    assertThat(file.createNewFile()).isTrue();
+                    assertThat(file.exists()).isTrue();
+                } finally {
+                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
+                }
+            }
+        } finally {
+            uninstallApp(TEST_APP_A);
+        }
+    }
+
+    /**
+     * Test that normal apps cannot access Android/data and Android/obb dirs of other apps
+     */
+    @Test
+    public void testCantAccessOtherAppsExternalDirs() throws Exception {
+        File[] obbDirs = getContext().getObbDirs();
+        File[] dataDirs = getContext().getExternalFilesDirs(null);
+        try {
+            installApp(TEST_APP_A);
+            for (File obbDir : obbDirs) {
+                final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
+                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+                final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
+                try {
+                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
+                    assertCannotReadOrWrite(file);
+                } finally {
+                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
+                }
+            }
+            for (File dataDir : dataDirs) {
+                final File otherAppExternalDataDir = new File(dataDir.getPath().replace(
+                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+                final File file = new File(otherAppExternalDataDir, NONMEDIA_FILE_NAME);
+                try {
+                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
+                    assertCannotReadOrWrite(file);
+                } finally {
+                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
+                }
+            }
+        } finally {
+            uninstallApp(TEST_APP_A);
+        }
+    }
+
+    /**
      * Test that we don't allow renaming to top level directory
      */
     @Test
@@ -1154,12 +1221,28 @@ public class ScopedStorageTest {
         assertThat(readPfd.getStatSize()).isEqualTo(writePfd.getStatSize());
     }
 
+    private void assertStartsWith(String actual, String prefix, boolean expected) throws Exception {
+        String message = "String \"" + actual + "\" should start with \"" + prefix + "\"";
+
+        if (expected) {
+            assertTrue(message, actual.startsWith(prefix));
+        } else {
+            assertFalse(message, actual.startsWith(prefix));
+        }
+    }
+
     private void assertLowerFsFd(ParcelFileDescriptor pfd) throws Exception {
-        assertThat(Os.readlink("/proc/self/fd/" + pfd.getFd()).startsWith("/storage")).isTrue();
+        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
+        String prefix = "/storage";
+
+        assertStartsWith(path, prefix, true);
     }
 
     private void assertUpperFsFd(ParcelFileDescriptor pfd) throws Exception {
-        assertThat(Os.readlink("/proc/self/fd/" + pfd.getFd()).startsWith("/mnt/user")).isTrue();
+        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
+        String prefix = "/mnt/user";
+
+        assertStartsWith(path, prefix, true);
     }
 
     private static void assertCanCreateFile(File file) throws IOException {

@@ -24,6 +24,7 @@ import android.service.carrier.CarrierService;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.ims.SipMessage;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -43,6 +44,9 @@ public class ImsUtils {
     public static final int ITEM_NON_COMPRESSED = 2000;
     // Id for compressed auto configuration xml.
     public static final int ITEM_COMPRESSED = 2001;
+    // TODO Replace with a real sip message once that logic is in.
+    public static final String TEST_TRANSACTION_ID = "z9hG4bK.TeSt";
+    public static final SipMessage TEST_SIP_MESSAGE = new SipMessage("A", "B", new byte[0]);
 
     public static boolean shouldTestTelephony() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
