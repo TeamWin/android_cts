@@ -1167,6 +1167,19 @@ public class ImsServiceTest {
         assertNotNull(capCb);
         assertTrue(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE));
 
+        // We should not have call composer availability here.
+        capCb = waitForResult(mQueue);
+        assertNotNull(capCb);
+        assertFalse(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+
+        // Now enable call composer availability
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities(
+                        MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+        capCb = waitForResult(mQueue);
+        assertNotNull(capCb);
+        assertTrue(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+
         try {
             automan.adoptShellPermissionIdentity();
             assertTrue(ImsUtils.retryUntilTrue(() -> mmTelManager.isAvailable(
