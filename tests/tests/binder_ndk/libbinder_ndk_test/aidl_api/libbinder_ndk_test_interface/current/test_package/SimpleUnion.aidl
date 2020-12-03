@@ -23,4 +23,5 @@ union SimpleUnion {
   test_package.ByteEnum d;
   test_package.ByteEnum[] e;
   @nullable test_package.Bar f;
+  const String S1 = "a string constant";
 }
