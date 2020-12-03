@@ -22,9 +22,6 @@
     </queries>
 
     <application>
-        <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
-             android:exported="true"/>
-
         <!-- This activity is necessary to register the test app as the default home activity (i.e.
                          to receive SESSION_COMMITTED broadcasts.) -->
         <activity android:name=".LauncherActivity"

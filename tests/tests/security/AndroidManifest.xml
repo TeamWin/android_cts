@@ -92,8 +92,6 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
-             android:exported="true"/>
         <receiver android:name="android.security.cts.PackageVerificationsBroadcastReceiver"
              android:permission="android.permission.BIND_PACKAGE_VERIFIER"
              android:exported="true">
