@@ -23,7 +23,7 @@ import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 import android.webkit.WebViewRenderProcess;
 import android.webkit.WebViewRenderProcessClient;
-
+import com.android.compatibility.common.util.NullWebViewUtils;
 import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.CountDownLatch;
@@ -44,7 +44,9 @@ public class WebViewRenderProcessClientTest extends ActivityInstrumentationTestC
         super.setUp();
         final WebViewCtsActivity activity = getActivity();
         WebView webView = activity.getWebView();
-        mOnUiThread = new WebViewOnUiThread(webView);
+        if (webView != null) {
+            mOnUiThread = new WebViewOnUiThread(webView);
+        }
     }
 
     @Override
@@ -146,11 +148,18 @@ public class WebViewRenderProcessClientTest extends ActivityInstrumentationTestC
 
     // TODO(tobiasjs) enable after webview drop
     public void disabled_testWebViewRenderProcessClientWithoutExecutor() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
         testWebViewRenderProcessClientOnExecutor(null);
     }
 
     // TODO(tobiasjs) enable after webview drop
     public void disabled_testWebViewRenderProcessClientWithExecutor() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         final AtomicInteger executorCount = new AtomicInteger();
         testWebViewRenderProcessClientOnExecutor(new Executor() {
             @Override
@@ -164,6 +173,10 @@ public class WebViewRenderProcessClientTest extends ActivityInstrumentationTestC
 
     // TODO(tobiasjs) enable after webview drop
     public void disabled_testSetWebViewRenderProcessClient() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         assertNull("Initially the renderer client should be null",
                 mOnUiThread.getWebViewRenderProcessClient());
 
