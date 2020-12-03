@@ -432,6 +432,7 @@ public class TestMedia extends SecurityTestCase {
      * b/17769851
      * Vulnerability Behaviour: EXIT_VULNERABLE (113)
      **/
+    @Test
     @SecurityTest(minPatchLevel = "2015-12")
     public void testPocCVE_2015_6616() throws Exception {
         pocPusher.only64();
