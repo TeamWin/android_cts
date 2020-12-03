@@ -15,66 +15,6 @@
 #
 
 LOCAL_PATH:= $(call my-dir)
-include $(CLEAR_VARS)
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_MULTILIB := both
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-under, src) \
-                    ../ForceStopHelperApp/src/com/android/cts/forcestophelper/Constants.java
-
-LOCAL_AIDL_INCLUDES := \
-    frameworks/native/aidl/gui
-
-LOCAL_USE_AAPT2 := true
-
-LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
-                               compatibility-common-util-devicesidelib \
-                               cts-sensors-tests \
-                               cts-camera-performance-tests \
-                               ctstestrunner-axt \
-                               apache-commons-math \
-                               androidplot \
-                               ctsverifier-opencv \
-                               core-tests-support \
-                               androidx.legacy_legacy-support-v4  \
-                               mockito-target-minus-junit4 \
-                               mockwebserver \
-                               compatibility-device-util-axt \
-                               platform-test-annotations \
-                               cts-security-test-support-library \
-                               cts-midi-lib \
-                               cbor-java \
-                               CtsCameraUtils
-
-LOCAL_STATIC_ANDROID_LIBRARIES := \
-    androidx.legacy_legacy-support-v4
-
-LOCAL_JAVA_LIBRARIES += telephony-common
-LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
-LOCAL_JAVA_LIBRARIES += android.test.base.stubs
-LOCAL_JAVA_LIBRARIES += android.test.mock.stubs
-LOCAL_JAVA_LIBRARIES += android.car
-LOCAL_JAVA_LIBRARIES += voip-common
-LOCAL_JAVA_LIBRARIES += truth-prebuilt
-
-LOCAL_PACKAGE_NAME := CtsVerifier
-LOCAL_PRIVATE_PLATFORM_APIS := true
-
-LOCAL_JNI_SHARED_LIBRARIES := \
-	libctsverifier_jni \
-	libctsnativemidi_jni \
-	libaudioloopback_jni \
-
-LOCAL_PROGUARD_FLAG_FILES := proguard.flags
-
-LOCAL_DEX_PREOPT := false
--include cts/error_prone_rules_tests.mk
-include $(BUILD_PACKAGE)
-
 # Build CTS verifier framework as a libary.
 
 include $(CLEAR_VARS)
@@ -100,14 +40,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-device-util-axt
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
-
-# opencv library
-include $(CLEAR_VARS)
-
-LOCAL_PREBUILT_STATIC_JAVA_LIBRARIES := \
-        ctsverifier-opencv:libs/opencv3-android.jar
-
-include $(BUILD_MULTI_PREBUILT)
 
 pre-installed-apps := \
     CtsEmptyDeviceAdmin \
