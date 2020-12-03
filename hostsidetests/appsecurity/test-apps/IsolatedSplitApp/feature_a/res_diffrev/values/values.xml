@@ -16,4 +16,5 @@
 
 <resources>
     <string name="feature_a_string">Feature A String Diff Revision</string>
+    <string name="theme_name">Feature A Theme Diff Revision</string>
 </resources>

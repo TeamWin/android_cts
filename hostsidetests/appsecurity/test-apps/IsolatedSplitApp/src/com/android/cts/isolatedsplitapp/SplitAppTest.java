@@ -315,18 +315,26 @@ public class SplitAppTest {
 
     @Test
     public void shouldLoadFeatureADiffRevision() throws Exception {
-        final Context context = mFeatureActivityRule.launchActivity(
+        final Activity activity = mActivityRule.launchActivity(
                 new Intent().setComponent(FEATURE_A_ACTIVITY));
-        final Resources resources = context.getResources();
+        final TestTheme testTheme = new TestTheme(activity, TestTheme.THEME_FEATURE_A);
+        final Resources resources = activity.getResources();
         assertThat(resources, notNullValue());
 
         assertThat(resources.getString(R.string.base_string), equalTo("Base String Default"));
+        new TestTheme(activity, R.style.Theme_Base).assertThemeBaseValues();
 
         int resourceId = resources.getIdentifier(FEATURE_A_STRING, null, null);
         assertThat(resources.getString(resourceId), equalTo("Feature A String Diff Revision"));
+        testTheme.assertThemeFeatureAValuesDiffRev();
 
-        assertActivitiesDoNotExist(context, FEATURE_B_ACTIVITY, FEATURE_C_ACTIVITY);
-        assertResourcesDoNotExist(context, FEATURE_B_STRING, FEATURE_C_STRING);
+        // Test the theme applied to the activity correctly
+        assertActivityThemeApplied(activity, testTheme);
+        assertTextViewBGColor(activity, FEATURE_A_TEXTVIEW_ID, testTheme.mColorBackground);
+
+        assertActivitiesDoNotExist(activity, FEATURE_B_ACTIVITY, FEATURE_C_ACTIVITY);
+        assertResourcesDoNotExist(activity, FEATURE_B_STRING, FEATURE_C_STRING,
+                TestTheme.THEME_FEATURE_B, TestTheme.THEME_FEATURE_C);
     }
 
     @Test
@@ -347,7 +355,7 @@ public class SplitAppTest {
 
     private void assertActivityDoNotExist(ComponentName activity) {
         try {
-            mFeatureActivityRule.launchActivity(new Intent().setComponent(activity));
+            mActivityRule.launchActivity(new Intent().setComponent(activity));
             fail("Activity " + activity + " is accessible");
         } catch (RuntimeException e) {
             // Pass.
