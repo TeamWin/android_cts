@@ -16,6 +16,7 @@
 
 package com.android.cts.appdataisolation.appa;
 
+import static com.android.cts.appdataisolation.common.FileUtils.APPB_PKG;
 import static com.android.cts.appdataisolation.common.FileUtils.CE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.DE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.EXTERNAL_DATA_FILE_NAME;
@@ -26,6 +27,7 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAc
 import static com.android.cts.appdataisolation.common.FileUtils.assertFileDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists;
 import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
+import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId;
 
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -171,7 +173,8 @@ public class AppATests {
 
     @Test
     public void testAppACurProfileDataAccessible() {
-        assertDirIsAccessible("/data/misc/profiles/cur/0/" + mContext.getPackageName());
+        assertDirIsAccessible("/data/misc/profiles/cur/"+ getCurrentUserId() + "/"
+                + mContext.getPackageName());
     }
 
     @Test
@@ -181,12 +184,12 @@ public class AppATests {
 
     @Test
     public void testCannotAccessAppBDataDir() throws Exception {
-        ApplicationInfo applicationInfo = mContext.getPackageManager().getApplicationInfo(
-                FileUtils.APPB_PKG,0);
+        ApplicationInfo applicationInfo = mContext.getPackageManager()
+                .getApplicationInfo(APPB_PKG, 0);
         assertDirDoesNotExist(applicationInfo.dataDir);
         assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
-        assertDirDoesNotExist("/data/data/" + FileUtils.APPB_PKG);
-        assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.APPB_PKG);
+        assertDirDoesNotExist("/data/data/" + APPB_PKG);
+        assertDirDoesNotExist("/data/misc/profiles/cur/" + getCurrentUserId() + "/" + APPB_PKG);
         assertDirIsNotAccessible("/data/misc/profiles/ref");
     }
 
