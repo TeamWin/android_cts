@@ -937,6 +937,7 @@ public class MediaSessionTest extends AndroidTestCase {
 
         MediaController.PlaybackInfo info = controller.getPlaybackInfo();
         assertNotNull(info);
+        info.toString(); // Test that calling PlaybackInfo.toString() does not crash.
         assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL, info.getPlaybackType());
         AudioAttributes attrs = info.getAudioAttributes();
         assertNotNull(attrs);
