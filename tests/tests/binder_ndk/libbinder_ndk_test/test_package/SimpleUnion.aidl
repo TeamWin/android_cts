@@ -10,4 +10,6 @@ union SimpleUnion {
     ByteEnum d;
     ByteEnum[] e;
     @nullable Bar f;
+
+    const String S1 = "a string constant";
 }
