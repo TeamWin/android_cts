@@ -33,6 +33,8 @@
         <option name="test-file-name" value="CtsCantSaveState1.apk" />
         <option name="test-file-name" value="CtsCantSaveState2.apk" />
         <option name="test-file-name" value="NotificationDelegator.apk" />
+        <option name="test-file-name" value="NotificationProvider.apk" />
+        <option name="test-file-name" value="NotificationListener.apk" />
         <option name="test-file-name" value="StorageDelegator.apk" />
         <option name="test-file-name" value="CtsActivityManagerApi29.apk" />
     </target_preparer>

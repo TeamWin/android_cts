@@ -378,6 +378,24 @@ public class EphemeralTest extends BaseAppSecurityTest {
                 "testInstallPermissionGranted");
     }
 
+    @Test
+    public void testInstallPermissionNotGrantedInPackageInfo() throws Exception {
+        if (mIsUnsupportedDevice) {
+            return;
+        }
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testInstallPermissionNotGrantedInPackageInfo");
+    }
+
+    @Test
+    public void testInstallPermissionGrantedInPackageInfo() throws Exception {
+        if (mIsUnsupportedDevice) {
+            return;
+        }
+        Utils.runDeviceTestsAsCurrentUser(getDevice(), EPHEMERAL_1_PKG, TEST_CLASS,
+                "testInstallPermissionGrantedInPackageInfo");
+    }
+
     /** Test for android.permission.INSTANT_APP_FOREGROUND_SERVICE */
     @Test
     public void testStartForegroundService() throws Exception {

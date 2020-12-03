@@ -139,27 +139,33 @@ public class ViewUnbufferedTest {
 
     // If resampling happened, the coordinates and event time would resample to new position.
     private static void compareEvent(final MotionEvent sentEvent,
-            final ReceivedEvent receivedEvent) {
+            final ReceivedEvent receivedEvent, final int[] offsets) {
         assertEquals(sentEvent.getAction(), receivedEvent.mAction);
-        assertEquals((int) sentEvent.getX(), receivedEvent.mX, 0);
+        assertEquals((int) sentEvent.getX(), receivedEvent.mX + offsets[0]);
+        assertEquals((int) sentEvent.getY(), receivedEvent.mY + offsets[1]);
         assertEquals(sentEvent.getEventTime(), receivedEvent.mEventTime);
         assertEquals(sentEvent.getSource(), receivedEvent.mSource);
     }
 
     private void compareEvents(final BlockingQueue<MotionEvent> sentEvents,
-            final BlockingQueue<ReceivedEvent> receivedEvents) {
+            final BlockingQueue<ReceivedEvent> receivedEvents, final int[] offsets) {
         assertEquals(sentEvents.size(), receivedEvents.size());
 
         for (int i = 0; i < sentEvents.size(); i++) {
             MotionEvent sentEvent = sentEvents.poll();
             ReceivedEvent receivedEvent = receivedEvents.poll();
-            compareEvent(sentEvent, receivedEvent);
+            compareEvent(sentEvent, receivedEvent, offsets);
         }
     }
 
-    private Point getViewCenterOnScreen(View view) {
+    private int[] getViewLocationOnScreen(View view) {
         final int[] xy = new int[2];
         view.getLocationOnScreen(xy);
+        return xy;
+    }
+
+    private Point getViewCenterOnScreen(View view) {
+        final int[] xy = getViewLocationOnScreen(view);
         final int viewWidth = view.getWidth();
         final int viewHeight = view.getHeight();
 
@@ -276,7 +282,7 @@ public class ViewUnbufferedTest {
                 InputDevice.SOURCE_TOUCHSCREEN);
 
         assertTrue(mMaxReceivedCountPerFrame > 1);
-        compareEvents(mSentEvents, mReceivedEvents);
+        compareEvents(mSentEvents, mReceivedEvents, getViewLocationOnScreen(mView));
     }
 
     // Test view requested touch screen unbuffered from MotionEvent.
@@ -295,7 +301,7 @@ public class ViewUnbufferedTest {
                 InputDevice.SOURCE_TOUCHSCREEN);
 
         assertTrue(mMaxReceivedCountPerFrame > 1);
-        compareEvents(mSentEvents, mReceivedEvents);
+        compareEvents(mSentEvents, mReceivedEvents, getViewLocationOnScreen(mView));
     }
 
     // Test view requested unbuffered source but reset it later.
@@ -330,7 +336,7 @@ public class ViewUnbufferedTest {
         sendJoystickEvents(0, 0);
 
         assertTrue(mMaxReceivedCountPerFrame > 1);
-        compareEvents(mSentEvents, mReceivedEvents);
+        compareEvents(mSentEvents, mReceivedEvents, new int[]{0, 0});
     }
 
     // Test view requested joystick unbuffered but no focus.
@@ -362,7 +368,7 @@ public class ViewUnbufferedTest {
                 InputDevice.SOURCE_TOUCHSCREEN);
 
         assertTrue(mMaxReceivedCountPerFrame > 1);
-        compareEvents(mSentEvents, mReceivedEvents);
+        compareEvents(mSentEvents, mReceivedEvents, getViewLocationOnScreen(mView));
     }
 
     // Test view requested different source unbuffered from the received events.

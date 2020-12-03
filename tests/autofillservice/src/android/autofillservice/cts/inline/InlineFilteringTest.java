@@ -70,7 +70,6 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
                         .setInlinePresentation(createInlinePresentation("Second Dude"))
                         .build());
         sReplier.addResponse(builder.build());
-        mActivity.expectAutoFill("test", "tweet");
 
         // Trigger autofill, then make sure it's showing initially.
         mUiBot.selectByRelativeId(ID_USERNAME);
@@ -93,6 +92,7 @@ public class InlineFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.waitForIdleSync();
         mUiBot.assertDatasets("Second Dude");
 
+        mActivity.expectAutoFill("test", "tweet");
         mUiBot.selectDataset("Second Dude");
         mUiBot.waitForIdleSync();
         mActivity.assertAutoFilled();

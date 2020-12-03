@@ -64,7 +64,6 @@ public class MediaPlayerVerifierActivity extends InteractiveVerifierActivity {
         cases.add(new MediaPlayerTestCase(R.string.qs_media_player_progress_bar));
         cases.add(new MediaPlayerTestCase(R.string.qs_media_player_actions));
         cases.add(new MediaPlayerTestCase(R.string.qs_media_player_output_switcher));
-        cases.add(new MediaPlayerTestCase(R.string.qs_media_player_compact_actions));
         return cases;
     }
 

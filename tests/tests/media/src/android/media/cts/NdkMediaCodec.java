@@ -28,6 +28,8 @@ import java.nio.ByteBuffer;
 public class NdkMediaCodec implements MediaCodecWrapper {
 
     private static final String CSD_0 = "csd-0";
+    private static final String CSD_1 = "csd-1";
+    private static final String CSD_2 = "csd-2";
     private long mNdkMediaCodec;
     private final String mName;
 
@@ -63,7 +65,8 @@ public class NdkMediaCodec implements MediaCodecWrapper {
             int bitRate,
             int frameRate,
             int iFrameInterval,
-            ByteBuffer csd,
+            ByteBuffer csd0,
+            ByteBuffer csd1,
             int flags,
             int lowLatency,
             Surface surface);
@@ -118,12 +121,25 @@ public class NdkMediaCodec implements MediaCodecWrapper {
         int iFrameInterval = format.getInteger(MediaFormat.KEY_I_FRAME_INTERVAL, -1);
         int lowLatency = format.getInteger(MediaFormat.KEY_LOW_LATENCY, -1);
 
-        ByteBuffer csdBufCopy = null;
+        ByteBuffer csd0BufCopy = null;
         if (format.containsKey(CSD_0)) {
-            ByteBuffer csdBufOld = format.getByteBuffer(CSD_0);
-            csdBufCopy = ByteBuffer.allocateDirect(csdBufOld.remaining());
-            csdBufCopy.put(csdBufOld);
-            csdBufCopy.position(0);
+            ByteBuffer csd0BufOld = format.getByteBuffer(CSD_0);
+            csd0BufCopy = ByteBuffer.allocateDirect(csd0BufOld.remaining());
+            csd0BufCopy.put(csd0BufOld);
+            csd0BufCopy.position(0);
+        }
+
+        ByteBuffer csd1BufCopy = null;
+        if (format.containsKey(CSD_1)) {
+            ByteBuffer csd1BufOld = format.getByteBuffer(CSD_1);
+            csd1BufCopy = ByteBuffer.allocateDirect(csd1BufOld.remaining());
+            csd1BufCopy.put(csd1BufOld);
+            csd1BufCopy.position(0);
+        }
+
+        // fail loudly so the test can be properly extended.
+        if (format.containsKey(CSD_2)) {
+            throw new UnsupportedOperationException("test error: does not handle csd-2");
         }
 
         AMediaCodecConfigure(
@@ -135,7 +151,8 @@ public class NdkMediaCodec implements MediaCodecWrapper {
                 bitRate,
                 frameRate,
                 iFrameInterval ,
-                csdBufCopy,
+                csd0BufCopy,
+                csd1BufCopy,
                 flags,
                 lowLatency,
                 surface);

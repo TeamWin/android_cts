@@ -16,6 +16,13 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.MetricsReportLog;
+import com.android.compatibility.common.util.ResultType;
+import com.android.compatibility.common.util.ResultUnit;
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.testtype.IAbiReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -24,10 +31,14 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.ddmlib.Log;
 
+import org.junit.rules.TestName;
+import org.junit.Rule;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
+import java.util.Map;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.concurrent.Callable;
@@ -50,6 +61,12 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
     private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
     private HostsideMainlineModuleDetector mainlineModuleDetector = new HostsideMainlineModuleDetector(this);
 
+    @Rule public TestName testName = new TestName();
+
+    private static Map<ITestDevice, IBuildInfo> sBuildInfo = new HashMap<>();
+    private static Map<ITestDevice, IAbi> sAbi = new HashMap<>();
+    private static Map<ITestDevice, String> sTestName = new HashMap<>();
+
     /**
      * Waits for device to be online, marks the most recent boottime of the device
      */
@@ -62,6 +79,9 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
         //     Specifically time when app framework starts
 
         oomCatcher.start();
+        sBuildInfo.put(getDevice(), getBuild());
+        sAbi.put(getDevice(), getAbi());
+        sTestName.put(getDevice(), testName.getMethodName());
     }
 
     /**
@@ -101,6 +121,18 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
 
             // TODO(badash@): add ability to catch runtime restart
         }
+    }
+
+    public static IBuildInfo getBuildInfo(ITestDevice device) {
+        return sBuildInfo.get(device);
+    }
+
+    public static IAbi getAbi(ITestDevice device) {
+        return sAbi.get(device);
+    }
+
+    public static String getTestName(ITestDevice device) {
+        return sTestName.get(device);
     }
 
     // TODO convert existing assertMatches*() to RegexUtils.assertMatches*()
@@ -190,7 +222,39 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
      * Check if a driver is present on a machine.
      */
     protected boolean containsDriver(ITestDevice device, String driver) throws Exception {
-        return AdbUtils.runCommandGetExitCode("test -r " + driver, device) == 0;
+        boolean containsDriver = AdbUtils.runCommandGetExitCode("test -r " + driver, device) == 0;
+
+        MetricsReportLog reportLog = buildMetricsReportLog(getDevice());
+        reportLog.addValue("path", driver, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.addValue("exists", containsDriver, ResultType.NEUTRAL, ResultUnit.NONE);
+        reportLog.submit();
+
+        return containsDriver;
+    }
+
+    protected static MetricsReportLog buildMetricsReportLog(ITestDevice device) {
+        IBuildInfo buildInfo = getBuildInfo(device);
+        IAbi abi = getAbi(device);
+        String testName = getTestName(device);
+
+        StackTraceElement[] stacktraces = Thread.currentThread().getStackTrace();
+        int stackDepth = 2; // 0: getStackTrace(), 1: buildMetricsReportLog, 2: caller
+        String className = stacktraces[stackDepth].getClassName();
+        String methodName = stacktraces[stackDepth].getMethodName();
+        String classMethodName = String.format("%s#%s", className, methodName);
+
+        // The stream name must be snake_case or else json formatting breaks
+        String streamName = methodName.replaceAll("(\\p{Upper})", "_$1").toLowerCase();
+
+        MetricsReportLog reportLog = new MetricsReportLog(
+            buildInfo,
+            abi.getName(),
+            classMethodName,
+            "CtsSecurityBulletinHostTestCases",
+            streamName,
+            true);
+        reportLog.addValue("test_name", testName, ResultType.NEUTRAL, ResultUnit.NONE);
+        return reportLog;
     }
 
     private long getDeviceUptime() throws DeviceNotAvailableException {

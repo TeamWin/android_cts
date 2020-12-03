@@ -31,6 +31,7 @@ import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiUsabilityStatsEntry;
+import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
@@ -40,6 +41,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -158,6 +160,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testWifiUsabilityStatsEntry() throws Exception {
+        // Usability stats collection only supported by vendor version Q and above.
+        if (!PropertyUtil.isVendorApiLevelAtLeast(Build.VERSION_CODES.Q)) {
+            return;
+        }
         CountDownLatch countDownLatch = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestUsabilityStatsListener usabilityStatsListener =

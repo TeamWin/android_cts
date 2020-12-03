@@ -328,6 +328,13 @@ public class WebViewZoomTest extends ActivityInstrumentationTestCase2<WebViewCts
             ScaleChangedState state = waitForNextScaleChange();
             assertEquals(currentScale, state.mOldScale);
 
+
+            // Zoom scale changes can come in multiple steps and the initial scale may have
+            // conversion errors. Wait for the first significant scale change.
+            while (Math.abs(state.mNewScale - state.mOldScale) < PAGE_SCALE_EPSILON) {
+                state = waitForNextScaleChange();
+            }
+
             // Check that we zoomed in the expected direction wrt. the current scale.
             if (scaleAmount > 1.0f) {
                 assertThat(

@@ -239,10 +239,11 @@ public class AppATests {
         mContext.registerReceiver(receiver, new IntentFilter(Intent.ACTION_BOOT_COMPLETED));
 
         testUnlockDevice();
-        setUpExternalStoragePaths();
 
         assertTrue("User not unlocked", unlocked.await(1, TimeUnit.MINUTES));
         assertTrue("No locked boot complete", bootCompleted.await(1, TimeUnit.MINUTES));
+
+        setUpExternalStoragePaths();
 
         // The test app process should be still running, make sure CE DE now is available
         testAppACeDataExists();
