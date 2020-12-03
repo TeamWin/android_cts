@@ -234,6 +234,22 @@ public class SplitAppTest {
     }
 
     @Test
+    public void shouldLoadFeatureADiffRevision() throws Exception {
+        final Context context = mFeatureActivityRule.launchActivity(
+                new Intent().setComponent(FEATURE_A_ACTIVITY));
+        final Resources resources = context.getResources();
+        assertThat(resources, notNullValue());
+
+        assertThat(resources.getString(R.string.base_string), equalTo("Base String Default"));
+
+        int resourceId = resources.getIdentifier(FEATURE_A_STRING, null, null);
+        assertThat(resources.getString(resourceId), equalTo("Feature A String Diff Revision"));
+
+        assertActivitiesDoNotExist(context, FEATURE_B_ACTIVITY, FEATURE_C_ACTIVITY);
+        assertResourcesDoNotExist(context, FEATURE_B_STRING, FEATURE_C_STRING);
+    }
+
+    @Test
     public void shouldLoadFeatureAAndBAndCReceivers() throws Exception {
         final Context context = mAppContextTestRule.getContext();
         final ExtrasResultReceiver receiver = sendOrderedBroadcast(context);
@@ -242,6 +258,20 @@ public class SplitAppTest {
         assertThat(results.getString("feature_a"), equalTo("Feature A String Default"));
         assertThat(results.getString("feature_b"), equalTo("Feature B String Default"));
         assertThat(results.getString("feature_c"), equalTo("Feature C String Default"));
+    }
+
+    @Test
+    public void shouldNotFoundFeatureC() throws Exception {
+        assertActivityDoNotExist(FEATURE_C_ACTIVITY);
+    }
+
+    private void assertActivityDoNotExist(ComponentName activity) {
+        try {
+            mFeatureActivityRule.launchActivity(new Intent().setComponent(activity));
+            fail("Activity " + activity + " is accessible");
+        } catch (RuntimeException e) {
+            // Pass.
+        }
     }
 
     private static void assertActivitiesDoNotExist(Context context, ComponentName... activities) {
