@@ -291,7 +291,8 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
 
     protected final CustomDescription.Builder newCustomDescriptionBuilder(Intent intent) {
         final RemoteViews presentation = newTemplate();
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE);
         presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
         return new CustomDescription.Builder(presentation);
     }

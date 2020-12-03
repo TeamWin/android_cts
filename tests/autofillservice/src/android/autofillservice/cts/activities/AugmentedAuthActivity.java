@@ -57,7 +57,8 @@ public class AugmentedAuthActivity extends AbstractAutoFillActivity {
         intent.putExtra(EXTRA_DATASET_TO_RETURN, datasetToReturn);
         intent.putExtra(EXTRA_CLIENT_STATE_TO_RETURN, clientStateToReturn);
         intent.putExtra(EXTRA_RESULT_CODE_TO_RETURN, resultCodeToReturn);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, requestCode, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, requestCode, intent,
+                PendingIntent.FLAG_IMMUTABLE);
         sPendingIntents.add(pendingIntent);
         return pendingIntent.getIntentSender();
     }

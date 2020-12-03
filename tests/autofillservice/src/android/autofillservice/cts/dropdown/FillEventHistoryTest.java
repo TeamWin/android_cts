@@ -37,6 +37,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.FillRequest;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
@@ -56,6 +57,7 @@ import java.util.Set;
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
+@Presubmit
 @AppModeFull(reason = "Service-specific test")
 public class FillEventHistoryTest extends FillEventHistoryCommonTestCase {
 

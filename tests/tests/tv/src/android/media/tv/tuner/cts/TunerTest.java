@@ -17,31 +17,30 @@
 package android.media.tv.tuner.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-
+import android.content.pm.PackageManager;
 import android.media.tv.tuner.DemuxCapabilities;
 import android.media.tv.tuner.Descrambler;
-import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Lnb;
+import android.media.tv.tuner.LnbCallback;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
 import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
-
-import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.AudioDescriptor;
+import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.DownloadEvent;
+import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
 import android.media.tv.tuner.filter.FilterEvent;
-import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.IpCidChangeEvent;
 import android.media.tv.tuner.filter.IpFilterConfiguration;
 import android.media.tv.tuner.filter.IpPayloadEvent;
@@ -53,22 +52,19 @@ import android.media.tv.tuner.filter.ScramblingStatusEvent;
 import android.media.tv.tuner.filter.SectionEvent;
 import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
 import android.media.tv.tuner.filter.Settings;
-import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.filter.TemiEvent;
 import android.media.tv.tuner.filter.TimeFilter;
+import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.filter.TsRecordEvent;
-
 import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
 import android.media.tv.tuner.frontend.AnalogFrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Atsc3FrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3PlpInfo;
-import android.media.tv.tuner.frontend.Atsc3PlpSettings;
 import android.media.tv.tuner.frontend.AtscFrontendCapabilities;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
 import android.media.tv.tuner.frontend.DvbcFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbcFrontendSettings;
-import android.media.tv.tuner.frontend.DvbsCodeRate;
 import android.media.tv.tuner.frontend.DvbsFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbsFrontendSettings;
 import android.media.tv.tuner.frontend.DvbtFrontendCapabilities;
@@ -76,8 +72,8 @@ import android.media.tv.tuner.frontend.DvbtFrontendSettings;
 import android.media.tv.tuner.frontend.FrontendCapabilities;
 import android.media.tv.tuner.frontend.FrontendInfo;
 import android.media.tv.tuner.frontend.FrontendSettings;
-import android.media.tv.tuner.frontend.FrontendStatus.Atsc3PlpTuningInfo;
 import android.media.tv.tuner.frontend.FrontendStatus;
+import android.media.tv.tuner.frontend.FrontendStatus.Atsc3PlpTuningInfo;
 import android.media.tv.tuner.frontend.Isdbs3FrontendCapabilities;
 import android.media.tv.tuner.frontend.Isdbs3FrontendSettings;
 import android.media.tv.tuner.frontend.IsdbsFrontendCapabilities;
@@ -91,22 +87,28 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerTest {
     private static final String TAG = "MediaTunerTest";
+
+    @Rule
+    public RequiredFeatureRule featureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_TUNER);
 
     private static final int TIMEOUT_MS = 10000;
 
@@ -119,7 +121,6 @@ public class TunerTest {
         mContext = InstrumentationRegistry.getTargetContext();
         InstrumentationRegistry
                 .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        if (!hasTuner()) return;
         mTuner = new Tuner(mContext, null, 100);
     }
 
@@ -132,14 +133,16 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTunerConstructor() throws Exception {
-        if (!hasTuner()) return;
         assertNotNull(mTuner);
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTunerVersion() {
-        if (!hasTuner()) return;
         assertNotNull(mTuner);
         int version = TunerVersionChecker.getTunerVersion();
         assertTrue(version >= TunerVersionChecker.TUNER_VERSION_1_0);
@@ -147,8 +150,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTuning() throws Exception {
-        if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
 
@@ -161,8 +165,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testScanning() throws Exception {
-        if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
         for (int id : ids) {
@@ -184,8 +189,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testFrontendStatus() throws Exception {
-        if (!hasTuner()) return;
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
 
@@ -282,8 +288,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testLnb() throws Exception {
-        if (!hasTuner()) return;
         Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
         if (lnb == null) return;
         assertEquals(lnb.setVoltage(Lnb.VOLTAGE_5V), Tuner.RESULT_SUCCESS);
@@ -295,8 +302,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenLnbByname() throws Exception {
-        if (!hasTuner()) return;
         Lnb lnb = mTuner.openLnbByName("default", getExecutor(), getLnbCallback());
         if (lnb != null) {
             lnb.close();
@@ -304,9 +312,10 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testCiCam() throws Exception {
-        if (!hasTuner()) return;
-        // open filter to get demux resource
+// open filter to get demux resource
         mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
 
@@ -315,9 +324,10 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSyncId() throws Exception {
-        if (!hasTuner()) return;
-        // open filter to get demux resource
+// open filter to get demux resource
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
         int id = mTuner.getAvSyncHwId(f);
@@ -327,8 +337,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testReadFilter() throws Exception {
-        if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
@@ -363,8 +374,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAudioFilterStreamTypeConfig() throws Exception {
-        if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
@@ -388,8 +400,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTimeFilter() throws Exception {
-        if (!hasTuner()) return;
         if (!mTuner.getDemuxCapabilities().isTimeFilterSupported()) return;
         TimeFilter f = mTuner.openTimeFilter();
         assertNotNull(f);
@@ -401,8 +414,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIpFilter() throws Exception {
-        if (!hasTuner()) return;
         Filter f = mTuner.openFilter(
                 Filter.TYPE_IP, Filter.SUBTYPE_IP, 1000, getExecutor(), getFilterCallback());
         assertNotNull(f);
@@ -425,8 +439,9 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDescrambler() throws Exception {
-        if (!hasTuner()) return;
         Descrambler d = mTuner.openDescrambler();
         assertNotNull(d);
         Filter f = mTuner.openFilter(
@@ -439,22 +454,25 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenDvrRecorder() throws Exception {
-        if (!hasTuner()) return;
         DvrRecorder d = mTuner.openDvrRecorder(100, getExecutor(), getRecordListener());
         assertNotNull(d);
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenDvPlayback() throws Exception {
-        if (!hasTuner()) return;
         DvrPlayback d = mTuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
         assertNotNull(d);
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDemuxCapabilities() throws Exception {
-        if (!hasTuner()) return;
         DemuxCapabilities d = mTuner.getDemuxCapabilities();
         assertNotNull(d);
 
@@ -474,34 +492,40 @@ public class TunerTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testResourceLostListener() throws Exception {
-        if (!hasTuner()) return;
         mTuner.setResourceLostListener(getExecutor(), new Tuner.OnResourceLostListener() {
             @Override
-            public void onResourceLost(Tuner tuner) {}
+            public void onResourceLost(Tuner tuner) {
+            }
         });
         mTuner.clearResourceLostListener();
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOnTuneEventListener() throws Exception {
-        if (!hasTuner()) return;
         mTuner.setOnTuneEventListener(getExecutor(), new OnTuneEventListener() {
             @Override
-            public void onTuneEvent(int tuneEvent) {}
+            public void onTuneEvent(int tuneEvent) {
+            }
         });
         mTuner.clearOnTuneEventListener();
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testUpdateResourcePriority() throws Exception {
-        if (!hasTuner()) return;
         mTuner.updateResourcePriority(100, 20);
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testShareFrontendFromTuner() throws Exception {
-        if (!hasTuner()) return;
         Tuner other = new Tuner(mContext, null, 100);
         List<Integer> ids = other.getFrontendIds();
         assertFalse(ids.isEmpty());

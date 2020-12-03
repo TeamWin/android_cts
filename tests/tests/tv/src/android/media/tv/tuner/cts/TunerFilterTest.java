@@ -17,11 +17,11 @@
 package android.media.tv.tuner.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.media.tv.tuner.Tuner;
 import android.media.tv.tuner.TunerVersionChecker;
 import android.media.tv.tuner.filter.AlpFilterConfiguration;
@@ -41,18 +41,24 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
-@Ignore("b/174500129") // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
 public class TunerFilterTest {
     private static final String TAG = "MediaTunerFilterTest";
+
+    @Rule
+    public RequiredFeatureRule featureRule = new RequiredFeatureRule(
+            PackageManager.FEATURE_TUNER);
 
     private Context mContext;
     private Tuner mTuner;
@@ -62,7 +68,6 @@ public class TunerFilterTest {
         mContext = InstrumentationRegistry.getTargetContext();
         InstrumentationRegistry
                 .getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        if (!hasTuner()) return;
         mTuner = new Tuner(mContext, null, 100);
     }
 
@@ -75,8 +80,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSettings() throws Exception {
-        if (!hasTuner()) return;
         AvSettings settings =
                 AvSettings
                         .builder(Filter.TYPE_TS, true) // is Audio
@@ -106,8 +112,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDownloadSettings() throws Exception {
-        if (!hasTuner()) return;
         DownloadSettings settings =
                 DownloadSettings
                         .builder(Filter.TYPE_MMTP)
@@ -118,8 +125,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testPesSettings() throws Exception {
-        if (!hasTuner()) return;
         PesSettings settings =
                 PesSettings
                         .builder(Filter.TYPE_TS)
@@ -132,8 +140,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testRecordSettings() throws Exception {
-        if (!hasTuner()) return;
         RecordSettings settings =
                 RecordSettings
                         .builder(Filter.TYPE_TS)
@@ -152,17 +161,18 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithSectionBits() throws Exception {
-        if (!hasTuner()) return;
         SectionSettingsWithSectionBits settings =
                 SectionSettingsWithSectionBits
                         .builder(Filter.TYPE_TS)
                         .setCrcEnabled(true)
                         .setRepeat(false)
                         .setRaw(false)
-                        .setFilter(new byte[] {2, 3, 4})
-                        .setMask(new byte[] {7, 6, 5, 4})
-                        .setMode(new byte[] {22, 55, 33})
+                        .setFilter(new byte[]{2, 3, 4})
+                        .setMask(new byte[]{7, 6, 5, 4})
+                        .setMode(new byte[]{22, 55, 33})
                         .build();
 
         assertTrue(settings.isCrcEnabled());
@@ -174,8 +184,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithTableInfo() throws Exception {
-        if (!hasTuner()) return;
         SectionSettingsWithTableInfo settings =
                 SectionSettingsWithTableInfo
                         .builder(Filter.TYPE_TS)
@@ -194,8 +205,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAlpFilterConfiguration() throws Exception {
-        if (!hasTuner()) return;
         AlpFilterConfiguration config =
                 AlpFilterConfiguration
                         .builder()
@@ -212,13 +224,14 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIpFilterConfiguration() throws Exception {
-        if (!hasTuner()) return;
         IpFilterConfiguration config =
                 IpFilterConfiguration
                         .builder()
-                        .setSrcIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 0, 1})
-                        .setDstIpAddress(new byte[] {(byte) 0xC0, (byte) 0xA8, 3, 4})
+                        .setSrcIpAddress(new byte[]{(byte) 0xC0, (byte) 0xA8, 0, 1})
+                        .setDstIpAddress(new byte[]{(byte) 0xC0, (byte) 0xA8, 3, 4})
                         .setSrcPort(33)
                         .setDstPort(23)
                         .setPassthrough(false)
@@ -245,8 +258,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testMmtpFilterConfiguration() throws Exception {
-        if (!hasTuner()) return;
         MmtpFilterConfiguration config =
                 MmtpFilterConfiguration
                         .builder()
@@ -260,8 +274,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTlvFilterConfiguration() throws Exception {
-        if (!hasTuner()) return;
         TlvFilterConfiguration config =
                 TlvFilterConfiguration
                         .builder()
@@ -279,9 +294,9 @@ public class TunerFilterTest {
     }
 
     @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTsFilterConfiguration() throws Exception {
-        if (!hasTuner()) return;
-
         PesSettings settings =
                 PesSettings
                         .builder(Filter.TYPE_TS)

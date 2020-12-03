@@ -41,6 +41,7 @@ import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillValue;
@@ -52,6 +53,7 @@ import java.util.regex.Pattern;
 
 public class AuthenticationTest extends AbstractLoginActivityTestCase {
 
+    @Presubmit
     @Test
     public void testDatasetAuthTwoFields() throws Exception {
         datasetAuthTwoFields(false);
@@ -513,6 +515,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthFilteringUsingRegex() throws Exception {
         // Set service.
@@ -667,6 +670,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Presubmit
     @Test
     public void testDatasetAuthClientStateSetOnIntentOnly() throws Exception {
         fillDatasetAuthWithClientState(ClientStateLocation.INTENT_ONLY);
@@ -743,6 +747,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         Helper.assertAuthenticationClientState("on save", saveRequest.data, "CSI", expectedValue);
     }
 
+    @Presubmit
     @Test
     public void testFillResponseAuthBothFields() throws Exception {
         fillResponseAuthBothFields(false);
@@ -1034,6 +1039,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         assertTextAndValue(passwordNode, "malkovich");
     }
 
+    @Presubmit
     @Test
     public void testFillResponseAuthClientStateSetOnIntentOnly() throws Exception {
         fillResponseAuthWithClientState(ClientStateLocation.INTENT_ONLY);
@@ -1126,6 +1132,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         Helper.assertAuthenticationClientState("on save", saveRequest.data, "CSI", expectedValue);
     }
 
+    @Presubmit
     @Test
     public void testFillResponseFiltering() throws Exception {
         // Set service.

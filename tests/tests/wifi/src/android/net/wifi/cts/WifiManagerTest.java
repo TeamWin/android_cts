@@ -823,10 +823,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(softApConfig);
             int securityType = softApConfig.getSecurityType();
             if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
-                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK) {
-                // TODO: b/165504232, add WPA3_SAE_TRANSITION assert check
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK
+                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
                 assertNotNull(softApConfig.toWifiConfiguration());
-            } else if (securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE) {
+            } else {
                 assertNull(softApConfig.toWifiConfiguration());
             }
             if (!hasAutomotiveFeature()) {
@@ -1578,8 +1578,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 testSoftApConfig.getAllowedClientList());
         assertEquals(currentConfig.getBlockedClientList(),
                 testSoftApConfig.getBlockedClientList());
-        assertEquals(currentConfig.getMacRandomizationSetting(),
-                testSoftApConfig.getMacRandomizationSetting());
+        if (BuildCompat.isAtLeastS()) {
+            assertEquals(currentConfig.getMacRandomizationSetting(),
+                    testSoftApConfig.getMacRandomizationSetting());
+        }
     }
 
     private void turnOffWifiAndTetheredHotspotIfEnabled() throws Exception {
@@ -1699,10 +1701,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 
-
-            int[] supportedChannelList = callback.getCurrentSoftApCapability()
-                    .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
-            assertNotEquals(supportedChannelList.length, 0);
+            if (BuildCompat.isAtLeastS()) {
+                int[] supportedChannelList = callback.getCurrentSoftApCapability()
+                        .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
+                assertNotEquals(supportedChannelList.length, 0);
+            }
             boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
                     .areFeaturesSupported(
                     SoftApCapability.SOFTAP_FEATURE_MAC_ADDRESS_CUSTOMIZATION)
@@ -1757,9 +1760,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                                 0 == callback.getCurrentSoftApInfo().getBandwidth() &&
                                 0 == callback.getCurrentSoftApInfo().getFrequency();
                     });
-            assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
-            assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
-                    callback.getCurrentSoftApInfo().getWifiStandard());
+            if (BuildCompat.isAtLeastS()) {
+                assertEquals(callback.getCurrentSoftApInfo().getBssid(), null);
+                assertEquals(ScanResult.WIFI_STANDARD_UNKNOWN,
+                        callback.getCurrentSoftApInfo().getWifiStandard());
+            }
             mWifiManager.unregisterSoftApCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -2200,13 +2205,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         boolean isStaApConcurrencySupported = mWifiManager.isStaApConcurrencySupported();
         // start local only hotspot.
         TestLocalOnlyHotspotCallback callback = startLocalOnlyHotspot();
-        if (isStaApConcurrencySupported) {
-            assertTrue(mWifiManager.isWifiEnabled());
-        } else {
-            // no concurrency, wifi should be disabled.
-            assertFalse(mWifiManager.isWifiEnabled());
+        try {
+            if (isStaApConcurrencySupported) {
+                assertTrue(mWifiManager.isWifiEnabled());
+            } else {
+                // no concurrency, wifi should be disabled.
+                assertFalse(mWifiManager.isWifiEnabled());
+            }
+        } finally {
+            // clean up local only hotspot no matter if assertion passed or failed
+            stopLocalOnlyHotspot(callback, true);
         }
-        stopLocalOnlyHotspot(callback, true);
 
         assertTrue(mWifiManager.isWifiEnabled());
     }
@@ -2434,6 +2443,32 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         new WifiNetworkConnectionStatistics();
         WifiNetworkConnectionStatistics stats = new WifiNetworkConnectionStatistics(0, 0);
         new WifiNetworkConnectionStatistics(stats);
+    }
+
+    /**
+     * Verify that startTemporarilyDisablingAllNonCarrierMergedWifi disconnects wifi and disables
+     * autoconnect to non-carrier-merged networks. Then verify that
+     * stopTemporarilyDisablingAllNonCarrierMergedWifi makes the disabled networks clear to connect
+     * again.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testStartAndStopTemporarilyDisablingAllNonCarrierMergedWifi() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        startScan();
+        waitForConnection();
+        int fakeSubscriptionId = 5;
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiManager.startTemporarilyDisablingAllNonCarrierMergedWifi(fakeSubscriptionId));
+        startScan();
+        ensureNotConnected();
+        ShellIdentityUtils.invokeWithShellPermissions(() ->
+                mWifiManager.stopTemporarilyDisablingAllNonCarrierMergedWifi());
+        startScan();
+        waitForConnection();
     }
 
     /**

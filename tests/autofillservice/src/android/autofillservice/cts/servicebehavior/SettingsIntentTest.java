@@ -31,6 +31,7 @@ import android.autofillservice.cts.testcore.NoOpAutofillService;
 import android.content.Intent;
 import android.net.Uri;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.support.test.uiautomator.UiObject2;
 
@@ -39,6 +40,7 @@ import com.android.compatibility.common.util.FeatureUtil;
 import org.junit.After;
 import org.junit.Test;
 
+@Presubmit
 @AppModeFull(reason = "Service-specific test")
 public class SettingsIntentTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<TrampolineForResultActivity> {

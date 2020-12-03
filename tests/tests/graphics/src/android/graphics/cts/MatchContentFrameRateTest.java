@@ -1,0 +1,103 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.graphics.cts;
+
+import static androidx.test.InstrumentationRegistry.getInstrumentation;
+
+import static org.junit.Assert.assertEquals;
+
+import android.Manifest;
+import android.hardware.display.DisplayManager;
+
+import androidx.test.filters.MediumTest;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class MatchContentFrameRateTest {
+    private static final int SETTING_PROPAGATION_TIMEOUT_MILLIS = 50;
+
+    @Rule
+    public ActivityTestRule<FrameRateCtsActivity> mActivityRule =
+            new ActivityTestRule<>(FrameRateCtsActivity.class);
+
+    @Rule
+    public final AdoptShellPermissionsRule mShellPermissionsRule =
+            new AdoptShellPermissionsRule(getInstrumentation().getUiAutomation(),
+                    Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
+                    Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
+
+    private int mInitialMatchContentFrameRate;
+    private DisplayManager mDisplayManager;
+
+    @Before
+    public void setUp() throws Exception {
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+
+        // Prevent DisplayManager from limiting the allowed refresh rate range based on
+        // non-app policies (e.g. low battery, user settings, etc).
+        mDisplayManager = activity.getSystemService(DisplayManager.class);
+        mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
+
+        mInitialMatchContentFrameRate = mDisplayManager.getRefreshRateSwitchingType();
+    }
+
+    @After
+    public void tearDown() {
+        mDisplayManager.setRefreshRateSwitchingType(mInitialMatchContentFrameRate);
+        mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+    }
+
+    @Test
+    public void testMatchContentFramerate_None() throws InterruptedException {
+        mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
+        assertEquals(DisplayManager.SWITCHING_TYPE_NONE,
+                mDisplayManager.getRefreshRateSwitchingType());
+
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testMatchContentFramerate_None();
+    }
+
+    @Test
+    public void testMatchContentFramerate_Auto() throws InterruptedException {
+        mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS);
+        assertEquals(DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS,
+                mDisplayManager.getRefreshRateSwitchingType());
+
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testMatchContentFramerate_Auto();
+    }
+
+    @Test
+    public void testMatchContentFramerate_Always() throws InterruptedException {
+        mDisplayManager.setRefreshRateSwitchingType(
+                DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS);
+        assertEquals(DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS,
+                mDisplayManager.getRefreshRateSwitchingType());
+        FrameRateCtsActivity activity = mActivityRule.getActivity();
+        activity.testMatchContentFramerate_Always();
+    }
+}

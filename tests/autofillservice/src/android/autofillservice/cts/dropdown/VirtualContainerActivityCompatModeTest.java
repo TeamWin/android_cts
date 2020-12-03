@@ -44,6 +44,7 @@ import android.autofillservice.cts.testcore.Timeouts;
 import android.content.AutofillOptions;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.SaveInfo;
 
 import com.android.compatibility.common.util.SettingsStateChangerRule;
@@ -102,6 +103,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
         assertThat(urlBar.getWebScheme()).isEqualTo("ftp");
     }
 
+    @Presubmit
     @Test
     public void testMultipleUrlBars_firstDoesNotExist() throws Exception {
         SettingsUtils.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,

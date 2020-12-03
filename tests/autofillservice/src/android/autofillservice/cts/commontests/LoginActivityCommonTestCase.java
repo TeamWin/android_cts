@@ -34,6 +34,7 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.MyAutofillCallback;
 import android.autofillservice.cts.testcore.UiBot;
+import android.platform.test.annotations.Presubmit;
 import android.service.autofill.FillContext;
 import android.view.View;
 
@@ -73,6 +74,7 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         waitUntilDisconnected();
     }
 
+    @Presubmit
     @Test
     public void testAutoFillNoDatasets_multipleFields_alwaysNull() throws Exception {
         // Set service.
@@ -99,18 +101,20 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         mUiBot.assertNoDatasetsEver();
     }
 
-
+    @Presubmit
     @Test
     public void testAutofill_oneDataset() throws Exception {
         testBasicLoginAutofill(/* numDatasets= */ 1, /* selectedDatasetIndex= */ 0);
     }
 
+    @Presubmit
     @Test
     public void testAutofill_twoDatasets_selectFirstDataset() throws Exception {
         testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 0);
 
     }
 
+    @Presubmit
     @Test
     public void testAutofill_twoDatasets_selectSecondDataset() throws Exception {
         testBasicLoginAutofill(/* numDatasets= */ 2, /* selectedDatasetIndex= */ 1);
@@ -172,6 +176,7 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
     }
 
+    @Presubmit
     @Test
     public void testClearFocusBeforeRespond() throws Exception {
         // Set service
@@ -197,6 +202,7 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         mUiBot.assertNoDatasetsEver();
     }
 
+    @Presubmit
     @Test
     public void testSwitchFocusBeforeResponse() throws Exception {
         // Set service
@@ -234,6 +240,7 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         mUiBot.assertDatasets("The Password");
     }
 
+    @Presubmit
     @Test
     public void testManualRequestWhileFirstResponseDelayed() throws Exception {
         // Set service
@@ -268,6 +275,7 @@ public abstract class LoginActivityCommonTestCase extends AbstractLoginActivityT
         mUiBot.assertDatasets("The Dude 2");
     }
 
+    @Presubmit
     @Test
     public void testResponseFirstAfterResponseSecond() throws Exception {
         // Set service
