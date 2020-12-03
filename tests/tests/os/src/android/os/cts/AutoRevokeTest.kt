@@ -90,6 +90,9 @@ class AutoRevokeTest {
 
     @Before
     fun setup() {
+        assumeFalse("Auto-revoke does not run on Automotive",
+                context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE))
+
         // Kill Permission Controller
         assertThat(
                 runShellCommand("killall " +
