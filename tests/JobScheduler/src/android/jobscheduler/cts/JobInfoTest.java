@@ -130,6 +130,13 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertTrue(persistableBundleEquals(pb, ji.getExtras()));
     }
 
+    public void testForegroundJob() {
+        JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                .setForeground(true)
+                .build();
+        assertTrue(ji.isForegroundJob());
+    }
+
     public void testImportantWhileForeground() {
         // Assert the default value is false
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
