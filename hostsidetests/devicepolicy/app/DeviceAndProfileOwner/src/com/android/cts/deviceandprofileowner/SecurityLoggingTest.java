@@ -442,6 +442,10 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     }
 
     private void verifyPayloadTypes(SecurityEvent event) {
+        // Spurious logs from liblog,see b/157950078
+        if (event.getTag() == 1006) {
+            return;
+        }
         final List<Class> payloadTypes = PAYLOAD_TYPES_MAP.get(event.getTag());
         assertNotNull("event type unknown: " + event.getTag(), payloadTypes);
 
