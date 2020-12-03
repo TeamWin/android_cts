@@ -822,6 +822,26 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
     }
 
+    /**
+     * Loads a url until a specific error code. This is meant to be used when two different errors
+     * can race. Specifically, this is meant to be used to workaround the TLS 1.3 (Android Q and
+     * above) race condition where a server <b>may</b> close the connection at the same time the
+     * client sends the HTTP request, emitting {@code ERROR_CONNECT} instead of {@code
+     * ERROR_FAILED_SSL_HANDSHAKE}.
+     */
+    private void loadUrlUntilError(SslErrorWebViewClient client, String url,
+            int expectedErrorCode) {
+        int maxTries = 40;
+        for (int i = 0; i < maxTries; i++) {
+            mOnUiThread.loadUrlAndWaitForCompletion(url);
+            if (client.onReceivedErrorCode() == expectedErrorCode) {
+                return;
+            }
+        }
+        throw new RuntimeException(
+                "Reached max number of tries and never saw error " + expectedErrorCode);
+    }
+
     public void testIgnoreClientCertRequest() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -833,18 +853,23 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         clearClientCertPreferences();
         // Ignore the request. Load should fail.
         webViewClient.setAction(ClientCertWebViewClient.IGNORE);
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
         assertFalse(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
-        assertFailedHandshakeOrConnectionError(webViewClient.onReceivedErrorCode());
+        // At least one of the loads done by loadUrlUntilError() should produce
+        // onReceivedClientCertRequest.
+        assertTrue("onReceivedClientCertRequest should be called at least once",
+                webViewClient.getClientCertRequestCount() >= 1);
 
         // Load a different page from the same domain, ignoring the request. We should get a callback,
         // and load should fail.
         int callCount = webViewClient.getClientCertRequestCount();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
         assertFalse(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
-        assertFailedHandshakeOrConnectionError(webViewClient.onReceivedErrorCode());
-        assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
+        // At least one of the loads done by loadUrlUntilError() should produce
+        // onReceivedClientCertRequest.
+        assertTrue("onReceivedClientCertRequest should be called at least once for second URL",
+                webViewClient.getClientCertRequestCount() >= callCount + 1);
 
         // Reload, proceeding the request. Load should succeed.
         webViewClient.setAction(ClientCertWebViewClient.PROCEED);
