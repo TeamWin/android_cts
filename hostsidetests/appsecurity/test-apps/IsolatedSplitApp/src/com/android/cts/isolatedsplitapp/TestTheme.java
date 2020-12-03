@@ -115,7 +115,6 @@ public class TestTheme {
         assertThat(mWindowBackground).isEqualTo(mBaseColor);
     }
 
-
     public void assertThemeFeatureAValues() {
         assertThat(mName).isEqualTo("Feature A Theme");
         assertThat(mBaseColor).isEqualTo(COLOR_BLUE);
@@ -133,6 +132,16 @@ public class TestTheme {
         assertThat(mColorBackground).isEqualTo(COLOR_GRAY);
         assertThat(mNavigationBarColor).isEqualTo(COLOR_LTGRAY);
         assertThat(mStatusBarColor).isEqualTo(COLOR_BLUE);
+        assertThat(mWindowBackground).isEqualTo(mPrimaryColor);
+    }
+
+    public void assertThemeFeatureAValuesDiffRev() {
+        assertThat(mName).isEqualTo("Feature A Theme Diff Revision");
+        assertThat(mBaseColor).isEqualTo(COLOR_YELLOW);
+        assertThat(mPrimaryColor).isEqualTo(COLOR_BLUE);
+        assertThat(mColorBackground).isEqualTo(COLOR_GRAY);
+        assertThat(mNavigationBarColor).isEqualTo(COLOR_LTGRAY);
+        assertThat(mStatusBarColor).isEqualTo(COLOR_DKGRAY);
         assertThat(mWindowBackground).isEqualTo(mPrimaryColor);
     }
 
