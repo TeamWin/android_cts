@@ -55,6 +55,15 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".SlipperyEnterBottomActivity"
+                  android:label="Slippery enter"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
         <activity android:name="android.security.cts.BinderExploitTest$CVE_2019_2213_Activity"
              android:label="Test Binder Exploit Race Condition activity"
              android:exported="true">
