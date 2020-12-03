@@ -60,7 +60,7 @@ class CodecAsyncHandler {
     std::list<callbackObject> mCbInputQueue;
     std::list<callbackObject> mCbOutputQueue;
     AMediaFormat* mOutFormat;
-    bool mSignalledOutFormatChanged;
+    volatile bool mSignalledOutFormatChanged;
     volatile bool mSignalledError;
 
   public:
