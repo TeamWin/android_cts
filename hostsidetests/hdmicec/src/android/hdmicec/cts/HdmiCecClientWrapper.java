@@ -49,6 +49,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     private LogicalAddress targetDevice = LogicalAddress.UNKNOWN;
     private String clientParams[];
     private StringBuilder sendVendorCommand = new StringBuilder("cmd hdmi_control vendorcommand ");
+    private int physicalAddress = 0xFFFF;
 
     public HdmiCecClientWrapper(String ...clientParams) {
         this.clientParams = clientParams;
@@ -159,6 +160,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
          * address 2.0.0.0 */
         commands.add("-p");
         commands.add("2");
+        physicalAddress = 0x2000;
         if (startAsTv) {
             commands.add("-t");
             commands.add("x");
@@ -440,6 +442,21 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     /** Returns the device type that the cec-client has started as. */
     public LogicalAddress getSelfDevice() {
         return selfDevice;
+    }
+
+    /** Set the physical address of the cec-client instance */
+    public void setPhysicalAddress(int newPhysicalAddress) throws Exception {
+        String command =
+                String.format(
+                        "pa %02d %02d",
+                        (newPhysicalAddress & 0xFF00) >> 8, newPhysicalAddress & 0xFF);
+        sendConsoleMessage(command);
+        physicalAddress = newPhysicalAddress;
+    }
+
+    /** Get the physical address of the cec-client instance, will return 0xFFFF if uninitialised */
+    public int getPhysicalAddress() {
+        return physicalAddress;
     }
 
     /**
