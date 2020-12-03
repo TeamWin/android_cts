@@ -18,6 +18,7 @@ package com.android.cts.appdataisolation.appa;
 
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsNotAccessible;
+import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId;
 
 import android.app.Service;
 import android.content.Intent;
@@ -41,21 +42,27 @@ public class IsolatedService extends Service {
                 assertDirDoesNotExist(applicationInfo.dataDir);
                 assertDirDoesNotExist(applicationInfo.deviceProtectedDataDir);
                 assertDirDoesNotExist("/data/data/" + getPackageName());
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + getPackageName());
+
+                int currentUserId = getCurrentUserId();
+
+                assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
+                        + getPackageName());
 
                 assertDirDoesNotExist(FileUtils.replacePackageAWithPackageB(
                         applicationInfo.dataDir));
                 assertDirDoesNotExist(FileUtils.replacePackageAWithPackageB(
                         applicationInfo.deviceProtectedDataDir));
                 assertDirDoesNotExist("/data/data/" + FileUtils.APPB_PKG);
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.APPB_PKG);
+                assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
+                        + FileUtils.APPB_PKG);
 
                 assertDirDoesNotExist(FileUtils.replacePackageAWithNotInstalledPkg(
                         applicationInfo.dataDir));
                 assertDirDoesNotExist(FileUtils.replacePackageAWithNotInstalledPkg(
                         applicationInfo.deviceProtectedDataDir));
                 assertDirDoesNotExist("/data/data/" + FileUtils.NOT_INSTALLED_PKG);
-                assertDirDoesNotExist("/data/misc/profiles/cur/0/" + FileUtils.NOT_INSTALLED_PKG);
+                assertDirDoesNotExist("/data/misc/profiles/cur/" + currentUserId + "/"
+                        + FileUtils.NOT_INSTALLED_PKG);
             } catch (Throwable e) {
                 throw new IllegalStateException(e.getMessage());
             }

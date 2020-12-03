@@ -93,7 +93,7 @@ android_test_helper_app {
     defaults: ["cts_support_defaults"],
     srcs: ["common/src/**/*.java", "AppB/src/**/*.java"],
     sdk_version: "test_current",
-    static_libs: ["androidx.test.rules", "truth-prebuilt", "testng"],
+    static_libs: ["androidx.test.rules", "truth-prebuilt", "testng", "compatibility-device-util-axt"],
     libs: ["android.test.base"],
     // tag this module as a cts test artifact
     test_suites: [
