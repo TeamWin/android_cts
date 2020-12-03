@@ -96,7 +96,7 @@ public class BundledTvInputServiceTest
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        if (!Utils.hasTvInputFramework(mActivity)) {
+        if (!Utils.assumeHasTvInputFramework(mActivity)) {
             return;
         }
         mInstrumentation = getInstrumentation();
@@ -112,7 +112,7 @@ public class BundledTvInputServiceTest
 
     @Override
     protected void tearDown() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             super.tearDown();
             return;
         }
@@ -131,7 +131,7 @@ public class BundledTvInputServiceTest
     }
 
     public void testTune() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         for (final TvInputInfo info : mPassthroughInputList) {
@@ -157,7 +157,7 @@ public class BundledTvInputServiceTest
     }
 
     public void testTuneStress() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         if (mPassthroughInputList.size() == 0) {
