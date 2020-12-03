@@ -545,6 +545,8 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   foo.shouldContainTwoIntFoos = {IntEnum::FOO, IntEnum::FOO};
   foo.shouldContainTwoLongFoos = {LongEnum::FOO, LongEnum::FOO};
   foo.u = SimpleUnion::make<SimpleUnion::c>("hello");
+  foo.shouldSetBit0AndBit2 = Foo::BIT0 | Foo::BIT2;
+  foo.shouldBeConstS1 = SimpleUnion::S1;
 
   Foo retFoo;
 
@@ -561,6 +563,8 @@ TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   EXPECT_EQ(foo.shouldContainTwoIntFoos, retFoo.shouldContainTwoIntFoos);
   EXPECT_EQ(foo.shouldContainTwoLongFoos, retFoo.shouldContainTwoLongFoos);
   EXPECT_EQ(foo.u, retFoo.u);
+  EXPECT_EQ(foo.shouldSetBit0AndBit2, retFoo.shouldSetBit0AndBit2);
+  EXPECT_EQ(foo.shouldBeConstS1, retFoo.shouldBeConstS1);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatGenericBar) {
