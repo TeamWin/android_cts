@@ -50,6 +50,11 @@ public final class TextViewActions {
                 new ViewClickAction(Tap.SINGLE, new TextCoordinates(index), Press.FINGER));
     }
 
+    public static ViewAction longTapOnTextAtIndex(int index) {
+        return actionWithAssertions(
+                new ViewClickAction(Tap.LONG, new TextCoordinates(index), Press.FINGER));
+    }
+
     private static final class ViewClickAction implements ViewAction {
         private final GeneralClickAction mGeneralClickAction;
 
