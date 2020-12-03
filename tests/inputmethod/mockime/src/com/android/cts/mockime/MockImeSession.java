@@ -16,15 +16,9 @@
 
 package com.android.cts.mockime;
 
-import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
-
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
 import android.app.UiAutomation;
-import android.app.compat.CompatChanges;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -32,13 +26,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.os.UserHandle;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -54,12 +46,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AssumptionViolatedException;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents an active Mock IME session, which provides basic primitives to write end-to-end tests
@@ -248,7 +240,6 @@ public class MockImeSession implements AutoCloseable {
             @NonNull Context context,
             @NonNull UiAutomation uiAutomation,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
-        MockImeSession.setEnabledFinishInputNoFallbackConnection(true);
         final String unavailabilityReason = getUnavailabilityReason(context);
         if (unavailabilityReason != null) {
             throw new AssumptionViolatedException(unavailabilityReason);
@@ -273,45 +264,6 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
-     * Whether {@link MockIme} enabled a compatibility flag to finish input without fallback
-     * input connection when device interactive state changed. See detailed description in
-     * {@link MockImeSession#setEnabledFinishInputNoFallbackConnection}.
-     *
-     * @return {@code true} if the compatibility flag is enabled.
-     */
-    public static boolean isFinishInputNoFallbackConnectionEnabled() {
-        AtomicBoolean result = new AtomicBoolean();
-        runWithShellPermissionIdentity(() ->
-                result.set(CompatChanges.isChangeEnabled(FINISH_INPUT_NO_FALLBACK_CONNECTION,
-                        MockIme.getComponentName().getPackageName(), UserHandle.CURRENT)));
-        return result.get();
-    }
-
-    /**
-     * Whether {@link MockIme} enables compatibility changes or remains the old behavior of the
-     * input connection lifecycle callback when the device interactive state changed.
-     *
-     * Set {@code true} when wanting to finish the current started input connection and callback
-     * {@link InputMethodService#onFinishInput} when receiving the device non-interactive state
-     * (e.g. screen-off), or start the new input connection and callback
-     * {@link InputMethodService#onStartInput} when receiving the device interactive state.
-     *
-     * Set {@code false} means to remain the compatibility behavior to finish the started input
-     * connection with {@link InputMethodService#onFinishInput} callback and start a fallback
-     * input connection with {@link InputMethodService#onStartInput} when the device is
-     * non-interactive state, or finish the fallback input connection with
-     * {@link InputMethodService#onFinishInput} callback and start a new input connection with
-     * {@link InputMethodService#onStartInput} when the device is in interactive state.
-     */
-    public static void setEnabledFinishInputNoFallbackConnection(boolean enable) {
-        runWithShellPermissionIdentity(() -> {
-            runShellCommand("am compat " + (enable ? "enable " : "disable ")
-                    + FINISH_INPUT_NO_FALLBACK_CONNECTION + " "
-                    + MockIme.getComponentName().getPackageName());
-        });
-    }
-
-    /**
      * @return {@link ImeEventStream} object that stores events sent from {@link MockIme} since the
      *         session is created.
      */
@@ -332,10 +284,6 @@ public class MockImeSession implements AutoCloseable {
                         .stream()
                         .noneMatch(info -> getMockImeComponentName().equals(info.getComponent())));
 
-        runWithShellPermissionIdentity(() -> {
-            runShellCommand("am compat reset " + FINISH_INPUT_NO_FALLBACK_CONNECTION + " "
-                    + getMockImeComponentName().getPackageName());
-        });
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
         mContext.getContentResolver().call(SettingsProvider.AUTHORITY, "delete", null, null);

@@ -470,6 +470,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
+
             // Launch a simple test activity
             final TestActivity testActivity =
                     TestActivity.startSync(activity -> new LinearLayout(activity));
@@ -502,37 +503,28 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
             expectImeVisible(TIMEOUT);
 
+            // Clear editor focus after screen-off
             TestUtils.turnScreenOff();
             TestUtils.waitOnMainUntil(() -> editTextRef.get().getWindowVisibility() != VISIBLE,
                     TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(true), TIMEOUT);
-            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
-                expectEvent(stream, event -> "onFinishInput".equals(event.getEventName()), TIMEOUT);
-                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                        NOT_EXPECT_TIMEOUT);
-            } else {
-                expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-                expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
-                // Expect showSoftInput comes when system notify InsetsController to apply show IME
-                // insets after IME input target updated.
-                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
-                notExpectEvent(stream, hideSoftInputMatcher(), NOT_EXPECT_TIMEOUT);
-            }
-
-            // Clear editor focus after screen-off
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+            // Expect showSoftInput comes when system notify InsetsController to apply show IME
+            // insets after IME input target updated.
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            notExpectEvent(stream, hideSoftInputMatcher(), NOT_EXPECT_TIMEOUT);
             TestUtils.runOnMainSync(editTextRef.get()::clearFocus);
 
             // Verify IME will invisible after device unlocked
             TestUtils.turnScreenOn();
             TestUtils.unlockScreen();
-            // Expect hideSoftInput will called by IMMS when the same window
+            // Expect hideSoftInput and onFinishInputView will called by IMMS when the same window
             // focused since the editText view focus has been cleared.
             TestUtils.waitOnMainUntil(() -> editTextRef.get().hasWindowFocus()
                     && !editTextRef.get().hasFocus(), TIMEOUT);
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
-            if (!MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
-                expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
-            }
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
             expectImeInvisible(TIMEOUT);
         }
     }
