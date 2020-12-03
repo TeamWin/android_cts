@@ -25,3 +25,8 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+java_library {
+    name: "CtsForceStopHelper-constants",
+    srcs: ["src/com/android/cts/forcestophelper/Constants.java"],
+}
