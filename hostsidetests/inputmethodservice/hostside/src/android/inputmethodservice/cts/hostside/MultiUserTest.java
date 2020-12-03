@@ -180,6 +180,11 @@ public class MultiUserTest extends BaseHostJUnit4Test {
 
         switchUser(primaryUserId);
 
+        // For devices that have config_multiuserDelayUserDataLocking set to true
+        // We need to wait the completion of switching user. Otherwise, it will
+        // stop the secondary user even startUser() is invoked after this call.
+        Thread.sleep(WAIT_AFTER_USER_SWITCH);
+
         // For devices that have config_multiuserDelayUserDataLocking set to true, the
         // secondaryUserId will be stopped after switching to the primaryUserId. This means that
         // the InputMethodManager can no longer query for the Input Method Services since they have
