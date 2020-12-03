@@ -33,7 +33,7 @@ import java.util.concurrent.Executor;
  * Test app that invokes authentication in onCreate
  */
 public class Class2BiometricActivity extends Activity {
-    private static final String TAG = "Class3OnlyBiometricActivity";
+    private static final String TAG = "Class2BiometricActivity";
 
     @Override
     protected void onCreate(@Nullable Bundle bundle) {
@@ -49,7 +49,7 @@ public class Class2BiometricActivity extends Activity {
                 .setNegativeButton("Negative Button", executor, (dialog, which) -> {
                     callbackHelper.onNegativeButtonPressed();
                 })
-                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_STRONG)
+                .setAllowedAuthenticators(BiometricManager.Authenticators.BIOMETRIC_WEAK)
                 .build();
 
         bp.authenticate(new CancellationSignal(), executor, callbackHelper);
