@@ -93,7 +93,7 @@ static bool isMediaSimilar(AMediaExtractor* refExtractor, AMediaExtractor* testE
                 setSampleInfo(refExtractor, &refSampleInfo);
                 setSampleInfo(testExtractor, &testSampleInfo);
                 if (!isSampleInfoValidAndIdentical(&refSampleInfo, &testSampleInfo)) {
-                    ALOGD(" Mime: %s mismatch for sample: %d", refMime, frameCount);
+                    ALOGD(" Mime: %s mismatch for sample: %d", mime, frameCount);
                     ALOGD(" flags exp/got: %d / %d", refSampleInfo.flags, testSampleInfo.flags);
                     ALOGD(" size exp/got: %d / %d ", refSampleInfo.size, testSampleInfo.size);
                     ALOGD(" ts exp/got: %" PRId64 " / %" PRId64 "",
@@ -104,55 +104,53 @@ static bool isMediaSimilar(AMediaExtractor* refExtractor, AMediaExtractor* testE
                 ssize_t refSz =
                         AMediaExtractor_readSampleData(refExtractor, refBuffer, maxSampleSize);
                 if (refSz != refSampleInfo.size) {
-                    ALOGD("Mime: %s Size exp/got:  %d / %zd ", refMime, refSampleInfo.size, refSz);
+                    ALOGD("Mime: %s Size exp/got:  %d / %zd ", mime, refSampleInfo.size, refSz);
                     areTracksIdentical = false;
                     break;
                 }
                 ssize_t testSz =
                         AMediaExtractor_readSampleData(testExtractor, testBuffer, maxSampleSize);
                 if (testSz != testSampleInfo.size) {
-                    ALOGD("Mime: %s Size exp/got:  %d / %zd ", refMime, testSampleInfo.size,
-                          testSz);
+                    ALOGD("Mime: %s Size exp/got:  %d / %zd ", mime, testSampleInfo.size, testSz);
                     areTracksIdentical = false;
                     break;
                 }
                 int trackIndex = AMediaExtractor_getSampleTrackIndex(refExtractor);
                 if (trackIndex != refTrackID) {
-                    ALOGD("Mime: %s TrackID exp/got: %zu / %d", refMime, refTrackID, trackIndex);
+                    ALOGD("Mime: %s TrackID exp/got: %zu / %d", mime, refTrackID, trackIndex);
                     areTracksIdentical = false;
                     break;
                 }
                 trackIndex = AMediaExtractor_getSampleTrackIndex(testExtractor);
                 if (trackIndex != testTrackID) {
-                    ALOGD("Mime: %s  TrackID exp/got %zd / %d : ", refMime, testTrackID,
-                          trackIndex);
+                    ALOGD("Mime: %s  TrackID exp/got %zd / %d : ", mime, testTrackID, trackIndex);
                     areTracksIdentical = false;
                     break;
                 }
                 if (memcmp(refBuffer, testBuffer, refSz)) {
-                    ALOGD("Mime: %s Mismatch in sample data", refMime);
+                    ALOGD("Mime: %s Mismatch in sample data", mime);
                     areTracksIdentical = false;
                     break;
                 }
                 bool haveRefSamples = AMediaExtractor_advance(refExtractor);
                 bool haveTestSamples = AMediaExtractor_advance(testExtractor);
                 if (haveRefSamples != haveTestSamples) {
-                    ALOGD("Mime: %s Mismatch in sampleCount", refMime);
+                    ALOGD("Mime: %s Mismatch in sampleCount", mime);
                     areTracksIdentical = false;
                     break;
                 }
 
                 if (!haveRefSamples && !isExtractorOKonEOS(refExtractor)) {
-                    ALOGD("Mime: %s calls post advance() are not OK", refMime);
+                    ALOGD("Mime: %s calls post advance() are not OK", mime);
                     areTracksIdentical = false;
                     break;
                 }
                 if (!haveTestSamples && !isExtractorOKonEOS(testExtractor)) {
-                    ALOGD("Mime: %s calls post advance() are not OK", refMime);
+                    ALOGD("Mime: %s calls post advance() are not OK", mime);
                     areTracksIdentical = false;
                     break;
                 }
-                ALOGV("Mime: %s Sample: %d flags: %d size: %d ts: % " PRId64 "", refMime,
+                ALOGV("Mime: %s Sample: %d flags: %d size: %d ts: % " PRId64 "", mime,
                       frameCount, refSampleInfo.flags, refSampleInfo.size,
                       refSampleInfo.presentationTimeUs);
                 if (!haveRefSamples || frameCount >= sampleLimit) {
@@ -423,6 +421,7 @@ static int checkSeekPoints(const char* srcFile, const char* mime,
         const char* currMime = nullptr;
         bool hasKey = AMediaFormat_getString(format, AMEDIAFORMAT_KEY_MIME, &currMime);
         if (!hasKey || strcmp(currMime, mime) != 0) {
+            AMediaFormat_delete(format);
             continue;
         }
         AMediaExtractor_selectTrack(extractor, trackID);
