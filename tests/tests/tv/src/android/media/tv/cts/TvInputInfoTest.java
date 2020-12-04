@@ -25,12 +25,14 @@ import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.os.Bundle;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 
 /**
  * Test for {@link android.media.tv.TvInputInfo}.
  */
+@Presubmit
 public class TvInputInfoTest extends AndroidTestCase {
     private TvInputInfo mStubInfo;
     private PackageManager mPackageManager;
@@ -53,7 +55,7 @@ public class TvInputInfoTest extends AndroidTestCase {
 
     @Override
     public void setUp() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         TvInputManager manager =
@@ -69,7 +71,7 @@ public class TvInputInfoTest extends AndroidTestCase {
     }
 
     public void testTvInputInfoOp() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         // Test describeContents
@@ -115,7 +117,7 @@ public class TvInputInfoTest extends AndroidTestCase {
     }
 
     public void testGetIntentForSetupActivity() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         Intent intent = mStubInfo.createSetupIntent();
@@ -127,28 +129,28 @@ public class TvInputInfoTest extends AndroidTestCase {
     }
 
     public void testTunerHasNoParentId() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertNull(mStubInfo.getParentId());
     }
 
     public void testGetTypeForTuner() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertEquals(mStubInfo.getType(), TvInputInfo.TYPE_TUNER);
     }
 
     public void testTunerIsNotPassthroughInput() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertFalse(mStubInfo.isPassthroughInput());
     }
 
     public void testLoadIcon() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertEquals(mStubInfo.loadIcon(getContext()).getConstantState(),
@@ -156,7 +158,7 @@ public class TvInputInfoTest extends AndroidTestCase {
     }
 
     public void testLoadLabel() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertEquals(mStubInfo.loadLabel(getContext()),
@@ -164,21 +166,21 @@ public class TvInputInfoTest extends AndroidTestCase {
     }
 
     public void testIsHidden() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertFalse(mStubInfo.isHidden(getContext()));
     }
 
     public void testLoadCustomLabel() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         assertNull(mStubInfo.loadCustomLabel(getContext()));
     }
 
     public void testBuilder() throws Exception {
-        if (!Utils.hasTvInputFramework(getContext())) {
+        if (!Utils.assumeHasTvInputFramework(getContext())) {
             return;
         }
         TvInputInfo defaultInfo = new TvInputInfo.Builder(getContext(),

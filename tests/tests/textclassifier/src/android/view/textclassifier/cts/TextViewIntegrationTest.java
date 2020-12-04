@@ -16,6 +16,7 @@
 
 package android.view.textclassifier.cts;
 
+import static android.content.pm.PackageManager.FEATURE_TOUCHSCREEN;
 import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
 import static android.provider.Settings.Global.TRANSITION_ANIMATION_SCALE;
 
@@ -37,6 +38,7 @@ import android.app.PendingIntent;
 import android.app.RemoteAction;
 import android.content.ContentResolver;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.provider.Settings;
@@ -48,16 +50,20 @@ import android.util.Log;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
+import android.view.textclassifier.TextSelection;
 import android.widget.TextView;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AfterClass;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -69,7 +75,7 @@ public class TextViewIntegrationTest {
     private final static String LOG_TAG = "TextViewIntegrationTest";
     private final static String TOOLBAR_TAG = "floating_toolbar";
 
-    private final SimpleTextClassifier mSimpleTextClassifier = new SimpleTextClassifier();
+    private SimpleTextClassifier mSimpleTextClassifier;
 
     @Rule
     public ActivityScenarioRule<TextViewActivity> rule = new ActivityScenarioRule<>(
@@ -77,6 +83,14 @@ public class TextViewIntegrationTest {
 
     private static float sOriginalAnimationDurationScale;
     private static float sOriginalTransitionAnimationDurationScale;
+
+    @Before
+    public void setup() {
+        Assume.assumeTrue(
+                ApplicationProvider.getApplicationContext().getPackageManager()
+                        .hasSystemFeature(FEATURE_TOUCHSCREEN));
+        mSimpleTextClassifier = new SimpleTextClassifier();
+    }
 
     @BeforeClass
     public static void disableAnimation() {
@@ -137,6 +151,44 @@ public class TextViewIntegrationTest {
         assertFloatingToolbarContainsItem("Test");
     }
 
+    @Test
+    public void smartSelection_suggestSelectionNotIncludeTextClassification() throws Exception {
+        smartSelectionInternal();
+
+        assertThat(mSimpleTextClassifier.isClassifyTextCalled()).isTrue();
+    }
+
+    @Test
+    public void smartSelection_suggestSelectionIncludeTextClassification() throws Exception {
+        mSimpleTextClassifier.setIncludeTextClassification(true);
+        smartSelectionInternal();
+
+        assertThat(mSimpleTextClassifier.isClassifyTextCalled()).isFalse();
+    }
+
+    private void smartSelectionInternal() {
+        ActivityScenario<TextViewActivity> scenario = rule.getScenario();
+        AtomicInteger clickIndex = new AtomicInteger();
+        //                   0123456789
+        final String TEXT = "Link: https://www.android.com";
+        scenario.onActivity(activity -> {
+            TextView textView = activity.findViewById(R.id.textview);
+            textView.setTextIsSelectable(true);
+            textView.setText(TEXT);
+            textView.setTextClassifier(mSimpleTextClassifier);
+            clickIndex.set(9);
+        });
+        onView(allOf(withId(R.id.textview), withText(TEXT))).check(matches(isDisplayed()));
+
+        // Long press the url to perform smart selection.
+        Log.d(LOG_TAG, "clickIndex = " + clickIndex.get());
+        onView(withId(R.id.textview)).perform(
+                TextViewActions.longTapOnTextAtIndex(clickIndex.get()));
+
+        assertFloatingToolbarIsDisplayed();
+        assertFloatingToolbarContainsItem("Test");
+    }
+
     private Spannable createLinkifiedText(CharSequence text) {
         TextLinks.Request request = new TextLinks.Request.Builder(text)
                 .setEntityConfig(
@@ -166,34 +218,69 @@ public class TextViewIntegrationTest {
         onFloatingToolBar().check(matches(hasDescendant(withText(itemLabel))));
     }
 
-    /** A {@link TextClassifier} that can only annotate the android.com url. */
+    /**
+     * A {@link TextClassifier} that can only annotate the android.com url. Do not reuse the same
+     * instance across tests.
+     */
     private static class SimpleTextClassifier implements TextClassifier {
         private static final String ANDROID_URL = "https://www.android.com";
         private static final Icon NO_ICON = Icon.createWithData(new byte[0], 0, 0);
+        private boolean mSetIncludeTextClassification = false;
+        private boolean mIsClassifyTextCalled = false;
+
+        public void setIncludeTextClassification(boolean setIncludeTextClassification) {
+            mSetIncludeTextClassification = setIncludeTextClassification;
+        }
+
+        public boolean isClassifyTextCalled() {
+            return mIsClassifyTextCalled;
+        }
+
+        @Override
+        public TextSelection suggestSelection(TextSelection.Request request) {
+            int start = request.getText().toString().indexOf(ANDROID_URL);
+            if (start == -1) {
+                return new TextSelection.Builder(
+                        request.getStartIndex(), request.getEndIndex())
+                        .build();
+            }
+            TextSelection.Builder builder =
+                    new TextSelection.Builder(start, start + ANDROID_URL.length())
+                            .setEntityType(TextClassifier.TYPE_URL, 1.0f);
+            if (mSetIncludeTextClassification) {
+                builder.setTextClassification(createAndroidUrlTextClassification());
+            }
+            return builder.build();
+        }
 
         @Override
         public TextClassification classifyText(TextClassification.Request request) {
-            TextClassification.Builder builder =
-                    new TextClassification.Builder().setText(request.getText().toString());
+            mIsClassifyTextCalled = true;
             String spanText = request.getText().toString()
                     .substring(request.getStartIndex(), request.getEndIndex());
             if (TextUtils.equals(ANDROID_URL, spanText)) {
-                builder.setEntityType(TextClassifier.TYPE_URL, 1.0f);
-
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setData(Uri.parse(ANDROID_URL));
-                PendingIntent pendingIntent = PendingIntent.getActivity(
-                        ApplicationProvider.getApplicationContext(),
-                        /* requestCode= */ 0,
-                        intent,
-                        PendingIntent.FLAG_IMMUTABLE);
-
-                RemoteAction remoteAction =
-                        new RemoteAction(NO_ICON, "Test", "content description", pendingIntent);
-                remoteAction.setShouldShowIcon(false);
-
-                builder.addAction(remoteAction);
+                return createAndroidUrlTextClassification();
             }
+            return new TextClassification.Builder().build();
+        }
+
+        private TextClassification createAndroidUrlTextClassification() {
+            TextClassification.Builder builder =
+                    new TextClassification.Builder().setText(ANDROID_URL);
+            builder.setEntityType(TextClassifier.TYPE_URL, 1.0f);
+
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setData(Uri.parse(ANDROID_URL));
+            PendingIntent pendingIntent = PendingIntent.getActivity(
+                    ApplicationProvider.getApplicationContext(),
+                    /* requestCode= */ 0,
+                    intent,
+                    PendingIntent.FLAG_IMMUTABLE);
+
+            RemoteAction remoteAction =
+                    new RemoteAction(NO_ICON, "Test", "content description", pendingIntent);
+            remoteAction.setShouldShowIcon(false);
+            builder.addAction(remoteAction);
             return builder.build();
         }
 

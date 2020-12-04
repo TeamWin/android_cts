@@ -44,7 +44,7 @@ import java.util.concurrent.Executor;
 public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "\"testSsid\"";
     private static final String TEST_PASSPHRASE = "\"testPassword\"";
-    private static final int TEST_WAIT_DURATION_MS = 12_000; // Long delay is necessary, see below
+    private static final int TEST_WAIT_DURATION_MS = 18_000; // Long delay is necessary, see below
     private WifiManager mWifiManager;
     private static final String TEST_DPP_URI =
             "DPP:C:81/1,117/40;I:Easy_Connect_Demo;M:000102030405;"
@@ -247,12 +247,15 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
             // skip the test if Easy Connect is not supported
             return;
         }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
+            uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_WRONG_DEVICE_INFO,
                     EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
                     mEasyConnectStatusCallback);
             fail("startEasyConnectAsEnrolleeResponder did not throw an IllegalArgumentException"
                     + "on passing a wrong device info!");
         } catch (IllegalArgumentException expected) {}
+        uiAutomation.dropShellPermissionIdentity();
     }
 }

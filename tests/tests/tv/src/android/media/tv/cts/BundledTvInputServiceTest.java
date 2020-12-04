@@ -23,6 +23,7 @@ import android.media.tv.TvContract;
 import android.media.tv.TvInputInfo;
 import android.media.tv.TvInputManager;
 import android.media.tv.TvView;
+import android.platform.test.annotations.Presubmit;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.ArrayMap;
 
@@ -37,6 +38,7 @@ import java.util.Map;
 /**
  * Test {@link android.media.tv.TvView}.
  */
+@Presubmit
 public class BundledTvInputServiceTest
         extends ActivityInstrumentationTestCase2<TvViewStubActivity> {
     /** The maximum time to wait for an operation. */
@@ -94,7 +96,7 @@ public class BundledTvInputServiceTest
     protected void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        if (!Utils.hasTvInputFramework(mActivity)) {
+        if (!Utils.assumeHasTvInputFramework(mActivity)) {
             return;
         }
         mInstrumentation = getInstrumentation();
@@ -110,7 +112,7 @@ public class BundledTvInputServiceTest
 
     @Override
     protected void tearDown() throws Exception {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             super.tearDown();
             return;
         }
@@ -129,7 +131,7 @@ public class BundledTvInputServiceTest
     }
 
     public void testTune() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         for (final TvInputInfo info : mPassthroughInputList) {
@@ -155,7 +157,7 @@ public class BundledTvInputServiceTest
     }
 
     public void testTuneStress() throws Throwable {
-        if (!Utils.hasTvInputFramework(getActivity())) {
+        if (!Utils.assumeHasTvInputFramework(getActivity())) {
             return;
         }
         if (mPassthroughInputList.size() == 0) {

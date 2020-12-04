@@ -2777,6 +2777,9 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         final Rect activeArraySize = mStaticInfo.getActiveArraySizeChecked();
         final Rect defaultCropRegion =
                 new Rect(0, 0, activeArraySize.width(), activeArraySize.height());
+        final Rect zoom2xCropRegion =
+                new Rect(activeArraySize.width()/4, activeArraySize.height()/4,
+                        activeArraySize.width()*3/4, activeArraySize.height()*3/4);
         MeteringRectangle[][] expectRegions = new MeteringRectangle[ZOOM_STEPS][];
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
@@ -2818,6 +2821,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 Log.v(TAG, "Testing Zoom ratio " + zoomFactor + " Preview size is " + previewSize);
             }
             requestBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomFactor);
+            requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, defaultCropRegion);
             CaptureRequest request = requestBuilder.build();
             for (int j = 0; j < captureSubmitRepeat; ++j) {
                 mSession.capture(request, listener, mHandler);
@@ -2894,6 +2898,37 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             }
 
             previousRatio = resultZoomRatio;
+
+            /*
+             * Set windowboxing cropRegion while zoomRatio is not 1.0x, and make sure the crop
+             * region was overwritten.
+             */
+            if (zoomFactor != 1.0f) {
+                requestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoom2xCropRegion);
+                CaptureRequest requestWithCrop = requestBuilder.build();
+                for (int j = 0; j < captureSubmitRepeat; ++j) {
+                    mSession.capture(requestWithCrop, listener, mHandler);
+                }
+
+                waitForNumResults(listener, captureSubmitRepeat - 1); // Drop first few frames
+                CaptureResult resultWithCrop = listener.getCaptureResultForRequest(
+                        requestWithCrop, NUM_RESULTS_WAIT_TIMEOUT);
+                float resultZoomRatioWithCrop = getValueNotNull(resultWithCrop,
+                        CaptureResult.CONTROL_ZOOM_RATIO);
+                Rect cropRegionWithCrop = getValueNotNull(resultWithCrop,
+                        CaptureResult.SCALER_CROP_REGION);
+
+                mCollector.expectTrue(String.format(
+                        "Result zoom ratio should remain the same (activeArrayCrop: %f, " +
+                        "zoomedCrop: %f)", resultZoomRatio, resultZoomRatioWithCrop),
+                        Math.abs(resultZoomRatio - resultZoomRatioWithCrop) < ZOOM_ERROR_MARGIN);
+
+                if (mStaticInfo.isHardwareLevelAtLeastLimited()) {
+                    mCollector.expectRectsAreSimilar(
+                            "Result crop region should remain the same with or without crop",
+                            cropRegion, cropRegionWithCrop, CROP_REGION_ERROR_PERCENT_DELTA);
+                }
+            }
         }
     }
 

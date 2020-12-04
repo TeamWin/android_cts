@@ -18,8 +18,6 @@
           package="android.scopedstorage.cts.device">
 <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 <application android:label="Scoped Storage Device Tests">
-    <receiver android:name="com.android.cts.install.lib.LocalIntentSender"
-              android:exported="true" />
     <uses-library android:name="android.test.runner" />
 </application>
 

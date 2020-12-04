@@ -203,10 +203,11 @@ public class BiometricServiceTest extends BiometricTestBase {
         final BiometricServiceState state = getCurrentState();
 
         for (int i = 0; i < state.mSensorStates.sensorStates.size(); i++) {
+            final int sensorId = state.mSensorStates.sensorStates.keyAt(i);
             final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
                 final UserState userState = sensorState.getUserStates().valueAt(j);
-                assertEquals(0, userState.numEnrolled);
+                assertEquals("SensorId: " + sensorId, 0, userState.numEnrolled);
             }
         }
 

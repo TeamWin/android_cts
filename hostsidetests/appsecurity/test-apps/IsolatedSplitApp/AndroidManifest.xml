@@ -21,7 +21,7 @@
 
     <application android:label="IsolatedSplitApp">
 
-        <activity android:name=".BaseActivity"
+        <activity android:name=".BaseActivity" android:theme="@style/Theme_Base"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

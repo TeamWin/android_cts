@@ -16,12 +16,17 @@
 
 package android.view.textclassifier.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
 
@@ -41,37 +46,43 @@ public class TextSelectionTest {
         BUNDLE.putString(BUNDLE_KEY, BUNDLE_VALUE);
     }
 
-    private static final double ACCEPTED_DELTA = 0.0000001;
+    private static final float ACCEPTED_DELTA = 0.0000001f;
     private static final String TEXT = "abcdefghijklmnopqrstuvwxyz";
     private static final int START = 5;
     private static final int END = 20;
     private static final String ID = "id123";
     private static final LocaleList LOCALES = LocaleList.forLanguageTags("fr,en,de,es");
+    private static final TextClassification TEXT_CLASSIFICATION =
+            new TextClassification.Builder().setText(TEXT).build();
 
     @Test
     public void testTextSelection() {
         final float addressScore = 0.1f;
         final float emailScore = 0.9f;
 
-        final TextSelection selection = new TextSelection.Builder(START, END)
+        final TextSelection original = new TextSelection.Builder(START, END)
                 .setEntityType(TextClassifier.TYPE_ADDRESS, addressScore)
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
                 .setId(ID)
                 .setExtras(BUNDLE)
+                .setTextClassification(TEXT_CLASSIFICATION)
                 .build();
 
-        assertEquals(START, selection.getSelectionStartIndex());
-        assertEquals(END, selection.getSelectionEndIndex());
-        assertEquals(2, selection.getEntityCount());
-        assertEquals(TextClassifier.TYPE_EMAIL, selection.getEntity(0));
-        assertEquals(TextClassifier.TYPE_ADDRESS, selection.getEntity(1));
-        assertEquals(addressScore, selection.getConfidenceScore(TextClassifier.TYPE_ADDRESS),
-                ACCEPTED_DELTA);
-        assertEquals(emailScore, selection.getConfidenceScore(TextClassifier.TYPE_EMAIL),
-                ACCEPTED_DELTA);
-        assertEquals(0, selection.getConfidenceScore("random_type"), ACCEPTED_DELTA);
-        assertEquals(ID, selection.getId());
-        assertEquals(BUNDLE_VALUE, selection.getExtras().getString(BUNDLE_KEY));
+        TextSelection selection = parcelizeDeparcelize(original, TextSelection.CREATOR);
+
+        assertThat(selection.getSelectionStartIndex()).isEqualTo(START);
+        assertThat(selection.getSelectionEndIndex()).isEqualTo(END);
+        assertThat(selection.getEntityCount()).isEqualTo(2);
+        assertThat(selection.getEntity(0)).isEqualTo(TextClassifier.TYPE_EMAIL);
+        assertThat(selection.getEntity(1)).isEqualTo(TextClassifier.TYPE_ADDRESS);
+        assertThat(selection.getConfidenceScore(TextClassifier.TYPE_ADDRESS)).isWithin(
+                ACCEPTED_DELTA).of(addressScore);
+        assertThat(selection.getConfidenceScore(TextClassifier.TYPE_EMAIL)).isWithin(
+                ACCEPTED_DELTA).of(emailScore);
+        assertThat(selection.getConfidenceScore("random_type")).isEqualTo(0);
+        assertThat(selection.getId()).isEqualTo(ID);
+        assertThat(selection.getExtras().getString(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
+        assertThat(selection.getTextClassification().getText()).isEqualTo(TEXT);
     }
 
     @Test
@@ -98,10 +109,14 @@ public class TextSelectionTest {
 
     @Test
     public void testTextSelection_defaultValues() {
-        TextSelection selection = new TextSelection.Builder(START, END).build();
-        assertEquals(0, selection.getEntityCount());
-        assertNull(selection.getId());
-        assertTrue(selection.getExtras().isEmpty());
+        TextSelection original = new TextSelection.Builder(START, END).build();
+
+        TextSelection selection = parcelizeDeparcelize(original, TextSelection.CREATOR);
+
+        assertThat(selection.getEntityCount()).isEqualTo(0);
+        assertThat(selection.getId()).isNull();
+        assertThat(selection.getExtras().isEmpty()).isTrue();
+        assertThat(selection.getTextClassification()).isNull();
     }
 
     @Test
@@ -143,31 +158,54 @@ public class TextSelectionTest {
 
     @Test
     public void testTextSelectionRequest() {
-        final TextSelection.Request request = new TextSelection.Request.Builder(TEXT, START, END)
+        final TextSelection.Request original = new TextSelection.Request.Builder(TEXT, START, END)
                 .setDefaultLocales(LOCALES)
                 .setExtras(BUNDLE)
+                .setIncludeTextClassification(true)
                 .build();
-        assertEquals(TEXT, request.getText().toString());
-        assertEquals(START, request.getStartIndex());
-        assertEquals(END, request.getEndIndex());
-        assertEquals(LOCALES, request.getDefaultLocales());
-        assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
+
+        TextSelection.Request request =
+                parcelizeDeparcelize(original, TextSelection.Request.CREATOR);
+
+        assertThat(request.getText().toString()).isEqualTo(TEXT);
+        assertThat(request.getStartIndex()).isEqualTo(START);
+        assertThat(request.getEndIndex()).isEqualTo(END);
+        assertThat(request.getDefaultLocales()).isEqualTo(LOCALES);
+        assertThat(request.getExtras().getString(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
+        assertThat(request.shouldIncludeTextClassification()).isEqualTo(true);
     }
 
     @Test
     public void testTextSelectionRequest_nullValues() {
-        final TextSelection.Request request =
+        final TextSelection.Request original =
                 new TextSelection.Request.Builder(TEXT, START, END)
                         .setDefaultLocales(null)
                         .build();
+
+        TextSelection.Request request =
+                parcelizeDeparcelize(original, TextSelection.Request.CREATOR);
+
         assertNull(request.getDefaultLocales());
     }
 
     @Test
     public void testTextSelectionRequest_defaultValues() {
-        final TextSelection.Request request =
+        final TextSelection.Request original =
                 new TextSelection.Request.Builder(TEXT, START, END).build();
-        assertNull(request.getDefaultLocales());
-        assertTrue(request.getExtras().isEmpty());
+
+        TextSelection.Request request =
+                parcelizeDeparcelize(original, TextSelection.Request.CREATOR);
+
+        assertThat(request.getDefaultLocales()).isNull();
+        assertThat(request.getExtras().isEmpty()).isTrue();
+        assertThat(request.shouldIncludeTextClassification()).isFalse();
+    }
+
+    private static <T extends Parcelable> T parcelizeDeparcelize(
+            T parcelable, Parcelable.Creator<T> creator) {
+        Parcel parcel = Parcel.obtain();
+        parcelable.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        return creator.createFromParcel(parcel);
     }
 }

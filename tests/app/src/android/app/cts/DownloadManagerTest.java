@@ -439,6 +439,16 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
         return process;
     }
 
+    private int getExternalVolumeMediaStoreFilesCount() {
+        Uri rootUri = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        String[] projection = {MediaStore.MediaColumns._ID};
+        int count = 0;
+        try (Cursor cursor = mContext.getContentResolver().query(rootUri, projection, null, null)) {
+            count = cursor.getCount();
+        }
+        return count;
+    }
+
     @FlakyTest
     @Test
     public void testProviderAcceptsCleartext() throws Exception {
@@ -641,10 +651,14 @@ public class DownloadManagerTest extends DownloadManagerTestBase {
                 int allDownloads = getTotalNumberDownloads();
                 assertEquals(1, allDownloads);
 
+                int countBeforeDownload = getExternalVolumeMediaStoreFilesCount();
                 receiver.waitForDownloadComplete(SHORT_TIMEOUT, id);
                 assertSuccessfulDownload(id, new File(
                         Environment.getExternalStoragePublicDirectory(destination), subPath));
 
+                int countAfterDownload = getExternalVolumeMediaStoreFilesCount();
+                // Asserts that only one row entry is added for 1 download
+                assertEquals((countBeforeDownload + 1), countAfterDownload);
                 final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(id);
                 mContext.grantUriPermission("com.android.shell", downloadUri,
                         Intent.FLAG_GRANT_READ_URI_PERMISSION);
