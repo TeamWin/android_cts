@@ -483,6 +483,21 @@ public class WindowManagerState {
         return result.stream().findFirst().orElse(null);
     }
 
+    @Nullable
+    DisplayArea getDisplayArea(String windowName) {
+        final List<DisplayArea> result = new ArrayList<>();
+        for (DisplayContent display : mDisplays) {
+            final DisplayArea da = display.getDisplayArea(windowName);
+            if (da != null) {
+                result.add(da);
+            }
+        }
+        assertWithMessage("There must be exactly one window among all DisplayAreas.")
+                .that(result.size()).isAtMost(1);
+
+        return result.stream().findFirst().orElse(null);
+    }
+
     int getFrontRootTaskId(int displayId) {
         return getDisplay(displayId).mRootTasks.get(0).mRootTaskId;
     }
@@ -1174,6 +1189,25 @@ public class WindowManagerState {
             return result.stream().findFirst().orElse(null);
         }
 
+        @Nullable
+        DisplayArea getDisplayArea(String windowName) {
+            List<DisplayArea> displayAreas = new ArrayList<>();
+            final Predicate<DisplayArea> p = da -> {
+                final boolean containsChildWindowToken = !da.mChildren.isEmpty()
+                        && da.mChildren.get(0) instanceof WindowToken;
+                return !da.isTaskDisplayArea() && containsChildWindowToken;
+            };
+            collectDescendantsOfTypeIf(DisplayArea.class, p, this, displayAreas);
+            List<DisplayArea> result = displayAreas.stream().filter(
+                    da -> da.containsWindow(windowName))
+                    .collect(Collectors.toList());
+
+            assertWithMessage("There must be exactly one window among all DisplayAreas.")
+                    .that(result.size()).isAtMost(1);
+
+            return result.stream().findFirst().orElse(null);
+        }
+
         ArrayList<ActivityTask> getRootTasks() {
             return mRootTasks;
         }
@@ -1475,8 +1509,9 @@ public class WindowManagerState {
         }
     }
     public static class DisplayArea extends WindowContainer {
-        final boolean mIsTaskDisplayArea;
-        ArrayList<Activity> mActivities;
+        private final boolean mIsTaskDisplayArea;
+        private ArrayList<Activity> mActivities;
+        private final ArrayList<WindowState> mWindows = new ArrayList<>();
 
         DisplayArea(DisplayAreaProto proto) {
             super(proto.windowContainer);
@@ -1485,6 +1520,7 @@ public class WindowManagerState {
                 mActivities = new ArrayList<>();
                 collectDescendantsOfType(Activity.class, this, mActivities);
             }
+            collectDescendantsOfType(WindowState.class, this, mWindows);
         }
 
         boolean isTaskDisplayArea() {
@@ -1499,6 +1535,15 @@ public class WindowManagerState {
             final String fullName = getActivityName(activityName);
             for (Activity a : mActivities) {
                 if (a.name.equals(fullName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        boolean containsWindow(String windowName) {
+            for (WindowState w : mWindows) {
+                if (w.mName.equals(windowName)) {
                     return true;
                 }
             }
