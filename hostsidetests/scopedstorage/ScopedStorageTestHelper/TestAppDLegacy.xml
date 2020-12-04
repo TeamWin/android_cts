@@ -15,12 +15,15 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.scopedstorage.cts.testapp.B.noperms"
+    package="android.scopedstorage.cts.testapp.D"
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <application android:label="TestAppB">
-        <activity android:name="android.scopedstorage.cts.ScopedStorageTestHelper">
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
+    <application android:label="TestAppDLegacy">
+        <activity android:name="android.scopedstorage.cts.ScopedStorageTestHelper" android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -30,7 +33,7 @@
 
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="android.scopedstorage.cts.testapp.B.noperms"
+            android:authorities="android.scopedstorage.cts.testapp.D"
             android:exported="false"
             android:grantUriPermissions="true">
           <meta-data

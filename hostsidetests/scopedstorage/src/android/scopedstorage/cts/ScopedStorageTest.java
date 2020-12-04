@@ -16,25 +16,17 @@
 
 package android.scopedstorage.cts;
 
-import static android.app.AppOpsManager.permissionToOp;
-import static android.provider.MediaStore.MediaColumns;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
-import static android.scopedstorage.cts.lib.TestUtils.allowAppOpsToUid;
-import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
-import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
-import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
-import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
-import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.dropShellPermissionIdentity;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
 import static android.scopedstorage.cts.lib.TestUtils.getAndroidDir;
@@ -49,23 +41,14 @@ import static android.scopedstorage.cts.lib.TestUtils.getExternalStorageDir;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileUri;
-import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.getMoviesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getMusicDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
-import static android.scopedstorage.cts.lib.TestUtils.getPodcastsDir;
-import static android.scopedstorage.cts.lib.TestUtils.installApp;
-import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
-import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
-import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
-import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 import static android.system.OsConstants.F_OK;
 import static android.system.OsConstants.R_OK;
 import static android.system.OsConstants.W_OK;
@@ -77,19 +60,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
-import android.app.AppOpsManager;
 import android.app.WallpaperManager;
-import android.content.ContentResolver;
-import android.content.ContentValues;
-import android.database.Cursor;
 import android.net.Uri;
-import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.MediaStore;
@@ -106,13 +83,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Runs the scoped storage tests on primary external storage.
@@ -122,7 +95,6 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class ScopedStorageTest {
     static final String TAG = "ScopedStorageTest";
-    static final String CONTENT_PROVIDER_URL = "content://android.tradefed.contentprovider";
     static final String THIS_PACKAGE_NAME = getContext().getPackageName();
     static final int USER_SYSTEM = 0;
 
@@ -136,26 +108,22 @@ public class ScopedStorageTest {
     static final String TEST_DIRECTORY_NAME = "ScopedStorageTestDirectory" + NONCE;
 
     static final String AUDIO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp3";
-    static final String PLAYLIST_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".m3u";
-    static final String SUBTITLE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".srt";
-    static final String VIDEO_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".mp4";
     static final String IMAGE_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".jpg";
     static final String NONMEDIA_FILE_NAME = "ScopedStorageTest_file_" + NONCE + ".pdf";
 
-    static final String FILE_CREATION_ERROR_MESSAGE = "No such file or directory";
-
-    private static final TestApp TEST_APP_A = new TestApp("TestAppA",
-            "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
-    private static final TestApp TEST_APP_B = new TestApp("TestAppB",
-            "android.scopedstorage.cts.testapp.B", 1, false, "CtsScopedStorageTestAppB.apk");
-    private static final TestApp TEST_APP_C = new TestApp("TestAppC",
-            "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppC.apk");
-    private static final TestApp TEST_APP_C_LEGACY = new TestApp("TestAppCLegacy",
-            "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
-    private static final String[] SYSTEM_GALERY_APPOPS = {
-            AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO};
-    private static final String OPSTR_MANAGE_EXTERNAL_STORAGE =
-            permissionToOp(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+    // The following apps are installed before the tests are run via a target_preparer.
+    // See test config for details.
+    // An app with READ_EXTERNAL_STORAGE permission
+    private static final TestApp APP_A_HAS_RES = new TestApp("TestAppA",
+            "android.scopedstorage.cts.testapp.A.withres", 1, false,
+            "CtsScopedStorageTestAppA.apk");
+    // An app with no permissions
+    private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
+            "android.scopedstorage.cts.testapp.B.noperms", 1, false,
+            "CtsScopedStorageTestAppB.apk");
+    // A legacy targeting app with RES and WES permissions
+    private static final TestApp APP_D_LEGACY_HAS_RW = new TestApp("TestAppDLegacy",
+            "android.scopedstorage.cts.testapp.D", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
 
     @Before
     public void setup() throws Exception {
@@ -174,127 +142,28 @@ public class ScopedStorageTest {
     }
 
     /**
-     * Test that readdir lists unsupported file types in default directories.
-     */
-    @Test
-    public void testListUnsupportedFileType() throws Exception {
-        final File pdfFile = new File(getDcimDir(), NONMEDIA_FILE_NAME);
-        final File videoFile = new File(getMusicDir(), VIDEO_FILE_NAME);
-        try {
-            // TEST_APP_A with storage permission should not see pdf file in DCIM
-            createFileUsingTradefedContentProvider(pdfFile);
-            assertThat(pdfFile.exists()).isTrue();
-            assertThat(MediaStore.scanFile(getContentResolver(), pdfFile)).isNotNull();
-
-            installAppWithStoragePermissions(TEST_APP_A);
-            assertThat(listAs(TEST_APP_A, getDcimDir().getPath()))
-                    .doesNotContain(NONMEDIA_FILE_NAME);
-
-            createFileUsingTradefedContentProvider(videoFile);
-            // We don't insert files to db for files created by shell.
-            assertThat(MediaStore.scanFile(getContentResolver(), videoFile)).isNotNull();
-            // TEST_APP_A with storage permission should see video file in Music directory.
-            assertThat(listAs(TEST_APP_A, getMusicDir().getPath())).contains(VIDEO_FILE_NAME);
-        } finally {
-            deleteFileUsingTradefedContentProvider(pdfFile);
-            deleteFileUsingTradefedContentProvider(videoFile);
-            MediaStore.scanFile(getContentResolver(), pdfFile);
-            MediaStore.scanFile(getContentResolver(), videoFile);
-            uninstallAppNoThrow(TEST_APP_A);
-        }
-    }
-
-    /**
      * Test that Installer packages can access app's private directories in Android/obb
      */
     @Test
     public void testCheckInstallerAppAccessToObbDirs() throws Exception {
         File[] obbDirs = getContext().getObbDirs();
-        try {
-            installApp(TEST_APP_A);
-            for (File obbDir : obbDirs) {
-                final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
-                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-                final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
-                try {
-                    assertThat(file.exists()).isFalse();
+        for (File obbDir : obbDirs) {
+            final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
+                    THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
+            final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
+            try {
+                assertThat(file.exists()).isFalse();
 
-                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
-                    assertFileAccess_readWrite(file);
+                assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
+                assertFileAccess_readWrite(file);
 
-                    assertThat(file.delete()).isTrue();
-                    assertThat(file.exists()).isFalse();
-                    assertThat(file.createNewFile()).isTrue();
-                    assertThat(file.exists()).isTrue();
-                } finally {
-                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
-                }
+                assertThat(file.delete()).isTrue();
+                assertThat(file.exists()).isFalse();
+                assertThat(file.createNewFile()).isTrue();
+                assertThat(file.exists()).isTrue();
+            } finally {
+                deleteFileAsNoThrow(APP_B_NO_PERMS, file.getAbsolutePath());
             }
-        } finally {
-            uninstallApp(TEST_APP_A);
-        }
-    }
-
-    /**
-     * Test that normal apps cannot access Android/data and Android/obb dirs of other apps
-     */
-    @Test
-    public void testCantAccessOtherAppsExternalDirs() throws Exception {
-        File[] obbDirs = getContext().getObbDirs();
-        File[] dataDirs = getContext().getExternalFilesDirs(null);
-        try {
-            installApp(TEST_APP_A);
-            for (File obbDir : obbDirs) {
-                final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
-                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-                final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
-                try {
-                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
-                    assertCannotReadOrWrite(file);
-                } finally {
-                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
-                }
-            }
-            for (File dataDir : dataDirs) {
-                final File otherAppExternalDataDir = new File(dataDir.getPath().replace(
-                        THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-                final File file = new File(otherAppExternalDataDir, NONMEDIA_FILE_NAME);
-                try {
-                    assertThat(createFileAs(TEST_APP_A, file.getPath())).isTrue();
-                    assertCannotReadOrWrite(file);
-                } finally {
-                    deleteFileAsNoThrow(TEST_APP_A, file.getAbsolutePath());
-                }
-            }
-        } finally {
-            uninstallApp(TEST_APP_A);
-        }
-    }
-
-    /**
-     * Test that we don't allow renaming to top level directory
-     */
-    @Test
-    public void testCantRenameToTopLevelDirectory() throws Exception {
-        final File topLevelDir1 = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME + "_1");
-        final File topLevelDir2 = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME + "_2");
-        final File nonTopLevelDir = new File(getDcimDir(), TEST_DIRECTORY_NAME);
-        try {
-            createDirUsingTradefedContentProvider(topLevelDir1);
-            assertTrue(topLevelDir1.exists());
-
-            // We can't rename a top level directory to a top level directory
-            assertCantRenameDirectory(topLevelDir1, topLevelDir2, null);
-
-            // However, we can rename a top level directory to non-top level directory.
-            assertCanRenameDirectory(topLevelDir1, nonTopLevelDir, null, null);
-
-            // We can't rename a non-top level directory to a top level directory.
-            assertCantRenameDirectory(nonTopLevelDir, topLevelDir2, null);
-        } finally {
-            deleteDirUsingTradefedContentProvider(topLevelDir1);
-            deleteDirUsingTradefedContentProvider(topLevelDir2);
-            nonTopLevelDir.delete();
         }
     }
 
@@ -319,73 +188,25 @@ public class ScopedStorageTest {
     public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
         pollForManageExternalStorageAllowed();
 
-        try {
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            installAppWithStoragePermissions(TEST_APP_A);
+        // Let app A create a file in its data dir
+        final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                THIS_PACKAGE_NAME, APP_A_HAS_RES.getPackageName()));
+        final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
+                NONMEDIA_FILE_NAME);
+        assertCreateFilesAs(APP_A_HAS_RES, otherAppExternalDataFile);
 
-            // Let app A create a file in its data dir
-            final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
-                    THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-            final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
-                    NONMEDIA_FILE_NAME);
-            assertCreateFilesAs(TEST_APP_A, otherAppExternalDataFile);
+        // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
+        // file manager app doesn't have access to other app's external files directory
+        assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
+        assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
+        assertThat(otherAppExternalDataFile.delete()).isFalse();
 
-            // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
-            // file manager app doesn't have access to other app's external files directory
-            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
-            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
-            assertThat(otherAppExternalDataFile.delete()).isFalse();
+        assertThat(deleteFileAs(APP_A_HAS_RES, otherAppExternalDataFile.getPath())).isTrue();
 
-            assertThat(deleteFileAs(TEST_APP_A, otherAppExternalDataFile.getPath())).isTrue();
-
-            assertThrows(IOException.class,
-                    () -> { otherAppExternalDataFile.createNewFile(); });
-
-        } finally {
-            uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
-        }
-    }
-
-    /**
-     * b/168830497: Test that app can write to file in DCIM/Camera even with .nomedia presence
-     */
-    @Test
-    public void testCanWriteToDCIMCameraWithNomedia() throws Exception {
-        final File cameraDir = new File(getDcimDir(), "Camera");
-        final File nomediaFile = new File(cameraDir, ".nomedia");
-        Uri targetUri = null;
-
-        try {
-            // Recreate required file and directory
-            if (cameraDir.exists()) {
-                // This is a work around to address a known inode cache inconsistency issue
-                // that occurs when test runs for the second time.
-                deleteDirUsingTradefedContentProvider(cameraDir);
-            }
-
-            createDirUsingTradefedContentProvider(cameraDir);
-            assertTrue(cameraDir.exists());
-
-            createFileUsingTradefedContentProvider(nomediaFile);
-            assertTrue(nomediaFile.exists());
-
-            ContentValues values = new ContentValues();
-            values.put(MediaColumns.RELATIVE_PATH, "DCIM/Camera");
-            targetUri = getContentResolver().insert(getImageContentUri(), values, Bundle.EMPTY);
-            assertNotNull(targetUri);
-
-            try (ParcelFileDescriptor pfd =
-                         getContentResolver().openFileDescriptor(targetUri, "w")) {
-                assertThat(pfd).isNotNull();
-                Os.write(pfd.getFileDescriptor(), ByteBuffer.wrap(BYTES_DATA1));
-            }
-
-            assertFileContent(new File(getFilePathFromUri(targetUri)), BYTES_DATA1);
-        } finally {
-            deleteWithMediaProviderNoThrow(targetUri);
-            deleteFileUsingTradefedContentProvider(nomediaFile);
-            deleteDirUsingTradefedContentProvider(cameraDir);
-        }
+        assertThrows(IOException.class,
+                () -> {
+                    otherAppExternalDataFile.createNewFile();
+                });
     }
 
     @Test
@@ -396,12 +217,10 @@ public class ScopedStorageTest {
         final File otherAppImage = new File(getDcimDir(), "other" + IMAGE_FILE_NAME);
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-
             // Create all of the files as another app
-            assertThat(createFileAs(TEST_APP_A, otherAppPdf.getPath())).isTrue();
-            assertThat(createFileAs(TEST_APP_A, otherAppImage.getPath())).isTrue();
-            assertThat(createFileAs(TEST_APP_A, otherAppMusic.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppPdf.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppMusic.getPath())).isTrue();
 
             assertThat(otherAppPdf.delete()).isTrue();
             assertThat(otherAppPdf.exists()).isFalse();
@@ -412,10 +231,9 @@ public class ScopedStorageTest {
             assertThat(otherAppMusic.delete()).isTrue();
             assertThat(otherAppMusic.exists()).isFalse();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
-            deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
-            deleteFileAsNoThrow(TEST_APP_A, otherAppMusic.getAbsolutePath());
-            uninstallApp(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppPdf.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppMusic.getAbsolutePath());
         }
     }
 
@@ -432,10 +250,8 @@ public class ScopedStorageTest {
         final File doesntExistPdf = new File(downloadDir, "nada-" + NONMEDIA_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
-
-            assertThat(createFileAs(TEST_APP_A, otherAppPdf.getPath())).isTrue();
-            assertThat(createFileAs(TEST_APP_A, otherAppImage.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppPdf.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImage.getPath())).isTrue();
 
             // We can read our image and pdf files.
             assertThat(myAppPdf.createNewFile()).isTrue();
@@ -448,18 +264,15 @@ public class ScopedStorageTest {
             assertAccess(doesntExistPdf, false, false, false);
 
             // We can check only exists for another app's files on root.
-            // Use content provider to create root file because TEST_APP_A is in
-            // scoped storage.
-            createFileUsingTradefedContentProvider(shellPdfAtRoot);
+            createFileAsLegacyApp(shellPdfAtRoot);
             MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             assertFileAccess_existsOnly(shellPdfAtRoot);
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
-            deleteFileAsNoThrow(TEST_APP_A, otherAppImage.getAbsolutePath());
-            deleteFileUsingTradefedContentProvider(shellPdfAtRoot);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppPdf.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImage.getAbsolutePath());
+            deleteAsLegacyApp(shellPdfAtRoot);
             MediaStore.scanFile(getContentResolver(), shellPdfAtRoot);
             myAppPdf.delete();
-            uninstallApp(TEST_APP_A);
         }
     }
 
@@ -469,33 +282,31 @@ public class ScopedStorageTest {
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
         File topLevelDir = new File(getExternalStorageDir(), "Test");
         try {
-            installApp(TEST_APP_A);
-
-            // Let app A create a file in its data dir
+            // Let app B create a file in its data dir
             final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
-                    THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
+                    THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
             final File otherAppExternalDataSubDir = new File(otherAppExternalDataDir, "subdir");
             final File otherAppExternalDataFile = new File(otherAppExternalDataSubDir, "abc.jpg");
-            assertThat(createFileAs(TEST_APP_A, otherAppExternalDataFile.getAbsolutePath()))
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppExternalDataFile.getAbsolutePath()))
                     .isTrue();
 
-            // We cannot read or write the file, but app A can.
-            assertThat(canReadAndWriteAs(TEST_APP_A,
+            // We cannot read or write the file, but app B can.
+            assertThat(canReadAndWriteAs(APP_B_NO_PERMS,
                     otherAppExternalDataFile.getAbsolutePath())).isTrue();
             assertCannotReadOrWrite(otherAppExternalDataFile);
 
-            // We cannot read or write the dir, but app A can.
-            assertThat(canReadAndWriteAs(TEST_APP_A,
+            // We cannot read or write the dir, but app B can.
+            assertThat(canReadAndWriteAs(APP_B_NO_PERMS,
                     otherAppExternalDataDir.getAbsolutePath())).isTrue();
             assertCannotReadOrWrite(otherAppExternalDataDir);
 
-            // We cannot read or write the sub dir, but app A can.
-            assertThat(canReadAndWriteAs(TEST_APP_A,
+            // We cannot read or write the sub dir, but app B can.
+            assertThat(canReadAndWriteAs(APP_B_NO_PERMS,
                     otherAppExternalDataSubDir.getAbsolutePath())).isTrue();
             assertCannotReadOrWrite(otherAppExternalDataSubDir);
 
-            // We can read and write our own app dir, but app A cannot.
-            assertThat(canReadAndWriteAs(TEST_APP_A,
+            // We can read and write our own app dir, but app B cannot.
+            assertThat(canReadAndWriteAs(APP_B_NO_PERMS,
                     getExternalFilesDir().getAbsolutePath())).isFalse();
             assertCanAccessMyAppFile(getExternalFilesDir());
 
@@ -504,13 +315,12 @@ public class ScopedStorageTest {
             assertDirectoryAccess(new File(getExternalStorageDir(), "Android"), true, false);
             assertDirectoryAccess(new File(getExternalStorageDir(), "doesnt/exist"), false, false);
 
-            createDirUsingTradefedContentProvider(topLevelDir);
+            createDirectoryAsLegacyApp(topLevelDir);
             assertDirectoryAccess(topLevelDir, true, false);
 
             assertCannotReadOrWrite(new File("/storage/emulated"));
         } finally {
-            uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
-            deleteDirUsingTradefedContentProvider(topLevelDir);
+            deleteAsLegacyApp(topLevelDir);
         }
     }
 
@@ -524,10 +334,8 @@ public class ScopedStorageTest {
         final File topLevelPdf = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
         final File musicFile = new File(getMusicDir(), AUDIO_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-
             // Have another app create a PDF
-            assertThat(createFileAs(TEST_APP_A, otherAppPdf.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppPdf.getPath())).isTrue();
             assertThat(otherAppPdf.exists()).isTrue();
 
 
@@ -556,21 +364,7 @@ public class ScopedStorageTest {
             pdfInObviouslyWrongPlace.delete();
             topLevelPdf.delete();
             musicFile.delete();
-            deleteFileAsNoThrow(TEST_APP_A, otherAppPdf.getAbsolutePath());
-            uninstallApp(TEST_APP_A);
-        }
-    }
-
-    @Test
-    public void testCanCreateDefaultDirectory() throws Exception {
-        final File podcastsDir = getPodcastsDir();
-        try {
-            if (podcastsDir.exists()) {
-                deleteDirUsingTradefedContentProvider(podcastsDir);
-            }
-            assertThat(podcastsDir.mkdir()).isTrue();
-        } finally {
-            createDirUsingTradefedContentProvider(podcastsDir);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppPdf.getAbsolutePath());
         }
     }
 
@@ -584,9 +378,8 @@ public class ScopedStorageTest {
         final File otherTopLevelFile = new File(getExternalStorageDir(),
                 "other" + NONMEDIA_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-            assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            createFileUsingTradefedContentProvider(otherTopLevelFile);
+            assertCreateFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf);
+            createFileAsLegacyApp(otherTopLevelFile);
             MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
 
             // We can list other apps' files
@@ -599,10 +392,9 @@ public class ScopedStorageTest {
             // We can also list all top level directories
             assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
         } finally {
-            deleteFileUsingTradefedContentProvider(otherTopLevelFile);
+            deleteAsLegacyApp(otherTopLevelFile);
             MediaStore.scanFile(getContentResolver(), otherTopLevelFile);
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            uninstallApp(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf);
         }
     }
 
@@ -615,18 +407,16 @@ public class ScopedStorageTest {
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
-            installApp(TEST_APP_A);
             // Apps can't query other app's pending file, hence create file and publish it.
             assertCreatePublishedFilesAs(
-                    TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+                    APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             assertCanQueryAndOpenFile(otherAppPdf, "rw");
             assertCanQueryAndOpenFile(otherAppImg, "rw");
             assertCanQueryAndOpenFile(otherAppMusic, "rw");
             assertCanQueryAndOpenFile(otherHiddenFile, "rw");
         } finally {
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
-            uninstallApp(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
         }
     }
 
@@ -712,21 +502,14 @@ public class ScopedStorageTest {
     public void testAndroidMedia() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
-        try {
-            installApp(TEST_APP_A);
+        final File myMediaDir = getExternalMediaDir();
+        final File otherAppMediaDir = new File(myMediaDir.getAbsolutePath()
+                .replace(THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
 
-            final File myMediaDir = getExternalMediaDir();
-            final File otherAppMediaDir = new File(myMediaDir.getAbsolutePath().
-                    replace(THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-
-            // Verify that accessing other app's /sdcard/Android/media behaves exactly like DCIM for
-            // image files and exactly like Downloads for documents.
-            assertSharedStorageAccess(otherAppMediaDir, otherAppMediaDir, TEST_APP_A);
-            assertSharedStorageAccess(getDcimDir(), getDownloadDir(), TEST_APP_A);
-
-        } finally {
-            uninstallApp(TEST_APP_A);
-        }
+        // Verify that accessing other app's /sdcard/Android/media behaves exactly like DCIM for
+        // image files and exactly like Downloads for documents.
+        assertSharedStorageAccess(otherAppMediaDir, otherAppMediaDir, APP_B_NO_PERMS);
+        assertSharedStorageAccess(getDcimDir(), getDownloadDir(), APP_B_NO_PERMS);
     }
 
     @Test
@@ -802,7 +585,8 @@ public class ScopedStorageTest {
             // .. but not the binary file
             assertFileAccess_existsOnly(otherAppBinary);
             assertThrows(FileNotFoundException.class, () -> {
-                assertFileContent(otherAppBinary, new String().getBytes()); });
+                assertFileContent(otherAppBinary, new String().getBytes());
+            });
         } finally {
             deleteFileAsNoThrow(otherApp, otherAppImage.getAbsolutePath());
             deleteFileAsNoThrow(otherApp, otherAppBinary.getAbsolutePath());
@@ -815,8 +599,7 @@ public class ScopedStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
         final File otherPendingFile = new File(getDcimDir(), IMAGE_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+            assertCreateFilesAs(APP_B_NO_PERMS, otherPendingFile);
 
             // We can read other app's pending file from FUSE via filePath
             assertCanQueryAndOpenFile(otherPendingFile, "r");
@@ -824,8 +607,7 @@ public class ScopedStorageTest {
             // We can also read other app's pending file via MediaStore API
             assertNotNull(openWithMediaProvider(otherPendingFile, "r"));
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherPendingFile.getAbsolutePath());
         }
     }
 
@@ -845,31 +627,25 @@ public class ScopedStorageTest {
 
     @Test
     public void testNoIsolatedStorageCantReadWriteOtherAppExternalDir() throws Exception {
-        try {
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            installAppWithStoragePermissions(TEST_APP_A);
+        // Let app A create a file in its data dir
+        final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
+                THIS_PACKAGE_NAME, APP_A_HAS_RES.getPackageName()));
+        final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
+                NONMEDIA_FILE_NAME);
+        assertCreateFilesAs(APP_A_HAS_RES, otherAppExternalDataFile);
 
-            // Let app A create a file in its data dir
-            final File otherAppExternalDataDir = new File(getExternalFilesDir().getPath().replace(
-                    THIS_PACKAGE_NAME, TEST_APP_A.getPackageName()));
-            final File otherAppExternalDataFile = new File(otherAppExternalDataDir,
-                    NONMEDIA_FILE_NAME);
-            assertCreateFilesAs(TEST_APP_A, otherAppExternalDataFile);
+        // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
+        // file manager app doesn't have access to other app's external files directory
+        assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
+        assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
+        assertThat(otherAppExternalDataFile.delete()).isFalse();
 
-            // File Manager app gets global access with MANAGE_EXTERNAL_STORAGE permission, however,
-            // file manager app doesn't have access to other app's external files directory
-            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ false)).isFalse();
-            assertThat(canOpen(otherAppExternalDataFile, /* forWrite */ true)).isFalse();
-            assertThat(otherAppExternalDataFile.delete()).isFalse();
+        assertThat(deleteFileAs(APP_A_HAS_RES, otherAppExternalDataFile.getPath())).isTrue();
 
-            assertThat(deleteFileAs(TEST_APP_A, otherAppExternalDataFile.getPath())).isTrue();
-
-            assertThrows(IOException.class,
-                    () -> { otherAppExternalDataFile.createNewFile(); });
-
-        } finally {
-            uninstallApp(TEST_APP_A); // Uninstalling deletes external app dirs
-        }
+        assertThrows(IOException.class,
+                () -> {
+                    otherAppExternalDataFile.createNewFile();
+                });
     }
 
     @Test
@@ -880,9 +656,8 @@ public class ScopedStorageTest {
         final File otherTopLevelFile = new File(getExternalStorageDir(),
                 "other" + NONMEDIA_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-            assertCreateFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            createFileUsingTradefedContentProvider(otherTopLevelFile);
+            assertCreateFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf);
+            createFileAsLegacyApp(otherTopLevelFile);
 
             // We can list other apps' files
             assertDirectoryContains(otherAppPdf.getParentFile(), otherAppPdf);
@@ -894,9 +669,8 @@ public class ScopedStorageTest {
             // We can also list all top level directories
             assertDirectoryContains(getExternalStorageDir(), getDefaultTopLevelDirs());
         } finally {
-            deleteFileUsingTradefedContentProvider(otherTopLevelFile);
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf);
-            uninstallApp(TEST_APP_A);
+            deleteAsLegacyApp(otherTopLevelFile);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf);
         }
     }
 
@@ -907,18 +681,16 @@ public class ScopedStorageTest {
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
-            installApp(TEST_APP_A);
             // Apps can't query other app's pending file, hence create file and publish it.
             assertCreatePublishedFilesAs(
-                    TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+                    APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             assertCanQueryAndOpenFile(otherAppPdf, "rw");
             assertCanQueryAndOpenFile(otherAppImg, "rw");
             assertCanQueryAndOpenFile(otherAppMusic, "rw");
             assertCanQueryAndOpenFile(otherHiddenFile, "rw");
         } finally {
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
-            uninstallApp(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
         }
     }
 
@@ -969,7 +741,7 @@ public class ScopedStorageTest {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
         File fileToRemain = new File(getPicturesDir(), IMAGE_FILE_NAME);
-        String testAppPackageName = TEST_APP_A.getPackageName();
+        String testAppPackageName = APP_B_NO_PERMS.getPackageName();
         File fileToBeDeleted =
                 new File(
                         getAndroidMediaDir(),
@@ -980,11 +752,9 @@ public class ScopedStorageTest {
                         String.format("%s/nesteddir/%s", testAppPackageName, IMAGE_FILE_NAME));
 
         try {
-            installApp(TEST_APP_A);
-
-            createAndCheckFileAsApp(TEST_APP_A, fileToRemain);
-            createAndCheckFileAsApp(TEST_APP_A, fileToBeDeleted);
-            createAndCheckFileAsApp(TEST_APP_A, nestedFileToBeDeleted);
+            createAndCheckFileAsApp(APP_B_NO_PERMS, fileToRemain);
+            createAndCheckFileAsApp(APP_B_NO_PERMS, fileToBeDeleted);
+            createAndCheckFileAsApp(APP_B_NO_PERMS, nestedFileToBeDeleted);
 
             executeShellCommand("pm clear " + testAppPackageName);
 
@@ -1005,10 +775,9 @@ public class ScopedStorageTest {
             assertThat(getFileOwnerPackageFromDatabase(nestedFileToBeDeleted)).isNull();
             assertThat(getFileRowIdFromDatabase(nestedFileToBeDeleted)).isEqualTo(-1);
         } finally {
-            deleteFilesAs(TEST_APP_A, fileToRemain);
-            deleteFilesAs(TEST_APP_A, fileToBeDeleted);
-            deleteFilesAs(TEST_APP_A, nestedFileToBeDeleted);
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, fileToRemain);
+            deleteFilesAs(APP_B_NO_PERMS, fileToBeDeleted);
+            deleteFilesAs(APP_B_NO_PERMS, nestedFileToBeDeleted);
         }
     }
 
@@ -1058,164 +827,6 @@ public class ScopedStorageTest {
         assertThat(getFileRowIdFromDatabase(newFile)).isNotEqualTo(-1);
     }
 
-    /**
-     * Checks restrictions for opening pending and trashed files by different apps. Assumes that
-     * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
-     * method doesn't uninstall given {@code testApp} at the end.
-     */
-    private void assertOpenPendingOrTrashed(Uri uri, TestApp testApp, boolean isImageOrVideo)
-            throws Exception {
-        final File pendingOrTrashedFile = new File(getFilePathFromUri(uri));
-
-        // App can open its pending or trashed file for read or write
-        assertTrue(canOpen(pendingOrTrashedFile, /*forWrite*/ false));
-        assertTrue(canOpen(pendingOrTrashedFile, /*forWrite*/ true));
-
-        // App with READ_EXTERNAL_STORAGE can't open other app's pending or trashed file for read or
-        // write
-        assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-        assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
-
-        final int testAppUid =
-                getContext().getPackageManager().getPackageUid(testApp.getPackageName(), 0);
-        try {
-            allowAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-            // File Manager can open any pending or trashed file for read or write
-            assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-            assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
-        } finally {
-            denyAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-        }
-
-        try {
-            allowAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
-            if (isImageOrVideo) {
-                // System Gallery can open any pending or trashed image/video file for read or write
-                assertTrue(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-                assertTrue(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
-            } else {
-                // System Gallery can't open other app's pending or trashed non-media file for read
-                // or write
-                assertFalse(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ false));
-                assertFalse(canOpenFileAs(testApp, pendingOrTrashedFile, /*forWrite*/ true));
-            }
-        } finally {
-            denyAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
-        }
-    }
-
-    /**
-     * Checks restrictions for listing pending and trashed files by different apps. Assumes that
-     * given {@code testApp} is already installed and has READ_EXTERNAL_STORAGE permission. This
-     * method doesn't uninstall given {@code testApp} at the end.
-     */
-    private void assertListPendingOrTrashed(Uri uri, File file, TestApp testApp,
-            boolean isImageOrVideo) throws Exception {
-        final String parentDirPath = file.getParent();
-        assertTrue(new File(parentDirPath).isDirectory());
-
-        final List<String> listedFileNames = Arrays.asList(new File(parentDirPath).list());
-        assertThat(listedFileNames).doesNotContain(file);
-
-        final File pendingOrTrashedFile = new File(getFilePathFromUri(uri));
-
-        assertThat(listedFileNames).contains(pendingOrTrashedFile.getName());
-
-        // App with READ_EXTERNAL_STORAGE can't see other app's pending or trashed file.
-        assertThat(listAs(testApp, parentDirPath)).doesNotContain(pendingOrTrashedFile.getName());
-
-        final int testAppUid =
-                getContext().getPackageManager().getPackageUid(testApp.getPackageName(), 0);
-        try {
-            allowAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-            // File Manager can see any pending or trashed file.
-            assertThat(listAs(testApp, parentDirPath)).contains(pendingOrTrashedFile.getName());
-        } finally {
-            denyAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-        }
-
-        try {
-            allowAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
-            if (isImageOrVideo) {
-                // System Gallery can see any pending or trashed image/video file.
-                assertTrue(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertThat(listAs(testApp, parentDirPath)).contains(pendingOrTrashedFile.getName());
-            } else {
-                // System Gallery can't see other app's pending or trashed non media file.
-                assertFalse(isMediaTypeImageOrVideo(pendingOrTrashedFile));
-                assertThat(listAs(testApp, parentDirPath))
-                        .doesNotContain(pendingOrTrashedFile.getName());
-            }
-        } finally {
-            denyAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
-        }
-    }
-
-    private Uri createPendingFile(File pendingFile) throws Exception {
-        assertTrue(pendingFile.createNewFile());
-
-        final ContentResolver cr = getContentResolver();
-        final Uri trashedFileUri = MediaStore.scanFile(cr, pendingFile);
-        assertNotNull(trashedFileUri);
-
-        final ContentValues values = new ContentValues();
-        values.put(MediaColumns.IS_PENDING, 1);
-        assertEquals(1, cr.update(trashedFileUri, values, Bundle.EMPTY));
-
-        return trashedFileUri;
-    }
-
-    private Uri createTrashedFile(File trashedFile) throws Exception {
-        assertTrue(trashedFile.createNewFile());
-
-        final ContentResolver cr = getContentResolver();
-        final Uri trashedFileUri = MediaStore.scanFile(cr, trashedFile);
-        assertNotNull(trashedFileUri);
-
-        trashFile(trashedFileUri);
-        return trashedFileUri;
-    }
-
-    private void trashFile(Uri uri) throws Exception {
-        final ContentValues values = new ContentValues();
-        values.put(MediaColumns.IS_TRASHED, 1);
-        assertEquals(1, getContentResolver().update(uri, values, Bundle.EMPTY));
-    }
-
-    /**
-     * Gets file path corresponding to the db row pointed by {@code uri}. If {@code uri} points to
-     * multiple db rows, file path is extracted from the first db row of the database query result.
-     */
-    private String getFilePathFromUri(Uri uri) {
-        final String[] projection = new String[] {MediaColumns.DATA};
-        try (Cursor c = getContentResolver().query(uri, projection, null, null)) {
-            assertTrue(c.moveToFirst());
-            return c.getString(0);
-        }
-    }
-
-    private boolean isMediaTypeImageOrVideo(File file) {
-        return queryImageFile(file).getCount() == 1 || queryVideoFile(file).getCount() == 1;
-    }
-
-    private static void assertIsMediaTypeImage(File file) {
-        final Cursor c = queryImageFile(file);
-        assertEquals(1, c.getCount());
-    }
-
-    private static void assertNotMediaTypeImage(File file) {
-        final Cursor c = queryImageFile(file);
-        assertEquals(0, c.getCount());
-    }
-
-    private static void assertCantQueryFile(File file) {
-        assertThat(getFileUri(file)).isNull();
-        // Confirm that file exists in the database.
-        assertNotNull(MediaStore.scanFile(getContentResolver(), file));
-    }
-
     private static void assertCreateFilesAs(TestApp testApp, File... files) throws Exception {
         for (File file : files) {
             assertFalse("File already exists: " + file, file.exists());
@@ -1241,46 +852,9 @@ public class ScopedStorageTest {
         }
     }
 
-
     private static void deleteFilesAs(TestApp testApp, File... files) throws Exception {
         for (File file : files) {
             deleteFileAs(testApp, file.getPath());
-        }
-    }
-    private static void assertCanDeletePathsAs(TestApp testApp, String... filePaths)
-            throws Exception {
-        for (String path: filePaths) {
-            assertTrue("Failed to delete file " + path + " on behalf of "
-                    + testApp.getPackageName(), deleteFileAs(testApp, path));
-        }
-    }
-
-    private static void assertCantDeletePathsAs(TestApp testApp, String... filePaths)
-            throws Exception {
-        for (String path: filePaths) {
-            assertFalse("Deleting " + path + " on behalf of " + testApp.getPackageName()
-                            + " was expected to fail", deleteFileAs(testApp, path));
-        }
-    }
-
-    private void deleteFiles(File... files) {
-        for (File file: files) {
-            if (file == null) continue;
-            file.delete();
-        }
-    }
-
-    private void deletePaths(String... paths) {
-        for (String path: paths) {
-            if (path == null) continue;
-            new File(path).delete();
-        }
-    }
-
-    private static void assertCanDeletePaths(String... filePaths) {
-        for (String filePath : filePaths) {
-            assertTrue("Failed to delete " + filePath,
-                    new File(filePath).delete());
         }
     }
 
@@ -1297,64 +871,6 @@ public class ScopedStorageTest {
                         getContentResolver().openFileDescriptor(fileUri, mode)) {
             assertThat(pfd).isNotNull();
         }
-    }
-
-    /**
-     * Assert that the last read in: read - write - read using {@code readFd} and {@code writeFd}
-     * see the last write. {@code readFd} and {@code writeFd} are fds pointing to the same
-     * underlying file on disk but may be derived from different mount points and in that case
-     * have separate VFS caches.
-     */
-    private void assertRWR(ParcelFileDescriptor readPfd, ParcelFileDescriptor writePfd)
-            throws Exception {
-        FileDescriptor readFd = readPfd.getFileDescriptor();
-        FileDescriptor writeFd = writePfd.getFileDescriptor();
-
-        byte[] readBuffer = new byte[10];
-        byte[] writeBuffer = new byte[10];
-        Arrays.fill(writeBuffer, (byte) 1);
-
-        // Write so readFd has content to read from next
-        Os.pwrite(readFd, readBuffer, 0, 10, 0);
-        // Read so readBuffer is in readFd's mount VFS cache
-        Os.pread(readFd, readBuffer, 0, 10, 0);
-
-        // Assert that readBuffer is zeroes
-        assertThat(readBuffer).isEqualTo(new byte[10]);
-
-        // Write so writeFd and readFd should now see writeBuffer
-        Os.pwrite(writeFd, writeBuffer, 0, 10, 0);
-
-        // Read so the last write can be verified on readFd
-        Os.pread(readFd, readBuffer, 0, 10, 0);
-
-        // Assert that the last write is indeed visible via readFd
-        assertThat(readBuffer).isEqualTo(writeBuffer);
-        assertThat(readPfd.getStatSize()).isEqualTo(writePfd.getStatSize());
-    }
-
-    private void assertStartsWith(String actual, String prefix, boolean expected) throws Exception {
-        String message = "String \"" + actual + "\" should start with \"" + prefix + "\"";
-
-        if (expected) {
-            assertTrue(message, actual.startsWith(prefix));
-        } else {
-            assertFalse(message, actual.startsWith(prefix));
-        }
-    }
-
-    private void assertLowerFsFd(ParcelFileDescriptor pfd) throws Exception {
-        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
-        String prefix = "/storage";
-
-        assertStartsWith(path, prefix, true);
-    }
-
-    private void assertUpperFsFd(ParcelFileDescriptor pfd) throws Exception {
-        String path = Os.readlink("/proc/self/fd/" + pfd.getFd());
-        String prefix = "/mnt/user";
-
-        assertStartsWith(path, prefix, true);
     }
 
     private static void assertCanCreateFile(File file) throws IOException {
@@ -1450,33 +966,36 @@ public class ScopedStorageTest {
         }
     }
 
-    private void createFileUsingTradefedContentProvider(File file) throws Exception {
-        // Files/Dirs are created using content provider. Owner of the Filse/Dirs is
-        // android.tradefed.contentprovider.
+    /**
+     * Creates a file at any location on storage (except external app data directory).
+     * The owner of the file is not the caller app.
+     */
+    private void createFileAsLegacyApp(File file) throws Exception {
+        // Use a legacy app to create this file, since it could be outside shared storage.
         Log.d(TAG, "Creating file " + file);
-        getContentResolver().openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), "w", null);
+        assertThat(createFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath())).isTrue();
     }
 
-    private void createDirUsingTradefedContentProvider(File file) throws Exception {
-        // Files/Dirs are created using content provider. Owner of the Files/Dirs is
-        // android.tradefed.contentprovider.
-        Log.d(TAG, "Creating Dir " + file);
+    /**
+     * Creates a file at any location on storage (except external app data directory).
+     * The owner of the file is not the caller app.
+     */
+    private void createDirectoryAsLegacyApp(File file) throws Exception {
+        // Use a legacy app to create this file, since it could be outside shared storage.
+        Log.d(TAG, "Creating directory " + file);
         // Create a tmp file in the target directory, this would also create the required
         // directory, then delete the tmp file. It would leave only new directory.
-        getContentResolver()
-            .openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath() + "/tmp.txt"), "w", null);
-        getContentResolver()
-            .delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath() + "/tmp.txt"), null, null);
+        assertThat(createFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath() + "/tmp.txt")).isTrue();
+        assertThat(deleteFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath() + "/tmp.txt")).isTrue();
     }
 
-    private void deleteFileUsingTradefedContentProvider(File file) throws Exception {
+    /**
+     * Deletes a file at any location on storage (except external app data directory).
+     */
+    private void deleteAsLegacyApp(File file) throws Exception {
+        // Use a legacy app to delete this file, since it could be outside shared storage.
         Log.d(TAG, "Deleting file " + file);
-        getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
-    }
-
-    private void deleteDirUsingTradefedContentProvider(File file) throws Exception {
-        Log.d(TAG, "Deleting Dir " + file);
-        getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
+        deleteFileAs(APP_D_LEGACY_HAS_RW, file.getAbsolutePath());
     }
 
     private int getCurrentUser() throws Exception {
