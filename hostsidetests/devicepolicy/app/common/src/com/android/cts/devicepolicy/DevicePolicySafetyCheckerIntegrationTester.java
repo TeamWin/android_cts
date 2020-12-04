@@ -21,11 +21,10 @@ import static android.app.admin.DevicePolicyManager.operationToString;
 import static org.junit.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
-import android.app.admin.DevicePolicyManager.DevicePolicyOperation;
 import android.app.admin.UnsafeStateException;
 import android.util.Log;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +82,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
      * <p>By default it returns an empty array, but sub-classes can override to add its supported
      * operations.
      */
-    protected @DevicePolicyOperation int[] getSafetyAwareOperations() {
+    protected int[] getSafetyAwareOperations() {
         return new int[] {};
     }
 
@@ -99,7 +98,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
      * <p>By default it returns an empty array, but sub-classes can override to add its supported
      * operations.
      */
-    protected @DevicePolicyOperation int[] getOverloadedSafetyAwareOperations() {
+    protected int[] getOverloadedSafetyAwareOperations() {
         return new int[] {};
     }
 
@@ -117,17 +116,16 @@ public class DevicePolicySafetyCheckerIntegrationTester {
      * Throws a {@link UnsupportedOperationException} then the given {@code operation} is not
      * supported.
      */
-    protected final void throwUnsupportedOperationException(@DevicePolicyOperation int operation,
-            boolean overloaded) {
+    protected final void throwUnsupportedOperationException(int operation, boolean overloaded) {
         throw new UnsupportedOperationException(
                 "Unsupported operation " + getOperationName(operation, overloaded));
     }
 
-    private void safeOperationTest(DevicePolicyManager dpm, List<String> failures,
-            @DevicePolicyOperation int operation, boolean overloaded) {
+    private void safeOperationTest(DevicePolicyManager dpm, List<String> failures, int operation,
+            boolean overloaded) {
         String name = getOperationName(operation, overloaded);
         try {
-            setOperationUnsafe(operation);
+            setOperationUnsafe(dpm, operation);
             runCommonOrSpecificOperation(dpm, operation, overloaded);
             Log.e(TAG, name + " didn't throw an UnsafeStateException");
             failures.add(name);
@@ -139,13 +137,13 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         }
     }
 
-    private String getOperationName(@DevicePolicyOperation int operation, boolean overloaded) {
+    private String getOperationName(int operation, boolean overloaded) {
         String name = operationToString(operation);
         return overloaded ? name + "(OVERLOADED)" : name;
     }
 
-    private void runCommonOrSpecificOperation(DevicePolicyManager dpm,
-            @DevicePolicyOperation int operation, boolean overloaded) {
+    private void runCommonOrSpecificOperation(DevicePolicyManager dpm, int operation,
+            boolean overloaded) {
         String name = getOperationName(operation, overloaded);
         Log.v(TAG, "runOperation(): " + name);
         switch (operation) {
@@ -161,10 +159,8 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         }
     }
 
-    private void setOperationUnsafe(@DevicePolicyOperation int operation) {
-        // TODO(b/172376923): use a proper DevicePolicyManager command
-        String cmd = "cmd device_policy set-operation-safe " + operation + " false";
-        Log.v(TAG, "Running '" + cmd + "'");
-        SystemUtil.runShellCommand(cmd);
+    private void setOperationUnsafe(DevicePolicyManager dpm, int operation) {
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(dpm,
+                (obj) -> obj.setNextOperationSafety(operation, false));
     }
 }
