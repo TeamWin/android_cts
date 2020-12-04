@@ -86,6 +86,19 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         executeProfileOwnerTest("BackupServicePoliciesTest");
     }
 
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        if (true) {
+            // TODO(b/172376923): currently disabled as PO is not properly set to run lockNow()
+            return;
+        }
+
+        executeProfileOwnerTest("DevicePolicySafetyCheckerIntegrationTest");
+    }
+
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
