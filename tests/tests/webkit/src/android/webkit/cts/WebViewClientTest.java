@@ -322,7 +322,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         assertNull(webViewClient.hasOnReceivedResourceError());
         String url = mWebServer.getAssetUrl(TestHtmlConstants.BAD_IMAGE_PAGE_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(webViewClient.hasOnReceivedResourceError() != null);
+        assertNotNull(webViewClient.hasOnReceivedResourceError());
         assertEquals(WebViewClient.ERROR_UNSUPPORTED_SCHEME,
                 webViewClient.hasOnReceivedResourceError().getErrorCode());
     }
@@ -338,7 +338,7 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         assertNull(webViewClient.hasOnReceivedHttpError());
         String url = mWebServer.getAssetUrl(TestHtmlConstants.NON_EXISTENT_PAGE_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertTrue(webViewClient.hasOnReceivedHttpError() != null);
+        assertNotNull(webViewClient.hasOnReceivedHttpError());
         assertEquals(404, webViewClient.hasOnReceivedHttpError().getStatusCode());
     }
 
