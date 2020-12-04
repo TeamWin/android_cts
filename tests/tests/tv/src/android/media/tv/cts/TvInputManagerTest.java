@@ -22,6 +22,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
 import android.media.tv.cts.TvViewTest.MockCallback;
 import android.media.tv.TunedInfo;
 import android.media.tv.TvContentRating;
@@ -35,6 +36,7 @@ import android.media.tv.TvInputService;
 import android.media.tv.TvStreamConfig;
 import android.media.tv.TvView;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
 import android.test.ActivityInstrumentationTestCase2;
 import android.tv.cts.R;
@@ -93,7 +95,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     public void setUp() throws Exception {
         super.setUp();
         mActivity = getActivity();
-        if (!Utils.assumeHasTvInputFramework(mActivity)) {
+        if (!Utils.hasTvInputFramework(mActivity)) {
             return;
         }
         mInstrumentation = getInstrumentation();
@@ -115,7 +117,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
 
     @Override
     protected void tearDown() throws Exception {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             super.tearDown();
             return;
         }
@@ -187,7 +189,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testGetCurrentTunedInfos() throws Throwable {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         mActivity.runOnUiThread(new Runnable() {
@@ -206,14 +208,14 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testGetInputState() throws Exception {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         assertEquals(mManager.getInputState(mStubId), TvInputManager.INPUT_STATE_CONNECTED);
     }
 
     public void testGetTvInputInfo() throws Exception {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         TvInputInfo expected = mManager.getTvInputInfo(mStubId);
@@ -224,7 +226,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testGetTvInputList() throws Exception {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         List<TvInputInfo> list = mManager.getTvInputList();
@@ -239,7 +241,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testIsParentalControlsEnabled() {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         try {
@@ -250,7 +252,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testIsRatingBlocked() {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         try {
@@ -261,7 +263,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testRegisterUnregisterCallback() {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         getActivity().runOnUiThread(new Runnable() {
@@ -279,7 +281,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testInputAddedAndRemoved() {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         getActivity().runOnUiThread(new Runnable() {
@@ -328,7 +330,7 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
     }
 
     public void testTvInputInfoUpdated() throws IOException, XmlPullParserException {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         getActivity().runOnUiThread(new Runnable() {
