@@ -31,7 +31,7 @@ import java.util.Objects;
  * Helper to automatically save multiple existing DeviceConfig values, change them during tests, and
  * restore the original values after the test.
  */
-public class DeviceConfigStateHelper {
+public class DeviceConfigStateHelper implements AutoCloseable {
     private final String mNamespace;
     @GuardedBy("mOriginalValues")
     private final ArrayMap<String, String> mOriginalValues = new ArrayMap<>();
@@ -82,5 +82,10 @@ public class DeviceConfigStateHelper {
         }
         SystemUtil.runWithShellPermissionIdentity(
                 () -> DeviceConfig.setProperties(builder.build()));
+    }
+
+    @Override
+    public void close() throws Exception {
+        restoreOriginalValues();
     }
 }

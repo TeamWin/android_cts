@@ -28,7 +28,6 @@ import static android.location.LocationRequest.PASSIVE_INTERVAL;
 import static android.os.PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_GPS_DISABLED_WHEN_SCREEN_OFF;
 import static android.os.PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF;
-import static android.provider.Settings.Global.BATTERY_SAVER_CONSTANTS;
 import static android.provider.Settings.Global.LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST;
 
 import static androidx.test.ext.truth.content.IntentSubject.assertThat;
@@ -68,16 +67,17 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.LocationUtils;
 import com.android.compatibility.common.util.ScreenUtils;
 import com.android.compatibility.common.util.ScreenUtils.ScreenResetter;
-import com.android.compatibility.common.util.SettingsUtils;
 import com.android.compatibility.common.util.SettingsUtils.SettingResetter;
 
 import org.junit.After;
@@ -642,14 +642,15 @@ public class LocationManagerFineTest {
         LocationRequest request = new LocationRequest.Builder(0).build();
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
-             ScreenResetter ignored = new ScreenResetter()) {
+             ScreenResetter ignored = new ScreenResetter();
+             DeviceConfigStateHelper batterySaverDeviceConfigStateHelper =
+                     new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER)) {
             mManager.requestLocationUpdates(GPS_PROVIDER, request,
                     Executors.newSingleThreadExecutor(), capture);
             mManager.requestLocationUpdates(TEST_PROVIDER, request,
                     Executors.newSingleThreadExecutor(), capture);
 
-            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
-                    "gps_mode=1");
+            batterySaverDeviceConfigStateHelper.set("location_mode", "1");
             BatteryUtils.runDumpsysBatteryUnplug();
             BatteryUtils.enableBatterySaver(true);
             assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
@@ -686,12 +687,13 @@ public class LocationManagerFineTest {
         LocationRequest request = new LocationRequest.Builder(0).build();
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
-             ScreenResetter ignored = new ScreenResetter()) {
+             ScreenResetter ignored = new ScreenResetter();
+             DeviceConfigStateHelper batterySaverDeviceConfigStateHelper =
+                     new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, request,
                     Executors.newSingleThreadExecutor(), capture);
 
-            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
-                    "gps_mode=2");
+            batterySaverDeviceConfigStateHelper.set("location_mode", "2");
             BatteryUtils.runDumpsysBatteryUnplug();
             BatteryUtils.enableBatterySaver(true);
             assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
@@ -723,12 +725,13 @@ public class LocationManagerFineTest {
         LocationRequest request = new LocationRequest.Builder(0).build();
 
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
-             ScreenResetter ignored = new ScreenResetter()) {
+             ScreenResetter ignored = new ScreenResetter();
+             DeviceConfigStateHelper batterySaverDeviceConfigStateHelper =
+                     new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, request,
                     Executors.newSingleThreadExecutor(), capture);
 
-            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
-                    "gps_mode=4");
+            batterySaverDeviceConfigStateHelper.set("location_mode", "4");
             BatteryUtils.runDumpsysBatteryUnplug();
             BatteryUtils.enableBatterySaver(true);
             assertThat(powerManager.getLocationPowerSaveMode()).isEqualTo(
@@ -757,7 +760,9 @@ public class LocationManagerFineTest {
         try (LocationListenerCapture capture = new LocationListenerCapture(mContext);
              ScreenResetter ignored1 = new ScreenResetter();
              SettingResetter ignored2 = new SettingResetter(NAMESPACE_GLOBAL,
-                     LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST, mContext.getPackageName())) {
+                     LOCATION_IGNORE_SETTINGS_PACKAGE_WHITELIST, mContext.getPackageName());
+             DeviceConfigStateHelper batterySaverDeviceConfigStateHelper =
+                     new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_BATTERY_SAVER)) {
 
             getInstrumentation().getUiAutomation()
                     .adoptShellPermissionIdentity(WRITE_SECURE_SETTINGS);
@@ -777,8 +782,7 @@ public class LocationManagerFineTest {
             mManager.setTestProviderEnabled(TEST_PROVIDER, false);
 
             // enable battery saver throttling
-            SettingsUtils.set(NAMESPACE_GLOBAL, BATTERY_SAVER_CONSTANTS,
-                    "gps_mode=4");
+            batterySaverDeviceConfigStateHelper.set("location_mode", "4");
             BatteryUtils.runDumpsysBatteryUnplug();
             BatteryUtils.enableBatterySaver(true);
             ScreenUtils.setScreenOn(false);
