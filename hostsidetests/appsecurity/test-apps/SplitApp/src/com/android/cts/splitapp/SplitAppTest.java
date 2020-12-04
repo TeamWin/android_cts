@@ -333,6 +333,7 @@ public class SplitAppTest extends AndroidTestCase {
             public void onReceive(Context context, Intent intent) {
                 assertEquals(1, intent.getIntExtra("CREATE_COUNT", -1));
                 assertEquals(0, intent.getIntExtra("NEW_INTENT_COUNT", -1));
+                assertNull(intent.getStringExtra("RESOURCE_CONTENT"));
                 cv.open();
             }
         };
@@ -357,6 +358,7 @@ public class SplitAppTest extends AndroidTestCase {
             public void onReceive(Context context, Intent intent) {
                 assertEquals(1, intent.getIntExtra("CREATE_COUNT", -1));
                 assertEquals(1, intent.getIntExtra("NEW_INTENT_COUNT", -1));
+                assertEquals("Hello feature!", intent.getStringExtra("RESOURCE_CONTENT"));
                 cv.open();
             }
         };
