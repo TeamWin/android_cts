@@ -136,8 +136,12 @@ public class ExtensionTest extends JetpackExtensionTestBase {
             assertThat(featureRect.top).isAtLeast(0);
             assertThat(featureRect.right).isAtLeast(0);
             assertThat(featureRect.bottom).isAtLeast(0);
-            assertThat(featureRect.right).isAtMost(mActivity.getWidth());
-            assertThat(featureRect.bottom).isAtMost(mActivity.getHeight());
+
+            final Rect activityBounds =
+                    mActivity.getWindowManager().getCurrentWindowMetrics().getBounds();
+
+            assertThat(featureRect.right).isAtMost(activityBounds.width());
+            assertThat(featureRect.bottom).isAtMost(activityBounds.height());
         }
     }
 
