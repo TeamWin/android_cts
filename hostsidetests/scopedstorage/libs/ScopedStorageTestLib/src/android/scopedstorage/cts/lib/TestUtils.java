@@ -41,7 +41,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -69,6 +68,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -136,10 +136,14 @@ public class TestUtils {
         uiAutomation.adoptShellPermissionIdentity("android.permission.GRANT_RUNTIME_PERMISSIONS");
         try {
             uiAutomation.grantRuntimePermission(packageName, permission);
-            // Wait for OP_READ_EXTERNAL_STORAGE to get updated.
-            SystemClock.sleep(1000);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+        try {
+            pollForPermission(packageName, permission, true);
+        } catch (Exception e) {
+            fail("Exception on polling for permission grant for " + packageName + " for "
+                    + permission + ": " + e.getMessage());
         }
     }
 
@@ -153,6 +157,12 @@ public class TestUtils {
             uiAutomation.revokeRuntimePermission(packageName, permission);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+        }
+        try {
+            pollForPermission(packageName, permission, false);
+        } catch (Exception e) {
+            fail("Exception on polling for permission revoke for " + packageName + " for "
+                    + permission + ": " + e.getMessage());
         }
     }
 
@@ -734,6 +744,48 @@ public class TestUtils {
     }
 
     /**
+     * Polls until {@code app} is granted or denied the given permission.
+     */
+    public static void pollForPermission(TestApp app, String perm, boolean granted)
+            throws Exception {
+        pollForPermission(app.getPackageName(), perm, granted);
+    }
+
+    /**
+     * Polls until {@code packageName} is granted or denied the given permission.
+     */
+    public static void pollForPermission(String packageName, String perm, boolean granted)
+            throws Exception {
+        pollForCondition(
+                () -> granted == checkPermission(packageName, perm),
+                "Timed out while waiting for permission " + perm + " to be "
+                        + (granted ? "granted" : "revoked"));
+    }
+
+    /**
+     * Returns true iff {@code packageName} is granted a given permission.
+     */
+    public static boolean checkPermission(String packageName, String perm) {
+        try {
+            int uid = getContext().getPackageManager().getPackageUid(packageName, 0);
+
+            Optional<ActivityManager.RunningAppProcessInfo> process = getAppProcessInfo(
+                    packageName);
+            int pid = process.isPresent() ? process.get().pid : -1;
+            return checkPermissionAndAppOp(perm, packageName, pid, uid);
+        } catch (PackageManager.NameNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Returns true iff {@code app} is granted a given permission.
+     */
+    public static boolean checkPermission(TestApp app, String perm) {
+        return checkPermission(app.getPackageName(), perm);
+    }
+
+    /**
      * Asserts the entire content of the file equals exactly {@code expectedContent}.
      */
     public static void assertFileContent(File file, byte[] expectedContent) throws IOException {
@@ -912,8 +964,16 @@ public class TestUtils {
     private static boolean checkPermissionAndAppOp(String permission) {
         final int pid = Os.getpid();
         final int uid = Os.getuid();
+        final String packageName = getContext().getPackageName();
+        return checkPermissionAndAppOp(permission, packageName, pid, uid);
+    }
+
+    /**
+     * Checks if the given {@code permission} is granted and corresponding AppOp is MODE_ALLOWED.
+     */
+    private static boolean checkPermissionAndAppOp(String permission, String packageName, int pid,
+            int uid) {
         final Context context = getContext();
-        final String packageName = context.getPackageName();
         if (context.checkPermission(permission, pid, uid) != PackageManager.PERMISSION_GRANTED) {
             return false;
         }
@@ -1194,12 +1254,13 @@ public class TestUtils {
     }
 
     private static boolean isProcessRunning(String packageName) {
-        try {
-            return getContext().getSystemService(
-                    ActivityManager.class).getRunningAppProcesses().stream().anyMatch(
-                            p -> packageName.equals(p.processName));
-        } catch (Exception e) {
-            return false;
-        }
+        return getAppProcessInfo(packageName).isPresent();
+    }
+
+    private static Optional<ActivityManager.RunningAppProcessInfo> getAppProcessInfo(
+            String packageName) {
+        return getContext().getSystemService(
+                ActivityManager.class).getRunningAppProcesses().stream().filter(
+                        p -> packageName.equals(p.processName)).findFirst();
     }
 }
