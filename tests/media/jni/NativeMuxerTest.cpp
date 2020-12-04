@@ -271,6 +271,8 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
         AMediaFormat* thisFormat = mFormat[i];
         const char* thisMime = nullptr;
         AMediaFormat_getString(thisFormat, AMEDIAFORMAT_KEY_MIME, &thisMime);
+        int tolerance = !strncmp(thisMime, "video/", strlen("video/")) ? STTS_TOLERANCE_US : 0;
+        tolerance += 1; // rounding error
         int j = 0;
         for (; j < that->mTrackCount; j++) {
             AMediaFormat* thatFormat = that->mFormat[j];
@@ -279,9 +281,6 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
             if (thisMime != nullptr && thatMime != nullptr && !strcmp(thisMime, thatMime)) {
                 if (!isFormatSimilar(thisFormat, thatFormat)) continue;
                 if (mBufferInfo[i].size() == that->mBufferInfo[j].size()) {
-                    int tolerance =
-                            !strncmp(thisMime, "video/", strlen("video/")) ? STTS_TOLERANCE_US : 0;
-                    tolerance += 1; // rounding error
                     int k = 0;
                     for (; k < mBufferInfo[i].size(); k++) {
                         AMediaCodecBufferInfo* thisInfo = mBufferInfo[i][k];
@@ -305,6 +304,7 @@ bool MuxerNativeTestHelper::isSubsetOf(MuxerNativeTestHelper* that) {
             }
         }
         if (j == that->mTrackCount) {
+            AMediaFormat_getString(thisFormat, AMEDIAFORMAT_KEY_MIME, &thisMime);
             ALOGV("For mime %s, Couldn't find a match", thisMime);
             return false;
         }
