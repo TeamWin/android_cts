@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.content.Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS;
+import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
 import static android.view.View.VISIBLE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
@@ -60,6 +61,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.TestWebView;
@@ -114,6 +116,9 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final RequireImeCompatFlagRule mRequireImeCompatFlagRule = new RequireImeCompatFlagRule(
+            FINISH_INPUT_NO_FALLBACK_CONNECTION, true);
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.KeyboardVisibilityControlTest";
@@ -472,7 +477,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
-
             // Launch a simple test activity
             final TestActivity testActivity =
                     TestActivity.startSync(activity -> new LinearLayout(activity));
@@ -505,28 +509,37 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
             expectImeVisible(TIMEOUT);
 
-            // Clear editor focus after screen-off
             TestUtils.turnScreenOff();
             TestUtils.waitOnMainUntil(() -> editTextRef.get().getWindowVisibility() != VISIBLE,
                     TIMEOUT);
             expectEvent(stream, onFinishInputViewMatcher(true), TIMEOUT);
-            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-            expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
-            // Expect showSoftInput comes when system notify InsetsController to apply show IME
-            // insets after IME input target updated.
-            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
-            notExpectEvent(stream, hideSoftInputMatcher(), NOT_EXPECT_TIMEOUT);
+            if (MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                expectEvent(stream, event -> "onFinishInput".equals(event.getEventName()), TIMEOUT);
+                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                        NOT_EXPECT_TIMEOUT);
+            } else {
+                expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
+                // Expect showSoftInput comes when system notify InsetsController to apply show IME
+                // insets after IME input target updated.
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+                notExpectEvent(stream, hideSoftInputMatcher(), NOT_EXPECT_TIMEOUT);
+            }
+
+            // Clear editor focus after screen-off
             TestUtils.runOnMainSync(editTextRef.get()::clearFocus);
 
             // Verify IME will invisible after device unlocked
             TestUtils.turnScreenOn();
             TestUtils.unlockScreen();
-            // Expect hideSoftInput and onFinishInputView will called by IMMS when the same window
+            // Expect hideSoftInput will called by IMMS when the same window
             // focused since the editText view focus has been cleared.
             TestUtils.waitOnMainUntil(() -> editTextRef.get().hasWindowFocus()
                     && !editTextRef.get().hasFocus(), TIMEOUT);
             expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
-            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            if (!MockImeSession.isFinishInputNoFallbackConnectionEnabled()) {
+                expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            }
             expectImeInvisible(TIMEOUT);
         }
     }
