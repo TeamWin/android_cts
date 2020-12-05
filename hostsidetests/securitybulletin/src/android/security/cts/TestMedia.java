@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 import junit.framework.Assert;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -511,6 +512,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-10")
     @Test
     public void testPocCVE_2020_0213() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
         String inputFiles[] = {"cve_2020_0213.hevc", "cve_2020_0213_info.txt"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0213",
             AdbUtils.TMP_PATH + inputFiles[0] + " " + AdbUtils.TMP_PATH + inputFiles[1],
