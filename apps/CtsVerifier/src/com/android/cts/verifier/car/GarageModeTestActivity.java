@@ -24,7 +24,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -37,22 +36,18 @@ import java.text.DateFormat;
  * Tests that Garage Mode runs at the end of a drive
  */
 public final class GarageModeTestActivity extends PassFailButtons.Activity {
-    // Requirements from Android 10 Compatibility Definition
+    // Requirements from Android 11 Compatibility Definition
     // 2.5.4. Performance and Power
     // Automotive device implementations:
     //
-    // [8.3/A-1-3] MUST enter Garage Mode at least once before the car is powered down.
-    // [8.3/A-1-4] MUST be in Garage Mode for at least 15 minutes unless:
+    // [8.3/A-1-3] MUST support Garage Mode
+    // [8.3/A-1-4] SHOULD be in Garage Mode for at least 15 minutes unless:
     //                 The battery is drained.
     //                 No idle jobs are scheduled.
     //                 The driver exits Garage Mode.
     //
-    // As updated:
-    // [8.3/A-1-3] MUST support Garage Mode functionality
-    // [8.3/A-1-4] SHOULD be in Garage Mode for at least 15 minutes after every drive unless:
-    //                 The battery is drained
-    //                 No idle jobs are scheduled
-    //                 The driver exits Garage Mode
+    // I understand that Google intends to require that Garage Mode is occasionally
+    // allowed to run at least 30 seconds. This code tests for that minimum time.
 
     private static final String TAG = GarageModeTestActivity.class.getSimpleName();
 
@@ -60,10 +55,17 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
     // for some variation, run the test for 14 minutes and verify that it
     // ran at least 13 minutes.
     private static final int NUM_SECONDS_DURATION = 14 * 60;
-    private static final long DURATION_MINIMUM_TEST_MS = (NUM_SECONDS_DURATION - 60) * 1000L;
+    private static final long RECOMMENDED_DURATION_MS = (NUM_SECONDS_DURATION - 60) * 1000L;
+
+    // The hard requirement is for Garage Mode to run for 30 seconds. Fail if
+    // the test doesn't run at least this long.
+    private static final long REQUIRED_DURATION_MS = 30 * 1000L;
+
+    // Once a test is started, Garage Mode is expected to start within 10 minutes. If it doesn't,
+    // the test is marked as fail.
+    private static final long MAX_WAIT_UNTIL_GARAGE_MODE = 10 * 60 * 1000L;
 
     private TextView mStatusText;
-    private boolean mJustLaunchedVerifier;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,10 +78,7 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
         mStatusText = findViewById(R.id.car_garage_mode_results);
 
-        Button wifiButton = view.findViewById(R.id.car_wifi_settings);
-        wifiButton.setOnClickListener(
-                (buttonView) -> startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS)));
-
+        // Garage Mode Monitor
         Button monitorButton = (Button) view.findViewById(R.id.launch_garage_monitor);
         monitorButton.setOnClickListener((buttonView) -> {
             Context context = GarageModeTestActivity.this;
@@ -91,10 +90,10 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
             editor.putLong(GarageModeChecker.PREFS_GARAGE_MODE_START, 0);
             editor.putLong(GarageModeChecker.PREFS_GARAGE_MODE_END, 0);
             editor.putLong(GarageModeChecker.PREFS_TERMINATION, 0);
+            editor.putBoolean(GarageModeChecker.PREFS_HAD_CONNECTIVITY, false);
             editor.commit();
 
             GarageModeChecker.scheduleAnIdleJob(context, NUM_SECONDS_DURATION);
-            mJustLaunchedVerifier = true;
             verifyStatus();
             Log.v(TAG, "Scheduled GarageModeChecker to run when idle");
         });
@@ -106,6 +105,14 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
         verifyStatus();
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasWindowFocus) {
+        super.onWindowFocusChanged(hasWindowFocus);
+        if (hasWindowFocus) {
+            verifyStatus();
+        }
+    }
+
     private void verifyStatus() {
         Context context = GarageModeTestActivity.this;
         SharedPreferences prefs = context.getSharedPreferences(
@@ -113,46 +120,72 @@ public final class GarageModeTestActivity extends PassFailButtons.Activity {
         String resultsString;
         DateFormat dateTime = DateFormat.getDateTimeInstance();
 
+        long now = System.currentTimeMillis();
         long initiateTime = prefs.getLong(GarageModeChecker.PREFS_INITIATION, 0);
         long garageModeStart = prefs.getLong(GarageModeChecker.PREFS_GARAGE_MODE_START, 0);
         long garageModeEnd = prefs.getLong(GarageModeChecker.PREFS_GARAGE_MODE_END, 0);
         long termination = prefs.getLong(GarageModeChecker.PREFS_TERMINATION, 0);
+        long jobUpdate = prefs.getLong(GarageModeChecker.PREFS_JOB_UPDATE, 0);
+        boolean hadConnectivity = prefs.getBoolean(GarageModeChecker.PREFS_HAD_CONNECTIVITY, false);
 
         boolean testPassed = false;
         if (initiateTime == 0) {
             resultsString = "No results are available.\n\n"
                     + "Perform the indicated steps to run the test.";
-        } else if (mJustLaunchedVerifier) {
-            resultsString = String.format("No results are available.\n\n"
-                            + "Perform the indicated steps to run the test.\n\n"
-                            + "%s -- Test was enabled",
-                    dateTime.format(initiateTime));
-            mJustLaunchedVerifier = false;
         } else if (garageModeStart == 0) {
-            resultsString = String.format("Test failed.\n"
-                            + "Garage Mode did not run.\n\n"
-                            + "%s -- Test was enabled",
-                    dateTime.format(initiateTime));
-        } else if (garageModeEnd > (garageModeStart + DURATION_MINIMUM_TEST_MS)) {
-            resultsString = String.format("Test Passed.\n"
-                            + "Garage Mode ran as required and for the recommended time.\n\n"
+            if (now < initiateTime + MAX_WAIT_UNTIL_GARAGE_MODE) {
+                resultsString = String.format("Waitng for Garage Mode to start.\n\n"
+                                + "%s -- Test was enabled",
+                        dateTime.format(initiateTime));
+            } else {
+                resultsString = String.format("Test failed.\n"
+                                + "Garage Mode did not run.\n\n"
+                                + "%s -- Test was enabled",
+                        dateTime.format(initiateTime));
+            }
+        } else if (garageModeEnd > (garageModeStart + RECOMMENDED_DURATION_MS)) {
+            testPassed = hadConnectivity;
+            resultsString = String.format("Test %s.\n"
+                            + "Garage Mode ran as required and for the recommended time.\n"
+                            + "Connectivity was %savailable.\n\n"
                             + "%s -- Test was enabled\n"
                             + "%s -- Garage mode started\n"
                             + "%s -- Garage mode completed",
+                    (testPassed ? "Passed" : "Failed"),
+                    (hadConnectivity ? "" : "not "),
                     dateTime.format(initiateTime), dateTime.format(garageModeStart),
                     dateTime.format(garageModeEnd));
-            testPassed = true;
-        } else if (termination > 0) {
-            resultsString = String.format("Test Passed.\n"
+        } else if (termination > (garageModeStart + REQUIRED_DURATION_MS)) {
+            testPassed = hadConnectivity;
+            resultsString = String.format("Test %s.\n"
                             + "Garage Mode ran as required, "
                             + "but for less time than is recommended.\n"
-                            + "The CDD recommends that Garage Mode runs for 15 minutes.\n\n"
+                            + "  The CDD recommends that Garage Mode runs for 15 minutes.\n"
+                            + "Connectivity was %savailable.\n\n"
                             + "%s -- Test was enabled\n"
                             + "%s -- Garage mode started\n"
                             + "%s -- Garage mode was terminated",
+                    (testPassed ? "Passed" : "Failed"),
+                    (hadConnectivity ? "" : "not "),
                     dateTime.format(initiateTime), dateTime.format(garageModeStart),
                     dateTime.format(termination));
-            testPassed = true;
+        } else if (termination > 0) {
+            resultsString = String.format("Test Failed.\n"
+                            + "Garage Mode ran, but for less than the required time.\n"
+                            + "  The minimum requirement is that Garage Mode runs for 30 seconds.\n"
+                            + "  The CDD recommends that Garage Mode runs for 15 minutes.\n"
+                            + "Connectivity was %savailable.\n\n"
+                            + "%s -- Test was enabled\n"
+                            + "%s -- Garage mode started\n"
+                            + "%s -- Garage mode was terminated",
+                    (hadConnectivity ? "" : "not "),
+                    dateTime.format(initiateTime), dateTime.format(garageModeStart),
+                    dateTime.format(termination));
+        } else if (now < jobUpdate + GarageModeChecker.MS_PER_ITERATION * 2) {
+            resultsString = "Garage Mode started and test is running.\n\n"
+                    + dateTime.format(initiateTime) + " -- Test was enabled\n"
+                    + dateTime.format(garageModeStart) + " -- Garage mode started\n"
+                    + dateTime.format(jobUpdate) + " -- Last job updated";
         } else {
             resultsString = "Test failed.\n\n"
                     + "Garage Mode started, but terminated unexpectedly.\n\n"
