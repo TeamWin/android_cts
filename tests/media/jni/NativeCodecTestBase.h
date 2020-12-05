@@ -103,18 +103,13 @@ class OutputManager {
     bool isPtsStrictlyIncreasing(int64_t lastPts);
     bool isOutPtsListIdenticalToInpPtsList(bool requireSorting);
     void saveToMemory(uint8_t* buf, AMediaCodecBufferInfo* info) {
-        memory.insert(memory.end(), buf + info->offset, buf + info->size);
+        memory.insert(memory.end(), buf, buf + info->size);
     }
     void updateChecksum(uint8_t* buf, AMediaCodecBufferInfo* info) {
-        crc32value = crc32(crc32value, buf + info->offset, info->size);
-        uint8_t flattenInfo[16];
-        int pos = 0;
-        flattenField<int32_t>(flattenInfo, &pos, info->size);
-        flattenField<int32_t>(flattenInfo, &pos,
-                              info->flags & ~AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
-        flattenField<int64_t>(flattenInfo, &pos, info->presentationTimeUs);
-        crc32value = crc32(crc32value, flattenInfo, sizeof(flattenInfo));
+        updateChecksum(buf, info, 0, 0, 0);
     }
+    void updateChecksum(
+            uint8_t* buf, AMediaCodecBufferInfo* info, int width, int height, int stride);
     uLong getChecksum() { return crc32value; }
     void reset() {
         inpPtsArray.clear();
