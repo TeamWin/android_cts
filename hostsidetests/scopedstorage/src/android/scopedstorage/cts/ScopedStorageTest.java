@@ -92,6 +92,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeInstant;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -937,6 +938,45 @@ public class ScopedStorageTest {
             deleteFilesAs(TEST_APP_A, nestedFileToBeDeleted);
             uninstallAppNoThrow(TEST_APP_A);
         }
+    }
+
+    /**
+     * Tests that an instant app can't access external storage.
+     */
+    @Test
+    @AppModeInstant
+    public void testInstantAppsCantAccessExternalStorage() throws Exception {
+        assumeTrue("This test requires that the test runs as an Instant app",
+                getContext().getPackageManager().isInstantApp());
+        assertThat(getContext().getPackageManager().isInstantApp()).isTrue();
+
+        // Can't read ExternalStorageDir
+        assertThat(getExternalStorageDir().list()).isNull();
+
+        // Can't create a top-level direcotry
+        final File topLevelDir = new File(getExternalStorageDir(), TEST_DIRECTORY_NAME);
+        assertThat(topLevelDir.mkdir()).isFalse();
+
+        // Can't create file under root dir
+        final File newTxtFile = new File(getExternalStorageDir(), NONMEDIA_FILE_NAME);
+        assertThrows(IOException.class,
+                () -> {
+                    newTxtFile.createNewFile();
+                });
+
+        // Can't create music file under /MUSIC
+        final File newMusicFile = new File(getMusicDir(), AUDIO_FILE_NAME);
+        assertThrows(IOException.class,
+                () -> {
+                    newMusicFile.createNewFile();
+                });
+
+        // getExternalFilesDir() is not null
+        assertThat(getExternalFilesDir()).isNotNull();
+
+        // Can't read/write app specific dir
+        assertThat(getExternalFilesDir().list()).isNull();
+        assertThat(getExternalFilesDir().exists()).isFalse();
     }
 
     private void createAndCheckFileAsApp(TestApp testApp, File newFile) throws Exception {

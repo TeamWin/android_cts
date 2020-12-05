@@ -16,6 +16,7 @@
 
 package android.view.inputmethod.cts;
 
+import static android.inputmethodservice.InputMethodService.FINISH_INPUT_NO_FALLBACK_CONNECTION;
 import static android.view.View.SCREEN_STATE_OFF;
 import static android.view.View.SCREEN_STATE_ON;
 import static android.view.View.VISIBLE;
@@ -42,6 +43,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.DisableScreenDozeRule;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
+import android.view.inputmethod.cts.util.RequireImeCompatFlagRule;
 import android.view.inputmethod.cts.util.TestActivity;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -76,6 +78,9 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
+    @Rule
+    public final RequireImeCompatFlagRule mRequireImeCompatFlagRule = new RequireImeCompatFlagRule(
+            FINISH_INPUT_NO_FALLBACK_CONNECTION, true);
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 

@@ -47,8 +47,6 @@ const char* TBD_AMEDIACODEC_PARAMETER_KEY_MAX_B_FRAMES = "max-bframes";
 const char* TBD_AMEDIAFORMAT_KEY_BIT_RATE_MODE = "bitrate-mode";
 
 bool isCSDIdentical(AMediaFormat* refFormat, AMediaFormat* testFormat) {
-    const char* mime;
-    AMediaFormat_getString(refFormat, AMEDIAFORMAT_KEY_MIME, &mime);
     for (int i = 0;; i++) {
         std::pair<void*, size_t> refCsd;
         std::pair<void*, size_t> testCsd;

@@ -15,6 +15,9 @@
 -->
 <configuration description="Runs CTS with common options set for an automated run on userdebug/eng builds">
 
+    <!-- template hook to allow users to attach additional target preparers -->
+    <template-include name="preparers" default="empty" />
+
     <include name="cts" />
 
     <option name="plan" value="cts" />

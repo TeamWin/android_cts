@@ -14,6 +14,7 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibility.cts.common.InstrumentedAccessibilityService.enableService;
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithAction;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
 import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
@@ -30,18 +31,23 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
+import android.accessibility.cts.common.InstrumentedAccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityFocusAndInputFocusSyncActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
+import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -67,6 +73,10 @@ public class AccessibilityFocusAndInputFocusSyncTest {
     private static UiAutomation sUiAutomation;
 
     private AccessibilityFocusAndInputFocusSyncActivity mActivity;
+    private Context mContext;
+    private AccessibilityManager mAccessibilityManager;
+    private int mFocusStrokeWidthDefaultValue;
+    private int mFocusColorDefaultValue;
 
     private ActivityTestRule<AccessibilityFocusAndInputFocusSyncActivity> mActivityRule =
             new ActivityTestRule<>(AccessibilityFocusAndInputFocusSyncActivity.class, false, false);
@@ -83,10 +93,6 @@ public class AccessibilityFocusAndInputFocusSyncTest {
     public static void oneTimeSetup() throws Exception {
         sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sUiAutomation = sInstrumentation.getUiAutomation();
-        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
-        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
-        info.flags &= ~AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
-        sUiAutomation.setServiceInfo(info);
     }
 
     @AfterClass
@@ -96,8 +102,19 @@ public class AccessibilityFocusAndInputFocusSyncTest {
 
     @Before
     public void setUp() throws Exception {
+        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        info.flags &= ~AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+        sUiAutomation.setServiceInfo(info);
+
         mActivity = launchActivityAndWaitForItToBeOnscreen(
                 sInstrumentation, sUiAutomation, mActivityRule);
+
+        mContext = sInstrumentation.getContext();
+        mAccessibilityManager = mContext.getSystemService(AccessibilityManager.class);
+        assertNotNull(mAccessibilityManager);
+        mFocusStrokeWidthDefaultValue = mAccessibilityManager.getAccessibilityFocusStrokeWidth();
+        mFocusColorDefaultValue = mAccessibilityManager.getAccessibilityFocusColor();
     }
 
     @MediumTest
@@ -110,7 +127,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         // Get the view that has input and accessibility focus.
         final AccessibilityNodeInfo expected = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.firstEditText)).get(0);
+                        mContext.getString(R.string.firstEditText)).get(0);
         assertNotNull(expected);
         assertFalse(expected.isAccessibilityFocused());
         assertTrue(expected.isFocused());
@@ -147,7 +164,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         // Get the root linear layout info.
         final AccessibilityNodeInfo rootLinearLayout = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.rootLinearLayout)).get(0);
+                        mContext.getString(R.string.rootLinearLayout)).get(0);
         assertNotNull(rootLinearLayout);
         assertFalse(rootLinearLayout.isAccessibilityFocused());
 
@@ -171,7 +188,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         // Get the root linear layout info.
         final AccessibilityNodeInfo rootLinearLayout = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.rootLinearLayout)).get(0);
+                        mContext.getString(R.string.rootLinearLayout)).get(0);
         assertNotNull(rootLinearLayout);
 
         sUiAutomation.executeAndWaitForEvent(
@@ -206,7 +223,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         // Get the first not focused edit text.
         final AccessibilityNodeInfo firstEditText = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.firstEditText)).get(0);
+                        mContext.getString(R.string.firstEditText)).get(0);
         assertNotNull(firstEditText);
         assertTrue(firstEditText.isFocusable());
         assertFalse(firstEditText.isAccessibilityFocused());
@@ -220,7 +237,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         // Get the second not focused edit text.
         final AccessibilityNodeInfo secondEditText = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.secondEditText)).get(0);
+                        mContext.getString(R.string.secondEditText)).get(0);
         assertNotNull(secondEditText);
         assertTrue(secondEditText.isFocusable());
         assertFalse(secondEditText.isFocused());
@@ -259,7 +276,7 @@ public class AccessibilityFocusAndInputFocusSyncTest {
     public void testScreenReaderFocusableAttribute_reportedToAccessibility() {
         final AccessibilityNodeInfo secondButton = sUiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByText(
-                        sInstrumentation.getContext().getString(R.string.secondButton)).get(0);
+                        mContext.getString(R.string.secondButton)).get(0);
         assertTrue("Screen reader focusability not propagated from xml to accessibility",
                 secondButton.isScreenReaderFocusable());
 
@@ -278,5 +295,46 @@ public class AccessibilityFocusAndInputFocusSyncTest {
         assertFalse(
                 "Screen reader focusability not propagated to accessibility after calling setter",
                 secondButton.isScreenReaderFocusable());
+    }
+
+    @Test
+    public void testSetFocusAppearanceDataAfterServiceEnabled() {
+        setFocusAppearanceDataAndCheckItCorrect();
+    }
+
+    @Test
+    public void testResetFocusAppearanceDataAfterServiceDisabled() {
+        setFocusAppearanceDataAndCheckItCorrect();
+
+        // Checks if the color and the stroke values from AccessibilityManager is
+        // reset to the default value.
+        PollingCheck.waitFor(()->isFocusAppearanceDataUpdated(mAccessibilityManager,
+                mFocusStrokeWidthDefaultValue, mFocusColorDefaultValue));
+    }
+
+    private void setFocusAppearanceDataAndCheckItCorrect() {
+        sInstrumentation
+                .getUiAutomation(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        final InstrumentedAccessibilityService service =
+                enableService(InstrumentedAccessibilityService.class);
+
+        try {
+            final int focusStrokeWidthValue = mFocusStrokeWidthDefaultValue + 10;
+            final int focusColorValue = mFocusColorDefaultValue + 100;
+
+            service.setAccessibilityFocusAppearance(focusStrokeWidthValue, focusColorValue);
+            // Checks if the color and the stroke values from AccessibilityManager is
+            // updated as in expectation.
+            PollingCheck.waitFor(()->isFocusAppearanceDataUpdated(mAccessibilityManager,
+                    focusStrokeWidthValue, focusColorValue));
+        } finally {
+            service.disableSelfAndRemove();
+        }
+    }
+
+    private static boolean isFocusAppearanceDataUpdated(AccessibilityManager manager,
+            int strokeWidth, int color) {
+        return manager.getAccessibilityFocusStrokeWidth() == strokeWidth
+                && manager.getAccessibilityFocusColor() == color;
     }
 }

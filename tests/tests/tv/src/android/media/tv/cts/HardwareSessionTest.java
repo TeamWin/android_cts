@@ -58,7 +58,7 @@ public class HardwareSessionTest extends ActivityInstrumentationTestCase2<TvView
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         mActivity = getActivity();
@@ -77,7 +77,7 @@ public class HardwareSessionTest extends ActivityInstrumentationTestCase2<TvView
     }
 
     public void testHardwareProxyTvInputService() throws Throwable {
-        if (!Utils.assumeHasTvInputFramework(getActivity())) {
+        if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
         for (final TvInputInfo info : mPassthroughInputList) {

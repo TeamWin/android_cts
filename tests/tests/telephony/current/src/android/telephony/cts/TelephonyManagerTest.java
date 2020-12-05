@@ -2081,6 +2081,36 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests TelephonyManager.getEmergencyNumberList(@EmergencyServiceCategories int categories).
+     *
+     */
+    @Test
+    public void testGetEmergencyNumberListForCategories() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        Map<Integer, List<EmergencyNumber>> emergencyNumberList =
+                mTelephonyManager.getEmergencyNumberList(
+                        EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_POLICE);
+
+        assertFalse(emergencyNumberList == null);
+
+        checkEmergencyNumberFormat(emergencyNumberList);
+
+        int defaultSubId = mSubscriptionManager.getDefaultSubscriptionId();
+        final String country_us = "us";
+        final String country_us_police_number = "911";
+        if (mTelephonyManager.getNetworkCountryIso().equals(country_us)) {
+            assertTrue(checkIfEmergencyNumberListHasSpecificAddress(
+                    emergencyNumberList.get(defaultSubId), country_us_police_number));
+        }
+        for (EmergencyNumber num : emergencyNumberList.get(defaultSubId)) {
+            assertTrue(num.isInEmergencyServiceCategories(
+                    EmergencyNumber.EMERGENCY_SERVICE_CATEGORY_POLICE));
+        }
+    }
+
+    /**
      * Tests TelephonyManager.isEmergencyNumber.
      *
      * Also enforce country-specific emergency number in CTS.

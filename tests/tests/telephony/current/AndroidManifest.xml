@@ -151,6 +151,16 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name="android.telephony.cts.FakeCarrierMessagingService"
+            android:permission="android.permission.BIND_CARRIER_SERVICES"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.service.carrier.CarrierMessagingService" />
+            </intent-filter>
+        </service>
+
         <activity android:name="android.telephony.cts.StubDialerActvity"
              android:exported="true">
             <intent-filter>
@@ -221,4 +231,11 @@
              android:value="com.android.cts.runner.CtsTestRunListener"/>
     </instrumentation>
 
+    <!-- Make sure the cts can connect to CarrierMessagingServices. This is needed for
+        CarrierMessagingServiceWrapperTest. -->
+    <queries>
+        <intent>
+            <action android:name="android.service.carrier.CarrierMessagingService" />
+        </intent>
+    </queries>
 </manifest>

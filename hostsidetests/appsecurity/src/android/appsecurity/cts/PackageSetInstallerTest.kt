@@ -30,11 +30,13 @@ import android.appsecurity.cts.PackageSetInstallerConstants.WHITELIST_PKG
 import android.cts.host.utils.DeviceJUnit4ClassRunnerWithParameters
 import android.cts.host.utils.DeviceJUnit4Parameterized
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.lang.AssertionError
 
 /**
  * This test verifies protection for an exploit where any app could set the installer package
@@ -197,7 +199,9 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertPermission(granted: Boolean, permission: String) {
-        assertThat(getPermissionString(permission)).contains("granted=$granted")
+        val dump = device.executeShellCommand("dumpsys package $TARGET_PKG")
+        assertWithMessage(dump).that(getPermissionString(dump, permission))
+                .contains("granted=$granted")
     }
 
     private fun grantPermission(permission: String) {
@@ -209,40 +213,50 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertGrantState(state: GrantState, permission: String) {
-        val output = getPermissionString(permission)
+        val dump = device.executeShellCommand("dumpsys package $TARGET_PKG")
+        val output = getPermissionString(dump, permission)
 
         when (state) {
             GrantState.TRUE -> {
-                assertThat(output).contains("granted=true")
-                assertThat(output).doesNotContain("RESTRICTION")
-                assertThat(output).doesNotContain("EXEMPT")
+                assertWithMessage(dump).that(output).contains("granted=true")
+                assertWithMessage(dump).that(output).doesNotContain("RESTRICTION")
+                assertWithMessage(dump).that(output).doesNotContain("EXEMPT")
             }
             GrantState.TRUE_EXEMPT -> {
-                assertThat(output).contains("granted=true")
-                assertThat(output).contains("RESTRICTION_INSTALLER_EXEMPT")
+                assertWithMessage(dump).that(output).contains("granted=true")
+                assertWithMessage(dump).that(output).contains("RESTRICTION_INSTALLER_EXEMPT")
             }
             GrantState.TRUE_RESTRICTED -> {
-                assertThat(output).contains("granted=true")
-                assertThat(output).contains("APPLY_RESTRICTION")
-                assertThat(output).doesNotContain("EXEMPT")
+                assertWithMessage(dump).that(output).contains("granted=true")
+                assertWithMessage(dump).that(output).contains("APPLY_RESTRICTION")
+                assertWithMessage(dump).that(output).doesNotContain("EXEMPT")
             }
             GrantState.FALSE -> {
-                assertThat(output).contains("granted=false")
+                assertWithMessage(dump).that(output).contains("granted=false")
             }
         }
     }
 
-    private fun getPermissionString(permission: String) =
-            device.executeShellCommand("dumpsys package $TARGET_PKG")
-                    .lineSequence()
-                    .dropWhile { !it.startsWith("Packages:") } // Wait for package header
-                    .drop(1) // Drop the package header itself
-                    .takeWhile { it.isEmpty() || it.first().isWhitespace() } // Until next header
-                    .dropWhile { !it.trim().startsWith("User $mPrimaryUserId:") } // Find user
-                    .drop(1) // Drop the user header itself
-                    .takeWhile { !it.trim().startsWith("User") } // Until next user
-                    .filter { it.contains("$permission: granted=") }
-                    .single()
+    private fun getPermissionString(output: String, permission: String) = retry {
+        output.lineSequence()
+                .dropWhile { !it.startsWith("Packages:") } // Wait for package header
+                .drop(1) // Drop the package header itself
+                .takeWhile { it.isEmpty() || it.first().isWhitespace() } // Until next header
+                .dropWhile { !it.trim().startsWith("User $mPrimaryUserId:") } // Find user
+                .drop(1) // Drop the user header itself
+                .takeWhile { !it.trim().startsWith("User") } // Until next user
+                .filter { it.contains("$permission: granted=") }
+                .firstOrNull()
+    }
+
+    private fun <T> retry(block: () -> T?): T {
+        repeat(10) {
+            block()?.let { return it }
+            Thread.sleep(1000)
+        }
+
+        throw AssertionError("Never succeeded")
+    }
 
     enum class GrantState {
         // Granted in full, unrestricted
