@@ -202,7 +202,7 @@ TEST_P(NdkBinderTest_Aidl, CallingInfo) {
   EXPECT_EQ(getuid(), res);
 }
 
-TEST_P(NdkBinderTest_Aidl, Constants) {
+TEST_P(NdkBinderTest_Aidl, ConstantsInInterface) {
   ASSERT_EQ(0, ITest::kZero);
   ASSERT_EQ(1, ITest::kOne);
   ASSERT_EQ(0xffffffff, ITest::kOnes);
@@ -210,6 +210,26 @@ TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0xffffffffffffffff, ITest::kLongOnes);
   ASSERT_EQ(std::string(""), ITest::kEmpty);
   ASSERT_EQ(std::string("foo"), ITest::kFoo);
+}
+
+TEST_P(NdkBinderTest_Aidl, ConstantsInParcelable) {
+  ASSERT_EQ(0, Foo::kZero);
+  ASSERT_EQ(1, Foo::kOne);
+  ASSERT_EQ(0xffffffff, Foo::kOnes);
+  ASSERT_EQ(1, Foo::kByteOne);
+  ASSERT_EQ(0xffffffffffffffff, Foo::kLongOnes);
+  ASSERT_EQ(std::string(""), Foo::kEmpty);
+  ASSERT_EQ(std::string("foo"), Foo::kFoo);
+}
+
+TEST_P(NdkBinderTest_Aidl, ConstantsInUnion) {
+  ASSERT_EQ(0, SimpleUnion::kZero);
+  ASSERT_EQ(1, SimpleUnion::kOne);
+  ASSERT_EQ(0xffffffff, SimpleUnion::kOnes);
+  ASSERT_EQ(1, SimpleUnion::kByteOne);
+  ASSERT_EQ(0xffffffffffffffff, SimpleUnion::kLongOnes);
+  ASSERT_EQ(std::string(""), SimpleUnion::kEmpty);
+  ASSERT_EQ(std::string("foo"), SimpleUnion::kFoo);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatPrimitiveInt) {
