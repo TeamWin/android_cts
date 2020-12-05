@@ -168,6 +168,8 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testStartActivityIntent_sameTaskByDefault() throws Exception {
+        // TODO(b/171957840): replace with device-side test using an inter-process communication
+        //  library.
         if (!mHasManagedUserFeature) {
             return;
         }
@@ -190,6 +192,21 @@ public class CrossProfileAppsHostSideTest extends BaseDevicePolicyTest {
             return -1;
         }
         return Integer.parseInt(matcher.group(1));
+    }
+
+    @LargeTest
+    @Test
+    public void testStartActivityIntent_crossProfile_returnsResult() throws Exception {
+        // TODO(b/171957840): replace with device-side test using an inter-process communication
+        //  library.
+        if (!mHasManagedUserFeature) {
+            return;
+        }
+        verifyCrossProfileAppsApi(
+                mProfileId,
+                mPrimaryUserId,
+                START_ACTIVITY_TEST_CLASS,
+                "testStartActivityIntent_crossProfile_returnsResult");
     }
 
     @LargeTest
