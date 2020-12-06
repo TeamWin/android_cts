@@ -23,5 +23,12 @@ union SimpleUnion {
   test_package.ByteEnum d;
   test_package.ByteEnum[] e;
   @nullable test_package.Bar f;
+  const int kZero = 0;
+  const int kOne = 1;
+  const int kOnes = -1;
+  const byte kByteOne = 1;
+  const long kLongOnes = -1;
+  const String kEmpty = "";
+  const String kFoo = "foo";
   const String S1 = "a string constant";
 }

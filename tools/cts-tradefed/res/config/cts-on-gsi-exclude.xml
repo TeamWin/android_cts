@@ -255,4 +255,7 @@
 
     <!-- b/153032202: CtsSystemUiTestCases (10_r3 waiver) -->
     <option name="compatibility:exclude-filter" value="CtsSystemUiTestCases android.systemui.cts.WindowInsetsBehaviorTests#swipeOutsideLimit_systemUiVisible_allEventsCanceled"/>
+
+    <!-- b/173662175: CtsStatsdHostTestCases due to insufficient processes running -->
+    <option name="compatibility:exclude-filter" value="CtsStatsdHostTestCases android.cts.statsd.validation.ProcStatsValidationTests#testProcessStatePssValue"/>
 </configuration>
