@@ -32,6 +32,7 @@ import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowInsets;
+import android.view.WindowManager;
 import android.view.WindowMetrics;
 
 import org.junit.After;
@@ -70,7 +71,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         stableBounds.inset(windowMetrics.getWindowInsets().getInsetsIgnoringVisibility(
                 systemBars() & ~captionBar()));
         final Rect appBounds = new Rect(mWmState.findFirstWindowWithType(
-                WindowManagerState.WindowState.WINDOW_TYPE_STARTING).getBounds());
+                WindowManager.LayoutParams.TYPE_APPLICATION_STARTING).getBounds());
         appBounds.intersect(stableBounds);
         // Use ratios to flexibly accommodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
