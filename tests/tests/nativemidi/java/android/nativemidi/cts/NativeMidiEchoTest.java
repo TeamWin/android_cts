@@ -266,6 +266,10 @@ public class NativeMidiEchoTest {
             return; // Nothing to test
         }
 
+        if (!hasMidiSupport()) {
+            return; // Nothing to test
+        }
+
         Assert.assertEquals("Didn't start with 0 sends", 0, getNumSends(mTestContext));
         Assert.assertEquals("Didn't start with 0 bytes sent", 0, getNumBytesSent(mTestContext));
 
