@@ -27,6 +27,7 @@ import android.content.Context;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerExecutor;
 import android.os.HandlerThread;
@@ -35,6 +36,8 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.SparseArray;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 import java.util.concurrent.Executor;
 
@@ -212,6 +215,9 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
             // skip the test if Easy Connect is not supported
             return;
         }
+        if (!PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S)) {
+            return;
+        }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -245,6 +251,9 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
         }
         if (!mWifiManager.isEasyConnectSupported()) {
             // skip the test if Easy Connect is not supported
+            return;
+        }
+        if (!PropertyUtil.isVndkApiLevelNewerThan(Build.VERSION_CODES.S)) {
             return;
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
