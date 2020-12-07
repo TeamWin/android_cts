@@ -16,6 +16,7 @@
 
 package android.webkit.cts;
 
+import android.annotation.CallSuper;
 import android.net.Uri;
 import android.net.http.SslCertificate;
 import android.net.http.SslError;
@@ -563,14 +564,14 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         // Load the page again. We expect another call to
         // WebViewClient.onReceivedSslError() since we cleared sslpreferences.
         mOnUiThread.clearSslPreferences();
-        webViewClient.resetWasOnReceivedSslErrorCalled();
+        webViewClient.resetCallCounts();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertTrue(webViewClient.wasOnReceivedSslErrorCalled());
         assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
 
         // Load the page once again, without clearing the sslpreferences.
         // Make sure we do not get the callback.
-        webViewClient.resetWasOnReceivedSslErrorCalled();
+        webViewClient.resetCallCounts();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertFalse(webViewClient.wasOnReceivedSslErrorCalled());
         assertEquals(TestHtmlConstants.HELLO_WORLD_TITLE, mOnUiThread.getTitle());
@@ -671,7 +672,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
 
         // Load the second page. We don't expect a call to
         // WebViewClient.onReceivedSslError(), but the page should load.
-        webViewClient.resetWasOnReceivedSslErrorCalled();
+        webViewClient.resetCallCounts();
         final String sameHostUrl = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL2);
         mOnUiThread.loadUrlAndWaitForCompletion(sameHostUrl);
         assertFalse(webViewClient.wasOnReceivedSslErrorCalled());
@@ -694,7 +695,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
 
         // Load the second page. We expect another call to
         // WebViewClient.onReceivedSslError().
-        webViewClient.resetWasOnReceivedSslErrorCalled();
+        webViewClient.resetCallCounts();
         // The test server uses the host "localhost". "127.0.0.1" works as an
         // alias, but will be considered unique by the WebView.
         final String differentHostUrl = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL2).replace(
@@ -730,7 +731,7 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         final SslErrorWebViewClient webViewClient = new SslErrorWebViewClient(mOnUiThread);
         mOnUiThread.setWebViewClient(webViewClient);
         mOnUiThread.clearSslPreferences();
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
         // Page NOT loaded OK...
         //
         // In this test, we expect both a recoverable and non-recoverable error:
@@ -747,24 +748,6 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         // WebView hit error 2 first, which prevented it from hitting error 1.
         assertFalse("Title should not be updated, since page load should have failed",
                 TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
-        assertFailedHandshakeOrConnectionError(webViewClient.onReceivedErrorCode());
-    }
-
-    private void assertFailedHandshakeOrConnectionError(int code) {
-        // Asserts the error code for a non-recoverable SSL error. Non-recoverable SSL errors may
-        // fail with either of the following codes:
-        //
-        //  a. In TLS 1.2 and earlier (< Android Q), handshakes take 2 round trips (RTTs). If the
-        //     server rejects the client , the client will know this reliably and WebView will
-        //     signal this with ERROR_FAILED_SSL_HANDSHAKE.
-        //  b. In TLS 1.3 (>= Android Q), handshakes were optimized to a single RTT. This has the
-        //     consequence the server *may* close the TCP connection at the same time as the client
-        //     sends the HTTP request. The closed TCP connection causes WebView to emit
-        //     ERROR_CONNECT and cancel the navigation. See b/146067690 and https://crbug.com/958638
-        //     for details on this issue.
-        assertTrue("Expected either ERROR_FAILED_SSL_HANDSHAKE or ERROR_CONNECT in onReceivedError",
-                code == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE ||
-                code == WebViewClient.ERROR_CONNECT);
     }
 
     public void testProceedClientCertRequest() throws Throwable {
@@ -781,17 +764,20 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
 
         // Test that the user's response for this server is kept in cache. Load a different
         // page from the same server and make sure we don't receive a client cert request callback.
-        int callCount = webViewClient.getClientCertRequestCount();
+        webViewClient.resetCallCounts();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
-        assertEquals(callCount, webViewClient.getClientCertRequestCount());
+        assertEquals("onReceivedClientCertRequest should not be called",
+                0, webViewClient.getClientCertRequestCount());
 
         // Now clear the cache and reload the page. We should receive a new callback.
+        webViewClient.resetCallCounts();
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
-        assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
+        assertEquals("onReceivedClientCertRequest should be called once",
+                1, webViewClient.getClientCertRequestCount());
     }
 
     public void testProceedClientCertRequestKeyWithAndroidKeystoreKey() throws Throwable {
@@ -811,17 +797,20 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
 
         // Test that the user's response for this server is kept in cache. Load a different
         // page from the same server and make sure we don't receive a client cert request callback.
-        int callCount = webViewClient.getClientCertRequestCount();
+        webViewClient.resetCallCounts();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
-        assertEquals(callCount, webViewClient.getClientCertRequestCount());
+        assertEquals("onReceivedClientCertRequest should not be called",
+                0, webViewClient.getClientCertRequestCount());
 
         // Now clear the cache and reload the page. We should receive a new callback.
+        webViewClient.resetCallCounts();
         clearClientCertPreferences();
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals(TestHtmlConstants.HTML_URL1_TITLE, mOnUiThread.getTitle());
-        assertEquals(callCount + 1, webViewClient.getClientCertRequestCount());
+        assertEquals("onReceivedClientCertRequest should be called once",
+                1, webViewClient.getClientCertRequestCount());
     }
 
     /**
@@ -844,7 +833,6 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
                 "Reached max number of tries and never saw error " + expectedErrorCode);
     }
 
-    @FlakyTest(bugId = 172332767)
     public void testIgnoreClientCertRequest() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -865,14 +853,14 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
 
         // Load a different page from the same domain, ignoring the request. We should get a callback,
         // and load should fail.
-        int callCount = webViewClient.getClientCertRequestCount();
+        webViewClient.resetCallCounts();
         url = mWebServer.getAssetUrl(TestHtmlConstants.HTML_URL1);
         loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
         assertFalse(TestHtmlConstants.HTML_URL1_TITLE.equals(mOnUiThread.getTitle()));
         // At least one of the loads done by loadUrlUntilError() should produce
         // onReceivedClientCertRequest.
         assertTrue("onReceivedClientCertRequest should be called at least once for second URL",
-                webViewClient.getClientCertRequestCount() >= callCount + 1);
+                webViewClient.getClientCertRequestCount() >= 1);
 
         // Reload, proceeding the request. Load should succeed.
         webViewClient.setAction(ClientCertWebViewClient.PROCEED);
@@ -892,16 +880,20 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
         clearClientCertPreferences();
         // Cancel the request. Load should fail.
         webViewClient.setAction(ClientCertWebViewClient.CANCEL);
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
         assertFalse(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
-        assertFailedHandshakeOrConnectionError(webViewClient.onReceivedErrorCode());
+        // At least one of the loads done by loadUrlUntilError() should produce
+        // onReceivedClientCertRequest.
+        assertTrue("onReceivedClientCertRequest should be called at least once",
+                webViewClient.getClientCertRequestCount() >= 1);
 
         // Reload. The request should fail without generating a new callback.
-        int callCount = webViewClient.getClientCertRequestCount();
-        mOnUiThread.loadUrlAndWaitForCompletion(url);
-        assertEquals(callCount, webViewClient.getClientCertRequestCount());
+        webViewClient.resetCallCounts();
+        loadUrlUntilError(webViewClient, url, WebViewClient.ERROR_FAILED_SSL_HANDSHAKE);
+        // None of the loads done by loadUrlUntilError() should produce onReceivedClientCertRequest.
+        assertEquals("onReceivedClientCertRequest should not be called for reload",
+                0, webViewClient.getClientCertRequestCount());
         assertFalse(TestHtmlConstants.HELLO_WORLD_TITLE.equals(mOnUiThread.getTitle()));
-        assertFailedHandshakeOrConnectionError(webViewClient.onReceivedErrorCode());
     }
 
     /**
@@ -989,8 +981,11 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
                 String failingUrl) {
             mErrorCode = errorCode;
         }
-        public void resetWasOnReceivedSslErrorCalled() {
+        @CallSuper
+        public void resetCallCounts() {
             mWasOnReceivedSslErrorCalled = false;
+            mErrorUrl = null;
+            mErrorCode = 0;
         }
         public boolean wasOnReceivedSslErrorCalled() {
             return mWasOnReceivedSslErrorCalled;
@@ -1035,12 +1030,15 @@ public class WebViewSslTest extends ActivityInstrumentationTestCase2<WebViewCtsA
             return mPrincipals;
         }
 
-        public void resetClientCertRequestCount() {
-            mClientCertRequests = 0;
-        }
-
         public void setAction(int action) {
             mAction = action;
+        }
+
+        @Override
+        public void resetCallCounts() {
+            super.resetCallCounts();
+            mClientCertRequests = 0;
+            mPrincipals = null;
         }
 
         @Override
