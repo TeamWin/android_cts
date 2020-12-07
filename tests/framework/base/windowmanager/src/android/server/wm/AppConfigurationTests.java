@@ -871,7 +871,10 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      * that are smaller than the dockedSizes.
      */
     private static void assertSizesAreSane(SizeInfo fullscreenSizes, SizeInfo dockedSizes) {
-        if (isDisplayPortrait()) {
+        final boolean isHorizontalDivision =
+                fullscreenSizes.displayHeight - dockedSizes.displayHeight >
+                fullscreenSizes.displayWidth - dockedSizes.displayWidth;
+        if (isHorizontalDivision) {
             assertThat(dockedSizes.displayHeight, lessThan(fullscreenSizes.displayHeight));
             assertThat(dockedSizes.heightDp, lessThan(fullscreenSizes.heightDp));
             assertThat(dockedSizes.metricsHeight, lessThan(fullscreenSizes.metricsHeight));
