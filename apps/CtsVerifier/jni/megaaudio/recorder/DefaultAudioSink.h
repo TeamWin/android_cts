@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#ifndef MEGA_RECORDER_DEFAULTAUDIOSINK_H
+#define MEGA_RECORDER_DEFAULTAUDIOSINK_H
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+#include "AudioSink.h"
 
-    private AppCallback mCallback;
+class DefaultAudioSink: public AudioSink {
+    virtual void start();
+    virtual void stop();
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+    virtual void push(float* audioData, int numChannels, int numFrames) ;
+};
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
-}
+#endif // EGA_RECORDER_DEFAULTAUDIOSINK_H

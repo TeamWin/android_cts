@@ -22,10 +22,12 @@ import org.hyphonate.megaaudio.common.StreamBase;
 
 public abstract class Recorder extends StreamBase {
     protected AudioSinkProvider mSinkProvider;
+    public static final int DEFAULT_INPUT_PRESET = -1;
 
     public Recorder(AudioSinkProvider sinkProvider) {
         mSinkProvider = sinkProvider;
     }
+    public abstract void setInputPreset(int preset);
 
     /*
      * State

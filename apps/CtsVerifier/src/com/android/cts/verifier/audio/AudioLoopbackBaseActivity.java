@@ -321,7 +321,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mLatencyMillis = 0.0;
         mConfidence = 0.0;
 
-        mNativeAnalyzerThread = new NativeAnalyzerThread();
+        mNativeAnalyzerThread = new NativeAnalyzerThread(this);
         if (mNativeAnalyzerThread != null) {
             mNativeAnalyzerThread.setMessageHandler(messageHandler);
             // This value matches AAUDIO_INPUT_PRESET_VOICE_RECOGNITION

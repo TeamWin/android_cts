@@ -15,6 +15,8 @@
  */
 package org.hyphonate.megaaudio.player;
 
+import android.media.AudioDeviceInfo;
+
 import org.hyphonate.megaaudio.common.BuilderBase;
 
 public class PlayerBuilder extends BuilderBase {
@@ -42,15 +44,19 @@ public class PlayerBuilder extends BuilderBase {
         Player player = null;
         int playerType = mType & TYPE_MASK;
         switch (playerType) {
+            case TYPE_NONE:
+                // NOP
+                break;
+
             case TYPE_JAVA:
                 player = new JavaPlayer(mSourceProvider);
                 break;
-            // FIXME - Uncomment this code when the oboe-based implementation is integrated.
-//            case TYPE_OBOE:{
-//                int playerSubType = mType & SUB_TYPE_MASK;
-//                player = new OboePlayer(mSourceProvider, playerSubType);
-//            }
-//            break;
+
+            case TYPE_OBOE:{
+                int playerSubType = mType & SUB_TYPE_MASK;
+                player = new OboePlayer(mSourceProvider, playerSubType);
+            }
+            break;
 
             default:
                 throw new BadStateException();

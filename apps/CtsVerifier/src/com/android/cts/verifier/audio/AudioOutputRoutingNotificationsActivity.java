@@ -133,7 +133,8 @@ public class AudioOutputRoutingNotificationsActivity extends AudioWiredDeviceBas
                     // .setPlayerType(PlayerBuilder.PLAYER_OBOE)
                     .setSourceProvider(sourceProvider)
                     .build();
-            mAudioPlayer.setupAudioStream(NUM_CHANNELS, SAMPLE_RATE, 96);
+            //TODO - explain the choice of 96 here.
+            mAudioPlayer.setupStream(NUM_CHANNELS, SAMPLE_RATE, 96);
         } catch (PlayerBuilder.BadStateException ex) {
             Log.e(TAG, "Failed MegaPlayer build.");
         }

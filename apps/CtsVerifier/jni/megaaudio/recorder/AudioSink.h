@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#ifndef SMOKEPLAYER_AUDIOSINK_H
+#define SMOKEPLAYER_AUDIOSINK_H
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+class AudioSink {
+public:
+    virtual ~AudioSink() {}
 
-    private AppCallback mCallback;
+    virtual void init(int numFrames, int numChannels) {}
+    virtual void start() {}
+    virtual void stop() {}
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+    virtual void push(float* audioData, int numFrames, int numChannels) = 0;
+};
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
-}
+#endif //SMOKEPLAYER_AUDIOSINK_H

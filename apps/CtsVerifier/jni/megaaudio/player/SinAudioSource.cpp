@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#include "SinAudioSource.h"
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+SinAudioSource::SinAudioSource() : WaveTableSource() {
+    float* waveTbl = new float[DEFAULT_WAVETABLE_LENGTH];
+    WaveTableSource::genSinWave(waveTbl, DEFAULT_WAVETABLE_LENGTH);
 
-    private AppCallback mCallback;
-
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
-
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
+    WaveTableSource::setWaveTable(waveTbl, DEFAULT_WAVETABLE_LENGTH);
 }
+
+//
+// JNI functions
+//
+#include <jni.h>
+
+#include <android/log.h>
+
+extern "C" {
+JNIEXPORT JNICALL jlong Java_org_hyphonate_megaaudio_player_sources_SinAudioSourceProvider_allocNativeSource(
+        JNIEnv *env, jobject thiz) {
+    return (jlong)new SinAudioSource();
+}
+
+} // extern "C"

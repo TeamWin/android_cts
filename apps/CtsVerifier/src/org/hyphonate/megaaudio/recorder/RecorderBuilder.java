@@ -15,11 +15,15 @@
  */
 package org.hyphonate.megaaudio.recorder;
 
+import android.media.AudioDeviceInfo;
+
 import org.hyphonate.megaaudio.common.BuilderBase;
 
 public class RecorderBuilder extends BuilderBase {
 
     private AudioSinkProvider mSinkProvider;
+
+    private int mInputPreset = -1; // undefined
 
     public RecorderBuilder() {
 
@@ -35,6 +39,11 @@ public class RecorderBuilder extends BuilderBase {
         return this;
     }
 
+    public RecorderBuilder setInputPreset(int inputPreset) {
+        mInputPreset = inputPreset;
+        return this;
+    }
+
     public Recorder build() throws BadStateException {
         if (mSinkProvider == null) {
             throw new BadStateException();
@@ -43,16 +52,19 @@ public class RecorderBuilder extends BuilderBase {
         Recorder recorder = null;
         int playerType = mType & TYPE_MASK;
         switch (playerType) {
+            case TYPE_NONE:
+                // NOP
+                break;
+
             case TYPE_JAVA:
                 recorder = new JavaRecorder(mSinkProvider);
                 break;
 
-            // FIXME - Uncomment this code when the oboe-based implementation is integrated.
-//            case TYPE_OBOE:{
-//                int recorderSubType = mType & SUB_TYPE_MASK;
-//                recorder = new OboeRecorder(mSinkProvider, recorderSubType);
-//            }
-//            break;
+            case TYPE_OBOE:{
+                int recorderSubType = mType & SUB_TYPE_MASK;
+                recorder = new OboeRecorder(mSinkProvider, recorderSubType);
+            }
+            break;
 
             default:
                 throw new BadStateException();

@@ -21,26 +21,42 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
 import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio imports
 import org.hyphonate.megaaudio.common.BuilderBase;
-import org.hyphonate.megaaudio.recorder.JavaRecorder;
+import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
+import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 import org.hyphonate.megaaudio.recorder.RecorderBuilder;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallback;
 import org.hyphonate.megaaudio.recorder.sinks.AppCallbackAudioSinkProvider;
 
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
-public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerActivity {
+public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity {
     private static final String TAG = "USBAudioPeripheralRecordActivity";
 
-    // MegaRecorder
-    private static final int NUM_CHANNELS = 2;
-    private JavaRecorder    mRecorder;
+    // JNI load
+    static {
+        try {
+            System.loadLibrary("megaaudio_jni");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Error loading MegaAudio JNI library");
+            Log.e(TAG, "e: " + e);
+            e.printStackTrace();
+        }
 
+        /* TODO: gracefully fail/notify if the library can't be loaded */
+    }
+
+    // MegaAudio
+    private static final int NUM_CHANNELS = 2;
+    private DuplexAudioManager   mDuplexManager;
+
+    private boolean mIsPlaying = false;
     private boolean mIsRecording = false;
 
     // Widgets
@@ -66,37 +82,35 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         int systemSampleRate = audioSystemParams.getSystemSampleRate();
         int numBufferFrames = audioSystemParams.getSystemBufferFrames();
 
-        try {
-            RecorderBuilder builder = new RecorderBuilder();
-            mRecorder = (JavaRecorder)builder
-                    .setRecorderType(BuilderBase.TYPE_JAVA)
-                    .setAudioSinkProvider(new AppCallbackAudioSinkProvider(new ScopeRefreshCallback()))
-                    .build();
-            mRecorder.setupAudioStream(NUM_CHANNELS, systemSampleRate, numBufferFrames);
+        mDuplexManager = new DuplexAudioManager(
+                withLoopback ? new SinAudioSourceProvider() : null,
+                new AppCallbackAudioSinkProvider(new ScopeRefreshCallback()));
 
-            mIsRecording = mRecorder.startStream();
-
-            if (withLoopback) {
-                startPlay();
-            }
-        } catch (RecorderBuilder.BadStateException ex) {
-            Log.e(TAG, "Failed MegaRecorder build.");
-            mIsRecording = false;
+        if (!mDuplexManager.setupStreams(
+                withLoopback ? BuilderBase.TYPE_JAVA : BuilderBase.TYPE_NONE,
+                BuilderBase.TYPE_JAVA)) {
+            Toast.makeText(
+                    this, "Couldn't create recorder. Please check permissions.", Toast.LENGTH_LONG)
+                    .show();
+            return mIsRecording = false;
         }
 
+        if (!mDuplexManager.start()) {
+            Toast.makeText(
+                    this, "Couldn't start recording. Please check permissions.", Toast.LENGTH_LONG)
+                    .show();
+            return mIsRecording = false;
+        } else {
+            mIsRecording = true;
+            mIsPlaying = withLoopback;
+        }
         return mIsRecording;
     }
 
     public void stopRecording() {
-        if (mRecorder != null) {
-            mRecorder.stopStream();
-            mRecorder.teardownAudioStream();
+        if (mDuplexManager != null) {
+            mDuplexManager.stop();
         }
-
-        if (mAudioPlayer != null && mAudioPlayer.isPlaying()) {
-            mAudioPlayer.stopStream();
-        }
-
         mIsRecording = false;
     }
 
@@ -116,8 +130,6 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
         mRecordBtn.setOnClickListener(mButtonClickListener);
         mRecordLoopbackBtn = (Button)findViewById(R.id.uap_recordRecordLoopBtn);
         mRecordLoopbackBtn.setOnClickListener(mButtonClickListener);
-
-        setupPlayer();
 
         mWaveView = (WaveScopeView)findViewById(R.id.uap_recordWaveView);
         mWaveView.setBackgroundColor(Color.DKGRAY);
@@ -168,9 +180,6 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
                         mRecordBtn.setEnabled(false);
                     }
                 } else {
-                    if (isPlaying()) {
-                        stopPlay();
-                    }
                     stopRecording();
                     mRecordLoopbackBtn.setText(
                         getString(R.string.audio_uap_record_recordLoopbackBtn));
@@ -185,10 +194,10 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
     protected void onPause() {
         super.onPause();
 
-        stopPlay();
+        stopRecording();
     }
 
-    class ScopeRefreshCallback implements AppCallback {
+    public class ScopeRefreshCallback implements AppCallback {
         @Override
         public void onDataReady(float[] audioData, int numFrames) {
             mWaveView.setPCMFloatBuff(audioData, NUM_CHANNELS, numFrames);

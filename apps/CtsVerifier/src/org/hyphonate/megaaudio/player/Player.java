@@ -86,7 +86,6 @@ public abstract class Player extends StreamBase {
             case 8:
                 return AudioFormat.CHANNEL_OUT_7POINT1;
 
-
             default:
                 return AudioTrack.ERROR_BAD_VALUE;
         }

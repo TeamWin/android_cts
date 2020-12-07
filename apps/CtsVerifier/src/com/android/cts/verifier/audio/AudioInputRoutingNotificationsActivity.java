@@ -132,7 +132,7 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
                     .setRecorderType(RecorderBuilder.TYPE_JAVA)
                     .setAudioSinkProvider(new NopAudioSinkProvider())
                     .build();
-            mAudioRecorder.setupAudioStream(NUM_CHANNELS, SAMPLE_RATE, mNumFrames);
+            mAudioRecorder.setupStream(NUM_CHANNELS, SAMPLE_RATE, mNumFrames);
         } catch (RecorderBuilder.BadStateException ex) {
             Log.e(TAG, "Failed MegaRecorder build.");
         }
