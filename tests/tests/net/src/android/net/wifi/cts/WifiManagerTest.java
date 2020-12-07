@@ -32,6 +32,7 @@ import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
+import android.os.Build;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
@@ -44,6 +45,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.cert.X509Certificate;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -130,6 +132,14 @@ public class WifiManagerTest extends AndroidTestCase {
             }
         }
     };
+
+    private static final LocalDate SECURITY_PATCH_DATE_2020_12 = LocalDate.of(2020, 12, 1);
+
+    private static boolean doesDeviceHave2020_12SecurityPatch() {
+        LocalDate deviceSecurityPatchDate = LocalDate.parse(Build.VERSION.SECURITY_PATCH);
+        // LocalDate#isBefore() is exclusive, so use workaround: !(a < b) <=> (b <= a)
+        return !deviceSecurityPatchDate.isBefore(SECURITY_PATCH_DATE_2020_12);
+    }
 
     @Override
     protected void setUp() throws Exception {
@@ -417,11 +427,35 @@ public class WifiManagerTest extends AndroidTestCase {
             assertFalse(existSSID(SSID1));
             assertTrue(existSSID(SSID2));
 
+            // Need an effectively-final holder because we need to modify inner Intent in callback.
+            class IntentHolder {
+                Intent intent;
+            }
+            IntentHolder intentHolder = new IntentHolder();
+            mContext.registerReceiver(new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    Log.i(TAG, "Received CONFIGURED_NETWORKS_CHANGED_ACTION broadcast: " + intent);
+                    intentHolder.intent = intent;
+                }
+            }, new IntentFilter(WifiManager.CONFIGURED_NETWORKS_CHANGED_ACTION));
+
             // Remove a WifiConfig
             assertTrue(mWifiManager.removeNetwork(netId));
             assertFalse(mWifiManager.removeNetwork(notExist));
             assertFalse(existSSID(SSID1));
             assertFalse(existSSID(SSID2));
+
+            if (doesDeviceHave2020_12SecurityPatch()) {
+                // wait 10 seconds to ensure that broadcast wasn't received
+                Thread.sleep(DURATION);
+                Intent intent = intentHolder.intent;
+                // Broadcast shouldn't be received because although CtsNetTestCases has
+                // ACCESS_WIFI_STATE permission, it doesn't have ACCESS_FINE_LOCATION permission.
+                // Receivers need both permissions to get the broadcast.
+                assertNull("Unexpected received CONFIGURED_NETWORKS_CHANGED_ACTION broadcast!",
+                        intent);
+            }
 
             assertTrue(mWifiManager.saveConfiguration());
         } finally {
