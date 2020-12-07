@@ -1,0 +1,19 @@
+android_library {
+    name: "EventLib",
+    srcs: [
+        "src/main/java/**/*.java",
+        "src/main/aidl/**/I*.aidl",
+    ],
+    static_libs: [
+        "androidx.test.ext.junit"],
+    manifest: "src/main/AndroidManifest.xml",
+}
+
+android_test {
+    name: "EventLibTest",
+    srcs: [
+        "src/test/java/**/*.java"
+    ],
+    static_libs: ["EventLib", "androidx.test.ext.junit", "ctstestrunner-axt", "truth-prebuilt"],
+    manifest: "src/test/AndroidManifest.xml",
+}
