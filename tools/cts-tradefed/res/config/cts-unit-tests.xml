@@ -17,9 +17,6 @@
     <option name="null-device" value="true" />
     <build_provider class="com.android.tradefed.build.StubBuildProvider" />
     <test class="com.android.tradefed.testtype.HostTest" >
-        <option name="class" value="com.android.compatibility.common.tradefed.UnitTests" />
-        <option name="class" value="com.android.compatibility.common.util.HostUnitTests" />
-        <option name="class" value="com.android.compatibility.common.util.UnitTests" />
         <option name="class" value="com.android.compatibility.tradefed.CtsUnitTests" />
         <option name="class" value="com.drawelements.deqp.runner.DeqpTestRunnerTest" />
     </test>
