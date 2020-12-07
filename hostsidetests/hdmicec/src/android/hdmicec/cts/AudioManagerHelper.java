@@ -73,12 +73,7 @@ public final class AudioManagerHelper {
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND + "android.hdmicec.app.REPORT_VOLUME");
-        try {
-            LogHelper.assertLog(device, CLASS, "Device muted.");
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
+        return (LogHelper.parseDutVolume(device, CLASS) >= 128);
     }
 
     public static void setDeviceVolume(ITestDevice device, int percentVolume) throws Exception {
