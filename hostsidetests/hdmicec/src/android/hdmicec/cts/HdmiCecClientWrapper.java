@@ -389,7 +389,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             }
         } catch (Exception e) {
             /* If cec-client is not running, do not throw an exception, just return. */
-            CLog.w("Unable to close cec-client", e);
+            CLog.w(new Exception("Unable to close cec-client", e));
         }
     }
 }
