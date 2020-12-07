@@ -567,6 +567,44 @@ public class ScopedStorageTest {
         }
     }
 
+    /*
+     * b/174211425: Test that for apps bypassing database operations we mark the nomedia directory
+     * as dirty for create/rename/delete.
+     */
+    @Test
+    public void testManageExternalStorageDoesntSkipScanningDirtyNomediaDir() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File nomediaDir = new File(getDownloadDir(), TEST_DIRECTORY_NAME);
+        final File nomediaFile = new File(nomediaDir, ".nomedia");
+        final File mediaFile = new File(nomediaDir, IMAGE_FILE_NAME);
+        final File renamedMediaFile = new File(nomediaDir, "Renamed_" + IMAGE_FILE_NAME);
+        try {
+            if (!nomediaDir.exists()) {
+                assertTrue(nomediaDir.mkdirs());
+            }
+            assertThat(nomediaFile.createNewFile()).isTrue();
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+
+            assertThat(mediaFile.createNewFile()).isTrue();
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+            assertThat(getFileRowIdFromDatabase(mediaFile)).isNotEqualTo(-1);
+
+            assertThat(mediaFile.renameTo(renamedMediaFile)).isTrue();
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+            assertThat(getFileRowIdFromDatabase(renamedMediaFile)).isNotEqualTo(-1);
+
+            assertThat(renamedMediaFile.delete()).isTrue();
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+            assertThat(getFileRowIdFromDatabase(renamedMediaFile)).isEqualTo(-1);
+        } finally {
+            nomediaFile.delete();
+            mediaFile.delete();
+            renamedMediaFile.delete();
+            nomediaDir.delete();
+        }
+    }
+
     @Test
     public void testAndroidMedia() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
