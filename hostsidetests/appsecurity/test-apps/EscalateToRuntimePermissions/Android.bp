@@ -25,6 +25,7 @@ android_test {
         "vts",
         "general-tests",
         "mts",
+        "sts",
     ],
     optimize: {
         enabled: false,
