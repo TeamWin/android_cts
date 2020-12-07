@@ -17,7 +17,7 @@ package com.android.cts.profileowner;
 
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
 
-//TODO(b/174859111): move to automotive-only section
+// TODO(b/174859111): move to automotive-only section
 /**
  * Tests that DPM calls fail when determined by the
  * {@link android.app.admin.DevicePolicySafetyChecker}.
