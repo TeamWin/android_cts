@@ -72,6 +72,17 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                     TEST_APP_1_PKG,
                     TEST_APP_2_PKG);
 
+    // The apps whose app-ops are maintained and unset are defined by
+    // testSetCrossProfilePackages_resetsAppOps_noAsserts on the device-side.
+    private static final Set<String> UNSET_CROSS_PROFILE_PACKAGES_2 =
+            Sets.newHashSet(
+                    TEST_APP_4_PKG);
+    private static final Set<String> MAINTAINED_CROSS_PROFILE_PACKAGES_2 =
+            Sets.newHashSet(
+                    TEST_APP_1_PKG,
+                    TEST_APP_2_PKG,
+                    TEST_APP_3_PKG);
+
     @LargeTest
     @Test
     public void testCrossProfileIntentFilters() throws Exception {
@@ -416,8 +427,7 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                         ".CrossProfileTest", "testSetCrossProfilePackages_noAsserts"),
                 new DevicePolicyEventWrapper.Builder(SET_CROSS_PROFILE_PACKAGES_VALUE)
                         .setAdminPackageName(MANAGED_PROFILE_PKG)
-                        .setStrings(
-                                TEST_APP_1_PKG, TEST_APP_2_PKG, TEST_APP_3_PKG, TEST_APP_4_PKG)
+                        .setStrings(TEST_APP_1_PKG)
                         .build());
     }
 
@@ -559,11 +569,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
                 () -> runWorkProfileDeviceTest(
                         ".CrossProfileTest", "testSetCrossProfilePackages_resetsAppOps_noAsserts"),
                 new DevicePolicyEventWrapper.Builder(SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE)
-                        .setStrings(TEST_APP_3_PKG)
-                        .setInt(MODE_DEFAULT)
-                        .setBoolean(true) // cross-profile manifest attribute
-                        .build(),
-                new DevicePolicyEventWrapper.Builder(SET_INTERACT_ACROSS_PROFILES_APP_OP_VALUE)
                         .setStrings(TEST_APP_4_PKG)
                         .setInt(MODE_DEFAULT)
                         .setBoolean(true) // cross-profile manifest attribute
@@ -578,17 +583,18 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
         installAllTestApps();
         launchAllTestAppsInBothProfiles();
         Map<String, List<String>> maintainedPackagesPids = getPackagesPids(
-                MAINTAINED_CROSS_PROFILE_PACKAGES);
-        Map<String, List<String>> unsetPackagesPids = getPackagesPids(UNSET_CROSS_PROFILE_PACKAGES);
+                MAINTAINED_CROSS_PROFILE_PACKAGES_2);
+        Map<String, List<String>> unsetPackagesPids = getPackagesPids(
+                UNSET_CROSS_PROFILE_PACKAGES_2);
 
         runWorkProfileDeviceTest(
                 ".CrossProfileTest",
                 "testSetCrossProfilePackages_resetsAppOps_noAsserts");
 
-        for (String packageName : MAINTAINED_CROSS_PROFILE_PACKAGES) {
+        for (String packageName : MAINTAINED_CROSS_PROFILE_PACKAGES_2) {
             assertAppRunningInBothProfiles(packageName, maintainedPackagesPids.get(packageName));
         }
-        for (String packageName : UNSET_CROSS_PROFILE_PACKAGES) {
+        for (String packageName : UNSET_CROSS_PROFILE_PACKAGES_2) {
             assertAppKilledInBothProfiles(packageName, unsetPackagesPids.get(packageName));
         }
     }
