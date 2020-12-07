@@ -720,9 +720,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         String output = getDevice().executeShellCommand(String.format(
                 "cmd package set-home-activity --user %d %s", mPrimaryUserId, component));
         assertTrue("failed to set home activity", output.contains("Success"));
-        output = getDevice().executeShellCommand(
-                String.format("cmd shortcut clear-default-launcher --user %d", mPrimaryUserId));
-        assertTrue("failed to clear default launcher", output.contains("Success"));
         executeShellCommand("am start -W -n " + component);
     }
 }
