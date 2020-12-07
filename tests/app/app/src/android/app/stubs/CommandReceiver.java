@@ -334,6 +334,21 @@ public class CommandReceiver extends BroadcastReceiver {
 
     public static void sendCommand(Context context, int command, String sourcePackage,
             String targetPackage, int flags, Bundle extras) {
+        final Intent intent = makeIntent(command, sourcePackage, targetPackage, flags, extras);
+        Log.d(TAG, "Sending broadcast " + intent);
+        context.sendOrderedBroadcast(intent, null);
+    }
+
+    public static void sendCommandWithBroadcastOptions(Context context, int command,
+            String sourcePackage, String targetPackage, int flags, Bundle extras,
+            Bundle broadcastOptions) {
+        final Intent intent = makeIntent(command, sourcePackage, targetPackage, flags, extras);
+        Log.d(TAG, "Sending broadcast with BroadcastOptions " + intent);
+        context.sendOrderedBroadcast(intent, null, broadcastOptions, null, null, 0, null, null);
+    }
+
+    private static Intent makeIntent(int command, String sourcePackage,
+            String targetPackage, int flags, Bundle extras) {
         Intent intent = new Intent();
         if (command == COMMAND_BIND_SERVICE || command == COMMAND_START_FOREGROUND_SERVICE) {
             intent.setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -345,12 +360,7 @@ public class CommandReceiver extends BroadcastReceiver {
         if (extras != null) {
             intent.putExtras(extras);
         }
-        sendCommand(context, intent);
-    }
-
-    private static void sendCommand(Context context, Intent intent) {
-        Log.d(TAG, "Sending broadcast " + intent);
-        context.sendOrderedBroadcast(intent, null);
+        return intent;
     }
 
     private ServiceConnection addServiceConnection(final String packageName) {
