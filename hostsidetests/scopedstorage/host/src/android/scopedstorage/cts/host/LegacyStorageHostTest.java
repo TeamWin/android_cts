@@ -219,4 +219,9 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
     public void testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW() throws Exception {
         runDeviceTest("testLegacyWESCanRenameImagesAndVideosWithDbUpdates_hasW");
     }
+
+    @Test
+    public void testScanUpdatesMetadataForNewlyAddedFile_hasRW() throws Exception {
+        runDeviceTest("testScanUpdatesMetadataForNewlyAddedFile_hasRW");
+    }
 }
