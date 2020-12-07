@@ -325,7 +325,7 @@ public class TestUtils {
             final String packageName = testApp.getPackageName();
             uiAutomation.adoptShellPermissionIdentity(
                     Manifest.permission.INSTALL_PACKAGES, Manifest.permission.DELETE_PACKAGES);
-            if (InstallUtils.getInstalledVersion(packageName) != -1) {
+            if (isAppInstalled(testApp)) {
                 Uninstall.packages(packageName);
             }
             Install.single(testApp).commit();
@@ -336,6 +336,10 @@ public class TestUtils {
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    public static boolean isAppInstalled(TestApp testApp) {
+        return InstallUtils.getInstalledVersion(testApp.getPackageName()) != -1;
     }
 
     /**
@@ -939,7 +943,9 @@ public class TestUtils {
             uiAutomation.adoptShellPermissionIdentity(Manifest.permission.FORCE_STOP_PACKAGES);
 
             getContext().getSystemService(ActivityManager.class).forceStopPackage(packageName);
-            Thread.sleep(1000);
+            pollForCondition(() -> {
+                return !isProcessRunning(packageName);
+            }, "Timed out while waiting for " + packageName + " to be stopped");
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -1184,6 +1190,16 @@ public class TestUtils {
             assertThat(parts[2]).isEqualTo("emulated");
         } else {
             assertThat(parts[2]).isNotEqualTo("emulated");
+        }
+    }
+
+    private static boolean isProcessRunning(String packageName) {
+        try {
+            return getContext().getSystemService(
+                    ActivityManager.class).getRunningAppProcesses().stream().anyMatch(
+                            p -> packageName.equals(p.processName));
+        } catch (Exception e) {
+            return false;
         }
     }
 }

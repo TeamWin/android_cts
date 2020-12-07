@@ -69,6 +69,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getRingtonesDir;
 import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermissions;
+import static android.scopedstorage.cts.lib.TestUtils.isAppInstalled;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
@@ -131,6 +132,7 @@ import com.android.cts.install.lib.TestApp;
 import com.google.common.io.Files;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -178,13 +180,17 @@ public class ScopedStorageDeviceTest {
 
     static final String FILE_CREATION_ERROR_MESSAGE = "No such file or directory";
 
-    private static final TestApp TEST_APP_A = new TestApp("TestAppA",
+    // This app is installed with READ_EXTERNAL_STORAGE permission before tests are run
+    private static final TestApp APP_A_HAS_RES = new TestApp("TestAppA",
             "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
-    private static final TestApp TEST_APP_B = new TestApp("TestAppB",
+    // This app is installed without any permissions before tests are run
+    private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
             "android.scopedstorage.cts.testapp.B", 1, false, "CtsScopedStorageTestAppB.apk");
-    private static final TestApp TEST_APP_C = new TestApp("TestAppC",
+    // This app is not installed at test startup - please install before using.
+    private static final TestApp APP_C = new TestApp("TestAppC",
             "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppC.apk");
-    private static final TestApp TEST_APP_C_LEGACY = new TestApp("TestAppCLegacy",
+    // This app is not installed at test startup - please install before using.
+    private static final TestApp APP_C_LEGACY = new TestApp("TestAppCLegacy",
             "android.scopedstorage.cts.testapp.C", 1, false, "CtsScopedStorageTestAppCLegacy.apk");
     private static final String[] SYSTEM_GALERY_APPOPS = {
             AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO};
@@ -207,6 +213,12 @@ public class ScopedStorageDeviceTest {
         }
     }
 
+    @BeforeClass
+    public static void installApps() throws Exception {
+        installAppWithStoragePermissions(APP_A_HAS_RES);
+        installApp(APP_B_NO_PERMS);
+    }
+
     @Before
     public void setup() throws Exception {
         // skips all test cases if FUSE is not active.
@@ -221,6 +233,12 @@ public class ScopedStorageDeviceTest {
     @After
     public void tearDown() throws Exception {
         executeShellCommand("rm -r /sdcard/Android/data/com.android.shell");
+    }
+
+    @AfterClass
+    public static void uninstallApps() {
+        uninstallAppNoThrow(APP_B_NO_PERMS);
+        uninstallAppNoThrow(APP_A_HAS_RES);
     }
 
     @Before
@@ -403,15 +421,12 @@ public class ScopedStorageDeviceTest {
                 assertThat(videoFile.createNewFile()).isTrue();
             }
 
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            installAppWithStoragePermissions(TEST_APP_A);
-
-            // TEST_APP_A should not be able to read/write to other app's external files directory.
-            assertThat(canOpenFileAs(TEST_APP_A, videoFile, false /* forWrite */)).isFalse();
-            assertThat(canOpenFileAs(TEST_APP_A, videoFile, true /* forWrite */)).isFalse();
-            // TEST_APP_A should not be able to delete files in other app's external files
+            // App A should not be able to read/write to other app's external files directory.
+            assertThat(canOpenFileAs(APP_A_HAS_RES, videoFile, false /* forWrite */)).isFalse();
+            assertThat(canOpenFileAs(APP_A_HAS_RES, videoFile, true /* forWrite */)).isFalse();
+            // App A should not be able to delete files in other app's external files
             // directory.
-            assertThat(deleteFileAs(TEST_APP_A, videoFile.getPath())).isFalse();
+            assertThat(deleteFileAs(APP_A_HAS_RES, videoFile.getPath())).isFalse();
 
             // Apps should have read/write access in their own app's external files directory.
             assertThat(canOpen(videoFile, false /* forWrite */)).isTrue();
@@ -420,7 +435,6 @@ public class ScopedStorageDeviceTest {
             assertThat(videoFile.delete()).isTrue();
         } finally {
             videoFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -497,10 +511,8 @@ public class ScopedStorageDeviceTest {
         final File mediaFile = new File(getPicturesDir(), IMAGE_FILE_NAME);
         final File nonMediaFile = new File(getDownloadDir(), NONMEDIA_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-
-            assertThat(createFileAs(TEST_APP_A, mediaFile.getPath())).isTrue();
-            assertThat(createFileAs(TEST_APP_A, nonMediaFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, mediaFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, nonMediaFile.getPath())).isTrue();
 
             // We can still see that the files exist
             assertThat(mediaFile.exists()).isTrue();
@@ -512,9 +524,8 @@ public class ScopedStorageDeviceTest {
             assertThat(canOpen(mediaFile, /* forWrite */ false)).isFalse();
             assertThat(canOpen(nonMediaFile, /* forWrite */ true)).isFalse();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, nonMediaFile.getPath());
-            deleteFileAsNoThrow(TEST_APP_A, mediaFile.getPath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, nonMediaFile.getPath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, mediaFile.getPath());
         }
     }
 
@@ -524,10 +535,9 @@ public class ScopedStorageDeviceTest {
         final File mediaFile = new File(dirInDownload, IMAGE_FILE_NAME);
         final File nonMediaFile = new File(dirInDownload, NONMEDIA_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
             assertThat(dirInDownload.mkdir()).isTrue();
             // Have another app create a media file in the directory
-            assertThat(createFileAs(TEST_APP_A, mediaFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, mediaFile.getPath())).isTrue();
 
             // Can't delete the directory since it contains another app's content
             assertThat(dirInDownload.delete()).isFalse();
@@ -535,7 +545,7 @@ public class ScopedStorageDeviceTest {
             assertThat(deleteRecursively(dirInDownload)).isFalse();
 
             // Have another app create a non-media file in the directory
-            assertThat(createFileAs(TEST_APP_A, nonMediaFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, nonMediaFile.getPath())).isTrue();
 
             // Can't delete the directory since it contains another app's content
             assertThat(dirInDownload.delete()).isFalse();
@@ -543,26 +553,25 @@ public class ScopedStorageDeviceTest {
             assertThat(deleteRecursively(dirInDownload)).isFalse();
 
             // Delete only the media file and keep the non-media file
-            assertThat(deleteFileAs(TEST_APP_A, mediaFile.getPath())).isTrue();
+            assertThat(deleteFileAs(APP_B_NO_PERMS, mediaFile.getPath())).isTrue();
             // Directory now has only the non-media file contributed by another app, so we still
             // can't delete it nor its content
             assertThat(dirInDownload.delete()).isFalse();
             assertThat(deleteRecursively(dirInDownload)).isFalse();
 
             // Delete the last file belonging to another app
-            assertThat(deleteFileAs(TEST_APP_A, nonMediaFile.getPath())).isTrue();
+            assertThat(deleteFileAs(APP_B_NO_PERMS, nonMediaFile.getPath())).isTrue();
             // Create our own file
             assertThat(nonMediaFile.createNewFile()).isTrue();
 
             // Now that the directory only has content that was contributed by us, we can delete it
             assertThat(deleteRecursively(dirInDownload)).isTrue();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, nonMediaFile.getPath());
-            deleteFileAsNoThrow(TEST_APP_A, mediaFile.getPath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, nonMediaFile.getPath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, mediaFile.getPath());
             // At this point, we're not sure who created this file, so we'll have both apps
             // deleting it
             mediaFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
             dirInDownload.delete();
         }
     }
@@ -684,32 +693,23 @@ public class ScopedStorageDeviceTest {
                 assertThat(dir.mkdir()).isTrue();
             }
 
-            // Install TEST_APP_A and create media file in the new directory.
-            installApp(TEST_APP_A);
-            assertThat(createFileAs(TEST_APP_A, videoFile.getPath())).isTrue();
-            // TEST_APP_A should see TEST_DIRECTORY in DCIM and new file in TEST_DIRECTORY.
-            assertThat(listAs(TEST_APP_A, dcimDir.getPath())).contains(TEST_DIRECTORY_NAME);
-            assertThat(listAs(TEST_APP_A, dir.getPath())).containsExactly(videoFileName);
+            assertThat(createFileAs(APP_B_NO_PERMS, videoFile.getPath())).isTrue();
+            // App B should see TEST_DIRECTORY in DCIM and new file in TEST_DIRECTORY.
+            assertThat(listAs(APP_B_NO_PERMS, dcimDir.getPath())).contains(TEST_DIRECTORY_NAME);
+            assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).containsExactly(videoFileName);
 
-            // Install TEST_APP_B with storage permission.
-            installAppWithStoragePermissions(TEST_APP_B);
-            // TEST_APP_B with storage permission should see TEST_DIRECTORY in DCIM and new file
+            // App A has storage permission, so should see TEST_DIRECTORY in DCIM and new file
             // in TEST_DIRECTORY.
-            assertThat(listAs(TEST_APP_B, dcimDir.getPath())).contains(TEST_DIRECTORY_NAME);
-            assertThat(listAs(TEST_APP_B, dir.getPath())).containsExactly(videoFileName);
+            assertThat(listAs(APP_A_HAS_RES, dcimDir.getPath())).contains(TEST_DIRECTORY_NAME);
+            assertThat(listAs(APP_A_HAS_RES, dir.getPath())).containsExactly(videoFileName);
 
-            // Revoke storage permission for TEST_APP_B
-            revokePermission(
-                    TEST_APP_B.getPackageName(), Manifest.permission.READ_EXTERNAL_STORAGE);
-            // TEST_APP_B without storage permission should see TEST_DIRECTORY in DCIM and should
-            // not see new file in new TEST_DIRECTORY.
-            assertThat(listAs(TEST_APP_B, dcimDir.getPath())).contains(TEST_DIRECTORY_NAME);
-            assertThat(listAs(TEST_APP_B, dir.getPath())).doesNotContain(videoFileName);
+            // We are an app without storage permission; should see TEST_DIRECTORY in DCIM and
+            // should not see new file in new TEST_DIRECTORY.
+            assertThat(dcimDir.list()).asList().contains(TEST_DIRECTORY_NAME);
+            assertThat(dir.list()).asList().doesNotContain(videoFileName);
         } finally {
-            uninstallAppNoThrow(TEST_APP_B);
-            deleteFileAsNoThrow(TEST_APP_A, videoFile.getPath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, videoFile.getPath());
             dir.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -727,26 +727,21 @@ public class ScopedStorageDeviceTest {
                 assertThat(dir.mkdir()).isTrue();
             }
 
-            // Install TEST_APP_A and create non media file in the new directory.
-            installApp(TEST_APP_A);
-            assertThat(createFileAs(TEST_APP_A, pdfFile.getPath())).isTrue();
+            // Have App B create non media file in the new directory.
+            assertThat(createFileAs(APP_B_NO_PERMS, pdfFile.getPath())).isTrue();
 
-            // TEST_APP_A should see TEST_DIRECTORY in downloadDir and new non media file in
+            // App B should see TEST_DIRECTORY in downloadDir and new non media file in
             // TEST_DIRECTORY.
-            assertThat(listAs(TEST_APP_A, downloadDir.getPath())).contains(TEST_DIRECTORY_NAME);
-            assertThat(listAs(TEST_APP_A, dir.getPath())).containsExactly(pdfFileName);
+            assertThat(listAs(APP_B_NO_PERMS, downloadDir.getPath())).contains(TEST_DIRECTORY_NAME);
+            assertThat(listAs(APP_B_NO_PERMS, dir.getPath())).containsExactly(pdfFileName);
 
-            // Install TEST_APP_B with storage permission.
-            installAppWithStoragePermissions(TEST_APP_B);
-            // TEST_APP_B with storage permission should see TEST_DIRECTORY in downloadDir
-            // and should not see new non media file in TEST_DIRECTORY.
-            assertThat(listAs(TEST_APP_B, downloadDir.getPath())).contains(TEST_DIRECTORY_NAME);
-            assertThat(listAs(TEST_APP_B, dir.getPath())).doesNotContain(pdfFileName);
+            // APP B with storage permission should see TEST_DIRECTORY in downloadDir
+            // and should not see non media file in TEST_DIRECTORY.
+            assertThat(listAs(APP_A_HAS_RES, downloadDir.getPath())).contains(TEST_DIRECTORY_NAME);
+            assertThat(listAs(APP_A_HAS_RES, dir.getPath())).doesNotContain(pdfFileName);
         } finally {
-            uninstallAppNoThrow(TEST_APP_B);
-            deleteFileAsNoThrow(TEST_APP_A, pdfFile.getPath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, pdfFile.getPath());
             dir.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -767,17 +762,13 @@ public class ScopedStorageDeviceTest {
             // files and directories in its external directory.
             assertDirectoryContains(nonmediaFile.getParentFile(), nonmediaFile);
 
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            // TEST_APP_A should not see other app's external files directory.
-            installAppWithStoragePermissions(TEST_APP_A);
-
+            // App A should not see other app's external files directory despite RES.
             assertThrows(IOException.class,
-                    () -> listAs(TEST_APP_A, getAndroidDataDir().getPath()));
+                    () -> listAs(APP_A_HAS_RES, getAndroidDataDir().getPath()));
             assertThrows(IOException.class,
-                    () -> listAs(TEST_APP_A, getExternalFilesDir().getPath()));
+                    () -> listAs(APP_A_HAS_RES, getExternalFilesDir().getPath()));
         } finally {
             nonmediaFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -798,18 +789,15 @@ public class ScopedStorageDeviceTest {
             // files.
             assertDirectoryContains(videoFile.getParentFile(), videoFile);
 
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            // TEST_APP_A with storage permission should see other app's external media directory.
-            installAppWithStoragePermissions(TEST_APP_A);
+            // App A with storage permission should see other app's external media directory.
             // Apps with READ_EXTERNAL_STORAGE can list files in other app's external media
             // directory.
-            assertThat(listAs(TEST_APP_A, getAndroidMediaDir().getPath()))
+            assertThat(listAs(APP_A_HAS_RES, getAndroidMediaDir().getPath()))
                     .contains(THIS_PACKAGE_NAME);
-            assertThat(listAs(TEST_APP_A, getExternalMediaDir().getPath()))
+            assertThat(listAs(APP_A_HAS_RES, getExternalMediaDir().getPath()))
                     .containsExactly(videoFile.getName());
         } finally {
             videoFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -833,19 +821,17 @@ public class ScopedStorageDeviceTest {
                 HashMap<String, String> exif = getExifMetadata(jpgFile);
                 assertExifMetadataMatch(exif, originalExif);
 
-                installAppWithStoragePermissions(TEST_APP_A);
                 HashMap<String, String> exifFromTestApp =
-                        readExifMetadataFromTestApp(TEST_APP_A, jpgFile.getPath());
+                        readExifMetadataFromTestApp(APP_A_HAS_RES, jpgFile.getPath());
                 // Other apps shouldn't have access to the same metadata without explicit permission
                 assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
-                // TODO(b/146346138): Test that if we give TEST_APP_A write URI permission,
+                // TODO(b/146346138): Test that if we give APP_A write URI permission,
                 //  it would be able to access the metadata.
             } // Intentionally keep the original streams open during the test so bytes are more
             // likely to be in the VFS cache from both file opens
         } finally {
             jpgFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1128,33 +1114,33 @@ public class ScopedStorageDeviceTest {
 
     @Test
     public void testReadStorageInvalidation() throws Exception {
-        testAppOpInvalidation(TEST_APP_C, new File(getDcimDir(), "read_storage.jpg"),
+        testAppOpInvalidation(APP_B_NO_PERMS, new File(getDcimDir(), "read_storage.jpg"),
                 Manifest.permission.READ_EXTERNAL_STORAGE,
                 AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE, /* forWrite */ false);
     }
 
     @Test
     public void testWriteStorageInvalidation() throws Exception {
-        testAppOpInvalidation(TEST_APP_C_LEGACY, new File(getDcimDir(), "write_storage.jpg"),
+        testAppOpInvalidation(APP_C_LEGACY, new File(getDcimDir(), "write_storage.jpg"),
                 Manifest.permission.WRITE_EXTERNAL_STORAGE,
                 AppOpsManager.OPSTR_WRITE_EXTERNAL_STORAGE, /* forWrite */ true);
     }
 
     @Test
     public void testManageStorageInvalidation() throws Exception {
-        testAppOpInvalidation(TEST_APP_C, new File(getDownloadDir(), "manage_storage.pdf"),
+        testAppOpInvalidation(APP_C, new File(getDownloadDir(), "manage_storage.pdf"),
                 /* permission */ null, OPSTR_MANAGE_EXTERNAL_STORAGE, /* forWrite */ true);
     }
 
     @Test
     public void testWriteImagesInvalidation() throws Exception {
-        testAppOpInvalidation(TEST_APP_C, new File(getDcimDir(), "write_images.jpg"),
+        testAppOpInvalidation(APP_B_NO_PERMS, new File(getDcimDir(), "write_images.jpg"),
                 /* permission */ null, AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, /* forWrite */ true);
     }
 
     @Test
     public void testWriteVideoInvalidation() throws Exception {
-        testAppOpInvalidation(TEST_APP_C, new File(getDcimDir(), "write_video.mp4"),
+        testAppOpInvalidation(APP_B_NO_PERMS, new File(getDcimDir(), "write_video.mp4"),
                 /* permission */ null, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO, /* forWrite */ true);
     }
 
@@ -1176,27 +1162,27 @@ public class ScopedStorageDeviceTest {
             assertExifMetadataMatch(exif, originalExif);
 
             // Install test app
-            installAppWithStoragePermissions(TEST_APP_C);
+            installAppWithStoragePermissions(APP_C);
 
             // Grant A_M_L and verify access to sensitive data
-            grantPermission(TEST_APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
             HashMap<String, String> exifFromTestApp =
-                    readExifMetadataFromTestApp(TEST_APP_C, imgFile.getPath());
+                    readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
 
             // Revoke A_M_L and verify sensitive data redaction
             revokePermission(
-                    TEST_APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
-            exifFromTestApp = readExifMetadataFromTestApp(TEST_APP_C, imgFile.getPath());
+                    APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMismatch(exifFromTestApp, originalExif);
 
             // Re-grant A_M_L and verify access to sensitive data
-            grantPermission(TEST_APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
-            exifFromTestApp = readExifMetadataFromTestApp(TEST_APP_C, imgFile.getPath());
+            grantPermission(APP_C.getPackageName(), Manifest.permission.ACCESS_MEDIA_LOCATION);
+            exifFromTestApp = readExifMetadataFromTestApp(APP_C, imgFile.getPath());
             assertExifMetadataMatch(exifFromTestApp, originalExif);
         } finally {
             imgFile.delete();
-            uninstallAppNoThrow(TEST_APP_C);
+            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -1207,24 +1193,24 @@ public class ScopedStorageDeviceTest {
             assertThat(file.createNewFile()).isTrue();
 
             // Install legacy
-            installAppWithStoragePermissions(TEST_APP_C_LEGACY);
-            grantPermission(TEST_APP_C_LEGACY.getPackageName(),
+            installAppWithStoragePermissions(APP_C_LEGACY);
+            grantPermission(APP_C_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // Grants write access for legacy
             // Legacy app can read and write media files contributed by others
-            assertThat(canOpenFileAs(TEST_APP_C_LEGACY, file, /* forWrite */ false)).isTrue();
-            assertThat(canOpenFileAs(TEST_APP_C_LEGACY, file, /* forWrite */ true)).isTrue();
+            assertThat(canOpenFileAs(APP_C_LEGACY, file, /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(APP_C_LEGACY, file, /* forWrite */ true)).isTrue();
 
             // Update to non-legacy
-            installAppWithStoragePermissions(TEST_APP_C);
-            grantPermission(TEST_APP_C_LEGACY.getPackageName(),
+            installAppWithStoragePermissions(APP_C);
+            grantPermission(APP_C_LEGACY.getPackageName(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE); // No effect for non-legacy
             // Non-legacy app can read media files contributed by others
-            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isTrue();
+            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isTrue();
             // But cannot write
-            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ true)).isFalse();
+            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ true)).isFalse();
         } finally {
             file.delete();
-            uninstallAppNoThrow(TEST_APP_C);
+            uninstallAppNoThrow(APP_C);
         }
     }
 
@@ -1236,28 +1222,35 @@ public class ScopedStorageDeviceTest {
             assertThat(file.createNewFile()).isTrue();
 
             // Install
-            installAppWithStoragePermissions(TEST_APP_C);
-            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isTrue();
+            installAppWithStoragePermissions(APP_C);
+            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isTrue();
 
             // Re-install
-            uninstallAppNoThrow(TEST_APP_C);
-            installApp(TEST_APP_C);
-            assertThat(canOpenFileAs(TEST_APP_C, file, /* forWrite */ false)).isFalse();
+            uninstallAppNoThrow(APP_C);
+            installApp(APP_C);
+            assertThat(canOpenFileAs(APP_C, file, /* forWrite */ false)).isFalse();
         } finally {
             file.delete();
-            uninstallAppNoThrow(TEST_APP_C);
+            uninstallAppNoThrow(APP_C);
         }
     }
 
     private void testAppOpInvalidation(TestApp app, File file, @Nullable String permission,
             String opstr, boolean forWrite) throws Exception {
+        boolean alreadyInstalled = true;
         try {
-            installApp(app);
+            if (!isAppInstalled(app)) {
+                alreadyInstalled = false;
+                installApp(app);
+            }
             assertThat(file.createNewFile()).isTrue();
             assertAppOpInvalidation(app, file, permission, opstr, forWrite);
         } finally {
             file.delete();
-            uninstallApp(app);
+            if (!alreadyInstalled) {
+                // only uninstall if we installed this app here
+                uninstallApp(app);
+            }
         }
     }
 
@@ -1299,11 +1292,10 @@ public class ScopedStorageDeviceTest {
         final File imageInAnObviouslyWrongPlace = new File(getMusicDir(), IMAGE_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
             // Have another app create an image file
-            assertThat(createFileAs(TEST_APP_A, otherAppImageFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImageFile.getPath())).isTrue();
             assertThat(otherAppImageFile.exists()).isTrue();
 
             // Assert we can write to the file
@@ -1322,12 +1314,11 @@ public class ScopedStorageDeviceTest {
             assertCanCreateFile(topLevelImageFile);
             assertCanCreateFile(imageInAnObviouslyWrongPlace);
 
-            // Put the file back in its place and let TEST_APP_A delete it
+            // Put the file back in its place and let APP B delete it
             assertThat(otherAppImageFile.createNewFile()).isTrue();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherAppImageFile.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImageFile.getAbsolutePath());
             otherAppImageFile.delete();
-            uninstallApp(TEST_APP_A);
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
@@ -1339,11 +1330,10 @@ public class ScopedStorageDeviceTest {
         final File audioInAnObviouslyWrongPlace = new File(getPicturesDir(), AUDIO_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
             // Have another app create an audio file
-            assertThat(createFileAs(TEST_APP_A, otherAppAudioFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppAudioFile.getPath())).isTrue();
             assertThat(otherAppAudioFile.exists()).isTrue();
 
             // Assert we can't access the file
@@ -1363,8 +1353,7 @@ public class ScopedStorageDeviceTest {
                         audioInAnObviouslyWrongPlace.createNewFile();
                     });
         } finally {
-            deleteFileAs(TEST_APP_A, otherAppAudioFile.getPath());
-            uninstallApp(TEST_APP_A);
+            deleteFileAs(APP_B_NO_PERMS, otherAppAudioFile.getPath());
             topLevelAudioFile.delete();
             audioInAnObviouslyWrongPlace.delete();
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
@@ -1379,11 +1368,10 @@ public class ScopedStorageDeviceTest {
         final File topLevelVideoFile = new File(getExternalStorageDir(), VIDEO_FILE_NAME);
         final File musicFile = new File(getMusicDir(), AUDIO_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
             // Have another app create a video file
-            assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideoFile.getPath())).isTrue();
             assertThat(otherAppVideoFile.exists()).isTrue();
 
             // Write some data to the file
@@ -1407,8 +1395,7 @@ public class ScopedStorageDeviceTest {
             assertThat(imageFile.renameTo(musicFile)).isTrue();
             assertThat(getFileRowIdFromDatabase(musicFile)).isEqualTo(-1);
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherAppVideoFile.getAbsolutePath());
-            uninstallApp(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideoFile.getAbsolutePath());
             imageFile.delete();
             videoFile.delete();
             topLevelVideoFile.delete();
@@ -1523,20 +1510,18 @@ public class ScopedStorageDeviceTest {
         final File videoFile1 = new File(getDcimDir(), VIDEO_FILE_NAME);
         final File videoFile2 = new File(getMoviesDir(), VIDEO_FILE_NAME);
         try {
-            installApp(TEST_APP_A);
-            assertThat(createFileAs(TEST_APP_A, videoFile1.getAbsolutePath())).isTrue();
-            // App can't rename a file owned by TEST_APP_A.
+            assertThat(createFileAs(APP_B_NO_PERMS, videoFile1.getAbsolutePath())).isTrue();
+            // App can't rename a file owned by APP B.
             assertCantRenameFile(videoFile1, videoFile2);
 
             assertThat(videoFile2.createNewFile()).isTrue();
-            // App can't rename a file to videoFile1 which is owned by TEST_APP_A
+            // App can't rename a file to videoFile1 which is owned by APP B.
             assertCantRenameFile(videoFile2, videoFile1);
             // TODO(b/146346138): Test that app with right URI permission should be able to rename
             // the corresponding file
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, videoFile1.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, videoFile1.getAbsolutePath());
             videoFile2.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1624,20 +1609,17 @@ public class ScopedStorageDeviceTest {
         File videoFile = new File(mediaDirectory1, VIDEO_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
-
             if (!mediaDirectory1.exists()) {
                 assertThat(mediaDirectory1.mkdirs()).isTrue();
             }
-            assertThat(createFileAs(TEST_APP_A, videoFile.getAbsolutePath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, videoFile.getAbsolutePath())).isTrue();
             // App doesn't have access to videoFile1, can't rename mediaDirectory1.
             assertThat(mediaDirectory1.renameTo(mediaDirectory2)).isFalse();
             assertThat(videoFile.exists()).isTrue();
             // Test app can delete the file since the file is not moved to new directory.
-            assertThat(deleteFileAs(TEST_APP_A, videoFile.getAbsolutePath())).isTrue();
+            assertThat(deleteFileAs(APP_B_NO_PERMS, videoFile.getAbsolutePath())).isTrue();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, videoFile.getAbsolutePath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, videoFile.getAbsolutePath());
             mediaDirectory1.delete();
         }
     }
@@ -1803,17 +1785,17 @@ public class ScopedStorageDeviceTest {
 
             assertDirectoryContains(dcimDir, hiddenImageFile);
 
-            installApp(TEST_APP_A, true);
             // TestApp with read permissions can't see the hidden image file created by other app
-            assertThat(listAs(TEST_APP_A, dcimDir.getAbsolutePath()))
+            assertThat(listAs(APP_B_NO_PERMS, dcimDir.getAbsolutePath()))
                     .doesNotContain(hiddenImageFileName);
 
             final int testAppUid =
-                    getContext().getPackageManager().getPackageUid(TEST_APP_A.getPackageName(), 0);
+                    getContext().getPackageManager().getPackageUid(APP_B_NO_PERMS.getPackageName(),
+                            0);
             // FileManager can see the hidden image file created by other app
             try {
                 allowAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
-                assertThat(listAs(TEST_APP_A, dcimDir.getAbsolutePath()))
+                assertThat(listAs(APP_B_NO_PERMS, dcimDir.getAbsolutePath()))
                         .contains(hiddenImageFileName);
             } finally {
                 denyAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
@@ -1822,14 +1804,13 @@ public class ScopedStorageDeviceTest {
             // Gallery can not see the hidden image file created by other app
             try {
                 allowAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
-                assertThat(listAs(TEST_APP_A, dcimDir.getAbsolutePath()))
+                assertThat(listAs(APP_B_NO_PERMS, dcimDir.getAbsolutePath()))
                         .doesNotContain(hiddenImageFileName);
             } finally {
                 denyAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
             }
         } finally {
             hiddenImageFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1844,20 +1825,18 @@ public class ScopedStorageDeviceTest {
         Uri pendingPdfFileUri = null;
         Uri trashedPdfFileUri = null;
         try {
-            installAppWithStoragePermissions(TEST_APP_A);
-
             pendingImgaeFileUri = createPendingFile(pendingImageFile);
-            assertOpenPendingOrTrashed(pendingImgaeFileUri, TEST_APP_A, /*isImageOrVideo*/ true);
+            assertOpenPendingOrTrashed(pendingImgaeFileUri, APP_A_HAS_RES, /*isImageOrVideo*/ true);
 
             pendingPdfFileUri = createPendingFile(pendingPdfFile);
-            assertOpenPendingOrTrashed(pendingPdfFileUri, TEST_APP_A,
+            assertOpenPendingOrTrashed(pendingPdfFileUri, APP_A_HAS_RES,
                     /*isImageOrVideo*/ false);
 
             trashedVideoFileUri = createTrashedFile(trashedVideoFile);
-            assertOpenPendingOrTrashed(trashedVideoFileUri, TEST_APP_A, /*isImageOrVideo*/ true);
+            assertOpenPendingOrTrashed(trashedVideoFileUri, APP_A_HAS_RES, /*isImageOrVideo*/ true);
 
             trashedPdfFileUri = createTrashedFile(trashedPdfFile);
-            assertOpenPendingOrTrashed(trashedPdfFileUri, TEST_APP_A,
+            assertOpenPendingOrTrashed(trashedPdfFileUri, APP_A_HAS_RES,
                     /*isImageOrVideo*/ false);
 
         } finally {
@@ -1865,7 +1844,6 @@ public class ScopedStorageDeviceTest {
                     trashedPdfFile);
             deleteWithMediaProviderNoThrow(pendingImgaeFileUri, trashedVideoFileUri,
                     pendingPdfFileUri, trashedPdfFileUri);
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1876,33 +1854,30 @@ public class ScopedStorageDeviceTest {
         Uri imageFileUri = null;
         Uri pdfFileUri = null;
         try {
-            installAppWithStoragePermissions(TEST_APP_A);
-
             imageFileUri = createPendingFile(imageFile);
             // Check that only owner package, file manager and system gallery can list pending image
             // file.
-            assertListPendingOrTrashed(imageFileUri, imageFile, TEST_APP_A,
+            assertListPendingOrTrashed(imageFileUri, imageFile, APP_A_HAS_RES,
                     /*isImageOrVideo*/ true);
 
             trashFile(imageFileUri);
             // Check that only owner package, file manager and system gallery can list trashed image
             // file.
-            assertListPendingOrTrashed(imageFileUri, imageFile, TEST_APP_A,
+            assertListPendingOrTrashed(imageFileUri, imageFile, APP_A_HAS_RES,
                     /*isImageOrVideo*/ true);
 
             pdfFileUri = createPendingFile(pdfFile);
             // Check that only owner package, file manager can list pending non media file.
-            assertListPendingOrTrashed(pdfFileUri, pdfFile, TEST_APP_A,
+            assertListPendingOrTrashed(pdfFileUri, pdfFile, APP_A_HAS_RES,
                     /*isImageOrVideo*/ false);
 
             trashFile(pdfFileUri);
             // Check that only owner package, file manager can list trashed non media file.
-            assertListPendingOrTrashed(pdfFileUri, pdfFile, TEST_APP_A,
+            assertListPendingOrTrashed(pdfFileUri, pdfFile, APP_A_HAS_RES,
                     /*isImageOrVideo*/ false);
         } finally {
             deleteWithMediaProviderNoThrow(imageFileUri, pdfFileUri);
             deleteFiles(imageFile, pdfFile);
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1932,18 +1907,17 @@ public class ScopedStorageDeviceTest {
             pendingPdfFilePath = getFilePathFromUri(createPendingFile(pendingPdfFile));
             trashedPdfFilePath = getFilePathFromUri(createTrashedFile(trashedPdfFile));
 
-            installAppWithStoragePermissions(TEST_APP_A);
-
             // App can't delete other app's pending and trashed file.
-            assertCantDeletePathsAs(TEST_APP_A, pendingVideoFilePath, trashedImageFilePath,
+            assertCantDeletePathsAs(APP_A_HAS_RES, pendingVideoFilePath, trashedImageFilePath,
                     pendingPdfFilePath, trashedPdfFilePath);
 
             final int testAppUid =
-                    getContext().getPackageManager().getPackageUid(TEST_APP_A.getPackageName(), 0);
+                    getContext().getPackageManager().getPackageUid(APP_A_HAS_RES.getPackageName(),
+                            0);
             try {
                 allowAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
                 // File Manager can delete any pending and trashed file
-                assertCanDeletePathsAs(TEST_APP_A, pendingVideoFilePath, trashedImageFilePath,
+                assertCanDeletePathsAs(APP_A_HAS_RES, pendingVideoFilePath, trashedImageFilePath,
                         pendingPdfFilePath, trashedPdfFilePath);
             } finally {
                 denyAppOpsToUid(testAppUid, OPSTR_MANAGE_EXTERNAL_STORAGE);
@@ -1959,12 +1933,12 @@ public class ScopedStorageDeviceTest {
                 // System Gallery can delete any pending and trashed image or video file.
                 assertTrue(isMediaTypeImageOrVideo(new File(pendingVideoFilePath)));
                 assertTrue(isMediaTypeImageOrVideo(new File(trashedImageFilePath)));
-                assertCanDeletePathsAs(TEST_APP_A, pendingVideoFilePath, trashedImageFilePath);
+                assertCanDeletePathsAs(APP_A_HAS_RES, pendingVideoFilePath, trashedImageFilePath);
 
                 // System Gallery can't delete other app's pending and trashed pdf file.
                 assertFalse(isMediaTypeImageOrVideo(new File(pendingPdfFilePath)));
                 assertFalse(isMediaTypeImageOrVideo(new File(trashedPdfFilePath)));
-                assertCantDeletePathsAs(TEST_APP_A, pendingPdfFilePath, trashedPdfFilePath);
+                assertCantDeletePathsAs(APP_A_HAS_RES, pendingPdfFilePath, trashedPdfFilePath);
             } finally {
                 denyAppOpsToUid(testAppUid, SYSTEM_GALERY_APPOPS);
             }
@@ -1972,7 +1946,6 @@ public class ScopedStorageDeviceTest {
             deletePaths(pendingVideoFilePath, trashedImageFilePath, pendingPdfFilePath,
                     trashedPdfFilePath);
             deleteFiles(pendingVideoFile, trashedImageFile, pendingPdfFile, trashedPdfFile);
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -1983,10 +1956,9 @@ public class ScopedStorageDeviceTest {
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
-            installApp(TEST_APP_A);
             // Apps can't query other app's pending file, hence create file and publish it.
             assertCreatePublishedFilesAs(
-                    TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+                    APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             // Since the test doesn't have READ_EXTERNAL_STORAGE nor any other special permissions,
             // it can't query for another app's contents.
@@ -1995,8 +1967,7 @@ public class ScopedStorageDeviceTest {
             assertCantQueryFile(otherAppPdf);
             assertCantQueryFile(otherHiddenFile);
         } finally {
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
-            uninstallApp(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
         }
     }
 
@@ -2007,10 +1978,9 @@ public class ScopedStorageDeviceTest {
         final File otherAppMusic = new File(getMusicDir(), "other" + AUDIO_FILE_NAME);
         final File otherHiddenFile = new File(getPicturesDir(), ".otherHiddenFile.jpg");
         try {
-            installApp(TEST_APP_A);
             // Apps can't query other app's pending file, hence create file and publish it.
             assertCreatePublishedFilesAs(
-                    TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
+                    APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
 
             // System gallery apps have access to video and image files
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
@@ -2023,8 +1993,7 @@ public class ScopedStorageDeviceTest {
             assertCantQueryFile(otherAppPdf);
         } finally {
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
-            deleteFilesAs(TEST_APP_A, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
-            uninstallApp(TEST_APP_A);
+            deleteFilesAs(APP_B_NO_PERMS, otherAppImg, otherAppMusic, otherAppPdf, otherHiddenFile);
         }
     }
 
@@ -2050,10 +2019,9 @@ public class ScopedStorageDeviceTest {
             executeShellCommand("touch " + otherAppPdfFile1);
             MediaStore.scanFile(getContentResolver(), otherAppPdfFile1);
 
-            installAppWithStoragePermissions(TEST_APP_A);
             allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
-            assertCreateFilesAs(TEST_APP_A, otherAppImageFile1, otherAppVideoFile1);
+            assertCreateFilesAs(APP_A_HAS_RES, otherAppImageFile1, otherAppVideoFile1);
 
             // System gallery privileges don't go beyond DCIM, Movies and Pictures boundaries.
             assertCantRenameDirectory(dirInDcim, dirInPodcasts, /*oldFilesList*/ null);
@@ -2077,7 +2045,6 @@ public class ScopedStorageDeviceTest {
             otherAppPdfFile2.delete();
             dirInDcim.delete();
             dirInPictures.delete();
-            uninstallAppNoThrow(TEST_APP_A);
             denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
@@ -2104,8 +2071,7 @@ public class ScopedStorageDeviceTest {
             assertThat(cr.openFileDescriptor(uriOfOldFile, "rw")).isNotNull();
 
             assertThat(imageFile.delete()).isTrue();
-            installApp(TEST_APP_A);
-            assertThat(createFileAs(TEST_APP_A, imageFile.getAbsolutePath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, imageFile.getAbsolutePath())).isTrue();
 
             final Uri uriOfNewFile = MediaStore.scanFile(getContentResolver(), imageFile);
             assertThat(uriOfNewFile).isNotNull();
@@ -2114,8 +2080,7 @@ public class ScopedStorageDeviceTest {
                     .isNotEqualTo(oldRowId);
         } finally {
             imageFile.delete();
-            deleteFileAsNoThrow(TEST_APP_A, imageFile.getAbsolutePath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, imageFile.getAbsolutePath());
         }
     }
 
@@ -2239,8 +2204,7 @@ public class ScopedStorageDeviceTest {
                 assertThat(c.getInt(0)).isEqualTo(0);
             }
 
-            installAppWithStoragePermissions(TEST_APP_A);
-            assertCreateFilesAs(TEST_APP_A, otherPendingFile);
+            assertCreateFilesAs(APP_A_HAS_RES, otherPendingFile);
             // We can't query other apps pending file from FUSE with MATCH_EXCLUDE
             try (Cursor c = queryFileExcludingPending(otherPendingFile,
                     MediaStore.MediaColumns.IS_PENDING)) {
@@ -2248,8 +2212,7 @@ public class ScopedStorageDeviceTest {
             }
         } finally {
             pendingFile.delete();
-            deleteFileAsNoThrow(TEST_APP_A, otherPendingFile.getAbsolutePath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_A_HAS_RES, otherPendingFile.getAbsolutePath());
         }
     }
 
@@ -2267,17 +2230,13 @@ public class ScopedStorageDeviceTest {
                 assertThat(externalMediaPath.createNewFile()).isTrue();
             }
 
-            // Install TEST_APP_A with READ_EXTERNAL_STORAGE permission.
-            installAppWithStoragePermissions(TEST_APP_A);
-
-            // TEST_APP_A should not be able to setattr to other app's files.
+            // APP A should not be able to setattr to other app's files.
             assertWithMessage(
                     "setattr on directory/external media path [%s]", externalMediaPath.getPath())
-                    .that(setAttrAs(TEST_APP_A, externalMediaPath.getPath()))
+                    .that(setAttrAs(APP_A_HAS_RES, externalMediaPath.getPath()))
                     .isFalse();
         } finally {
             externalMediaPath.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
