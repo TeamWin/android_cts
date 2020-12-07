@@ -22,5 +22,6 @@ android_test_helper_app {
         "arcts",
         "cts",
         "general-tests",
+        "sts",
     ],
 }
