@@ -204,6 +204,31 @@ bool OutputManager::isPtsStrictlyIncreasing(int64_t lastPts) {
     return result;
 }
 
+void OutputManager::updateChecksum(
+        uint8_t* buf, AMediaCodecBufferInfo* info, int width, int height, int stride) {
+    uint8_t flattenInfo[16];
+    int pos = 0;
+    if (width <= 0 || height <= 0 || stride <= 0) {
+        flattenField<int32_t>(flattenInfo, &pos, info->size);
+    }
+    flattenField<int32_t>(flattenInfo, &pos,
+                          info->flags & ~AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
+    flattenField<int64_t>(flattenInfo, &pos, info->presentationTimeUs);
+    crc32value = crc32(crc32value, flattenInfo, pos);
+    if (width > 0 && height > 0 && stride > 0) {
+        // Only checksum Y plane
+        std::vector<uint8_t> tmp(width * height, 0u);
+        size_t offset = 0;
+        for (int i = 0; i < height; ++i) {
+            memcpy(tmp.data() + (i * width), buf + offset, width);
+            offset += stride;
+        }
+        crc32value = crc32(crc32value, tmp.data(), width * height);
+    } else {
+        crc32value = crc32(crc32value, buf, info->size);
+    }
+}
+
 bool OutputManager::isOutPtsListIdenticalToInpPtsList(bool requireSorting) {
     bool isEqual = true;
     std::sort(inpPtsArray.begin(), inpPtsArray.end());
