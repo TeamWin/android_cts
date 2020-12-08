@@ -41,6 +41,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATI
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
@@ -172,10 +173,18 @@ public class PipActivity extends AbstractLifecycleLogActivity {
             }
         }
 
+        final PictureInPictureParams.Builder sharedBuilder = new PictureInPictureParams.Builder();
+        boolean sharedBuilderChanged = false;
+
         if (getIntent().hasExtra(EXTRA_ALLOW_AUTO_PIP)) {
-            final PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
-            builder.setAutoEnterEnabled(true);
-            setPictureInPictureParams(builder.build());
+            sharedBuilder.setAutoEnterEnabled(true);
+            sharedBuilderChanged = true;
+        }
+
+        if (getIntent().hasExtra(EXTRA_IS_SEAMLESS_RESIZE_ENABLED)) {
+            sharedBuilder.setSeamlessResizeEnabled(
+                    getIntent().getBooleanExtra(EXTRA_IS_SEAMLESS_RESIZE_ENABLED, true));
+            sharedBuilderChanged = true;
         }
 
         // Enable tap to finish if necessary
@@ -198,13 +207,16 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         if (getIntent().hasExtra(EXTRA_NUMBER_OF_CUSTOM_ACTIONS)) {
             final int numberOfCustomActions = Integer.valueOf(
                     getIntent().getStringExtra(EXTRA_NUMBER_OF_CUSTOM_ACTIONS));
-            final PictureInPictureParams.Builder builder = new PictureInPictureParams.Builder();
             final List<RemoteAction> actions = new ArrayList<>(numberOfCustomActions);
             for (int i = 0; i< numberOfCustomActions; i++) {
                 actions.add(createRemoteAction(i));
             }
-            builder.setActions(actions);
-            setPictureInPictureParams(builder.build());
+            sharedBuilder.setActions(actions);
+            sharedBuilderChanged = true;
+        }
+
+        if (sharedBuilderChanged) {
+            setPictureInPictureParams(sharedBuilder.build());
         }
 
         // Register the broadcast receiver

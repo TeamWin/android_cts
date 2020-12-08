@@ -425,6 +425,9 @@ public class Components extends ComponentsBase {
                 "enter_pip_on_pip_requested";
         // Sets auto PIP allowed on the activity picture-in-picture params.
         public static final String EXTRA_ALLOW_AUTO_PIP = "enter_pip_auto_pip_allowed";
+        // Sets seamless resize enabled on the activity picture-in-picture params.
+        public static final String EXTRA_IS_SEAMLESS_RESIZE_ENABLED =
+                "enter_pip_is_seamless_resize_enabled";
         // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
         public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
