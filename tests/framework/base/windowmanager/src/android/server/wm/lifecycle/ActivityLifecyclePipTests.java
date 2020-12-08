@@ -249,8 +249,6 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
                 .launch();
 
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_RESUME), "launchToSide");
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelow");
     }
