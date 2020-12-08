@@ -493,6 +493,24 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Restart WiFi subsystem - verify that privileged call fails.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testRestartWifiSubsystemShouldFailNoPermission() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        try {
+            mWifiManager.restartWifiSubsystem("CTS triggered");
+            fail("The restartWifiSubsystem should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    /**
      * test point of wifiManager properties:
      * 1.enable properties
      * 2.DhcpInfo properties
