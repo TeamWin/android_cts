@@ -98,10 +98,6 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
-        // Leaving the minimized dock, the stack state on the primary split screen should change
-        // from Paused to Resumed.
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-
         // Show and hide lock screen
         getLifecycleLog().clear();
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {

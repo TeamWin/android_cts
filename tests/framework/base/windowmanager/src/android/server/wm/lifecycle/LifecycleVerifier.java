@@ -298,14 +298,31 @@ class LifecycleVerifier {
 
     static List<LifecycleLog.ActivityCallback> getSplitScreenTransitionSequence(
             Class<? extends Activity> activityClass) {
+        // Minimized-dock is not a policy requirement and but SysUI-specific concept, so we here
+        // don't expect a trailing ON_PAUSE.
         return CALLBACK_TRACKING_CLASS.isAssignableFrom(activityClass)
                 ? Arrays.asList(
                 ON_TOP_POSITION_LOST, ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE,
                 ON_CREATE, ON_MULTI_WINDOW_MODE_CHANGED, ON_START, ON_POST_CREATE, ON_RESUME,
-                ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST, ON_PAUSE)
+                ON_TOP_POSITION_GAINED, ON_TOP_POSITION_LOST)
                 : Arrays.asList(
                         ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
-                ON_RESUME, ON_PAUSE);
+                ON_RESUME);
+    }
+
+    // TODO(b/149338177): Remove this workaround once test passes with TestTaskOrganizer not to
+    // depend on minimized dock feature which is not policy requirement, but SysUI-specific.
+    /**
+     * Returns the result of appending "leave from minimized dock" transitions to given transitions
+     * to "consume" these activity callbacks.
+     */
+    static List<ActivityCallback> appendMinimizedDockTransitionTrail(
+            List<ActivityCallback> transitions) {
+        final List<LifecycleLog.ActivityCallback> newTransitions =
+                new ArrayList<LifecycleLog.ActivityCallback>(transitions);
+        newTransitions.addAll(Arrays.asList(ON_PAUSE, ON_RESUME));
+
+        return newTransitions;
     }
 
     static void assertSequence(Class<? extends Activity> activityClass, LifecycleLog lifecycleLog,

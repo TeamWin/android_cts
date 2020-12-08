@@ -70,6 +70,7 @@ import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -687,7 +688,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId());
+        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
 
         final Class<? extends Activity> activityClass = activity.getClass();
         waitAndAssertActivityEnterSplitScreenTransitions(activityClass, "enterSplitScreen");
@@ -703,20 +704,48 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         log("Start waitAndAssertActivitySplitScreenTransitions");
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
-                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass);
+                new ArrayList<LifecycleLog.ActivityCallback>(
+                        LifecycleVerifier.getSplitScreenTransitionSequence(activityClass));
+
+        final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
+                LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
 
         mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+
         if (!expectedTransitions.contains(ON_MULTI_WINDOW_MODE_CHANGED)) {
-            LifecycleVerifier.assertSequence(activityClass, getLifecycleLog(),
-                    expectedTransitions, message);
+            LifecycleVerifier.assertSequenceMatchesOneOf(
+                    activityClass,
+                    getLifecycleLog(),
+                    Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
+                    message);
         } else {
             final List<LifecycleLog.ActivityCallback> extraSequence =
-                    Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST,
-                            ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
-                            ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED,
-                            ON_TOP_POSITION_LOST, ON_PAUSE);
-            LifecycleVerifier.assertSequenceMatchesOneOf(activityClass, getLifecycleLog(),
-                    Arrays.asList(expectedTransitions, extraSequence), message);
+                    new ArrayList<LifecycleLog.ActivityCallback>(
+                            Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST,
+                                    ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE,
+                                    ON_START, ON_POST_CREATE, ON_RESUME, ON_TOP_POSITION_GAINED));
+            final List<LifecycleLog.ActivityCallback> extraSequenceForMinimizedDock =
+                    LifecycleVerifier.appendMinimizedDockTransitionTrail(extraSequence);
+            final int displayWindowingMode =
+                    getDisplayWindowingModeByActivity(getComponentName(activityClass));
+            if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
+                // For non-fullscreen display mode, there won't be a multi-window callback.
+                expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+                expectedTransitionForMinimizedDock.removeAll(
+                        Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+                extraSequence.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+                extraSequenceForMinimizedDock.removeAll(
+                        Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+            }
+            LifecycleVerifier.assertSequenceMatchesOneOf(
+                    activityClass,
+                    getLifecycleLog(),
+                    Arrays.asList(
+                            expectedTransitions,
+                            extraSequence,
+                            expectedTransitionForMinimizedDock,
+                            extraSequenceForMinimizedDock),
+                    message);
         }
     }
 
