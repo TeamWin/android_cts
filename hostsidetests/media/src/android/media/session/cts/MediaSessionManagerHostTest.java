@@ -253,7 +253,9 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
     @AppModeFull
     @RequiresDevice
-    public void testIsTrusted_withEnabledNotificationListener_returnsTrue() throws Exception {
+    // Ignored due to b/171012388.
+    public void ignored_testIsTrusted_withEnabledNotificationListener_returnsTrue()
+            throws Exception {
         if (!canCreateAdditionalUsers(1)) {
             CLog.logAndDisplay(LogLevel.INFO,
                     "Cannot create a new user. Skipping multi-user test cases.");
@@ -288,8 +290,7 @@ public class MediaSessionManagerHostTest extends BaseMultiUserTest {
 
     private void runTestAsUser(String testMethodName, int userId)
             throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(DEVICE_SIDE_TEST_PKG, DEVICE_SIDE_TEST_CLASS,
-                testMethodName, userId);
+        runDeviceTests(DEVICE_SIDE_TEST_PKG, DEVICE_SIDE_TEST_CLASS, testMethodName, userId);
     }
 
     /**
