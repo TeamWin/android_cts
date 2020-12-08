@@ -19,7 +19,7 @@ import org.hyphonate.megaaudio.recorder.AudioSink;
 
 public class NopAudioSink extends AudioSink {
     @Override
-    public void process(float[] audioData, int numFrames, int numChannels) {
+    public void push(float[] audioData, int numFrames, int numChannels) {
         // NOP
     }
 }

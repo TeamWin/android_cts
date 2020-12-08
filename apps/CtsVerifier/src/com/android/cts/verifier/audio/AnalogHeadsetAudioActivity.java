@@ -286,7 +286,8 @@ public class AnalogHeadsetAudioActivity
 
     protected void startPlay() {
         if (!mIsPlaying) {
-            mAudioPlayer.setupAudioStream(NUM_CHANNELS, SAMPLE_RATE, 96);
+            //TODO - explain the choice of 96 here.
+            mAudioPlayer.setupStream(NUM_CHANNELS, SAMPLE_RATE, 96);
             mAudioPlayer.startStream();
             mIsPlaying = true;
         }
@@ -295,7 +296,7 @@ public class AnalogHeadsetAudioActivity
     protected void stopPlay() {
         if (mIsPlaying) {
             mAudioPlayer.stopStream();
-            mAudioPlayer.teardownAudioStream();
+            mAudioPlayer.teardownStream();
             mIsPlaying = false;
         }
     }

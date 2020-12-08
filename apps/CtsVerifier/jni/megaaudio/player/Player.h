@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#ifndef MEGA_PLAYER_PLAYER_H
+#define MEGA_PLAYER_PLAYER_H
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+#include <OboeStream.h>
 
-    private AppCallback mCallback;
+class AudioSource;
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+class Player: public OboeStream {
+public:
+    Player(AudioSource* source, int32_t subtype) : OboeStream(subtype), mAudioSource(source) {}
+    virtual ~Player() {}
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
-}
+protected:
+    std::shared_ptr<AudioSource>    mAudioSource;
+};
+
+#endif // MEGA_PLAYER_PLAYER_H

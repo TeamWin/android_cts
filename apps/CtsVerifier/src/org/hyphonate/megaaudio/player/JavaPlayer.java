@@ -15,6 +15,7 @@
  */
 package org.hyphonate.megaaudio.player;
 
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioTrack;
 import android.util.Log;
@@ -66,7 +67,7 @@ public class JavaPlayer extends Player {
     }
 
     /**
-     * Allocates the array or the burst buffer.
+     * Allocates the array for the burst buffer.
      */
     private void allocBurstBuffer() {
         // pad it by 1 frame. This allows some sources to not have to worry about
@@ -74,6 +75,9 @@ public class JavaPlayer extends Player {
         mAudioBuffer = new float[(mNumBufferFrames + 1) * mChannelCount];
     }
 
+    //
+    // Attributes
+    //
     /**
      * @return The number of frames of audio data contained in the internal buffer.
      */
@@ -82,13 +86,23 @@ public class JavaPlayer extends Player {
         return mNumBufferFrames;
     }
 
+    @Override
+    public int getRoutedDeviceId() {
+        if (mAudioTrack != null) {
+            AudioDeviceInfo routedDevice = mAudioTrack.getRoutedDevice();
+            return routedDevice != null ? routedDevice.getId() : ROUTED_DEVICE_ID_INVALID;
+        } else {
+            return ROUTED_DEVICE_ID_INVALID;
+        }
+    }
+
     /*
      * State
      */
     @Override
-    public boolean setupAudioStream(int channelCount, int sampleRate, int numBufferFrames) {
+    public boolean setupStream(int channelCount, int sampleRate, int numBufferFrames) {
         if (LOG) {
-            Log.i(TAG, "setupAudioStream(chans:" + channelCount + ", rate:" + sampleRate +
+            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate +
                     ", frames:" + numBufferFrames);
         }
 
@@ -97,6 +111,7 @@ public class JavaPlayer extends Player {
         mNumBufferFrames = numBufferFrames;
 
         mAudioSource = mSourceProvider.getJavaSource();
+        mAudioSource.init(mNumBufferFrames, mChannelCount);
 
         try {
             int bufferSizeInBytes = mNumBufferFrames * mChannelCount
@@ -112,6 +127,7 @@ public class JavaPlayer extends Player {
                     .build();
 
             allocBurstBuffer();
+            mAudioTrack.setPreferredDevice(mRouteDevice);
         }  catch (UnsupportedOperationException ex) {
             if (LOG) {
                 Log.i(TAG, "Couldn't open AudioTrack: " + ex);
@@ -124,7 +140,7 @@ public class JavaPlayer extends Player {
     }
 
     @Override
-    public void teardownAudioStream() {
+    public void teardownStream() {
         stopStream();
 
         waitForStreamThreadToExit();
@@ -147,6 +163,9 @@ public class JavaPlayer extends Player {
      */
     @Override
     public boolean startStream() {
+        if (mAudioTrack == null) {
+            return false;
+        }
         waitForStreamThreadToExit(); // just to be sure.
 
         mStreamThread = new Thread(new StreamPlayerRunnable(), "StreamPlayer Thread");

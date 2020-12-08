@@ -16,6 +16,15 @@
 package org.hyphonate.megaaudio.recorder;
 
 public interface AudioSinkProvider {
-    AudioSink getJavaSink();
-    long getOboeSink();
+    /**
+     * @return return a Java AudioSink subclass object corresponding to the AudioSourceProvider
+     * implementation.
+     */
+    AudioSink allocJavaSink();
+
+    /**
+     * @return a native (C/C++) AudioSource subclass object corresponding to the AudioSourceProvider
+     * implementation (stored in a long).
+     */
+    NativeAudioSink allocNativeSink();
 }

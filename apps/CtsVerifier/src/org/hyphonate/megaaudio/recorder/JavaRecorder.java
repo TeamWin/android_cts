@@ -15,6 +15,7 @@
  */
 package org.hyphonate.megaaudio.recorder;
 
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.os.Looper;
@@ -47,21 +48,39 @@ public class JavaRecorder extends Recorder {
 
     private AudioSink mAudioSink;
 
+    private int mInputPreset = DEFAULT_INPUT_PRESET;
+
+    @Override
+    public int getRoutedDeviceId() {
+        if (mAudioRecord != null) {
+            AudioDeviceInfo routedDevice = mAudioRecord.getRoutedDevice();
+            return routedDevice != null ? routedDevice.getId() : ROUTED_DEVICE_ID_INVALID;
+        } else {
+            return ROUTED_DEVICE_ID_INVALID;
+        }
+    }
+
     /**
-     * The listener to receive notifications of recording events
-     * @see {@link JavaSinkHandler}
-     */
+      * The listener to receive notifications of recording events
+      * @see {@link JavaSinkHandler}
+      */
     private JavaSinkHandler mListener = null;
 
     public JavaRecorder(AudioSinkProvider sinkProvider) {
         super(sinkProvider);
     }
 
+    //
+    // Attributes
+    //
     /** The buff to receive the recorder samples */
     public float[] getFloatBuffer() { return mRecorderBuffer; }
 
     // JavaRecorder-specific extension
     public AudioRecord getAudioRecord() { return mAudioRecord; }
+
+    @Override
+    public void setInputPreset(int preset) { mInputPreset = preset; }
 
     /*
      * State
@@ -72,9 +91,9 @@ public class JavaRecorder extends Recorder {
     }
 
     @Override
-    public boolean setupAudioStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public boolean setupStream(int channelCount, int sampleRate, int numBurstFrames) {
         if (LOG) {
-            Log.i(TAG, "setupAudioStream(chans:" + channelCount + ", rate:" + sampleRate +
+            Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate +
                     ", frames:" + numBurstFrames);
         }
         mChannelCount = channelCount;
@@ -89,8 +108,9 @@ public class JavaRecorder extends Recorder {
                             .setSampleRate(mSampleRate)
                             .setChannelIndexMask(StreamBase.channelCountToIndexMask(mChannelCount))
                             .build())
-                    .setBufferSizeInBytes(numBurstFrames * frameSize)
+                    // .setBufferSizeInBytes(numBurstFrames * frameSize)
                     .build();
+            mAudioRecord.setPreferredDevice(mRouteDevice);
 
             mNumBuffFrames = mAudioRecord.getBufferSizeInFrames();
 
@@ -99,7 +119,8 @@ public class JavaRecorder extends Recorder {
             if (mSinkProvider == null) {
                 mSinkProvider = new NopAudioSinkProvider();
             }
-            mAudioSink = mSinkProvider.getJavaSink();
+            mAudioSink = mSinkProvider.allocJavaSink();
+            mAudioSink.init(mNumBuffFrames, mChannelCount);
             mListener = new JavaSinkHandler(this, mAudioSink, Looper.getMainLooper());
             return true;
         } catch (UnsupportedOperationException ex) {
@@ -115,7 +136,7 @@ public class JavaRecorder extends Recorder {
     }
 
     @Override
-    public void teardownAudioStream() {
+    public void teardownStream() {
         stopStream();
 
         waitForStreamThreadToExit();
@@ -131,14 +152,22 @@ public class JavaRecorder extends Recorder {
 
     @Override
     public boolean startStream() {
-
-        // Routing
+        if (LOG) {
+            Log.i(TAG, "startStream() mAudioRecord:" + mAudioRecord);
+        }
+        if (mAudioRecord == null) {
+            return false;
+        }
+//        // Routing
 //        mAudioRecord.setPreferredDevice(mRoutingDevice);
-//
+
         if (mListener != null) {
             mListener.sendEmptyMessage(JavaSinkHandler.MSG_START);
         }
 
+//        if (mAudioSink != null) {
+//            mAudioSink.init(mNumBuffFrames, mChannelCount);
+//        }
         try {
             mAudioRecord.startRecording();
         } catch (IllegalStateException ex) {

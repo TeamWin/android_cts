@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
+#include <android/log.h>
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#include "DefaultAudioSink.h"
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+static const char * const TAG = "DefaultAudioSink";
 
-    private AppCallback mCallback;
+void DefaultAudioSink::start() {
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+}
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
+void DefaultAudioSink::stop() {
+
+}
+
+void DefaultAudioSink::push(float* audioData, int numChannels, int numFrames) {
+    __android_log_print(ANDROID_LOG_INFO, TAG, "process()");
 }

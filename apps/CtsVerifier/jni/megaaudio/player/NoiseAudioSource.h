@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#ifndef MEGA_PLAYER_NOISEAUDIOSOURCE_H
+#define MEGA_PLAYER_NOISEAUDIOSOURCE_H
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+#include "AudioSource.h"
 
-    private AppCallback mCallback;
+class NoiseAudioSource: public AudioSource {
+public:
+    NoiseAudioSource();
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+    /**
+     * Fills the specified buffer with random noise.
+     * @return  The number of frames generated. Since we are generating a continuous periodic
+     * signal, this will always be <code>numFrames</code>.
+     */
+    virtual int pull(float* buffer, int numFrames, int numChans) override;
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
-}
+};
+
+
+#endif // MEGA_PLAYER_NOISEAUDIOSOURCE_H

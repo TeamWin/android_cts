@@ -62,7 +62,7 @@ public abstract class USBAudioPeripheralPlayerActivity extends USBAudioPeriphera
                     // .setPlayerType(PlayerBuilder.PLAYER_OBOE)
                     .setSourceProvider(sourceProvider)
                     .build();
-            mAudioPlayer.setupAudioStream(NUM_CHANNELS, systemSampleRate, numBufferFrames);
+            mAudioPlayer.setupStream(NUM_CHANNELS, systemSampleRate, numBufferFrames);
         } catch (PlayerBuilder.BadStateException ex) {
             Log.e(TAG, "Failed MegaPlayer build.");
         }

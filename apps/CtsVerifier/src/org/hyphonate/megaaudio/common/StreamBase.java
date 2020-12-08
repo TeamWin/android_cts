@@ -15,19 +15,19 @@
  */
 package org.hyphonate.megaaudio.common;
 
+import android.media.AudioDeviceCallback;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 
 public abstract class StreamBase {
-    /*
-     * Stream attributes
-     */
+    //
+    // Stream attributes
+    //
     protected int mChannelCount;
     protected int mSampleRate;
 
-    public int getChannelCount() { return mChannelCount; }
-    public int getSampleRate() { return mSampleRate; }
-
-    public abstract int getNumBufferFrames();
+    // Routing
+    protected AudioDeviceInfo mRouteDevice;
 
     // the thread on which the underlying Android AudioTrack/AudioRecord will run
     protected Thread mStreamThread = null;
@@ -35,6 +35,18 @@ public abstract class StreamBase {
     //
     // Attributes
     //
+    public int getChannelCount() { return mChannelCount; }
+    public int getSampleRate() { return mSampleRate; }
+
+    public abstract int getNumBufferFrames();
+
+    // Routing
+    public void setRouteDevice(AudioDeviceInfo routeDevice) {
+        mRouteDevice = routeDevice;
+    }
+
+    public static final int ROUTED_DEVICE_ID_INVALID = -1;
+    public abstract int getRoutedDeviceId();
 
     //
     // Sample Format Utils
@@ -74,14 +86,17 @@ public abstract class StreamBase {
      * @param numFrames     The number of frames of audio data in the stream's buffer.
      * @return              True if the stream is successfully initialized.
      */
-    public abstract boolean setupAudioStream(int channelCount, int sampleRate, int numFrames);
+    //TODO - investigate potential errors and return codes
+    public abstract boolean setupStream(int channelCount, int sampleRate, int numFrames);
 
-    public abstract void teardownAudioStream();
+    //TODO - investigate potential errors and return codes
+    public abstract void teardownStream();
 
     /**
      * Starts playback on an open stream player. (@see open() method above).
      * @return <code>true</code> if playback/recording starts.
      */
+    //TODO - investigate potential errors and return codes
     public abstract boolean startStream();
 
     /**
@@ -89,6 +104,7 @@ public abstract class StreamBase {
      * May not stop the stream immediately. i.e. does not stop until the next audio callback
      * from the underlying system.
      */
+    //TODO - investigate potential errors and return codes
     public abstract void stopStream();
 
     //

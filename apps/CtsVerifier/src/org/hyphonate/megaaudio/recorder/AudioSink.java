@@ -16,16 +16,23 @@
 package org.hyphonate.megaaudio.recorder;
 
 public abstract class AudioSink {
+    /**
+     * Called before the stream starts to allow initialization of the sink
+     * @param numFrames The number of frames that will be requested in each process() call.
+     * @param numChans The number of channels in the stream.
+     */
+    public void init(int numFrames, int numChans) {}
+
     public void start() {}
     public void stop(int lastBufferFrames) {}
 
     /**
      * Process incoming audio data.
-     * @param audioData The buffer to be filled.
-     * @param numFrames The number of frames of audio to provide.
-     * @param numChans The number of channels (in the buffer) required by the player.
+     * @param audioData The buffer of audio data.
+     * @param numFrames The number of frames of audio to process.
+     * @param numChans The number of channels (in the buffer).
      * Note that the recorder will be blocked by this call.
      * Note that the data is assumed to be *interleaved*.
      */
-    abstract public void process(final float[] audioData, int numFrames, int numChans);
+    abstract public void push(final float[] audioData, int numFrames, int numChans);
 }

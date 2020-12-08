@@ -13,25 +13,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.player;
 
-public abstract class AudioSource {
-    public AudioSource() {}
+#ifndef MEGA_PLAYER_AUDIOSOURCE_H
+#define MEGA_PLAYER_AUDIOSOURCE_H
+
+class AudioSource {
+public:
+    AudioSource() {}
+    virtual ~AudioSource() {}
+
+    static const int NUMCHANNELS_UNSPECIFIED = -1;
+    static const int NUMCHANNELS_ERROR = -2;
+    virtual int getNumChannels() { return NUMCHANNELS_UNSPECIFIED; }
+
+    // Encoding Constants (specific to MegaAudio)
+    static const int ENCODING_UNSPECIFIED = -1;
+    static const int ENCODING_ERROR = -2;
+    static const int ENCODING_UNINITIALIZED = 0;
+    static const int ENCODING_FLOAT = 1;
+    static const int ENCODING_PCM16 = 2;
+    static const int ENCODING_PCM24 = 3;
+    static const int ENCODING_PCM32 = 4;
+    virtual int getEncoding() { return ENCODING_UNSPECIFIED; };
 
     /**
      * Called before the stream starts to allow initialization of the source
      * @param numFrames The number of frames that will be requested in each pull() call.
      * @param numChans The number of channels in the stream.
      */
-    public void init(int numFrames, int numChans) {}
-
-    public void start() {}
-    public void stop() {}
+    virtual void init(int numFrames, int numChans) {}
 
     /**
-     * reset a stream to the beginning.
+     * Reset the stream to its beginning
      */
-    public void reset() {}
+    virtual void reset() {}
 
     /**
      * Process a request for audio data.
@@ -43,5 +58,7 @@ public abstract class AudioSource {
      * Note that the player will be blocked by this call.
      * Note that the data is assumed to be *interleaved*.
      */
-    public abstract int pull(float[] audioData, int numFrames, int numChans);
-}
+    virtual int pull(float* buffer, int numFrames, int numChans) = 0;
+};
+
+#endif // MEGA_PLAYER_AUDIOSOURCE_H

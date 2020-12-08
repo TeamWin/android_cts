@@ -13,21 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.hyphonate.megaaudio.recorder.sinks;
 
-import org.hyphonate.megaaudio.recorder.AudioSink;
+#ifndef MEGA_COMMON_OBOESTREAM_H
+#define MEGA_COMMON_OBOESTREAM_H
 
-public class AppCallbackAudioSink extends AudioSink {
-    private static final String TAG = AppCallbackAudioSink.class.getSimpleName();
+#include <mutex>
 
-    private AppCallback mCallback;
+#include <StreamBase.h>
 
-    public AppCallbackAudioSink(AppCallback callback) {
-        mCallback = callback;
-    }
+class OboeStream: public StreamBase {
+protected:
+    OboeStream(int32_t subtype) : mSubtype(subtype), mStreamStarted(false) {}
 
-    @Override
-    public void push(float[] audioData, int numFrames, int numChans) {
-        mCallback.onDataReady(audioData, numFrames);
-    }
-}
+    // determine native back-end to use.
+    // either SUB_TYPE_OBOE_DEFAULT, SUB_TYPE_OBOE_AAUDIO or SUB_TYPE_OBOE_OPENSL_ES
+    int32_t mSubtype;
+
+    // Oboe Audio Stream
+    std::shared_ptr<oboe::AudioStream>  mAudioStream;
+    bool    mStreamStarted;
+
+    std::mutex mStreamLock;
+};
+
+#endif //MEGA_COMMON_OBOESTREAM_H
