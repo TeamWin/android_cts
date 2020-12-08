@@ -219,6 +219,12 @@
         <uses-feature android:name="android.hardware.camera"/>
     </feature-group>
 
+    <attribution android:tag="attribution_tag_one"
+                 android:label="@string/attribution_label_one" />
+
+    <attribution android:tag="attribution_tag_two"
+                 android:label="@string/attribution_label_two" />
+
     <application android:label="Android TestCase"
          android:icon="@drawable/size_48x48"
          android:maxRecents="1"
