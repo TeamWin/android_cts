@@ -2554,7 +2554,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // wait for the activity to launch and finish
         mContext.startActivity(activityIntent);
-        Thread.sleep(500);
+        Thread.sleep(2000);
 
         NotificationChannel channel =
                 mContext.createPackageContextAsUser(DELEGATOR, /* flags= */ 0, mContext.getUser())
