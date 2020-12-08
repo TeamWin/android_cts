@@ -103,7 +103,7 @@ public class CarPackageManagerTest extends CarApiTestBase {
         Intent intent = new Intent();
         intent.setClassName(packageName, packageName + relativeClassName);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        return PendingIntent.getActivity(sContext, 0, intent, 0);
+        return PendingIntent.getActivity(sContext, 0, intent, PendingIntent.FLAG_IMMUTABLE);
     }
 
     @Test

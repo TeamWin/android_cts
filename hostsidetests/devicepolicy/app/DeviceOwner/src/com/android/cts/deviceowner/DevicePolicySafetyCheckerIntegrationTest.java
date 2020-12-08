@@ -22,12 +22,11 @@ import static android.app.admin.DevicePolicyManager.OPERATION_STOP_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SWITCH_USER;
 
 import android.app.admin.DevicePolicyManager;
-import android.app.admin.DevicePolicyManager.DevicePolicyOperation;
 import android.os.UserHandle;
 
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
 
-//TODO(b/174859111): move to automotive-only section
+// TODO(b/174859111): move to automotive-only section
 /**
  * Tests that DPM calls fail when determined by the
  * {@link android.app.admin.DevicePolicySafetyChecker}.
@@ -41,7 +40,7 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
             new DevicePolicySafetyCheckerIntegrationTester() {
 
         @Override
-        protected @DevicePolicyOperation int[] getSafetyAwareOperations() {
+        protected int[] getSafetyAwareOperations() {
             return new int [] {
                     OPERATION_CREATE_AND_MANAGE_USER,
                     OPERATION_REMOVE_USER,
@@ -51,8 +50,7 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
         }
 
         @Override
-        protected void runOperation(DevicePolicyManager dpm,
-                @DevicePolicyOperation int operation, boolean overloaded) {
+        protected void runOperation(DevicePolicyManager dpm, int operation, boolean overloaded) {
             switch (operation) {
                 case OPERATION_CREATE_AND_MANAGE_USER:
                     dpm.createAndManageUser(/* admin= */ getWho(), /* name= */ null,

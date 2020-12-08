@@ -1447,11 +1447,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // can not scroll any more
         mOnUiThread.findNext(false);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() == previousScrollY);
+        assertEquals(mOnUiThread.getScrollY(), previousScrollY);
 
         mOnUiThread.findNext(true);
         waitForScrollingComplete(previousScrollY);
-        assertTrue(mOnUiThread.getScrollY() == previousScrollY);
+        assertEquals(mOnUiThread.getScrollY(), previousScrollY);
     }
 
     public void testDocumentHasImages() throws Exception, Throwable {

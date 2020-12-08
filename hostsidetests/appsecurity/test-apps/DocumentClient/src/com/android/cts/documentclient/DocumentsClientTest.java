@@ -163,6 +163,13 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertTrue(title.waitForExists(TIMEOUT));
     }
 
+    private String getDeviceName() {
+        final String deviceName = Settings.Global.getString(
+                mActivity.getContentResolver(), Settings.Global.DEVICE_NAME);
+        // Device name should always be set. In case it isn't, fall back to "Internal Storage"
+        return !TextUtils.isEmpty(deviceName) ? deviceName : "Internal Storage";
+    }
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
@@ -406,6 +413,16 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         // save button is disabled for the storage root
         assertFalse(findSaveButton().isEnabled());
 
+        // We should always have Android directory available
+        findDocument("Android").click();
+        mDevice.waitForIdle();
+
+        // save button is disabled for Android folder
+        assertFalse(findSaveButton().isEnabled());
+
+        findRoot(getDeviceName()).click();
+        mDevice.waitForIdle();
+
         try {
             findDocument("Download").click();
             mDevice.waitForIdle();
@@ -443,6 +460,16 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
 
         // save button is enabled for for the storage root
         assertTrue(findSaveButton().isEnabled());
+
+        // We should always have Android directory available
+        findDocument("Android").click();
+        mDevice.waitForIdle();
+
+        // save button is enabled for Android folder
+        assertTrue(findSaveButton().isEnabled());
+
+        findRoot(getDeviceName()).click();
+        mDevice.waitForIdle();
 
         try {
             findDocument("Download").click();
@@ -745,15 +772,8 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
         mDevice.waitForIdle();
 
-        final String deviceName = Settings.Global.getString(
-                mActivity.getContentResolver(), Settings.Global.DEVICE_NAME);
-
-        // Device name should always be set. In case it isn't, though,
-        // fall back to "Internal Storage".
-        final String title = !TextUtils.isEmpty(deviceName) ? deviceName : "Internal Storage";
-
         // assert the default root is internal storage root
-        assertToolbarTitleEquals(title);
+        assertToolbarTitleEquals(getDeviceName());
 
         // no Downloads root
         assertFalse(findRoot("Downloads").exists());

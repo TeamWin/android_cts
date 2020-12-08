@@ -128,11 +128,12 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 InstrumentationRegistry.getInstrumentation(), new Bundle());
 
         // Setup source HEVC file uri.
-        mSourceHEVCVideoUri = resourceToUri(mContext, R.raw.VideoOnlyHEVC, "VideoOnlyHEVC.mp4");
+        mSourceHEVCVideoUri = resourceToUri(mContext, R.raw.Video_HEVC_30Frames,
+                "Video_HEVC_30Frames.mp4");
 
         // Setup source AVC file uri.
-        mSourceAVCVideoUri = resourceToUri(mContext, R.raw.VideoOnlyAVC,
-                "VideoOnlyAVC.mp4");
+        mSourceAVCVideoUri = resourceToUri(mContext, R.raw.Video_AVC_30Frames,
+                "Video_AVC_30Frames.mp4");
 
         // Setup destination file.
         mDestinationUri = generateNewUri(mContext, "transcoded.mp4");
@@ -344,7 +345,31 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 TranscodingSession.RESULT_SUCCESS);
     }
 
-    public void testTranscodingFromHevcToAvc() throws Exception {
+    public void testAvcTranscodingVideo30FramesWithoutAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"));
+    }
+
+    public void testHevcTranscodingVideo30FramesWithoutAudio() throws Exception {
+        transcodeFile(
+                resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"));
+    }
+
+    public void testHevcTranscodingVideo1FrameWithAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
+                "Video_HEVC_1Frame_Audio.mp4"));
+    }
+
+    public void testHevcTranscodingVideo36FramesWithAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_36Frames_Audio,
+                "Video_HEVC_36Frames_Audio.mp4"));
+    }
+
+    public void testHevcTranscodingVideo68FramesWithAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_68Frames_Audio,
+                "Video_HEVC_68Frames_Audio.mp4"));
+    }
+
+    private void transcodeFile(Uri fileUri) throws Exception {
         Semaphore transcodeCompleteSemaphore = new Semaphore(0);
 
         // Create a file Uri: file:///data/user/0/android.media.cts/cache/HevcTranscode.mp4

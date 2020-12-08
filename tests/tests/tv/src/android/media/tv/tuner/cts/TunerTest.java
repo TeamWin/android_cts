@@ -443,14 +443,27 @@ public class TunerTest {
     // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDescrambler() throws Exception {
         Descrambler d = mTuner.openDescrambler();
+        byte[] keyToken = new byte[] {1, 3, 2};
         assertNotNull(d);
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
-        d.setKeyToken(new byte[] {1, 3, 2});
+        assertTrue(d.isValidKeyToken(keyToken));
+        d.setKeyToken(keyToken);
         d.addPid(Descrambler.PID_TYPE_T, 1, f);
         d.removePid(Descrambler.PID_TYPE_T, 1, f);
         f.close();
         d.close();
+    }
+
+    @Test
+    @Ignore("b/174500129")
+    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
+    public void testDescramblerKeyTokenValidator() throws Exception {
+        byte[] invalidToken = new byte[17];
+        byte[] validToken = new byte[] {1, 3, 2};
+        assertTrue(Descrambler.isValidKeyToken(validToken));
+        assertTrue(Descrambler.isValidKeyToken(Tuner.VOID_KEYTOKEN));
+        assertFalse(Descrambler.isValidKeyToken(invalidToken));
     }
 
     @Test
