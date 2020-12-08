@@ -71,6 +71,7 @@ public class UsbAccessoryTestActivity extends PassFailButtons.Activity implement
         setInfoResources(
                 R.string.usb_accessory_test, R.string.usb_accessory_test_info, -1);
 
+        setPassFailButtonClickListeners();
         mStatus = (TextView) findViewById(R.id.status);
         mProgress = (ProgressBar) findViewById(R.id.progress_bar);
         mStatus.setText(R.string.usb_accessory_test_step1);
