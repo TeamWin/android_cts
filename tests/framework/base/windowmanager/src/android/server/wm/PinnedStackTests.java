@@ -862,7 +862,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     public void testConfigurationChangeOrderDuringTransition() throws Exception {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
-        launchActivity(PIP_ACTIVITY);
+        launchActivity(PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         separateTestJournal();
         int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
