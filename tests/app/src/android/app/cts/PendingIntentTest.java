@@ -169,6 +169,12 @@ public class PendingIntentTest extends AndroidTestCase {
         } catch (IllegalArgumentException expected) {
         }
 
+        try {
+            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent, 0);
+            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
+        } catch (IllegalArgumentException expected) {
+        }
+
     }
 
     private void pendingIntentSendError(PendingIntent pendingIntent) {
@@ -214,6 +220,11 @@ public class PendingIntentTest extends AndroidTestCase {
         } catch (IllegalArgumentException expected) {
         }
 
+        try {
+            mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 0);
+            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
+        } catch (IllegalArgumentException expected) {
+        }
 
     }
 
@@ -319,6 +330,12 @@ public class PendingIntentTest extends AndroidTestCase {
             mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent,
                     PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_MUTABLE);
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
+        } catch (IllegalArgumentException expected) {
+        }
+
+        try {
+            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent, 0);
+            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
         } catch (IllegalArgumentException expected) {
         }
 
