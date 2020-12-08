@@ -4456,6 +4456,7 @@
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
 
+        <!-- TODO b/142492957
         <activity android:name=".audio.ProAudioActivity"
                   android:label="@string/pro_audio_latency_test">
             <intent-filter>
@@ -4466,8 +4467,9 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.usb.host:android.hardware.audio.pro" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
-
+        -->
         <!-- ProAudio test invokes the "Loopback" App -->
+        <!--
         <activity android:name="org.drrickorang.loopback"/>
 
         <activity android:name=".audio.AudioLoopbackLatencyActivity"
@@ -4482,7 +4484,7 @@
                        android:value="android.hardware.type.watch:android.hardware.type.television" />
             <meta-data android:name="display_mode" android:value="multi_display_mode" />
         </activity>
-
+        -->
         <activity android:name=".audio.MidiActivity"
                   android:label="@string/midi_test">
             <intent-filter>
