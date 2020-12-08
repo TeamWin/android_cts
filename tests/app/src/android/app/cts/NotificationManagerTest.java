@@ -3718,6 +3718,39 @@ public class NotificationManagerTest extends AndroidTestCase {
                 channel.getId(), conversationId).isDemoted());
     }
 
+    public void testDeleteConversationChannels() throws Exception {
+        setUpNotifListener();
+
+        createDynamicShortcut();
+
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "Messages", IMPORTANCE_DEFAULT);
+
+        final NotificationChannel conversationChannel =
+                new NotificationChannel(mId + "child",
+                        "Messages from " + SHARE_SHORTCUT_ID, IMPORTANCE_DEFAULT);
+        conversationChannel.setConversationId(channel.getId(), SHARE_SHORTCUT_ID);
+
+        mNotificationManager.createNotificationChannel(channel);
+        mNotificationManager.createNotificationChannel(conversationChannel);
+
+        mNotificationManager.notify(177, getConversationNotification().build());
+
+        if (!checkNotificationExistence(177, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + 177);
+        }
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+
+        deleteShortcuts();
+
+        Thread.sleep(300); // wait for deletion to propagate
+
+        assertFalse(mNotificationManager.getNotificationChannel(channel.getId(),
+                conversationChannel.getConversationId()).isConversation());
+
+    }
+
     public void testActivityStartOnBroadcastTrampoline_isBlocked() throws Exception {
         setUpNotifListener();
         mListener.addTestPackage(TRAMPOLINE_APP);
