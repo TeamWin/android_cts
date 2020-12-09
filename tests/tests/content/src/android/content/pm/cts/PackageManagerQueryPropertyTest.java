@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.Property;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.Objects;
 
 @RunWith(JUnit4.class)
+@AppModeFull(reason = "Instant applications cannot install other packages")
 public class PackageManagerQueryPropertyTest {
 
     private static PackageManager sPackageManager;

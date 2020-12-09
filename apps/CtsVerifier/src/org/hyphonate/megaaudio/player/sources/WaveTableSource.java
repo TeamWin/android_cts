@@ -21,7 +21,7 @@ import org.hyphonate.megaaudio.player.AudioSource;
  * An AudioFiller implementation for feeding data from a PCMFLOAT wavetable.
  * We do simple, linear interpolation for inter-table values.
  */
-public class WaveTableSource implements AudioSource {
+public class WaveTableSource extends AudioSource {
     @SuppressWarnings("unused") private static String TAG = WaveTableSource.class.getSimpleName();
 
     /** The samples defining one cycle of the waveform to play */

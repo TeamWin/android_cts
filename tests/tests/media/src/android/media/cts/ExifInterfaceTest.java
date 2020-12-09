@@ -37,10 +37,8 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 @NonMediaMainlineTest
@@ -719,7 +717,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         writeToFilesWithoutExif(WEBP_WITHOUT_EXIF_WITH_LOSSLESS_ENCODING);
     }
 
-    public void testGetSetDateTime() throws IOException {
+    public void testGetSetDateTime() throws Throwable {
         final long expectedDatetimeValue = 1454059947000L;
         final String dateTimeValue = "2017:02:02 22:22:22";
         final String dateTimeOriginalValue = "2017:01:01 11:11:11";
@@ -752,7 +750,7 @@ public class ExifInterfaceTest extends AndroidTestCase {
         imageFile.delete();
     }
 
-    public void testIsSupportedMimeType() throws Exception {
+    public void testIsSupportedMimeType() {
         try {
             ExifInterface.isSupportedMimeType(null);
             fail();
@@ -775,6 +773,103 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertTrue(ExifInterface.isSupportedMimeType("image/png"));
         assertTrue(ExifInterface.isSupportedMimeType("image/webp"));
         assertFalse(ExifInterface.isSupportedMimeType("image/gif"));
+    }
+
+    public void testSetAttribute() throws Throwable {
+        File srcFile = new File(mInpPrefix, JPEG_WITH_EXIF_BYTE_ORDER_MM);
+        File imageFile = clone(srcFile);
+
+        ExifInterface exif = new ExifInterface(imageFile.getAbsolutePath());
+        try {
+            exif.setAttribute(null, null);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+
+        // Test setting tag to null
+        assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+        exif.setAttribute(ExifInterface.TAG_GPS_TIMESTAMP, null);
+        assertNull(exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+
+        // Test tags that are converted to rational values for compatibility:
+        // 1. GpsTimeStamp tag will be converted to rational in setAttribute and converted back to
+        // timestamp format in getAttribute.
+        String validGpsTimeStamp = "11:11:11";
+        exif.setAttribute(ExifInterface.TAG_GPS_TIMESTAMP, validGpsTimeStamp);
+        assertEquals(validGpsTimeStamp, exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+        // Check that invalid format is not set
+        String invalidGpsTimeStamp = "11:11:11:11";
+        exif.setAttribute(ExifInterface.TAG_GPS_TIMESTAMP, invalidGpsTimeStamp);
+        assertEquals(validGpsTimeStamp, exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP));
+
+        // 2. FNumber tag will be converted to rational in setAttribute and converted back to
+        // double value in getAttribute
+        String validFNumber = "2.4";
+        exif.setAttribute(ExifInterface.TAG_F_NUMBER, validFNumber);
+        assertEquals(validFNumber, exif.getAttribute(ExifInterface.TAG_F_NUMBER));
+        // Check that invalid format is not set
+        String invalidFNumber = "invalid format";
+        exif.setAttribute(ExifInterface.TAG_F_NUMBER, invalidFNumber);
+        assertEquals(validFNumber, exif.getAttribute(ExifInterface.TAG_F_NUMBER));
+
+        // Test writing different types of formats:
+        // 1. Byte format tag
+        String gpsVersionId = "2.3.0.0";
+        exif.setAttribute(ExifInterface.TAG_GPS_VERSION_ID, gpsVersionId);
+        byte[] setGpsVersionIdBytes =
+                exif.getAttribute(ExifInterface.TAG_GPS_VERSION_ID).getBytes();
+        for (int i = 0; i < setGpsVersionIdBytes.length; i++) {
+            assertEquals(gpsVersionId.getBytes()[i], setGpsVersionIdBytes[i]);
+        }
+        // Test TAG_GPS_ALTITUDE_REF, which is an exceptional case since the only valid values are
+        // "0" and "1".
+        String gpsAltitudeRef = "1";
+        exif.setAttribute(ExifInterface.TAG_GPS_ALTITUDE_REF, gpsAltitudeRef);
+        assertEquals(gpsAltitudeRef.getBytes()[0],
+                exif.getAttribute(ExifInterface.TAG_GPS_ALTITUDE_REF).getBytes()[0]);
+
+        // 2. String format tag
+        String makeValue = "MakeTest";
+        exif.setAttribute(ExifInterface.TAG_MAKE, makeValue);
+        assertEquals(makeValue, exif.getAttribute(ExifInterface.TAG_MAKE));
+        // Check that the following values are not parsed as rational values
+        String makeValueWithOneSlash = "Make/Test";
+        exif.setAttribute(ExifInterface.TAG_MAKE, makeValueWithOneSlash);
+        assertEquals(makeValueWithOneSlash, exif.getAttribute(ExifInterface.TAG_MAKE));
+        String makeValueWithTwoSlashes = "Make/Test/Test";
+        exif.setAttribute(ExifInterface.TAG_MAKE, makeValueWithTwoSlashes);
+        assertEquals(makeValueWithTwoSlashes, exif.getAttribute(ExifInterface.TAG_MAKE));
+
+        // 3. Unsigned short format tag
+        String isoSpeedRatings = "800";
+        exif.setAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS, isoSpeedRatings);
+        assertEquals(isoSpeedRatings, exif.getAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS));
+
+        // 4. Unsigned long format tag
+        String validImageWidthValue = "65536"; // max unsigned short value + 1
+        exif.setAttribute(ExifInterface.TAG_IMAGE_WIDTH, validImageWidthValue);
+        assertEquals(validImageWidthValue, exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH));
+        String invalidImageWidthValue = "-65536";
+        exif.setAttribute(ExifInterface.TAG_IMAGE_WIDTH, invalidImageWidthValue);
+        assertEquals(validImageWidthValue, exif.getAttribute(ExifInterface.TAG_IMAGE_WIDTH));
+
+        // 5. Unsigned rational format tag
+        String exposureTime = "1/8";
+        exif.setAttribute(ExifInterface.TAG_APERTURE_VALUE, exposureTime);
+        assertEquals(exposureTime, exif.getAttribute(ExifInterface.TAG_APERTURE_VALUE));
+
+        // 6. Signed rational format tag
+        String brightnessValue = "-220/100";
+        exif.setAttribute(ExifInterface.TAG_BRIGHTNESS_VALUE, brightnessValue);
+        assertEquals(brightnessValue, exif.getAttribute(ExifInterface.TAG_BRIGHTNESS_VALUE));
+
+        // 7. Undefined format tag
+        String userComment = "UserCommentTest";
+        exif.setAttribute(ExifInterface.TAG_USER_COMMENT, userComment);
+        assertEquals(userComment, exif.getAttribute(ExifInterface.TAG_USER_COMMENT));
+
+        imageFile.delete();
     }
 
     private static File clone(File original) throws IOException {

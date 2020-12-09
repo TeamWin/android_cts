@@ -49,6 +49,7 @@ android_test {
         "libctsverifier_jni",
         "libctsnativemidi_jni",
         "libaudioloopback_jni",
+        "libmegaaudio_jni",
     ],
 
     optimize: {

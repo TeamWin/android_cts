@@ -16,11 +16,13 @@
 package org.hyphonate.megaaudio.common;
 
 public class BuilderBase {
+    //TODO exlain the structure of these constants
     // API Types - enumerated in high nibble
-    protected static final int TYPE_MASK = 0xF000;
-    private static final int TYPE_UNDEFINED = 0xF000;
-    public static final int TYPE_JAVA = 0x0000;
-    public static final int TYPE_OBOE = 0x1000;
+    public static final int TYPE_MASK = 0xF000;
+    public static final int TYPE_UNDEFINED = 0xF000;
+    public static final int TYPE_NONE = 0x0000;
+    public static final int TYPE_JAVA = 0x1000;
+    public static final int TYPE_OBOE = 0x2000;
 
     // API subtypes - enumerated in low nibble
     public static final int SUB_TYPE_MASK = 0x0000F;

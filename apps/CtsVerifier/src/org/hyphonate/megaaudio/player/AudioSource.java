@@ -15,11 +15,23 @@
  */
 package org.hyphonate.megaaudio.player;
 
-public interface AudioSource {
+public abstract class AudioSource {
+    public AudioSource() {}
+
+    /**
+     * Called before the stream starts to allow initialization of the source
+     * @param numFrames The number of frames that will be requested in each pull() call.
+     * @param numChans The number of channels in the stream.
+     */
+    public void init(int numFrames, int numChans) {}
+
+    public void start() {}
+    public void stop() {}
+
     /**
      * reset a stream to the beginning.
      */
-    public void reset();
+    public void reset() {}
 
     /**
      * Process a request for audio data.
@@ -31,5 +43,5 @@ public interface AudioSource {
      * Note that the player will be blocked by this call.
      * Note that the data is assumed to be *interleaved*.
      */
-    public int pull(float[] audioData, int numFrames, int numChans);
+    public abstract int pull(float[] audioData, int numFrames, int numChans);
 }

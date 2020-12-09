@@ -17,6 +17,7 @@ package org.hyphonate.megaaudio.player.sources;
 
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
+import org.hyphonate.megaaudio.player.NativeAudioSource;
 
 public class SinAudioSourceProvider implements AudioSourceProvider {
     @Override
@@ -25,5 +26,9 @@ public class SinAudioSourceProvider implements AudioSourceProvider {
     }
 
     @Override
-    public native long getNativeSource();
+    public NativeAudioSource getNativeSource() {
+        return new NativeAudioSource(allocNativeSource());
+    }
+
+    private native long allocNativeSource();
 }

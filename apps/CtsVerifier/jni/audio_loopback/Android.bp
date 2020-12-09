@@ -2,11 +2,13 @@ cc_test_library {
     name: "libaudioloopback_jni",
     srcs: [
         "jni-bridge.cpp",
-        "NativeAudioAnalyzer.cpp",
+        "NativeAudioAnalyzer.cpp"
     ],
     include_dirs: [
         "frameworks/av/media/ndk/include",
         "system/core/include/cutils",
+        "cts/apps/CtsVerifier/jni/megaaudio/player",
+        "cts/apps/CtsVerifier/jni/megaaudio/recorder"
     ],
     header_libs: ["jni_headers"],
     shared_libs: [
@@ -18,6 +20,7 @@ cc_test_library {
     cflags: [
         "-Werror",
         "-Wall",
+        "-Wno-unused-parameter",
         // For slCreateEngine
         "-Wno-deprecated",
     ],

@@ -27,7 +27,7 @@ public class AppCallbackAudioSink extends AudioSink {
     }
 
     @Override
-    public void process(float[] audioData, int numFrames, int numChans) {
+    public void push(float[] audioData, int numFrames, int numChans) {
         mCallback.onDataReady(audioData, numFrames);
     }
 }

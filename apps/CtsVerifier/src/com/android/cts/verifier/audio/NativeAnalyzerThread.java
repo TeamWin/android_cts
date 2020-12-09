@@ -17,6 +17,8 @@
 
 package com.android.cts.verifier.audio;
 
+import android.content.Context;
+
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -26,12 +28,24 @@ import android.media.MediaRecorder;
 import android.util.Log;
 
 import android.os.Handler;
-import  android.os.Message;
+import android.os.Message;
+
+import com.android.cts.verifier.audio.audiolib.AudioSystemParams;
+
+import org.hyphonate.megaaudio.player.AudioSource;
+import org.hyphonate.megaaudio.player.AudioSourceProvider;
+import org.hyphonate.megaaudio.player.Player;
+import org.hyphonate.megaaudio.player.PlayerBuilder;
+import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 
 /**
  * A thread that runs a native audio loopback analyzer.
  */
 public class NativeAnalyzerThread {
+    private static final String TAG = "NativeAnalyzerThread";
+
+    private Context mContext;
+
     private final int mSecondsToRun = 5;
     private Handler mMessageHandler;
     private Thread mThread;
@@ -39,6 +53,9 @@ public class NativeAnalyzerThread {
     private volatile double mLatencyMillis = 0.0;
     private volatile double mConfidence = 0.0;
     private volatile int mSampleRate = 0;
+
+    private Player mAudioPlayer;
+    private int NUM_CHANNELS = 2;
 
     private int mInputPreset = 0;
 
@@ -48,6 +65,10 @@ public class NativeAnalyzerThread {
     static final int NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE = 895;
     static final int NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE_ERRORS = 896;
 
+    public NativeAnalyzerThread(Context context) {
+        mContext = context;
+    }
+
     public void setInputPreset(int inputPreset) {
         mInputPreset = inputPreset;
     }
@@ -56,8 +77,10 @@ public class NativeAnalyzerThread {
     static {
         try {
             System.loadLibrary("audioloopback_jni");
+            System.loadLibrary("megaaudio_jni");
         } catch (UnsatisfiedLinkError e) {
             log("Error loading loopback JNI library");
+            log("e: " + e);
             e.printStackTrace();
         }
 
@@ -67,16 +90,61 @@ public class NativeAnalyzerThread {
     /**
      * @return native audio context
      */
-    private native long openAudio(int micSource);
-    private native int startAudio(long audio_context);
-    private native int stopAudio(long audio_context);
-    private native int closeAudio(long audio_context);
+//    private native long openAudio(int micSource);
+    private long openAudio(int micSource) {
+        AudioSystemParams audioSystemParams = new AudioSystemParams();
+        audioSystemParams.init(mContext);
+
+        int systemSampleRate = audioSystemParams.getSystemSampleRate();
+        int numBufferFrames = audioSystemParams.getSystemBufferFrames();
+
+        //
+        // Allocate the source provider for the sort of signal we want to play
+        //
+        AudioSourceProvider sourceProvider = new SinAudioSourceProvider();
+        try {
+            PlayerBuilder builder = new PlayerBuilder();
+            mAudioPlayer = builder
+                    // choose one or the other of these for a Java or an Oboe player
+                    // .setPlayerType(PlayerBuilder.TYPE_JAVA)
+                    .setPlayerType(PlayerBuilder.TYPE_OBOE)
+                    .setSourceProvider(sourceProvider)
+                    .build();
+            mAudioPlayer.setupStream(NUM_CHANNELS, systemSampleRate, numBufferFrames);
+        } catch (PlayerBuilder.BadStateException ex) {
+            Log.e(TAG, "Failed MegaPlayer build.");
+            return -1;
+        }
+
+        // Don't need this any more
+        return 0;
+    }
+
+    // return a result code. < 0 indicates an error
+//    private native int startAudio(long audio_context);
+    private int startAudio(long audio_context) {
+        return mAudioPlayer.startStream() ? 0 : -1;
+    }
+
+    private void stopAudio(long audio_context) {
+        mAudioPlayer.stopStream();
+    }
+
+    // return a result code. < 0 indicates an error
+    private void closeAudio(long audio_context) {
+        mAudioPlayer.teardownStream();
+    }
+
     private native int getError(long audio_context);
     private native boolean isRecordingComplete(long audio_context);
     private native int analyze(long audio_context);
     private native double getLatencyMillis(long audio_context);
     private native double getConfidence(long audio_context);
-    private native int getSampleRate(long audio_context);
+
+    // private native int getSampleRate(long audio_context);
+    private int getSampleRate(long audio_context) {
+        return mAudioPlayer.getSampleRate();
+    }
 
     public double getLatencyMillis() {
         return mLatencyMillis;
@@ -146,11 +214,7 @@ public class NativeAnalyzerThread {
                     sendMessage(NATIVE_AUDIO_THREAD_MESSAGE_REC_ERROR);
                     break;
                 } else if (isRecordingComplete(audioContext)) {
-                    result = stopAudio(audioContext);
-                    if (result < 0) {
-                        sendMessage(NATIVE_AUDIO_THREAD_MESSAGE_REC_ERROR);
-                        break;
-                    }
+                    stopAudio(audioContext);
 
                     // Analyze the recording and measure latency.
                     mThread.setPriority(Thread.MAX_PRIORITY);
