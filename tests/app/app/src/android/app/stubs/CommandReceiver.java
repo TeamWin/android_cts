@@ -246,7 +246,7 @@ public class CommandReceiver extends BroadcastReceiver {
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
         intent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
         final PendingIntent pendingIntent = PendingIntent.getForegroundService(context, 0,
-                intent, 0);
+                intent, PendingIntent.FLAG_IMMUTABLE);
         sPendingIntent.put(targetPackage, pendingIntent);
     }
 
