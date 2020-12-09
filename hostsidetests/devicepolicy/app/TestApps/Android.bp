@@ -115,3 +115,27 @@ android_test_helper_app {
     ],
     manifest: "testapp4/AndroidManifest.xml",
 }
+
+android_test_helper_app {
+    name: "SharedUidApp1",
+    defaults: ["cts_defaults"],
+    //srcs: ["share/src/**/*.java"],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts",
+    ],
+    manifest: "shareduidapp1/AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "SharedUidApp2",
+    defaults: ["cts_defaults"],
+    //srcs: ["share/src/**/*.java"],
+    test_suites: [
+        "cts",
+        "general-tests",
+        "mts",
+    ],
+    manifest: "shareduidapp2/AndroidManifest.xml",
+}

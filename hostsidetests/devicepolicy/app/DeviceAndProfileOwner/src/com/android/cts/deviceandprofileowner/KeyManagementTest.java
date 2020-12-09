@@ -25,6 +25,10 @@ import static android.keystore.cts.CertificateUtils.createCertificate;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.testng.Assert.assertThrows;
+
+import static java.util.Collections.singleton;
+
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -44,6 +48,8 @@ import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
+
+import com.google.common.collect.Sets;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -75,6 +81,13 @@ import javax.security.auth.x500.X500Principal;
 
 public class KeyManagementTest extends BaseDeviceAdminTest {
     private static final long KEYCHAIN_TIMEOUT_MINS = 6;
+
+    private static final String TEST_ALIAS = "KeyManagementTest-keypair";
+    private static final String NON_EXISTENT_ALIAS = "KeyManagementTest-nonexistent";
+
+    private static final String SHARED_UID_APP1_PKG = "com.android.cts.testapps.shareduidapp1";
+    private static final String SHARED_UID_APP2_PKG = "com.android.cts.testapps.shareduidapp2";
+
     private PrivateKey mFakePrivKey;
     private Certificate mFakeCert;
 
@@ -117,6 +130,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     @Override
     public void tearDown() throws Exception {
         mActivity.finish();
+        mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
         super.tearDown();
     }
 
@@ -801,30 +815,82 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     }
 
     public void testHasKeyPair_NonExistent() {
-        assertThat(mDevicePolicyManager.hasKeyPair("no-such-key-for-sure")).isFalse();
+        assertThat(mDevicePolicyManager.hasKeyPair(NON_EXISTENT_ALIAS)).isFalse();
     }
 
-    public void testHasKeyPair_Installed() throws Exception {
-        final String alias = "delegated-cert-installer-test-key-9000";
-
-        mDevicePolicyManager.installKeyPair(
-                getWho(), mFakePrivKey, new Certificate[]{mFakeCert}, alias, true);
+    public void testHasKeyPair_Installed() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ true);
 
         try {
-            assertThat(mDevicePolicyManager.hasKeyPair(alias)).isTrue();
+            assertThat(mDevicePolicyManager.hasKeyPair(TEST_ALIAS)).isTrue();
         } finally {
-            mDevicePolicyManager.removeKeyPair(getWho(), alias);
+            mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
         }
     }
 
-    public void testHasKeyPair_Removed() throws Exception {
-        final String alias = "delegated-cert-installer-test-key-9001";
+    public void testHasKeyPair_Removed() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ true);
+        mDevicePolicyManager.removeKeyPair(getWho(), TEST_ALIAS);
 
-        mDevicePolicyManager.installKeyPair(
-                getWho(), mFakePrivKey, new Certificate[]{mFakeCert}, alias, true);
-        mDevicePolicyManager.removeKeyPair(getWho(), alias);
+        assertThat(mDevicePolicyManager.hasKeyPair(TEST_ALIAS)).isFalse();
+    }
 
-        assertThat(mDevicePolicyManager.hasKeyPair(alias)).isFalse();
+    public void testGetKeyPairGrants_NonExistent() {
+        assertThrows(IllegalArgumentException.class,
+                () -> mDevicePolicyManager.getKeyPairGrants(NON_EXISTENT_ALIAS));
+    }
+
+    public void testGetKeyPairGrants_NotGranted() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEmpty();
+    }
+
+    public void testGetKeyPairGrants_GrantedAtInstall() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ true);
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
+                .isEqualTo(singleton(singleton(getWho().getPackageName())));
+    }
+
+    public void testGetKeyPairGrants_GrantedExplicitly() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, getWho().getPackageName());
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
+                .isEqualTo(singleton(singleton(getWho().getPackageName())));
+    }
+
+    public void testGetKeyPairGrants_Revoked() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ true);
+        mDevicePolicyManager.revokeKeyPairFromApp(getWho(), TEST_ALIAS, getWho().getPackageName());
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEmpty();
+    }
+
+    public void testGetKeyPairGrants_SharedUid() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, SHARED_UID_APP1_PKG);
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
+                .isEqualTo(singleton(Sets.newHashSet(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG)));
+    }
+
+    public void testGetKeyPairGrants_DifferentUids() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ true);
+        mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, SHARED_UID_APP1_PKG);
+
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEqualTo(Sets.newHashSet(
+                Sets.newHashSet(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG),
+                singleton(getWho().getPackageName())));
     }
 
     private void assertGranted(String alias, boolean expected)
