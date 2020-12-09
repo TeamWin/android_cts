@@ -16,8 +16,6 @@
 
 package android.provider.cts.media;
 
-import static android.provider.cts.ProviderTestUtils.assertExists;
-import static android.provider.cts.ProviderTestUtils.assertNotExists;
 import static android.provider.cts.media.MediaStoreTest.TAG;
 
 import static org.junit.Assert.assertEquals;
@@ -26,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -60,6 +59,7 @@ import org.junit.runners.Parameterized.Parameters;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -179,13 +179,13 @@ public class MediaStore_Video_MediaTest {
             new File(externalVideoPath).delete();
         }
 
-        // check that the video file is removed when deleting the database entry
+        // check that the file is not available when deleting the database entry
         Context context = mContext;
         Uri videoUri = insertVideo(context);
-        File videofile = new File(ProviderTestUtils.stageDir(mVolumeName), "testVideo.3gp");
-        assertExists(videofile);
+        assertNotNull("Cannot open " + videoUri, mContentResolver.openFile(videoUri, "r", null));
         mContentResolver.delete(videoUri, null, null);
-        assertNotExists(videofile);
+        assertThrows(FileNotFoundException.class, () -> mContentResolver.openFile(videoUri, "r",
+                null));
     }
 
     private Uri insertVideo(Context context) throws IOException {
