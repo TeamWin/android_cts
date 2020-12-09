@@ -17,6 +17,7 @@
 package com.android.cts.mockime;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.ColorInt;
@@ -27,6 +28,13 @@ import androidx.annotation.NonNull;
  * visible to the user or not can be determined from the screenshot.
  */
 public final class Watermark {
+    /**
+     * Tolerance level between the expected color and the actual color in each color channel.
+     *
+     * <p>See Bug 174534092 about why we ended up having this.</p>
+     */
+    private static final int TOLERANCE = 4;
+
     /**
      * A utility class that represents A8R8G8B bitmap as an integer array.
      */
@@ -96,15 +104,30 @@ public final class Watermark {
         }
 
         /**
-         * Checks if the same image can be found in the specified {@link BitmapImage}
+         * Compares two given pixels to determine whether those two pixels are considered to be
+         * the same within {@link #TOLERANCE}.
+         *
+         * @param lhs a color integer to be compared.
+         * @param rhs another color integer to be compared.
+         * @return {@true} if two given pixels are the same within {@link #TOLERANCE}.
+         */
+        private static boolean robustMatchInternal(@ColorInt int lhs, @ColorInt int rhs) {
+            return lhs == rhs || (Math.abs(Color.red(lhs) - Color.red(rhs)) <= TOLERANCE
+                    && Math.abs(Color.green(lhs) - Color.green(rhs)) <= TOLERANCE
+                    && Math.abs(Color.blue(lhs) - Color.blue(rhs)) <= TOLERANCE);
+        }
+
+        /**
+         * Checks if the same image can be found in the specified {@link BitmapImage} within
+         * within {@link #TOLERANCE}.
          *
          * @param targetImage {@link BitmapImage} to be checked.
          * @param offsetX X offset in the {@code targetImage} used when comparing.
          * @param offsetY Y offset in the {@code targetImage} used when comparing.
-         * @return
+         * @return {@true} if two given images are the same within {@link #TOLERANCE}.
          */
         @AnyThread
-        boolean match(@NonNull BitmapImage targetImage, int offsetX, int offsetY) {
+        boolean robustMatch(@NonNull BitmapImage targetImage, int offsetX, int offsetY) {
             final int targetWidth = targetImage.getWidth();
             final int targetHeight = targetImage.getHeight();
 
@@ -118,7 +141,8 @@ public final class Watermark {
                     if (targetY < 0 || targetHeight <= targetY) {
                         return false;
                     }
-                    if (targetImage.getPixel(targetX, targetY) != getPixel(x, y)) {
+                    if (!robustMatchInternal(
+                            targetImage.getPixel(targetX, targetY), getPixel(x, y))) {
                         return false;
                     }
                 }
@@ -231,7 +255,7 @@ public final class Watermark {
         // Search from the bottom line with an assumption that the IME is shown at the bottom.
         for (int offsetY = targetImage.getHeight() - 1; offsetY >= 0; --offsetY) {
             for (int offsetX = 0; offsetX < targetImage.getWidth(); ++offsetX) {
-                if (sImage.match(targetImage, offsetX, offsetY)) {
+                if (sImage.robustMatch(targetImage, offsetX, offsetY)) {
                     return true;
                 }
             }
