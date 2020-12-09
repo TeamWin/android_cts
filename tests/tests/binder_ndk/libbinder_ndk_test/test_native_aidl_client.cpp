@@ -455,6 +455,27 @@ TEST_P(NdkBinderTest_Aidl, RepeatNullableString) {
   EXPECT_EQ("say what?", *res);
 }
 
+TEST_P(NdkBinderTest_Aidl, ParcelableOrder) {
+  RegularPolygon p1 = {"A", 1, 1.0f};
+
+  // tests on self
+  EXPECT_EQ(p1, p1);
+  EXPECT_LE(p1, p1);
+  EXPECT_GE(p1, p1);
+  EXPECT_FALSE(p1 < p1);
+  EXPECT_FALSE(p1 > p1);
+
+  RegularPolygon p2 = {"A", 2, 1.0f};
+  RegularPolygon p3 = {"B", 1, 1.0f};
+  for (const auto& bigger : {p2, p3}) {
+    EXPECT_FALSE(p1 == bigger);
+    EXPECT_LE(p1, bigger);
+    EXPECT_GE(bigger, p1);
+    EXPECT_LT(p1, bigger);
+    EXPECT_GT(bigger, p1);
+  }
+}
+
 TEST_P(NdkBinderTest_Aidl, ParcelableDefaults) {
   RegularPolygon polygon;
 
@@ -530,28 +551,6 @@ TEST_P(NdkBinderTest_Aidl, GetLastItem) {
   EXPECT_EQ(15, retF);
 }
 
-namespace aidl {
-namespace test_package {
-bool operator==(const SimpleUnion& lhs, const SimpleUnion& rhs) {
-  if (lhs.getTag() != rhs.getTag()) return false;
-  switch (lhs.getTag()) {
-    case SimpleUnion::a:
-      return lhs.get<SimpleUnion::a>() == rhs.get<SimpleUnion::a>();
-    case SimpleUnion::b:
-      return lhs.get<SimpleUnion::b>() == rhs.get<SimpleUnion::b>();
-    case SimpleUnion::c:
-      return lhs.get<SimpleUnion::c>() == rhs.get<SimpleUnion::c>();
-    case SimpleUnion::d:
-      return lhs.get<SimpleUnion::d>() == rhs.get<SimpleUnion::d>();
-    case SimpleUnion::e:
-      return lhs.get<SimpleUnion::e>() == rhs.get<SimpleUnion::e>();
-    case SimpleUnion::f:
-      return lhs.get<SimpleUnion::f>() == rhs.get<SimpleUnion::f>();
-  }
-}
-}  // namespace test_package
-}  // namespace aidl
-
 TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
   Foo foo;
   foo.a = "NEW FOO";
@@ -605,22 +604,6 @@ TEST_P(NdkBinderTest_Aidl, RepeatGenericBar) {
 template <typename T>
 using RepeatMethod = ScopedAStatus (ITest::*)(const std::vector<T>&,
                                               std::vector<T>*, std::vector<T>*);
-
-namespace aidl {
-namespace test_package {
-inline bool operator==(const RegularPolygon& lhs, const RegularPolygon& rhs) {
-  return lhs.name == rhs.name && lhs.numSides == rhs.numSides && lhs.sideLength == rhs.sideLength;
-}
-inline bool operator==(const std::vector<RegularPolygon>& lhs,
-                       const std::vector<RegularPolygon>& rhs) {
-  if (lhs.size() != rhs.size()) return false;
-  for (size_t i = 0; i < lhs.size(); i++) {
-    if (!(lhs[i] == rhs[i])) return false;
-  }
-  return true;
-}
-}  // namespace test_package
-}  // namespace aidl
 
 template <typename T>
 void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
