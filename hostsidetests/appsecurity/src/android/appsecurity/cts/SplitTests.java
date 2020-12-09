@@ -53,6 +53,7 @@ public class SplitTests extends BaseAppSecurityTest {
     static final String APK_xxhdpi = "CtsSplitApp_xxhdpi-v4.apk";
 
     private static final String APK_v7 = "CtsSplitApp_v7.apk";
+    private static final String APK_v23 = "CtsSplitApp_v23.apk";
     private static final String APK_fr = "CtsSplitApp_fr.apk";
     private static final String APK_de = "CtsSplitApp_de.apk";
 
@@ -75,6 +76,7 @@ public class SplitTests extends BaseAppSecurityTest {
 
     private static final String APK_FEATURE = "CtsSplitAppFeature.apk";
     private static final String APK_FEATURE_v7 = "CtsSplitAppFeature_v7.apk";
+    private static final String APK_FEATURE_v23 = "CtsSplitAppFeature_v23.apk";
 
     static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
 
@@ -605,5 +607,90 @@ public class SplitTests extends BaseAppSecurityTest {
         runDeviceTests(PKG, CLASS, "testCodeCacheWrite");
         new InstallMultiple(instant).addArg("-r").addFile(APK_DIFF_VERSION).run();
         runDeviceTests(PKG, CLASS, "testCodeCacheRead");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installBase_full() throws Exception {
+        testTheme_installBase(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installBase_instant() throws Exception {
+        testTheme_installBase(true);
+    }
+    private void testTheme_installBase(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBase_themeApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installBaseV23_full() throws Exception {
+        testTheme_installBaseV23(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installBaseV23_instant() throws Exception {
+        testTheme_installBaseV23(true);
+    }
+    private void testTheme_installBaseV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBaseV23_themeApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installFeature_full() throws Exception {
+        testTheme_installFeature(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installFeature_instant() throws Exception {
+        testTheme_installFeature(true);
+    }
+    private void testTheme_installFeature(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeature_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBase_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeature_themeApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installFeatureV23_full() throws Exception {
+        testTheme_installFeatureV23(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installFeatureV23_instant() throws Exception {
+        testTheme_installFeatureV23(true);
+    }
+    private void testTheme_installFeatureV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE)
+                .addFile(APK_FEATURE_v23).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeatureV23_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBaseV23_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeatureV23_themeApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installFeatureV23_removeV23_full() throws Exception {
+        testTheme_installFeatureV23_removeV23(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installFeatureV23_removeV23_instant() throws Exception {
+        testTheme_installFeatureV23_removeV23(true);
+    }
+    private void testTheme_installFeatureV23_removeV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE)
+                .addFile(APK_FEATURE_v23).run();
+        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("config.v23")
+                .removeSplit("feature.config.v23").run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeature_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBase_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeature_themeApplied");
     }
 }

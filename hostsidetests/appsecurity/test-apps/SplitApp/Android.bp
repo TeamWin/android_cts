@@ -41,6 +41,7 @@ android_test_helper_app {
         "xhdpi-v4",
         "xxhdpi-v4",
         "v7",
+        "v23",
         "fr",
         "de",
     ],

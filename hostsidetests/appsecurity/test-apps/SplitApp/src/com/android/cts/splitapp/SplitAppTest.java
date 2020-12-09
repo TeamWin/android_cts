@@ -25,7 +25,9 @@ import static junit.framework.Assert.fail;
 import static org.xmlpull.v1.XmlPullParser.END_DOCUMENT;
 import static org.xmlpull.v1.XmlPullParser.START_TAG;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -51,8 +53,10 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -80,6 +84,14 @@ public class SplitAppTest {
 
     public static boolean sFeatureTouched = false;
     public static String sFeatureValue = null;
+
+    private static final String THEME_ACTIVITY = ".ThemeActivity";
+    private static final String FEATURE_THEME_ACTIVITY = ".FeatureThemeActivity";
+
+    @Rule
+    public ActivityTestRule<Activity> mActivityRule =
+            new ActivityTestRule<>(Activity.class, true /*initialTouchMode*/,
+                    false /*launchActivity*/);
 
     @Test
     public void testNothing() throws Exception {
@@ -593,6 +605,90 @@ public class SplitAppTest {
         assertEquals(12, info.splitRevisionCodes[0]);
     }
 
+    @Test
+    public void launchBaseActivity_withThemeBase_themeApplied() {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(THEME_ACTIVITY, R.style.Theme_Base));
+        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
+
+        expected.assertThemeBaseValues();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeBaseV23_themeApplied() {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(THEME_ACTIVITY, R.style.Theme_Base));
+        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
+
+        expected.assertThemeBaseV23Values();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeFeature_themeApplied() {
+        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(THEME_ACTIVITY, themeRes));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
+
+        expected.assertThemeFeatureValues();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeFeatureV23_themeApplied() {
+        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(THEME_ACTIVITY, themeRes));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
+
+        expected.assertThemeFeatureV23Values();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchFeatureActivity_withThemeBase_themeApplied() {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(FEATURE_THEME_ACTIVITY, R.style.Theme_Base));
+        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
+
+        expected.assertThemeBaseValues();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchFeatureActivity_withThemeBaseV23_themeApplied() {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(FEATURE_THEME_ACTIVITY, R.style.Theme_Base));
+        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
+
+        expected.assertThemeBaseV23Values();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchFeatureActivity_withThemeFeature_themeApplied() {
+        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(FEATURE_THEME_ACTIVITY, themeRes));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
+
+        expected.assertThemeFeatureValues();
+        expected.assertThemeApplied(activity);
+    }
+
+    @Test
+    public void launchFeatureActivity_withThemeFeatureV23_themeApplied() {
+        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(FEATURE_THEME_ACTIVITY, themeRes));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
+
+        expected.assertThemeFeatureV23Values();
+        expected.assertThemeApplied(activity);
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
@@ -659,5 +755,18 @@ public class SplitAppTest {
         } finally {
             is.close();
         }
+    }
+
+    private int resolveResourceId(String nameOfIdentifier) {
+        final int resId = getContext().getResources().getIdentifier(nameOfIdentifier, null, null);
+        assertTrue("Resource not found: " + nameOfIdentifier, resId != 0);
+        return resId;
+    }
+
+    private static Intent getTestThemeIntent(String activityName, int themeResId) {
+        final Intent intent = new Intent(ThemeActivity.INTENT_THEME_TEST);
+        intent.setComponent(ComponentName.createRelative(PKG, activityName));
+        intent.putExtra(ThemeActivity.EXTRAS_THEME_RES_ID, themeResId);
+        return intent;
     }
 }

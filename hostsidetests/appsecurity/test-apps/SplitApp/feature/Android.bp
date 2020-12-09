@@ -28,7 +28,10 @@ java_defaults {
 android_test_helper_app {
     name: "CtsSplitAppFeature",
     defaults: ["CtsSplitAppFeatureDefaults"],
-    package_splits: ["v7"],
+    package_splits: [
+        "v7",
+        "v23",
+    ],
     certificate: ":cts-testkey1",
     aaptflags: [
         "--version-code 100",
