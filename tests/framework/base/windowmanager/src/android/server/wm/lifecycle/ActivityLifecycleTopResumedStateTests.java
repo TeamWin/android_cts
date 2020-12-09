@@ -309,11 +309,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
-        // Wait for first activity to resume after moving to primary split-screen
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
-        // First activity must be resumed, but not gain the top position
-        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
-                Arrays.asList(ON_RESUME), "unminimizeDockedStack");
         // Second activity must be on top now
         LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog());
     }
@@ -333,9 +328,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Activity secondActivity = new Launcher(SingleTopActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
-
-        // Wait for first activity to resume after moving to primary split-screen
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Switch top between two activities
         getLifecycleLog().clear();
@@ -472,9 +464,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Activity secondActivity = new Launcher(SingleTopActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
-
-        // Wait for first activity to resume after moving to primary split-screen
-        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Tap on first activity to switch the focus
         getLifecycleLog().clear();
