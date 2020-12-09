@@ -80,8 +80,8 @@ public class ActivityManagerTest extends TestCase {
         assertNotNull("Expect SecurityException by attaching null application", securityException);
     }
 
-    // b/165595677
-    @SecurityTest(minPatchLevel = "2020-10")
+    // b/166667403
+    @SecurityTest(minPatchLevel = "2021-01")
     public void testActivityManager_appExitReasonPackageNames() {
         final String mockPackage = "com.foo.bar";
         final String realPackage = "com.android.compatibility.common.deviceinfo";
