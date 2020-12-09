@@ -279,8 +279,8 @@ def find_circle(gray, name):
         dist_y = abs(child_shape['cty']-prt_shape['cty'])
         # 1. 0.56*Parent's width < Child's width < 0.76*Parent's width.
         # 2. 0.56*Parent's height < Child's height < 0.76*Parent's height.
-        # 3. Child's width > 0.1*Image width
-        # 4. Child's height > 0.1*Image height
+        # 3. Child's width > 0.075*Image width
+        # 4. Child's height > 0.075*Image height
         # 5. 0.25*Parent's area < Child's area < 0.45*Parent's area
         # 6. Child == 0, and Parent == 255
         # 7. Center of Child and center of parent should overlap
@@ -288,8 +288,8 @@ def find_circle(gray, name):
                     < prt_shape['width'] * 0.76
                     and prt_shape['height'] * 0.56 < child_shape['height']
                     < prt_shape['height'] * 0.76
-                    and child_shape['width'] > 0.1 * size[1]
-                    and child_shape['height'] > 0.1 * size[0]
+                    and child_shape['width'] > 0.075 * size[1]
+                    and child_shape['height'] > 0.075 * size[0]
                     and 0.30 * prt_area < child_area < 0.50 * prt_area
                     and img_bw[child_shape['cty']][child_shape['ctx']] == 0
                     and img_bw[child_shape['top']][child_shape['left']] == 255
