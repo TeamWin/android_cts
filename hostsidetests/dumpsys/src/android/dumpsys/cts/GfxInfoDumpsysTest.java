@@ -102,16 +102,31 @@ public class GfxInfoDumpsysTest extends BaseDumpsysTest {
                 if (numparts[0] != 0 && numparts[0] != 1) {
                     continue;
                 }
-                // assert VSYNC >= INTENDED_VSYNC
-                assertTrue(numparts[3] >= numparts[2]);
-                // assert time is flowing forwards, skipping index 4 & 5
-                // as those are input timestamps that may or may not be present
-                assertTrue(numparts[6] >= numparts[3]);
-                for (int i = 7; i < TIMESTAMP_COUNT; i++) {
-                    assertTrue("Index " + i + " did not flow forward, " +
-                                    numparts[i] + " not larger than " + numparts[i - 1],
-                            numparts[i] >= numparts[i-1]);
-                }
+
+                // assert time is flowing forwards. we need to check each entry explicitly
+                // as some entries do not represent a flow of events.
+                assertTrue("VSYNC happened before INTENDED_VSYNC",
+                        numparts[3] >= numparts[2]);
+                assertTrue("HandleInputStart happened before VSYNC",
+                        numparts[6] >= numparts[3]);
+                assertTrue("AnimationStart happened before HandleInputStart",
+                        numparts[7] >= numparts[6]);
+                assertTrue("PerformTraversalsStart happened before AnimationStart",
+                        numparts[8] >= numparts[7]);
+                assertTrue("DrawStart happened before PerformTraversalsStart",
+                        numparts[9] >= numparts[8]);
+                assertTrue("SyncQueued happened before DrawStart",
+                        numparts[11] >= numparts[9]);
+                assertTrue("SyncStart happened before SyncQueued",
+                        numparts[12] >= numparts[11]);
+                assertTrue("IssueDrawCommandsStart happened before SyncStart",
+                        numparts[13] >= numparts[12]);
+                assertTrue("SwapBuffers happened before IssueDrawCommandsStart",
+                        numparts[14] >= numparts[13]);
+                assertTrue("FrameCompleted happened before SwapBuffers",
+                        numparts[15] >= numparts[14]);
+
+                // total duration is from IntendedVsync to FrameCompleted
                 long totalDuration = numparts[15] - numparts[2];
                 assertTrue("Frame did not take a positive amount of time to process",
                         totalDuration > 0);
