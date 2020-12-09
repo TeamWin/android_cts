@@ -77,4 +77,32 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
                 .that(AudioManagerHelper.isDeviceMuted(getDevice()))
                 .isTrue();
     }
+
+    /**
+     * Test 11.1.15-8
+     *
+     * <p>Tests that the DUT unmutes its volume when the DUT receives a broadcast {@code <Set System
+     * Audio Mode>} ["Off"] message
+     */
+    @Ignore("b/174733146")
+    @Test
+    public void cect_11_1_15_8_DutUnmutesForSetSystemAudioModeOff() throws Exception {
+        /*
+         * TODO: Call HdmiCecLocalDeviceTv.setSystemAudioMode(true) instead to turn off system
+         * audio mode after permission issue is sorted.
+         */
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.BROADCAST,
+                CecOperand.SET_SYSTEM_AUDIO_MODE,
+                CecMessage.formatParams(ON));
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.BROADCAST,
+                CecOperand.SET_SYSTEM_AUDIO_MODE,
+                CecMessage.formatParams(OFF));
+        assertWithMessage("Device is muted")
+                .that(AudioManagerHelper.isDeviceMuted(getDevice()))
+                .isFalse();
+    }
 }
