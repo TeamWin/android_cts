@@ -27,12 +27,6 @@ public abstract class EventLogs<E extends Event> {
 
     private static Instant sEarliestLogTime = null;
 
-    /** Returns the specific implementation of {@link Event} being queried for. */
-    protected abstract Class<E> eventClass();
-
-    /** Returns true if {@code E} matches the custom filters for this {@link Event} subclass. */
-    protected abstract boolean filter(E event);
-
     /**
      * Returns the {@link EventQuerier} to be used to interact with the
      * appropriate {@link Event} store.
