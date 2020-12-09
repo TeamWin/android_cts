@@ -73,8 +73,6 @@ public class ActivityManagerFgsBgStartTest {
 
     private static final String KEY_DEFAULT_FGS_STARTS_RESTRICTION_ENABLED =
             "default_fgs_starts_restriction_enabled";
-    private static final String KEY_DEFAULT_FGS_STARTS_TEMP_ALLOWLIST_ENABLED =
-            "default_fgs_starts_temp_allowlist_enabled";
 
     private static final int WAITFOR_MSEC = 10000;
 
@@ -977,8 +975,6 @@ public class ActivityManagerFgsBgStartTest {
             } catch (Exception e) {
             }
 
-            // Put APP1 in AllowList.
-            enableTempAllowList(true);
             // Add package to AllowList.
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "dumpsys deviceidle whitelist +" + PACKAGE_NAME_APP1);
@@ -995,7 +991,6 @@ public class ActivityManagerFgsBgStartTest {
         } finally {
             uid1Watcher.finish();
             enableFgsRestriction(false, true, null);
-            enableTempAllowList(false);
             // Remove package from AllowList.
             CtsAppTestUtils.executeShellCmd(mInstrumentation,
                     "dumpsys deviceidle whitelist -" + PACKAGE_NAME_APP1);
@@ -1019,7 +1014,6 @@ public class ActivityManagerFgsBgStartTest {
         try {
             // Enable the FGS background startForeground() restriction.
             enableFgsRestriction(true, true, null);
-            enableTempAllowList(true);
             // Start FGS in BG state.
             CommandReceiver.sendCommand(mContext,
                     CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
@@ -1064,7 +1058,6 @@ public class ActivityManagerFgsBgStartTest {
         } finally {
             uid1Watcher.finish();
             enableFgsRestriction(false, true, null);
-            enableTempAllowList(false);
         }
 
     }
@@ -1091,20 +1084,6 @@ public class ActivityManagerFgsBgStartTest {
                     "am compat " + (enable ? "enable" : "disable")
                             + " FGS_BG_START_RESTRICTION_CHANGE_ID " + packageName);
         }
-    }
-
-    /**
-     * Turn on FGS BG-launch temp allowlist.
-     * @param enable true to allow temp allowlist, falst to disallow.
-     * @throws Exception
-     */
-    private void enableTempAllowList(boolean enable)
-            throws Exception {
-        runWithShellPermissionIdentity(() -> {
-            DeviceConfig.setProperty("activity_manager",
-                    KEY_DEFAULT_FGS_STARTS_TEMP_ALLOWLIST_ENABLED,
-                    Boolean.toString(enable), false);
-        });
     }
 
     /**
