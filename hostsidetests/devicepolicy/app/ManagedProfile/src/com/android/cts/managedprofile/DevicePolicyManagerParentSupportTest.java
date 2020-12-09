@@ -26,7 +26,7 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
             FakeComponent.class.getPackage().getName(), FakeComponent.class.getName());
 
     public void testSetAndGetRequiredPasswordComplexity_onParent() {
-        if (!mHasSecureLockScreen) {
+       if (!mHasSecureLockScreen) {
             return;
         }
 
@@ -106,7 +106,7 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
         assertThat(actualMaximumPasswordLength).isGreaterThan(0);
     }
 
-    public void testIsActivePasswordSufficient_onParent_isSupported() {
+    public void testIsActivePasswordSufficient_onParent_setOnParent_isSupported() {
         try {
             mParentDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
             assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isFalse();
@@ -115,7 +115,7 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
         }
     }
 
-    public void testIsActivePasswordSufficient_onParent_appliesComplexity() {
+    public void testIsActivePasswordSufficient_onParent_setOnProfile_isSupported() {
         try {
             mDevicePolicyManager.setRequiredPasswordComplexity(PASSWORD_COMPLEXITY_HIGH);
             assertThat(mParentDevicePolicyManager.isActivePasswordSufficient()).isFalse();
@@ -125,7 +125,7 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetPasswordQuality_onParent_isNotSupported() {
-        assertThrows(IllegalArgumentException.class,
+        assertThrows(SecurityException.class,
                 () -> setPasswordQuality(PASSWORD_QUALITY_NUMERIC_COMPLEX));
     }
 
