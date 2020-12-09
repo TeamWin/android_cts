@@ -45,6 +45,7 @@
     <string name="test_category_jobscheduler">Job Scheduler</string>
     <string name="test_category_telecom">Telecom</string>
     <string name="test_category_telephony">Telephony</string>
+    <string name="test_category_tunnel">Tunnel Mode</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_instant_apps">Instant Apps</string>
     <string name="test_category_display_cutout">DisplayCutout</string>
@@ -1714,6 +1715,9 @@
     <string name="sv_no_data">No videos.</string>
     <string name="sv_failed_title">Test Failed</string>
     <string name="sv_failed_message">Unable to play stream.  See log for details.</string>
+
+    <!-- Strings for MediaCodecFlushActivity -->
+    <string name="media_codec_flush">Video codec flushing in Tunnel Mode</string>
 
     <!-- Strings for the Camera Bokeh mode test activity -->
     <string name="camera_bokeh_test">Camera Bokeh</string>
