@@ -28,7 +28,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
-    private static final String TEST_PRIVATE_DNS_HOST = "resolver.example.com";
+    private static final String FAKE_PRIVATE_DNS_HOST = "resolver.example.com";
     private static final String VALID_PRIVATE_DNS_HOST = "dns.google";
 
     private UserManager mUserManager;
@@ -130,7 +130,7 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
 
         // This host does not resolve, so would output an error.
         callSetGlobalPrivateDnsHostModeExpectingResult(
-                TEST_PRIVATE_DNS_HOST,
+                FAKE_PRIVATE_DNS_HOST,
                 DevicePolicyManager.PRIVATE_DNS_SET_ERROR_HOST_NOT_SERVING);
     }
 
