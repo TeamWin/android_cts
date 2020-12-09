@@ -16,12 +16,14 @@
 package com.android.cts.deviceowner;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_CREATE_AND_MANAGE_USER;
+import static android.app.admin.DevicePolicyManager.OPERATION_REBOOT;
 import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_START_USER_IN_BACKGROUND;
 import static android.app.admin.DevicePolicyManager.OPERATION_STOP_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SWITCH_USER;
 
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.os.UserHandle;
 
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
@@ -43,6 +45,7 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
         protected int[] getSafetyAwareOperations() {
             return new int [] {
                     OPERATION_CREATE_AND_MANAGE_USER,
+                    OPERATION_REBOOT,
                     OPERATION_REMOVE_USER,
                     OPERATION_START_USER_IN_BACKGROUND,
                     OPERATION_STOP_USER,
@@ -50,23 +53,27 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
         }
 
         @Override
-        protected void runOperation(DevicePolicyManager dpm, int operation, boolean overloaded) {
+        protected void runOperation(DevicePolicyManager dpm, ComponentName admin, int operation,
+                boolean overloaded) {
             switch (operation) {
                 case OPERATION_CREATE_AND_MANAGE_USER:
-                    dpm.createAndManageUser(/* admin= */ getWho(), /* name= */ null,
-                            /* profileOwner= */ getWho(), /* adminExtras= */ null, NO_FLAGS);
+                    dpm.createAndManageUser(admin, /* name= */ null, admin, /* adminExtras= */ null,
+                            NO_FLAGS);
+                    break;
+                case OPERATION_REBOOT:
+                    dpm.reboot(admin);
                     break;
                 case OPERATION_REMOVE_USER:
-                    dpm.removeUser(getWho(), USER_HANDLE);
+                    dpm.removeUser(admin, USER_HANDLE);
                     break;
                 case OPERATION_START_USER_IN_BACKGROUND:
-                    dpm.startUserInBackground(getWho(), USER_HANDLE);
+                    dpm.startUserInBackground(admin, USER_HANDLE);
                     break;
                 case OPERATION_STOP_USER:
-                    dpm.stopUser(getWho(), USER_HANDLE);
+                    dpm.stopUser(admin, USER_HANDLE);
                     break;
                 case OPERATION_SWITCH_USER:
-                    dpm.switchUser(getWho(), USER_HANDLE);
+                    dpm.switchUser(admin, USER_HANDLE);
                     break;
                 default:
                     throwUnsupportedOperationException(operation, overloaded);
@@ -78,6 +85,6 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
      * Tests that all safety-aware operations are properly implemented.
      */
     public void testAllOperations() {
-        mTester.testAllOperations(mDevicePolicyManager);
+        mTester.testAllOperations(mDevicePolicyManager, getWho());
     }
 }
