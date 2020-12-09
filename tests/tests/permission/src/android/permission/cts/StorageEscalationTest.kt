@@ -23,6 +23,7 @@ import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
 import android.content.pm.PackageManager
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
@@ -30,6 +31,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 
+@AppModeFull
 class StorageEscalationTest {
     companion object {
         private const val APK_DIRECTORY = "/data/local/tmp/cts/permissions"
