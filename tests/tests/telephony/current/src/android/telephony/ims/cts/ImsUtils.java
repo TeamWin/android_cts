@@ -46,6 +46,7 @@ public class ImsUtils {
     public static final int ITEM_COMPRESSED = 2001;
     // TODO Replace with a real sip message once that logic is in.
     public static final String TEST_TRANSACTION_ID = "z9hG4bK.TeSt";
+    public static final String TEST_CALL_ID = "testcall";
     public static final SipMessage TEST_SIP_MESSAGE = new SipMessage("A", "B", new byte[0]);
 
     public static boolean shouldTestTelephony() {
