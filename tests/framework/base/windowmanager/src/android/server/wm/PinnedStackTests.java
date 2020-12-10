@@ -24,7 +24,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.wm.CliIntentExtra.*;
+import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getWindowName;
@@ -61,6 +61,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_PIP_ORIENTATION
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -1268,6 +1269,42 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         assertNumberOfActions(PIP_ACTIVITY, maxNumberActions);
+    }
+
+    @Test
+    public void testIsSeamlessResizeEnabledDefaultToTrue() {
+        // Launch the PIP activity with some random param without setting isSeamlessResizeEnabled
+        // so the PictureInPictureParams acquired from TaskInfo is not null
+        launchActivity(PIP_ACTIVITY,
+                extraString(EXTRA_NUMBER_OF_CUSTOM_ACTIONS, String.valueOf(1)));
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        // Assert the default value of isSeamlessResizeEnabled is set to true.
+        assertIsSeamlessResizeEnabled(PIP_ACTIVITY, true);
+    }
+
+    @Test
+    public void testDisableIsSeamlessResizeEnabled() {
+        // Launch the PIP activity with overridden isSeamlessResizeEnabled param
+        launchActivity(PIP_ACTIVITY, extraBool(EXTRA_IS_SEAMLESS_RESIZE_ENABLED, false));
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+        waitForEnterPip(PIP_ACTIVITY);
+        assertPinnedStackExists();
+
+        // Assert the value of isSeamlessResizeEnabled is overridden.
+        assertIsSeamlessResizeEnabled(PIP_ACTIVITY, false);
+    }
+
+    private void assertIsSeamlessResizeEnabled(ComponentName componentName, boolean expected) {
+        runWithShellPermission(() -> {
+            final ActivityTask task = mWmState.getTaskByActivity(componentName);
+            final TaskInfo info = mTaskOrganizer.getTaskInfo(task.getTaskId());
+            final PictureInPictureParams params = info.getPictureInPictureParams();
+
+            assertEquals(expected, params.isSeamlessResizeEnabled());
+        });
     }
 
     private void assertNumberOfActions(ComponentName componentName, int numberOfActions) {
