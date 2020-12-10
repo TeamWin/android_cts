@@ -108,6 +108,8 @@ public final class DeviceState implements TestRule {
     private Statement applyTest(final Statement base, final Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
+                Log.d("DeviceState", "Preparing state for test " + description.getMethodName());
+
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
@@ -157,13 +159,17 @@ public final class DeviceState implements TestRule {
                     }
                 }
 
+                Log.d("DeviceState", "Finished preparing state for test " + description.getMethodName());
+
                 try {
                     base.evaluate();
                 } finally {
+                    Log.d("DeviceState", "Tearing down state for test " + description.getMethodName());
                     teardownNonShareableState();
                     if (!mSkipTestTeardown) {
                         teardownShareableState();
                     }
+                    Log.d("DeviceState", "Finished tearing down state for test " + description.getMethodName());
                 }
             }};
     }
@@ -371,13 +377,15 @@ public final class DeviceState implements TestRule {
         final String type;
         final int parent;
         final boolean isPrimary;
+        final boolean removing;
         final Set<String> flags;
 
-        UserInfo(int id, String type, int parent, boolean isPrimary, Set<String> flags) {
+        UserInfo(int id, String type, int parent, boolean isPrimary, boolean removing, Set<String> flags) {
             this.id = id;
             this.type = type;
             this.parent = parent;
             this.isPrimary = isPrimary;
+            this.removing = removing;
             this.flags = flags;
         }
 
@@ -392,7 +400,13 @@ public final class DeviceState implements TestRule {
     private static final Pattern USERS_PARENT_PATTERN = Pattern.compile("parentId=(\\d+)");
     private static final Pattern USERS_FLAGS_PATTERN = Pattern.compile("Flags: \\d+ \\((.*)\\)");
 
+
     private Set<UserInfo> listUsers() {
+        return listUsers(/* includeRemoving= */ false);
+    }
+
+
+    private Set<UserInfo> listUsers(boolean includeRemoving) {
         String command = "dumpsys user";
         String commandOutput = runCommandWithOutput(command);
 
@@ -437,12 +451,17 @@ public final class DeviceState implements TestRule {
             if (!userFlagsMatcher.find()) {
                 throw new IllegalStateException("Bad dumpsys user output: " + commandOutput);
             }
+            boolean removing = userString.contains("<removing>");
+
             Set<String> flagNames = new HashSet<>();
             for (String flag : userFlagsMatcher.group(1).split("\\|")) {
                 flagNames.add(flag);
             }
 
-            listUsers.add(new UserInfo(userId, userType, userParent, isPrimary, flagNames));
+            if (!removing || includeRemoving) {
+                listUsers.add(
+                        new UserInfo(userId, userType, userParent, isPrimary, removing, flagNames));
+            }
         }
 
         return listUsers;
@@ -455,11 +474,15 @@ public final class DeviceState implements TestRule {
         if (getWorkProfileId(forUser) == null) {
             createWorkProfile(resolveUserTypeToUserId(forUser));
         }
+        int workProfileId = getWorkProfileId(forUser);
+
+        // TODO(scottjonathan): Can make this quicker by checking if we're already running
+        runCommandWithOutput("am start-user -w " + workProfileId);
         if (installTestApp) {
-            installInProfile(getWorkProfileId(forUser),
+            installInProfile(workProfileId,
                     sInstrumentation.getContext().getPackageName());
         } else {
-            uninstallFromProfile(getWorkProfileId(forUser),
+            uninstallFromProfile(workProfileId,
                     sInstrumentation.getContext().getPackageName());
         }
     }
@@ -551,7 +574,6 @@ public final class DeviceState implements TestRule {
                 runCommandWithOutput(
                         "pm create-user --profileOf " + parentUserId + " --managed work");
         final int profileId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
-        runCommandWithOutput("am start-user -w " + profileId);
         createdUserIds.add(profileId);
     }
 
@@ -589,13 +611,17 @@ public final class DeviceState implements TestRule {
         InputStream inputStream = new FileInputStream(p.getFileDescriptor());
 
         try (Scanner scanner = new Scanner(inputStream, UTF_8.name())) {
-            return scanner.useDelimiter("\\A").next();
+            String s = scanner.useDelimiter("\\A").next();
+            Log.d("DeviceState", "Running command " + command + " got output: " + s);
+            return s;
         } catch (NoSuchElementException e) {
+            Log.d("DeviceState", "Running command " + command + " with no output", e);
             return "";
         }
     }
 
     private ParcelFileDescriptor runCommand(String command) {
+        Log.d("DeviceState", "Running command " + command);
         return getAutomation()
                 .executeShellCommand(command);
     }
