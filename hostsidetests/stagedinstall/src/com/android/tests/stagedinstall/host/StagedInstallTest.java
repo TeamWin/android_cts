@@ -660,6 +660,14 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Test non-priv apps cannot access /data/app-staging folder contents
+     */
+    @Test
+    public void testAppStagingDirCannotBeReadByNonPrivApps() throws Exception {
+        runPhase("testAppStagingDirCannotBeReadByNonPrivApps");
+    }
+
+    /**
      * Store the component name of the default launcher. This value will be used to reset the
      * default launcher to its correct component upon test completion.
      */
