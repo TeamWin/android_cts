@@ -37,6 +37,145 @@ import android.platform.test.annotations.SecurityTest;
 
 public class AmbiguousBundlesTest extends AndroidTestCase {
 
+    /**
+     * b/140417434
+     * Vulnerability Behaviour: Failure via Exception
+     */
+    @SecurityTest(minPatchLevel = "2020-04")
+    public void test_android_CVE_2020_0082() throws Exception {
+
+        Ambiguator ambiguator = new Ambiguator() {
+
+            private static final int VAL_STRING = 0;
+            private static final int VAL_PARCELABLEARRAY = 16;
+            private static final int LENGTH_PARCELABLEARRAY = 4;
+            private Parcel mContextBinder;
+            private int mContextBinderSize;
+            private static final int BINDER_TYPE_HANDLE = 0x73682a85;
+            private static final int PAYLOAD_DATA_LENGTH = 54;
+
+            {
+                mContextBinder = Parcel.obtain();
+                mContextBinder.writeInt(BINDER_TYPE_HANDLE);
+                for (int i = 0; i < 20; i++) {
+                    mContextBinder.writeInt(0);
+                }
+                mContextBinder.setDataPosition(0);
+                mContextBinder.readStrongBinder();
+                mContextBinderSize = mContextBinder.dataPosition();
+            }
+
+            private String fillString(int length) {
+                return new String(new char[length]).replace('\0', 'A');
+            }
+
+
+            private String stringForInts(int... values) {
+                Parcel p = Parcel.obtain();
+                p.writeInt(2 * values.length);
+                for (int value : values) {
+                    p.writeInt(value);
+                }
+                p.writeInt(0);
+                p.setDataPosition(0);
+                String s = p.readString();
+                p.recycle();
+                return s;
+            }
+
+            private void writeContextBinder(Parcel parcel) {
+                parcel.appendFrom(mContextBinder, 0, mContextBinderSize);
+            }
+
+            @Override
+            public Bundle make(Bundle preReSerialize, Bundle postReSerialize) throws Exception {
+                // Find key that has hash below everything else
+                Random random = new Random(1234);
+                int minHash = 0;
+                for (String s : preReSerialize.keySet()) {
+                    minHash = Math.min(minHash, s.hashCode());
+                }
+                for (String s : postReSerialize.keySet()) {
+                    minHash = Math.min(minHash, s.hashCode());
+                }
+
+                String key, key2;
+                int keyHash, key2Hash;
+
+                do {
+                    key = randomString(random);
+                    keyHash = key.hashCode();
+                } while (keyHash >= minHash);
+
+                do {
+                    key2 = randomString(random);
+                    key2Hash = key2.hashCode();
+                } while (key2Hash >= minHash || keyHash == key2Hash);
+
+                if (keyHash > key2Hash) {
+                    String tmp = key;
+                    key = key2;
+                    key2 = tmp;
+                }
+
+                // Pad bundles
+                padBundle(postReSerialize, preReSerialize.size(), minHash, random);
+                padBundle(preReSerialize, postReSerialize.size(), minHash, random);
+
+                // Write bundle
+                Parcel parcel = Parcel.obtain();
+
+                int sizePosition = parcel.dataPosition();
+                parcel.writeInt(0);
+                parcel.writeInt(BUNDLE_MAGIC);
+                int startPosition = parcel.dataPosition();
+                parcel.writeInt(preReSerialize.size() + 2);
+
+                parcel.writeString(key);
+                parcel.writeInt(VAL_PARCELABLEARRAY);
+                parcel.writeInt(LENGTH_PARCELABLEARRAY);
+                parcel.writeString("android.os.ExternalVibration");
+                parcel.writeInt(0);
+                parcel.writeString(null);
+                parcel.writeInt(0);
+                parcel.writeInt(0);
+                parcel.writeInt(0);
+                parcel.writeInt(0);
+                writeContextBinder(parcel);
+                writeContextBinder(parcel);
+
+                parcel.writeString(null);
+                parcel.writeString(null);
+                parcel.writeString(null);
+
+                // Payload
+                parcel.writeString(key2);
+                parcel.writeInt(VAL_OBJECTARRAY);
+                parcel.writeInt(2);
+                parcel.writeInt(VAL_STRING);
+                parcel.writeString(
+                        fillString(PAYLOAD_DATA_LENGTH) + stringForInts(VAL_INTARRAY, 5));
+                parcel.writeInt(VAL_BUNDLE);
+                parcel.writeBundle(postReSerialize);
+
+                // Data from preReSerialize bundle
+                writeBundleSkippingHeaders(parcel, preReSerialize);
+
+                // Fix up bundle size
+                int bundleDataSize = parcel.dataPosition() - startPosition;
+                parcel.setDataPosition(sizePosition);
+                parcel.writeInt(bundleDataSize);
+
+                parcel.setDataPosition(0);
+                Bundle bundle = parcel.readBundle();
+                parcel.recycle();
+                return bundle;
+            }
+        };
+
+        testAmbiguator(ambiguator);
+    }
+
     /*
      * b/71992105
      */
