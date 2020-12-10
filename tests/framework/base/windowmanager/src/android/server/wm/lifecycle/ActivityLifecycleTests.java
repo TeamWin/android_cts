@@ -17,6 +17,7 @@
 package android.server.wm.lifecycle;
 
 import static android.app.Instrumentation.ActivityMonitor;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -51,6 +52,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -487,9 +489,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
             return;
         }
 
-        final Activity becomingVisibleActivity = launchActivityAndWait(FirstActivity.class);
-        final Activity translucentActivity = launchActivityAndWait(TranslucentActivity.class);
-        final Activity topOpaqueActivity = launchActivityAndWait(SecondActivity.class);
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+
+        final Activity becomingVisibleActivity =
+                new Launcher(FirstActivity.class).setOptions(options).launch();
+        final Activity translucentActivity =
+                new Launcher(TranslucentActivity.class).setOptions(options).launch();
+        final Activity topOpaqueActivity =
+                new Launcher(SecondActivity.class).setOptions(options).launch();
 
         waitAndAssertActivityStates(
                 state(becomingVisibleActivity, ON_STOP),
