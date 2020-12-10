@@ -736,7 +736,12 @@ public class ToastTest {
 
         mActivityRule.runOnUiThread(mToast::show);
 
-        assertNotShowCustomToast(view);
+        // The custom toast should not be blocked in multi-window mode. Otherwise, it should be.
+        if (mActivityRule.getActivity().isInMultiWindowMode()) {
+            assertShowCustomToast(view);
+        } else {
+            assertNotShowCustomToast(view);
+        }
         mContext.sendBroadcast(new Intent(ACTION_TRANSLUCENT_ACTIVITY_FINISH));
     }
 

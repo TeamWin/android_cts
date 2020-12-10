@@ -1707,6 +1707,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_thenTapBack() throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
                 ViewActionActivity.ActivityCustomAction.NORMAL_ACTIVITY);
@@ -1718,6 +1719,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_thenTapBack() throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
                 ViewActionActivity.ActivityCustomAction.NORMAL_ACTIVITY);
@@ -1729,6 +1731,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_forwardAnotherActivityThenTapBack()
             throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
@@ -1741,6 +1744,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_forwardAnotherActivityThenTapBack()
             throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
@@ -1753,6 +1757,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnCustomDescription_tapBackWithoutFinish() throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.CUSTOM,
                 ViewActionActivity.ActivityCustomAction.TAP_BACK_WITHOUT_FINISH);
@@ -1764,6 +1769,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
      * the Save UI should have been restored.
      */
     @Test
+    @AppModeFull(reason = "No real use case for instant mode af service")
     public void testTapUrlSpanOnSuccinctDescription_tapBackWithoutFinish() throws Exception {
         saveUiRestoredAfterTappingSpanTest(DescriptionType.SUCCINCT,
                 ViewActionActivity.ActivityCustomAction.TAP_BACK_WITHOUT_FINISH);

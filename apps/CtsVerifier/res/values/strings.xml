@@ -1213,7 +1213,7 @@
       If your device supports type B (for example, because of a type B only UICC), select "Type B" from the drop-down box above. Note that all tests must be completed in the same mode (either "Type A" or "Type B").</string>
     <string name="nfc_offhost_please_wait">Please wait</string>
     <string name="nfc_offhost_setting_up">Setting up card emulation services...</string>
-    <string name="nfc_offhost_uicc_transaction_event_emulator_help">Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
+    <string name="nfc_offhost_uicc_transaction_event_emulator_help"> This is an optional test for Android version beofre S. This is okay to set this test to passed and continue. Switch application to background before starting tests. Successful transaction event will switch application to foreground with transaction event data.</string>
 
     <!-- Strings for Sensor Test Activities -->
     <string name="snsr_device_admin_receiver">Sensor Tests Device Admin Receiver</string>
@@ -2197,6 +2197,9 @@
         and disabled, and that once enabled the service is able to receive notifications and
         dismiss them.
     </string>
+    <string name="nls_anr">This test checks that notifications are not sent with content that is
+        too long. If this test causes the test app to ANR, the test has failed.
+    </string>
     <string name="msg_extras_preserved">Check that Message extras Bundle was preserved.</string>
     <string name="conversation_section_ordering">If this device supports conversation notifications,
         and groups them into a separate section from alerting and silent non-conversation
@@ -2223,10 +2226,6 @@
     <string name="qs_media_player_actions">Fully expand Quick Settings and look at the media player
         controls for the CTS Verifier app.
         Check that icons appear for rewind, previous track, pause, next track and fast forward.
-    </string>
-    <string name="qs_media_player_compact_actions">Open Notification Shade and look at the media player
-        controls for the CTS Verifier app.
-        Check that icons appear for only previous track, pause and next track.
     </string>
     <string name="qs_media_player_output_switcher">Open Quick Settings and look at the media player
         controls for the CTS Verifier app. Click on the button showing that the media is playing
@@ -4676,21 +4675,8 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- HDR Capabilities test -->
     <string name="tv_hdr_capabilities_test">HDR Capabilities Test</string>
-    <string name="tv_hdr_capabilities_test_step_hdr_display">HDR Display</string>
-    <string name="tv_hdr_capabilities_test_step_no_display">No Display</string>
-    <string name="tv_hdr_capabilities_test_step_non_hdr_display">Non HDR Display</string>
     <string name="tv_hdr_capabilities_test_info">This test checks if
         Display.getHdrCapabilities correctly reports the HDR capabilities of the display.
-    </string>
-    <string name="tv_hdr_connect_no_hdr_display">Connect a non-HDR display and then
-        press the "%s" button, below.
-    </string>
-    <string name="tv_hdr_connect_hdr_display">Connect an HDR display and press
-        the "%s" button, below.
-    </string>
-    <string name="tv_hdr_disconnect_display">Press the "%1$s" button
-        and disconnect the display within %2$d seconds. Wait at least %3$d seconds and then
-        reconnect the display.
     </string>
     <string name="tv_panel_hdr_types_reported_are_supported">
         The supported HDR types are: %s\nAre all of them supported by the hardware?
@@ -4699,31 +4685,6 @@ You should be prompted to select credentials; choose the ones you just installed
         Are there other HDR types which are supported by the hardware, but are not listed above?
     </string>
 
-    <!-- Display Modes Test -->
-    <string name="tv_display_modes_test">Display Modes Test</string>
-    <string name="tv_display_modes_test_info">This test checks if Display.getSupportedModes()
-        and Display.getMode() are correctly reporting the supported screen modes.
-    </string>
-    <string name="tv_display_modes_disconnect_display">
-        Press the "%1$s" button and disconnect the display within %2$d seconds. Wait at least %3$d
-        seconds and then reconnect the display.
-    </string>
-    <string name="tv_display_modes_test_step_no_display">No Display</string>
-    <string name="tv_display_modes_test_step_1080p">1080p Display</string>
-    <string name="tv_display_modes_test_step_2160p">2160p Display</string>
-    <string name="tv_display_modes_start_test_button">Start Test</string>
-    <string name="tv_display_modes_connect_2160p_display">
-        Connect a 2160p display and press the "%s" button, below.
-    </string>
-    <string name="tv_display_modes_connect_1080p_display">
-        Connect a 1080p display and press the "%s" button, below.
-    </string>
-    <string name="tv_panel_display_modes_reported_are_supported">
-        The supported display modes are:\n%s\n\nAre all of the above display modes supported by the hardware?
-    </string>
-    <string name="tv_panel_display_modes_supported_are_reported">
-        Are there other modes which are supported by the hardware, but are not listed above?
-    </string>
     <string name="overlay_view_text">Overlay View Dummy Text</string>
     <string name="custom_rating">Example of input app specific custom rating.</string>
 

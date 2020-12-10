@@ -16,6 +16,8 @@
 
 package android.deviceconfig.cts;
 
+import androidx.test.InstrumentationRegistry;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -23,17 +25,13 @@ import android.provider.DeviceConfig;
 import android.provider.DeviceConfig.OnPropertiesChangedListener;
 import android.provider.DeviceConfig.Properties;
 
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
-
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.concurrent.Executor;
 
-@RunWith(AndroidJUnit4.class)
-public final class DeviceConfigApiPermissionTests {
+public final class DeviceConfigApiPermissionTests extends AbstractDeviceConfigTestCase {
     private static final String NAMESPACE = "namespace";
     private static final String NAMESPACE2 = "namespace2";
     private static final String PUBLIC_NAMESPACE = "textclassifier";
@@ -41,16 +39,10 @@ public final class DeviceConfigApiPermissionTests {
     private static final String KEY2 = "key2";
     private static final String VALUE = "value";
 
-    private static final String WRITE_DEVICE_CONFIG_PERMISSION =
-            "android.permission.WRITE_DEVICE_CONFIG";
-
-    private static final String READ_DEVICE_CONFIG_PERMISSION =
-            "android.permission.READ_DEVICE_CONFIG";
-
-    private static final Executor EXECUTOR = InstrumentationRegistry.getContext().getMainExecutor();
-
     @After
     public void dropShellPermissionIdentityAfterTest() {
+        if (!isSupported()) return;
+
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

@@ -58,7 +58,7 @@ public class PreferredActivitiesTest extends BaseDynamicMimeTest {
 
     private static final BySelector BUTTON_ALWAYS = By.res("android:id/button_always");
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30L);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(60L);
 
     private TestStrategy mTest;
 

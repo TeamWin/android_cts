@@ -80,6 +80,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
 
     private boolean mIsAutomotive;
     private boolean mHasHifiSensors;
+    private boolean mHasProximitySensor;
     private boolean mVrModeHighPerformance;
     private SensorManager mSensorManager;
 
@@ -89,6 +90,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
         mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
         mIsAutomotive = pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
         mHasHifiSensors = pm.hasSystemFeature(PackageManager.FEATURE_HIFI_SENSORS);
+        mHasProximitySensor = pm.hasSystemFeature(PackageManager.FEATURE_SENSOR_PROXIMITY);
         mVrModeHighPerformance = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
@@ -215,7 +217,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
     }
 
     public void testProximityFifoLength() throws Throwable {
-        if (!mHasHifiSensors) return;
+        if (!mHasHifiSensors || !mHasProximitySensor) return;
         checkMinFifoLength(Sensor.TYPE_PROXIMITY, PROXIMITY_SENSOR_MIN_FIFO_LENGTH);
     }
 

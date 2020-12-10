@@ -66,8 +66,8 @@ public class ScanningSettingsTest extends AndroidTestCase {
     protected void setUp() {
         // Can't use assumeTrue / assumeFalse because this is not a junit test, and so doesn't
         // support using these keywords to trigger assumption failure and skip test.
-        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
-            // TV and auto do not support the setting options of WIFI scanning and Bluetooth
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
+            // TV, auto, and watch do not support the setting options of WIFI scanning and Bluetooth
             // scanning
             return;
         }
@@ -83,7 +83,7 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.2/C-2-1")
     public void testWifiScanningSettings() throws Exception {
-        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
             return;
         }
         launchScanningSettings();
@@ -115,7 +115,7 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
     @CddTest(requirement = "7.4.3/C-4-1")
     public void testBleScanningSettings() throws PackageManager.NameNotFoundException {
-        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
             return;
         }
         launchScanningSettings();
