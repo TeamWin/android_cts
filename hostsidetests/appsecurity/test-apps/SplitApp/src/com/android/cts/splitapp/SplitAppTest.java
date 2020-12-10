@@ -16,6 +16,12 @@
 
 package com.android.cts.splitapp;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
+
 import static org.xmlpull.v1.XmlPullParser.END_DOCUMENT;
 import static org.xmlpull.v1.XmlPullParser.START_TAG;
 
@@ -40,13 +46,15 @@ import android.os.ConditionVariable;
 import android.os.Environment;
 import android.system.Os;
 import android.system.StructStat;
-import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -63,7 +71,8 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
 
-public class SplitAppTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class SplitAppTest {
     private static final String TAG = "SplitAppTest";
     private static final String PKG = "com.android.cts.splitapp";
 
@@ -72,9 +81,11 @@ public class SplitAppTest extends AndroidTestCase {
     public static boolean sFeatureTouched = false;
     public static String sFeatureValue = null;
 
+    @Test
     public void testNothing() throws Exception {
     }
 
+    @Test
     public void testSingleBase() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
@@ -131,6 +142,7 @@ public class SplitAppTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDensitySingle() throws Exception {
         final Resources r = getContext().getResources();
 
@@ -143,6 +155,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0xff7e00ff, getDrawableColor(d));
     }
 
+    @Test
     public void testDensityAll() throws Exception {
         final Resources r = getContext().getResources();
 
@@ -164,6 +177,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0xffff0000, getDrawableColor(r.getDrawable(R.drawable.image)));
     }
 
+    @Test
     public void testDensityBest1() throws Exception {
         final Resources r = getContext().getResources();
 
@@ -172,6 +186,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0xff7e00ff, getDrawableColor(r.getDrawable(R.drawable.image)));
     }
 
+    @Test
     public void testDensityBest2() throws Exception {
         final Resources r = getContext().getResources();
 
@@ -180,6 +195,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0xffff0000, getDrawableColor(r.getDrawable(R.drawable.image)));
     }
 
+    @Test
     public void testApi() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
@@ -196,6 +212,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals("com.android.cts.splitapp.MyReceiver", result.get(0).activityInfo.name);
     }
 
+    @Test
     public void testLocale() throws Exception {
         final Resources r = getContext().getResources();
 
@@ -212,6 +229,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals("pourpre", r.getString(R.string.my_string2));
     }
 
+    @Test
     public void testNative() throws Exception {
         Log.d(TAG, "testNative() thinks it's using ABI " + Native.arch());
 
@@ -219,6 +237,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(11642, Native.add(4933, 6709));
     }
 
+    @Test
     public void testFeatureBase() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
@@ -326,6 +345,7 @@ public class SplitAppTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testBaseInstalled() throws Exception {
         final ConditionVariable cv = new ConditionVariable();
         final BroadcastReceiver r = new BroadcastReceiver() {
@@ -351,6 +371,7 @@ public class SplitAppTest extends AndroidTestCase {
      * Prior to running this test, the activity must be started. That is currently
      * done in {@link #testBaseInstalled()}.
      */
+    @Test
     public void testFeatureInstalled() throws Exception {
         final ConditionVariable cv = new ConditionVariable();
         final BroadcastReceiver r = new BroadcastReceiver() {
@@ -370,6 +391,7 @@ public class SplitAppTest extends AndroidTestCase {
         getContext().unregisterReceiver(r);
     }
 
+    @Test
     public void testFeatureApi() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
@@ -400,6 +422,7 @@ public class SplitAppTest extends AndroidTestCase {
      * Write app data in a number of locations that expect to remain intact over
      * long periods of time, such as across app moves.
      */
+    @Test
     public void testDataWrite() throws Exception {
         final String token = String.valueOf(android.os.Process.myUid());
         writeString(getContext().getFileStreamPath("my_int"), token);
@@ -418,6 +441,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify that data written by {@link #testDataWrite()} is still intact.
      */
+    @Test
     public void testDataRead() throws Exception {
         final String token = String.valueOf(android.os.Process.myUid());
         assertEquals(token, readString(getContext().getFileStreamPath("my_int")));
@@ -445,6 +469,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify that app is installed on internal storage.
      */
+    @Test
     public void testDataInternal() throws Exception {
         final StructStat internal = Os.stat(Environment.getDataDirectory().getAbsolutePath());
         final StructStat actual = Os.stat(getContext().getFilesDir().getAbsolutePath());
@@ -454,17 +479,20 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify that app is not installed on internal storage.
      */
+    @Test
     public void testDataNotInternal() throws Exception {
         final StructStat internal = Os.stat(Environment.getDataDirectory().getAbsolutePath());
         final StructStat actual = Os.stat(getContext().getFilesDir().getAbsolutePath());
         MoreAsserts.assertNotEqual(internal.st_dev, actual.st_dev);
     }
 
+    @Test
     public void testPrimaryDataWrite() throws Exception {
         final String token = String.valueOf(android.os.Process.myUid());
         writeString(new File(getContext().getExternalFilesDir(null), "my_ext"), token);
     }
 
+    @Test
     public void testPrimaryDataRead() throws Exception {
         final String token = String.valueOf(android.os.Process.myUid());
         assertEquals(token, readString(new File(getContext().getExternalFilesDir(null), "my_ext")));
@@ -473,6 +501,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify shared storage behavior when on internal storage.
      */
+    @Test
     public void testPrimaryInternal() throws Exception {
         assertTrue("emulated", Environment.isExternalStorageEmulated());
         assertFalse("removable", Environment.isExternalStorageRemovable());
@@ -482,6 +511,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify shared storage behavior when on physical storage.
      */
+    @Test
     public void testPrimaryPhysical() throws Exception {
         assertFalse("emulated", Environment.isExternalStorageEmulated());
         assertTrue("removable", Environment.isExternalStorageRemovable());
@@ -491,6 +521,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify shared storage behavior when on adopted storage.
      */
+    @Test
     public void testPrimaryAdopted() throws Exception {
         assertTrue("emulated", Environment.isExternalStorageEmulated());
         assertTrue("removable", Environment.isExternalStorageRemovable());
@@ -500,6 +531,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify that shared storage is unmounted.
      */
+    @Test
     public void testPrimaryUnmounted() throws Exception {
         MoreAsserts.assertNotEqual(Environment.MEDIA_MOUNTED,
                 Environment.getExternalStorageState());
@@ -508,6 +540,7 @@ public class SplitAppTest extends AndroidTestCase {
     /**
      * Verify that shared storage lives on same volume as app.
      */
+    @Test
     public void testPrimaryOnSameVolume() throws Exception {
         final File current = getContext().getFilesDir();
         final File primary = Environment.getExternalStorageDirectory();
@@ -521,16 +554,19 @@ public class SplitAppTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCodeCacheWrite() throws Exception {
         assertTrue(new File(getContext().getFilesDir(), "normal.raw").createNewFile());
         assertTrue(new File(getContext().getCodeCacheDir(), "cache.raw").createNewFile());
     }
 
+    @Test
     public void testCodeCacheRead() throws Exception {
         assertTrue(new File(getContext().getFilesDir(), "normal.raw").exists());
         assertFalse(new File(getContext().getCodeCacheDir(), "cache.raw").exists());
     }
 
+    @Test
     public void testRevision0_0() throws Exception {
         final PackageInfo info = getContext().getPackageManager()
                 .getPackageInfo(getContext().getPackageName(), 0);
@@ -539,6 +575,7 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0, info.splitRevisionCodes[0]);
     }
 
+    @Test
     public void testRevision12_0() throws Exception {
         final PackageInfo info = getContext().getPackageManager()
                 .getPackageInfo(getContext().getPackageName(), 0);
@@ -547,12 +584,17 @@ public class SplitAppTest extends AndroidTestCase {
         assertEquals(0, info.splitRevisionCodes[0]);
     }
 
+    @Test
     public void testRevision0_12() throws Exception {
         final PackageInfo info = getContext().getPackageManager()
                 .getPackageInfo(getContext().getPackageName(), 0);
         assertEquals(0, info.baseRevisionCode);
         assertEquals(1, info.splitRevisionCodes.length);
         assertEquals(12, info.splitRevisionCodes[0]);
+    }
+
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
 
     private static void updateDpi(Resources r, int densityDpi) {
