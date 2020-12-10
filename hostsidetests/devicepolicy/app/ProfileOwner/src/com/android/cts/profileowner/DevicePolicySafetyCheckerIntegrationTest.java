@@ -31,6 +31,6 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseProfileO
      * Tests that all safety-aware operations are properly implemented.
      */
     public void testAllOperations() {
-        mTester.testAllOperations(mDevicePolicyManager);
+        mTester.testAllOperations(mDevicePolicyManager, getWho());
     }
 }
