@@ -3251,9 +3251,9 @@ public class TelephonyManagerTest {
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(bandwidth != null);
             assertTrue(bandwidth.getPrimaryDownlinkCapacityKbps()
-                            != CarrierBandwidth.INVALID);
+                    != CarrierBandwidth.INVALID);
             assertTrue(bandwidth.getPrimaryUplinkCapacityKbps()
-                            != CarrierBandwidth.INVALID);
+                    != CarrierBandwidth.INVALID);
         }
     }
 
@@ -3599,8 +3599,8 @@ public class TelephonyManagerTest {
                                         .setDataThrottlingAction(DataThrottlingRequest
                                                 .DATA_THROTTLING_ACTION_THROTTLE_SECONDARY_CARRIER)
                                         .setCompletionDurationMillis(arbitraryCompletionWindowSecs)
-                                .build())
-                        .build()));
+                                        .build())
+                                .build()));
         // Only verify the result for supported devices on IRadio 1.6+
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertEquals(thermalMitigationResult,
@@ -3663,11 +3663,11 @@ public class TelephonyManagerTest {
                                     .setDataThrottlingRequest(new DataThrottlingRequest.Builder()
                                             .setDataThrottlingAction(
                                                     DataThrottlingRequest
-                                                    .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
+                                                            .DATA_THROTTLING_ACTION_THROTTLE_PRIMARY_CARRIER
                                             )
                                             .setCompletionDurationMillis(-1)
                                             .build())
-                            .build()));
+                                    .build()));
         } catch (IllegalArgumentException e) {
         }
 
@@ -3685,9 +3685,18 @@ public class TelephonyManagerTest {
                                             )
                                             .setCompletionDurationMillis(-1)
                                             .build())
-                            .build()));
+                                    .build()));
         } catch (IllegalArgumentException e) {
         }
+    }
+
+    @Test
+    public void testIsRadioInterfaceCapabilitySupported() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported("empty"));
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(null));
+        assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(""));
     }
 
     /**
