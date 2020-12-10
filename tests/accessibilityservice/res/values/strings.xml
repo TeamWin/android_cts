@@ -194,4 +194,6 @@
     <!-- String title of accessibility embedded hierarchy test activity -->
     <string name="accessibility_embedded_hierarchy_test_activity">Accessibility embedded hierarchy test</string>
 
+    <string name="stub_focus_indicator_service_description">com.android.accessibilityservice.cts.StubFocusIndicatorService</string>
+
 </resources>
