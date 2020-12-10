@@ -200,7 +200,7 @@ public class PerformanceTest {
 
                         // Blocking stop preview
                         startTimeMs = SystemClock.elapsedRealtime();
-                        blockingStopPreview();
+                        blockingStopRepeating();
                         stopPreviewTimes[i] = SystemClock.elapsedRealtime() - startTimeMs;
                     }
                     finally {
@@ -433,7 +433,7 @@ public class PerformanceTest {
                     CameraTestUtils.waitForNumResults(previewResultListener, NUM_RESULTS_WAIT,
                             WAIT_FOR_RESULT_TIMEOUT_MS);
 
-                    stopPreviewAndDrain();
+                    blockingStopRepeating();
 
                     CameraTestUtils.closeImageReaders(readers);
                     readers = null;
@@ -655,7 +655,7 @@ public class PerformanceTest {
                     CameraTestUtils.waitForNumResults(previewResultListener, NUM_RESULTS_WAIT,
                             WAIT_FOR_RESULT_TIMEOUT_MS);
 
-                    stopPreview();
+                    stopRepeating();
                 }
 
                 for (int i = 0; i < getResultTimes.length; i++) {
@@ -929,7 +929,7 @@ public class PerformanceTest {
             maxCaptureGapsMs[i] = maxTimestampGapMs;
         }
 
-        stopZslStreaming();
+        blockingStopRepeating();
 
         String reprocessType = "YUV reprocessing";
         if (reprocessInputFormat == ImageFormat.PRIVATE) {
@@ -1026,7 +1026,7 @@ public class PerformanceTest {
             }
         }
 
-        stopZslStreaming();
+        blockingStopRepeating();
 
         String reprocessType = "YUV reprocessing";
         if (reprocessInputFormat == ImageFormat.PRIVATE) {
@@ -1074,12 +1074,6 @@ public class PerformanceTest {
         zslBuilder.addTarget(mCameraZslReader.getSurface());
         mTestRule.getCameraSession().setRepeatingRequest(
                 zslBuilder.build(), mZslResultListener, mTestRule.getHandler());
-    }
-
-    private void stopZslStreaming() throws Exception {
-        mTestRule.getCameraSession().stopRepeating();
-        mTestRule.getCameraSessionListener().getStateWaiter().waitForState(
-                BlockingSessionCallback.SESSION_READY, CameraTestUtils.CAMERA_IDLE_TIMEOUT_MS);
     }
 
     /**
@@ -1154,10 +1148,14 @@ public class PerformanceTest {
                 /*listener*/null, /*handler*/null);
     }
 
-    private void blockingStopPreview() throws Exception {
-        stopPreview();
+    /**
+     * Stop repeating requests for current camera and waiting for it to go back to idle, resulting
+     * in an idle device.
+     */
+    private void blockingStopRepeating() throws Exception {
+        stopRepeating();
         mTestRule.getCameraSessionListener().getStateWaiter().waitForState(
-                BlockingSessionCallback.SESSION_CLOSED, CameraTestUtils.SESSION_CLOSE_TIMEOUT_MS);
+                BlockingSessionCallback.SESSION_READY, CameraTestUtils.CAMERA_IDLE_TIMEOUT_MS);
     }
 
     private void blockingStartPreview(String id, CaptureCallback listener,
@@ -1381,29 +1379,14 @@ public class PerformanceTest {
     }
 
     /**
-     * Stop preview for current camera device by closing the session.
+     * Stop the repeating requests of current camera.
      * Does _not_ wait for the device to go idle
      */
-    private void stopPreview() throws Exception {
+    private void stopRepeating() throws Exception {
         // Stop repeat, wait for captures to complete, and disconnect from surfaces
         if (mTestRule.getCameraSession() != null) {
             if (VERBOSE) Log.v(TAG, "Stopping preview");
-            mTestRule.getCameraSession().close();
-        }
-    }
-
-    /**
-     * Stop preview for current camera device by closing the session and waiting for it to close,
-     * resulting in an idle device.
-     */
-    private void stopPreviewAndDrain() throws Exception {
-        // Stop repeat, wait for captures to complete, and disconnect from surfaces
-        if (mTestRule.getCameraSession() != null) {
-            if (VERBOSE) Log.v(TAG, "Stopping preview and waiting for idle");
-            mTestRule.getCameraSession().close();
-            mTestRule.getCameraSessionListener().getStateWaiter().waitForState(
-                    BlockingSessionCallback.SESSION_CLOSED,
-                    /*timeoutMs*/WAIT_FOR_RESULT_TIMEOUT_MS);
+            mTestRule.getCameraSession().stopRepeating();
         }
     }
 
