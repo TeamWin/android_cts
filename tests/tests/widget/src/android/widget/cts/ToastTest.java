@@ -158,9 +158,22 @@ public class ToastTest {
         PollingCheck.waitFor(TIME_OUT, () -> null != view.getParent());
     }
 
+    private static void assertCustomToastShown(CustomToastInfo customToastInfo) {
+        PollingCheck.waitFor(TIME_OUT, customToastInfo::isShowing);
+    }
+
+    private static void assertCustomToastHidden(CustomToastInfo customToastInfo) {
+        PollingCheck.waitFor(TIME_OUT, () -> !customToastInfo.isShowing());
+    }
+
     private static void assertCustomToastShownAndHidden(final View view) {
         assertCustomToastShown(view);
         PollingCheck.waitFor(TIME_OUT, () -> null == view.getParent());
+    }
+
+    private static void assertCustomToastShownAndHidden(CustomToastInfo customToastInfo) {
+        assertCustomToastShown(customToastInfo);
+        assertCustomToastHidden(customToastInfo);
     }
 
     private void assertTextToastShownAndHidden() {
@@ -177,6 +190,14 @@ public class ToastTest {
         // sleep a while and then make sure do not show toast
         SystemClock.sleep(TIME_FOR_UI_OPERATION);
         assertNull(view.getParent());
+    }
+
+    private static void assertCustomToastNotShown(CustomToastInfo customToastInfo) {
+        assertThat(customToastInfo.isShowing()).isFalse();
+
+        // sleep a while and then make sure it's still not shown
+        SystemClock.sleep(TIME_FOR_UI_OPERATION);
+        assertThat(customToastInfo.isShowing()).isFalse();
     }
 
     private void assertTextToastNotShown(TextToastInfo textToastInfo) {
@@ -923,7 +944,7 @@ public class ToastTest {
     public void testPackageCantPostMoreThanMaxToastsQuickly() throws Throwable {
         List<TextToastInfo> toasts =
                 createTextToasts(MAX_PACKAGE_TOASTS_LIMIT + 1, "Text", Toast.LENGTH_SHORT);
-        showTextToasts(toasts);
+        showToasts(toasts);
 
         assertTextToastsShownAndHidden(toasts.subList(0, MAX_PACKAGE_TOASTS_LIMIT));
         assertTextToastNotShown(toasts.get(MAX_PACKAGE_TOASTS_LIMIT));
@@ -943,7 +964,7 @@ public class ToastTest {
             List<TextToastInfo> toasts =
                     createTextToasts(currentToastNum + 1, "Text", Toast.LENGTH_SHORT);
             long startTime = SystemClock.elapsedRealtime();
-            showTextToasts(toasts);
+            showToasts(toasts);
 
             assertTextToastsShownAndHidden(toasts.subList(0, currentToastNum));
             assertTextToastNotShown(toasts.get(currentToastNum));
@@ -961,6 +982,20 @@ public class ToastTest {
         }
     }
 
+    @Test
+    public void testCustomToastPostedWhileInForeground_notShownWhenAppGoesToBackground()
+            throws Throwable {
+        List<CustomToastInfo> toasts = createCustomToasts(2, "Custom", Toast.LENGTH_SHORT);
+        showToasts(toasts);
+        assertCustomToastShown(toasts.get(0));
+
+        // move to background
+        mActivityRule.finishActivity();
+
+        assertCustomToastHidden(toasts.get(0));
+        assertCustomToastNotShown(toasts.get(1));
+    }
+
     /** Create given number of text toasts with the same given text and length. */
     private List<TextToastInfo> createTextToasts(int num, String text, int length)
             throws Throwable {
@@ -974,9 +1009,22 @@ public class ToastTest {
         return toasts;
     }
 
-    private void showTextToasts(List<TextToastInfo> toasts) throws Throwable {
+    /** Create given number of custom toasts with the same given text and length. */
+    private List<CustomToastInfo> createCustomToasts(int num, String text, int length)
+            throws Throwable {
+        List<CustomToastInfo> toasts = new ArrayList<>();
         mActivityRule.runOnUiThread(() -> {
-            for (TextToastInfo t : toasts) {
+            toasts.addAll(Stream
+                    .generate(() -> CustomToastInfo.create(mContext, text, length))
+                    .limit(num + 1)
+                    .collect(toList()));
+        });
+        return toasts;
+    }
+
+    private void showToasts(List<? extends ToastInfo> toasts) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            for (ToastInfo t : toasts) {
                 t.getToast().show();
             }
         });
@@ -1071,7 +1119,7 @@ public class ToastTest {
         }
     }
 
-    private static class TextToastInfo {
+    private static class TextToastInfo implements ToastInfo {
         private final Toast mToast;
         private final ConditionVariable mToastShown;
         private final ConditionVariable mToastHidden;
@@ -1093,7 +1141,8 @@ public class ToastTest {
             return new TextToastInfo(t, toastShown, toastHidden);
         }
 
-        Toast getToast() {
+        @Override
+        public Toast getToast() {
             return mToast;
         }
 
@@ -1104,5 +1153,35 @@ public class ToastTest {
         boolean blockOnToastHidden(long timeout) {
             return mToastHidden.block(timeout);
         }
+    }
+
+    private static class CustomToastInfo implements ToastInfo {
+        private final Toast mToast;
+
+        CustomToastInfo(Toast toast) {
+            mToast = toast;
+        }
+
+        static CustomToastInfo create(Context context, String text, int toastLength) {
+            Toast t = new Toast(context);
+            t.setDuration(toastLength);
+            TextView view = new TextView(context);
+            view.setText(text);
+            t.setView(view);
+            return new CustomToastInfo(t);
+        }
+
+        @Override
+        public Toast getToast() {
+            return mToast;
+        }
+
+        boolean isShowing() {
+            return mToast.getView().getParent() != null;
+        }
+    }
+
+    interface ToastInfo {
+        Toast getToast();
     }
 }
