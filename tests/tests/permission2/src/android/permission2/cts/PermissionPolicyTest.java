@@ -72,6 +72,9 @@ public class PermissionPolicyTest {
     private static final Date INPUT_CONSUMER_PATCH_DATE = parseDate("2020-12-05");
     private static final String INPUT_CONSUMER_PERMISSION = "android.permission.INPUT_CONSUMER";
 
+    private static final String READ_DREAM_SUPPRESSION_PERMISSION =
+            "android.permission.READ_DREAM_SUPPRESSION";
+
     private static final String LOG_TAG = "PermissionProtectionTest";
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
@@ -456,6 +459,8 @@ public class PermissionPolicyTest {
                 return parseDate(SECURITY_PATCH).before(MANAGE_COMPANION_DEVICES_PATCH_DATE);
             case INPUT_CONSUMER_PERMISSION:
                 return parseDate(SECURITY_PATCH).before(INPUT_CONSUMER_PATCH_DATE);
+            case READ_DREAM_SUPPRESSION_PERMISSION:
+                return true;
             default:
                 return false;
         }
