@@ -94,4 +94,29 @@ public abstract class EventLogs<E extends Event> {
         return poll(DEFAULT_POLL_TIMEOUT);
     }
 
+    /**
+     * Gets the earliest logged event matching the query which has not be returned by a previous
+     * call to {@link #next()} or {@link #poll()}, or blocks until a matching event is logged.
+     *
+     * <p>This will timeout after {@code timeout} and throw an {@link AssertionError} if no
+     * matching event is logged.
+     */
+    public E pollOrFail(Duration timeout) {
+        E event = poll(timeout);
+        if (event == null) {
+            throw new AssertionError("No event was found before timeout");
+        }
+        return event;
+    }
+
+    /**
+     * Gets the earliest logged event matching the query which has not be returned by a previous
+     * call to {@link #next()} or {@link #poll()}, or blocks until a matching event is logged.
+     *
+     * <p>This will timeout after {@link #DEFAULT_POLL_TIMEOUT} and throw an {@link AssertionError}
+     * if no matching event is logged.
+     */
+    public E pollOrFail() {
+        return pollOrFail(DEFAULT_POLL_TIMEOUT);
+    }
 }

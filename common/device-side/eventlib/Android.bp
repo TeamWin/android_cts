@@ -17,6 +17,12 @@ android_test {
     test_suites: [
         "general-tests",
     ],
-    static_libs: ["EventLib", "androidx.test.ext.junit", "ctstestrunner-axt", "truth-prebuilt"],
+    static_libs: [
+        "EventLib",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+        "testng" // for assertThrows
+    ],
     manifest: "src/test/AndroidManifest.xml",
 }
