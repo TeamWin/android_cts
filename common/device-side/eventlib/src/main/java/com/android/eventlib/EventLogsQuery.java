@@ -20,6 +20,10 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Function;
+
 /**
  * Interface to provide additional restrictions on an {@link Event} query.
  */
@@ -47,6 +51,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
 
     private final Class<E> mEventClass;
     private final String mPackageName;
+    private final Set<Function<E, Boolean>> filters = new HashSet<>();
 
     protected EventLogsQuery(Class<E> eventClass, String packageName) {
         if (eventClass == null || packageName == null) {
@@ -64,7 +69,6 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         return mPackageName;
     }
 
-    @Override
     protected Class<E> eventClass() {
         return mEventClass;
     }
@@ -76,4 +80,24 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
     protected EventQuerier<E> getQuerier() {
         return mQuerier;
     }
+
+    public F filter(Function<E, Boolean> filter) {
+        filters.add(filter);
+        return (F) this;
+    }
+
+    /**
+     * Returns true if {@code E} matches custom and default filters for this {@link Event} subclass.
+     */
+    protected final boolean filterAll(E event) {
+        for (Function<E, Boolean> filter : filters) {
+            if (!filter.apply(event)) {
+                return false;
+            }
+        }
+        return filter(event);
+    }
+
+    /** Returns true if {@code E} matches the custom filters for this {@link Event} subclass. */
+    protected abstract boolean filter(E event);
 }

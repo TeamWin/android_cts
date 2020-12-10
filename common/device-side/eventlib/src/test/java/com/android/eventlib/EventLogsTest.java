@@ -417,6 +417,121 @@ public class EventLogsTest {
         assertThat(eventLogs1.poll()).isEqualTo(eventLogs2.poll());
     }
 
+    @Test
+    public void get_obeysLambdaFilter() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG2);
+    }
+
+    @Test
+    public void poll_obeysLambdaFilter() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
+    public void next_obeysLambdaFilter() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void get_obeysMultipleLambdaFilters() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .setData(DATA_1)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.get();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+    }
+
+    @Test
+    public void poll_obeysMultipleLambdaFilters() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .setData(DATA_1)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.poll();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
+    public void next_obeysMultipleLambdaFilters() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .log();
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG2)
+                .setData(DATA_1)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.next();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.next()).isNull();
+    }
+
     private void scheduleCustomEventInOneSecond() {
         hasScheduledEvents = true;
         new Handler(Looper.getMainLooper()).postDelayed(() ->

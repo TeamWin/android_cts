@@ -14,6 +14,9 @@ android_test {
     srcs: [
         "src/test/java/**/*.java"
     ],
+    test_suites: [
+        "general-tests",
+    ],
     static_libs: ["EventLib", "androidx.test.ext.junit", "ctstestrunner-axt", "truth-prebuilt"],
     manifest: "src/test/AndroidManifest.xml",
 }

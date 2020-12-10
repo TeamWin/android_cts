@@ -28,12 +28,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Implementation of {@link EventQuerier} which queries data about the current package.
  */
-public class LocalEventQuerier<E extends Event> implements EventQuerier<E>, Events.EventListener {
-    private final EventLogs<E> mEventLogs;
+public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implements EventQuerier<E>, Events.EventListener {
+    private final EventLogsQuery<E, F> mEventLogsQuery;
     private final BlockingDeque<Event> mEvents;
 
-    LocalEventQuerier(EventLogs<E> eventLogs) {
-        mEventLogs = eventLogs;
+    LocalEventQuerier(EventLogsQuery<E, F> eventLogsQuery) {
+        mEventLogsQuery = eventLogsQuery;
         mEvents = new LinkedBlockingDeque<>(Events.EVENTS.getEvents());
         Events.EVENTS.registerEventListener(this);
     }
@@ -41,13 +41,13 @@ public class LocalEventQuerier<E extends Event> implements EventQuerier<E>, Even
     @Override
     public E get(Instant earliestLogTime) {
         for (Event event : Events.EVENTS.getEvents()) {
-            if (mEventLogs.eventClass().isInstance(event)) {
+            if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
                     continue;
                 }
 
                 E typedEvent = (E) event;
-                if (mEventLogs.filter(typedEvent)) {
+                if (mEventLogsQuery.filterAll(typedEvent)) {
                     return typedEvent;
                 }
             }
@@ -60,13 +60,13 @@ public class LocalEventQuerier<E extends Event> implements EventQuerier<E>, Even
         while (!mEvents.isEmpty()) {
             Event event = mEvents.removeFirst();
 
-            if (mEventLogs.eventClass().isInstance(event)) {
+            if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
                     continue;
                 }
 
                 E typedEvent = (E) event;
-                if (mEventLogs.filter(typedEvent)) {
+                if (mEventLogsQuery.filterAll(typedEvent)) {
                     return typedEvent;
                 }
             }
@@ -92,13 +92,13 @@ public class LocalEventQuerier<E extends Event> implements EventQuerier<E>, Even
                 return null;
             }
 
-            if (mEventLogs.eventClass().isInstance(event)) {
+            if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
                     continue;
                 }
 
                 E typedEvent = (E) event;
-                if (mEventLogs.filter(typedEvent)) {
+                if (mEventLogsQuery.filterAll(typedEvent)) {
                     return typedEvent;
                 }
             }
