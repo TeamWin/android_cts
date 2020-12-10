@@ -16,11 +16,27 @@
 
 package android.provider.cts.contacts;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.net.Uri;
+import android.os.OutcomeReceiver;
+import android.os.ParcelFileDescriptor;
 import android.provider.CallLog;
+import android.provider.cts.R;
 import android.test.InstrumentationTestCase;
+import android.util.Pair;
+
+import androidx.annotation.NonNull;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class CallLogTest extends InstrumentationTestCase {
 
@@ -73,6 +89,59 @@ public class CallLogTest extends InstrumentationTestCase {
                 CONTENT_RESOLVER_TIMEOUT_MS,
                 "getLastOutgoingCall did not return " + TEST_NUMBER + " as expected"
         );
+    }
+
+    public void testCallComposerImageStorage() throws Exception {
+        Context context = getInstrumentation().getContext();
+        byte[] expected = readResourceDrawable(context, R.drawable.testimage);
+
+        CompletableFuture<Pair<Uri, CallLog.CallComposerLoggingException>> resultFuture =
+                new CompletableFuture<>();
+        Pair<Uri, CallLog.CallComposerLoggingException> result;
+        try (InputStream inputStream =
+                     context.getResources().openRawResource(R.drawable.testimage)) {
+            CallLog.storeCallComposerPictureAsUser(context, android.os.Process.myUserHandle(),
+                    inputStream,
+                    Executors.newSingleThreadExecutor(),
+                    new OutcomeReceiver<Uri, CallLog.CallComposerLoggingException>() {
+                        @Override
+                        public void onResult(@NonNull Uri result) {
+                            resultFuture.complete(Pair.create(result, null));
+                        }
+
+                        @Override
+                        public void onError(CallLog.CallComposerLoggingException error) {
+                            resultFuture.complete(Pair.create(null, error));
+                        }
+                    });
+           result = resultFuture.get(CONTENT_RESOLVER_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+        if (result.second != null) {
+            fail("Got error " + result.second.getErrorCode() + " when storing image");
+        }
+        Uri imageLocation = result.first;
+
+        try (ParcelFileDescriptor pfd =
+                context.getContentResolver().openFileDescriptor(imageLocation, "r")) {
+            byte[] remoteBytes = readBytes(new FileInputStream(pfd.getFileDescriptor()));
+            assertArrayEquals(expected, remoteBytes);
+        }
+    }
+
+    private byte[] readResourceDrawable(Context context, int id) throws Exception {
+        InputStream inputStream = context.getResources().openRawResource(id);
+        return readBytes(inputStream);
+    }
+
+    private byte[] readBytes(InputStream inputStream) throws Exception {
+        byte[] buffer = new byte[1024];
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        int numRead;
+        do {
+            numRead = inputStream.read(buffer);
+            if (numRead > 0) output.write(buffer, 0, numRead);
+        } while (numRead > 0);
+        return output.toByteArray();
     }
 
     private void waitUntilConditionIsTrueOrTimeout(Condition condition, long timeout,
