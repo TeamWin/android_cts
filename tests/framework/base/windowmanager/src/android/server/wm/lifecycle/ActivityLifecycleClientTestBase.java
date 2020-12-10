@@ -70,6 +70,7 @@ import org.junit.Before;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -701,11 +702,30 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId());
+        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
 
         final Class<? extends Activity> activityClass = activity.getClass();
-        waitAndAssertActivityTransitions(activityClass,
-                LifecycleVerifier.getSplitScreenTransitionSequence(activityClass),
+
+        final List<LifecycleLog.ActivityCallback> expectedTransitions =
+                new ArrayList<LifecycleLog.ActivityCallback>(
+                        LifecycleVerifier.getSplitScreenTransitionSequence(activityClass));
+        final List<LifecycleLog.ActivityCallback> expectedTransitionForMinimizedDock =
+                LifecycleVerifier.appendMinimizedDockTransitionTrail(expectedTransitions);
+
+        final int displayWindowingMode =
+                getDisplayWindowingModeByActivity(getComponentName(activityClass));
+        if (displayWindowingMode != WINDOWING_MODE_FULLSCREEN) {
+            // For non-fullscreen display mode, there won't be a multi-window callback.
+            expectedTransitions.removeAll(Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+            expectedTransitionForMinimizedDock.removeAll(
+                    Collections.singleton(ON_MULTI_WINDOW_MODE_CHANGED));
+        }
+
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
+        LifecycleVerifier.assertSequenceMatchesOneOf(
+                activityClass,
+                getLifecycleLog(),
+                Arrays.asList(expectedTransitions, expectedTransitionForMinimizedDock),
                 "enterSplitScreen");
     }
 

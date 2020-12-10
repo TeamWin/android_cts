@@ -45,6 +45,7 @@
     <string name="test_category_jobscheduler">Job Scheduler</string>
     <string name="test_category_telecom">Telecom</string>
     <string name="test_category_telephony">Telephony</string>
+    <string name="test_category_tunnel">Tunnel Mode</string>
     <string name="test_category_tv">TV</string>
     <string name="test_category_instant_apps">Instant Apps</string>
     <string name="test_category_display_cutout">DisplayCutout</string>
@@ -128,6 +129,18 @@
     <string name="da_tapjacking_test_info">This test checks that an activity cannot tapjack the
         user by obscuring the device admin details while prompting the user to activate the admin.
     </string>
+    <string name="car_enable_garage_monitor">Enable Garage Mode Monitor</string>
+    <string name="car_garage_mode_test">Garage Mode Test</string>
+    <string name="car_garage_mode_test_desc">
+        This test verifies that Garage Mode runs at the end of a drive.\n\n
+        Optional: Disable Wi-Fi to minimize other activity during the test.\n\n
+        Touch "Enable Garage Mode Monitor" to launch the Garage Mode verifier.\n\n
+        Turn the vehicle off and exit the vehicle (or take the proprietary action that
+        initiates shut-down of the system).\n\n
+        Do not enter or disturb the vehicle for at least 15 minutes.\n\n
+        Enter the vehicle. Re-launch the CTS-Verifier app if it is not running.\n\n
+        If Garage Mode ran as required, the pass button will be enabled.</string>
+    <string name="car_wifi_settings">Go to Wi-Fi settings</string>
     <string name="car_dock_test">Car Dock Test</string>
     <string name="car_dock_test_desc">This test ensures that car mode opens the app associated with
         car dock when going into car mode.\n\n
@@ -1702,6 +1715,9 @@
     <string name="sv_no_data">No videos.</string>
     <string name="sv_failed_title">Test Failed</string>
     <string name="sv_failed_message">Unable to play stream.  See log for details.</string>
+
+    <!-- Strings for MediaCodecFlushActivity -->
+    <string name="media_codec_flush">Video codec flushing in Tunnel Mode</string>
 
     <!-- Strings for the Camera Bokeh mode test activity -->
     <string name="camera_bokeh_test">Camera Bokeh</string>

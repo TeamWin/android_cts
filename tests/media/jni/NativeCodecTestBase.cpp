@@ -141,6 +141,7 @@ void CodecAsyncHandler::clearQueues() {
 }
 
 void CodecAsyncHandler::setOutputFormat(AMediaFormat* format) {
+    std::unique_lock<std::mutex> lock{mMutex};
     assert(format != nullptr);
     if (mOutFormat) {
         AMediaFormat_delete(mOutFormat);
@@ -151,10 +152,12 @@ void CodecAsyncHandler::setOutputFormat(AMediaFormat* format) {
 }
 
 AMediaFormat* CodecAsyncHandler::getOutputFormat() {
+    std::unique_lock<std::mutex> lock{mMutex};
     return mOutFormat;
 }
 
 bool CodecAsyncHandler::hasOutputFormatChanged() {
+    std::unique_lock<std::mutex> lock{mMutex};
     return mSignalledOutFormatChanged;
 }
 

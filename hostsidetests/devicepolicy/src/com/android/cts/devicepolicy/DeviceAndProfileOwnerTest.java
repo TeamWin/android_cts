@@ -146,6 +146,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             = "com.android.cts.devicepolicy.meteredtestapp";
     private static final String METERED_DATA_APP_APK = "CtsMeteredDataTestApp.apk";
 
+    // For testing key pair grants since they are per-uid
+    private static final String SHARED_UID_APP1_APK = "SharedUidApp1.apk";
+    private static final String SHARED_UID_APP2_APK = "SharedUidApp2.apk";
+
     private static final String ENABLED_NOTIFICATION_POLICY_ACCESS_PACKAGES
             = "enabled_notification_policy_access_packages";
 
@@ -1588,6 +1592,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+
+        installAppAsUser(SHARED_UID_APP1_APK, mUserId);
+        installAppAsUser(SHARED_UID_APP2_APK, mUserId);
 
         executeDeviceTestClass(".KeyManagementTest");
     }

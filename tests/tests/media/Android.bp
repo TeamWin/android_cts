@@ -18,6 +18,10 @@ java_library {
         "src/android/media/cts/CodecImage.java",
         "src/android/media/cts/YUVImage.java",
         "src/android/media/cts/CodecUtils.java",
+        "src/android/media/cts/CodecState.java",
+        "src/android/media/cts/MediaCodecTunneledPlayer.java",
+        "src/android/media/cts/MediaTimeProvider.java",
+        "src/android/media/cts/NonBlockingAudioTrack.java",
     ],
     sdk_version: "current",
 }

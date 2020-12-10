@@ -25,21 +25,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import android.app.Instrumentation;
 import android.content.ClipData;
 import android.content.ClipDescription;
-import android.content.Context;
 import android.net.Uri;
 import android.view.ContentInfo;
 import android.view.OnReceiveContentListener;
 import android.view.View;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 import androidx.test.rule.ActivityTestRule;
-
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -56,17 +51,12 @@ public class ViewOnReceiveContentTest {
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule = new ActivityTestRule<>(
             ViewTestCtsActivity.class);
 
-    private Instrumentation mInstrumentation;
-    private Context mContext;
     private ViewTestCtsActivity mActivity;
     private OnReceiveContentListener mReceiver;
 
     @Before
     public void before() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mContext = mInstrumentation.getTargetContext();
         mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(mActivity::hasWindowFocus);
         mReceiver = mock(OnReceiveContentListener.class);
     }
 

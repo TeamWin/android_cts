@@ -19,6 +19,8 @@ package com.android.cts.certinstaller;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static java.util.Collections.singleton;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -55,6 +57,9 @@ import java.util.List;
  * When this class is done then the DelegatedCertInstallerTest can be deleted.
  */
 public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
+    private static final String TEST_ALIAS = "DirectDelegatedCertInstallerTest-keypair";
+    private static final String NON_EXISTENT_ALIAS = "DirectDelegatedCertInstallerTest-nonexistent";
+
     // Content from cacert.pem
     private static final String TEST_CA =
             "-----BEGIN CERTIFICATE-----\n" +
@@ -130,6 +135,7 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     @Override
     public void tearDown() throws Exception {
         mDpm.uninstallCaCert(null, TEST_CA.getBytes());
+        mDpm.removeKeyPair(null, TEST_ALIAS);
         super.tearDown();
     }
 
@@ -226,30 +232,39 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     }
 
     public void testHasKeyPair_NonExistent() {
-        assertThat(mDpm.hasKeyPair("NobodyWouldCallAKeyLikeThat")).isFalse();
+        assertThat(mDpm.hasKeyPair(NON_EXISTENT_ALIAS)).isFalse();
     }
 
-    public void testHasKeyPair_Installed() throws Exception {
-        final String alias = "delegated-cert-installer-test-key-9000";
+    public void testHasKeyPair_Installed() {
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate}, TEST_ALIAS,
+                /* requestAccess= */ true);
 
-        mDpm.installKeyPair(
-                null, mTestPrivateKey, new Certificate[]{mTestCertificate}, alias, true);
-
-        try {
-            assertThat(mDpm.hasKeyPair(alias)).isTrue();
-        } finally {
-            mDpm.removeKeyPair(null, alias);
-        }
+        assertThat(mDpm.hasKeyPair(TEST_ALIAS)).isTrue();
     }
 
-    public void testHasKeyPair_Removed() throws Exception {
-        final String alias = "delegated-cert-installer-test-key-9001";
+    public void testHasKeyPair_Removed() {
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate}, TEST_ALIAS,
+                /* requestAccess= */ true);
+        mDpm.removeKeyPair(null, TEST_ALIAS);
 
-        mDpm.installKeyPair(
-                null, mTestPrivateKey, new Certificate[]{mTestCertificate}, alias, true);
-        mDpm.removeKeyPair(null, alias);
+        assertThat(mDpm.hasKeyPair(TEST_ALIAS)).isFalse();
+    }
 
-        assertThat(mDpm.hasKeyPair(alias)).isFalse();
+    public void testGetKeyPairGrants_Empty() {
+        // Not granting upon install.
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate}, TEST_ALIAS,
+                /* requestAccess= */ false);
+
+        assertThat(mDpm.getKeyPairGrants(TEST_ALIAS)).isEmpty();
+    }
+
+    public void testGetKeyPairGrants_NonEmpty() {
+        // Granting upon install.
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate}, TEST_ALIAS,
+                /* requestAccess= */ true);
+
+        assertThat(mDpm.getKeyPairGrants(TEST_ALIAS))
+                .isEqualTo(singleton(singleton(getContext().getPackageName())));
     }
 
     private PrivateKey rsaKeyFromString(String key) throws Exception {
