@@ -160,6 +160,16 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testScanDoesntSkipDirtySubtree() throws Exception {
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testScanDoesntSkipDirtySubtree");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
+    }
+
+    @Test
     public void testOpenOtherPendingFilesFromFuse() throws Exception {
         grantPermissions("android.permission.READ_EXTERNAL_STORAGE");
         try {

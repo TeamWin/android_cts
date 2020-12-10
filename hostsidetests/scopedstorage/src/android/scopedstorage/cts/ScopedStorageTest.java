@@ -606,6 +606,46 @@ public class ScopedStorageTest {
     }
 
     @Test
+    public void testScanDoesntSkipDirtySubtree() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File nomediaDir = new File(getDownloadDir(), TEST_DIRECTORY_NAME);
+        final File topLevelNomediaFile = new File(nomediaDir, ".nomedia");
+        final File nomediaSubDir = new File(nomediaDir, "child_" + TEST_DIRECTORY_NAME);
+        final File nomediaFileInSubDir = new File(nomediaSubDir, ".nomedia");
+        final File mediaFile1InSubDir = new File(nomediaSubDir, "1_" + IMAGE_FILE_NAME);
+        final File mediaFile2InSubDir = new File(nomediaSubDir, "2_" + IMAGE_FILE_NAME);
+        try {
+            if (!nomediaDir.exists()) {
+                assertTrue(nomediaDir.mkdirs());
+            }
+            if (!nomediaSubDir.exists()) {
+                assertTrue(nomediaSubDir.mkdirs());
+            }
+            assertThat(topLevelNomediaFile.createNewFile()).isTrue();
+            assertThat(nomediaFileInSubDir.createNewFile()).isTrue();
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+
+            // Verify creating a new file in subdirectory sets dirty state, and scanning the top
+            // level nomedia directory will not skip scanning the subdirectory.
+            assertCreateFileAndScanNomediaDirDoesntNoOp(mediaFile1InSubDir, nomediaDir);
+
+            // Verify creating a new file in subdirectory sets dirty state, and scanning the
+            // subdirectory will not no-op.
+            assertCreateFileAndScanNomediaDirDoesntNoOp(mediaFile2InSubDir, nomediaSubDir);
+        } finally {
+            nomediaFileInSubDir.delete();
+            mediaFile1InSubDir.delete();
+            mediaFile2InSubDir.delete();
+            topLevelNomediaFile.delete();
+            nomediaSubDir.delete();
+            nomediaDir.delete();
+            // Scan the directory to remove stale db rows.
+            MediaStore.scanFile(getContentResolver(), nomediaDir);
+        }
+    }
+
+    @Test
     public void testAndroidMedia() throws Exception {
         pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
 
@@ -667,6 +707,17 @@ public class ScopedStorageTest {
         } finally {
             dropShellPermissionIdentity();
         }
+    }
+
+    private void assertCreateFileAndScanNomediaDirDoesntNoOp(File newFile, File scanDir)
+            throws Exception {
+        assertThat(newFile.createNewFile()).isTrue();
+        // File is not added to database yet, but the directory is marked as dirty so that next
+        // scan doesn't no-op.
+        assertThat(getFileRowIdFromDatabase(newFile)).isEqualTo(-1);
+
+        MediaStore.scanFile(getContentResolver(), scanDir);
+        assertThat(getFileRowIdFromDatabase(newFile)).isNotEqualTo(-1);
     }
 
     /**
