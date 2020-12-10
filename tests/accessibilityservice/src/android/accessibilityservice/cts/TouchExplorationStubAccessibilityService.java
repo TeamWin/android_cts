@@ -34,7 +34,6 @@ public class TouchExplorationStubAccessibilityService
                 case TYPE_GESTURE_DETECTION_START:
                 case TYPE_GESTURE_DETECTION_END:
                 case TYPE_VIEW_ACCESSIBILITY_FOCUSED:
-                case TYPE_VIEW_CLICKED:
                 case TYPE_VIEW_LONG_CLICKED:
                     mCollectedEvents.add(event.getEventType());
             }
