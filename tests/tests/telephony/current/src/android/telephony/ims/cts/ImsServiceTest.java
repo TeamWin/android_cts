@@ -52,6 +52,7 @@ import android.telephony.ims.RegistrationManager;
 import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.MmTelFeature;
 import android.telephony.ims.feature.RcsFeature.RcsImsCapabilities;
+import android.telephony.ims.stub.CapabilityExchangeEventListener;
 import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
@@ -857,6 +858,164 @@ public class ImsServiceTest {
         } catch (SecurityException e) {
             //expected
         }
+    }
+
+    @Test
+    public void testRcsDeviceCapabilitiesPublish() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to device ImsService with MmTel feature and RCS feature
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener publishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        // Another publish register callback to verify the API
+        // RcsUceAdapter#removeOnPublishStateChangedListener
+        LinkedBlockingQueue<Integer> unregisteredPublishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener unregisteredPublishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        unregisteredPublishStateQueue.offer(state);
+                    }
+                };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            automan.adoptShellPermissionIdentity();
+            // register two publish state callback
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    publishStateCallback);
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    unregisteredPublishStateCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Verify receiving the publish state callback immediately after registering the callback.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(unregisteredPublishStateQueue));
+        publishStateQueue.clear();
+        unregisteredPublishStateQueue.clear();
+
+        // Verify the value of getting from the API is NOT_PUBLISHED
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Setup the operation of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "";
+            listener.onPublish();
+            cb.onNetworkResponse(networkResp, reason);
+        });
+
+        // Unregister the publish state callback
+        try {
+            automan.adoptShellPermissionIdentity();
+            uceAdapter.removeOnPublishStateChangedListener(unregisteredPublishStateCallback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Framework should trigger the device capabilities publish when IMS is registered.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // The unregistered callback should not be called.
+        if (unregisteredPublishStateQueue.poll() != null) {
+            fail("Unregistered publish callback should not be called");
+        }
+
+        // Verify the value of getting from the API is PUBLISH_STATE_OK
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // ImsService triggers the unpublish notification
+        eventListener.onUnpublish();
+
+        // Verify the publish state callback will be called with the state "NOT_PUBLISHED"
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // The unregistered callback should not be called.
+        if (unregisteredPublishStateQueue.poll() != null) {
+            fail("Unregistered publish callback should not be called when unpublish");
+        }
+
+        // Verify the value of getting from the API is NOT_PUBLISHED
+        try {
+            automan.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        // Trigger RcsFeature is unavailable
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .setFeatureState(ImsFeature.STATE_UNAVAILABLE);
+
+        // Verify the RcsCapabilityExchangeImplBase will be removed.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_LISTENER_SET));
+
+        overrideCarrierConfig(null);
     }
 
     @Ignore("RCS APIs not public yet")
@@ -2066,6 +2225,44 @@ public class ImsServiceTest {
         assertNotNull("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
                 + "called!", sServiceConnector.getCarrierService().getRcsFeature());
         int serviceSlot = sServiceConnector.getCarrierService().getRcsFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated RcsFeature",
+                sTestSlot, serviceSlot);
+    }
+
+    private void triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature() throws Exception {
+        // Connect to the ImsService with the RCS feature.
+        assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
+                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
+                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
+                .build()));
+
+        // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        assertTrue("Did not receive createMmTelFeature", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_MMTEL));
+        assertTrue("Did not receive MmTelFeature#onReady", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
+        assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
+                sServiceConnector.getCarrierService().getMmTelFeature());
+        int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
+        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
+                        + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
+                sTestSlot, serviceSlot);
+
+        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
+        // Framework did not call it.
+        assertTrue("Did not receive createRcsFeature", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_CREATE_RCS));
+        assertTrue("Did not receive RcsFeature#onReady", sServiceConnector.getCarrierService()
+                .waitForLatchCountdown(TestImsService.LATCH_RCS_READY));
+        // Make sure the RcsFeature was created in the test service.
+        assertNotNull("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
+                + "called!", sServiceConnector.getCarrierService().getRcsFeature());
+        assertTrue("Did not receive RcsFeature#setCapabilityExchangeEventListener",
+                sServiceConnector.getCarrierService().waitForLatchCountdown(
+                        TestImsService.LATCH_UCE_LISTENER_SET));
+        serviceSlot = sServiceConnector.getCarrierService().getRcsFeature().getSlotIndex();
         assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
                         + "assigned slot (" + serviceSlot + "+ for the associated RcsFeature",
                 sTestSlot, serviceSlot);

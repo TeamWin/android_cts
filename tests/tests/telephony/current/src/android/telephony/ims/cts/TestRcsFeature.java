@@ -17,23 +17,39 @@
 package android.telephony.ims.cts;
 
 import android.telephony.ims.feature.RcsFeature;
+import android.telephony.ims.stub.CapabilityExchangeEventListener;
+import android.telephony.ims.stub.RcsCapabilityExchangeImplBase;
 import android.util.Log;
 
+import java.util.concurrent.Executor;
+
 public class TestRcsFeature extends RcsFeature {
+
     private static final String TAG = "CtsTestImsService";
 
     private final TestImsService.ReadyListener mReadyListener;
     private final TestImsService.RemovedListener mRemovedListener;
     private final TestImsService.CapabilitiesSetListener mCapSetListener;
+    private final TestImsService.RcsCapabilitySetListener mRcsCapabilitySetListener;
+
+    private TestRcsCapabilityExchangeImpl mCapExchangeImpl;
+    private CapabilityExchangeEventListener mCapEventListener;
+    private TestImsService.DeviceCapPublishListener mDeviceCapPublishListener;
 
     TestRcsFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener listener,
-            TestImsService.CapabilitiesSetListener setListener) {
+            TestImsService.CapabilitiesSetListener setListener,
+            TestImsService.RcsCapabilitySetListener uceCallbackListener) {
         mReadyListener = readyListener;
         mRemovedListener = listener;
         mCapSetListener = setListener;
+        mRcsCapabilitySetListener = uceCallbackListener;
 
         setFeatureState(STATE_READY);
+    }
+
+    public void setDeviceCapPublishListener(TestImsService.DeviceCapPublishListener listener) {
+        mDeviceCapPublishListener = listener;
     }
 
     @Override
@@ -50,5 +66,31 @@ public class TestRcsFeature extends RcsFeature {
             Log.d(TAG, "TestRcsFeature.onFeatureRemoved called");
         }
         mRemovedListener.onRemoved();
+    }
+
+    public RcsCapabilityExchangeImplBase createCapabilityExchangeImpl(Executor executor,
+            CapabilityExchangeEventListener listener) {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.createCapabilityExchangeImpl called");
+        }
+        mCapEventListener = listener;
+        mCapExchangeImpl = new TestRcsCapabilityExchangeImpl(executor, mDeviceCapPublishListener);
+        mRcsCapabilitySetListener.onSet();
+        return mCapExchangeImpl;
+    }
+
+    public void removeCapabilityExchangeImpl(RcsCapabilityExchangeImplBase capExchangeImpl) {
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.removeCapabilityExchangeImpl called");
+        }
+        mRcsCapabilitySetListener.onSet();
+    }
+
+    public CapabilityExchangeEventListener getEventListener() {
+        return mCapEventListener;
+    }
+
+    public TestRcsCapabilityExchangeImpl getRcsCapabilityExchangeImpl() {
+        return mCapExchangeImpl;
     }
 }
