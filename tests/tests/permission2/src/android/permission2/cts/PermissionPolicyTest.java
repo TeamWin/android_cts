@@ -341,6 +341,9 @@ public class PermissionPolicyTest {
                     protectionLevel |= PermissionInfo.PROTECTION_SIGNATURE;
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM;
                 } break;
+                case "internal": {
+                    protectionLevel |= PermissionInfo.PROTECTION_INTERNAL;
+                } break;
                 case "system": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM;
                 } break;
@@ -406,6 +409,9 @@ public class PermissionPolicyTest {
                 } break;
                 case "recents": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_RECENTS;
+                } break;
+                case "role": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_ROLE;
                 } break;
             }
         }
