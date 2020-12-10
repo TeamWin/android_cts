@@ -16,6 +16,8 @@
 
 package android.app.cts;
 
+import static android.app.cts.NotificationManagerTest.toggleListenerAccess;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertTrue;
@@ -25,13 +27,19 @@ import static org.testng.Assert.assertThrows;
 import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.FutureServiceConnection;
+import android.app.cts.android.app.cts.tools.NotificationHelper;
+import android.app.stubs.TestNotificationListener;
 import android.app.stubs.shared.ICloseSystemDialogsTestsService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.ConditionVariable;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.ResultReceiver;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -69,11 +77,18 @@ public class CloseSystemDialogsTest {
     private volatile CompletableFuture<Void> mCloseSystemDialogsReceived;
     private volatile ConditionVariable mSentinelReceived;
     private IntentReceiver mIntentReceiver;
+    private Handler mMainHandler;
+    private TestNotificationListener mNotificationListener;
+    private NotificationHelper mNotificationHelper;
 
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mMainHandler = new Handler(Looper.getMainLooper());
+        toggleListenerAccess(mContext, true);
+        mNotificationListener = TestNotificationListener.getInstance();
+        mNotificationHelper = new NotificationHelper(mContext, () -> mNotificationListener);
         compat(APP_COMPAT_ENABLE, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP);
         // TODO(b/159105552): For now we emulate current targetSdk by force-enabling the feature.
         //   Remove this once the feature is enabled by default.
@@ -95,6 +110,8 @@ public class CloseSystemDialogsTest {
         mContext.unregisterReceiver(mIntentReceiver);
         compat(APP_COMPAT_RESET, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP);
         compat(APP_COMPAT_RESET, ActivityManager.LOCK_DOWN_CLOSE_SYSTEM_DIALOGS, APP);
+        compat(APP_COMPAT_RESET, "NOTIFICATION_TRAMPOLINE_BLOCK", APP);
+        mNotificationListener.resetData();
     }
 
     @Test
@@ -133,6 +150,38 @@ public class CloseSystemDialogsTest {
         assertCloseSystemDialogsReceived();
     }
 
+    @Test
+    public void testCloseSystemDialogs_inTrampolineWhenTargetSdkCurrent_isBlockedAndThrows()
+            throws Exception {
+        int notificationId = 42;
+        CompletableFuture<Integer> result = new CompletableFuture<>();
+        mService = getService();
+
+        mService.postNotification(notificationId, new FutureReceiver(result));
+
+        mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
+        assertThat(result.get()).isEqualTo(
+                ICloseSystemDialogsTestsService.RESULT_SECURITY_EXCEPTION);
+        assertCloseSystemDialogsNotReceived();
+    }
+
+    @Test
+    public void testCloseSystemDialogs_inTrampolineWhenTargetSdk30_isSent() throws Exception {
+        // TODO(b/159105552): For now we emulate targetSdk 30 by force-disabling the feature.
+        //   Remove this once the feature is enabled and use another app with lower targetSdk.
+        compat(APP_COMPAT_DISABLE, "NOTIFICATION_TRAMPOLINE_BLOCK", APP);
+        int notificationId = 43;
+        CompletableFuture<Integer> result = new CompletableFuture<>();
+        mService = getService();
+
+        mService.postNotification(notificationId, new FutureReceiver(result));
+
+        mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
+        assertThat(result.get()).isEqualTo(
+                ICloseSystemDialogsTestsService.RESULT_OK);
+        assertCloseSystemDialogsReceived();
+    }
+
     private void assertCloseSystemDialogsNotReceived() {
         // If both broadcasts are sent, they will be received in order here since they are both
         // registered receivers in the "bg" queue in system_server and belong to the same app.
@@ -167,9 +216,13 @@ public class CloseSystemDialogsTest {
         return mConnection;
     }
 
-    private static void compat(String command, long changeId, String packageName) {
+    private static void compat(String command, String changeId, String packageName) {
         SystemUtil.runShellCommand(
-                String.format("am compat %s %d %s", command, changeId, packageName));
+                String.format("am compat %s %s %s", command, changeId, packageName));
+    }
+
+    private static void compat(String command, long changeId, String packageName) {
+        compat(command, Long.toString(changeId), packageName);
     }
 
     private class IntentReceiver extends BroadcastReceiver {
@@ -185,4 +238,19 @@ public class CloseSystemDialogsTest {
             }
         }
     }
+
+    private class FutureReceiver extends ResultReceiver {
+        private final CompletableFuture<Integer> mFuture;
+
+        FutureReceiver(CompletableFuture<Integer> future) {
+            super(mMainHandler);
+            mFuture = future;
+        }
+
+        @Override
+        protected void onReceiveResult(int resultCode, Bundle resultData) {
+            mFuture.complete(resultCode);
+        }
+    }
+
 }
