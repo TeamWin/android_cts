@@ -34,6 +34,11 @@
         -->
     </test>
 
+    <!-- Create Place to store apks -->
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="mkdir -p /data/local/tmp/cts/os" />
+        <option name="teardown-command" value="rm -rf /data/local/tmp/cts/os" />
+    </target_preparer>
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAutoRevokeDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk" />
