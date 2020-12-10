@@ -62,6 +62,7 @@ public class SettingsPanelTest {
 
     private Context mContext;
     private boolean mHasTouchScreen;
+    private boolean mHasBluetooth;
 
     private UiDevice mDevice;
 
@@ -74,6 +75,7 @@ public class SettingsPanelTest {
 
         mHasTouchScreen = packageManager.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
                 || packageManager.hasSystemFeature(PackageManager.FEATURE_FAKETOUCH);
+        mHasBluetooth = packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
 
         Intent launcherIntent = new Intent(Intent.ACTION_MAIN);
         launcherIntent.addCategory(Intent.CATEGORY_HOME);

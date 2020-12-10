@@ -33,7 +33,10 @@ android_test {
         "platformprotosnano",
         "permission-test-util-lib"
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "NotificationListener/src/com/android/test/notificationlistener/INotificationUriAccessService.aidl",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

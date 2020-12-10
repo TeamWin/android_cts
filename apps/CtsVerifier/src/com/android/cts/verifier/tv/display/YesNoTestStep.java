@@ -27,9 +27,10 @@ import com.android.cts.verifier.tv.TvAppVerifierActivity;
  * two buttons - Yes and No, which respectively set the test in passing and failing state.
  */
 public abstract class YesNoTestStep extends TestStepBase {
-    private View yesButton;
-    private View noButton;
-
+    private View positiveButton;
+    private View negativeButton;
+    private final int positiveButtonText;
+    private final int negativeButtonText;
     /**
      * Constructs a test step containing human instructions for a manual test and two buttons - Yes
      * and No.
@@ -37,24 +38,27 @@ public abstract class YesNoTestStep extends TestStepBase {
      * @param context The test activity which this test step is part of.
      * @param instructionText The text of the test instruction visible to the user.
      */
-    public YesNoTestStep(TvAppVerifierActivity context, String instructionText) {
+    public YesNoTestStep(TvAppVerifierActivity context, String instructionText, 
+            int positiveButtonText, int negativeButtonText) {
         super(context, instructionText);
+        this.positiveButtonText = positiveButtonText;
+        this.negativeButtonText = negativeButtonText;
     }
 
     @Override
     public void createUiElements() {
         super.createUiElements();
-        yesButton =
+        positiveButton =
                 mContext.createButtonItem(
-                        R.string.tv_yes,
+                        positiveButtonText,
                         (View view) -> {
                             disableInteractivity();
                             // do nothing so the test will pass
                             done();
                         });
-        noButton =
+        negativeButton =
                 mContext.createButtonItem(
-                        R.string.tv_no,
+                        negativeButtonText,
                         (View view) -> {
                             disableInteractivity();
                             getAsserter().fail();
@@ -64,13 +68,13 @@ public abstract class YesNoTestStep extends TestStepBase {
 
     @Override
     public void enableInteractivity() {
-        TvAppVerifierActivity.setButtonEnabled(yesButton, true);
-        TvAppVerifierActivity.setButtonEnabled(noButton, true);
+        TvAppVerifierActivity.setButtonEnabled(positiveButton, true);
+        TvAppVerifierActivity.setButtonEnabled(negativeButton, true);
     }
 
     @Override
     public void disableInteractivity() {
-        TvAppVerifierActivity.setButtonEnabled(yesButton, false);
-        TvAppVerifierActivity.setButtonEnabled(noButton, false);
+        TvAppVerifierActivity.setButtonEnabled(positiveButton, false);
+        TvAppVerifierActivity.setButtonEnabled(negativeButton, false);
     }
 }

@@ -398,24 +398,59 @@ public abstract class ActivityManagerTestBase {
         private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
         private static final int WAIT_SLICE = 50;
 
+        /**
+         * Launches an {@link Activity} on a target display synchronously.
+         * @param activityClass The {@link Activity} class to be launched
+         * @param displayId ID of the target display
+         */
         void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
-            launchTestActivityOnDisplaySync(new Intent(mContext, activityClass), displayId);
+            launchTestActivityOnDisplaySync(activityClass, displayId, WINDOWING_MODE_UNDEFINED);
         }
 
+        /**
+         * Launches an {@link Activity} on a target display synchronously.
+         *
+         * @param activityClass The {@link Activity} class to be launched
+         * @param displayId ID of the target display
+         * @param windowingMode Windowing mode at launch
+         */
         void launchTestActivityOnDisplaySync(
                 Class<T> activityClass, int displayId, int windowingMode) {
-            launchTestActivityOnDisplaySync(
-                    new Intent(mContext, activityClass), displayId, windowingMode);
+            final Intent intent = new Intent(mContext, activityClass)
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+            final String className = intent.getComponent().getClassName();
+            launchTestActivityOnDisplaySync(className, intent, displayId, windowingMode);
         }
 
-        void launchTestActivityOnDisplaySync(Intent intent, int displayId) {
-            launchTestActivityOnDisplaySync(intent, displayId, WINDOWING_MODE_UNDEFINED);
+        /**
+         * Launches an {@link Activity} synchronously on a target display. The class name needs to 
+         * be provided either implicitly through the {@link Intent} or explicitly as a parameter
+         *
+         * @param className Optional class name of expected activity
+         * @param intent Intent to launch an activity
+         * @param displayId ID for the target display
+         */
+        void launchTestActivityOnDisplaySync(@Nullable String className, Intent intent,
+                int displayId) {
+            launchTestActivityOnDisplaySync(className, intent, displayId, WINDOWING_MODE_UNDEFINED);
         }
 
-        void launchTestActivityOnDisplaySync(Intent intent, int displayId, int windowingMode) {
+        /**
+         * Launches an {@link Activity} synchronously on a target display. The class name needs to
+         * be provided either implicitly through the {@link Intent} or explicitly as a parameter
+         *
+         * @param className Optional class name of expected activity
+         * @param intent Intent to launch an activity
+         * @param displayId ID for the target display
+         * @param windowingMode Windowing mode at launch
+         */
+        void launchTestActivityOnDisplaySync(
+                @Nullable String className, Intent intent, int displayId, int windowingMode) {
             SystemUtil.runWithShellPermissionIdentity(
                     () -> {
-                        mTestActivity = launchActivityOnDisplay(intent, displayId, windowingMode);
+                        mTestActivity =
+                                launchActivityOnDisplay(
+                                        className, intent, displayId, windowingMode);
                         // Check activity is launched and resumed.
                         final ComponentName testActivityName = mTestActivity.getComponentName();
                         waitAndAssertTopResumedActivity(
@@ -423,25 +458,47 @@ public abstract class ActivityManagerTestBase {
                     });
         }
 
+        /**
+         * Launches an {@link Activity} on a target display asynchronously.
+         * @param activityClass The {@link Activity} class to be launched
+         * @param displayId ID of the target display
+         */
         void launchTestActivityOnDisplay(Class<T> activityClass, int displayId) {
+            final Intent intent = new Intent(mContext, activityClass)
+                    .addFlags(FLAG_ACTIVITY_NEW_TASK);
+            final String className = intent.getComponent().getClassName();
             SystemUtil.runWithShellPermissionIdentity(
                     () -> {
                         mTestActivity =
                                 launchActivityOnDisplay(
-                                        new Intent(mContext, activityClass)
-                                                .addFlags(FLAG_ACTIVITY_NEW_TASK),
-                                        displayId,
-                                        WINDOWING_MODE_UNDEFINED);
+                                        className, intent, displayId, WINDOWING_MODE_UNDEFINED);
                         assertNotNull(mTestActivity);
                     });
         }
 
-        private T launchActivityOnDisplay(Intent intent, int displayId, int windowingMode) {
+        /**
+         * Launches an {@link Activity} on a target display. In order to return the correct activity
+         * the class name or an explicit {@link Intent} must be provided.
+         *
+         * @param className Optional class name of expected activity
+         * @param intent {@link Intent} to launch an activity
+         * @param displayId ID for the target display
+         * @param windowingMode Windowing mode at launch
+         * @return The {@link Activity} that was launched
+         */
+        private T launchActivityOnDisplay(
+                @Nullable String className, Intent intent, int displayId, int windowingMode) {
+            final String localClassName = className != null ? className :
+              (intent.getComponent() != null ? intent.getComponent().getClassName() : null);
+            if (localClassName == null || localClassName.isEmpty()) {
+                fail("Must provide either a class name or an intent with a component");
+            }
             final ActivityOptions launchOptions = ActivityOptions.makeBasic();
             launchOptions.setLaunchDisplayId(displayId);
             launchOptions.setLaunchWindowingMode(windowingMode);
             final Bundle bundle = launchOptions.toBundle();
-            final ActivityMonitor monitor = mInstrumentation.addMonitor((String) null, null, false);
+            final ActivityMonitor monitor = mInstrumentation.addMonitor(localClassName, null,
+                    false);
             mContext.startActivity(intent.addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
             // Wait for activity launch with timeout.
             mTestActivity = (T) mInstrumentation.waitForMonitorWithTimeout(monitor,
@@ -1190,6 +1247,11 @@ public abstract class ActivityManagerTestBase {
     protected static boolean perDisplayFocusEnabled() {
         return getInstrumentation().getTargetContext().getResources()
                 .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
+    }
+
+    protected static boolean remoteInsetsControllerControlsSystemBars() {
+        return getInstrumentation().getTargetContext().getResources()
+                .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */

@@ -278,8 +278,9 @@ public class ListPopupWindowTest {
         } else {
             // On narrow screens, it's possible for the popup to reach the edge
             // of the screen.
-            int rightmostX =
-                    getDisplay().getWidth() - mPopupWindow.getWidth() + listViewInWindowXY[0];
+            final int displayWidth =
+                        mActivity.getWindowManager().getMaximumWindowMetrics().getBounds().width();
+            final int rightmostX = displayWidth - mPopupWindow.getWidth() + listViewInWindowXY[0];
             if (expectedListViewOnScreenX > rightmostX) {
                 expectedListViewOnScreenX = rightmostX;
             }

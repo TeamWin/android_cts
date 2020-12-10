@@ -197,6 +197,9 @@ public class StorageStatsTest extends InstrumentationTestCase {
         // Rename to ensure that stats are updated
         video.renameTo(new File(dir, System.nanoTime() + ".PnG"));
 
+        // Since we have MANAGE_EXTERNAL_STORAGE, need to ask for a re-scan
+        MediaStore.scanFile(getContext().getContentResolver(), dir);
+        MediaStore.scanFile(getContext().getContentResolver(), downloadsDir);
         MediaStore.waitForIdle(getContext().getContentResolver());
 
         final ExternalStorageStats afterRename = stats.queryExternalStatsForUser(UUID_DEFAULT, user);

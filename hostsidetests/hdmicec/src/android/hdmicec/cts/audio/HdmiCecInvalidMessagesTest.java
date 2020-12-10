@@ -33,12 +33,14 @@ import android.hdmicec.cts.RequiredFeatureRule;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /** HDMI CEC test to verify that device ignores invalid messages (Section 12) */
+@Ignore("b/162820841")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
 
