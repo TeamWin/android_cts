@@ -25,6 +25,7 @@
     <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
+    <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS"/>
 
     <application>
         <activity android:name=".TestActivity"
@@ -547,6 +548,7 @@
         <activity android:name=".PresentationActivity"
              android:launchMode="singleTop"
              android:exported="true"/>
+        <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />
