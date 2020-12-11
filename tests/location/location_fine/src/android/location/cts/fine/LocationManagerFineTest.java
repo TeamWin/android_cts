@@ -1071,7 +1071,9 @@ public class LocationManagerFineTest {
         Criteria criteria = new Criteria();
 
         String bestProvider = mManager.getBestProvider(criteria, false);
-        if (allProviders.contains(GPS_PROVIDER)) {
+        if (allProviders.contains(FUSED_PROVIDER)) {
+            assertThat(bestProvider).isEqualTo(FUSED_PROVIDER);
+        } else if (allProviders.contains(GPS_PROVIDER)) {
             assertThat(bestProvider).isEqualTo(GPS_PROVIDER);
         } else if (allProviders.contains(NETWORK_PROVIDER)) {
             assertThat(bestProvider).isEqualTo(NETWORK_PROVIDER);
@@ -1091,6 +1093,16 @@ public class LocationManagerFineTest {
                 true,
                 Criteria.POWER_LOW,
                 Criteria.ACCURACY_FINE);
+        mManager.addTestProvider(FUSED_PROVIDER,
+                true,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                Criteria.POWER_HIGH,
+                Criteria.ACCURACY_COARSE);
 
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_LOW);
