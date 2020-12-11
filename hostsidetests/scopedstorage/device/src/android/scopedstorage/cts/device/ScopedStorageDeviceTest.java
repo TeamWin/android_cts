@@ -1668,6 +1668,43 @@ public class ScopedStorageDeviceTest {
     }
 
     /**
+     * Test that FUSE upper-fs is consistent with lower-fs after the lower-fs fd is closed.
+     */
+    @Test
+    public void testInodeStatConsistency() throws Exception {
+        File file = new File(getDcimDir(), IMAGE_FILE_NAME);
+
+        try {
+            byte[] writeBuffer = new byte[10];
+            Arrays.fill(writeBuffer, (byte) 1);
+
+            assertThat(file.createNewFile()).isTrue();
+            // Scanning a file is essential as files created via filepath will be marked
+            // as isPending, and we do not set listener for pending files as it can lead to
+            // performance overhead. See: I34611f0ee897dc676e7653beb7943aa6de58c55a.
+            MediaStore.scanFile(getContentResolver(), file);
+
+            // File operation #1 (to lower-fs)
+            ParcelFileDescriptor writePfd = openWithMediaProvider(file, "rw");
+
+            // File operation #2 (to fuse). This caches the inode for the file.
+            file.exists();
+
+            // Write bytes directly to lower-fs
+            Os.pwrite(writePfd.getFileDescriptor(), writeBuffer, 0, 10, 0);
+
+            // Close should invalidate inode cache for this file.
+            writePfd.close();
+            Thread.sleep(1000);
+
+            long fuseFileSize = file.length();
+            assertThat(writeBuffer.length).isEqualTo(fuseFileSize);
+        } finally {
+            file.delete();
+        }
+    }
+
+    /**
      * Test that apps can rename a hidden file.
      */
     @Test
