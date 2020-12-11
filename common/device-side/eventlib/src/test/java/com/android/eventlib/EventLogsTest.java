@@ -18,6 +18,8 @@ package com.android.eventlib;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
@@ -530,6 +532,42 @@ public class EventLogsTest {
         assertThat(event.tag()).isEqualTo(TEST_TAG2);
         assertThat(event.data()).isEqualTo(DATA_1);
         assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void pollOrFail_hasEvent_returnsEvent() {
+        CustomEvent.logger(CONTEXT)
+                .setTag(TEST_TAG1)
+                .log();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .withTag(TEST_TAG1);
+
+        assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
+    }
+
+    @Test
+    public void pollOrFail_noEvent_throwsException() {
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .withTag(TEST_TAG1);
+
+        assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
+    }
+
+    @Test
+    public void pollOrFail_loggedAfter_returnsEvent() {
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .withTag(TEST_TAG1);
+
+        // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
+        // as we're blocking for the event in this method
+        new Handler(Looper.getMainLooper()).postDelayed(() ->
+                        CustomEvent.logger(CONTEXT)
+                                .setTag(TEST_TAG1)
+                                .log(),
+                ONE_SECOND_DELAY_MILLIS);
+
+        assertThat(eventLogs.pollOrFail()).isNotNull();
     }
 
     private void scheduleCustomEventInOneSecond() {
