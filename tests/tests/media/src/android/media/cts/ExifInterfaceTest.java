@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static android.media.ExifInterface.TAG_SUBJECT_AREA;
+
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -840,11 +842,34 @@ public class ExifInterfaceTest extends AndroidTestCase {
         String makeValueWithTwoSlashes = "Make/Test/Test";
         exif.setAttribute(ExifInterface.TAG_MAKE, makeValueWithTwoSlashes);
         assertEquals(makeValueWithTwoSlashes, exif.getAttribute(ExifInterface.TAG_MAKE));
+        // When a value has a comma, it should be parsed as a string if any of the values before or
+        // after the comma is a string.
+        int defaultValue = -1;
+        String makeValueWithCommaType1 = "Make,2";
+        exif.setAttribute(ExifInterface.TAG_MAKE, makeValueWithCommaType1);
+        assertEquals(makeValueWithCommaType1, exif.getAttribute(ExifInterface.TAG_MAKE));
+        // Make sure that it's not stored as an integer value.
+        assertEquals(defaultValue, exif.getAttributeInt(ExifInterface.TAG_MAKE, defaultValue));
+        String makeValueWithCommaType2 = "2,Make";
+        exif.setAttribute(ExifInterface.TAG_MAKE, makeValueWithCommaType2);
+        assertEquals(makeValueWithCommaType2, exif.getAttribute(ExifInterface.TAG_MAKE));
+        // Make sure that it's not stored as an integer value.
+        assertEquals(defaultValue, exif.getAttributeInt(ExifInterface.TAG_MAKE, defaultValue));
 
         // 3. Unsigned short format tag
         String isoSpeedRatings = "800";
         exif.setAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS, isoSpeedRatings);
         assertEquals(isoSpeedRatings, exif.getAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS));
+        // When a value has multiple components, all of them should be of the format that the tag
+        // supports. Thus, the following values (SHORT,LONG) should not be set since TAG_COMPRESSION
+        // only allows short values.
+        assertNull(exif.getAttribute(ExifInterface.TAG_COMPRESSION));
+        String invalidMultipleComponentsValueType1 = "1,65536";
+        exif.setAttribute(ExifInterface.TAG_COMPRESSION, invalidMultipleComponentsValueType1);
+        assertNull(exif.getAttribute(ExifInterface.TAG_COMPRESSION));
+        String invalidMultipleComponentsValueType2 = "65536,1";
+        exif.setAttribute(ExifInterface.TAG_COMPRESSION, invalidMultipleComponentsValueType2);
+        assertNull(exif.getAttribute(ExifInterface.TAG_COMPRESSION));
 
         // 4. Unsigned long format tag
         String validImageWidthValue = "65536"; // max unsigned short value + 1
@@ -870,6 +895,46 @@ public class ExifInterfaceTest extends AndroidTestCase {
         assertEquals(userComment, exif.getAttribute(ExifInterface.TAG_USER_COMMENT));
 
         imageFile.delete();
+    }
+
+    public void testGetAttributeForNullAndNonExistentTag() throws Throwable {
+        // JPEG_WITH_EXIF_BYTE_ORDER_MM does not have a value for TAG_SUBJECT_AREA tag.
+        File srcFile = new File(mInpPrefix, JPEG_WITH_EXIF_BYTE_ORDER_MM);
+        File imageFile = clone(srcFile);
+
+        ExifInterface exif = new ExifInterface(imageFile.getAbsolutePath());
+        try {
+            exif.getAttribute(null);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+        assertNull(exif.getAttribute(TAG_SUBJECT_AREA));
+
+        int defaultValue = -1;
+        try {
+            exif.getAttributeInt(null, defaultValue);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+        assertEquals(defaultValue, exif.getAttributeInt(TAG_SUBJECT_AREA, defaultValue));
+
+        try {
+            exif.getAttributeDouble(null, defaultValue);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+        assertEquals(defaultValue, exif.getAttributeInt(TAG_SUBJECT_AREA, defaultValue));
+
+        try {
+            exif.getAttributeBytes(null);
+            fail();
+        } catch (NullPointerException e) {
+            // expected
+        }
+        assertNull(exif.getAttributeBytes(TAG_SUBJECT_AREA));
     }
 
     private static File clone(File original) throws IOException {

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.FlakyTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -64,6 +65,7 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
         assertFalse(getDevice().isPackageInstalled(TEST_PACKAGE_NAME));
     }
 
+    @FlakyTest(bugId = 174668020)
     @Test
     @AppModeFull
     public void testAddPreferredActivity() throws Exception {
@@ -81,6 +83,7 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
                 Collections.singletonMap("numPreferredActivities", "1")));
     }
 
+    @FlakyTest(bugId = 174668020)
     @Test
     @AppModeFull
     public void testAddDuplicatedPreferredActivity() throws Exception {

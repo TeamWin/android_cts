@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.UnsafeStateException;
+import android.content.ComponentName;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -41,7 +42,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
             .getSimpleName();
 
     private static final int[] OPERATIONS = new int[] {
-            OPERATION_LOCK_NOW
+            OPERATION_LOCK_NOW,
     };
 
     private static final int[] OVERLOADED_OPERATIONS = new int[] {
@@ -51,24 +52,24 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     /**
      * Tests that all safety-aware operations are properly implemented.
      */
-    public final void testAllOperations(DevicePolicyManager dpm) {
+    public final void testAllOperations(DevicePolicyManager dpm, ComponentName admin) {
         Objects.requireNonNull(dpm);
 
         List<String> failures = new ArrayList<>();
         for (int operation : OPERATIONS) {
-            safeOperationTest(dpm, failures, operation, /* overloaded= */ false);
+            safeOperationTest(dpm, admin, failures, operation, /* overloaded= */ false);
         }
 
         for (int operation : OVERLOADED_OPERATIONS) {
-            safeOperationTest(dpm, failures, operation, /* overloaded= */ true);
+            safeOperationTest(dpm, admin, failures, operation, /* overloaded= */ true);
         }
 
         for (int operation : getSafetyAwareOperations()) {
-            safeOperationTest(dpm, failures, operation, /* overloaded= */ false);
+            safeOperationTest(dpm, admin, failures, operation, /* overloaded= */ false);
         }
 
         for (int operation : getOverloadedSafetyAwareOperations()) {
-            safeOperationTest(dpm, failures, operation, /* overloaded= */ true);
+            safeOperationTest(dpm, admin, failures, operation, /* overloaded= */ true);
         }
 
         if (!failures.isEmpty()) {
@@ -107,7 +108,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
      *
      * <p>MUST be overridden if {@link #getSafetyAwareOperations()} is overridden as well.
      */
-    protected void runOperation(DevicePolicyManager dpm, int operation,
+    protected void runOperation(DevicePolicyManager dpm, ComponentName admin, int operation,
             boolean overloaded) {
         throwUnsupportedOperationException(operation, overloaded);
     }
@@ -121,12 +122,12 @@ public class DevicePolicySafetyCheckerIntegrationTester {
                 "Unsupported operation " + getOperationName(operation, overloaded));
     }
 
-    private void safeOperationTest(DevicePolicyManager dpm, List<String> failures, int operation,
-            boolean overloaded) {
+    private void safeOperationTest(DevicePolicyManager dpm, ComponentName admin,
+            List<String> failures, int operation, boolean overloaded) {
         String name = getOperationName(operation, overloaded);
         try {
             setOperationUnsafe(dpm, operation);
-            runCommonOrSpecificOperation(dpm, operation, overloaded);
+            runCommonOrSpecificOperation(dpm, admin, operation, overloaded);
             Log.e(TAG, name + " didn't throw an UnsafeStateException");
             failures.add(name);
         } catch (UnsafeStateException e) {
@@ -142,8 +143,8 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         return overloaded ? name + "(OVERLOADED)" : name;
     }
 
-    private void runCommonOrSpecificOperation(DevicePolicyManager dpm, int operation,
-            boolean overloaded) {
+    private void runCommonOrSpecificOperation(DevicePolicyManager dpm, ComponentName admin,
+            int operation, boolean overloaded) {
         String name = getOperationName(operation, overloaded);
         Log.v(TAG, "runOperation(): " + name);
         switch (operation) {
@@ -155,7 +156,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
                 }
                 break;
             default:
-                runOperation(dpm, operation, overloaded);
+                runOperation(dpm, admin, operation, overloaded);
         }
     }
 

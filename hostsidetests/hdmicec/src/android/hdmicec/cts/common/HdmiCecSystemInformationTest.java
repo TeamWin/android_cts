@@ -21,7 +21,6 @@ import static android.hdmicec.cts.HdmiCecConstants.TIMEOUT_SAFETY_MS;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
-import android.hdmicec.cts.CecClientMessage;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.CecVersionHelper;
@@ -45,20 +44,6 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                     .outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
                     .around(hdmiCecClient);
-
-    /**
-     * Test 11.2.6-1
-     * Tests for Ack {@code <Polling Message>} message.
-     */
-    @Test
-    public void cect_11_2_6_1_Ack() throws Exception {
-        String command = CecClientMessage.POLL + " " + mDutLogicalAddress;
-        String expectedOutput = "POLL sent";
-        hdmiCecClient.sendConsoleMessage(command);
-        if (!hdmiCecClient.checkConsoleOutput(expectedOutput)) {
-            throw new Exception("Could not find " + expectedOutput);
-        }
-    }
 
     /**
      * Test 11.2.6-2

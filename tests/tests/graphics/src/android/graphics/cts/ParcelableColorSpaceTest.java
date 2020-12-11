@@ -127,11 +127,11 @@ public class ParcelableColorSpaceTest {
     }
 
     @Test
-    public void testIsColorSpace() {
+    public void testIsColorSpaceContainer() {
         ColorSpace colorSpace = ColorSpace.get(ColorSpace.Named.BT2020);
         ParcelableColorSpace parcelableColorSpace = new ParcelableColorSpace(colorSpace);
         Bitmap bitmap = Bitmap.createBitmap(10, 10,
-                Bitmap.Config.RGBA_F16, false, parcelableColorSpace);
+                Bitmap.Config.RGBA_F16, false, parcelableColorSpace.getColorSpace());
         assertNotNull(bitmap);
         ColorSpace bitmapColorSpace = bitmap.getColorSpace();
         assertNotNull(bitmapColorSpace);

@@ -250,6 +250,39 @@ public class PlaybackStateTest extends AndroidTestCase {
         parcel.recycle();
     }
 
+    /**
+     * Tests that each ACTION_* constant does not overlap.
+     */
+    public void testActionConstantDoesNotOverlap() {
+        long[] actionConstants = new long[] {
+                PlaybackState.ACTION_STOP,
+                PlaybackState.ACTION_PAUSE,
+                PlaybackState.ACTION_PLAY,
+                PlaybackState.ACTION_REWIND,
+                PlaybackState.ACTION_SKIP_TO_PREVIOUS,
+                PlaybackState.ACTION_SKIP_TO_NEXT,
+                PlaybackState.ACTION_FAST_FORWARD,
+                PlaybackState.ACTION_SET_RATING,
+                PlaybackState.ACTION_SEEK_TO,
+                PlaybackState.ACTION_PLAY_PAUSE,
+                PlaybackState.ACTION_PLAY_FROM_MEDIA_ID,
+                PlaybackState.ACTION_PLAY_FROM_SEARCH,
+                PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM,
+                PlaybackState.ACTION_PLAY_FROM_URI,
+                PlaybackState.ACTION_PREPARE,
+                PlaybackState.ACTION_PREPARE_FROM_MEDIA_ID,
+                PlaybackState.ACTION_PREPARE_FROM_SEARCH,
+                PlaybackState.ACTION_PREPARE_FROM_URI,
+                PlaybackState.ACTION_SET_PLAYBACK_SPEED};
+
+        // Check that the values are not overlapped.
+        for (int i = 0; i < actionConstants.length; i++) {
+            for (int j = i + 1; j < actionConstants.length; j++) {
+                assertEquals(0, actionConstants[i] & actionConstants[j]);
+            }
+        }
+    }
+
     private void assertCustomActionEquals(PlaybackState.CustomAction action1,
             PlaybackState.CustomAction action2) {
         assertEquals(action1.getAction(), action2.getAction());

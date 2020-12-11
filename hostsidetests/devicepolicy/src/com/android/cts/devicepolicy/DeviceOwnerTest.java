@@ -137,6 +137,9 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDeviceOwnerSetup() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         executeDeviceOwnerTest("DeviceOwnerSetupTest");
     }
 

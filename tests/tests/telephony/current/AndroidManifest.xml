@@ -36,6 +36,7 @@
     <uses-permission android:name="android.permission.USE_SIP"/>
     <uses-permission android:name="android.telephony.embms.cts.permission.TEST_BROADCAST"/>
     <uses-permission android:name="android.permission.WRITE_EMBEDDED_SUBSCRIPTIONS" />
+    <uses-permission android:name="android.permission.USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER" />
 
     <permission android:name="android.telephony.embms.cts.permission.TEST_BROADCAST"
          android:protectionLevel="signature"/>
@@ -158,6 +159,16 @@
             android:enabled="true">
             <intent-filter>
                 <action android:name="android.service.carrier.CarrierMessagingService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="android.telephony.gba.cts.TestGbaService"
+            android:directBootAware="true"
+            android:permission="android.permission.BIND_GBA_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.gba.GbaService"/>
             </intent-filter>
         </service>
 

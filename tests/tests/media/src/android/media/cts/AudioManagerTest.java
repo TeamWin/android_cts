@@ -56,6 +56,7 @@ import android.media.AudioAttributes;
 import android.media.AudioDeviceAttributes;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
+import android.media.AudioProfile;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.media.MicrophoneInfo;
@@ -77,10 +78,14 @@ import com.android.compatibility.common.util.MediaUtils;
 import com.android.internal.annotations.GuardedBy;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @NonMediaMainlineTest
 public class AudioManagerTest extends InstrumentationTestCase {
@@ -1778,6 +1783,37 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
         // There is not listener added at server side. Nothing to remove.
         mAudioManager.removeOnPreferredDevicesForCapturePresetChangedListener(listener);
+    }
+
+    public void testGetDevices() {
+        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_ALL);
+        for (AudioDeviceInfo device : devices) {
+            HashSet<Integer> formats = IntStream.of(device.getEncodings()).boxed()
+                    .collect(Collectors.toCollection(HashSet::new));
+            HashSet<Integer> channelMasks = IntStream.of(device.getChannelMasks()).boxed()
+                    .collect(Collectors.toCollection(HashSet::new));
+            HashSet<Integer> channelIndexMasks = IntStream.of(device.getChannelIndexMasks()).boxed()
+                    .collect(Collectors.toCollection(HashSet::new));
+            HashSet<Integer> sampleRates = IntStream.of(device.getSampleRates()).boxed()
+                    .collect(Collectors.toCollection(HashSet::new));
+            HashSet<Integer> formatsFromProfile = new HashSet<>();
+            HashSet<Integer> channelMasksFromProfile = new HashSet<>();
+            HashSet<Integer> channelIndexMasksFromProfile = new HashSet<>();
+            HashSet<Integer> sampleRatesFromProfile = new HashSet<>();
+            for (AudioProfile profile : device.getAudioProfiles()) {
+                formatsFromProfile.add(profile.getFormat());
+                channelMasksFromProfile.addAll(Arrays.stream(profile.getChannelMasks()).boxed()
+                        .collect(Collectors.toList()));
+                channelIndexMasksFromProfile.addAll(Arrays.stream(profile.getChannelIndexMasks())
+                        .boxed().collect(Collectors.toList()));
+                sampleRatesFromProfile.addAll(Arrays.stream(profile.getSampleRates()).boxed()
+                        .collect(Collectors.toList()));
+            }
+            assertEquals(formats, formatsFromProfile);
+            assertEquals(channelMasks, channelMasksFromProfile);
+            assertEquals(channelIndexMasks, channelIndexMasksFromProfile);
+            assertEquals(sampleRates, sampleRatesFromProfile);
+        }
     }
 
     private void assertStreamVolumeEquals(int stream, int expectedVolume) throws Exception {

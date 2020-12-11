@@ -7,3 +7,4 @@ per-file MainlineNetworkStackPermissionTest.java = file: platform/frameworks/bas
 per-file Camera2PermissionTest.java = file: platform/frameworks/av:/camera/OWNERS
 per-file OneTimePermissionTest.java, AppThatRequestOneTimePermission/... = evanseverson@google.com
 per-file LocationAccessCheckTest.java = ntmyren@google.com
+per-file NoRollbackPermissionTest.java = mpgroover@google.com

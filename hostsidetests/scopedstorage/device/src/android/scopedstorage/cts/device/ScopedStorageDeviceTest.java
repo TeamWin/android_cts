@@ -104,7 +104,6 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.AppOpsManager;
@@ -221,9 +220,6 @@ public class ScopedStorageDeviceTest {
 
     @Before
     public void setup() throws Exception {
-        // skips all test cases if FUSE is not active.
-        assumeTrue(getBoolean("persist.sys.fuse", false));
-
         if (!getContext().getPackageManager().isInstantApp()) {
             pollForExternalStorageState();
             getExternalFilesDir().mkdirs();

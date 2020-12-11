@@ -72,6 +72,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnPrimaryUser
+    @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromPrimaryUser_doesNotContainPrimaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
@@ -80,6 +81,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromPrimaryUser_doesNotContainSecondaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
@@ -98,6 +100,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromPrimaryUser_containsWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
@@ -107,6 +110,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile(installTestApp = false)
+    @Postsubmit(reason="new test")
     public void getTargetUserProfiles_callingFromPrimaryUser_appNotInstalledInWorkProfile_doesNotContainWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
@@ -139,6 +143,7 @@ public final class CrossProfileAppsTest {
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     @Ignore // TODO(scottjonathan): Replace use of UIAutomator
+    @Postsubmit(reason="new test")
     public void startMainActivity_callingFromPrimaryUser_targetIsWorkProfile_launches() {
         sCrossProfileApps.startMainActivity(
                 new ComponentName(sContext, MainActivity.class), sDeviceState.getWorkProfile());
@@ -161,6 +166,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
+    @Postsubmit(reason="new test")
     public void startMainActivity_activityNotExported_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
@@ -170,6 +176,7 @@ public final class CrossProfileAppsTest {
     }
 
     @Test
+    @Postsubmit(reason="new test")
     public void startMainActivity_activityNotMain_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
@@ -180,6 +187,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @Ignore // TODO(scottjonathan): This requires another app to be installed which can be launched
+    @Postsubmit(reason="new test")
     public void startMainActivity_activityIncorrectPackage_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
 
@@ -188,6 +196,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnPrimaryUser
+    @Postsubmit(reason="new test")
     public void
             startMainActivity_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
@@ -199,6 +208,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @Postsubmit(reason="new test")
     public void
     startMainActivity_callingFromPrimaryUser_targetIsSecondaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
@@ -223,6 +233,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnPrimaryUser
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.getPrimaryUser());
@@ -232,6 +243,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsSecondaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.getPrimaryUser());
@@ -260,6 +272,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsWorkProfile_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingLabel(
                 sDeviceState.getWorkProfile())).isNotNull();
@@ -267,6 +280,7 @@ public final class CrossProfileAppsTest {
 
     @Test
     @RequireRunOnPrimaryUser
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingLabelIconDrawable_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingIconDrawable(sDeviceState.getPrimaryUser());
@@ -276,6 +290,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingLabelIconDrawable_callingFromPrimaryUser_targetIsSecondaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingIconDrawable(sDeviceState.getSecondaryUser());
@@ -304,6 +319,7 @@ public final class CrossProfileAppsTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="new test")
     public void getProfileSwitchingIconDrawable_callingFromPrimaryUser_targetIsWorkProfile_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingIconDrawable(
                 sDeviceState.getWorkProfile())).isNotNull();
