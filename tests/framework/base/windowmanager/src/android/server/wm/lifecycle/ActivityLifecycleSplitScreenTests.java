@@ -322,12 +322,23 @@ public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTe
                 getLaunchActivityBuilder().
                         setTargetActivity(getComponentName(SecondActivity.class)));
 
-        // Wait for the activity to receive the change
-        waitForActivityTransitions(ConfigChangeHandlingActivity.class,
-                Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
-        LifecycleVerifier.assertOrder(getLifecycleLog(), ConfigChangeHandlingActivity.class,
-                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST),
-                "moveToSplitScreen");
+        final int displayWindowingMode = getDisplayWindowingModeByActivity(
+                getComponentName(ConfigChangeHandlingActivity.class));
+        if (displayWindowingMode == WINDOWING_MODE_FULLSCREEN) {
+            // Wait for the activity to receive the change.
+            waitForActivityTransitions(ConfigChangeHandlingActivity.class,
+                    Arrays.asList(ON_TOP_POSITION_LOST, ON_MULTI_WINDOW_MODE_CHANGED));
+            LifecycleVerifier.assertOrder(getLifecycleLog(), ConfigChangeHandlingActivity.class,
+                    Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_TOP_POSITION_LOST),
+                    "moveToSplitScreen");
+        } else {
+            // For non-fullscreen display mode, there won't be a multi-window callback.
+            waitForActivityTransitions(ConfigChangeHandlingActivity.class,
+                    Arrays.asList(ON_TOP_POSITION_LOST));
+            LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
+                    transition(ConfigChangeHandlingActivity.class, ON_TOP_POSITION_LOST),
+                    "moveToSplitScreen");
+        }
 
         // Exit split-screen
         getLifecycleLog().clear();
