@@ -32,9 +32,6 @@ android_test {
         "cts",
         "general-tests",
     ],
-    test_options: {
-        extra_test_configs: ["AdminWorkProfileTest.xml"]
-    },
     instrumentation_for: "CtsAdminApp",
     sdk_version: "test_current",
 }
