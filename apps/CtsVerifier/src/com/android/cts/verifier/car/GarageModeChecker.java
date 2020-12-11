@@ -23,6 +23,8 @@ import android.app.job.JobService;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Message;
@@ -41,22 +43,25 @@ public final class GarageModeChecker extends JobService {
     static final String PREFS_GARAGE_MODE_START = "garage-mode-start";
     static final String PREFS_GARAGE_MODE_END = "garage-mode-end";
     static final String PREFS_TERMINATION = "termination-time";
+    static final String PREFS_JOB_UPDATE = "job-update-time";
+    static final String PREFS_HAD_CONNECTIVITY = "had-connectivity";
 
-    private static final int SECONDS_PER_ITERATION = 10;
-    private static final int MS_PER_ITERATION = SECONDS_PER_ITERATION * 1000;
+    static final int SECONDS_PER_ITERATION = 10;
+    static final int MS_PER_ITERATION = SECONDS_PER_ITERATION * 1000;
 
     private static final int GARAGE_JOB_ID = GarageModeTestActivity.class.hashCode();
     private static final String JOB_NUMBER = "job_number";
     private static final String REMAINING_SECONDS = "remaining_seconds";
-    // JobScheduler allows a maximum of 10 minutes for a job
-    private static final int MAX_SECONDS_PER_JOB = 9 * 60;
+    // JobScheduler allows a maximum of 10 minutes for a job, but depending on vendor implementation
+    // Garage Mode may not last that long. So, max job duration is set to 60 seconds.
+    private static final int MAX_SECONDS_PER_JOB = 60;
 
     private static final int MSG_FINISHED = 0;
     private static final int MSG_RUN_JOB = 1;
     private static final int MSG_CANCEL_JOB = 2;
 
     private Context mIdleJobContext;
-    
+
     private boolean mReportFirstExecution = true;
 
     public static void scheduleAnIdleJob(Context context, int durationSeconds) {
@@ -90,6 +95,8 @@ public final class GarageModeChecker extends JobService {
 
     private final Handler mHandler = new Handler() {
         private SparseArray<JobParameters> mTaskMap = new SparseArray<>();
+        private boolean mHaveContinuousConnectivity = true; // Assume true initially
+
         @Override
         public void handleMessage(Message msg) {
             JobParameters job = (JobParameters) msg.obj;
@@ -99,14 +106,15 @@ public final class GarageModeChecker extends JobService {
                     jobFinished(job, false);
                     break;
                 case MSG_RUN_JOB:
+                    checkConnectivity(msg.arg1);
                     GarageModeCheckerTask task = new GarageModeCheckerTask(this, job, msg.arg1);
                     task.execute();
                     mTaskMap.put(job.getJobId(), job);
                     break;
                 case MSG_CANCEL_JOB:
-                    JobParameters job1 = mTaskMap.get(job.getJobId());
-                    if (job1 != null) {
-                        removeMessages(MSG_RUN_JOB, job1);
+                    JobParameters runningJob = mTaskMap.get(job.getJobId());
+                    if (runningJob != null) {
+                        removeMessages(MSG_RUN_JOB, runningJob);
                         mTaskMap.remove(job.getJobId());
                     }
                     SharedPreferences prefs = mIdleJobContext.getSharedPreferences(PREFS_FILE_NAME,
@@ -116,6 +124,25 @@ public final class GarageModeChecker extends JobService {
                     editor.commit();
                     Log.v(TAG, "Idle job was terminated");
                     break;
+            }
+        }
+
+        private void checkConnectivity(int iteration) {
+            if (mHaveContinuousConnectivity) {
+                // Check if we still have internet connectivity
+                NetworkInfo networkInfo = getApplicationContext()
+                        .getSystemService(ConnectivityManager.class).getActiveNetworkInfo();
+                mHaveContinuousConnectivity = networkInfo != null
+                        && networkInfo.isAvailable() && networkInfo.isConnected();
+                if (iteration == 0 || !mHaveContinuousConnectivity) {
+                    // Save the connectivity state on the first pass and
+                    // the first time we lose connectivity
+                    SharedPreferences prefs = mIdleJobContext.getSharedPreferences(PREFS_FILE_NAME,
+                            Context.MODE_PRIVATE);
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putBoolean(PREFS_HAD_CONNECTIVITY, mHaveContinuousConnectivity);
+                    editor.commit();
+                }
             }
         }
     };
@@ -161,22 +188,27 @@ public final class GarageModeChecker extends JobService {
             int remainingSeconds = mJobParameter.getExtras().getInt(REMAINING_SECONDS);
             int myMaxTime = Math.min(remainingSeconds, MAX_SECONDS_PER_JOB);
             int elapsedSeconds = SECONDS_PER_ITERATION * mIteration;
+            long now = System.currentTimeMillis();
+            SharedPreferences prefs = mIdleJobContext.getSharedPreferences(PREFS_FILE_NAME,
+                    Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = null;
 
-            if (elapsedSeconds >= myMaxTime) {
+            if (elapsedSeconds >= myMaxTime + SECONDS_PER_ITERATION) {
                 // This job is done
                 if (myMaxTime == remainingSeconds) {
                     // This is the final job. Note the completion time.
-                    SharedPreferences prefs = mIdleJobContext.getSharedPreferences(PREFS_FILE_NAME,
-                            Context.MODE_PRIVATE);
-                    SharedPreferences.Editor editor = prefs.edit();
-                    editor.putLong(PREFS_GARAGE_MODE_END, System.currentTimeMillis());
+                    editor = prefs.edit();
+                    editor.putLong(PREFS_GARAGE_MODE_END, now);
                     editor.commit();
                     Log.v(TAG, "Idle job is finished");
                 }
                 return false;
             }
-            if (elapsedSeconds >= (myMaxTime - SECONDS_PER_ITERATION)
-                    && (myMaxTime < remainingSeconds)) {
+
+            editor = prefs.edit();
+            editor.putLong(PREFS_JOB_UPDATE, now);
+            editor.commit();
+            if (elapsedSeconds >= myMaxTime && (myMaxTime < remainingSeconds)) {
                 // This job is about to finish and there is more time remaining.
                 // Schedule another job.
                 scheduleJob(mIdleJobContext, mJobParameter.getJobId() + 1,
