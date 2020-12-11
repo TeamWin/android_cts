@@ -2194,31 +2194,6 @@
         notifications, fully expand the notification display and verify that the \"Person A\"
         notification appears before the "\Non-Person Notification\".
         If this device does not support conversation notifications or does not group them together, press Pass.</string>
-    <string name="qs_media_player_title">QS Media Controls Test</string>
-    <string name="qs_media_player_test">Media Controls Test</string>
-    <string name="qs_media_player_info">This test checks that media controls appear in the
-        Quick Settings shade for applications that post a media style notification.</string>
-    <string name="qs_media_player_song_and_artist">Fully expand Quick Settings and look at the media
-        player controls for the CTS Verifier app.
-        Check that the media player contains the strings "Song" and "Artist".
-    </string>
-    <string name="qs_media_player_album_art">Open Quick Settings and look at the media player
-        controls for the CTS Verifier app.
-        Check that the media player contains a solid yellow image.
-    </string>
-    <string name="qs_media_player_progress_bar">Fully expand Quick Settings and look at the media
-        player controls for the CTS Verifier app.
-        Check that the media player contains a progress bar showing 6 seconds have elapsed of a
-        one minute long track.
-    </string>
-    <string name="qs_media_player_actions">Fully expand Quick Settings and look at the media player
-        controls for the CTS Verifier app.
-        Check that icons appear for rewind, previous track, pause, next track and fast forward.
-    </string>
-    <string name="qs_media_player_output_switcher">Open Quick Settings and look at the media player
-        controls for the CTS Verifier app. Click on the button showing that the media is playing
-        on the phone speaker. Check that the Output Switcher opens.
-    </string>
     <string name="tile_service_name">Tile Service for CTS Verifier</string>
     <string name="tiles_test">Tile Service Test</string>
     <string name="tiles_info">This test checks that a Tile Service added by a third party
