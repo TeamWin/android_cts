@@ -1157,21 +1157,4 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         } catch(SecurityException e) {
         }
     }
-
-    public void testHasKeyPair_failIfNotOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testHasKeyPair_failIfNotOwner(), no device_admin feature");
-            return;
-        }
-        assertThrows(SecurityException.class, () -> mDevicePolicyManager.hasKeyPair("some-alias"));
-    }
-
-    public void testGetKeyPairGrants_failIfNotOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetKeyPairGrants_failIfNotOwner(), no device_admin feature");
-            return;
-        }
-        assertThrows(SecurityException.class,
-                () -> mDevicePolicyManager.getKeyPairGrants("some-alias"));
-    }
 }
