@@ -60,6 +60,7 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         assertEquals("Device must not be in car mode at start of test.",
                 Configuration.UI_MODE_TYPE_NORMAL, uiModeManager.getCurrentModeType());
+        mInCallCallbacks.resetLock();
     }
 
     @Override
