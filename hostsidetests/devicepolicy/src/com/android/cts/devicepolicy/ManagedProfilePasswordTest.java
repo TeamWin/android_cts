@@ -51,8 +51,10 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
         if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
+        disableParentRestrictionChange();
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PasswordMinimumRestrictionsTest",
                 mProfileUserId);
+        enableParentRestrictionChange();
     }
 
     @FlakyTest
@@ -255,5 +257,15 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
                 "The managed profile has not been locked after calling "
                         + "lockNow(FLAG_SECURE_USER_DATA)",
                 TIMEOUT_USER_LOCKED_MILLIS);
+    }
+
+    private void disableParentRestrictionChange() throws Exception {
+        final String cmd = "am compat disable 165573442 " + MANAGED_PROFILE_PKG;
+        getDevice().executeShellCommand(cmd);
+    }
+
+    private void enableParentRestrictionChange() throws Exception {
+        final String cmd = "am compat enable 165573442 " + MANAGED_PROFILE_PKG;
+        getDevice().executeShellCommand(cmd);
     }
 }
