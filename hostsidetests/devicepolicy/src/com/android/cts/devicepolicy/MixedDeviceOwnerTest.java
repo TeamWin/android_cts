@@ -31,11 +31,6 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -101,6 +96,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @FlakyTest(bugId = 127270520)
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTask_affiliatedSecondaryUser() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
