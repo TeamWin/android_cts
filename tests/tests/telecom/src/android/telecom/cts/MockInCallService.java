@@ -76,6 +76,10 @@ public class MockInCallService extends InCallService {
         final public void setService(MockInCallService service) {
             mService = service;
         }
+
+        public void resetLock() {
+            lock = new Semaphore(0);
+        }
     }
 
     /**

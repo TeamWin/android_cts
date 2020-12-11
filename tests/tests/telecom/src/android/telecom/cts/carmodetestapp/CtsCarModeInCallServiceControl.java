@@ -74,6 +74,11 @@ public class CtsCarModeInCallServiceControl extends Service {
             UiModeManager uiModeManager = getSystemService(UiModeManager.class);
             uiModeManager.disableCarMode(0);
         }
+
+        @Override
+        public boolean checkBindStatus(boolean bind) {
+            return CtsCarModeInCallService.checkBindStatus(bind);
+        }
     };
 
     @Override
