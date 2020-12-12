@@ -434,6 +434,7 @@ public class TestMedia extends SecurityTestCase {
      **/
     @SecurityTest(minPatchLevel = "2015-12")
     public void testPocCVE_2015_6616() throws Exception {
+        pocPusher.only64();
         String inputFiles[] = {"cve_2015_6616.mp4"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2015-6616",
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
