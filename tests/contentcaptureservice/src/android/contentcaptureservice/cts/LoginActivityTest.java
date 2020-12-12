@@ -425,9 +425,15 @@ public class LoginActivityTest
         activity.syncRunOnUiThread(() -> {
             activity.mUsername.setText("a");
             activity.mUsername.setText("ab");
+            activity.mUsername.setText("");
+            activity.mUsername.setText("abc");
 
             activity.mPassword.setText("d");
+            activity.mPassword.setText("");
+            activity.mPassword.setText("");
             activity.mPassword.setText("de");
+            activity.mPassword.setText("def");
+            activity.mPassword.setText("");
 
             activity.mUsername.setText("abc");
         });
@@ -440,15 +446,20 @@ public class LoginActivityTest
 
         assertRightActivity(session, sessionId, activity);
 
-        final int additionalEvents = 3;
+        final int additionalEvents = 8;
         final List<ContentCaptureEvent> events = activity.assertInitialViewsAppeared(session,
                 additionalEvents);
 
         final int i = LoginActivity.MIN_EVENTS;
 
         assertViewTextChanged(events, i, activity.mUsername.getAutofillId(), "ab");
-        assertViewTextChanged(events, i + 1, activity.mPassword.getAutofillId(), "de");
+        assertViewTextChanged(events, i + 1, activity.mUsername.getAutofillId(), "");
         assertViewTextChanged(events, i + 2, activity.mUsername.getAutofillId(), "abc");
+        assertViewTextChanged(events, i + 3, activity.mPassword.getAutofillId(), "d");
+        assertViewTextChanged(events, i + 4, activity.mPassword.getAutofillId(), "");
+        assertViewTextChanged(events, i + 5, activity.mPassword.getAutofillId(), "def");
+        assertViewTextChanged(events, i + 6, activity.mPassword.getAutofillId(), "");
+        assertViewTextChanged(events, i + 7, activity.mUsername.getAutofillId(), "abc");
 
         activity.assertInitialViewsDisappeared(events, additionalEvents);
     }
