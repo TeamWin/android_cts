@@ -580,8 +580,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
         Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
-        options.requestUsageTimeReport(PendingIntent.getBroadcast(context,
-                0, receiveIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+        options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 
         // The application finished tracker.
         ActivityReceiverFilter appEndReceiver = new ActivityReceiverFilter(ACTIVITY_EXIT_ACTION);
@@ -666,8 +666,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
         Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
-        options.requestUsageTimeReport(PendingIntent.getBroadcast(context,
-                0, receiveIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+        options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
+                    PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 
         // The application started tracker.
         ActivityReceiverFilter appStartedReceiver = new ActivityReceiverFilter(
@@ -714,8 +714,8 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         Context context = mInstrumentation.getTargetContext();
         ActivityOptions options = ActivityOptions.makeBasic();
         Intent receiveIntent = new Intent(ACTIVITY_TIME_TRACK_INFO);
-        options.requestUsageTimeReport(PendingIntent.getBroadcast(context,
-                0, receiveIntent, PendingIntent.FLAG_CANCEL_CURRENT));
+        options.requestUsageTimeReport(PendingIntent.getBroadcast(context, 0, receiveIntent,
+                    PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_MUTABLE));
 
         // The application finished tracker.
         ActivityReceiverFilter appEndReceiver = new ActivityReceiverFilter(
