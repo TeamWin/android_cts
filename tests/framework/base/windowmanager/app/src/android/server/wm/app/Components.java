@@ -52,6 +52,8 @@ public class Components extends ComponentsBase {
             component("FontScaleNoRelaunchActivity");
     public static final ComponentName FREEFORM_ACTIVITY = component("FreeformActivity");
     public static final ComponentName HOST_ACTIVITY = component("HostActivity");
+    public static final ComponentName HIDE_OVERLAY_WINDOWS_ACTIVITY =
+            component("HideOverlayWindowsActivity");
     public static final ComponentName KEYGUARD_LOCK_ACTIVITY = component("KeyguardLockActivity");
     public static final ComponentName LANDSCAPE_ORIENTATION_ACTIVITY =
             component("LandscapeOrientationActivity");
@@ -530,6 +532,12 @@ public class Components extends ComponentsBase {
     public static class Notifications {
         public static final String CHANNEL_MAIN = "main";
         public static final int ID_OVERLAY_TEST_SERVICE = 1;
+    }
+
+    public static class HideOverlayWindowsActivity {
+        public static final String ACTION = "hide_action";
+        public static final String PONG = "pong_action";
+        public static final String SHOULD_HIDE = "should_hide";
     }
 
     private static ComponentName component(String className) {

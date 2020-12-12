@@ -295,6 +295,12 @@ public class WindowManagerStateHelper extends WindowManagerState {
         }, windowName + "'s surface is disappeared");
     }
 
+    void waitAndAssertWindowSurfaceShown(String windowName, boolean shown) {
+        assertTrue(
+                waitForWithAmState(state -> state.isWindowSurfaceShown(windowName) == shown,
+                        windowName + "'s  isWindowSurfaceShown to return " + shown));
+    }
+
     /** A variant of waitForWithAmState with different parameter order for better Kotlin interop. */
     public boolean waitForWithAmState(String message, Predicate<WindowManagerState> waitCondition) {
         return waitForWithAmState(waitCondition, message);

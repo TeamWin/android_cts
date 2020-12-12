@@ -239,7 +239,15 @@ public class LocationManagerCoarseTest {
 
     @Test
     public void testGetBestProvider() {
-        // prevent network provider from matching
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
+
+        if (mManager.getProvider(FUSED_PROVIDER) != null) {
+            assertEquals(FUSED_PROVIDER, mManager.getBestProvider(criteria, false));
+        }
+
+        // prevent network + fused provider from matching
         mManager.addTestProvider(NETWORK_PROVIDER,
                 true,
                 false,
@@ -250,10 +258,16 @@ public class LocationManagerCoarseTest {
                 false,
                 Criteria.POWER_HIGH,
                 Criteria.ACCURACY_COARSE);
-
-        Criteria criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
-        criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
+        mManager.addTestProvider(FUSED_PROVIDER,
+                true,
+                false,
+                true,
+                false,
+                false,
+                false,
+                false,
+                Criteria.POWER_HIGH,
+                Criteria.ACCURACY_COARSE);
 
         String bestProvider = mManager.getBestProvider(criteria, false);
         assertEquals(TEST_PROVIDER, bestProvider);

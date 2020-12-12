@@ -48,6 +48,7 @@ public class TestSipDelegate implements SipDelegate {
     // Pair is <transactionId, error reason>
     private final LinkedBlockingQueue<Pair<String, Integer>> mReceivedMessageAcks =
             new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<String> mCloseDialogRequests = new LinkedBlockingQueue<>();
     private int mSendMessageDenyReason = -1;
 
     public TestSipDelegate(int sub, DelegateRequest request, DelegateStateCallback cb,
@@ -73,7 +74,7 @@ public class TestSipDelegate implements SipDelegate {
     @Override
     public void closeDialog(@NonNull String callId) {
         if (ImsUtils.VDBG) Log.d(LOG_TAG, "closeDialog");
-        // TODO: Test once dialogs are tracked in AOSP.
+        mCloseDialogRequests.offer(callId);
     }
 
     @Override
@@ -91,6 +92,12 @@ public class TestSipDelegate implements SipDelegate {
     public void verifyMessageSend(SipMessage messageToVerify) throws Exception {
         SipMessage m = mIncomingMessages.poll(ImsUtils.TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertEquals(messageToVerify, m);
+    }
+
+    public void verifyCloseDialog(String callIdToVerify) throws Exception {
+        String requestedCallId = mCloseDialogRequests.poll(ImsUtils.TEST_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+        assertEquals(callIdToVerify, requestedCallId);
     }
 
     public void setSendMessageDenyReason(int reason) {

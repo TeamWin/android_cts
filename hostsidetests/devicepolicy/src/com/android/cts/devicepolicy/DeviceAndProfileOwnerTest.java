@@ -36,6 +36,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 
 import com.google.common.collect.ImmutableMap;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -1155,6 +1156,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @FlakyTest(bugId = 132226089)
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTask() throws Exception {
         if (!mHasFeature) {
@@ -1207,6 +1209,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @LargeTest
     @Test
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
         if (!mHasFeature) {
             return;
@@ -1238,6 +1241,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     public void testLockTask_defaultDialer() throws Exception {
         if (!mHasFeature || !mHasTelephony || !mHasConnectionService) {
             return;
