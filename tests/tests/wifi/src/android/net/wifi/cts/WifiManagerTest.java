@@ -78,8 +78,8 @@ import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
@@ -95,6 +95,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -3284,6 +3285,66 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Note, the reverse is a valid case.
         if (isSupportedWhenWifiDisabled) {
             assertTrue(isSupportedWhenWifiEnabled);
+        }
+    }
+
+    public class TestCoexCallback extends WifiManager.CoexCallback {
+        private Object mCoexLock;
+        private int mOnCoexUnsafeChannelChangedCount;
+
+        TestCoexCallback(Object lock) {
+            mCoexLock = lock;
+        }
+
+        @Override
+        public void onCoexUnsafeChannelsChanged() {
+            synchronized (mCoexLock) {
+                mOnCoexUnsafeChannelChangedCount++;
+            }
+        }
+
+        public int getOnCoexUnsafeChannelChangedCount() {
+            synchronized (mCoexLock) {
+                return mOnCoexUnsafeChannelChangedCount;
+            }
+        }
+    }
+
+    /**
+     * Test that coex-related methods fail without the needed privileged permissions
+     */
+    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testCoexMethodsShouldFailNoPermission() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        try {
+            mWifiManager.setCoexUnsafeChannels(Collections.emptySet(), 0);
+            fail("setCoexUnsafeChannels should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mWifiManager.getCoexUnsafeChannels();
+            fail("getCoexUnsafeChannels should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+        final TestCoexCallback callback = new TestCoexCallback(mLock);
+        try {
+            mWifiManager.registerCoexCallback(mExecutor, callback);
+            fail("registerCoexCallback should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // expected
+        }
+        try {
+            mWifiManager.unregisterCoexCallback(callback);
+            fail("unregisterCoexCallback should not succeed - privileged call");
+        } catch (SecurityException e) {
+            // expected
         }
     }
 }
