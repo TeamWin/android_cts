@@ -79,7 +79,7 @@ public class EncodeVirtualDisplayWithCompositionTestImpl {
     private static final boolean DBG = false;
     private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
 
-    private static final long DEFAULT_WAIT_TIMEOUT_MS = 5000;
+    private static final long DEFAULT_WAIT_TIMEOUT_MS = 10000;
     private static final long DEFAULT_WAIT_TIMEOUT_US = DEFAULT_WAIT_TIMEOUT_MS * 1000;
 
     private static final int COLOR_RED =  makeColor(100, 0, 0);
