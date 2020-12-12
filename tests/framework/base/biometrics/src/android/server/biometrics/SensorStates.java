@@ -124,9 +124,9 @@ public class SensorStates {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < sensorStates.size(); i++) {
             sb.append("{SensorId: ").append(sensorStates.keyAt(i));
-            sb.append(", Busy: ").append(sensorStates.get(i).isBusy());
+            sb.append(", Busy: ").append(sensorStates.valueAt(i).isBusy());
 
-            final SparseArray<UserState> userStates = sensorStates.get(i).getUserStates();
+            final SparseArray<UserState> userStates = sensorStates.valueAt(i).getUserStates();
             for (int j = 0; j < userStates.size(); j++) {
                 sb.append(", UserId: ").append(userStates.keyAt(j));
                 sb.append(", NumEnrolled: ").append(userStates.get(j).numEnrolled);
