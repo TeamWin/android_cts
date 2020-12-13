@@ -698,7 +698,6 @@ public class FrameRateCtsActivity extends Activity {
         runOneSurfaceTest(api, (TestSurface surface) -> {
             Display display = mDisplayManager.getDisplay(Display.DEFAULT_DISPLAY);
             Display.Mode currentMode = display.getMode();
-            float initialRefreshRate = currentMode.getRefreshRate();
 
             if (shouldBeSeamless) {
                 // Seamless rates should be seamlessly achieved with no resolution changes.
@@ -717,7 +716,7 @@ public class FrameRateCtsActivity extends Activity {
                 surface.setFrameRate(0.f, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
                         /*shouldBeSeamless*/ true);
                 // Wait for potential mode switches
-                verifyCompatibleAndStableFrameRate(initialRefreshRate, Arrays.asList(surface));
+                verifyCompatibleAndStableFrameRate(0, Arrays.asList(surface));
                 currentMode = display.getMode();
 
                 // Seamed rates should never generate a seamed switch.
@@ -925,7 +924,6 @@ public class FrameRateCtsActivity extends Activity {
         runOneSurfaceTest(api, (TestSurface surface) -> {
             Display display = getDisplay();
             Display.Mode currentMode = display.getMode();
-            float initialRefreshRate = currentMode.getRefreshRate();
             List<Float> frameRatesToTest = Floats.asList(currentMode.getAlternativeRefreshRates());
 
             for (float frameRate : frameRatesToTest) {
@@ -943,7 +941,7 @@ public class FrameRateCtsActivity extends Activity {
                     /*shouldBeSeamless*/ false);
 
             // Wait for potential mode switches.
-            verifyCompatibleAndStableFrameRate(initialRefreshRate, Arrays.asList(surface));
+            verifyCompatibleAndStableFrameRate(0, Arrays.asList(surface));
 
             currentMode = display.getMode();
             List<Float> seamedRefreshRates = getSeamedRefreshRates(currentMode, display);
