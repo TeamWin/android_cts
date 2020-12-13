@@ -75,6 +75,11 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
                 runDeviceTests(deviceTestRunOptions)).isTrue();
     }
 
+    protected long getDeviceTimeMs() throws Exception {
+        final String timeMs = getDevice().executeShellCommand("date +%s%3N");
+        return Long.parseLong(timeMs.trim());
+    }
+
     protected void rebootAndWaitUntilReady() throws Exception {
         // TODO: use rebootUserspace()
         getDevice().reboot(); // reboot() waits for device available
