@@ -23,7 +23,7 @@ public class RecorderBuilder extends BuilderBase {
 
     private AudioSinkProvider mSinkProvider;
 
-    private int mInputPreset = -1; // undefined
+    private int mInputPreset = Recorder.INPUT_PRESET_NONE;
 
     public RecorderBuilder() {
 

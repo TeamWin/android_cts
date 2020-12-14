@@ -51,7 +51,7 @@ public class OboeRecorder extends Recorder {
     }
 
     @Override
-    public boolean setupStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBurstFrames) {
         mChannelCount = channelCount;
         mSampleRate = sampleRate;
         return setupStreamN(mNativeRecorder, channelCount, sampleRate,
@@ -59,20 +59,22 @@ public class OboeRecorder extends Recorder {
     }
 
     @Override
-    public void teardownStream() {
-        teardownStreamN(mNativeRecorder);
+    public int teardownStream() {
+        int errCode = teardownStreamN(mNativeRecorder);
         mChannelCount = 0;
         mSampleRate = 0;
+
+        return errCode;
     }
 
     @Override
-    public boolean startStream() {
+    public int startStream() {
         return startStreamN(mNativeRecorder, mRecorderSubtype);
     }
 
     @Override
-    public void stopStream() {
-        stopN(mNativeRecorder);
+    public int stopStream() {
+        return stopN(mNativeRecorder);
     }
 
     private native long allocNativeRecorder(long nativeSink, int recorderSubtype);
@@ -84,12 +86,12 @@ public class OboeRecorder extends Recorder {
 
     private native int getRoutedDeviceIdN(long nativeRecorder);
 
-    private native boolean setupStreamN(long nativeRecorder, int channelCount, int sampleRate, int routeDeviceId);
-    private native boolean teardownStreamN(long nativeRecorder);
+    private native int setupStreamN(long nativeRecorder, int channelCount, int sampleRate, int routeDeviceId);
+    private native int teardownStreamN(long nativeRecorder);
 
-    private native boolean startStreamN(long nativeRecorder, int recorderSubtype);
+    private native int startStreamN(long nativeRecorder, int recorderSubtype);
 
-    private native boolean stopN(long nativeRecorder);
+    private native int stopN(long nativeRecorder);
 
     private native int getNumBufferFramesN(long nativeRecorder);
 }

@@ -23,6 +23,18 @@ class AudioSink;
 
 class StreamBase {
 public:
+    //
+    // Error Codes
+    // These values must be kept in sync with the equivalent symbols in
+    // org.hyphonate.megaaudio.common.Streambase.java
+    //
+    enum Result {
+        OK = 0,
+        ERROR_UNKNOWN = -1,
+        ERROR_UNSUPPORTED = -2,
+        ERROR_INVALID_STATE = -3
+    };
+
     StreamBase() :
         mChannelCount(0),
         mSampleRate(0),
@@ -52,10 +64,9 @@ public:
      * @param sampleRate the desired playback sample rate
      * @param the device id of the device to route the audio to.
      * @param a pointer to an AudioSource (subclass) object which will provide the audio data.
-     * @return true if the stream is successfully initialized, false if an error occurs.
+     * @return ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    virtual bool setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) = 0;
+    virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) = 0;
 
     /**
      * Deinitializes the stream.
@@ -64,25 +75,24 @@ public:
      * The stream cannot be started again without another call to setupAudioStream().
      *
      * The expectation is that this method will be synchronous in concrete subclasses.
+     * @return ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    virtual void teardownStream() = 0;
+    virtual Result teardownStream() = 0;
 
     /**
      * Begin the playback/recording process.
      *
      * In concrete subclasses, this may be either synchronous or asynchronous.
+     * @return ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    virtual bool startStream() = 0;
+    virtual Result startStream() = 0;
 
     /**
      * Stop the playback/recording process.
      *
      * In concrete subclasses, this may be either synchronous or asynchronous.
      */
-    //TODO - investigate potential errors and return codes
-    virtual void stopStream() = 0;
+    virtual Result stopStream() = 0;
 
 protected:
     // Audio attributes

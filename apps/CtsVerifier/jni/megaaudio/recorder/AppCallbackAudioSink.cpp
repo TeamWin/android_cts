@@ -65,8 +65,8 @@ void AppCallbackAudioSink::stop() {
 }
 
 void AppCallbackAudioSink::push(float* audioData, int numFrames, int numChannels) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "push(numFrames:%d, numChannels:%d)",
-                        numFrames, numChannels);
+//    __android_log_print(ANDROID_LOG_INFO, TAG, "push(numFrames:%d, numChannels:%d)",
+//                        numFrames, numChannels);
 
     // Get the local JNI env
     JNIEnv * env;

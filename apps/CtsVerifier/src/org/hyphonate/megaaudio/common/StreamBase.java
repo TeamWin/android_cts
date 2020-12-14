@@ -21,6 +21,16 @@ import android.media.AudioFormat;
 
 public abstract class StreamBase {
     //
+    // Error Codes
+    // These values must be kept in sync with the equivalent symbols in
+    // megaaudio/common/Streambase.h
+    //
+    public static final int OK = 0;
+    public static final int ERROR_UNKNOWN = -1;
+    public static final int ERROR_UNSUPPORTED = -2;
+    public static final int ERROR_INVALID_STATE = -3;
+
+    //
     // Stream attributes
     //
     protected int mChannelCount;
@@ -84,28 +94,25 @@ public abstract class StreamBase {
      * @param channelCount  The number of channels of audio data to be streamed.
      * @param sampleRate    The stream sample rate
      * @param numFrames     The number of frames of audio data in the stream's buffer.
-     * @return              True if the stream is successfully initialized.
+     * @return              ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    public abstract boolean setupStream(int channelCount, int sampleRate, int numFrames);
+    public abstract int setupStream(int channelCount, int sampleRate, int numFrames);
 
-    //TODO - investigate potential errors and return codes
-    public abstract void teardownStream();
+    public abstract int teardownStream();
 
     /**
      * Starts playback on an open stream player. (@see open() method above).
-     * @return <code>true</code> if playback/recording starts.
+     * @return              ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    public abstract boolean startStream();
+    public abstract int startStream();
 
     /**
      * Stops playback.
      * May not stop the stream immediately. i.e. does not stop until the next audio callback
      * from the underlying system.
+     * @return              ERROR_NONE if successful, otherwise an error code
      */
-    //TODO - investigate potential errors and return codes
-    public abstract void stopStream();
+    public abstract int stopStream();
 
     //
     // Thread stuff
