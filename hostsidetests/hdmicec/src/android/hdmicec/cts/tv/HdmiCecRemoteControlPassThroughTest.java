@@ -49,7 +49,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                     .around(hdmiCecClient);
 
     public HdmiCecRemoteControlPassThroughTest() {
-        super(LogicalAddress.TV, "-t", "r", "-t", "p");
+        super(LogicalAddress.TV, "-t", "r", "-t", "p", "-t", "t");
         mapRemoteControlKeys();
     }
 
@@ -98,6 +98,19 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
         hdmiCecClient.broadcastActiveSource(
                 LogicalAddress.PLAYBACK_1, hdmiCecClient.getPhysicalAddress());
         validateKeyeventToUserControlPress(LogicalAddress.PLAYBACK_1);
+    }
+
+    /**
+     * Test 11.1.13-3
+     *
+     * <p>Tests that the DUT sends the appropriate messages for remote control pass through to a
+     * Tuner Device.
+     */
+    @Test
+    public void cect_11_1_13_3_RemoteControlMessagesToTuner() throws Exception {
+        hdmiCecClient.broadcastActiveSource(
+                LogicalAddress.TUNER_1, hdmiCecClient.getPhysicalAddress());
+        validateKeyeventToUserControlPress(LogicalAddress.TUNER_1);
     }
 
     private void mapRemoteControlKeys() {
