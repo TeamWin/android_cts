@@ -74,4 +74,24 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
                     .isEqualTo(testDevice);
         }
     }
+
+    /**
+     * Test 11.1.1-2
+     *
+     * <p>Tests that the DUT responds to {@code <Text View On>} message correctly when the message
+     * is sent from logical addresses 0x1, 0x3 and 0x4
+     */
+    @Test
+    public void cect_11_1_1_2_RespondToTextViewOn() throws Exception {
+        for (LogicalAddress testDevice : testDevices) {
+            hdmiCecClient.sendCecMessage(testDevice, LogicalAddress.TV, CecOperand.TEXT_VIEW_ON);
+            TimeUnit.MILLISECONDS.sleep(WAIT_TIME_MS);
+            hdmiCecClient.broadcastActiveSource(testDevice, hdmiCecClient.getPhysicalAddress());
+            hdmiCecClient.checkOutputDoesNotContainMessage(testDevice, CecOperand.FEATURE_ABORT);
+            assertWithMessage(
+                            "Device has not registered expected logical address as active source.")
+                    .that(getDumpsysActiveSourceLogicalAddress())
+                    .isEqualTo(testDevice);
+        }
+    }
 }
