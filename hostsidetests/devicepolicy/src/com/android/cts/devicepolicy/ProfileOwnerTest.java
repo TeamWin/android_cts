@@ -91,10 +91,6 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        if (true) {
-            // TODO(b/172376923): currently disabled as PO is not properly set to run lockNow()
-            return;
-        }
 
         executeProfileOwnerTest("DevicePolicySafetyCheckerIntegrationTest");
     }
