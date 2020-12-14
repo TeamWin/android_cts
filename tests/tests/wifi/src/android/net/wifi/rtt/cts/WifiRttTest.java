@@ -26,6 +26,8 @@ import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.ResponderLocation;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.core.os.BuildCompat;
+
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -80,7 +82,13 @@ public class WifiRttTest extends TestBase {
                         + "your test setup includes them!", testAp);
 
         // Perform RTT operations
-        RangingRequest request = new RangingRequest.Builder().addAccessPoint(testAp).build();
+        RangingRequest.Builder builder = new RangingRequest.Builder();
+        builder.addAccessPoint(testAp);
+        if (BuildCompat.isAtLeastS()) {
+            builder.setRttBurstSize(RangingRequest.getMaxRttBurstSize());
+        }
+        RangingRequest request = builder.build();
+
         List<RangingResult> allResults = new ArrayList<>();
         int numFailures = 0;
         int distanceSum = 0;
@@ -109,6 +117,12 @@ public class WifiRttTest extends TestBase {
             RangingResult result = currentResults.get(0);
             assertEquals("Wi-Fi RTT results: invalid result (wrong BSSID) entry on iteration " + i,
                     result.getMacAddress().toString(), testAp.BSSID);
+            if (BuildCompat.isAtLeastS()) {
+                assertEquals(
+                        "Wi-Fi RTT results: invalid result (wrong rttBurstSize) entry on iteration "
+                                + i,
+                        result.getNumAttemptedMeasurements(), RangingRequest.getMaxRttBurstSize());
+            }
             assertNull("Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
                     + i, result.getPeerHandle());
 
