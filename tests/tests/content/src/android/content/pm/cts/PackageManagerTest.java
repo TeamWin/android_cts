@@ -35,6 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -871,13 +872,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexSupported_ApexPackage_MatchesApex() throws Exception {
-        // This really should be a assumeTrue(isUpdatingApexSupported()), but JUnit3 doesn't support
-        // assumptions framework.
-        // TODO: change to assumeTrue after migrating tests to JUnit4.
-        if (!isUpdatingApexSupported()) {
-            Log.i(TAG, "Device doesn't support updating APEX");
-            return;
-        }
+        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
+
         PackageInfo packageInfo = mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME,
                 PackageManager.MATCH_APEX | PackageManager.MATCH_FACTORY_ONLY);
         assertShimApexInfoIsCorrect(packageInfo);
@@ -885,13 +881,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexSupported_ApexPackage_DoesNotMatchApex() {
-        // This really should be a assumeTrue(isUpdatingApexSupported()), but JUnit3 doesn't support
-        // assumptions framework.
-        // TODO: change to assumeTrue after migrating tests to JUnit4.
-        if (!isUpdatingApexSupported()) {
-            Log.i(TAG, "Device doesn't support updating APEX");
-            return;
-        }
+        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
+
         try {
             mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, 0 /* flags */);
             fail("NameNotFoundException expected");
@@ -901,10 +892,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexNotSupported_ApexPackage_MatchesApex() {
-        if (isUpdatingApexSupported()) {
-            Log.i(TAG, "Device supports updating APEX");
-            return;
-        }
+        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
+
         try {
             mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, PackageManager.MATCH_APEX);
             fail("NameNotFoundException expected");
@@ -914,10 +903,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetPackageInfo_ApexNotSupported_ApexPackage_DoesNotMatchApex() {
-        if (isUpdatingApexSupported()) {
-            Log.i(TAG, "Device supports updating APEX");
-            return;
-        }
+        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
+
         try {
             mPackageManager.getPackageInfo(SHIM_APEX_PACKAGE_NAME, 0);
             fail("NameNotFoundException expected");
@@ -927,10 +914,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexSupported_MatchesApex() {
-        if (!isUpdatingApexSupported()) {
-            Log.i(TAG, "Device doesn't support updating APEX");
-            return;
-        }
+        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
+
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
                 PackageManager.MATCH_APEX | PackageManager.MATCH_FACTORY_ONLY);
         List<PackageInfo> shimApex = installedPackages.stream().filter(
@@ -942,10 +927,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexSupported_DoesNotMatchApex() {
-        if (!isUpdatingApexSupported()) {
-            Log.i(TAG, "Device doesn't support updating APEX");
-            return;
-        }
+        assumeTrue("Device doesn't support updating APEX", isUpdatingApexSupported());
+
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(0);
         List<PackageInfo> shimApex = installedPackages.stream().filter(
                 packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
@@ -955,10 +938,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexNotSupported_MatchesApex() {
-        if (isUpdatingApexSupported()) {
-            Log.i(TAG, "Device supports updating APEX");
-            return;
-        }
+        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
+
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(
                 PackageManager.MATCH_APEX);
         List<PackageInfo> shimApex = installedPackages.stream().filter(
@@ -969,10 +950,8 @@ public class PackageManagerTest {
 
     @Test
     public void testGetInstalledPackages_ApexNotSupported_DoesNotMatchApex() {
-        if (isUpdatingApexSupported()) {
-            Log.i(TAG, "Device supports updating APEX");
-            return;
-        }
+        assumeFalse("Device supports updating APEX", isUpdatingApexSupported());
+
         List<PackageInfo> installedPackages = mPackageManager.getInstalledPackages(0);
         List<PackageInfo> shimApex = installedPackages.stream().filter(
                 packageInfo -> packageInfo.packageName.equals(SHIM_APEX_PACKAGE_NAME)).collect(
