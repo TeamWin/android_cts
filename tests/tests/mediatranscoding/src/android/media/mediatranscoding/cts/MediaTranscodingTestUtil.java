@@ -30,9 +30,12 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.FileUtils;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Size;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -51,6 +54,7 @@ import java.util.Locale;
         int mHeight = 0;
         float mVideoFrameRate = 0.0f;
         boolean mHasAudio = false;
+        int mRotationDegree = 0;
 
         public String toString() {
             String str = mUri;
@@ -101,6 +105,13 @@ import java.util.Locale;
             if (hasAudio != null) {
                 info.mHasAudio = hasAudio.equals("yes");
             }
+
+            retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            String degree = retriever.extractMetadata(
+                    MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+            if (degree != null) {
+                info.mRotationDegree = Integer.parseInt(degree);
+            }
         } finally {
             if (retriever != null) {
                 retriever.close();
@@ -112,23 +123,45 @@ import java.util.Locale;
         return info;
     }
 
+    static void dumpYuvToExternal(final Context ctx, Uri yuvUri) {
+        Log.i(TAG, "dumping file to external");
+        try {
+            String filename = + System.nanoTime() + "_" + yuvUri.getLastPathSegment();
+            String path = "/storage/emulated/0/Download/" + filename;
+            final File file = new File(path);
+            ParcelFileDescriptor pfd = ctx.getContentResolver().openFileDescriptor(yuvUri, "r");
+            FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+            FileOutputStream fos = new FileOutputStream(file);
+            FileUtils.copy(fis, fos);
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to copy file", e);
+        }
+    }
+
     static VideoTranscodingStatistics computeStats(final Context ctx, final Uri sourceMp4,
-            final Uri transcodedMp4)
+            final Uri transcodedMp4, boolean debugYuv)
             throws Exception {
         // First decode the sourceMp4 to a temp yuv in yuv420p format.
         Uri sourceYUV420PUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + ctx.getCacheDir().getAbsolutePath() + "/sourceYUV420P.yuv");
         decodeMp4ToYuv(ctx, sourceMp4, sourceYUV420PUri);
         VideoFileInfo srcInfo = extractVideoFileInfo(ctx, sourceMp4);
+        if (debugYuv) {
+            dumpYuvToExternal(ctx, sourceYUV420PUri);
+        }
 
         // Second decode the transcodedMp4 to a temp yuv in yuv420p format.
         Uri transcodedYUV420PUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + ctx.getCacheDir().getAbsolutePath() + "/transcodedYUV420P.yuv");
         decodeMp4ToYuv(ctx, transcodedMp4, transcodedYUV420PUri);
         VideoFileInfo dstInfo = extractVideoFileInfo(ctx, sourceMp4);
+        if (debugYuv) {
+            dumpYuvToExternal(ctx, transcodedYUV420PUri);
+        }
 
         if ((srcInfo.mWidth != dstInfo.mWidth) || (srcInfo.mHeight != dstInfo.mHeight) ||
-                (srcInfo.mNumVideoFrames != dstInfo.mNumVideoFrames)) {
+                (srcInfo.mNumVideoFrames != dstInfo.mNumVideoFrames) ||
+                (srcInfo.mRotationDegree != dstInfo.mRotationDegree)) {
             throw new UnsupportedOperationException(
                     "Src mp4 and dst mp4 must have same width/height/frames");
         }
