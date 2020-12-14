@@ -3375,6 +3375,23 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void setSetImeTemporarilyConsumesInput() {
+        InputConnection input = initTextViewForSimulatedIme();
+        mTextView.setCursorVisible(true);
+        assertTrue(mTextView.isCursorVisible());
+
+        mTextView.setImeTemporarilyConsumesInput(true);
+        assertFalse(mTextView.isCursorVisible());
+
+        mTextView.setCursorVisible(true);
+        assertFalse(mTextView.isCursorVisible());
+
+        input.closeConnection();
+        assertTrue(mTextView.isCursorVisible());
+    }
+
+    @UiThreadTest
+    @Test
     public void testPerformLongClick() {
         mTextView = findTextView(R.id.textview_text);
         mTextView.setText("This is content");
