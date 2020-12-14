@@ -28,6 +28,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
+import android.view.WindowManager;
 
 import androidx.test.filters.SmallTest;
 
@@ -95,14 +96,8 @@ public class ContextGetDisplayTest extends ContextTestBase {
         verifyGetDisplayFromDisplayContextDerivedContext(true /* onSecondaryDisplay */);
     }
 
-    private void verifyGetDisplayFromDisplayContextDerivedContext(
-            boolean onSecondaryDisplay) {
-        final Display display;
-        if (onSecondaryDisplay) {
-            display = getSecondaryDisplay();
-        } else {
-            display = getDefaultDisplay();
-        }
+    private void verifyGetDisplayFromDisplayContextDerivedContext(boolean onSecondaryDisplay) {
+        final Display display = onSecondaryDisplay ? getSecondaryDisplay() : getDefaultDisplay();
         final Context context = mApplicationContext.createDisplayContext(display)
                 .createConfigurationContext(new Configuration());
         assertEquals(display, context.getDisplay());
@@ -111,7 +106,23 @@ public class ContextGetDisplayTest extends ContextTestBase {
     @Test
     public void testGetDisplayFromWindowContext() {
         final Display display = getDefaultDisplay();
-        Context windowContext =  createWindowContext();
+        final Context windowContext = createWindowContext();
+        assertEquals(display, windowContext.getDisplay());
+    }
+
+    @Test
+    public void testGetDisplayFromWindowContextWithDefaultDisplay() {
+        final Display display = getDefaultDisplay();
+        final Context windowContext = mApplicationContext.createWindowContext(display,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
+        assertEquals(display, windowContext.getDisplay());
+    }
+
+    @Test
+    public void testGetDisplayFromWindowContextWithSecondaryDisplay() {
+        final Display display = getSecondaryDisplay();
+        final Context windowContext = mApplicationContext.createWindowContext(display,
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
         assertEquals(display, windowContext.getDisplay());
     }
 
