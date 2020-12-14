@@ -23,7 +23,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_PACKAGE_NAME := CtsDeclareNonRuntimePermissions
 LOCAL_SDK_VERSION := current
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 LOCAL_DEX_PREOPT := false
 
