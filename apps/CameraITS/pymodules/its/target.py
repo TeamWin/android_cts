@@ -191,9 +191,11 @@ def get_target_exposure_combos(its_session=None):
         with its.device.ItsSession() as cam:
             exposure = get_target_exposure(cam)
             props = cam.get_camera_properties()
+            props = cam.override_with_hidden_physical_camera_props(props)
     else:
         exposure = get_target_exposure(its_session)
         props = its_session.get_camera_properties()
+        props = its_session.override_with_hidden_physical_camera_props(props)
 
     sens_range = props['android.sensor.info.sensitivityRange']
     exp_time_range = props['android.sensor.info.exposureTimeRange']
