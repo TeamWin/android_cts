@@ -106,6 +106,7 @@ class Chart(object):
         if not self.xnorm:
             with its.device.ItsSession(camera_id) as cam:
                 props = cam.get_camera_properties()
+                props = cam.override_with_hidden_physical_camera_props(props)
                 if its.caps.read_3a(props):
                     self.locate(cam, props)
                 else:
