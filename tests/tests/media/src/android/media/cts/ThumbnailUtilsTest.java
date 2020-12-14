@@ -23,6 +23,7 @@ import android.annotation.ColorInt;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
 import android.media.ThumbnailUtils;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Size;
@@ -33,6 +34,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -161,6 +164,11 @@ public class ThumbnailUtilsTest {
     @Test
     @Parameters(method = "getHEICSampleForCreateImageThumbnail")
     public void testCreateImageThumbnail_HEICSample(int resId) throws Exception {
+        if (!MediaUtils.hasDecoder(MIMETYPE_VIDEO_HEVC)) {
+            MediaUtils.skipTest("no video decoders for resource");
+            return;
+        }
+
         final File file = stageFile(resId, new File(mDir, "cts.heic"));
         final Bitmap bitmap = ThumbnailUtils.createImageThumbnail(file, TEST_SIZES[0], null);
 
