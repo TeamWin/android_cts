@@ -29,6 +29,8 @@ android_test_helper_app {
         "mockito-target-minus-junit4",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "testng",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",
@@ -59,6 +61,7 @@ android_test_helper_app {
         "mockito-target-minus-junit4",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",
@@ -92,6 +95,7 @@ android_test {
         "mockito-target-minus-junit4",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",
@@ -125,6 +129,7 @@ android_test_helper_app {
         "mockito-target-minus-junit4",
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
+        "CtsAppTestStubsShared",
     ],
     srcs: [
         "src/**/*.java",

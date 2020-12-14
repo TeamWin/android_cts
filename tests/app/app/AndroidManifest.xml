@@ -492,6 +492,9 @@
             android:exported="true"
             android:isolatedProcess="true">
         </service>
+
+        <service android:name=".CloseSystemDialogsTestService"
+            android:exported="true" />
     </application>
 
 </manifest>
