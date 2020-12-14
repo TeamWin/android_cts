@@ -17,7 +17,9 @@
 package android.hdmicec.cts.tv;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
+import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -39,6 +41,11 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress TV_DEVICE = LogicalAddress.TV;
     private static final int WAIT_TIME_MS = 300;
+
+    private static final int SLEEP_TIMESTEP_SECONDS = 1;
+    private static final int POWER_TRANSITION_WAIT_TIME = 10;
+    private static final int MAX_POWER_TRANSITION_WAIT_TIME = 15;
+
     List<LogicalAddress> testDevices = new ArrayList<>();
 
     public HdmiCecTvOneTouchPlayTest() {
@@ -127,4 +134,58 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
                 getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
         hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
     }
+
+    /**
+     * Test 11.1.1-3
+     *
+     * <p>Tests that the DUT powers on in response to an {@code <Image View On>} message when in
+     * standby
+     */
+    @Test
+    public void cect_11_1_1_3_ImageViewOnWhenInStandby() throws Exception {
+        try {
+            getDevice().reboot();
+            getDevice().executeShellCommand("input keyevent KEYCODE_SLEEP");
+            assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
+            /* Get the first device the client has started as */
+            LogicalAddress testDevice = testDevices.get(0);
+            hdmiCecClient.sendCecMessage(testDevice, LogicalAddress.TV, CecOperand.IMAGE_VIEW_ON);
+            assertDevicePowerStatus(HdmiCecConstants.CEC_POWER_STATUS_ON);
+        } finally {
+            getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            TimeUnit.SECONDS.sleep(MAX_POWER_TRANSITION_WAIT_TIME);
+        }
+    }
+
+    private void assertDevicePowerStatus(int powerStatus) throws Exception {
+        String[] powerStatusNames = {"ON", "OFF", "IN_TRANSITION_TO_ON", "IN_TRANSITION_TO_OFF"};
+        LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
+        int actualPowerStatus;
+        int waitTimeSeconds = POWER_TRANSITION_WAIT_TIME;
+
+        /* Wait for the device to transition */
+        TimeUnit.SECONDS.sleep(waitTimeSeconds);
+
+        do {
+            TimeUnit.SECONDS.sleep(SLEEP_TIMESTEP_SECONDS);
+            waitTimeSeconds += SLEEP_TIMESTEP_SECONDS;
+            hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
+            actualPowerStatus =
+                    CecMessage.getParams(
+                            hdmiCecClient.checkExpectedOutput(
+                                    cecClientDevice, CecOperand.REPORT_POWER_STATUS));
+            /* Compare with (powerStatus + 2) to check if it is transitioning to the expected power
+             * status.
+             */
+        } while (actualPowerStatus == (powerStatus + 2)
+                && waitTimeSeconds <= MAX_POWER_TRANSITION_WAIT_TIME);
+        assertWithMessage(
+                        "Device power status is "
+                                + powerStatusNames[actualPowerStatus]
+                                + " but expected to be "
+                                + powerStatusNames[powerStatus])
+                .that(actualPowerStatus)
+                .isEqualTo(powerStatus);
+    }
 }
+
