@@ -37,6 +37,7 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
 
@@ -828,6 +829,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
     // Verify no LEGACY-level devices appear on devices first launched in the Q release or newer
     @Test
+    @AppModeFull(reason = "Instant apps can't access Test API")
     public void testNoLegacyOnQ() throws Exception {
         if(PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.Q){
             // LEGACY still allowed for devices upgrading to Q
