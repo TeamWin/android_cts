@@ -16,10 +16,6 @@
 
 package com.android.eventlib;
 
-import android.content.Context;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -29,10 +25,6 @@ import java.util.function.Function;
  */
 public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         extends EventLogs<E> {
-
-    // We can do this as we expect to only query when running inside instrumentation
-    private static final Context CONTEXT =
-            InstrumentationRegistry.getInstrumentation().getContext();
 
     /**
      * Default implementation of {@link EventLogsQuery} used when there are no additional query
@@ -57,9 +49,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         if (eventClass == null || packageName == null) {
             throw new NullPointerException();
         }
-        if (!packageName.equals(CONTEXT.getPackageName())) {
-            throw new IllegalArgumentException("Only events in the current package can be queried");
-        }
+        mQuerier = new RemoteEventQuerier<>(packageName, this);
         mEventClass = eventClass;
         mPackageName = packageName;
     }
@@ -73,8 +63,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         return mEventClass;
     }
 
-    // Currently we only support local events - this will need to be replaced when we support more
-    private final EventQuerier<E> mQuerier = new LocalEventQuerier<>(this);
+    private final transient EventQuerier<E> mQuerier;
 
     @Override
     protected EventQuerier<E> getQuerier() {

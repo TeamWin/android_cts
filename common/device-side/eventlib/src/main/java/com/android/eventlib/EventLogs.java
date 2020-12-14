@@ -18,14 +18,15 @@ package com.android.eventlib;
 
 import android.util.Log;
 
+import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 
 /** Interface to interact with the results of an {@link EventLogsQuery}. */
-public abstract class EventLogs<E extends Event> {
+public abstract class EventLogs<E extends Event> implements Serializable {
     static final Duration DEFAULT_POLL_TIMEOUT = Duration.ofMinutes(5);
 
-    private static Instant sEarliestLogTime = null;
+    static Instant sEarliestLogTime = Instant.now();
 
     /**
      * Returns the {@link EventQuerier} to be used to interact with the

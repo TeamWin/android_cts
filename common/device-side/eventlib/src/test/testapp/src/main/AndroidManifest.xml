@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ Copyright (C) 2020 The Android Open Source Project
   ~
@@ -17,8 +16,11 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.android.eventlib">
+          package="com.android.eventlib.tests.testapp">
     <application>
-        <service android:name="com.android.eventlib.QueryService" android:exported="true"/>
+        <activity android:name=".EventLoggingActivity"
+                  android:exported="true">
+        </activity>
     </application>
 </manifest>
+
