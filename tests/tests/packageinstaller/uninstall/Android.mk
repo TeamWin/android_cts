@@ -32,6 +32,6 @@ LOCAL_JAVA_RESOURCE_DIRS := res
 LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts sts
 
 include $(BUILD_CTS_PACKAGE)
