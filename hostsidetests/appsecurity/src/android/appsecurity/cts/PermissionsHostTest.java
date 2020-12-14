@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.SecurityTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -304,6 +305,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testCannotEscalateNonRuntimePermissionsToRuntime");
     }
 
+    @SecurityTest
     public void testNoPermissionEscalationAfterReboot() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
                 APK_DECLARE_NON_RUNTIME_PERMISSIONS), false, false));

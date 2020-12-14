@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsEscalateToRuntimePermissions
 
-LOCAL_COMPATIBILITY_SUITE := cts
+LOCAL_COMPATIBILITY_SUITE := cts sts
 
 LOCAL_PROGUARD_ENABLED := disabled
 
