@@ -65,9 +65,9 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         assertTrue(persistableBundleEquals(pb, params.getExtras()));
     }
 
-    public void testForeground() throws Exception {
+    public void testExpedited() throws Exception {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setForeground(true)
+                .setExpedited(true)
                 .build();
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -76,10 +76,10 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
         JobParameters params = kTestEnvironment.getLastJobParameters();
-        assertTrue(params.isForegroundJob());
+        assertTrue(params.isExpeditedJob());
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setForeground(false)
+                .setExpedited(false)
                 .build();
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -88,7 +88,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
         params = kTestEnvironment.getLastJobParameters();
-        assertFalse(params.isForegroundJob());
+        assertFalse(params.isExpeditedJob());
     }
 
     public void testJobId() throws Exception {
