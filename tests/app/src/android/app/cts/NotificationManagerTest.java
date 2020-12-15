@@ -17,6 +17,9 @@
 package android.app.cts;
 
 import static android.app.Notification.FLAG_BUBBLE;
+import static android.app.NotificationManager.BUBBLE_PREFERENCE_ALL;
+import static android.app.NotificationManager.BUBBLE_PREFERENCE_NONE;
+import static android.app.NotificationManager.BUBBLE_PREFERENCE_SELECTED;
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
 import static android.app.NotificationManager.IMPORTANCE_HIGH;
 import static android.app.NotificationManager.IMPORTANCE_LOW;
@@ -2657,18 +2660,33 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testAreBubblesAllowed_appNone() throws Exception {
-        setBubblesAppPref(0 /* none */);
+        setBubblesAppPref(BUBBLE_PREFERENCE_NONE);
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
     public void testAreBubblesAllowed_appSelected() throws Exception {
-        setBubblesAppPref(2 /* selected */);
+        setBubblesAppPref(BUBBLE_PREFERENCE_SELECTED);
         assertFalse(mNotificationManager.areBubblesAllowed());
     }
 
     public void testAreBubblesAllowed_appAll() throws Exception {
-        setBubblesAppPref(1 /* all */);
+        setBubblesAppPref(BUBBLE_PREFERENCE_ALL);
         assertTrue(mNotificationManager.areBubblesAllowed());
+    }
+
+    public void testGetBubblePreference_appNone() throws Exception {
+        setBubblesAppPref(BUBBLE_PREFERENCE_NONE);
+        assertEquals(BUBBLE_PREFERENCE_NONE, mNotificationManager.getBubblePreference());
+    }
+
+    public void testGetBubblePreference_appSelected() throws Exception {
+        setBubblesAppPref(BUBBLE_PREFERENCE_SELECTED);
+        assertEquals(BUBBLE_PREFERENCE_SELECTED, mNotificationManager.getBubblePreference());
+    }
+
+    public void testGetBubblePreference_appAll() throws Exception {
+        setBubblesAppPref(BUBBLE_PREFERENCE_ALL);
+        assertEquals(BUBBLE_PREFERENCE_ALL, mNotificationManager.getBubblePreference());
     }
 
     public void testNotificationIcon() {
