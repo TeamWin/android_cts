@@ -40,6 +40,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.MediaUtils;
+
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -377,6 +379,20 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
     public void testHevcTranscoding1080PVideo72FramesWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_72Frames_Audio,
                 "Video_HEVC_72Frames_Audio.mp4"));
+    }
+
+    // This test will only run when the device support decoding and encoding 4K video.
+    public void testHevcTranscoding4KVideo64FramesWithAudio() throws Exception {
+        MediaFormat format = new MediaFormat();
+        format.setString(MediaFormat.KEY_MIME, MediaFormat.MIMETYPE_VIDEO_HEVC);
+        format.setInteger(MediaFormat.KEY_WIDTH, 3840);
+        format.setInteger(MediaFormat.KEY_HEIGHT, 2160);
+        format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+        if (!MediaUtils.canDecode(format) || !MediaUtils.canEncode(format) ) {
+            return;
+        }
+        transcodeFile(resourceToUri(mContext, R.raw.Video_4K_HEVC_64Frames_Audio,
+                "Video_4K_HEVC_64Frames_Audio.mp4"));
     }
 
     private void transcodeFile(Uri fileUri) throws Exception {
