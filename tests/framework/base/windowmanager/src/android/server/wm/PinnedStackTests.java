@@ -565,6 +565,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // Launch first PIP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
+        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
 
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, EXTRA_ENTER_PIP, "true");
@@ -574,7 +575,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
                 PIP_ACTIVITY2, WINDOWING_MODE_PINNED));
         assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
-                PIP_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
+                PIP_ACTIVITY, defaultDisplayWindowingMode));
     }
 
     @Test
@@ -633,12 +634,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
+        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
 
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+                defaultDisplayWindowingMode, ACTIVITY_TYPE_STANDARD);
     }
 
     @FlakyTest(bugId = 70746098)
@@ -683,13 +685,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
+        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
         mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
+                defaultDisplayWindowingMode, ACTIVITY_TYPE_STANDARD);
     }
 
     @FlakyTest(bugId = 70906499)
@@ -950,7 +953,15 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
-        assertEquals(ORIENTATION_LANDSCAPE, mAmWmState.getWmState().getLastOrientation());
+
+        mAmWmState.computeState(PIP_ACTIVITY);
+        final ActivityTask activityTask =
+                mAmWmState.getAmState().getTaskByActivity(PIP_ACTIVITY);
+        if (activityTask.getWindowingMode() == WINDOWING_MODE_FULLSCREEN) {
+            assertEquals(ORIENTATION_LANDSCAPE, mAmWmState.getWmState().getLastOrientation());
+        } else {
+            assertEquals(ORIENTATION_LANDSCAPE, activityTask.mOverrideConfiguration.orientation);
+        }
     }
 
     @Test
@@ -1280,12 +1291,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
      */
     private void assertPinnedStackStateOnMoveToFullscreen(ComponentName activityName,
             int windowingMode, int activityType) {
+        int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(activityName);
         mAmWmState.waitForFocusedStack(windowingMode, activityType);
         mAmWmState.assertFocusedStack("Wrong focused stack", windowingMode, activityType);
         waitAndAssertActivityState(activityName, STATE_STOPPED,
                 "Activity should go to STOPPED");
         assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
-                activityName, WINDOWING_MODE_FULLSCREEN));
+                activityName, defaultDisplayWindowingMode));
         assertPinnedStackDoesNotExist();
     }
 
@@ -1322,6 +1334,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         final Rect displayRect = display.getDisplayRect();
         final Rect pinnedStackBounds = getPinnedStackBounds();
         assertTrue(displayRect.contains(pinnedStackBounds));
+    }
+
+    private int getDefaultDisplayWindowingMode(ComponentName activityName) {
+        ActivityTask activityTask = mAmWmState.getAmState().getTaskByActivity(activityName);
+        ActivityStack activityStack = getStackForTaskId(activityTask.mTaskId);
+        return mAmWmState.getWmState().getDisplay(activityStack.mDisplayId)
+                .getWindowingMode();
     }
 
     /**
