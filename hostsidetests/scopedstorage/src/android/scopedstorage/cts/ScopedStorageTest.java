@@ -17,7 +17,6 @@
 package android.scopedstorage.cts;
 
 import static android.app.AppOpsManager.permissionToOp;
-import static android.os.SystemProperties.getBoolean;
 import static android.provider.MediaStore.MediaColumns;
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
@@ -160,9 +159,6 @@ public class ScopedStorageTest {
 
     @Before
     public void setup() throws Exception {
-        // skips all test cases if FUSE is not active.
-        assumeTrue(getBoolean("persist.sys.fuse", false));
-
         if (!getContext().getPackageManager().isInstantApp()) {
             pollForExternalStorageState();
             getExternalFilesDir().mkdirs();
