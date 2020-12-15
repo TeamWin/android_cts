@@ -96,9 +96,15 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.gotoKeyguard();
             keyguardLock.disableKeyguard();
 
-            lockScreenSession.setLockCredential().gotoKeyguard();
+            lockScreenSession.setLockCredential();
+            lockScreenSession.gotoKeyguard();
+
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
+            assertTrue(mKeyguardManager.isKeyguardLocked());
+            assertTrue(mKeyguardManager.isDeviceLocked());
+            assertTrue(mKeyguardManager.isDeviceSecure());
+            assertTrue(mKeyguardManager.isKeyguardSecure());
         } finally {
             keyguardLock.reenableKeyguard();
         }
@@ -177,6 +183,9 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
     @Test
     public void testDismissKeyguardActivity_method_cancelled() throws Exception {
+        // Pressing the back button does not cancel Keyguard in AAOS.
+        assumeFalse(isCar());
+
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
             separateTestJournal();
