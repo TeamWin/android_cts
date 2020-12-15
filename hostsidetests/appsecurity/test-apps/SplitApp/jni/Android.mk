@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+# Caution: This file is used by NDK to generate all platform library files.
+#          Please don't change this file to Android.bp.
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
@@ -22,6 +24,8 @@ LOCAL_MODULE := libsplitappjni
 LOCAL_SRC_FILES := com_android_cts_splitapp_Native.cpp
 
 LOCAL_LDLIBS += -llog
+
+LOCAL_CFLAGS := -D__ANDROID_ARCH__=\"$(TARGET_ARCH_ABI)\"
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
