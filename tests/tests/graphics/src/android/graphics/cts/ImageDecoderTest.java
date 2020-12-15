@@ -2020,6 +2020,25 @@ public class ImageDecoderTest {
         }
     }
 
+    @Test
+    public void testOrientationWithSampleSize() {
+        Uri uri = Utils.getAsResourceUri(R.drawable.orientation_6);
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        final int sampleSize = 7;
+        try {
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setTargetSampleSize(sampleSize);
+            });
+            assertNotNull(bm);
+
+            // The unsampled image, after rotation, is 100 x 80
+            assertEquals(100 / sampleSize, bm.getWidth());
+            assertEquals( 80 / sampleSize, bm.getHeight());
+        } catch (IOException e) {
+            fail("Failed to decode " + uri.toString() + " with a sampleSize (" + sampleSize + ")");
+        }
+    }
+
     @Test(expected = ArrayIndexOutOfBoundsException.class)
     public void testArrayOutOfBounds() {
         byte[] array = new byte[10];
