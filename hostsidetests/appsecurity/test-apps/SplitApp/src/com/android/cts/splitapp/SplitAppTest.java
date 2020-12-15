@@ -56,6 +56,8 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.cts.splitapp.TestThemeHelper.ThemeColors;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -85,8 +87,9 @@ public class SplitAppTest {
     public static boolean sFeatureTouched = false;
     public static String sFeatureValue = null;
 
-    private static final String THEME_ACTIVITY = ".ThemeActivity";
-    private static final String FEATURE_THEME_ACTIVITY = ".FeatureThemeActivity";
+    private static final String BASE_THEME_ACTIVITY = ".ThemeActivity";
+    private static final String WARM_THEME_ACTIVITY = ".WarmThemeActivity";
+    private static final String ROSE_THEME_ACTIVITY = ".RoseThemeActivity";
 
     @Rule
     public ActivityTestRule<Activity> mActivityRule =
@@ -250,7 +253,7 @@ public class SplitAppTest {
     }
 
     @Test
-    public void testFeatureBase() throws Exception {
+    public void testFeatureWarmBase() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
 
@@ -267,9 +270,9 @@ public class SplitAppTest {
 
         // And that we can access resources from feature
         assertEquals("red", r.getString(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_string", "string", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_string", "string", PKG)));
         assertEquals(123, r.getInteger(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);
@@ -404,7 +407,7 @@ public class SplitAppTest {
     }
 
     @Test
-    public void testFeatureApi() throws Exception {
+    public void testFeatureWarmApi() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
 
@@ -413,7 +416,7 @@ public class SplitAppTest {
 
         // And that we can access resources from feature
         assertEquals(321, r.getInteger(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);
@@ -606,86 +609,95 @@ public class SplitAppTest {
     }
 
     @Test
-    public void launchBaseActivity_withThemeBase_themeApplied() {
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(THEME_ACTIVITY, R.style.Theme_Base));
-        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
-
-        expected.assertThemeBaseValues();
-        expected.assertThemeApplied(activity);
+    public void launchBaseActivity_withThemeBase_baseApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE);
     }
 
     @Test
-    public void launchBaseActivity_withThemeBaseV23_themeApplied() {
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(THEME_ACTIVITY, R.style.Theme_Base));
-        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
-
-        expected.assertThemeBaseV23Values();
-        expected.assertThemeApplied(activity);
+    public void launchBaseActivity_withThemeBaseLt_baseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE_LT);
     }
 
     @Test
-    public void launchBaseActivity_withThemeFeature_themeApplied() {
-        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(THEME_ACTIVITY, themeRes));
-        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
-
-        expected.assertThemeFeatureValues();
-        expected.assertThemeApplied(activity);
+    public void launchBaseActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
     }
 
     @Test
-    public void launchBaseActivity_withThemeFeatureV23_themeApplied() {
-        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(THEME_ACTIVITY, themeRes));
-        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
-
-        expected.assertThemeFeatureV23Values();
-        expected.assertThemeApplied(activity);
+    public void launchBaseActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
     }
 
     @Test
-    public void launchFeatureActivity_withThemeBase_themeApplied() {
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(FEATURE_THEME_ACTIVITY, R.style.Theme_Base));
-        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
-
-        expected.assertThemeBaseValues();
-        expected.assertThemeApplied(activity);
+    public void launchWarmActivity_withThemeBase_baseApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE);
     }
 
     @Test
-    public void launchFeatureActivity_withThemeBaseV23_themeApplied() {
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(FEATURE_THEME_ACTIVITY, R.style.Theme_Base));
-        final TestThemeHelper expected = new TestThemeHelper(activity, R.style.Theme_Base);
-
-        expected.assertThemeBaseV23Values();
-        expected.assertThemeApplied(activity);
+    public void launchWarmActivity_withThemeBaseLt_baseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE_LT);
     }
 
     @Test
-    public void launchFeatureActivity_withThemeFeature_themeApplied() {
-        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(FEATURE_THEME_ACTIVITY, themeRes));
-        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
-
-        expected.assertThemeFeatureValues();
-        expected.assertThemeApplied(activity);
+    public void launchWarmActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
     }
 
     @Test
-    public void launchFeatureActivity_withThemeFeatureV23_themeApplied() {
-        final int themeRes = resolveResourceId(TestThemeHelper.THEME_FEATURE);
-        final Activity activity = mActivityRule.launchActivity(
-                getTestThemeIntent(FEATURE_THEME_ACTIVITY, themeRes));
-        final TestThemeHelper expected = new TestThemeHelper(activity, themeRes);
+    public void launchWarmActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
+    }
 
-        expected.assertThemeFeatureV23Values();
+    @Test
+    public void launchWarmActivity_withThemeRose_roseApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeRoseLt_roseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE_LT);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeRose_roseApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeRoseLt_roseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE_LT);
+    }
+
+    private void assertActivityLaunchedAndThemeApplied(String activityName, int themeResId,
+            ThemeColors themeColors) {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(activityName, themeResId));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeResId);
+        expected.assertThemeValues(themeColors);
         expected.assertThemeApplied(activity);
     }
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Copyright (C) 2020 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,10 +14,5 @@
      limitations under the License.
 -->
 
-<resources xmlns:android="http://schemas.android.com/apk/res/android">
-    <style name="Theme_Feature" parent="@style/Theme_Base">
-        <item name="customColor">@color/feature_custom_color</item>
-        <item name="android:windowBackground">@drawable/feature_color_drawable</item>
-        <item name="android:statusBarColor">@color/feature_status_bar_color</item>
-    </style>
-</resources>
+<color xmlns:android="http://schemas.android.com/apk/res/android"
+       android:color="?attr/customColor"/>

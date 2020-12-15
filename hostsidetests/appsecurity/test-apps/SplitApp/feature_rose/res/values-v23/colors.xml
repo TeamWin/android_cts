@@ -16,12 +16,12 @@
   -->
 
 <resources>
-    <!-- warm colors for Theme_Feature -->
-    <color name="feature_custom_color">@color/red</color>
-    <color name="feature_navigation_bar_color">@color/orange</color>
-    <color name="feature_status_bar_color">@color/yellow</color>
+    <!-- light rose colors for Theme_Rose -->
+    <color name="rose_custom_color">@color/pink_light</color>
+    <color name="rose_navigation_bar_color">@color/rose_light</color>
+    <color name="rose_status_bar_color">@color/ruby_light</color>
 
-    <color name="red">#ffff0000</color>
-    <color name="orange">#ffffa500</color>
-    <color name="yellow">#ffffff00</color>
+    <color name="pink_light">#ffffb6c1</color>
+    <color name="rose_light">#ffff66cc</color>
+    <color name="ruby_light">#ffff0da6</color>
 </resources>

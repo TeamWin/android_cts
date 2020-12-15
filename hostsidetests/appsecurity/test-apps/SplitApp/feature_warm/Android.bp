@@ -15,7 +15,7 @@
 //
 
 java_defaults {
-    name: "CtsSplitAppFeatureDefaults",
+    name: "CtsSplitAppFeatureWarmDefaults",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
@@ -26,8 +26,8 @@ java_defaults {
 }
 
 android_test_helper_app {
-    name: "CtsSplitAppFeature",
-    defaults: ["CtsSplitAppFeatureDefaults"],
+    name: "CtsSplitAppFeatureWarm",
+    defaults: ["CtsSplitAppFeatureWarmDefaults"],
     package_splits: [
         "v7",
         "v23",
@@ -47,8 +47,8 @@ android_test_helper_app {
 
 // Define a variant requiring a split for install
 android_test_helper_app {
-    name: "CtsNeedSplitFeature",
-    defaults: ["CtsSplitAppFeatureDefaults"],
+    name: "CtsNeedSplitFeatureWarm",
+    defaults: ["CtsSplitAppFeatureWarmDefaults"],
     manifest: "needsplit/AndroidManifest.xml",
     package_splits: ["v7"],
     certificate: ":cts-testkey1",

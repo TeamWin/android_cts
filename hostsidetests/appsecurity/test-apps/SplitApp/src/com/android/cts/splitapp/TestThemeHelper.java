@@ -32,12 +32,23 @@ import android.view.Window;
 import android.widget.LinearLayout;
 
 /**
- * A helper class to retrieve theme values of Theme_Base and Theme_Feature.
+ * A helper class to retrieve theme values of Theme_Base and Theme_Warm and Theme_Rose.
  */
 public class TestThemeHelper {
 
-    public static final String THEME_FEATURE =
-            "com.android.cts.splitapp.feature:style/Theme_Feature";
+    public static final String THEME_WARM =
+            "com.android.cts.splitapp.feature_warm:style/Theme_Warm";
+    public static final String THEME_ROSE =
+            "com.android.cts.splitapp.feature_rose:style/Theme_Rose";
+
+    public enum ThemeColors {
+        BASE,
+        BASE_LT,
+        WARM,
+        WARM_LT,
+        ROSE,
+        ROSE_LT
+    };
 
     private static final int COLOR_BLUE = 0xFF0000FF;
     private static final int COLOR_TEAL = 0xFF008080;
@@ -49,8 +60,20 @@ public class TestThemeHelper {
     private static final int COLOR_YELLOW = 0xFFFFFF00;
     private static final int COLOR_RED_LT = 0xFFFFCCCB;
     private static final int COLOR_ORANGE_LT = 0xFFFED8B1;
+    private static final int COLOR_PINK = 0xFFFFC0CB;
+    private static final int COLOR_RUBY = 0xFFCC0080;
+    private static final int COLOR_PINK_LT = 0xFFFFB6C1;
+    private static final int COLOR_ROSE_LT = 0xFFFF66CC;
 
-    /** {@link com.android.cts.isolatedsplitapp.R.attr.customColor} */
+    private static final int[] THEME_BASE_COLORS = {COLOR_BLUE, COLOR_TEAL, COLOR_AQUA};
+    private static final int[] THEME_BASE_LT_COLORS = {COLOR_BLUE_LT, COLOR_TEAL_LT, COLOR_AQUA_LT};
+    private static final int[] THEME_WARM_COLORS = {COLOR_RED, COLOR_TEAL, COLOR_YELLOW};
+    private static final int[] THEME_WARM_LT_COLORS =
+            {COLOR_RED_LT, COLOR_ORANGE_LT, COLOR_AQUA_LT};
+    private static final int[] THEME_ROSE_COLORS = {COLOR_PINK, COLOR_TEAL, COLOR_RUBY};
+    private static final int[] THEME_ROSE_LT_COLORS = {COLOR_PINK_LT, COLOR_ROSE_LT, COLOR_AQUA_LT};
+
+    /** {@link com.android.cts.splitapp.R.attr.customColor} */
     private final int mCustomColor;
 
     /** {#link android.R.attr.colorBackground} */
@@ -65,8 +88,8 @@ public class TestThemeHelper {
     /** {#link android.R.attr.windowBackground} */
     private final int mWindowBackground;
 
-    public TestThemeHelper(Context context, int themeId) {
-        final Resources.Theme theme = new ContextThemeWrapper(context, themeId).getTheme();
+    public TestThemeHelper(Context context, int themeResId) {
+        final Resources.Theme theme = new ContextThemeWrapper(context, themeResId).getTheme();
         mCustomColor = getColor(theme, R.attr.customColor);
         mColorBackground = getColor(theme, android.R.attr.colorBackground);
         mNavigationBarColor = getColor(theme, android.R.attr.navigationBarColor);
@@ -74,32 +97,27 @@ public class TestThemeHelper {
         mWindowBackground = getDrawableColor(theme, android.R.attr.windowBackground);
     }
 
-    public void assertThemeBaseValues() {
-        assertThat(mCustomColor).isEqualTo(COLOR_BLUE);
-        assertThat(mNavigationBarColor).isEqualTo(COLOR_TEAL);
-        assertThat(mStatusBarColor).isEqualTo(COLOR_AQUA);
+    public void assertThemeValues(ThemeColors themeColors) {
+        final int[] colors = getThemeColors(themeColors);
+        assertThat(themeColors).isNotNull();
+        assertThat(mCustomColor).isEqualTo(colors[0]);
+        assertThat(mNavigationBarColor).isEqualTo(colors[1]);
+        assertThat(mStatusBarColor).isEqualTo(colors[2]);
         assertThat(mWindowBackground).isEqualTo(mCustomColor);
     }
 
-    public void assertThemeBaseV23Values() {
-        assertThat(mCustomColor).isEqualTo(COLOR_BLUE_LT);
-        assertThat(mNavigationBarColor).isEqualTo(COLOR_TEAL_LT);
-        assertThat(mStatusBarColor).isEqualTo(COLOR_AQUA_LT);
-        assertThat(mWindowBackground).isEqualTo(mCustomColor);
-    }
-
-    public void assertThemeFeatureValues() {
-        assertThat(mCustomColor).isEqualTo(COLOR_RED);
-        assertThat(mNavigationBarColor).isEqualTo(COLOR_TEAL); // fallback to the value of parent
-        assertThat(mStatusBarColor).isEqualTo(COLOR_YELLOW);
-        assertThat(mWindowBackground).isEqualTo(mCustomColor);
-    }
-
-    public void assertThemeFeatureV23Values() {
-        assertThat(mCustomColor).isEqualTo(COLOR_RED_LT);
-        assertThat(mNavigationBarColor).isEqualTo(COLOR_ORANGE_LT);
-        assertThat(mStatusBarColor).isEqualTo(COLOR_AQUA_LT); // fallback to the value of parent
-        assertThat(mWindowBackground).isEqualTo(mCustomColor);
+    private int[] getThemeColors(ThemeColors themeColors) {
+        switch (themeColors) {
+            case BASE: return THEME_BASE_COLORS;
+            case BASE_LT: return THEME_BASE_LT_COLORS;
+            case WARM: return THEME_WARM_COLORS;
+            case WARM_LT: return THEME_WARM_LT_COLORS;
+            case ROSE: return THEME_ROSE_COLORS;
+            case ROSE_LT: return THEME_ROSE_LT_COLORS;
+            default:
+                break;
+        }
+        return null;
     }
 
     public void assertThemeApplied(Activity activity) {

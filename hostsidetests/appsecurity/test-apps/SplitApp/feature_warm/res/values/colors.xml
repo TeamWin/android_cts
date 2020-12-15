@@ -16,12 +16,12 @@
   -->
 
 <resources>
-    <!-- light warm colors for Theme_Feature -->
-    <color name="feature_custom_color">@color/red_light</color>
-    <color name="feature_navigation_bar_color">@color/orange_light</color>
-    <color name="feature_status_bar_color">@color/yellow_light</color>
+    <!-- warm colors for Theme_Warm -->
+    <color name="warm_custom_color">@color/red</color>
+    <color name="warm_navigation_bar_color">@color/orange</color>
+    <color name="warm_status_bar_color">@color/yellow</color>
 
-    <color name="red_light">#ffffcccb</color>
-    <color name="orange_light">#fffed8b1</color>
-    <color name="yellow_light">#ffffffed</color>
+    <color name="red">#ffff0000</color>
+    <color name="orange">#ffffa500</color>
+    <color name="yellow">#ffffff00</color>
 </resources>

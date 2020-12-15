@@ -39,7 +39,7 @@ public class SplitTests extends BaseAppSecurityTest {
     static final String APK_NO_RESTART_FEATURE = "CtsNoRestartFeature.apk";
 
     static final String APK_NEED_SPLIT_BASE = "CtsNeedSplitApp.apk";
-    static final String APK_NEED_SPLIT_FEATURE = "CtsNeedSplitFeature.apk";
+    static final String APK_NEED_SPLIT_FEATURE_WARM = "CtsNeedSplitFeatureWarm.apk";
     static final String APK_NEED_SPLIT_CONFIG = "CtsNeedSplitApp_xxhdpi-v4.apk";
 
     static final String PKG = "com.android.cts.splitapp";
@@ -74,9 +74,12 @@ public class SplitTests extends BaseAppSecurityTest {
     private static final String APK_DIFF_CERT = "CtsSplitAppDiffCert.apk";
     private static final String APK_DIFF_CERT_v7 = "CtsSplitAppDiffCert_v7.apk";
 
-    private static final String APK_FEATURE = "CtsSplitAppFeature.apk";
-    private static final String APK_FEATURE_v7 = "CtsSplitAppFeature_v7.apk";
-    private static final String APK_FEATURE_v23 = "CtsSplitAppFeature_v23.apk";
+    private static final String APK_FEATURE_WARM = "CtsSplitAppFeatureWarm.apk";
+    private static final String APK_FEATURE_WARM_v7 = "CtsSplitAppFeatureWarm_v7.apk";
+    private static final String APK_FEATURE_WARM_v23 = "CtsSplitAppFeatureWarm_v23.apk";
+
+    private static final String APK_FEATURE_ROSE = "CtsSplitAppFeatureRose.apk";
+    private static final String APK_FEATURE_ROSE_v23 = "CtsSplitAppFeatureRose_v23.apk";
 
     static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
 
@@ -454,32 +457,33 @@ public class SplitTests extends BaseAppSecurityTest {
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testFeatureBase_full() throws Exception {
-        testFeatureBase(false);
+    public void testFeatureWarmBase_full() throws Exception {
+        testFeatureWarmBase(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testFeatureBase_instant() throws Exception {
-        testFeatureBase(true);
+    public void testFeatureWarmBase_instant() throws Exception {
+        testFeatureWarmBase(true);
     }
-    private void testFeatureBase(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE).run();
-        runDeviceTests(PKG, CLASS, "testFeatureBase");
+    private void testFeatureWarmBase(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE_WARM).run();
+        runDeviceTests(PKG, CLASS, "testFeatureWarmBase");
     }
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testFeatureApi_full() throws Exception {
-        testFeatureApi(false);
+    public void testFeatureWarmApi_full() throws Exception {
+        testFeatureWarmApi(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testFeatureApi_instant() throws Exception {
-        testFeatureApi(true);
+    public void testFeatureWarmApi_instant() throws Exception {
+        testFeatureWarmApi(true);
     }
-    private void testFeatureApi(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE).addFile(APK_FEATURE_v7).run();
-        runDeviceTests(PKG, CLASS, "testFeatureApi");
+    private void testFeatureWarmApi(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE_WARM)
+                .addFile(APK_FEATURE_WARM_v7).run();
+        runDeviceTests(PKG, CLASS, "testFeatureWarmApi");
     }
 
     @Test
@@ -537,17 +541,17 @@ public class SplitTests extends BaseAppSecurityTest {
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testRequiredSplitInstalledFeature_full() throws Exception {
-        testRequiredSplitInstalledFeature(false);
+    public void testRequiredSplitInstalledFeatureWarm_full() throws Exception {
+        testRequiredSplitInstalledFeatureWarm(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testRequiredSplitInstalledFeature_instant() throws Exception {
-        testRequiredSplitInstalledFeature(true);
+    public void testRequiredSplitInstalledFeatureWarm_instant() throws Exception {
+        testRequiredSplitInstalledFeatureWarm(true);
     }
-    private void testRequiredSplitInstalledFeature(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK_NEED_SPLIT_BASE).addFile(APK_NEED_SPLIT_FEATURE)
-                .run();
+    private void testRequiredSplitInstalledFeatureWarm(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK_NEED_SPLIT_BASE)
+                .addFile(APK_NEED_SPLIT_FEATURE_WARM).run();
     }
 
     @Test
@@ -579,11 +583,11 @@ public class SplitTests extends BaseAppSecurityTest {
         // start with a base and two splits
         new InstallMultiple(instant)
                 .addFile(APK_NEED_SPLIT_BASE)
-                .addFile(APK_NEED_SPLIT_FEATURE)
+                .addFile(APK_NEED_SPLIT_FEATURE_WARM)
                 .addFile(APK_NEED_SPLIT_CONFIG)
                 .run();
         // it's okay to remove one of the splits
-        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("feature").run();
+        new InstallMultiple(instant).inheritFrom(PKG).removeSplit("feature_warm").run();
         // but, not to remove all of them
         new InstallMultiple(instant).inheritFrom(PKG).removeSplit("config.xxhdpi")
                 .runExpectingFailure("INSTALL_FAILED_MISSING_SPLIT");
@@ -621,7 +625,7 @@ public class SplitTests extends BaseAppSecurityTest {
     }
     private void testTheme_installBase(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK).run();
-        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBase_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBase_baseApplied");
     }
 
     @Test
@@ -636,61 +640,100 @@ public class SplitTests extends BaseAppSecurityTest {
     }
     private void testTheme_installBaseV23(boolean instant) throws Exception {
         new InstallMultiple(instant).addFile(APK).addFile(APK_v23).run();
-        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBaseV23_themeApplied");
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeBaseLt_baseLtApplied");
     }
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testTheme_installFeature_full() throws Exception {
-        testTheme_installFeature(false);
+    public void testTheme_installFeatureWarm_full() throws Exception {
+        testTheme_installFeatureWarm(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testTheme_installFeature_instant() throws Exception {
-        testTheme_installFeature(true);
+    public void testTheme_installFeatureWarm_instant() throws Exception {
+        testTheme_installFeatureWarm(true);
     }
-    private void testTheme_installFeature(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE).run();
-        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeature_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBase_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeature_themeApplied");
+    private void testTheme_installFeatureWarm(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE_WARM).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeWarm_warmApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeBase_baseApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeWarm_warmApplied");
     }
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testTheme_installFeatureV23_full() throws Exception {
-        testTheme_installFeatureV23(false);
+    public void testTheme_installFeatureWarmV23_full() throws Exception {
+        testTheme_installFeatureWarmV23(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testTheme_installFeatureV23_instant() throws Exception {
-        testTheme_installFeatureV23(true);
+    public void testTheme_installFeatureWarmV23_instant() throws Exception {
+        testTheme_installFeatureWarmV23(true);
     }
-    private void testTheme_installFeatureV23(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE)
-                .addFile(APK_FEATURE_v23).run();
-        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeatureV23_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBaseV23_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeatureV23_themeApplied");
+    private void testTheme_installFeatureWarmV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE_WARM)
+                .addFile(APK_FEATURE_WARM_v23).run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeWarmLt_warmLtApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeBaseLt_baseLtApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeWarmLt_warmLtApplied");
     }
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testTheme_installFeatureV23_removeV23_full() throws Exception {
-        testTheme_installFeatureV23_removeV23(false);
+    public void testTheme_installFeatureWarmV23_removeV23_full() throws Exception {
+        testTheme_installFeatureWarmV23_removeV23(false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
-    public void testTheme_installFeatureV23_removeV23_instant() throws Exception {
-        testTheme_installFeatureV23_removeV23(true);
+    public void testTheme_installFeatureWarmV23_removeV23_instant() throws Exception {
+        testTheme_installFeatureWarmV23_removeV23(true);
     }
-    private void testTheme_installFeatureV23_removeV23(boolean instant) throws Exception {
-        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE)
-                .addFile(APK_FEATURE_v23).run();
+    private void testTheme_installFeatureWarmV23_removeV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23).addFile(APK_FEATURE_WARM)
+                .addFile(APK_FEATURE_WARM_v23).run();
         new InstallMultiple(instant).inheritFrom(PKG).removeSplit("config.v23")
-                .removeSplit("feature.config.v23").run();
-        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeFeature_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeBase_themeApplied");
-        runDeviceTests(PKG, CLASS, "launchFeatureActivity_withThemeFeature_themeApplied");
+                .removeSplit("feature_warm.config.v23").run();
+        runDeviceTests(PKG, CLASS, "launchBaseActivity_withThemeWarm_warmApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeBase_baseApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeWarm_warmApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installFeatureWarmAndRose_full() throws Exception {
+        testTheme_installFeatureWarmAndRose(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installFeatureWarmAndRose_instant() throws Exception {
+        testTheme_installFeatureWarmAndRose(true);
+    }
+    private void testTheme_installFeatureWarmAndRose(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE_WARM)
+                .addFile(APK_FEATURE_ROSE).run();
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeWarm_warmApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeRose_roseApplied");
+        runDeviceTests(PKG, CLASS, "launchRoseActivity_withThemeWarm_warmApplied");
+        runDeviceTests(PKG, CLASS, "launchRoseActivity_withThemeRose_roseApplied");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testTheme_installFeatureWarmAndRoseV23_full() throws Exception {
+        testTheme_installFeatureWarmAndRoseV23(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testTheme_installFeatureWarmAndRoseV23_instant() throws Exception {
+        testTheme_installFeatureWarmAndRoseV23(true);
+    }
+    private void testTheme_installFeatureWarmAndRoseV23(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_v23)
+                .addFile(APK_FEATURE_WARM).addFile(APK_FEATURE_WARM_v23)
+                .addFile(APK_FEATURE_ROSE).addFile(APK_FEATURE_ROSE_v23).run();
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeWarmLt_warmLtApplied");
+        runDeviceTests(PKG, CLASS, "launchWarmActivity_withThemeRoseLt_roseLtApplied");
+        runDeviceTests(PKG, CLASS, "launchRoseActivity_withThemeWarmLt_warmLtApplied");
+        runDeviceTests(PKG, CLASS, "launchRoseActivity_withThemeRoseLt_roseLtApplied");
     }
 }

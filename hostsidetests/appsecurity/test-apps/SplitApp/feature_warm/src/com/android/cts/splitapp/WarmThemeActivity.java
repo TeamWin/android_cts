@@ -16,5 +16,5 @@
 
 package com.android.cts.splitapp;
 
-public class FeatureThemeActivity extends ThemeActivity {
+public class WarmThemeActivity extends ThemeActivity {
 }

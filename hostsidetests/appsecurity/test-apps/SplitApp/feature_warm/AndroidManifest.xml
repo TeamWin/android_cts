@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2018 The Android Open Source Project
+<!-- Copyright (C) 2014 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="com.android.cts.splitapp"
-     split="feature"
-     android:isSplitRequired="true">
+     split="feature_warm">
 
     <uses-sdk android:minSdkVersion="4"
          android:targetSdkVersion="27"/>
@@ -35,6 +34,13 @@
             </intent-filter>
             <meta-data android:name="android.service.wallpaper"
                  android:resource="@xml/my_activity_meta"/>
+        </activity>
+        <activity android:name=".WarmThemeActivity" android:theme="@style/Theme_Warm"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="com.android.cts.splitapp.intent.THEME_TEST"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <receiver android:name=".FeatureReceiver"
              android:enabled="@bool/feature_receiver_enabled"

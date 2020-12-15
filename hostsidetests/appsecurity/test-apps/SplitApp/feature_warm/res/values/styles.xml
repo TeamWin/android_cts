@@ -15,9 +15,9 @@
 -->
 
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
-    <style name="Theme_Feature" parent="@style/Theme_Base">
-        <item name="customColor">@color/feature_custom_color</item>
-        <item name="android:windowBackground">@drawable/feature_color_drawable</item>
-        <item name="android:navigationBarColor">@color/feature_navigation_bar_color</item>
+    <style name="Theme_Warm" parent="@style/Theme_Base">
+        <item name="customColor">@color/warm_custom_color</item>
+        <item name="android:windowBackground">@drawable/warm_color_drawable</item>
+        <item name="android:statusBarColor">@color/warm_status_bar_color</item>
     </style>
 </resources>
