@@ -93,6 +93,7 @@ public class AppLinkTest extends InstrumentationTestCase {
     private Intent getHttpIntent() {
         Intent i = new Intent(Intent.ACTION_VIEW);
         i.addCategory(Intent.CATEGORY_BROWSABLE);
+        i.addCategory(Intent.CATEGORY_DEFAULT);
         i.setData(Uri.parse("http://com.android.cts.intent.receiver"));
         return i;
     }
