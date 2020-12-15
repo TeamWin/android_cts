@@ -16,19 +16,11 @@
 
 package com.android.cts.appdataisolation.common;
 
-import android.app.ActivityManager;
-
-import com.android.compatibility.common.util.ShellIdentityUtils;
+import android.os.Process;
+import android.os.UserHandle;
 
 public final class UserUtils {
-
-    // Suppress default constructor
-    private UserUtils() {
-        throw new AssertionError();
-    }
-
     public static int getCurrentUserId() {
-        return ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
-                () -> ActivityManager.getCurrentUser());
+        return UserHandle.getUserId(Process.myUid());
     }
 }
