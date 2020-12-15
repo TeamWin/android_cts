@@ -1153,7 +1153,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
             // Stop recording and preview
             stopRecording(/* useMediaRecorder */true, useIntermediateSurface,
-                    /* stopCameraStreaming */false);
+                    /* stopCameraStreaming */true);
             // Convert number of frames camera produced into the duration in unit of ms.
             float frameDurationMs = 1000.0f / profile.videoFrameRate;
             float durationMs = 0.f;
