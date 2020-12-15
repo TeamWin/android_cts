@@ -85,9 +85,6 @@ public class BuildTest extends TestCase {
 
         List<String> abiList = Arrays.asList(abiListProperty);
 
-        // Every device must support at least one 32 bit ABI.
-        assertTrue(Build.SUPPORTED_32_BIT_ABIS.length > 0);
-
         // Every supported 32 bit ABI must be present in Build.SUPPORTED_ABIS.
         for (String abi : Build.SUPPORTED_32_BIT_ABIS) {
             assertTrue(abiList.contains(abi));
