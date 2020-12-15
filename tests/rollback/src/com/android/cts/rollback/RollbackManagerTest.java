@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.Manifest;
 import android.content.rollback.RollbackInfo;
+import android.provider.DeviceConfig;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -57,7 +58,9 @@ public class RollbackManagerTest {
                 .adoptShellPermissionIdentity(
                     Manifest.permission.INSTALL_PACKAGES,
                     Manifest.permission.DELETE_PACKAGES,
-                    Manifest.permission.TEST_MANAGE_ROLLBACKS);
+                    Manifest.permission.TEST_MANAGE_ROLLBACKS,
+                    Manifest.permission.READ_DEVICE_CONFIG,
+                    Manifest.permission.WRITE_DEVICE_CONFIG);
 
         Uninstall.packages(TestApp.A);
     }
@@ -128,5 +131,31 @@ public class RollbackManagerTest {
             // Abandon the session
             InstallUtils.getPackageInstaller().abandonSession(sessionId);
         }
+    }
+
+    /**
+     * Test that flags are cleared when a rollback is committed.
+     */
+    @Test
+    public void testRollbackClearsFlags() throws Exception {
+        Install.single(TestApp.A1).commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+        RollbackUtils.waitForRollbackGone(
+                () -> getRollbackManager().getAvailableRollbacks(), TestApp.A);
+
+        Install.single(TestApp.A2).setEnableRollback().commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+        RollbackInfo available = RollbackUtils.waitForAvailableRollback(TestApp.A);
+
+        DeviceConfig.setProperty("configuration", "namespace_to_package_mapping",
+                "testspace:" + TestApp.A, false);
+        DeviceConfig.setProperty("testspace", "flagname", "hello", false);
+        DeviceConfig.setProperty("testspace", "another", "12345", false);
+        assertThat(DeviceConfig.getProperties("testspace").getKeyset()).hasSize(2);
+
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.A2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+
+        assertThat(DeviceConfig.getProperties("testspace").getKeyset()).hasSize(0);
     }
 }
