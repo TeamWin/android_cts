@@ -19,6 +19,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -55,15 +56,18 @@ public class AnnotationChecker extends AbstractApiChecker {
             Set<Constructor<?>> constructors = ReflectionHelper.getAnnotatedConstructors(clazz,
                     annotationSpec);
             if (!constructors.isEmpty()) {
-                annotatedConstructorsMap.put(clazz.getName(), constructors);
+                annotatedConstructorsMap.put(clazz.getName(), constructors.stream().
+                        filter(c -> !c.isSynthetic()).collect(Collectors.toSet()));
             }
             Set<Method> methods = ReflectionHelper.getAnnotatedMethods(clazz, annotationSpec);
             if (!methods.isEmpty()) {
-                annotatedMethodsMap.put(clazz.getName(), methods);
+                annotatedMethodsMap.put(clazz.getName(), methods.stream().
+                        filter(m -> !m.isSynthetic()).collect(Collectors.toSet()));
             }
             Set<Field> fields = ReflectionHelper.getAnnotatedFields(clazz, annotationSpec);
             if (!fields.isEmpty()) {
-                annotatedFieldsMap.put(clazz.getName(), fields);
+                annotatedFieldsMap.put(clazz.getName(), fields.stream().
+                        filter(f -> !f.isSynthetic()).collect(Collectors.toSet()));
             }
         });
     }
