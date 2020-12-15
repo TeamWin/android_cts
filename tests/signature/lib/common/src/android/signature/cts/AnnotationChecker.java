@@ -30,6 +30,8 @@ public class AnnotationChecker extends AbstractApiChecker {
 
     private final String annotationSpec;
 
+    private final ResultFilter filter;
+
     private final Map<String, Class<?>> annotatedClassesMap = new HashMap<>();
     private final Map<String, Set<Constructor<?>>> annotatedConstructorsMap = new HashMap<>();
     private final Map<String, Set<Method>> annotatedMethodsMap = new HashMap<>();
@@ -40,10 +42,12 @@ public class AnnotationChecker extends AbstractApiChecker {
      *      android.annotation.SystemApi)
      */
     public AnnotationChecker(
-            ResultObserver resultObserver, ClassProvider classProvider, String annotationSpec) {
+            ResultObserver resultObserver, ClassProvider classProvider, String annotationSpec,
+            ResultFilter filter) {
         super(classProvider, resultObserver);
 
         this.annotationSpec = annotationSpec;
+        this.filter = filter;
         classProvider.getAllClasses().forEach(clazz -> {
             if (ReflectionHelper.hasMatchingAnnotation(clazz, annotationSpec)) {
                 annotatedClassesMap.put(clazz.getName(), clazz);
@@ -64,15 +68,27 @@ public class AnnotationChecker extends AbstractApiChecker {
         });
     }
 
+    /**
+     * ResultFilter allows users to skip the check for certain types of APIs.
+     */
+    public interface ResultFilter {
+        public boolean skip(Class<?> clazz);
+        public boolean skip(Constructor<?> ctor);
+        public boolean skip(Method m);
+        public boolean skip(Field f);
+    }
+
     @Override
     public void checkDeferred() {
         for (Class<?> clazz : annotatedClassesMap.values()) {
+            if (filter != null && filter.skip(clazz)) continue;
             resultObserver.notifyFailure(FailureType.EXTRA_CLASS, clazz.getName(),
                     "Class annotated with " + annotationSpec
                             + " does not exist in the documented API");
         }
         for (Set<Constructor<?>> set : annotatedConstructorsMap.values()) {
             for (Constructor<?> c : set) {
+                if (filter != null && filter.skip(c)) continue;
                 resultObserver.notifyFailure(FailureType.EXTRA_METHOD, c.toString(),
                         "Constructor annotated with " + annotationSpec
                                 + " does not exist in the API");
@@ -80,6 +96,7 @@ public class AnnotationChecker extends AbstractApiChecker {
         }
         for (Set<Method> set : annotatedMethodsMap.values()) {
             for (Method m : set) {
+                if (filter != null && filter.skip(m)) continue;
                 resultObserver.notifyFailure(FailureType.EXTRA_METHOD, m.toString(),
                         "Method annotated with " + annotationSpec
                                 + " does not exist in the API");
@@ -87,6 +104,7 @@ public class AnnotationChecker extends AbstractApiChecker {
         }
         for (Set<Field> set : annotatedFieldsMap.values()) {
             for (Field f : set) {
+                if (filter != null && filter.skip(f)) continue;
                 resultObserver.notifyFailure(FailureType.EXTRA_FIELD, f.toString(),
                         "Field annotated with " + annotationSpec
                                 + " does not exist in the API");

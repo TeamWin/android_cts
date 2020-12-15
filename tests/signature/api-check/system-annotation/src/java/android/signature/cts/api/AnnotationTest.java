@@ -20,8 +20,13 @@ import android.os.Build;
 import android.os.Bundle;
 import android.signature.cts.AnnotationChecker;
 import android.signature.cts.ApiDocumentParser;
+import android.signature.cts.JDiffClassDescription;
 
 import com.android.compatibility.common.util.PropertyUtil;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Checks that parts of the device's API that are annotated (e.g. with android.annotation.SystemApi)
@@ -47,9 +52,33 @@ public class AnnotationTest extends AbstractApiTest {
     public void testAnnotation() {
         if ("true".equals(PropertyUtil.getProperty("ro.treble.enabled")) &&
                 PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1) {
+            AnnotationChecker.ResultFilter filter = new AnnotationChecker.ResultFilter() {
+                @Override
+                public boolean skip(Class<?> clazz) {
+                    return false;
+                }
+
+                @Override
+                public boolean skip(Constructor<?> ctor) {
+                    return false;
+                }
+
+                @Override
+                public boolean skip(Method m) {
+                    return false;
+                }
+
+                @Override
+                public boolean skip(Field f) {
+                    // The R.styleable class is not part of the API because it's annotated with
+                    // @doconly. But the class actually exists in the runtime classpath.  To avoid
+                    // the mismatch, skip the check for fields from the class.
+                    return "android.R$styleable".equals(f.getDeclaringClass().getName());
+                }
+            };
             runWithTestResultObserver(resultObserver -> {
                 AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
-                        classProvider, annotationForExactMatch);
+                        classProvider, annotationForExactMatch, filter);
 
                 ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
