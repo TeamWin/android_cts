@@ -345,26 +345,26 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 TranscodingSession.RESULT_SUCCESS);
     }
 
-    public void testAvcTranscodingVideo30FramesWithoutAudio() throws Exception {
+    public void testAvcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"));
     }
 
-    public void testHevcTranscodingVideo30FramesWithoutAudio() throws Exception {
+    public void testHevcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
         transcodeFile(
                 resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"));
     }
 
-    public void testHevcTranscodingVideo1FrameWithAudio() throws Exception {
+    public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
                 "Video_HEVC_1Frame_Audio.mp4"));
     }
 
-    public void testHevcTranscodingVideo36FramesWithAudio() throws Exception {
+    public void testHevcTranscoding1080PVideo36FramesWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_36Frames_Audio,
                 "Video_HEVC_36Frames_Audio.mp4"));
     }
 
-    public void testHevcTranscodingVideo68FramesWithAudio() throws Exception {
+    public void testHevcTranscoding1080PVideo68FramesWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_68Frames_Audio,
                 "Video_HEVC_68Frames_Audio.mp4"));
     }
@@ -393,7 +393,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         TranscodingRequest request =
                 new TranscodingRequest.Builder()
-                        .setSourceUri(mSourceHEVCVideoUri)
+                        .setSourceUri(fileUri)
                         .setDestinationUri(destinationUri)
                         .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
                         .setClientPid(pid)
@@ -429,7 +429,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         // Validates the transcoded video's psnr.
         MediaTranscodingTestUtil.VideoTranscodingStatistics stats =
-                MediaTranscodingTestUtil.computeStats(mContext, mSourceAVCVideoUri, destinationUri);
+                MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri);
         assertTrue("PSNR: " + stats.mAveragePSNR + " is too low",
                 stats.mAveragePSNR >= PSNR_THRESHOLD);
     }
