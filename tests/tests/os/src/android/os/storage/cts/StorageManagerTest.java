@@ -211,15 +211,18 @@ public class StorageManagerTest extends AndroidTestCase {
         assertEquals("Wrong state", Environment.MEDIA_MOUNTED, volume.getState());
 
         // Tests properties that depend on storage type (emulated or physical)
-        final String uuid = volume.getUuid();
+        final String fsUuid = volume.getUuid();
+        final UUID uuid = volume.getStorageUuid();
         final boolean removable = volume.isRemovable();
         final boolean emulated = volume.isEmulated();
         if (emulated) {
             assertFalse("Should not be removable", removable);
-            assertNull("Should not have uuid", uuid);
+            assertNull("Should not have fsUuid", fsUuid);
+            assertEquals("Should have uuid_default", StorageManager.UUID_DEFAULT, uuid);
         } else {
             assertTrue("Should be removable", removable);
-            assertNotNull("Should have uuid", uuid);
+            assertNotNull("Should have fsUuid", fsUuid);
+            assertNull("Should not have uuid", uuid);
         }
 
         // Tests path - although it's not a public API, sm.getPrimaryStorageVolume()
