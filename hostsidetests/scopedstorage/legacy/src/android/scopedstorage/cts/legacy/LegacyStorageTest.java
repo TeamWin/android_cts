@@ -726,8 +726,8 @@ public class LegacyStorageTest {
 
             // We have transferred ownership away from APP_B_NO_PERMS so reads / writes
             // should no longer work.
-            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, false /* for write */)).isFalse();
-            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, false /* for read */)).isFalse();
+            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, false /* forWrite */)).isFalse();
+            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, true /* forWrite */)).isFalse();
         } finally {
             deleteFileAsNoThrow(APP_B_NO_PERMS, fullPath.getAbsolutePath());
             fullPath.delete();
