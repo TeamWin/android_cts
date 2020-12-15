@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import android.app.ActivityManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.os.Process;
@@ -107,9 +108,15 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      * Test: Requesting a bug report should update the corresponding timestamp.
      */
     public void testRequestBugreport() throws Exception {
+        ActivityManager activityManager = mContext.getSystemService(ActivityManager.class);
+
         // This test leaves a notification which will block future tests that request bug reports
         // to fix this - we dismiss the bug report before returning
-        CountDownLatch notificationDismissedLatch = initTestRequestBugreport();
+        CountDownLatch notificationDismissedLatch = null;
+        if (!activityManager.isLowRamDevice()) {
+            // On low ram devices we should reboot the phone after the test
+            notificationDismissedLatch = initTestRequestBugreport();
+        }
 
         Thread.sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastBugReportRequestTime();
@@ -123,7 +130,10 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         assertTrue(newTimestamp >= timeBefore);
         assertTrue(newTimestamp <= timeAfter);
 
-        cleanupTestRequestBugreport(notificationDismissedLatch);
+        if (!activityManager.isLowRamDevice()) {
+            // On low ram devices we should reboot the phone after the test
+            cleanupTestRequestBugreport(notificationDismissedLatch);
+        }
     }
 
     private CountDownLatch initTestRequestBugreport() {
