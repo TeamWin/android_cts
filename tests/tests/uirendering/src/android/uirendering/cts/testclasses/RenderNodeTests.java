@@ -26,6 +26,7 @@ import android.graphics.BlendMode;
 import android.graphics.BlendModeColorFilter;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
@@ -34,12 +35,18 @@ import android.graphics.Rect;
 import android.graphics.RenderEffect;
 import android.graphics.RenderNode;
 import android.graphics.Shader;
+import android.graphics.drawable.Drawable;
+import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.BlurPixelVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.view.View;
+import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.filters.MediumTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -578,6 +585,73 @@ public class RenderNodeTests extends ActivityTestBase {
                                         new ColorVerifier(Color.RED)
                                 )
             );
+    }
+
+    @Test
+    public void testViewRenderNodeBlurEffect() {
+        final int blurRadius = 10;
+        final Rect fullBounds = new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        final Rect insetBounds = new Rect(blurRadius, blurRadius, TEST_WIDTH - blurRadius,
+                TEST_HEIGHT - blurRadius);
+
+        final Rect unblurredBounds = new Rect(insetBounds);
+        unblurredBounds.inset(blurRadius, blurRadius);
+        createTest()
+                .addLayout(R.layout.frame_layout, (view) -> {
+                    FrameLayout root = view.findViewById(R.id.frame_layout);
+                    View innerView = new View(view.getContext());
+                    innerView.setLayoutParams(
+                            new FrameLayout.LayoutParams(TEST_WIDTH, TEST_HEIGHT));
+                    innerView.setBackground(new TestDrawable());
+                    root.addView(innerView);
+                }, true)
+                .runWithVerifier(
+                        new RegionVerifier()
+                                .addVerifier(
+                                        unblurredBounds,
+                                        new ColorVerifier(Color.BLUE))
+                                .addVerifier(
+                                        fullBounds,
+                                        new BlurPixelVerifier(Color.BLUE, Color.WHITE)
+                                )
+            );
+    }
+
+    private static class TestDrawable extends Drawable {
+
+        private final Paint mPaint = new Paint();
+
+        @Override
+        public void draw(@NonNull Canvas canvas) {
+            mPaint.setColor(Color.WHITE);
+
+            Rect rect = getBounds();
+            canvas.drawRect(rect, mPaint);
+            mPaint.setColor(Color.BLUE);
+
+            canvas.drawRect(
+                    10,
+                    10,
+                    rect.right - 10,
+                    rect.bottom - 10,
+                    mPaint
+            );
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            // No-op
+        }
+
+        @Override
+        public void setColorFilter(@Nullable ColorFilter colorFilter) {
+            // No-op
+        }
+
+        @Override
+        public int getOpacity() {
+            return 0;
+        }
     }
 
     @Test
