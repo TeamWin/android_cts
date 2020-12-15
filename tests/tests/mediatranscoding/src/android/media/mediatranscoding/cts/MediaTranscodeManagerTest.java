@@ -354,10 +354,11 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"));
     }
 
-    public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
+    // Enable this after fixing b/175641397
+    /* public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
                 "Video_HEVC_1Frame_Audio.mp4"));
-    }
+    } */
 
     public void testHevcTranscoding1080PVideo36FramesWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_36Frames_Audio,
