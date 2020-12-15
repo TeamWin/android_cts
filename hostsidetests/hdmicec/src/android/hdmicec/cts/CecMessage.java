@@ -141,7 +141,7 @@ public class CecMessage {
     /** Assert for the DUT's physical address with the value passed from command line argument. */
     public static void assertPhysicalAddressValid(String message, int expectedPhysicalAddress) {
         int physicalAddress = getParams(message, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
-        assertThat(expectedPhysicalAddress).isEqualTo(physicalAddress);
+        assertThat(physicalAddress).isEqualTo(expectedPhysicalAddress);
     }
 
     private static String getNibbles(String message) {
