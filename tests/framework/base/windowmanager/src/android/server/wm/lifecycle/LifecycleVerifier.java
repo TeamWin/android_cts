@@ -31,6 +31,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_P
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -388,6 +389,15 @@ class LifecycleVerifier {
             Pair<String, ActivityCallback> expectedTransition, String transition) {
         assertTrue("Transition " + expectedTransition + " must be observed during " + transition,
                 lifecycleLog.getLog().contains(expectedTransition));
+    }
+
+    /**
+     * Assert that a transition was not observer, no particular order.
+     */
+    static void assertTransitionNotObserved(LifecycleLog lifecycleLog,
+            Pair<String, ActivityCallback> expectedTransition, String transition) {
+        assertFalse("Transition " + expectedTransition + " must not be observed during "
+                        + transition, lifecycleLog.getLog().contains(expectedTransition));
     }
 
     static void assertEmptySequence(Class<? extends Activity> activityClass,
