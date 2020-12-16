@@ -16,6 +16,7 @@
 
 package android.telephony.ims.cts;
 
+import android.telephony.ims.RcsClientConfiguration;
 import android.telephony.ims.stub.ImsConfigImplBase;
 
 import java.util.HashMap;
@@ -50,7 +51,16 @@ public class TestImsConfig extends ImsConfigImplBase {
 
     @Override
     public void notifyRcsAutoConfigurationReceived(byte[] content, boolean isCompressed) {
-        int item = isCompressed ? ImsUtils.ITEM_COMPRESSED : ImsUtils.ITEM_NON_COMPRESSED;
-        setConfig(item, new String(content));
+        TestAcsClient.getInstance().onConfigChanged(content, isCompressed);
+    }
+
+    @Override
+    public void setRcsClientConfiguration(RcsClientConfiguration rcc) {
+        TestAcsClient.getInstance().onSetRcsClientConfiguration(rcc);
+    }
+
+    @Override
+    public void triggerAutoConfiguration() {
+        TestAcsClient.getInstance().onTriggerAutoConfiguration();
     }
 }
