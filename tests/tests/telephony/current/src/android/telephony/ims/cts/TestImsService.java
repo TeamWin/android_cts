@@ -43,7 +43,8 @@ public class TestImsService extends Service {
 
     private static final String TAG = "GtsImsTestImsService";
 
-    private static ImsRegistrationImplBase sImsRegistrationImplBase = new ImsRegistrationImplBase();
+    private static final TestImsRegistration sImsRegistrationImplBase =
+            new TestImsRegistration();
 
     private TestRcsFeature mTestRcsFeature;
     private TestMmTelFeature mTestMmTelFeature;
@@ -348,7 +349,7 @@ public class TestImsService extends Service {
         }
     }
 
-    public ImsRegistrationImplBase getImsRegistration() {
+    public TestImsRegistration getImsRegistration() {
         synchronized (mLock) {
             return sImsRegistrationImplBase;
         }
