@@ -1,2 +1,2 @@
 # Bug component: 49763
-jsharkey@google.com
+include platform/frameworks/base:/core/java/android/os/storage/OWNERS
