@@ -36,18 +36,30 @@ import android.provider.MediaStore;
 public class JobInfoTest extends BaseJobSchedulerTest {
     private static final int JOB_ID = JobInfoTest.class.hashCode();
 
+    @Override
+    public void tearDown() throws Exception {
+        mJobScheduler.cancel(JOB_ID);
+
+        // The super method should be called at the end.
+        super.tearDown();
+    }
+
     public void testBackoffCriteria() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setBackoffCriteria(12345, JobInfo.BACKOFF_POLICY_LINEAR)
                 .build();
         assertEquals(12345, ji.getInitialBackoffMillis());
         assertEquals(JobInfo.BACKOFF_POLICY_LINEAR, ji.getBackoffPolicy());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setBackoffCriteria(54321, JobInfo.BACKOFF_POLICY_EXPONENTIAL)
                 .build();
         assertEquals(54321, ji.getInitialBackoffMillis());
         assertEquals(JobInfo.BACKOFF_POLICY_EXPONENTIAL, ji.getBackoffPolicy());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testBatteryNotLow() {
@@ -55,11 +67,15 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiresBatteryNotLow(true)
                 .build();
         assertTrue(ji.isRequireBatteryNotLow());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresBatteryNotLow(false)
                 .build();
         assertFalse(ji.isRequireBatteryNotLow());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testCharging() {
@@ -67,11 +83,15 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiresCharging(true)
                 .build();
         assertTrue(ji.isRequireCharging());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresCharging(false)
                 .build();
         assertFalse(ji.isRequireCharging());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testClipData() {
@@ -81,12 +101,16 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .build();
         assertEquals(clipData, ji.getClipData());
         assertEquals(Intent.FLAG_GRANT_READ_URI_PERMISSION, ji.getClipGrantFlags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setClipData(null, 0)
                 .build();
         assertNull(ji.getClipData());
         assertEquals(0, ji.getClipGrantFlags());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testDeviceIdle() {
@@ -94,23 +118,23 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiresDeviceIdle(true)
                 .build();
         assertTrue(ji.isRequireDeviceIdle());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresDeviceIdle(false)
                 .build();
         assertFalse(ji.isRequireDeviceIdle());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testEstimatedNetworkBytes() {
-        try {
-            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                    .setEstimatedNetworkBytes(500, 1000)
-                    .build();
-            fail("Successfully built a JobInfo specifying estimated network bytes without "
-                    + "requesting network");
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertBuildFails(
+                "Successfully built a JobInfo specifying estimated network bytes without"
+                        + " requesting network",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setEstimatedNetworkBytes(500, 1000));
 
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -118,6 +142,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .build();
         assertEquals(500, ji.getEstimatedNetworkDownloadBytes());
         assertEquals(1000, ji.getEstimatedNetworkUploadBytes());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testExtras() {
@@ -128,13 +154,67 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setExtras(pb)
                 .build();
         assertTrue(persistableBundleEquals(pb, ji.getExtras()));
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testExpeditedJob() {
+        // Test all allowed constraints.
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setExpedited(true)
+                .setPersisted(true)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         assertTrue(ji.isExpedited());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+
+        // Test disallowed constraints.
+        final String failureMessage =
+                "Successfully built an expedited JobInfo object with disallowed constraints";
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setMinimumLatency(100));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setOverrideDeadline(200));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setPeriodic(15 * 60_000));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setImportantWhileForeground(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setPrefetch(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setRequiresStorageNotLow(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setRequiresDeviceIdle(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setRequiresBatteryNotLow(true));
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .setRequiresCharging(true));
+        final JobInfo.TriggerContentUri tcu = new JobInfo.TriggerContentUri(
+                Uri.parse("content://" + MediaStore.AUTHORITY + "/"),
+                JobInfo.TriggerContentUri.FLAG_NOTIFY_FOR_DESCENDANTS);
+        assertBuildFails(failureMessage,
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setExpedited(true)
+                        .addTriggerContentUri(tcu));
     }
 
     public void testImportantWhileForeground() {
@@ -142,16 +222,22 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();
         assertFalse(ji.isImportantWhileForeground());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setImportantWhileForeground(true)
                 .build();
         assertTrue(ji.isImportantWhileForeground());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setImportantWhileForeground(false)
                 .build();
         assertFalse(ji.isImportantWhileForeground());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testMinimumLatency() {
@@ -159,6 +245,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setMinimumLatency(1337)
                 .build();
         assertEquals(1337, ji.getMinLatencyMillis());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testOverrideDeadline() {
@@ -176,6 +264,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertTrue(ji.isPeriodic());
         assertEquals(60 * 60 * 1000L, ji.getIntervalMillis());
         assertEquals(60 * 60 * 1000L, ji.getFlexMillis());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setPeriodic(120 * 60 * 1000L, 20 * 60 * 1000L)
@@ -183,6 +273,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertTrue(ji.isPeriodic());
         assertEquals(120 * 60 * 1000L, ji.getIntervalMillis());
         assertEquals(20 * 60 * 1000L, ji.getFlexMillis());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testPersisted() {
@@ -190,16 +282,22 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();
         assertFalse(ji.isPersisted());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setPersisted(true)
                 .build();
         assertTrue(ji.isPersisted());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setPersisted(false)
                 .build();
         assertFalse(ji.isPersisted());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testPrefetch() {
@@ -207,16 +305,22 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();
         assertFalse(ji.isPrefetch());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setPrefetch(true)
                 .build();
         assertTrue(ji.isPrefetch());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setPrefetch(false)
                 .build();
         assertFalse(ji.isPrefetch());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testRequiredNetwork() {
@@ -228,11 +332,15 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiredNetwork(nr)
                 .build();
         assertEquals(nr, ji.getRequiredNetwork());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetwork(null)
                 .build();
         assertNull(ji.getRequiredNetwork());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     @SuppressWarnings("deprecation")
@@ -241,31 +349,43 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NONE, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_ANY, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_UNMETERED, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NOT_ROAMING)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NOT_ROAMING, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_CELLULAR, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_NONE)
                 .build();
         assertEquals(JobInfo.NETWORK_TYPE_NONE, ji.getNetworkType());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testStorageNotLow() {
@@ -273,25 +393,24 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setRequiresStorageNotLow(true)
                 .build();
         assertTrue(ji.isRequireStorageNotLow());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setRequiresStorageNotLow(false)
                 .build();
         assertFalse(ji.isRequireStorageNotLow());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testTransientExtras() {
         final Bundle b = new Bundle();
         b.putBoolean("random_bool", true);
-        try {
-            new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                    .setPersisted(true)
-                    .setTransientExtras(b)
-                    .build();
-            fail("Successfully built a persisted JobInfo object with transient extras");
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
+        assertBuildFails("Successfully built a persisted JobInfo object with transient extras",
+                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setPersisted(true)
+                        .setTransientExtras(b));
 
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                 .setTransientExtras(b)
@@ -300,6 +419,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         for (String key : b.keySet()) {
             assertEquals(b.get(key), ji.getTransientExtras().get(key));
         }
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testTriggerContentMaxDelay() {
@@ -307,6 +428,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setTriggerContentMaxDelay(1337)
                 .build();
         assertEquals(1337, ji.getTriggerContentMaxDelay());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testTriggerContentUpdateDelay() {
@@ -314,6 +437,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setTriggerContentUpdateDelay(1337)
                 .build();
         assertEquals(1337, ji.getTriggerContentUpdateDelay());
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
     }
 
     public void testTriggerContentUri() {
@@ -327,6 +452,8 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .build();
         assertEquals(1, ji.getTriggerContentUris().length);
         assertEquals(tcu, ji.getTriggerContentUris()[0]);
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
 
         final Uri u2 = Uri.parse("content://" + ContactsContract.AUTHORITY + "/");
         final JobInfo.TriggerContentUri tcu2 = new JobInfo.TriggerContentUri(u2, 0);
@@ -339,5 +466,16 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertEquals(2, ji.getTriggerContentUris().length);
         assertEquals(tcu, ji.getTriggerContentUris()[0]);
         assertEquals(tcu2, ji.getTriggerContentUris()[1]);
+        // Confirm JobScheduler accepts the JobInfo object.
+        mJobScheduler.schedule(ji);
+    }
+
+    private void assertBuildFails(String message, JobInfo.Builder builder) {
+        try {
+            builder.build();
+            fail(message);
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
     }
 }
