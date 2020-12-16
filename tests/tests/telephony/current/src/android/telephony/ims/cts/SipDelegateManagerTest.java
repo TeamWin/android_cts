@@ -21,6 +21,7 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
@@ -405,6 +406,7 @@ public class SipDelegateManagerTest {
         connectTestImsServiceWithSipTransportAndConfig();
 
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration imsReg = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -415,6 +417,12 @@ public class SipDelegateManagerTest {
         // TODO deal with this case better when we can filter messages.
         delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_DELEGATE_DEAD);
+
+        delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
+        // wait 5 seconds, this should not return.
+        TestImsRegistration.NetworkRegistrationInfo info =
+                imsReg.getNextFullNetworkRegRequest(5000);
+        assertNull("If there is no valid SipTransport, this should not be called", info);
 
         destroySipDelegateConnectionNoDelegate(manager, delegateConn);
     }
@@ -428,6 +436,7 @@ public class SipDelegateManagerTest {
         connectTestImsServiceWithSipTransportAndConfig();
 
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -444,6 +453,9 @@ public class SipDelegateManagerTest {
 
         sendMessageAndVerifyAck(delegateConn, delegate);
         receiveMessageAndVerifyAck(delegateConn, delegate);
+
+        // Ensure requests to perform a full network re-registration work properly.
+        verifyFullRegistrationTriggered(manager, regImpl, delegateConn);
 
         destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
                 request.getFeatureTags());
@@ -825,6 +837,18 @@ public class SipDelegateManagerTest {
         return grantedTags.stream().filter(newTags::contains)
                 .map(s -> new FeatureTagState(s, reason))
                 .collect(Collectors.toSet());
+    }
+
+    private void verifyFullRegistrationTriggered(SipDelegateManager manager,
+            TestImsRegistration regImpl, TestSipDelegateConnection delegateConn) throws Exception {
+        delegateConn.verifyDelegateCreated();
+        delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
+        TestImsRegistration.NetworkRegistrationInfo info =
+                regImpl.getNextFullNetworkRegRequest(ImsUtils.TEST_TIMEOUT_MS);
+        assertNotNull("full registration requested, but ImsRegistrationImplBase "
+                + "implementation did not receive a request.", info);
+        assertEquals(403, info.sipCode);
+        assertEquals("FORBIDDEN", info.sipReason);
     }
 
     private void sendMessageAndVerifyAck(TestSipDelegateConnection delegateConn,

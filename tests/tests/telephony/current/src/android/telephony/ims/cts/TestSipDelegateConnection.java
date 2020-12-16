@@ -89,6 +89,13 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
                 ImsException.class, "android.permission.MODIFY_PHONE_STATE");
     }
 
+    public void triggerFullNetworkRegistration(SipDelegateManager manager, int sipCode,
+            String sipReason) throws Exception {
+        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                manager, (m) -> m.triggerFullNetworkRegistration(connection, sipCode, sipReason),
+                ImsException.class, "android.permission.MODIFY_PHONE_STATE");
+    }
+
     @Override
     public void onMessageReceived(@NonNull SipMessage message) {
         if (ImsUtils.VDBG) Log.d(LOG_TAG, "onMessageReceived");
