@@ -123,6 +123,7 @@
             </intent-filter>
         </activity>
         <activity android:name="android.media.cts.MockActivity" />
+        <activity android:name="android.media.cts.MediaRouter2TestActivity"/>
         <service android:name="android.media.cts.RemoteVirtualDisplayService"
             android:process=":remoteService" >
             <intent-filter>
