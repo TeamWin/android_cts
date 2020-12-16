@@ -300,14 +300,14 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void deviceRequestLskf() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery request-lskf cts-test1");
+        String res = getDevice().executeShellCommand("cmd recovery request-lskf " + PKG);
         if (res == null || !res.contains("success")) {
             fail("could not set up recovery request-lskf");
         }
     }
 
     private void deviceClearLskf() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery clear-lskf");
+        String res = getDevice().executeShellCommand("cmd recovery clear-lskf " + PKG);
         if (res == null || !res.contains("success")) {
             fail("could not clear-lskf");
         }
@@ -338,8 +338,9 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void deviceRebootAndApply() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply cts-test1 cts-test");
-        if (res != null && res.contains("failure")) {
+        String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply " + PKG
+                + " cts-test");
+        if (res != null && res.contains("Reboot and apply status: failure")) {
             fail("could not call reboot-and-apply");
         }
 
