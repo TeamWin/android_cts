@@ -87,7 +87,7 @@ public class CellInfoTest {
     private static final int MAX_RSSNR = 30;
     private static final int MIN_RSSNR = -20;
     // Maximum and minimum possible CQI values.
-    private static final int MAX_CQI = 30;
+    private static final int MAX_CQI = 15;
     private static final int MIN_CQI = 0;
 
     /**
@@ -127,6 +127,9 @@ public class CellInfoTest {
     // 3GPP TS 36.101
     private static final int BAND_MIN_LTE = 1;
     private static final int BAND_MAX_LTE = 88;
+    //3GPP TS 136.213 section 7.2.3
+    private static final int CQI_TABLE_INDEX_MIN_LTE = 1;
+    private static final int CQI_TABLE_INDEX_MAX_LTE = 6;
 
     // The followings are parameters for testing CellIdentityWcdma
     // Location Area Code ranges from 0 to 65535.
@@ -150,6 +153,9 @@ public class CellInfoTest {
     private static final int BAND_FR1_MAX_NR = 95;
     private static final int BAND_FR2_MIN_NR = 257;
     private static final int BAND_FR2_MAX_NR = 261;
+    //3GPP TS 138.214 section 5.2.2.1
+    private static final int CQI_TABLE_INDEX_MIN_NR = 1;
+    private static final int CQI_TABLE_INDEX_MAX_NR = 3;
 
     // 3gpp 36.101 Sec 5.7.2
     private static final int CHANNEL_RASTER_EUTRAN = 100; //kHz
@@ -597,6 +603,8 @@ public class CellInfoTest {
         int csiRsrp = nr.getCsiRsrp();
         int csiRsrq = nr.getCsiRsrq();
         int csiSinr = nr.getSsSinr();
+        int csiCqiTableIndex = nr.getCsiCqiTableIndex();
+        List<Integer> csiCqiReport = nr.getCsiCqiReport();
         int ssRsrp = nr.getSsRsrp();
         int ssRsrq = nr.getSsRsrq();
         int ssSinr = nr.getSsSinr();
@@ -608,6 +616,14 @@ public class CellInfoTest {
                 + csiRsrq, -20 <= csiRsrq && csiRsrq <= -3 || csiRsrq == CellInfo.UNAVAILABLE);
         assertTrue("getCsiSinr() out of range [-23, 40] | Integer.MAX_INTEGER, csiSinr = "
                 + csiSinr, -23 <= csiSinr && csiSinr <= 40 || csiSinr == CellInfo.UNAVAILABLE);
+        assertTrue("getCsiCqiTableIndex() out of range | CellInfo.UNAVAILABLE, csiCqiTableIndex="
+                + csiCqiTableIndex, csiCqiTableIndex == CellInfo.UNAVAILABLE
+                        || (csiCqiTableIndex >= CQI_TABLE_INDEX_MIN_NR
+                                && csiCqiTableIndex <= CQI_TABLE_INDEX_MAX_NR));
+        assertTrue("cqi in getCsiCqiReport() out of range | CellInfo.UNAVAILABLE, csiCqiReport="
+                + csiCqiReport, csiCqiReport.stream()
+                        .allMatch(cqi -> cqi.intValue() == CellInfo.UNAVAILABLE
+                                || (cqi.intValue() >= MIN_CQI && cqi.intValue() <= MAX_CQI)));
         assertTrue("getSsRsrp() out of range [-140, -44] | Integer.MAX_INTEGER, ssRsrp = "
                         + ssRsrp, -140 <= ssRsrp && ssRsrp <= -44
                 || ssRsrp == CellInfo.UNAVAILABLE);
@@ -745,6 +761,11 @@ public class CellInfoTest {
         int rssnr = cellSignalStrengthLte.getRssnr();
         assertTrue("getRssnr() out of range | CellInfo.UNAVAILABLE, rssnr=" + rssnr,
                 rssnr == CellInfo.UNAVAILABLE || (rssnr >= MIN_RSSNR && rssnr <= MAX_RSSNR));
+
+        int cqiTableIndex = cellSignalStrengthLte.getCqiTableIndex();
+        assertTrue("getCqiTableIndex() out of range | CellInfo.UNAVAILABLE, cqi=" + cqiTableIndex,
+                cqiTableIndex == CellInfo.UNAVAILABLE || (cqiTableIndex >= CQI_TABLE_INDEX_MIN_LTE
+                        && cqiTableIndex <= CQI_TABLE_INDEX_MAX_LTE));
 
         int cqi = cellSignalStrengthLte.getCqi();
         assertTrue("getCqi() out of range | CellInfo.UNAVAILABLE, cqi=" + cqi,
