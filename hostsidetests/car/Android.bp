@@ -29,6 +29,9 @@ java_test_host {
         "cts",
         "general-tests",
     ],
+    static_libs: [
+    	"cts-statsd-atom-host-test-utils",
+    ],
     data: [
         ":CtsCarApp",
     ],

@@ -130,11 +130,11 @@ public class JobInfoTest extends BaseJobSchedulerTest {
         assertTrue(persistableBundleEquals(pb, ji.getExtras()));
     }
 
-    public void testForegroundJob() {
+    public void testExpeditedJob() {
         JobInfo ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                .setForeground(true)
+                .setExpedited(true)
                 .build();
-        assertTrue(ji.isForegroundJob());
+        assertTrue(ji.isExpedited());
     }
 
     public void testImportantWhileForeground() {

@@ -33,7 +33,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.usage.cts.ITestReceiver;
 import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
@@ -117,6 +116,9 @@ public class UsageStatsTest {
             = "android.app.usage.cts.test1.SomeActivityWithLocus";
     private static final String TEST_APP_CLASS_SERVICE
             = "android.app.usage.cts.test1.TestService";
+    private static final String TEST_APP2_PKG = "android.app.usage.cts.test2";
+    private static final String TEST_APP2_CLASS_FINISHING_TASK_ROOT =
+            "android.app.usage.cts.test2.FinishingTaskRootActivity";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long MINUTE = TimeUnit.MINUTES.toMillis(1);
@@ -1285,14 +1287,36 @@ public class UsageStatsTest {
         setUsageSourceSetting(Integer.toString(UsageStatsManager.USAGE_SOURCE_CURRENT_ACTIVITY));
         launchSubActivity(TaskRootActivity.class);
         // Usage should be attributed to the test app package
-        assertAppOrTokenUsed(TaskRootActivity.TEST_APP_PKG, true);
+        assertAppOrTokenUsed(TaskRootActivity.TEST_APP_PKG, true, TIMEOUT);
 
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
 
         setUsageSourceSetting(Integer.toString(UsageStatsManager.USAGE_SOURCE_TASK_ROOT_ACTIVITY));
         launchSubActivity(TaskRootActivity.class);
         // Usage should be attributed to this package
-        assertAppOrTokenUsed(mTargetPackage, true);
+        assertAppOrTokenUsed(mTargetPackage, true, TIMEOUT);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testTaskRootAttribution_finishingTaskRoot() throws Exception {
+        setUsageSourceSetting(Integer.toString(UsageStatsManager.USAGE_SOURCE_TASK_ROOT_ACTIVITY));
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        launchTestActivity(TEST_APP2_PKG, TEST_APP2_CLASS_FINISHING_TASK_ROOT);
+        // Wait until the nested activity gets started
+        mUiDevice.wait(Until.hasObject(By.clazz(TEST_APP_PKG, TEST_APP_CLASS)), TIMEOUT);
+
+        // Usage should be attributed to the task root app package
+        assertAppOrTokenUsed(TEST_APP_PKG, false, TIMEOUT);
+        assertAppOrTokenUsed(TEST_APP2_PKG, true, TIMEOUT);
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
+        mUiDevice.wait(Until.gone(By.clazz(TEST_APP_PKG, TEST_APP_CLASS)), TIMEOUT);
+
+        // Usage should no longer be tracked
+        assertAppOrTokenUsed(TEST_APP_PKG, false, TIMEOUT);
+        assertAppOrTokenUsed(TEST_APP2_PKG, false, TIMEOUT);
     }
 
     @AppModeInstant
@@ -1445,20 +1469,21 @@ public class UsageStatsTest {
 
     /**
      * Assert on an app or token's usage state.
+     *
      * @param entity name of the app or token
      * @param expected expected usage state, true for in use, false for not in use
      */
-    private void assertAppOrTokenUsed(String entity, boolean expected) throws IOException {
-        final String activeUsages = executeShellCmd("dumpsys usagestats apptimelimit actives");
-        final String[] actives = activeUsages.split("\n");
-        boolean found = false;
+    private void assertAppOrTokenUsed(String entity, boolean expected, long timeout)
+            throws IOException {
+        final long realtimeTimeout = SystemClock.elapsedRealtime() + timeout;
+        String activeUsages;
+        boolean found;
+        do {
+            activeUsages = executeShellCmd("dumpsys usagestats apptimelimit actives");
+            final String[] actives = activeUsages.split("\n");
+            found = Arrays.asList(actives).contains(entity);
+        } while (found != expected && SystemClock.elapsedRealtime() <= realtimeTimeout);
 
-        for (String active : actives) {
-            if (active.equals(entity)) {
-                found = true;
-                break;
-            }
-        }
         if (expected) {
             assertTrue(entity + " not found in list of active activities and tokens\n"
                     + activeUsages, found);

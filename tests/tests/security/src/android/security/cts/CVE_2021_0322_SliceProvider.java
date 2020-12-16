@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.security.cts;
 
-package com.android.cts.appdataisolation.common;
+import android.content.Context;
 
-import android.os.Process;
-import android.os.UserHandle;
+public class CVE_2021_0322_SliceProvider extends android.app.slice.SliceProvider {
 
-public final class UserUtils {
-    public static int getCurrentUserId() {
-        return UserHandle.getUserId(Process.myUid());
+    @Override
+    public boolean onCreate() {
+        return true;
     }
 }

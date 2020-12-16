@@ -17,6 +17,7 @@
 package android.server.wm.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.content.Intent.FLAG_ACTIVITY_FORWARD_RESULT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.StateLogger.log;
@@ -34,6 +35,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
@@ -91,6 +93,7 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     static final String EXTRA_FINISH_IN_ON_STOP = "finish_in_on_stop";
     static final String EXTRA_START_ACTIVITY_IN_ON_CREATE = "start_activity_in_on_create";
     static final String EXTRA_START_ACTIVITY_WHEN_IDLE = "start_activity_when_idle";
+    static final String EXTRA_ACTIVITY_ON_USER_LEAVE_HINT = "activity_on_user_leave_hint";
 
     static final ComponentName CALLBACK_TRACKING_ACTIVITY =
             getComponentName(CallbackTrackingActivity.class);
@@ -414,6 +417,15 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
             super.onRestart();
             mLifecycleLogClient.onActivityCallback(ON_RESTART);
         }
+
+        @Override
+        protected void onUserLeaveHint() {
+            super.onUserLeaveHint();
+
+            if (getIntent().getBooleanExtra(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT, false)) {
+                mLifecycleLogClient.onActivityCallback(ON_USER_LEAVE_HINT);
+            }
+        }
     }
 
     // Test activity
@@ -485,6 +497,29 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             setShowWhenLocked(true);
+        }
+    }
+
+    /**
+     * Test activity that launches {@link TrampolineActivity} for result.
+     */
+    public static class LaunchForwardResultActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, TrampolineActivity.class);
+            startActivityForResult(intent, 1 /* requestCode */);
+        }
+    }
+
+    public static class TrampolineActivity extends CallbackTrackingActivity {
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            final Intent intent = new Intent(this, ResultActivity.class);
+            intent.setFlags(FLAG_ACTIVITY_FORWARD_RESULT);
+            startActivity(intent);
+            finish();
         }
     }
 

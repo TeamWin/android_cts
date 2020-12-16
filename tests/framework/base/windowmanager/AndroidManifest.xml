@@ -158,6 +158,10 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TransitionDestinationActivity"
              android:theme="@style/window_activity_transitions"/>
 
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$LaunchForwardResultActivity"/>
+
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TrampolineActivity"/>
+
         <activity android:name="android.server.wm.MultiDisplayActivityLaunchTests$ImmediateLaunchTestActivity"
              android:allowEmbedded="true"/>
 
