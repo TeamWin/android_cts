@@ -200,6 +200,7 @@ import java.util.Locale;
                     videoTrackIndex = i;
                     break;
                 }
+                extractor.unselectTrack(i);
             }
             if (videoTrackIndex == -1) {
                 throw new IllegalArgumentException("Can not find video track");
