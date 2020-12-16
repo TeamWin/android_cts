@@ -23,7 +23,6 @@ import android.scopedstorage.cts.lib.TestUtils;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 
@@ -38,17 +37,22 @@ public class ScopedStoragePublicVolumeDeviceTest extends ScopedStorageDeviceTest
         ScopedStorageDeviceTest.createPublicVolume();
     }
 
+    @BeforeClass
+    public static void setupApps() throws Exception {
+        ScopedStorageDeviceTest.setupApps();
+    }
+
     @AfterClass
     public static void resetDefaultVolume() throws Exception {
         TestUtils.resetDefaultExternalStorageVolume();
     }
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeClass
+    public static void setupStorage() throws Exception {
         String volumeName = TestUtils.getPublicVolumeName();
         assertThat(volumeName).isNotNull();
         TestUtils.setExternalStorageVolume(volumeName);
         TestUtils.assertDefaultVolumeIsPublic();
-        super.setup();
+        ScopedStorageDeviceTest.setupStorage();
     }
 }
