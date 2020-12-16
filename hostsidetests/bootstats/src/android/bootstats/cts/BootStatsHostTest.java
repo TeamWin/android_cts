@@ -79,7 +79,7 @@ public class BootStatsHostTest implements IDeviceTest {
             }
             Thread.sleep(WAIT_SLEEP_MS);
         }
-        assertThat(checkAllExpectedAtoms(expectedAtomHeaders).isEmpty());
+        assertThat(checkAllExpectedAtoms(expectedAtomHeaders)).isEmpty();
     }
 
     /** Check all atoms are available and return atom headers not available */
