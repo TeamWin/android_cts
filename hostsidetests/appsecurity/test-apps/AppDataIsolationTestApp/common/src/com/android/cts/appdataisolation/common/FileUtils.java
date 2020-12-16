@@ -62,14 +62,21 @@ public class FileUtils {
     }
 
     public static void assertDirDoesNotExist(String path) {
+        File directory = new File(path);
         // Trying to access a file/directory that does exist, but is not visible to the caller, it
         // should return file not found.
         Exception exception = expectThrows(FileNotFoundException.class, () -> {
-            new FileInputStream(new File(path));
+            new FileInputStream(directory);
         });
         assertThat(exception.getMessage()).contains(JAVA_FILE_NOT_FOUND_MSG);
         assertThat(exception.getMessage()).doesNotContain(JAVA_FILE_PERMISSION_DENIED_MSG);
 
+        File parent = directory.getParentFile();
+        if (parent != null && !parent.exists()) {
+            // If the parent directory doesn't exist then we can be confident this
+            // directory is entirely invisible.
+            return;
+        }
         // Try to create a directory here, and it should return permission denied not directory
         // exists.
         try {
