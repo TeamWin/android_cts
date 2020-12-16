@@ -27,6 +27,7 @@ import android.view.inputmethod.cts.util.TestUtils
 import android.view.inputmethod.cts.util.UnlockScreenRule
 import android.view.textservice.SpellCheckerSubtype
 import android.view.textservice.SuggestionsInfo
+import android.view.textservice.SuggestionsInfo.RESULT_ATTR_IN_THE_DICTIONARY
 import android.view.textservice.TextServicesManager
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -35,6 +36,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.CtsTouchUtils
 import com.android.compatibility.common.util.SettingsStateChangerRule
+import com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand
 import com.android.cts.mockime.MockImeSession
 import com.android.cts.mockspellchecker.MockSpellChecker
 import com.android.cts.mockspellchecker.MockSpellCheckerClient
@@ -124,6 +126,49 @@ class SpellCheckerTest : EndToEndImeTestBase() {
                     getSuggestionSpans(editText).find {
                         (it.flags and SuggestionSpan.FLAG_GRAMMAR_ERROR) != 0
                     } != null
+                }, TIMEOUT)
+            }
+        }
+    }
+
+    @Test
+    fun performSpellCheck() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(SuggestionsInfo.RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use { client ->
+                val stream = session.openEventStream()
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(
+                        InstrumentationRegistry.getInstrumentation(), null, editText)
+                TestUtils.waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("match", 1)
+                session.callCommitText(" ", 1)
+                TestUtils.waitOnMainUntil({
+                    getSuggestionSpans(editText).find {
+                        (it.flags and SuggestionSpan.FLAG_MISSPELLED) != 0
+                    } != null
+                }, TIMEOUT)
+                // The word is now in dictionary. The next spell check should remove the misspelled
+                // SuggestionSpan.
+                client.updateConfiguration(MockSpellCheckerConfiguration.newBuilder()
+                        .addSuggestionRules(
+                                MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                        .setMatch("match")
+                                        .setAttributes(RESULT_ATTR_IN_THE_DICTIONARY)
+                        ).build())
+                val command = session.callPerformSpellCheck()
+                expectCommand(stream, command, TIMEOUT)
+                TestUtils.waitOnMainUntil({
+                    getSuggestionSpans(editText).find {
+                        (it.flags and SuggestionSpan.FLAG_MISSPELLED) != 0
+                    } == null
                 }, TIMEOUT)
             }
         }

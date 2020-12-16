@@ -259,6 +259,9 @@ public final class MockIme extends InputMethodService {
                         final boolean enabled = command.getExtras().getBoolean("enabled");
                         return getCurrentInputConnection().reportFullscreenMode(enabled);
                     }
+                    case "performSpellCheck": {
+                        return getCurrentInputConnection().performSpellCheck();
+                    }
                     case "performPrivateCommand": {
                         final String action = command.getExtras().getString("action");
                         final Bundle data = command.getExtras().getBundle("data");

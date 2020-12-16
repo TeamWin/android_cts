@@ -23,13 +23,9 @@ import com.android.cts.mockspellchecker.MockSpellCheckerProto.MockSpellCheckerCo
  *
  * <p>This class should be used by test apps.
  */
-class MockSpellCheckerClient(
-    private val context: Context,
-    private val configuration: MockSpellCheckerConfiguration
-)
-    : AutoCloseable {
+class MockSpellCheckerClient(private val context: Context) : AutoCloseable {
 
-    fun initialize() {
+    fun updateConfiguration(configuration: MockSpellCheckerConfiguration) {
         SharedPrefsProvider.put(
                 context.contentResolver, KEY_CONFIGURATION, configuration.toByteArray())
     }
@@ -42,8 +38,8 @@ class MockSpellCheckerClient(
         @JvmStatic
         fun create(context: Context, configuration: MockSpellCheckerConfiguration):
                 MockSpellCheckerClient {
-            val client = MockSpellCheckerClient(context, configuration)
-            client.initialize()
+            val client = MockSpellCheckerClient(context)
+            client.updateConfiguration(configuration)
             return client
         }
     }

@@ -769,6 +769,20 @@ public class MockImeSession implements AutoCloseable {
     }
 
     /**
+     * Lets {@link MockIme} to call {@link InputConnection#performSpellCheck()}.
+     *
+     * <p>This triggers {@code getCurrentInputConnection().performSpellCheck()}.</p>
+     *
+     * @return {@link ImeCommand} object that can be passed to
+     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
+     *         wait until this event is handled by {@link MockIme}
+     */
+    @NonNull
+    public ImeCommand callPerformSpellCheck() {
+        return callCommandInternal("performSpellCheck", new Bundle());
+    }
+
+    /**
      * Lets {@link MockIme} to call {@link InputConnection#clearMetaKeyStates(int)} with the given
      * parameters.
      *
