@@ -247,7 +247,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         AnimatedVectorDrawableTest.waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Check that the AVD with empty AnimatorSet has finished
         callback.assertEnded(true);
-        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(300));
+        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(900));
     }
 
     // Does a fuzzy comparison between two images.
