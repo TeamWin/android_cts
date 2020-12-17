@@ -1,6 +1,1 @@
-corinac@google.com
-jsharkey@android.com
-maco@google.com
-nandana@google.com
-zezeozue@google.com
-sahanas@google.com
+include platform/frameworks/base:/core/java/android/os/storage/OWNERS
