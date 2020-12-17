@@ -72,9 +72,7 @@ public class GnssLocationValuesTest extends GnssTestCase {
      */
     public void testLowPowerModeGnssLocation() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
-        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(MIN_ANDROID_SDK_VERSION_REQUIRED,
-                mTestLocationManager, TAG)) {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
         }
         mTestLocationManager.requestLowPowerModeGnssLocationUpdates(5000, mLocationListener);

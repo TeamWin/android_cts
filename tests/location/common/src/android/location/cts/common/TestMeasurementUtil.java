@@ -26,8 +26,6 @@ import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.util.Log;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -89,31 +87,17 @@ public final class TestMeasurementUtil {
     /**
      * Check if test can be run on the current device.
      *
-     * @param  androidSdkVersionCode must be from {@link android.os.Build.VERSION_CODES}
      * @param  testLocationManager TestLocationManager
      * @return true if Build.VERSION &gt;= {@code androidSdkVersionCode} and Location GPS present on
      *         device.
      */
-    public static boolean canTestRunOnCurrentDevice(int androidSdkVersionCode,
-            TestLocationManager testLocationManager,
+    public static boolean canTestRunOnCurrentDevice(TestLocationManager testLocationManager,
             String testTag) {
-        if (ApiLevelUtil.isBefore(androidSdkVersionCode)) {
-            Log.i(testTag, "This test is designed to work on API level " +
-                    androidSdkVersionCode + " or newer. " +
-                    "Test is being skipped because the platform version is being run in " +
-                    ApiLevelUtil.getApiLevel());
-            return false;
-        }
-
         // If device does not have a GPS, skip the test.
         if (!TestUtils.deviceHasGpsFeature(testLocationManager.getContext())) {
             return false;
         }
 
-        // If device has a GPS, but it's turned off in settings, and this is CTS verifier,
-        // fail the test now, because there's no point in going further.
-        // If this is CTS only,we'll warn instead, and quickly pass the test.
-        // (Cts non-verifier deep-indoors-forgiveness happens later, *if* needed)
         boolean gpsProviderEnabled = testLocationManager.getLocationManager()
                 .isProviderEnabled(LocationManager.GPS_PROVIDER);
         SoftAssert.failOrWarning(true, " GPS location disabled on the device. "

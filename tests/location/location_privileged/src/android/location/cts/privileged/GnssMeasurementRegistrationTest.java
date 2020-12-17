@@ -26,7 +26,6 @@ import android.location.cts.common.TestGnssMeasurementListener;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -89,11 +88,8 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
      * Test GPS measurements registration with full tracking enabled.
      */
     public void testGnssMeasurementRegistration_enableFullTracking() throws Exception {
-        // Checks if GPS hardware feature is present, skips test (pass) if not,
-        // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.R,
-                mTestLocationManager,
-                TAG)) {
+        // Checks if GPS hardware feature is present, skips test (pass) if not.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
         }
 
