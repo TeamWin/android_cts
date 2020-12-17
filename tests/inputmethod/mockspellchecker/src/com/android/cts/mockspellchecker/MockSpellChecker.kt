@@ -45,14 +45,10 @@ class MockSpellChecker : SpellCheckerService() {
     }
 
     override fun createSession(): Session = withLog("MockSpellChecker.createSession") {
-        val configuration = MockSpellCheckerConfiguration.parseFrom(
-                SharedPrefsProvider.get(contentResolver, KEY_CONFIGURATION))
-        return MockSpellCheckerSession(configuration)
+        return MockSpellCheckerSession()
     }
 
-    private inner class MockSpellCheckerSession(
-        val configuration: MockSpellCheckerConfiguration
-    ) : SpellCheckerService.Session() {
+    private inner class MockSpellCheckerSession : SpellCheckerService.Session() {
 
         override fun onCreate() = withLog("MockSpellCheckerSession.onCreate") {
         }
@@ -63,6 +59,8 @@ class MockSpellChecker : SpellCheckerService() {
         ): SuggestionsInfo = withLog(
             "MockSpellCheckerSession.onGetSuggestions: ${textInfo?.text}") {
             if (textInfo == null) return emptySuggestionsInfo()
+            val configuration = MockSpellCheckerConfiguration.parseFrom(
+                    SharedPrefsProvider.get(contentResolver, KEY_CONFIGURATION))
             return configuration.suggestionRulesList
                     .find { it.match == textInfo.text }
                     ?.let { SuggestionsInfo(it.attributes, it.suggestionsList.toTypedArray()) }

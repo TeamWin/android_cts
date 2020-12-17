@@ -28,11 +28,13 @@ import android.media.MediaTranscodeManager.TranscodingRequest;
 import android.media.MediaTranscodeManager.TranscodingSession;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.RequiresDevice;
+import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -43,6 +45,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -61,8 +64,13 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
     private static final String TAG = "MediaTranscodeManagerTest";
     /** The time to wait for the transcode operation to complete before failing the test. */
     private static final int TRANSCODE_TIMEOUT_SECONDS = 10;
+    /** Copy the transcoded video to /storage/emulated/0/Download/ */
+    private static final boolean DEBUG_TRANSCODED_VIDEO = false;
+    /** Dump both source yuv and transcode YUV to /storage/emulated/0/Download/ */
+    private static final boolean DEBUG_YUV = false;
 
     private Context mContext;
+    private ContentResolver mContentResolver;
     private MediaTranscodeManager mMediaTranscodeManager = null;
     private Uri mSourceHEVCVideoUri = null;
     private Uri mSourceAVCVideoUri = null;
@@ -122,6 +130,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         super.setUp();
 
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContentResolver = mContext.getContentResolver();
         mMediaTranscodeManager = mContext.getSystemService(MediaTranscodeManager.class);
         assertNotNull(mMediaTranscodeManager);
         androidx.test.InstrumentationRegistry.registerInstance(
@@ -360,14 +369,14 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 "Video_HEVC_1Frame_Audio.mp4"));
     } */
 
-    public void testHevcTranscoding1080PVideo36FramesWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_36Frames_Audio,
-                "Video_HEVC_36Frames_Audio.mp4"));
+    public void testHevcTranscoding1080PVideo37FramesWithAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_37Frames_Audio,
+                "Video_HEVC_37Frames_Audio.mp4"));
     }
 
-    public void testHevcTranscoding1080PVideo68FramesWithAudio() throws Exception {
-        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_68Frames_Audio,
-                "Video_HEVC_68Frames_Audio.mp4"));
+    public void testHevcTranscoding1080PVideo72FramesWithAudio() throws Exception {
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_72Frames_Audio,
+                "Video_HEVC_72Frames_Audio.mp4"));
     }
 
     private void transcodeFile(Uri fileUri) throws Exception {
@@ -426,13 +435,31 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             assertTrue("Transcode failed to complete in time.", finishedOnTime);
         }
 
+        if (DEBUG_TRANSCODED_VIDEO) {
+            try {
+                // Add the system time to avoid duplicate that leads to write failure.
+                String filename =
+                        "transcoded_" + System.nanoTime() + "_" + fileUri.getLastPathSegment();
+                String path = "/storage/emulated/0/Download/" + filename;
+                final File file = new File(path);
+                ParcelFileDescriptor pfd = mContext.getContentResolver().openFileDescriptor(
+                        destinationUri, "r");
+                FileInputStream fis = new FileInputStream(pfd.getFileDescriptor());
+                FileOutputStream fos = new FileOutputStream(file);
+                FileUtils.copy(fis, fos);
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to copy file", e);
+            }
+        }
+
         // TODO(hkuang): Validate the transcoded video's width and height, framerate.
 
         // Validates the transcoded video's psnr.
-        MediaTranscodingTestUtil.VideoTranscodingStatistics stats =
-                MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri);
+        // Enable this after fixing b/175644377
+        /*MediaTranscodingTestUtil.VideoTranscodingStatistics stats =
+                MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri, DEBUG_YUV);
         assertTrue("PSNR: " + stats.mAveragePSNR + " is too low",
-                stats.mAveragePSNR >= PSNR_THRESHOLD);
+                stats.mAveragePSNR >= PSNR_THRESHOLD);*/
     }
 
     public void testCancelTranscoding() throws Exception {

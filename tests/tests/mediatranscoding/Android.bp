@@ -38,4 +38,3 @@ java_defaults {
     ],
     sdk_version: "test_current",
 }
-

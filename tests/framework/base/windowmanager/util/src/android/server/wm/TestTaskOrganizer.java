@@ -63,6 +63,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         final WindowContainerTransaction t = new WindowContainerTransaction();
         t.setBounds(taskInfo.getToken(), null);
         t.reparent(taskInfo.getToken(), mRootPrimary.getToken(), true /* onTop */);
+        t.reorder(mRootPrimary.getToken(), true /* onTop */);
         applyTransaction(t);
     }
 

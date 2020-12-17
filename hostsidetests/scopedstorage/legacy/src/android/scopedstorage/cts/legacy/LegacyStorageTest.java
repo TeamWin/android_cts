@@ -27,6 +27,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
 import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
+import static android.scopedstorage.cts.lib.TestUtils.checkPermission;
 import static android.scopedstorage.cts.lib.TestUtils.createFileAs;
 import static android.scopedstorage.cts.lib.TestUtils.createImageEntryAs;
 import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
@@ -39,13 +40,10 @@ import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDat
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
-import static android.scopedstorage.cts.lib.TestUtils.installApp;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
-import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -123,8 +121,16 @@ public class LegacyStorageTest {
     static final String VIDEO_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".mp4";
     static final String NONMEDIA_FILE_NAME = "LegacyStorageTest_file_" + NONCE + ".pdf";
 
-    private static final TestApp TEST_APP_A = new TestApp("TestAppA",
-            "android.scopedstorage.cts.testapp.A", 1, false, "CtsScopedStorageTestAppA.apk");
+    // The following apps are installed before the tests are run via a target_preparer.
+    // See test config for details.
+    // An app with READ_EXTERNAL_STORAGE permission
+    private static final TestApp APP_A_HAS_RES = new TestApp("TestAppA",
+            "android.scopedstorage.cts.testapp.A.withres", 1, false,
+            "CtsScopedStorageTestAppA.apk");
+    // An app with no permissions
+    private static final TestApp APP_B_NO_PERMS = new TestApp("TestAppB",
+            "android.scopedstorage.cts.testapp.B.noperms", 1, false,
+            "CtsScopedStorageTestAppB.apk");
 
     private static final String[] SYSTEM_GALERY_APPOPS = {
             AppOpsManager.OPSTR_WRITE_MEDIA_IMAGES, AppOpsManager.OPSTR_WRITE_MEDIA_VIDEO};
@@ -140,6 +146,11 @@ public class LegacyStorageTest {
     @Before
     public void setup() throws Exception {
         pollForExternalStorageState();
+
+        assertThat(checkPermission(APP_A_HAS_RES,
+                Manifest.permission.READ_EXTERNAL_STORAGE)).isTrue();
+        assertThat(checkPermission(APP_B_NO_PERMS,
+                Manifest.permission.READ_EXTERNAL_STORAGE)).isFalse();
     }
 
     @After
@@ -499,8 +510,7 @@ public class LegacyStorageTest {
             // Deleting the file will remove videoFile entry from database.
             assertThat(getFileRowIdFromDatabase(videoFile)).isEqualTo(-1);
 
-            installApp(TEST_APP_A, false);
-            assertThat(createFileAs(TEST_APP_A, otherAppPdfFile.getAbsolutePath())).isTrue();
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppPdfFile.getAbsolutePath())).isTrue();
             assertThat(getFileRowIdFromDatabase(otherAppPdfFile)).isNotEqualTo(-1);
             // Legacy app with write permission can delete the pdfFile owned by TestApp.
             assertThat(otherAppPdfFile.delete()).isTrue();
@@ -509,8 +519,7 @@ public class LegacyStorageTest {
             // on a public volume, which is different from the behaviour on a primary external.
 //            assertThat(getFileRowIdFromDatabase(otherAppPdfFile)).isEqualTo(-1);
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, otherAppPdfFile.getAbsolutePath());
-            uninstallApp(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppPdfFile.getAbsolutePath());
             videoFile.delete();
         }
     }
@@ -528,9 +537,8 @@ public class LegacyStorageTest {
         try {
             assertThat(videoFile.createNewFile()).isTrue();
 
-            installApp(TEST_APP_A, true);
             // videoFile is inserted to database, non-legacy app can see this videoFile on 'ls'.
-            assertThat(listAs(TEST_APP_A, TestUtils.getExternalStorageDir().getAbsolutePath()))
+            assertThat(listAs(APP_A_HAS_RES, TestUtils.getExternalStorageDir().getAbsolutePath()))
                     .contains(VIDEO_FILE_NAME);
 
             // videoFile is in database, row ID for videoFile can not be -1.
@@ -542,7 +550,6 @@ public class LegacyStorageTest {
             assertEquals(-1, getFileRowIdFromDatabase(videoFile));
         } finally {
             videoFile.delete();
-            uninstallApp(TEST_APP_A);
         }
     }
 
@@ -711,20 +718,18 @@ public class LegacyStorageTest {
         pollForPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, /*granted*/ true);
 
         final File fullPath = new File(TestUtils.getDcimDir(),
-                "OwnershipChange_" + IMAGE_FILE_NAME);
-        final String relativePath = "DCIM/OwnershipChange_" + IMAGE_FILE_NAME;
+                "OwnershipChange" + IMAGE_FILE_NAME);
+        final String relativePath = "DCIM/OwnershipChange" + IMAGE_FILE_NAME;
         try {
-            installApp(TEST_APP_A, false);
-            createImageEntryAs(TEST_APP_A, relativePath);
+            createImageEntryAs(APP_B_NO_PERMS, relativePath);
             assertThat(fullPath.createNewFile()).isTrue();
 
-            // We have transferred ownership away from TEST_APP_A so reads / writes
+            // We have transferred ownership away from APP_B_NO_PERMS so reads / writes
             // should no longer work.
-            assertThat(canOpenFileAs(TEST_APP_A, fullPath, false /* for write */)).isFalse();
-            assertThat(canOpenFileAs(TEST_APP_A, fullPath, false /* for read */)).isFalse();
+            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, false /* forWrite */)).isFalse();
+            assertThat(canOpenFileAs(APP_B_NO_PERMS, fullPath, true /* forWrite */)).isFalse();
         } finally {
-            deleteFileAsNoThrow(TEST_APP_A, fullPath.getAbsolutePath());
-            uninstallAppNoThrow(TEST_APP_A);
+            deleteFileAsNoThrow(APP_B_NO_PERMS, fullPath.getAbsolutePath());
             fullPath.delete();
         }
     }
@@ -788,31 +793,24 @@ public class LegacyStorageTest {
         final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
+            allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
-            try {
-                allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
-
-                // Create and write some data to the file
-                assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
-                try (final FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
-                    fos.write(BYTES_DATA1);
-                }
-
-                // Assert legacy system gallery can rename the file.
-                assertCanRenameFile(otherAppVideoFile, videoFile, false /* checkDatabase */);
-                assertFileContent(videoFile, BYTES_DATA1);
-                // Database was not updated.
-                assertThat(getFileRowIdFromDatabase(otherAppVideoFile)).isNotEqualTo(-1);
-                assertThat(getFileRowIdFromDatabase(videoFile)).isEqualTo(-1);
+            // Create and write some data to the file
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideoFile.getPath())).isTrue();
+            try (FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
+                fos.write(BYTES_DATA1);
             }
-            finally {
-                otherAppVideoFile.delete();
-                videoFile.delete();
-                denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
-            }
+
+            // Assert legacy system gallery can rename the file.
+            assertCanRenameFile(otherAppVideoFile, videoFile, false /* checkDatabase */);
+            assertFileContent(videoFile, BYTES_DATA1);
+            // Database was not updated.
+            assertThat(getFileRowIdFromDatabase(otherAppVideoFile)).isNotEqualTo(-1);
+            assertThat(getFileRowIdFromDatabase(videoFile)).isEqualTo(-1);
         } finally {
-            uninstallAppNoThrow(TEST_APP_A);
+            otherAppVideoFile.delete();
+            videoFile.delete();
+            denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
 
@@ -824,24 +822,17 @@ public class LegacyStorageTest {
         final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
+            allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
 
-            try {
-                allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+            // Create file of other app.
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideoFile.getPath())).isTrue();
 
-                // Create file of other app.
-                assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
-
-                // Check we cannot rename it.
-                assertThat(otherAppVideoFile.renameTo(videoFile)).isFalse();
-            }
-            finally {
-                otherAppVideoFile.delete();
-                videoFile.delete();
-                denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
-            }
+            // Check we cannot rename it.
+            assertThat(otherAppVideoFile.renameTo(videoFile)).isFalse();
         } finally {
-            uninstallAppNoThrow(TEST_APP_A);
+            otherAppVideoFile.delete();
+            videoFile.delete();
+            denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
         }
     }
 
@@ -853,20 +844,18 @@ public class LegacyStorageTest {
         final File videoFile = new File(getPicturesDir(), VIDEO_FILE_NAME);
 
         try {
-            installApp(TEST_APP_A);
-             // Create and write some data to the file
-             assertThat(createFileAs(TEST_APP_A, otherAppVideoFile.getPath())).isTrue();
-             try (final FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
-                 fos.write(BYTES_DATA1);
-             }
+            // Create and write some data to the file
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideoFile.getPath())).isTrue();
+            try (FileOutputStream fos = new FileOutputStream(otherAppVideoFile)) {
+                fos.write(BYTES_DATA1);
+            }
 
-             // Assert legacy WES can rename the file (including database updated).
-             assertCanRenameFile(otherAppVideoFile, videoFile);
-             assertFileContent(videoFile, BYTES_DATA1);
+            // Assert legacy WES can rename the file (including database updated).
+            assertCanRenameFile(otherAppVideoFile, videoFile);
+            assertFileContent(videoFile, BYTES_DATA1);
         } finally {
             otherAppVideoFile.delete();
             videoFile.delete();
-            uninstallAppNoThrow(TEST_APP_A);
         }
     }
 
@@ -970,12 +959,12 @@ public class LegacyStorageTest {
     }
 
     private void createFileInExternalDir(File file) throws Exception {
-        Log.d(TAG, "Creating file " + file + " in the external Directory");
+        Log.d(TAG, "Creating file " + file);
         getContentResolver().openFile(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), "w", null);
     }
 
     private void deleteFileInExternalDir(File file) throws Exception {
-        Log.d(TAG, "Deleting file " + file + " from the external Directory");
+        Log.d(TAG, "Deleting file " + file);
         getContentResolver().delete(Uri.parse(CONTENT_PROVIDER_URL + file.getPath()), null, null);
     }
 }
