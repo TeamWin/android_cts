@@ -126,9 +126,6 @@
     <!-- b/110417203: Flaky tests -->
     <option name="compatibility:exclude-filter" value="CtsUsageStatsTestCases android.app.usage.cts.NetworkUsageStatsTest#testUidTagStateDetails" />
 
-    <!-- b/80077786: MyVerizonServices fail -->
-    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
-
     <!-- b/111101428: CtsOsTestCases irrelevant test cases -->
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.BuildTest#testIsSecureUserBuild" />
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.BuildVersionTest#testBuildFingerprint" />
