@@ -24,6 +24,7 @@ import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
+import android.os.UserHandle;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -59,7 +60,9 @@ public class AppBTests {
         ApplicationInfo applicationInfo = mContext.getApplicationInfo();
         assertDirIsAccessible(replacePackageBWithPackageA(applicationInfo.dataDir));
         assertDirIsAccessible(replacePackageBWithPackageA(applicationInfo.deviceProtectedDataDir));
-        assertDirIsAccessible("/data/data/" + APPA_PKG);
+        if (getCurrentUserId() == UserHandle.USER_SYSTEM) {
+            assertDirIsAccessible("/data/data/" + APPA_PKG);
+        }
         assertFileIsAccessible("/data/misc/profiles/cur/" + getCurrentUserId() + "/"
                 + APPA_PKG + "/primary.prof");
         assertDirIsNotAccessible("/data/misc/profiles/ref");
