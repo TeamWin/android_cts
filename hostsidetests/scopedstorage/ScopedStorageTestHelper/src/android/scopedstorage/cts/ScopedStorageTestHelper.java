@@ -175,6 +175,9 @@ public class ScopedStorageTestHelper extends Activity {
                     return intent;
                 case CREATE_FILE_QUERY:
                     maybeCreateParentDirInAndroid(file);
+                    if (!file.getParentFile().exists()) {
+                        file.getParentFile().mkdirs();
+                    }
                     intent.putExtra(queryType, file.createNewFile());
                     return intent;
                 case DELETE_FILE_QUERY:

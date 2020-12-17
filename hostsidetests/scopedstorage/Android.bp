@@ -18,6 +18,8 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppB",
@@ -25,6 +27,8 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppC",
@@ -32,6 +36,8 @@ android_test_helper_app {
     static_libs: ["cts-scopedstorage-lib"],
     sdk_version: "test_current",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
 }
 android_test_helper_app {
     name: "CtsScopedStorageTestAppCLegacy",
@@ -40,6 +46,28 @@ android_test_helper_app {
     sdk_version: "test_current",
     target_sdk_version: "28",
     srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
+}
+android_test_helper_app {
+    name: "CtsScopedStorageTestAppDLegacy",
+    manifest: "ScopedStorageTestHelper/TestAppDLegacy.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    target_sdk_version: "28",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
+}
+
+android_test_helper_app {
+    name: "CtsScopedStorageTestAppFileManager",
+    manifest: "ScopedStorageTestHelper/TestAppFileManager.xml",
+    static_libs: ["cts-scopedstorage-lib"],
+    sdk_version: "test_current",
+    srcs: ["ScopedStorageTestHelper/src/**/*.java"],
+    // Tag as a CTS artifact
+    test_suites: ["device-tests", "mts", "cts"],
 }
 
 android_test {
@@ -113,5 +141,7 @@ android_test {
         ":CtsScopedStorageTestAppB",
         ":CtsScopedStorageTestAppC",
         ":CtsScopedStorageTestAppCLegacy",
+        ":CtsScopedStorageTestAppDLegacy",
+        ":CtsScopedStorageTestAppFileManager",
     ]
 }
