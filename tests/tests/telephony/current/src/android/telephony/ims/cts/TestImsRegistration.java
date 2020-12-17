@@ -18,6 +18,7 @@ package android.telephony.ims.cts;
 
 import android.telephony.ims.stub.ImsRegistrationImplBase;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +33,16 @@ public class TestImsRegistration extends ImsRegistrationImplBase {
         }
     }
 
+    public static final int LATCH_UPDATE_REGISTRATION = 0;
+    public static final int LATCH_TRIGGER_DEREGISTRATION = 1;
+    private static final int LATCH_MAX = 2;
+    private static final CountDownLatch[] sLatches = new CountDownLatch[LATCH_MAX];
+    static {
+        for (int i = 0; i < LATCH_MAX; i++) {
+            sLatches[i] = new CountDownLatch(1);
+        }
+    }
+
     private final LinkedBlockingQueue<NetworkRegistrationInfo> mPendingFullRegistrationRequests =
             new LinkedBlockingQueue<>();
 
@@ -40,7 +51,40 @@ public class TestImsRegistration extends ImsRegistrationImplBase {
         mPendingFullRegistrationRequests.offer(new NetworkRegistrationInfo(sipCode, sipReason));
     }
 
+    @Override
+    public void updateSipDelegateRegistration() {
+        synchronized (sLatches) {
+            sLatches[LATCH_UPDATE_REGISTRATION].countDown();
+        }
+    }
+
+    @Override
+    public void triggerSipDelegateDeregistration() {
+        synchronized (sLatches) {
+            sLatches[LATCH_TRIGGER_DEREGISTRATION].countDown();
+        }
+    }
+
     public NetworkRegistrationInfo getNextFullNetworkRegRequest(int timeoutMs) throws Exception {
         return mPendingFullRegistrationRequests.poll(timeoutMs, TimeUnit.MILLISECONDS);
+    }
+
+    public void resetLatch(int latchIndex, int newCount) {
+        synchronized (sLatches) {
+            sLatches[latchIndex] = new CountDownLatch(newCount);
+        }
+    }
+
+    public boolean waitForLatchCountDown(int latchIndex, int timeoutMs) {
+        CountDownLatch latch;
+        synchronized (sLatches) {
+            latch = sLatches[latchIndex];
+        }
+        while (latch.getCount() > 0) {
+            try {
+                return latch.await(timeoutMs, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) { }
+        }
+        return true;
     }
 }
