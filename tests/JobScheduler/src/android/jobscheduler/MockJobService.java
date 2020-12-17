@@ -467,7 +467,9 @@ public class MockJobService extends JobService {
             mExecutedPermCheckWrite = permCheckWrite;
             mExecutedReceivedWork = receivedWork;
             mExecutedErrorMessage = errorMsg;
-            mLatch.countDown();
+            if (mLatch != null) {
+                mLatch.countDown();
+            }
         }
 
         private void notifyWaitingForStop() {
