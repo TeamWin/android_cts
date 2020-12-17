@@ -59,12 +59,15 @@ public class FileUtils {
         });
         assertThat(exception.getMessage()).contains(JAVA_FILE_PERMISSION_DENIED_MSG);
         assertThat(exception.getMessage()).doesNotContain(JAVA_FILE_NOT_FOUND_MSG);
+
+        assertThat(new File(path).canExecute()).isFalse();
     }
 
     public static void assertDirDoesNotExist(String path) {
         File directory = new File(path);
         // Trying to access a file/directory that does exist, but is not visible to the caller, it
         // should return file not found.
+        final File directory = new File(path);
         Exception exception = expectThrows(FileNotFoundException.class, () -> {
             new FileInputStream(directory);
         });
@@ -85,6 +88,8 @@ public class FileUtils {
         } catch (ErrnoException e) {
             assertEquals(e.errno, OsConstants.EACCES, "Error on path: " + path);
         }
+
+        assertThat(directory.exists()).isFalse();
     }
 
     public static void assertDirIsAccessible(String path) {
@@ -92,6 +97,8 @@ public class FileUtils {
         // if app has search permission to that directory, it should return file not found
         // and not security exception.
         assertFileDoesNotExist(path, "FILE_DOES_NOT_EXIST");
+
+        assertThat(new File(path).canExecute()).isTrue();
     }
 
     public static void assertFileIsAccessible(String path) {
