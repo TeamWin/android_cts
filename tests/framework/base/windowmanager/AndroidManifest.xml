@@ -32,7 +32,9 @@
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <application android:label="CtsWindowManagerDeviceTestCases"
-            android:requestLegacyExternalStorage="true">
+                 android:requestLegacyExternalStorage="true"
+                 android:theme="@style/Theme_NoSwipeDismiss">
+
         <uses-library android:name="android.test.runner"/>
 
         <activity
