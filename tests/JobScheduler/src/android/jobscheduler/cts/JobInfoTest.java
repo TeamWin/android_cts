@@ -164,6 +164,7 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setExpedited(true)
                 .setPersisted(true)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setRequiresStorageNotLow(true)
                 .build();
         assertTrue(ji.isExpedited());
         // Confirm JobScheduler accepts the JobInfo object.
@@ -192,10 +193,6 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
                         .setPrefetch(true));
-        assertBuildFails(failureMessage,
-                new JobInfo.Builder(JOB_ID, kJobServiceComponent)
-                        .setExpedited(true)
-                        .setRequiresStorageNotLow(true));
         assertBuildFails(failureMessage,
                 new JobInfo.Builder(JOB_ID, kJobServiceComponent)
                         .setExpedited(true)
