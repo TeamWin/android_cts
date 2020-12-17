@@ -3,7 +3,7 @@ toddke@google.com
 per-file AccessSerialNumberTest.java = moltmann@google.com
 per-file ApexSignatureVerificationTest.java = dariofreni@google.com
 per-file ApplicationVisibilityTest.java = toddke@google.com
-per-file AppDataIsolationTests.java = rickywai@google.com
+per-file AppDataIsolationTests.java = rickywai@google.com,alanstokes@google.com
 per-file AppOpsTest.java = moltmann@google.com
 per-file AppSecurityTests.java = cbrubaker@google.com
 per-file AuthBoundKeyTest.java = cbrubaker@google.com
