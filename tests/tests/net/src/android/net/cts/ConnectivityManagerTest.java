@@ -1141,12 +1141,13 @@ public class ConnectivityManagerTest {
         assertNotNull(dstAddr);
 
         // Test concurrent Nat-T keepalives.
-        final ArrayList<SocketKeepalive> result = createConcurrentKeepalivesOfType(requestCount,
-                callback, () -> mCm.createSocketKeepalive(network, nattSocket,
-                        srcAddr, dstAddr, executor, callback));
-
-        nattSocket.close();
-        return result;
+        try {
+            return createConcurrentKeepalivesOfType(requestCount,
+                    callback, () -> mCm.createSocketKeepalive(network, nattSocket,
+                            srcAddr, dstAddr, executor, callback));
+        } finally {
+            nattSocket.close();
+        }
     }
 
     private @NonNull ArrayList<SocketKeepalive> createConcurrentTcpSocketKeepalives(
