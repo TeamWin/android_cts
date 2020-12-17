@@ -25,6 +25,7 @@ import android.cts.statsdatom.lib.ReportUtils;
 import android.telephony.NetworkTypeEnum;
 
 import com.android.os.AtomsProto;
+import com.android.os.StatsLog.EventMetricData;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
@@ -147,6 +148,73 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         }
     }
 
+    public void testAirplaneModeEvent_shortToggle() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.AIRPLANE_MODE_FIELD_NUMBER);
+
+        turnOnAirplaneMode();
+        // wait long enough for airplane mode events to propagate, but less than threshold for
+        // long toggle.
+        Thread.sleep(1_200);
+        turnOffAirplaneMode();
+        // wait long enough for airplane mode events to propagate.
+        Thread.sleep(1_200);
+
+        // Verify that we have at least one atom for enablement and one for disablement.
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomsProto.AirplaneMode airplaneModeEnabledAtom = null;
+        AtomsProto.AirplaneMode airplaneModeDisabledAtom = null;
+        for (EventMetricData d : data) {
+            AtomsProto.AirplaneMode atom = d.getAtom().getAirplaneMode();
+            if (atom.getIsEnabled() && airplaneModeEnabledAtom == null) {
+                airplaneModeEnabledAtom = atom;
+            }
+            if (!atom.getIsEnabled() && airplaneModeDisabledAtom == null) {
+                airplaneModeDisabledAtom = atom;
+            }
+        }
+        assertThat(airplaneModeEnabledAtom).isNotNull();
+        assertThat(airplaneModeDisabledAtom).isNotNull();
+        assertThat(airplaneModeDisabledAtom.getShortToggle()).isTrue();
+    }
+
+    public void testAirplaneModeEvent_longToggle() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.AIRPLANE_MODE_FIELD_NUMBER);
+
+        turnOnAirplaneMode();
+        // wait long enough for long airplane mode toggle (10 seconds).
+        Thread.sleep(12_000);
+        turnOffAirplaneMode();
+        // wait long enough for airplane mode events to propagate.
+        Thread.sleep(1_200);
+
+        // Verify that we have at least one atom for enablement and one for disablement.
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomsProto.AirplaneMode airplaneModeEnabledAtom = null;
+        AtomsProto.AirplaneMode airplaneModeDisabledAtom = null;
+        for (EventMetricData d : data) {
+            AtomsProto.AirplaneMode atom = d.getAtom().getAirplaneMode();
+            if (atom.getIsEnabled() && airplaneModeEnabledAtom == null) {
+                airplaneModeEnabledAtom = atom;
+            }
+            if (!atom.getIsEnabled() && airplaneModeDisabledAtom == null) {
+                airplaneModeDisabledAtom = atom;
+            }
+        }
+        assertThat(airplaneModeEnabledAtom).isNotNull();
+        assertThat(airplaneModeDisabledAtom).isNotNull();
+        assertThat(airplaneModeDisabledAtom.getShortToggle()).isFalse();
+    }
+
     private boolean hasGsmPhone() throws Exception {
         // Not using log entries or ServiceState in the dump since they may or may not be present,
         // which can make the test flaky
@@ -244,5 +312,13 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
             }
         }
         return results;
+    }
+
+    private void turnOnAirplaneMode() throws Exception {
+        getDevice().executeShellCommand("cmd connectivity airplane-mode enable");
+    }
+
+    private void turnOffAirplaneMode() throws Exception {
+        getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
     }
 }
