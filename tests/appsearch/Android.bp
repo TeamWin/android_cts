@@ -16,6 +16,7 @@ android_test {
     name: "CtsAppSearchTestCases",
     defaults: ["cts_defaults"],
     static_libs: [
+        "AppSearchTestUtils",
         "androidx.test.ext.junit",
         "androidx.test.rules",
         "compatibility-device-util-axt",
