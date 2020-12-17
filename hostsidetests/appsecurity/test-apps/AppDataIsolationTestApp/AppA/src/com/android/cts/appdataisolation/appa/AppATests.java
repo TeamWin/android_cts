@@ -16,12 +16,10 @@
 
 package com.android.cts.appdataisolation.appa;
 
-import static com.android.cts.appdataisolation.common.FileUtils.APPA_PKG;
 import static com.android.cts.appdataisolation.common.FileUtils.APPB_PKG;
 import static com.android.cts.appdataisolation.common.FileUtils.CE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.DE_DATA_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.EXTERNAL_DATA_FILE_NAME;
-import static com.android.cts.appdataisolation.common.FileUtils.NOT_INSTALLED_PKG;
 import static com.android.cts.appdataisolation.common.FileUtils.OBB_FILE_NAME;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirDoesNotExist;
 import static com.android.cts.appdataisolation.common.FileUtils.assertDirIsAccessible;
@@ -31,7 +29,6 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists
 import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
 import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -42,24 +39,19 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.support.test.uiautomator.UiDevice;
-import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.appdataisolation.common.FileUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -294,49 +286,5 @@ public class AppATests {
         } finally {
             mContext.unbindService(mServiceConnection);
         }
-    }
-
-    @Test
-    public void testOtherUserDirsNotPresent() throws Exception {
-        final Bundle arguments = InstrumentationRegistry.getArguments();
-        final int otherUserId = Integer.parseInt(arguments.getString("other_user_id"));
-
-        final String ceDataRoot = "/data/user/" + otherUserId;
-        final String deDataRoot = "/data/user_de/" + otherUserId;
-        final String profileRoot = "/data/misc/profiles/cur/" + otherUserId;
-
-        assertDirDoesNotExist(ceDataRoot);
-        assertDirDoesNotExist(deDataRoot);
-        assertDirDoesNotExist(profileRoot);
-    }
-
-    @Test
-    public void testOtherUserDirsNotAccessible() throws Exception {
-        final Bundle arguments = InstrumentationRegistry.getArguments();
-        final int otherUserId = Integer.parseInt(arguments.getString("other_user_id"));
-
-        final String ceDataRoot = "/data/user/" + otherUserId;
-        final String deDataRoot = "/data/user_de/" + otherUserId;
-        final String profileRoot = "/data/misc/profiles/cur/" + otherUserId;
-
-        // APPA (this app) is installed in this user but not the other one.
-        // APPB is installed in this user and the other one.
-        // NOT_INSTALLED_PKG isn't installed anywhere.
-        // We must get the same answer for all of them, so we can't infer if any of them are or
-        // are not installed in the other user.
-        assertDirIsNotAccessible(ceDataRoot);
-        assertDirIsNotAccessible(ceDataRoot + "/" + APPA_PKG);
-        assertDirIsNotAccessible(ceDataRoot + "/" + APPB_PKG);
-        assertDirIsNotAccessible(ceDataRoot + "/" + NOT_INSTALLED_PKG);
-
-        assertDirIsNotAccessible(deDataRoot);
-        assertDirIsNotAccessible(deDataRoot + "/" + APPA_PKG);
-        assertDirIsNotAccessible(deDataRoot + "/" + APPB_PKG);
-        assertDirIsNotAccessible(deDataRoot + "/" + NOT_INSTALLED_PKG);
-
-        assertDirIsNotAccessible(profileRoot);
-        assertDirIsNotAccessible(profileRoot + "/" + APPA_PKG);
-        assertDirIsNotAccessible(profileRoot + "/" + APPB_PKG);
-        assertDirIsNotAccessible(profileRoot + "/" + NOT_INSTALLED_PKG);
     }
 }
