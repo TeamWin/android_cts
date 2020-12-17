@@ -407,7 +407,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      * is not found within the timeout, an exception is thrown.
      */
     public String checkExpectedOutput(CecOperand expectedMessage) throws Exception {
-        return checkExpectedOutput(LogicalAddress.BROADCAST, expectedMessage, DEFAULT_TIMEOUT);
+        return checkExpectedOutput(
+                targetDevice, LogicalAddress.BROADCAST, expectedMessage, DEFAULT_TIMEOUT, false);
     }
 
     /**
@@ -417,7 +418,30 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public String checkExpectedOutput(LogicalAddress toDevice,
                                       CecOperand expectedMessage) throws Exception {
-        return checkExpectedOutput(toDevice, expectedMessage, DEFAULT_TIMEOUT);
+        return checkExpectedOutput(targetDevice, toDevice, expectedMessage, DEFAULT_TIMEOUT, false);
+    }
+
+    /**
+     * Looks for the broadcasted CEC expectedMessage sent from cec-client device fromDevice on the
+     * cec-client communication channel and returns the first line that contains that message within
+     * default timeout. If the CEC message is not found within the timeout, an exception is thrown.
+     */
+    public String checkExpectedMessageFromClient(
+            LogicalAddress fromDevice, CecOperand expectedMessage) throws Exception {
+        return checkExpectedMessageFromClient(
+                fromDevice, LogicalAddress.BROADCAST, expectedMessage);
+    }
+
+    /**
+     * Looks for the CEC expectedMessage sent from cec-client device fromDevice to CEC device
+     * toDevice on the cec-client communication channel and returns the first line that contains
+     * that message within default timeout. If the CEC message is not found within the timeout, an
+     * exception is thrown.
+     */
+    public String checkExpectedMessageFromClient(
+            LogicalAddress fromDevice, LogicalAddress toDevice, CecOperand expectedMessage)
+            throws Exception {
+        return checkExpectedOutput(fromDevice, toDevice, expectedMessage, DEFAULT_TIMEOUT, true);
     }
 
     /**
@@ -427,7 +451,8 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public String checkExpectedOutput(CecOperand expectedMessage,
                                       long timeoutMillis) throws Exception {
-        return checkExpectedOutput(LogicalAddress.BROADCAST, expectedMessage, timeoutMillis);
+        return checkExpectedOutput(
+                targetDevice, LogicalAddress.BROADCAST, expectedMessage, timeoutMillis, false);
     }
 
     /**
@@ -437,13 +462,40 @@ public final class HdmiCecClientWrapper extends ExternalResource {
      */
     public String checkExpectedOutput(LogicalAddress toDevice, CecOperand expectedMessage,
                                        long timeoutMillis) throws Exception {
+        return checkExpectedOutput(targetDevice, toDevice, expectedMessage, timeoutMillis, false);
+    }
+
+    /**
+     * Looks for the CEC expectedMessage sent from CEC device fromDevice to CEC device toDevice on
+     * the cec-client communication channel and returns the first line that contains that message
+     * within timeoutMillis. If the CEC message is not found within the timeout, an exception is
+     * thrown. This method looks for the CEC messages coming from Cec-client if fromCecClient is
+     * true.
+     */
+    public String checkExpectedOutput(
+            LogicalAddress fromDevice,
+            LogicalAddress toDevice,
+            CecOperand expectedMessage,
+            long timeoutMillis,
+            boolean fromCecClient)
+            throws Exception {
         checkCecClient();
         long startTime = System.currentTimeMillis();
         long endTime = startTime;
-        Pattern pattern = Pattern.compile("(.*>>)(.*?)" +
-                                          "(" + targetDevice + toDevice + "):" +
-                                          "(" + expectedMessage + ")(.*)",
-                                          Pattern.CASE_INSENSITIVE);
+        String direction = fromCecClient ? "<<" : ">>";
+        Pattern pattern =
+                Pattern.compile(
+                        "(.*"
+                                + direction
+                                + ")(.*?)"
+                                + "("
+                                + fromDevice
+                                + toDevice
+                                + "):"
+                                + "("
+                                + expectedMessage
+                                + ")(.*)",
+                        Pattern.CASE_INSENSITIVE);
 
         while ((endTime - startTime <= timeoutMillis)) {
             if (mInputConsole.ready()) {
