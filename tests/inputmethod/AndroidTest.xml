@@ -70,10 +70,10 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsInputMethodTestCases.apk" />
     </target_preparer>
+    <!-- Enabling change id ALLOW_TEST_API_ACCESS allows that package to access @TestApi methods -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-      <!-- Disable hidden API checking, see b/166236554 -->
-        <option name="run-command" value="settings put global hidden_api_policy 1" />
-        <option name="teardown-command" value="settings delete global hidden_api_policy" />
+        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS com.android.cts.mockime"  />
+        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS com.android.cts.mockime" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.view.inputmethod.cts" />
