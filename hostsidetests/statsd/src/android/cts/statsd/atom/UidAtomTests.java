@@ -1824,7 +1824,7 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         // Test the size of atoms. It should contain 5 atoms
         List<Atom> atoms = getGaugeMetricDataList();
-        assertThat(atoms.size()).isEqualTo(5);
+        assertThat(atoms.size()).isAtLeast(5);
         SettingSnapshot snapshot = null;
         for (Atom atom : atoms) {
             SettingSnapshot settingSnapshot = atom.getSettingSnapshot();
