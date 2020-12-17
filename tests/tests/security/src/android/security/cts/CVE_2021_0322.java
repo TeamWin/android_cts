@@ -44,7 +44,7 @@ public class CVE_2021_0322 {
     /**
      * b/159145361
      */
-    @SecurityTest(minPatchLevel = "2020-01")
+    @SecurityTest(minPatchLevel = "2021-01")
     @Test
     public void testPocCVE_2021_0322() {
         CVE_2021_0322_SliceProvider serviceProvider = new CVE_2021_0322_SliceProvider();
