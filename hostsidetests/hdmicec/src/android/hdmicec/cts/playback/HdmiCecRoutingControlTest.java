@@ -110,6 +110,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     LogicalAddress.BROADCAST,
                     CecOperand.SET_STREAM_PATH,
                     CecMessage.formatParams(dumpsysPhysicalAddress));
+            TimeUnit.SECONDS.sleep(5);
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
                     CecOperand.INACTIVE_SOURCE);
