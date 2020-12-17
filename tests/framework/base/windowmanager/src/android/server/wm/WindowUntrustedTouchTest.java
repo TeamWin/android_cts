@@ -623,6 +623,19 @@ public class WindowUntrustedTouchTest {
         assertTouchNotReceived();
     }
 
+    @Test
+    public void testWhenExitAnimationAboveThresholdFromSameUid_allowsTouch() {
+        // Translucent activities don't honor custom exit animations
+        addOpaqueActivity(APP_SELF);
+        sendFinishToActivity(APP_SELF, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
+
+        mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
+
+        assertAnimationRunning();
+        assertTouchReceived();
+    }
+
     /** Toast windows */
 
     @Test
