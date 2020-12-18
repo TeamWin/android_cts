@@ -456,10 +456,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
         // Validates the transcoded video's psnr.
         // Enable this after fixing b/175644377
-        /*MediaTranscodingTestUtil.VideoTranscodingStatistics stats =
+        MediaTranscodingTestUtil.VideoTranscodingStatistics stats =
                 MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri, DEBUG_YUV);
         assertTrue("PSNR: " + stats.mAveragePSNR + " is too low",
-                stats.mAveragePSNR >= PSNR_THRESHOLD);*/
+                stats.mAveragePSNR >= PSNR_THRESHOLD);
     }
 
     public void testCancelTranscoding() throws Exception {
