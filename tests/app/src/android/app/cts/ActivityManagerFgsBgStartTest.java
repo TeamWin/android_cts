@@ -462,6 +462,7 @@ public class ActivityManagerFgsBgStartTest {
      * @throws Exception
      */
     @Test
+    @Ignore("b/173799456 flaky test")
     public void testFgsStartFromBG1() throws Exception {
         testFgsStartFromBG(true);
     }
@@ -472,6 +473,7 @@ public class ActivityManagerFgsBgStartTest {
      * @throws Exception
      */
     @Test
+    @Ignore("b/175054460 flaky test")
     public void testFgsStartFromBG2() throws Exception {
         testFgsStartFromBG(false);
     }
@@ -936,7 +938,8 @@ public class ActivityManagerFgsBgStartTest {
      */
     @Test
     // Change Settings.Global.DEVICE_DEMO_MODE on device may trigger other listener and put
-    // the device in undesired state, ignore this test for now.
+    // the device in undesired state, for example, the battery charge level is set to 35%
+    // permanently, ignore this test for now.
     @Ignore
     public void testFgsStartRetailDemoMode() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(

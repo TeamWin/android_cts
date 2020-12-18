@@ -94,7 +94,9 @@ public class BatterySaverTest extends BatterySavingTestBase {
     }
 
     @Test
-    public void testSetBatterySaver_powerManager() {
+    public void testSetBatterySaver_powerManager() throws Exception {
+        enableBatterySaver(false);
+
         runWithShellPermissionIdentity(() -> {
             PowerManager manager = BatteryUtils.getPowerManager();
             assertFalse(manager.isPowerSaveMode());
@@ -137,8 +139,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
             enableBatterySaver(true);
 
             assertTrue(powerManager.isPowerSaveMode());
-            assertEquals(PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
-                    powerManager.getLocationPowerSaveMode());
+            // Updating based on the settings change may take some time.
+            waitUntil("Location mode didn't change to "
+                            + PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
+                    () -> PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF ==
+                            powerManager.getLocationPowerSaveMode());
             // UI change can take a while to propagate, so need to wait for this check.
             waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
                     () -> Configuration.UI_MODE_NIGHT_YES ==
@@ -155,6 +160,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
                     () -> Configuration.UI_MODE_NIGHT_NO ==
                             (getContext().getResources().getConfiguration().uiMode
                                     & Configuration.UI_MODE_NIGHT_MASK));
+            // Check location mode after we know battery saver changes have propagated fully.
             final int locationPowerSaveMode = powerManager.getLocationPowerSaveMode();
             assertTrue("Location power save mode didn't change from " + locationPowerSaveMode,
                     locationPowerSaveMode == PowerManager.LOCATION_MODE_FOREGROUND_ONLY
@@ -170,6 +176,7 @@ public class BatterySaverTest extends BatterySavingTestBase {
                     () -> Configuration.UI_MODE_NIGHT_YES ==
                             (getContext().getResources().getConfiguration().uiMode
                                     & Configuration.UI_MODE_NIGHT_MASK));
+            // Check location mode after we know battery saver changes have propagated fully.
             assertEquals(PowerManager.LOCATION_MODE_ALL_DISABLED_WHEN_SCREEN_OFF,
                     powerManager.getLocationPowerSaveMode());
         } finally {
@@ -192,8 +199,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
                 "location_mode=" + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF
                         + ",enable_night_mode=true");
         assertTrue(powerManager.isPowerSaveMode());
-        assertEquals(PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
-                powerManager.getLocationPowerSaveMode());
+        // Updating based on the settings change may take some time.
+        waitUntil("Location mode didn't change to "
+                        + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
+                () -> PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF ==
+                        powerManager.getLocationPowerSaveMode());
         // UI change can take a while to propagate, so need to wait for this check.
         waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
                 () -> Configuration.UI_MODE_NIGHT_YES ==
@@ -212,8 +222,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
         mDeviceConfigStateHelper.set("enable_night_mode", "true");
 
         assertTrue(powerManager.isPowerSaveMode());
-        assertEquals(PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
-                powerManager.getLocationPowerSaveMode());
+        // Updating based on DeviceConfig change may take some time.
+        waitUntil("Location mode didn't change to "
+                        + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
+                () -> PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF ==
+                        powerManager.getLocationPowerSaveMode());
         // UI change can take a while to propagate, so need to wait for this check.
         waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
                 () -> Configuration.UI_MODE_NIGHT_YES ==
@@ -232,8 +245,11 @@ public class BatterySaverTest extends BatterySavingTestBase {
         mDeviceConfigStateHelper.set("enable_night_mode", "true");
 
         assertTrue(powerManager.isPowerSaveMode());
-        assertEquals(PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
-                powerManager.getLocationPowerSaveMode());
+        // Updating constants may take some time.
+        waitUntil("Location mode didn't change to "
+                        + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
+                () -> PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF ==
+                        powerManager.getLocationPowerSaveMode());
         // UI change can take a while to propagate, so need to wait for this check.
         waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
                 () -> Configuration.UI_MODE_NIGHT_YES ==
@@ -247,16 +263,20 @@ public class BatterySaverTest extends BatterySavingTestBase {
                 () -> Configuration.UI_MODE_NIGHT_NO ==
                         (getContext().getResources().getConfiguration().uiMode
                                 & Configuration.UI_MODE_NIGHT_MASK));
-        final int locationPowerSaveMode = powerManager.getLocationPowerSaveMode();
-        assertEquals("Location power save mode didn't change from " + locationPowerSaveMode,
-                PowerManager.LOCATION_MODE_FOREGROUND_ONLY, locationPowerSaveMode);
+        // Updating constants may take some time.
+        waitUntil("Location mode didn't change to " + PowerManager.LOCATION_MODE_FOREGROUND_ONLY,
+                () -> PowerManager.LOCATION_MODE_FOREGROUND_ONLY ==
+                        powerManager.getLocationPowerSaveMode());
 
         SettingsUtils.delete(SettingsUtils.NAMESPACE_GLOBAL, "battery_saver_constants");
         waitUntil("UI mode didn't change to " + Configuration.UI_MODE_NIGHT_YES,
                 () -> Configuration.UI_MODE_NIGHT_YES ==
                         (getContext().getResources().getConfiguration().uiMode
                                 & Configuration.UI_MODE_NIGHT_MASK));
-        assertEquals(PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
-                powerManager.getLocationPowerSaveMode());
+        // Updating constants may take some time.
+        waitUntil("Location mode didn't change to "
+                        + PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF,
+                () -> PowerManager.LOCATION_MODE_THROTTLE_REQUESTS_WHEN_SCREEN_OFF ==
+                        powerManager.getLocationPowerSaveMode());
     }
 }

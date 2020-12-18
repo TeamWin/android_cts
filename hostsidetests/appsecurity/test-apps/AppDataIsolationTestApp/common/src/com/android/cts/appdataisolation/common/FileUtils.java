@@ -66,7 +66,7 @@ public class FileUtils {
         // Trying to access a file/directory that does exist, but is not visible to the caller, it
         // should return file not found.
         Exception exception = expectThrows(FileNotFoundException.class, () -> {
-            new FileInputStream(directory);
+            new FileInputStream(new File(path));
         });
         assertThat(exception.getMessage()).contains(JAVA_FILE_NOT_FOUND_MSG);
         assertThat(exception.getMessage()).doesNotContain(JAVA_FILE_PERMISSION_DENIED_MSG);

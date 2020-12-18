@@ -21,6 +21,7 @@ import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.content.BroadcastReceiver;
@@ -405,6 +406,7 @@ public class SipDelegateManagerTest {
         connectTestImsServiceWithSipTransportAndConfig();
 
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration imsReg = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -415,6 +417,12 @@ public class SipDelegateManagerTest {
         // TODO deal with this case better when we can filter messages.
         delegateConn.sendMessageAndVerifyFailure(ImsUtils.TEST_SIP_MESSAGE,
                 SipDelegateManager.MESSAGE_FAILURE_REASON_DELEGATE_DEAD);
+
+        delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
+        // wait 5 seconds, this should not return.
+        TestImsRegistration.NetworkRegistrationInfo info =
+                imsReg.getNextFullNetworkRegRequest(5000);
+        assertNull("If there is no valid SipTransport, this should not be called", info);
 
         destroySipDelegateConnectionNoDelegate(manager, delegateConn);
     }
@@ -428,6 +436,7 @@ public class SipDelegateManagerTest {
         connectTestImsServiceWithSipTransportAndConfig();
 
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -435,6 +444,7 @@ public class SipDelegateManagerTest {
         TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
                 transportImpl, Collections.emptySet(), 0);
         assertNotNull(delegate);
+        verifyUpdateRegistrationCalled(regImpl);
 
         SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
                 .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
@@ -445,10 +455,14 @@ public class SipDelegateManagerTest {
         sendMessageAndVerifyAck(delegateConn, delegate);
         receiveMessageAndVerifyAck(delegateConn, delegate);
 
+        // Ensure requests to perform a full network re-registration work properly.
+        verifyFullRegistrationTriggered(manager, regImpl, delegateConn);
+
         destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
                 request.getFeatureTags());
         assertEquals("There should be no more delegates", 0,
                 transportImpl.getDelegates().size());
+        verifyUpdateRegistrationCalled(regImpl);
     }
 
     @Test
@@ -509,6 +523,7 @@ public class SipDelegateManagerTest {
         assertTrue(sServiceConnector.setDefaultSmsApp());
         connectTestImsServiceWithSipTransportAndConfig();
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
 
         DelegateRequest request1 = getChatOnlyRequest();
@@ -532,6 +547,7 @@ public class SipDelegateManagerTest {
         TestSipDelegate delegate2 = createSipDelegateConnectionAndVerify(manager, delegateConn2,
                 transportImpl, Collections.emptySet(), 1);
         assertNotNull(delegate2);
+        verifyUpdateRegistrationCalled(regImpl);
         Set<FeatureTagState> deniedSet = generateDeniedSetFromRequest(request1.getFeatureTags(),
                 request2.getFeatureTags(),
                 SipDelegateManager.DENIED_REASON_IN_USE_BY_ANOTHER_DELEGATE);
@@ -548,6 +564,7 @@ public class SipDelegateManagerTest {
         verifySipDelegateDestroyed(transportImpl, delegateConn2, delegate2, registeredTags2,
                 DelegateRegistrationState.DEREGISTERING_REASON_FEATURE_TAGS_CHANGING);
         delegate2 = getSipDelegate(transportImpl, Collections.emptySet(), 0);
+        verifyUpdateRegistrationCalled(regImpl);
         verifyRegisteredAndSendSipConfig(delegateConn2, delegate2, request2.getFeatureTags(),
                 Collections.emptySet(), c);
 
@@ -566,6 +583,7 @@ public class SipDelegateManagerTest {
         connectTestImsServiceWithSipTransportAndConfig();
 
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
         DelegateRequest request = getDefaultRequest();
         TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
@@ -575,7 +593,9 @@ public class SipDelegateManagerTest {
 
         // Make this app the DMA
         assertTrue(sServiceConnector.setDefaultSmsApp());
+        verifyTriggerDeregistrationCalled(regImpl);
         TestSipDelegate delegate = getSipDelegate(transportImpl, Collections.emptySet(), 0);
+        verifyUpdateRegistrationCalled(regImpl);
         SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
                 .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
                 .build();
@@ -596,6 +616,7 @@ public class SipDelegateManagerTest {
         assertTrue(sServiceConnector.setDefaultSmsApp());
         connectTestImsServiceWithSipTransportAndConfig();
         TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
         SipDelegateManager manager = getSipDelegateManager();
 
         DelegateRequest request = getDefaultRequest();
@@ -603,6 +624,7 @@ public class SipDelegateManagerTest {
         TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
                 transportImpl, Collections.emptySet(), 0);
         assertNotNull(delegate);
+        verifyUpdateRegistrationCalled(regImpl);
 
         SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
                 .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
@@ -614,6 +636,7 @@ public class SipDelegateManagerTest {
         // Move DMA to another app, we should receive a registration update.
         delegateConn.setOperationCountDownLatch(1);
         sServiceConnector.restoreDefaultSmsApp();
+        verifyTriggerDeregistrationCalled(regImpl);
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         // we should get another reg update with all tags denied.
         delegateConn.setOperationCountDownLatch(1);
@@ -627,6 +650,7 @@ public class SipDelegateManagerTest {
         // There should not be any delegates left, as the only delegate should have been cleaned up.
         assertEquals("SipDelegate should not have any delegates", 0,
                 transportImpl.getDelegates().size());
+        verifyUpdateRegistrationCalled(regImpl);
 
         destroySipDelegateConnectionNoDelegate(manager, delegateConn);
     }
@@ -825,6 +849,30 @@ public class SipDelegateManagerTest {
         return grantedTags.stream().filter(newTags::contains)
                 .map(s -> new FeatureTagState(s, reason))
                 .collect(Collectors.toSet());
+    }
+
+    private void verifyUpdateRegistrationCalled(TestImsRegistration regImpl) {
+        regImpl.resetLatch(TestImsRegistration.LATCH_UPDATE_REGISTRATION, 1);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_UPDATE_REGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
+    }
+
+    private void verifyTriggerDeregistrationCalled(TestImsRegistration regImpl) {
+        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
+    }
+
+    private void verifyFullRegistrationTriggered(SipDelegateManager manager,
+            TestImsRegistration regImpl, TestSipDelegateConnection delegateConn) throws Exception {
+        delegateConn.verifyDelegateCreated();
+        delegateConn.triggerFullNetworkRegistration(manager, 403, "FORBIDDEN");
+        TestImsRegistration.NetworkRegistrationInfo info =
+                regImpl.getNextFullNetworkRegRequest(ImsUtils.TEST_TIMEOUT_MS);
+        assertNotNull("full registration requested, but ImsRegistrationImplBase "
+                + "implementation did not receive a request.", info);
+        assertEquals(403, info.sipCode);
+        assertEquals("FORBIDDEN", info.sipReason);
     }
 
     private void sendMessageAndVerifyAck(TestSipDelegateConnection delegateConn,
