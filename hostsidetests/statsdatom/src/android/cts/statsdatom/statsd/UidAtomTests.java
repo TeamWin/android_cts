@@ -36,9 +36,6 @@ import com.android.os.AtomsProto.AppUsageEventOccurred;
 import com.android.os.AtomsProto.Atom;
 import com.android.os.AtomsProto.AttributionNode;
 import com.android.os.AtomsProto.AudioStateChanged;
-import com.android.os.AtomsProto.BlobCommitted;
-import com.android.os.AtomsProto.BlobLeased;
-import com.android.os.AtomsProto.BlobOpened;
 import com.android.os.AtomsProto.CameraStateChanged;
 import com.android.os.AtomsProto.DeviceCalculatedPowerBlameUid;
 import com.android.os.AtomsProto.FlashlightStateChanged;
@@ -787,111 +784,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getBytesField().getExperimentIdList()).isEmpty();
     }
 
-    public void testPushedBlobStoreStats() throws Exception {
-        StatsdConfig.Builder conf = ConfigUtils.createConfigBuilder(
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(conf,
-                Atom.BLOB_COMMITTED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(conf,
-                Atom.BLOB_LEASED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.addEventMetricForUidAtom(conf,
-                Atom.BLOB_OPENED_FIELD_NUMBER, /*useUidAttributionChain=*/false,
-                DeviceUtils.STATSD_ATOM_TEST_PKG);
-        ConfigUtils.uploadConfig(getDevice(), conf);
-
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
-
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
-        assertThat(data).hasSize(3);
-
-        BlobCommitted blobCommitted = data.get(0).getAtom().getBlobCommitted();
-        final long blobId = blobCommitted.getBlobId();
-        final long blobSize = blobCommitted.getSize();
-        assertThat(blobCommitted.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
-        assertThat(blobId).isNotEqualTo(0);
-        assertThat(blobSize).isNotEqualTo(0);
-        assertThat(blobCommitted.getResult()).isEqualTo(BlobCommitted.Result.SUCCESS);
-
-        BlobLeased blobLeased = data.get(1).getAtom().getBlobLeased();
-        assertThat(blobLeased.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
-        assertThat(blobLeased.getBlobId()).isEqualTo(blobId);
-        assertThat(blobLeased.getSize()).isEqualTo(blobSize);
-        assertThat(blobLeased.getResult()).isEqualTo(BlobLeased.Result.SUCCESS);
-
-        BlobOpened blobOpened = data.get(2).getAtom().getBlobOpened();
-        assertThat(blobOpened.getUid()).isEqualTo(DeviceUtils.getStatsdTestAppUid(getDevice()));
-        assertThat(blobOpened.getBlobId()).isEqualTo(blobId);
-        assertThat(blobOpened.getSize()).isEqualTo(blobSize);
-        assertThat(blobOpened.getResult()).isEqualTo(BlobOpened.Result.SUCCESS);
-    }
-
-    // Constants that match the constants for AtomTests#testBlobStore
-    private static final long BLOB_COMMIT_CALLBACK_TIMEOUT_SEC = 5;
-    private static final long BLOB_EXPIRY_DURATION_MS = 24 * 60 * 60 * 1000;
-    private static final long BLOB_FILE_SIZE_BYTES = 23 * 1024L;
-    private static final long BLOB_LEASE_EXPIRY_DURATION_MS = 60 * 60 * 1000;
-
-    public void testPulledBlobStoreStats() throws Exception {
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                Atom.BLOB_INFO_FIELD_NUMBER);
-
-        final long testStartTimeMs = getDeviceTimeMs();
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testBlobStore");
-        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        // Add commit callback time to test end time to account for async execution
-        final long testEndTimeMs =
-                getDeviceTimeMs() + BLOB_COMMIT_CALLBACK_TIMEOUT_SEC * 1000;
-
-        // Find the BlobInfo for the blob created in the test run
-        AtomsProto.BlobInfo blobInfo = null;
-        for (Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            if (atom.hasBlobInfo()) {
-                final AtomsProto.BlobInfo temp = atom.getBlobInfo();
-                if (temp.getCommitters().getCommitter(0).getUid()
-                        == DeviceUtils.getStatsdTestAppUid(getDevice())) {
-                    blobInfo = temp;
-                    break;
-                }
-            }
-        }
-        assertThat(blobInfo).isNotNull();
-
-        assertThat(blobInfo.getSize()).isEqualTo(BLOB_FILE_SIZE_BYTES);
-
-        // Check that expiry time is reasonable
-        assertThat(blobInfo.getExpiryTimestampMillis()).isGreaterThan(
-                testStartTimeMs + BLOB_EXPIRY_DURATION_MS);
-        assertThat(blobInfo.getExpiryTimestampMillis()).isLessThan(
-                testEndTimeMs + BLOB_EXPIRY_DURATION_MS);
-
-        // Check that commit time is reasonable
-        final long commitTimeMs = blobInfo.getCommitters().getCommitter(
-                0).getCommitTimestampMillis();
-        assertThat(commitTimeMs).isGreaterThan(testStartTimeMs);
-        assertThat(commitTimeMs).isLessThan(testEndTimeMs);
-
-        // Check that WHITELIST and PRIVATE access mode flags are set
-        assertThat(blobInfo.getCommitters().getCommitter(0).getAccessMode()).isEqualTo(0b1001);
-        assertThat(blobInfo.getCommitters().getCommitter(0).getNumWhitelistedPackage()).isEqualTo(
-                1);
-
-        assertThat(blobInfo.getLeasees().getLeaseeCount()).isGreaterThan(0);
-        assertThat(blobInfo.getLeasees().getLeasee(0).getUid()).isEqualTo(
-                DeviceUtils.getStatsdTestAppUid(getDevice()));
-
-        // Check that lease expiry time is reasonable
-        final long leaseExpiryMs = blobInfo.getLeasees().getLeasee(
-                0).getLeaseExpiryTimestampMillis();
-        assertThat(leaseExpiryMs).isGreaterThan(testStartTimeMs + BLOB_LEASE_EXPIRY_DURATION_MS);
-        assertThat(leaseExpiryMs).isLessThan(testEndTimeMs + BLOB_LEASE_EXPIRY_DURATION_MS);
-    }
-
     public void testAppForegroundBackground() throws Exception {
         Set<Integer> onStates = new HashSet<>(Arrays.asList(
                 AppUsageEventOccurred.EventType.MOVE_TO_FOREGROUND_VALUE));
@@ -962,10 +854,5 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
     private void setScreenBrightness(int brightness) throws Exception {
         getDevice().executeShellCommand("settings put system screen_brightness " + brightness);
-    }
-
-    private long getDeviceTimeMs() throws Exception {
-        String timeMs = getDevice().executeShellCommand("date +%s%3N");
-        return Long.parseLong(timeMs.trim());
     }
 }
