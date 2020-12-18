@@ -491,6 +491,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-11")
     @Test
     public void testPocCVE_2020_0451() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
         String inputFiles[] = {"cve_2020_0451.aac"};
         String binaryName = "CVE-2020-0451";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
