@@ -67,10 +67,11 @@ public class OverlayableTest {
         return InstrumentationRegistry.getTargetContext().createPackageContext(TARGET_PACKAGE, 0);
     }
 
-    private void assertOverlayEnabled(Context context, String overlayPackage) throws Exception {
+    private void assertOverlayEnabled(String overlayPackage) throws Exception {
         // Wait for the overlay changes to propagate
         FutureTask<Boolean> task = new FutureTask<>(() -> {
             while (true) {
+                Context context = getTargetContext();
                 for (String path : context.getAssets().getApkPaths()) {
                     if (path.contains(overlayPackage)) {
                         return true;
@@ -85,8 +86,8 @@ public class OverlayableTest {
 
     @Test
     public void testOverlayPolicyAll() throws Exception {
+        assertOverlayEnabled(POLICY_ALL_PACKAGE);
         Context context = getTargetContext();
-        assertOverlayEnabled(context, POLICY_ALL_PACKAGE);
 
         String result = context.getResources().getString(R.string.not_overlayable);
         assertEquals(NOT_OVERLAID, result);
@@ -112,8 +113,8 @@ public class OverlayableTest {
 
     @Test
     public void testSameSignatureNoOverlayableSucceeds() throws Exception {
+        assertOverlayEnabled(POLICY_ALL_PACKAGE);
         Context context = getTargetContext();
-        assertOverlayEnabled(context, POLICY_ALL_PACKAGE);
 
         String result = context.getResources().getString(R.string.not_overlayable);
         assertEquals(OVERLAID, result);
