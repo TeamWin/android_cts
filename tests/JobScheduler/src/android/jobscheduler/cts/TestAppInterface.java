@@ -68,12 +68,13 @@ class TestAppInterface {
         mTestJobStatus.reset();
     }
 
-    void scheduleJob(boolean allowWhileIdle, boolean needNetwork) {
+    void scheduleJob(boolean allowWhileIdle, boolean needNetwork, boolean asExpeditedJob) {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
         scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, mJobId);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_REQUIRE_NETWORK_ANY, needNetwork);
+        scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, asExpeditedJob);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         mContext.sendBroadcast(scheduleJobIntent);
     }

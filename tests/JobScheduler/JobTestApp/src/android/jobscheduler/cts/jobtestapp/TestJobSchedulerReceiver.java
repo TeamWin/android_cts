@@ -36,6 +36,7 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String EXTRA_ALLOW_IN_IDLE = PACKAGE_NAME + ".extra.ALLOW_IN_IDLE";
     public static final String EXTRA_REQUIRE_NETWORK_ANY = PACKAGE_NAME
             + ".extra.REQUIRE_NETWORK_ANY";
+    public static final String EXTRA_AS_EXPEDITED = PACKAGE_NAME + ".extra.AS_EXPEDITED";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final int JOB_INITIAL_BACKOFF = 10_000;
@@ -53,10 +54,15 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final int jobId = intent.getIntExtra(EXTRA_JOB_ID_KEY, hashCode());
                 final boolean allowInIdle = intent.getBooleanExtra(EXTRA_ALLOW_IN_IDLE, false);
                 final boolean network = intent.getBooleanExtra(EXTRA_REQUIRE_NETWORK_ANY, false);
+                final boolean expedited = intent.getBooleanExtra(EXTRA_AS_EXPEDITED, false);
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
-                        .setOverrideDeadline(0)
                         .setImportantWhileForeground(allowInIdle);
+                if (expedited) {
+                    jobBuilder.setExpedited(expedited);
+                } else {
+                    jobBuilder.setOverrideDeadline(0);
+                }
                 if (network) {
                     jobBuilder = jobBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
                 }
