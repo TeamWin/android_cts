@@ -1230,6 +1230,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             // Wait for the LockTask starting
             waitForBroadcastIdle();
 
+            // Wait for the LockTask starting
+            waitForBroadcastIdle();
+
             // Try to open settings via adb
             executeShellCommand("am start -a android.settings.SETTINGS");
 
