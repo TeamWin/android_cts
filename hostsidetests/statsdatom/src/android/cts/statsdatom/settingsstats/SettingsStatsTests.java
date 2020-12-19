@@ -100,7 +100,7 @@ public class SettingsStatsTests extends DeviceTestCase implements IBuildReceiver
 
         // Test the size of atoms. It should contain 5 atoms.
         List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
-        assertThat(atoms.size()).isEqualTo(5);
+        assertThat(atoms.size()).isAtLeast(5);
         AtomsProto.SettingSnapshot snapshot = null;
         for (AtomsProto.Atom atom : atoms) {
             AtomsProto.SettingSnapshot settingSnapshot = atom.getSettingSnapshot();

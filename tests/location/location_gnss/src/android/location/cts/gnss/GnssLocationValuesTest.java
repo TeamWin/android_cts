@@ -22,7 +22,6 @@ import android.location.cts.common.SoftAssert;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
-import android.os.Build;
 import android.util.Log;
 
 /**
@@ -67,8 +66,7 @@ public class GnssLocationValuesTest extends GnssTestCase {
    */
   public void testAccuracyFields() throws Exception {
     // Checks if GPS hardware feature is present, skips test (pass) if not
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
-        TAG)) {
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
       return;
     }
 
@@ -139,8 +137,7 @@ public class GnssLocationValuesTest extends GnssTestCase {
    */
   public void testLocationRegularFields() throws Exception {
     // Checks if GPS hardware feature is present, skips test (pass) if not
-    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N, mTestLocationManager,
-        TAG)) {
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
       return;
     }
 

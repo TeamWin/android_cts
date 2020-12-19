@@ -16,6 +16,8 @@
 package com.android.cts.devicepolicy;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_LOCK_NOW;
+import static android.app.admin.DevicePolicyManager.OPERATION_LOGOUT_USER;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.operationToString;
 
 import static org.junit.Assert.fail;
@@ -23,6 +25,7 @@ import static org.junit.Assert.fail;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.UnsafeStateException;
 import android.content.ComponentName;
+import android.os.UserManager;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -43,6 +46,8 @@ public class DevicePolicySafetyCheckerIntegrationTester {
 
     private static final int[] OPERATIONS = new int[] {
             OPERATION_LOCK_NOW,
+            OPERATION_LOGOUT_USER,
+            OPERATION_SET_USER_RESTRICTION
     };
 
     private static final int[] OVERLOADED_OPERATIONS = new int[] {
@@ -154,6 +159,12 @@ public class DevicePolicySafetyCheckerIntegrationTester {
                 } else {
                     dpm.lockNow();
                 }
+                break;
+            case OPERATION_LOGOUT_USER:
+                dpm.logoutUser(admin);
+                break;
+            case OPERATION_SET_USER_RESTRICTION:
+                dpm.addUserRestriction(admin, UserManager.DISALLOW_REMOVE_USER);
                 break;
             default:
                 runOperation(dpm, admin, operation, overloaded);

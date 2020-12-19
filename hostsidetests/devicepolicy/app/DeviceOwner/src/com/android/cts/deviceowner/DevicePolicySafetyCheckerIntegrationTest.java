@@ -21,6 +21,7 @@ import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_START_USER_IN_BACKGROUND;
 import static android.app.admin.DevicePolicyManager.OPERATION_STOP_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SWITCH_USER;
+import static android.app.admin.DevicePolicyManager.OPERATION_WIPE_DATA;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -49,7 +50,16 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     OPERATION_REMOVE_USER,
                     OPERATION_START_USER_IN_BACKGROUND,
                     OPERATION_STOP_USER,
-                    OPERATION_SWITCH_USER};
+                    OPERATION_SWITCH_USER,
+                    OPERATION_WIPE_DATA
+            };
+        }
+
+        @Override
+        protected int[] getOverloadedSafetyAwareOperations() {
+            return new int [] {
+                OPERATION_WIPE_DATA
+            };
         }
 
         @Override
@@ -74,6 +84,14 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     break;
                 case OPERATION_SWITCH_USER:
                     dpm.switchUser(admin, USER_HANDLE);
+                    break;
+                case OPERATION_WIPE_DATA:
+                    if (overloaded) {
+                        dpm.wipeData(NO_FLAGS,
+                                /* reason= */ "DevicePolicySafetyCheckerIntegrationTest");
+                    } else {
+                        dpm.wipeData(NO_FLAGS);
+                    }
                     break;
                 default:
                     throwUnsupportedOperationException(operation, overloaded);

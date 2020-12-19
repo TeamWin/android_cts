@@ -22,6 +22,9 @@ java_test_host {
         "tradefed",
         "truth-prebuilt"
     ],
+    static_libs: [
+        "cts-statsd-atom-host-test-utils",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

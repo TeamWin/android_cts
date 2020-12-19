@@ -23,7 +23,6 @@ import android.location.cts.common.SoftAssert;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
-import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -87,9 +86,7 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
     }
 
     public void testLocationUpdatesAtVariousIntervals() throws Exception {
-        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(Build.VERSION_CODES.N,
-                mTestLocationManager,
-                TAG)) {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
         }
 
