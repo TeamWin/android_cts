@@ -213,6 +213,66 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     }
 
     /**
+     * Broadcasts a CEC ACTIVE_SOURCE message from client device source through the output console
+     * of the cec-communication channel.
+     */
+    public void broadcastActiveSource(LogicalAddress source) throws Exception {
+        int sourcePa = (source == selfDevice) ? physicalAddress : 0xFFFF;
+        sendCecMessage(
+                source,
+                LogicalAddress.BROADCAST,
+                CecOperand.ACTIVE_SOURCE,
+                CecMessage.formatParams(sourcePa, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+    }
+
+    /**
+     * Broadcasts a CEC ACTIVE_SOURCE message with physicalAddressOfActiveDevice from client device
+     * source through the output console of the cec-communication channel.
+     */
+    public void broadcastActiveSource(LogicalAddress source, int physicalAddressOfActiveDevice)
+            throws Exception {
+        sendCecMessage(
+                source,
+                LogicalAddress.BROADCAST,
+                CecOperand.ACTIVE_SOURCE,
+                CecMessage.formatParams(
+                        physicalAddressOfActiveDevice, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+    }
+
+    /**
+     * Broadcasts a CEC REPORT_PHYSICAL_ADDRESS message from client device source through the output
+     * console of the cec-communication channel.
+     */
+    public void broadcastReportPhysicalAddress(LogicalAddress source) throws Exception {
+        String deviceType = CecMessage.formatParams(source.getDeviceType());
+        int sourcePa = (source == selfDevice) ? physicalAddress : 0xFFFF;
+        String physicalAddress =
+                CecMessage.formatParams(sourcePa, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
+        sendCecMessage(
+                source,
+                LogicalAddress.BROADCAST,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                physicalAddress + deviceType);
+    }
+
+    /**
+     * Broadcasts a CEC REPORT_PHYSICAL_ADDRESS message with physicalAddressToReport from client
+     * device source through the output console of the cec-communication channel.
+     */
+    public void broadcastReportPhysicalAddress(LogicalAddress source, int physicalAddressToReport)
+            throws Exception {
+        String deviceType = CecMessage.formatParams(source.getDeviceType());
+        String physicalAddress =
+                CecMessage.formatParams(
+                        physicalAddressToReport, HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH);
+        sendCecMessage(
+                source,
+                LogicalAddress.BROADCAST,
+                CecOperand.REPORT_PHYSICAL_ADDRESS,
+                physicalAddress + deviceType);
+    }
+
+    /**
      * Sends a CEC message from source device to a destination device through the output console of
      * the cec-communication channel with the appended params.
      */
