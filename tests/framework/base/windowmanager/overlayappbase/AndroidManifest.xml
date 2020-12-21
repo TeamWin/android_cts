@@ -23,7 +23,7 @@
 
     <application>
         <service
-            android:name="android.server.wm.overlay.TestCompanionService"
+            android:name="android.server.wm.overlay.UntrustedTouchTestService"
             android:exported="true" />
         <activity
             android:name="android.server.wm.overlay.OverlayActivity"
