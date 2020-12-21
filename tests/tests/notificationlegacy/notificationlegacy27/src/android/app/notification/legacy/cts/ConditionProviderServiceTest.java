@@ -82,11 +82,11 @@ public class ConditionProviderServiceTest {
 
     @After
     public void tearDown() throws Exception {
-        mContext.unregisterReceiver(mModeReceiver);
         if (mNm == null) {
             // assumption in setUp is false, so mNm is not initialized
             return;
         }
+        mContext.unregisterReceiver(mModeReceiver);
         try {
             for (String id : ids) {
                 if (id != null) {
