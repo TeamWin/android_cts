@@ -19,11 +19,13 @@ package android.permission.cts;
 import static org.testng.Assert.assertThrows;
 
 import android.content.pm.PackageInstaller;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Test;
 
+@AppModeFull(reason = "PackageInstaller cannot be accessed by instant apps")
 public class NoRollbackPermissionTest {
     @Test
     public void testCreateInstallSessionWithReasonRollbackFails() throws Exception {
