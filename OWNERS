@@ -1,0 +1,20 @@
+# This is a list of backup approvers.
+# Each test should have their own OWNERS file specified
+# in sub-directory. And changes to specific test code
+# should be approved by test owners.
+
+# Ordered by escalation priority
+# Android Partner Eng Approvers
+rossyeh@google.com
+robinjacob@google.com
+mariay@google.com
+aaronholden@google.com
+yuji@google.com
+nickrose@google.com
+
+# Android EngProd Approvers
+fdeng@google.com
+normancheung@google.com
+moonk@google.com
+guangzhu@google.com
+jdesprez@google.com
