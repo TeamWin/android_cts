@@ -183,10 +183,7 @@ public class ImageDecoderTest {
             File dir = new File(context.getFilesDir(), "images");
             dir.mkdirs();
             file = new File(dir, "test_file" + resId);
-            if (!file.createNewFile()) {
-                if (file.exists()) {
-                    return file;
-                }
+            if (!file.createNewFile() && !file.exists()) {
                 fail("Failed to create new File!");
             }
 
