@@ -14,27 +14,23 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.server.wm.overlay">
+       package="com.android.cts.appdataisolation.appa">
 
-    <!-- We use SAWs to create obscuring windows for test WindowUntrustedTouchTest -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-sdk android:targetSdkVersion="29" />
 
     <application>
-        <service
-            android:name="android.server.wm.overlay.UntrustedTouchTestService"
-            android:exported="true" />
-        <activity
-            android:name="android.server.wm.overlay.OverlayActivity"
-            android:theme="@android:style/Theme.Translucent"
-            android:exported="true" />
-        <activity
-            android:name="android.server.wm.overlay.OpaqueActivity"
-            android:exported="true" />
-        <activity
-            android:name="android.server.wm.overlay.ToastActivity"
-            android:exported="true" />
+        <uses-library android:name="android.test.runner" />
+        <service android:name=".IsolatedService"
+                 android:process=":Isolated"
+                 android:isolatedProcess="true"/>
+        <service android:name=".AppZygoteIsolatedService"
+                 android:process=":Isolated2"
+                 android:isolatedProcess="true"
+                 android:useAppZygote="true"/>
     </application>
 
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="com.android.cts.appdataisolation.appa"
+                     android:label="Test app data isolation."/>
 </manifest>

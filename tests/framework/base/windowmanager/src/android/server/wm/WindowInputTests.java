@@ -30,6 +30,9 @@ import static android.view.WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -40,6 +43,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -70,6 +74,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Ensure moving windows and tapping is done synchronously.
@@ -87,6 +92,7 @@ public class WindowInputTests {
     private Instrumentation mInstrumentation;
     private final WindowManagerStateHelper mWmState = new WindowManagerStateHelper();
     private TestActivity mActivity;
+    private InputManager mInputManager;
     private View mView;
     private final Random mRandom = new Random(1);
 
@@ -100,6 +106,7 @@ public class WindowInputTests {
 
         mInstrumentation = getInstrumentation();
         mActivity = mActivityRule.launchActivity(null);
+        mInputManager = mActivity.getSystemService(InputManager.class);
         mInstrumentation.waitForIdleSync();
         mClickCount = 0;
     }
@@ -203,6 +210,7 @@ public class WindowInputTests {
     public void testFilterTouchesWhenObscuredByWindowFromSameUid() throws Throwable {
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
 
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         // Set up a touchable window.
         mActivityRule.runOnUiThread(() -> {
             mView = new View(mActivity);
@@ -215,6 +223,7 @@ public class WindowInputTests {
                 mClickCount++;
             });
             mView.setOnTouchListener((v, ev) -> {
+                touchReceived.set(true);
                 assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                 return false;
             });
@@ -232,6 +241,7 @@ public class WindowInputTests {
         mInstrumentation.waitForIdleSync();
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
+        assertTrue(touchReceived.get());
         assertEquals(1, mClickCount);
     }
 
@@ -242,6 +252,7 @@ public class WindowInputTests {
         final Intent intent = new Intent();
         intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         try {
             // Set up a touchable window.
             mActivityRule.runOnUiThread(() -> {
@@ -255,6 +266,52 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
+                    return false;
+                });
+                mActivity.addWindow(mView, p);
+
+                // Set up an overlap window from service, use different process.
+                WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
+                params.flags |= FLAG_NOT_TOUCHABLE;
+                // Any opacity higher than this would make InputDispatcher block the touch
+                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch(mActivity);
+                intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
+                mActivity.startForegroundService(intent);
+            });
+            mInstrumentation.waitForIdleSync();
+            waitForWindow(windowName);
+            CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
+
+            // Touch not received due to setFilterTouchesWhenObscured(true)
+            assertFalse(touchReceived.get());
+            assertEquals(0, mClickCount);
+        } finally {
+            mActivity.stopService(intent);
+        }
+    }
+
+    @Test
+    public void testFlagTouchesWhenObscuredByWindowFromDifferentUid() throws Throwable {
+        final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+
+        final Intent intent = new Intent();
+        intent.setComponent(Components.OVERLAY_TEST_SERVICE);
+        final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
+        try {
+            // Set up a touchable window.
+            mActivityRule.runOnUiThread(() -> {
+                mView = new View(mActivity);
+                p.flags = FLAG_NOT_TOUCH_MODAL | FLAG_LAYOUT_IN_SCREEN;
+                p.width = 100;
+                p.height = 100;
+                p.gravity = Gravity.CENTER;
+                mView.setOnClickListener((v) -> {
+                    mClickCount++;
+                });
+                mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
                     assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
                             ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                     return false;
@@ -264,6 +321,8 @@ public class WindowInputTests {
                 // Set up an overlap window from service, use different process.
                 WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
                 params.flags |= FLAG_NOT_TOUCHABLE;
+                // Any opacity higher than this would make InputDispatcher block the touch
+                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch(mActivity);
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
@@ -271,7 +330,8 @@ public class WindowInputTests {
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
-            assertEquals(0, mClickCount);
+            assertTrue(touchReceived.get());
+            assertEquals(1, mClickCount);
         } finally {
             mActivity.stopService(intent);
         }
@@ -284,6 +344,7 @@ public class WindowInputTests {
         final Intent intent = new Intent();
         intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         try {
             mActivityRule.runOnUiThread(() -> {
                 mView = new View(mActivity);
@@ -296,6 +357,7 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
                     assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                     return false;
                 });
@@ -312,6 +374,7 @@ public class WindowInputTests {
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
+            assertTrue(touchReceived.get());
             assertEquals(1, mClickCount);
         } finally {
             mActivity.stopService(intent);
@@ -325,6 +388,7 @@ public class WindowInputTests {
         final Intent intent = new Intent();
         intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         try {
             mActivityRule.runOnUiThread(() -> {
                 mView = new View(mActivity);
@@ -337,6 +401,7 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
                     assertEquals(MotionEvent.FLAG_WINDOW_IS_OBSCURED,
                             ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_OBSCURED);
                     return false;
@@ -354,6 +419,7 @@ public class WindowInputTests {
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
+            assertTrue(touchReceived.get());
             assertEquals(1, mClickCount);
         } finally {
             mActivity.stopService(intent);
@@ -367,6 +433,7 @@ public class WindowInputTests {
         final Intent intent = new Intent();
         intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         try {
             mActivityRule.runOnUiThread(() -> {
                 mView = new View(mActivity);
@@ -379,6 +446,7 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
                     assertEquals(MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED,
                             ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED);
                     return false;
@@ -397,6 +465,7 @@ public class WindowInputTests {
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
+            assertTrue(touchReceived.get());
             assertEquals(1, mClickCount);
         } finally {
             mActivity.stopService(intent);
@@ -411,6 +480,7 @@ public class WindowInputTests {
         final Intent intent = new Intent();
         intent.setComponent(Components.OVERLAY_TEST_SERVICE);
         final String windowName = "Test Overlay";
+        final AtomicBoolean touchReceived = new AtomicBoolean(false);
         try {
             mActivityRule.runOnUiThread(() -> {
                 mView = new View(mActivity);
@@ -423,6 +493,7 @@ public class WindowInputTests {
                     mClickCount++;
                 });
                 mView.setOnTouchListener((v, ev) -> {
+                    touchReceived.set(true);
                     assertEquals(0, ev.getFlags() & MotionEvent.FLAG_WINDOW_IS_PARTIALLY_OBSCURED);
                     return false;
                 });
@@ -441,6 +512,7 @@ public class WindowInputTests {
             waitForWindow(windowName);
             CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mView);
 
+            assertTrue(touchReceived.get());
             assertEquals(1, mClickCount);
         } finally {
             mActivity.stopService(intent);

@@ -427,10 +427,6 @@
 
         <activity android:name="android.server.wm.WindowUntrustedTouchTest$TestActivity"
                   android:exported="true"/>
-
-        <activity android:name="android.server.wm.WindowUntrustedTouchTest$OverlayActivity"
-                  android:exported="true"
-                  android:theme="@android:style/Theme.Translucent"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

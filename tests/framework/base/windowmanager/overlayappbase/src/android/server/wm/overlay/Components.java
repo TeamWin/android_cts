@@ -21,12 +21,8 @@ import android.server.wm.component.ComponentsBase;
 
 
 public class Components extends ComponentsBase {
-    public interface TestCompanionService {
-        ComponentName COMPONENT = component("TestCompanionService");
-        int ACTION_SHOW_SYSTEM_ALERT_WINDOW = 0;
-        int ACTION_SHOW_TOAST = 1;
-        String EXTRA_NAME = "name";
-        String EXTRA_OPACITY = "opacity";
+    public interface UntrustedTouchTestService {
+        ComponentName COMPONENT = component("UntrustedTouchTestService");
     }
 
     public interface OverlayActivity {
@@ -49,7 +45,6 @@ public class Components extends ComponentsBase {
 
     public interface ToastActivity {
         ComponentName COMPONENT = component("ToastActivity");
-        String EXTRA_CUSTOM = "custom";
     }
 
     private static ComponentName component(String className) {

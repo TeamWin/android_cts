@@ -16,7 +16,7 @@
 
 package android.server.wm.overlay;
 
-import static android.server.wm.overlay.TestCompanionService.BACKGROUND_COLOR;
+import static android.server.wm.overlay.UntrustedTouchTestService.BACKGROUND_COLOR;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.AnimRes;

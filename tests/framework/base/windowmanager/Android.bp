@@ -61,6 +61,7 @@ android_test {
         "metrics-helper-lib",
         "truth-prebuilt",
         "cts-wm-overlayapp-base",
+        "cts-wm-shared",
     ],
 
     test_suites: [
