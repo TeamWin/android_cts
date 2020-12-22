@@ -366,11 +366,23 @@ public class TunerTest {
         f.configure(config);
         f.configureMonitorEvent(
                 Filter.MONITOR_EVENT_SCRAMBLING_STATUS | Filter.MONITOR_EVENT_IP_CID_CHANGE);
+
+        // Tune a frontend before start the filter
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
         f.start();
         f.flush();
         f.read(new byte[3], 0, 3);
         f.stop();
         f.close();
+
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
@@ -393,10 +405,22 @@ public class TunerTest {
                 .setSettings(settings)
                 .build();
         f.configure(config);
+
+        // Tune a frontend before start the filter
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
         f.start();
         f.flush();
         f.stop();
         f.close();
+
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
@@ -433,9 +457,21 @@ public class TunerTest {
                 .setIpFilterContextId(1)
                 .build();
         f.configure(config);
+
+        // Tune a frontend before start the filter
+        List<Integer> ids = mTuner.getFrontendIds();
+        assertFalse(ids.isEmpty());
+
+        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
+        int res = mTuner.tune(createFrontendSettings(info));
+        assertEquals(Tuner.RESULT_SUCCESS, res);
+
         f.start();
         f.stop();
         f.close();
+
+        res = mTuner.cancelTuning();
+        assertEquals(Tuner.RESULT_SUCCESS, res);
     }
 
     @Test
@@ -544,7 +580,7 @@ public class TunerTest {
         assertFalse(ids.isEmpty());
         FrontendInfo info = other.getFrontendInfoById(ids.get(0));
 
-	// call tune() to open frontend resource
+        // call tune() to open frontend resource
         int res = other.tune(createFrontendSettings(info));
         assertEquals(Tuner.RESULT_SUCCESS, res);
         assertNotNull(other.getFrontendInfo());
