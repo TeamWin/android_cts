@@ -62,6 +62,7 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -437,6 +438,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     /** Test the cursor position of {@link EditText} is correct after typing on another activity. */
     @Test
+    @FlakyTest(bugId = 175821058)
     public void testCursorAfterLaunchAnotherActivity() throws Exception {
         final AtomicReference<EditText> firstEditTextRef = new AtomicReference<>();
         final int NEW_CURSOR_OFFSET = 6;
