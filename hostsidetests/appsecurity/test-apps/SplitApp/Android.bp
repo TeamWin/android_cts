@@ -17,6 +17,7 @@
 java_defaults {
     name: "CtsSplitAppDefaults",
     defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
     asset_dirs: ["assets"],
     sdk_version: "current",
     min_sdk_version: "4",
