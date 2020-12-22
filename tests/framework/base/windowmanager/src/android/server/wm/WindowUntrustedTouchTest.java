@@ -910,6 +910,11 @@ public class WindowUntrustedTouchTest {
         for (FutureConnection<IUntrustedTouchTestService> connection : mConnections.values()) {
             connection.getCurrent().removeOverlays();
         }
+        // We need to stop the app because not every overlay is created via the service (eg.
+        // activity overlays and custom toasts)
+        for (String app : APPS) {
+            stopPackage(app);
+        }
         waitForNoSawOverlays("SAWs not removed on time");
         removeActivityOverlays();
         waitForNoActivityOverlays("Activities not removed on time");
