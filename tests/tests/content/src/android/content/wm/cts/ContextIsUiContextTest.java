@@ -27,6 +27,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
 import android.view.Display;
+import android.view.WindowManager;
 
 import androidx.test.filters.SmallTest;
 
@@ -74,6 +75,13 @@ public class ContextIsUiContextTest extends ContextTestBase {
     @Test
     public void testIsUiContextOnWindowContext() {
         assertThat(Context.isUiContext(createWindowContext())).isTrue();
+    }
+
+    @Test
+    public void testIsUiContextOnWindowContextWithDisplay() {
+        final Context windowContext = mApplicationContext.createWindowContext(getDefaultDisplay(),
+                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
+        assertThat(Context.isUiContext(windowContext)).isTrue();
     }
 
     @Test
