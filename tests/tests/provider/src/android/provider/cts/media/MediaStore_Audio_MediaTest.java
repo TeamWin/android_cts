@@ -108,6 +108,10 @@ public class MediaStore_Audio_MediaTest {
         assertNotNull(c = mContentResolver.query(Media.getContentUriForPath(internalPath), null, null,
                 null, null));
         c.close();
+
+        // Check other volume has correct uri
+        assertEquals(Media.getContentUri("0000-0000"),
+                Media.getContentUriForPath("/storage/0000-0000/foo.jpg"));
     }
 
     @Test
