@@ -1448,7 +1448,11 @@ public class ImsServiceTest {
         // Trigger carrier config changed
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);
-        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL,
+                true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_RCS_BULK_CAPABILITY_EXCHANGE_BOOL, true);
+
         overrideCarrierConfig(bundle);
 
         // The carrier config changed should trigger RcsFeature#changeEnabledCapabilities
@@ -1807,7 +1811,10 @@ public class ImsServiceTest {
         triggerFrameworkConnectToCarrierImsService();
 
         PersistableBundle bundle = new PersistableBundle();
-        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_PRESENCE_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL,
+                true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_RCS_BULK_CAPABILITY_EXCHANGE_BOOL, true);
         bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_RCS_PROVISIONING_REQUIRED_BOOL, true);
         overrideCarrierConfig(bundle);
 
