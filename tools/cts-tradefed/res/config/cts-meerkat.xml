@@ -22,6 +22,15 @@
     <!-- Disable instant tests -->
     <option name="compatibility:enable-parameterized-modules" value="false" />
 
+    <!-- Status bar, trampolines & close system dialogs -->
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.StatusBarManagerTest#testCollapsePanels_withoutStatusBarPermission_throws"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.StatusBarManagerTest#testCollapsePanels_withStatusBarPermission_doesNotThrow"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.NotificationManagerTest#testActivityStartOnBroadcastTrampoline_isBlocked"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.NotificationManagerTest#testActivityStartOnServiceTrampoline_isBlocked"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.NotificationManagerTest#testActivityStartOnBroadcastTrampoline_whenApi30_isAllowed"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.NotificationManagerTest#testActivityStartOnServiceTrampoline_whenApi30_isAllowed"/>
+    <option name="compatibility:include-filter" value="CtsAppTestCases android.app.cts.CloseSystemDialogsTest"/>
+
     <!-- Overlays & touches -->
     <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowInputTests"/>
     <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases android.server.wm.WindowUntrustedTouchTest"/>
