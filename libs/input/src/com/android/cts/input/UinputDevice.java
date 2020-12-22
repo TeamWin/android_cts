@@ -69,8 +69,9 @@ public final class UinputDevice extends VirtualInputDevice {
         }
     }
 
-    public UinputDevice(Instrumentation instrumentation, int deviceId, String registerCommand) {
-        super(instrumentation, deviceId, registerCommand);
+    public UinputDevice(Instrumentation instrumentation, int id, int vendorId, int productId,
+            int sources, String registerCommand) {
+        super(instrumentation, id, vendorId, productId, sources, registerCommand);
     }
 
     /**

@@ -76,13 +76,14 @@ public abstract class InputTestCase {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivityRule.getActivity().setInputCallback(mInputListener);
         mActivityRule.getActivity().clearUnhandleKeyCode();
         mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         int deviceId = mParser.readDeviceId(mRegisterResourceId);
         String registerCommand = mParser.readRegisterCommand(mRegisterResourceId);
-        setUpDevice(deviceId, registerCommand);
+        setUpDevice(deviceId, mParser.readVendorId(mRegisterResourceId),
+                mParser.readProductId(mRegisterResourceId),
+                mParser.readSources(mRegisterResourceId), registerCommand);
         mEvents.clear();
     }
 
@@ -92,7 +93,8 @@ public abstract class InputTestCase {
     }
 
     // To be implemented by device specific test case.
-    protected abstract void setUpDevice(int deviceId, String registerCommand);
+    protected abstract void setUpDevice(int id, int vendorId, int productId, int sources,
+            String registerCommand);
 
     protected abstract void tearDownDevice();
 
@@ -211,6 +213,7 @@ public abstract class InputTestCase {
     }
 
     protected void verifyEvents(List<InputEvent> events) {
+        mActivityRule.getActivity().setInputCallback(mInputListener);
         // Make sure we received the expected input events
         if (events.size() == 0) {
             // If no event is expected we need to wait for event until timeout and fail on
