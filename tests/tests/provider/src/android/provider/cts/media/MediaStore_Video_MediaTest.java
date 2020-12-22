@@ -39,6 +39,7 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.Video.Media;
@@ -257,6 +258,7 @@ public class MediaStore_Video_MediaTest {
         }
     }
 
+    @SecurityTest
     @Test
     public void testIsoLocationRedaction() throws Exception {
         // STOPSHIP: remove this once isolated storage is always enabled
