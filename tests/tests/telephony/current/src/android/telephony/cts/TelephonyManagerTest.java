@@ -3290,10 +3290,6 @@ public class TelephonyManagerTest {
                     (tm) -> tm.getCarrierBandwidth());
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(bandwidth != null);
-            assertTrue(bandwidth.getPrimaryDownlinkCapacityKbps()
-                    != CarrierBandwidth.INVALID);
-            assertTrue(bandwidth.getPrimaryUplinkCapacityKbps()
-                    != CarrierBandwidth.INVALID);
         }
     }
 
