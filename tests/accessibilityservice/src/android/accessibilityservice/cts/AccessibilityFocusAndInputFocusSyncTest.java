@@ -39,6 +39,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
+import android.os.Environment;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Display;
@@ -50,6 +52,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.AfterClass;
@@ -58,6 +61,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 import java.util.LinkedList;
@@ -72,6 +76,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityFocusAndInputFocusSyncTest {
+    /**
+     * The delay time is for next UI frame rendering out.
+     */
+    private static final long SCREEN_FRAME_RENDERING_OUT_TIME_MILLIS = 500;
+
     private static Instrumentation sInstrumentation;
     private static UiAutomation sUiAutomation;
     private static Context sContext;
@@ -96,6 +105,9 @@ public class AccessibilityFocusAndInputFocusSyncTest {
             .outerRule(mActivityRule)
             .around(mFocusIndicatorServiceRule)
             .around(mDumpOnFailureRule);
+
+    /* Test name rule that tracks the current test method under execution */
+    @Rule public TestName mTestName = new TestName();
 
     @BeforeClass
     public static void oneTimeSetup() throws Exception {
@@ -360,6 +372,8 @@ public class AccessibilityFocusAndInputFocusSyncTest {
                 filterForEventTypeWithAction(TYPE_VIEW_ACCESSIBILITY_FOCUSED,
                         ACTION_ACCESSIBILITY_FOCUS),
                 DEFAULT_TIMEOUT_MS);
+        Thread.sleep(SCREEN_FRAME_RENDERING_OUT_TIME_MILLIS);
+
         final Bitmap screenshot = sUiAutomation.takeScreenshot();
 
         sUiAutomation.executeAndWaitForEvent(
@@ -395,7 +409,21 @@ public class AccessibilityFocusAndInputFocusSyncTest {
             }
         }
 
+        saveFailureScreenshot(bitmap1, bitmap2);
         return false;
+    }
+
+    private void saveFailureScreenshot(Bitmap bitmap1, Bitmap bitmap2) {
+        final String directoryName = Environment.getExternalStorageDirectory()
+                + "/" + getClass().getSimpleName();
+
+        final String fileName1 = String.format("%s_%s_%s.png", mTestName.getMethodName(), "Bitmap1",
+                SystemClock.uptimeMillis());
+        BitmapUtils.saveBitmap(bitmap1, directoryName, fileName1);
+
+        final String fileName2 = String.format("%s_%s_%s.png", mTestName.getMethodName(), "Bitmap2",
+                SystemClock.uptimeMillis());
+        BitmapUtils.saveBitmap(bitmap2, directoryName, fileName2);
     }
 
     private void setFocusAppearanceDataAndCheckItCorrect(StubFocusIndicatorService service,
