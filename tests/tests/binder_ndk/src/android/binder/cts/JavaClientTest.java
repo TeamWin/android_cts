@@ -225,6 +225,18 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testRepeatFdNull() throws RemoteException {
+        boolean isNativeRemote = mInterface.GetName().equals("CPP");
+
+        try {
+            mInterface.RepeatFd(null);
+            assertFalse("Native shouldn't accept null here", isNativeRemote);
+        } catch (java.lang.NullPointerException e) {
+            assertTrue("Java should accept null here", isNativeRemote);
+        }
+    }
+
+    @Test
     public void testRepeatNullableFd() throws RemoteException, IOException {
         checkFdRepeated((fd) -> mInterface.RepeatNullableFd(fd));
         assertEquals(null, mInterface.RepeatNullableFd(null));
