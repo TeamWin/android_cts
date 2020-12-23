@@ -71,6 +71,8 @@ import com.google.common.collect.ImmutableSet;
 
 import androidx.test.filters.RequiresDevice;
 
+import androidx.test.filters.RequiresDevice;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
