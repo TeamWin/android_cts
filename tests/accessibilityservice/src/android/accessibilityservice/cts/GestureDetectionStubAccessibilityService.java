@@ -28,7 +28,7 @@ import java.util.List;
 /** Accessibility service stub, which will collect recognized gestures. */
 public class GestureDetectionStubAccessibilityService extends InstrumentedAccessibilityService {
     private static final long GESTURE_RECOGNIZE_TIMEOUT_MS = 3000;
-    private static final long EVENT_RECOGNIZE_TIMEOUT_MS = 5000;
+    protected static final long EVENT_RECOGNIZE_TIMEOUT_MS = 5000;
     // Member variables
     protected final Object mLock = new Object();
     private ArrayList<Integer> mCollectedGestures = new ArrayList();
