@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.SecurityTest;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -144,6 +146,7 @@ public class DocumentsTest extends DocumentsTestCase {
         }
     }
 
+    @SecurityTest
     public void testAfterMoveDocumentInStorage_revokeUriPermission() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
                 "testAfterMoveDocumentInStorage_revokeUriPermission");
