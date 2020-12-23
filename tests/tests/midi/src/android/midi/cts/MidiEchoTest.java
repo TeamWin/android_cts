@@ -114,16 +114,22 @@ public class MidiEchoTest extends AndroidTestCase {
     // Store received messages in an array.
     class MyLoggingReceiver extends MidiReceiver {
         ArrayList<MidiMessage> messages = new ArrayList<MidiMessage>();
+        int mByteCount;
 
         @Override
         public synchronized void onSend(byte[] data, int offset, int count,
                 long timestamp) {
             messages.add(new MidiMessage(data, offset, count, timestamp));
+            mByteCount += count;
             notifyAll();
         }
 
         public synchronized int getMessageCount() {
             return messages.size();
+        }
+
+        public synchronized int getByteCount() {
+            return mByteCount;
         }
 
         public synchronized MidiMessage getMessage(int index) {
@@ -142,6 +148,24 @@ public class MidiEchoTest extends AndroidTestCase {
             long endTimeMs = System.currentTimeMillis() + timeoutMs + 1;
             long timeToWait = timeoutMs + 1;
             while ((getMessageCount() < count)
+                    && (timeToWait > 0)) {
+                wait(timeToWait);
+                timeToWait = endTimeMs - System.currentTimeMillis();
+            }
+        }
+
+        /**
+         * Wait until count bytes have arrived. This is a cumulative total.
+         *
+         * @param count
+         * @param timeoutMs
+         * @throws InterruptedException
+         */
+        public synchronized void waitForBytes(int count, int timeoutMs)
+                throws InterruptedException {
+            long endTimeMs = System.currentTimeMillis() + timeoutMs + 1;
+            long timeToWait = timeoutMs + 1;
+            while ((getByteCount() < count)
                     && (timeToWait > 0)) {
                 wait(timeToWait);
                 timeToWait = endTimeMs - System.currentTimeMillis();
@@ -359,12 +383,13 @@ public class MidiEchoTest extends AndroidTestCase {
         mc.echoInputPort.send(buffer, 0, 0, timestamp); // should be a NOOP
 
         // Wait for message to pass quickly through echo service.
-        final int numMessages = 1;
+        // Message sent may have been split into multiple received messages.
+        // So wait until we receive all the expected bytes.
+        final int numBytesExpected = buffer.length;
         final int timeoutMs = 20;
         synchronized (receiver) {
-            receiver.waitForMessages(numMessages, timeoutMs);
+            receiver.waitForBytes(numBytesExpected, timeoutMs);
         }
-        // Message sent may have been split into multiple received messages.
 
         // Check total size.
         final int numReceived = receiver.getMessageCount();
@@ -374,9 +399,10 @@ public class MidiEchoTest extends AndroidTestCase {
             totalBytesReceived += message.data.length;
             assertEquals("timestamp in message", timestamp, message.timestamp);
         }
-        assertEquals("byte count of messages", buffer.length,
+        assertEquals("byte count of messages", numBytesExpected,
                 totalBytesReceived);
 
+        // Make sure the payload was not corrupted.
         int sentIndex = 0;
         for (int i = 0; i < numReceived; i++) {
             MidiMessage message = receiver.getMessage(i);
