@@ -414,6 +414,25 @@ TEST_P(NdkBinderTest_Aidl, RepeatFdArray) {
 
 TEST_P(NdkBinderTest_Aidl, RepeatFd) { checkFdRepeat(iface, &ITest::RepeatFd); }
 
+TEST_P(NdkBinderTest_Aidl, RepeatFdNull) {
+  ScopedFileDescriptor fd;
+  // FD is different from most types because the standard type used to represent
+  // it can also contain a null value (this is why many other types don't have
+  // 'null' tests for the non-@nullable Repeat* functions).
+  //
+  // Even worse, these are default initialized to this value, so it's a pretty
+  // common error:
+  EXPECT_EQ(fd.get(), -1);
+  ScopedFileDescriptor out;
+
+  if (shouldBeWrapped) {
+    ASSERT_EQ(STATUS_UNEXPECTED_NULL, AStatus_getStatus(iface->RepeatFd(fd, &out).get()));
+  } else {
+    // another in/out-process difference
+    ASSERT_OK(iface->RepeatFd(fd, &out));
+  }
+}
+
 TEST_P(NdkBinderTest_Aidl, RepeatNullableFd) {
   checkFdRepeat(iface, &ITest::RepeatNullableFd);
 
