@@ -316,18 +316,11 @@ public class AccessibilityFocusAndInputFocusSyncTest {
             setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue + 10,
                     focusColor);
         } finally {
+            setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue,
+                    sFocusColorDefaultValue);
+
             service.disableSelfAndRemove();
         }
-    }
-
-    @Test
-    public void testResetFocusAppearanceDataAfterServiceDisabled() {
-        testSetFocusAppearanceDataAfterServiceEnabled();
-
-        // Checks if the color and the stroke values from AccessibilityManager is
-        // reset to the default value.
-        PollingCheck.waitFor(()->isFocusAppearanceDataUpdated(sAccessibilityManager,
-                sFocusStrokeWidthDefaultValue, sFocusColorDefaultValue));
     }
 
     @Test
@@ -341,35 +334,42 @@ public class AccessibilityFocusAndInputFocusSyncTest {
                     .getRootInActiveWindow().findAccessibilityNodeInfosByText(
                             sContext.getString(R.string.rootLinearLayout)).get(0);
 
-            setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue + 10,
-                    Color.BLUE);
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                    filterForEventTypeWithAction(
-                            TYPE_VIEW_ACCESSIBILITY_FOCUSED, ACTION_ACCESSIBILITY_FOCUS),
-                    DEFAULT_TIMEOUT_MS);
-            final Bitmap blueColorFocusScreenshot = sUiAutomation.takeScreenshot();
+            final Bitmap blueColorFocusScreenshot = screenshotAfterChangeFocusColor(service,
+                    rootLinearLayout, Color.BLUE);
 
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> assertTrue(
-                            rootLinearLayout.performAction(ACTION_CLEAR_ACCESSIBILITY_FOCUS)),
-                    filterForEventTypeWithAction(TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
-                            ACTION_CLEAR_ACCESSIBILITY_FOCUS),
-                    DEFAULT_TIMEOUT_MS);
-
-            setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue + 10,
-                    Color.RED);
-            sUiAutomation.executeAndWaitForEvent(
-                    () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
-                    filterForEventTypeWithAction(TYPE_VIEW_ACCESSIBILITY_FOCUSED,
-                            ACTION_ACCESSIBILITY_FOCUS),
-                    DEFAULT_TIMEOUT_MS);
-            final Bitmap redColorFocusScreenshot = sUiAutomation.takeScreenshot();
+            final Bitmap redColorFocusScreenshot = screenshotAfterChangeFocusColor(service,
+                    rootLinearLayout, Color.RED);
 
             assertTrue(isBitmapDifferent(blueColorFocusScreenshot, redColorFocusScreenshot));
         } finally {
+            setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue,
+                    sFocusColorDefaultValue);
+
             service.disableSelfAndRemove();
         }
+    }
+
+    private Bitmap screenshotAfterChangeFocusColor(StubFocusIndicatorService service,
+            AccessibilityNodeInfo unAccessibilityFocusedNode, int color) throws Exception {
+        assertFalse(unAccessibilityFocusedNode.isAccessibilityFocused());
+
+        setFocusAppearanceDataAndCheckItCorrect(service, sFocusStrokeWidthDefaultValue, color);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(unAccessibilityFocusedNode.performAction(
+                        ACTION_ACCESSIBILITY_FOCUS)),
+                filterForEventTypeWithAction(TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                        ACTION_ACCESSIBILITY_FOCUS),
+                DEFAULT_TIMEOUT_MS);
+        final Bitmap screenshot = sUiAutomation.takeScreenshot();
+
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(unAccessibilityFocusedNode.performAction(
+                        ACTION_CLEAR_ACCESSIBILITY_FOCUS)),
+                filterForEventTypeWithAction(TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                        ACTION_CLEAR_ACCESSIBILITY_FOCUS),
+                DEFAULT_TIMEOUT_MS);
+
+        return screenshot;
     }
 
     private boolean isBitmapDifferent(Bitmap bitmap1, Bitmap bitmap2) {
