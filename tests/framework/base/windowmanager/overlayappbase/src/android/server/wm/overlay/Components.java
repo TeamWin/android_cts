@@ -41,6 +41,7 @@ public class Components extends ComponentsBase {
         int EXTRA_VALUE_ANIMATION_EMPTY = 0;
         int EXTRA_VALUE_ANIMATION_0_7 = 1;
         int EXTRA_VALUE_ANIMATION_0_9 = 2;
+        int EXTRA_VALUE_LONG_ANIMATION_0_7 = 3;
     }
 
     public interface ToastActivity {

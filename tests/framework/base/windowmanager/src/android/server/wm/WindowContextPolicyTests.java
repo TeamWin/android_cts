@@ -19,7 +19,10 @@ package android.server.wm;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 
+import android.content.Context;
+import android.hardware.display.DisplayManager;
 import android.platform.test.annotations.Presubmit;
+import android.view.Display;
 
 import org.junit.Test;
 
@@ -35,6 +38,20 @@ public class WindowContextPolicyTests extends WindowContextTestBase {
     @Test(expected = UnsupportedOperationException.class)
     public void testCreateWindowContextWithNoDisplayContext() {
         mContext.createWindowContext(TYPE_APPLICATION_OVERLAY, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWindowContextWithNullDisplay() {
+        final Context displayContext = createDisplayContext(Display.DEFAULT_DISPLAY);
+        displayContext.createWindowContext(null /* display */, TYPE_APPLICATION_OVERLAY,
+                null /* options */);
+    }
+
+    @Test
+    public void testWindowContextWithDisplayOnNonUiContext() {
+        createAllowSystemAlertWindowAppOpSession();
+        final Display display = mDm.getDisplay(Display.DEFAULT_DISPLAY);
+        mContext.createWindowContext(display, TYPE_APPLICATION_OVERLAY, null /* options */);
     }
 
     @Test(expected = UnsupportedOperationException.class)

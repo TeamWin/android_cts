@@ -60,13 +60,29 @@ public class OpaqueActivity extends Activity {
                             Components.ActivityReceiver.EXTRA_ANIMATION,
                             Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY);
                     finish();
-                    overridePendingTransition(R.anim.alpha_1, getAnimationRes(exitAnimation));
+                    overridePendingTransition(getEnterAnimationRes(exitAnimation),
+                            getAnimationRes(exitAnimation));
                     break;
                 default:
                     throw new AssertionError("Unknown action" + intent.getAction());
             }
         }
     };
+
+    /** An enter animation for a certain exit animation, mostly so durations match. */
+    @AnimRes
+    private static int getEnterAnimationRes(int exitAnimation) {
+        switch (exitAnimation) {
+            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY:
+            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_7:
+            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
+                return R.anim.alpha_1;
+            case Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
+                return R.anim.long_alpha_1;
+            default:
+                throw new AssertionError("Unknown animation value " + exitAnimation);
+        }
+    }
 
     @AnimRes
     private static int getAnimationRes(int animation) {
@@ -77,6 +93,8 @@ public class OpaqueActivity extends Activity {
                 return R.anim.alpha_0_7;
             case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
                 return R.anim.alpha_0_9;
+            case Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
+                return R.anim.long_alpha_0_7;
             default:
                 throw new AssertionError("Unknown animation value " + animation);
         }

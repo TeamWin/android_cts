@@ -38,17 +38,19 @@ import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.app.IUntrustedTouchTestService;
-import android.server.wm.cts.R;
 import android.server.wm.overlay.Components;
+import android.server.wm.overlay.R;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.view.Display;
@@ -96,8 +98,10 @@ public class WindowUntrustedTouchTest {
             Float.intBitsToFloat(0b00111000100000000000000000000000);
 
     private static final float MAXIMUM_OBSCURING_OPACITY = .8f;
-    private static final long TOUCH_TIME_OUT_MS = 1000L;
     private static final long BIND_TIMEOUT_MS = 1000L;
+    private static final long MAX_ANIMATION_DURATION_MS = 3000L;
+    private static final long ANIMATION_DURATION_TOLERANCE_MS = 500L;
+
     private static final int OVERLAY_COLOR = 0xFFFF0000;
     private static final int ACTIVITY_COLOR = 0xFFFFFFFF;
 
@@ -124,6 +128,7 @@ public class WindowUntrustedTouchTest {
             new ArrayMap<>();
     private Instrumentation mInstrumentation;
     private Context mContext;
+    private Resources mResources;
     private ContentResolver mContentResolver;
     private TouchHelper mTouchHelper;
     private Handler mMainHandler;
@@ -152,6 +157,7 @@ public class WindowUntrustedTouchTest {
         mContainer.setOnTouchListener(this::onTouchEvent);
         mInstrumentation = getInstrumentation();
         mContext = mInstrumentation.getContext();
+        mResources = mContext.getResources();
         mContentResolver = mContext.getContentResolver();
         mTouchHelper = new TouchHelper(mInstrumentation, mWmState);
         mMainHandler = new Handler(Looper.getMainLooper());
@@ -565,9 +571,40 @@ public class WindowUntrustedTouchTest {
     /** Activity transitions */
 
     @Test
+    public void testLongEnterAnimations_areLimited() {
+        long durationSet = mResources.getInteger(R.integer.long_animation_duration);
+        assertThat(durationSet).isGreaterThan(
+                MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
+        addAnimatedActivityOverlay(APP_A, /* touchable */ false, R.anim.long_alpha_0_7,
+                R.anim.long_alpha_1);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
+        long start = SystemClock.elapsedRealtime();
+
+        assertTrue(mWmState.waitForAppTransitionIdleOnDisplay(Display.DEFAULT_DISPLAY));
+        long duration = SystemClock.elapsedRealtime() - start;
+        assertThat(duration).isAtMost(MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
+    }
+
+    @Test
+    public void testLongExitAnimations_areLimited() {
+        long durationSet = mResources.getInteger(R.integer.long_animation_duration);
+        assertThat(durationSet).isGreaterThan(
+                MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
+        // Translucent activities don't honor custom exit animations
+        addOpaqueActivity(APP_A);
+        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
+        long start = SystemClock.elapsedRealtime();
+
+        assertTrue(mWmState.waitForAppTransitionIdleOnDisplay(Display.DEFAULT_DISPLAY));
+        long duration = SystemClock.elapsedRealtime() - start;
+        assertThat(duration).isAtMost(MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
+    }
+
+    @Test
     public void testWhenEnterAnimationAboveThresholdAndNewActivityNotTouchable_blocksTouch() {
         addAnimatedActivityOverlay(APP_A, /* touchable */ false, R.anim.alpha_0_9, R.anim.alpha_1);
-        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
 
@@ -578,7 +615,7 @@ public class WindowUntrustedTouchTest {
     @Test
     public void testWhenEnterAnimationBelowThresholdAndNewActivityNotTouchable_allowsTouch() {
         addAnimatedActivityOverlay(APP_A, /* touchable */ false, R.anim.alpha_0_7, R.anim.alpha_1);
-        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
 
@@ -589,7 +626,7 @@ public class WindowUntrustedTouchTest {
     @Test
     public void testWhenEnterAnimationBelowThresholdAndNewActivityTouchable_blocksTouch() {
         addAnimatedActivityOverlay(APP_A, /* touchable */ true, R.anim.alpha_0_7, R.anim.alpha_1);
-        mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY);
+        assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
 
@@ -909,6 +946,11 @@ public class WindowUntrustedTouchTest {
     private void removeOverlays() throws Throwable {
         for (FutureConnection<IUntrustedTouchTestService> connection : mConnections.values()) {
             connection.getCurrent().removeOverlays();
+        }
+        // We need to stop the app because not every overlay is created via the service (eg.
+        // activity overlays and custom toasts)
+        for (String app : APPS) {
+            stopPackage(app);
         }
         waitForNoSawOverlays("SAWs not removed on time");
         removeActivityOverlays();

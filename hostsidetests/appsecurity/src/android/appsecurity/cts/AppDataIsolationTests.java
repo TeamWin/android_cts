@@ -204,7 +204,14 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
             // Setup screenlock
             getDevice().executeShellCommand("settings put global require_password_to_decrypt 0");
             getDevice().executeShellCommand("locksettings set-disabled false");
-            getDevice().executeShellCommand("locksettings set-pin 12345");
+            String response = getDevice().executeShellCommand("locksettings set-pin 12345");
+            if (!response.contains("12345")) {
+                // This seems to fail occasionally. Try again once, then give up.
+                Thread.sleep(500);
+                response = getDevice().executeShellCommand("locksettings set-pin 12345");
+                assumeTrue("Test requires setting a pin, which failed: " + response,
+                        response.contains("12345"));
+            }
 
             // Give enough time for vold to update keys
             Thread.sleep(15000);
