@@ -189,8 +189,10 @@ public class StagedInstallTest {
         PackageInstaller packageInstaller = getPackageInstaller();
         List<PackageInstaller.SessionInfo> stagedSessions = packageInstaller.getStagedSessions();
         for (PackageInstaller.SessionInfo sessionInfo : stagedSessions) {
-            if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID) {
-                // Cannot abandon a child session
+            if (sessionInfo.getParentSessionId() != PackageInstaller.SessionInfo.INVALID_ID
+                    || sessionInfo.isStagedSessionApplied()
+                    || sessionInfo.isStagedSessionFailed()) {
+                // Cannot abandon a child session; no need to abandon terminated sessions
                 continue;
             }
             try {
