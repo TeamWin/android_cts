@@ -18,7 +18,6 @@ package android.app.role.cts
 
 import android.app.Instrumentation
 
-import android.app.role.RoleControllerManager
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.Intent
@@ -42,15 +41,14 @@ import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 /**
- * Tests [RoleControllerManager].
+ * Tests RoleControllerManager APIs exposed on [RoleManager].
  */
 @RunWith(AndroidJUnit4::class)
 class RoleControllerManagerTest {
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.context
     private val packageManager: PackageManager = context.packageManager
-    private val roleControllerManager: RoleControllerManager =
-        context.getSystemService(RoleControllerManager::class.java)!!
+    private val roleManager: RoleManager = context.getSystemService(RoleManager::class.java)!!
 
     @Before
     fun installApp() {
@@ -95,7 +93,7 @@ class RoleControllerManagerTest {
     ) {
         runWithShellPermissionIdentity {
             val future = CompletableFuture<Boolean>()
-            roleControllerManager.isApplicationVisibleForRole(
+            roleManager.isApplicationVisibleForRole(
                 roleName, packageName, context.mainExecutor, Consumer { future.complete(it) }
             )
             val isVisible = future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
@@ -121,7 +119,7 @@ class RoleControllerManagerTest {
     private fun isRoleVisible(roleName: String): Boolean =
         runWithShellPermissionIdentity(ThrowingSupplier {
             val future = CompletableFuture<Boolean>()
-            roleControllerManager.isRoleVisible(
+            roleManager.isRoleVisible(
                 roleName, context.mainExecutor, Consumer { future.complete(it) }
             )
             future.get(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)
