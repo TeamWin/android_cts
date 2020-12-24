@@ -71,7 +71,6 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -451,7 +450,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 173462056)
     public void testImeState_Visible_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_VISIBLE);
     }
@@ -558,7 +556,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @AppModeFull
     @Test
-    @FlakyTest(bugId = 173462056)
     public void testImeInvisibleWhenForceStopPkgProcess_Full() throws Exception {
         runImeVisibilityTestWhenForceStopPackage(false /* instant */);
     }
@@ -642,7 +639,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                     Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker))) {
                 expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
-                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
                 expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                         View.VISIBLE, TIMEOUT);
                 expectImeVisible(TIMEOUT);
