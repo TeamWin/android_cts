@@ -18,6 +18,8 @@ package android.telephony.cts;
 
 import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_DO_FALLBACK;
 import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_LEGACY;
+import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_EMBB;
+import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_MIOT;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -26,6 +28,7 @@ import android.net.LinkAddress;
 import android.os.Parcel;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.DataCallResponse;
+import android.telephony.data.SliceInfo;
 
 import org.junit.Test;
 
@@ -52,6 +55,18 @@ public class DataCallResponseTest {
     private static final int MTU_V6 = 1400;
     private static final int HANDOVER_FAILURE_MODE = HANDOVER_FAILURE_MODE_DO_FALLBACK;
     private static final int PDU_SESSION_ID = 5;
+    private static final int TEST_SLICE_DIFFERENTIATOR = 1;
+    private static final int TEST_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_EMBB;
+    private static final int TEST_HPLMN_SLICE_DIFFERENTIATOR = 10;
+    private static final int TEST_HPLMN_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_MIOT;
+    private static final SliceInfo SLICE_INFO =
+            new SliceInfo.Builder()
+                .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
+                .setSliceDifferentiator(TEST_SLICE_DIFFERENTIATOR)
+                .setMappedHplmnSliceDifferentiator(TEST_HPLMN_SLICE_DIFFERENTIATOR)
+                .setMappedHplmnSliceServiceType(TEST_HPLMN_SLICE_SERVICE_TYPE)
+                .build();
+
 
     @Test
     public void testConstructorAndGetters() {
@@ -70,6 +85,7 @@ public class DataCallResponseTest {
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         assertThat(response.getCause()).isEqualTo(CAUSE);
@@ -86,6 +102,7 @@ public class DataCallResponseTest {
         assertThat(response.getMtuV6()).isEqualTo(MTU_V6);
         assertThat(response.getHandoverFailureMode()).isEqualTo(HANDOVER_FAILURE_MODE_DO_FALLBACK);
         assertThat(response.getPduSessionId()).isEqualTo(PDU_SESSION_ID);
+        assertThat(response.getSliceInfo()).isEqualTo(SLICE_INFO);
     }
 
     @Test
@@ -105,6 +122,7 @@ public class DataCallResponseTest {
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         DataCallResponse equalsResponse = new DataCallResponse.Builder()
@@ -122,6 +140,7 @@ public class DataCallResponseTest {
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         assertThat(response).isEqualTo(equalsResponse);
@@ -144,6 +163,7 @@ public class DataCallResponseTest {
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
@@ -161,6 +181,7 @@ public class DataCallResponseTest {
                 .setMtuV6(1440)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE_LEGACY)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         assertThat(response).isNotEqualTo(notEqualsResponse);
@@ -185,6 +206,7 @@ public class DataCallResponseTest {
                 .setMtuV6(MTU_V6)
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
+                .setSliceInfo(SLICE_INFO)
                 .build();
 
         Parcel stateParcel = Parcel.obtain();
