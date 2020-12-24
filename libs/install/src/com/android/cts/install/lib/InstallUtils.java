@@ -83,7 +83,7 @@ public class InstallUtils {
      * Returns -1 if the package is not currently installed.
      */
     public static long getInstalledVersion(String packageName) {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
             PackageInfo info = pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
@@ -117,7 +117,7 @@ public class InstallUtils {
         IntentFilter sessionUpdatedFilter =
                 new IntentFilter(PackageInstaller.ACTION_SESSION_UPDATED);
 
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
         context.registerReceiver(sessionUpdatedReceiver, sessionUpdatedFilter);
 
         PackageInstaller installer = getPackageInstaller();
@@ -154,7 +154,7 @@ public class InstallUtils {
      * Returns the info for the given package name.
      */
     public static PackageInfo getPackageInfo(String packageName) {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         try {
             return pm.getPackageInfo(packageName, PackageManager.MATCH_APEX);
@@ -167,7 +167,7 @@ public class InstallUtils {
      * Returns the PackageInstaller instance of the current {@code Context}
      */
     public static PackageInstaller getPackageInstaller() {
-        return InstrumentationRegistry.getContext().getPackageManager().getPackageInstaller();
+        return InstrumentationRegistry.getTargetContext().getPackageManager().getPackageInstaller();
     }
 
     /**
@@ -241,7 +241,7 @@ public class InstallUtils {
         intent.setComponent(new ComponentName(packageName,
                 "com.android.cts.install.lib.testapp.ProcessUserData"));
         intent.setAction("PROCESS_USER_DATA");
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
 
         HandlerThread handlerThread = new HandlerThread("RollbackTestHandlerThread");
         handlerThread.start();
@@ -290,7 +290,7 @@ public class InstallUtils {
         intent.setComponent(new ComponentName(packageName,
                 "com.android.cts.install.lib.testapp.ProcessUserData"));
         intent.setAction("GET_USER_DATA_VERSION");
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
 
         HandlerThread handlerThread = new HandlerThread("RollbackTestHandlerThread");
         handlerThread.start();
@@ -346,7 +346,7 @@ public class InstallUtils {
      */
     public static boolean isOnlyInstalledForUser(String packageName, int userIdToCheck,
             List<Integer> userIds) {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
         PackageManager pm = context.getPackageManager();
         for (int userId: userIds) {
             List<PackageInfo> installedPackages;
