@@ -445,27 +445,32 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         }
     }
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testImeState_Unspecified_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_UNSPECIFIED);
     }
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     @FlakyTest(bugId = 173462056)
     public void testImeState_Visible_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_VISIBLE);
     }
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testImeState_AlwaysVisible_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
     }
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testImeState_Hidden_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_HIDDEN);
     }
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testImeState_AlwaysHidden_EditorDialogLostFocusAfterUnlocked() throws Exception {
         runImeDoesntReshowAfterKeyguardTest(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
