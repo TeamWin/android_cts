@@ -17,6 +17,7 @@
 package android.location.cts.privileged;
 
 import android.Manifest;
+import android.location.GnssMeasurementRequest;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssRequest;
 import android.location.Location;
@@ -103,6 +104,33 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener,
                 new GnssRequest.Builder().setFullTracking(true).build());
 
+        verifyGnssMeasurementsReceived();
+    }
+
+    /**
+     * Test GPS measurements registration with correlation vector outputs enabled
+     */
+    public void testGnssMeasurementRegistration_enableCorrelationOutputs() throws Exception {
+        // Checks if GPS hardware feature is present, skips test (pass) if not.
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
+            return;
+        }
+
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
+        // Register for GPS measurements.
+        mMeasurementListener = new TestGnssMeasurementListener(TAG, GPS_EVENTS_COUNT);
+        mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener,
+                new GnssMeasurementRequest.Builder().
+                        setCorrelationVectorOutputsEnabled(true).build());
+
+        verifyGnssMeasurementsReceived();
+    }
+
+    private void verifyGnssMeasurementsReceived() throws InterruptedException {
         mMeasurementListener.await();
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
