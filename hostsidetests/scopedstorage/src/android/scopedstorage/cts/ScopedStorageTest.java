@@ -49,6 +49,13 @@ import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageStat
 import static android.scopedstorage.cts.lib.TestUtils.pollForManageExternalStorageAllowed;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaData_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPrivateDirViaData_denied;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPrivateDirViaRelativePath_denied;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalDirsViaData_denied;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalPrivateDirsViaRelativePath_denied;
 import static android.system.OsConstants.F_OK;
 import static android.system.OsConstants.R_OK;
 import static android.system.OsConstants.W_OK;
@@ -566,6 +573,41 @@ public class ScopedStorageTest {
         } finally {
             dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Test that File Manager can't insert files from private directories.
+     */
+    @Test
+    public void testInsertExternalFilesViaData() throws Exception {
+        verifyInsertFromExternalMediaDirViaData_allowed();
+        verifyInsertFromExternalPrivateDirViaData_denied();
+    }
+
+    /**
+     * Test that File Manager can't update file path to private directories.
+     */
+    @Test
+    public void testUpdateExternalFilesViaData() throws Exception {
+        verifyUpdateToExternalDirsViaData_denied();
+    }
+
+    /**
+     * Test that File Manager can't insert files from private directories.
+     */
+    @Test
+    public void testInsertExternalFilesViaRelativePath() throws Exception {
+        verifyInsertFromExternalMediaDirViaRelativePath_allowed();
+        verifyInsertFromExternalPrivateDirViaRelativePath_denied();
+    }
+
+    /**
+     * Test that File Manager can't update file path to private directories.
+     */
+    @Test
+    public void testUpdateExternalFilesViaRelativePath() throws Exception {
+        verifyUpdateToExternalMediaDirViaRelativePath_allowed();
+        verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
     }
 
     private void assertCreateFileAndScanNomediaDirDoesntNoOp(File newFile, File scanDir)
