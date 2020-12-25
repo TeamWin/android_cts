@@ -51,7 +51,7 @@ public class LocalIntentSender extends BroadcastReceiver {
      * Get a LocalIntentSender.
      */
     public IntentSender getIntentSender() {
-        Context context = InstrumentationRegistry.getContext();
+        Context context = InstrumentationRegistry.getTargetContext();
         // Generate a unique string to ensure each LocalIntentSender gets its own results.
         String action = LocalIntentSender.class.getName() + SystemClock.elapsedRealtime();
         context.registerReceiver(this, new IntentFilter(action));

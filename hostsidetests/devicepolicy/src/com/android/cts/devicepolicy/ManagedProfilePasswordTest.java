@@ -235,6 +235,15 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
                 .build());
     }
 
+    @Test
+    public void testActivePasswordSufficientForDeviceRequirement() throws Exception {
+        if (!mHasFeature || !mHasSecureLockScreen) {
+            return;
+        }
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ActivePasswordSufficientForDeviceTest",
+                mProfileUserId);
+    }
+
     private void verifyUnifiedPassword(boolean unified) throws DeviceNotAvailableException {
         final String testMethod =
                 unified ? "testUsingUnifiedPassword" : "testNotUsingUnifiedPassword";

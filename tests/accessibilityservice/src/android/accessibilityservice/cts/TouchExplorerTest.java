@@ -98,7 +98,6 @@ public class TouchExplorerTest {
     private static final float GESTURE_LENGTH_MMS = 10.0f;
     private TouchExplorationStubAccessibilityService mService;
     private Instrumentation mInstrumentation;
-    private UiAutomation mUiAutomation;
     private boolean mHasTouchscreen;
     private boolean mScreenBigEnough;
     private long mSwipeTimeMillis;
@@ -130,9 +129,6 @@ public class TouchExplorerTest {
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation =
-                mInstrumentation.getUiAutomation(
-                        UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         PackageManager pm = mInstrumentation.getContext().getPackageManager();
         mHasTouchscreen =
                 pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
@@ -140,6 +136,9 @@ public class TouchExplorerTest {
         // Find window size, check that it is big enough for gestures.
         // Gestures will start in the center of the window, so we need enough horiz/vert space.
         mService = mServiceRule.enableService();
+        // To prevent a deadlock, we disable UiAutomation while another a11y service is running.
+        mInstrumentation.getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES).destroy();
         mView = mActivityRule.getActivity().findViewById(R.id.full_screen_text_view);
         WindowManager windowManager =
                 (WindowManager)
@@ -592,11 +591,11 @@ public class TouchExplorerTest {
     private void syncAccessibilityFocusToInputFocus() {
         mService.runOnServiceSync(
                 () -> {
-                    mUiAutomation
-                            .getRootInActiveWindow()
-                            .findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
-                            .performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                    AccessibilityNodeInfo focus = mService.findFocus(AccessibilityNodeInfo.FOCUS_INPUT);
+                    focus.performAction(AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS);
+                    focus.recycle();
                 });
+        mService.waitForAccessibilityFocus();
     }
 
     private void setRightSideOfActivityWindowGestureDetectionPassthrough() {
