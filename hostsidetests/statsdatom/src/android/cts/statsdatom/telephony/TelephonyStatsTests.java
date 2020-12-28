@@ -215,6 +215,27 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         assertThat(airplaneModeDisabledAtom.getShortToggle()).isFalse();
     }
 
+    public void testModemRestart() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.MODEM_RESTART_FIELD_NUMBER);
+
+        // Restart modem. If the command fails, exit the test case.
+        boolean restart = restartModem();
+        if (!restart) {
+            return;
+        }
+
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        // Verify that we have at least one atom for modem restart
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).isNotEmpty();
+    }
+
     private boolean hasGsmPhone() throws Exception {
         // Not using log entries or ServiceState in the dump since they may or may not be present,
         // which can make the test flaky
@@ -320,5 +341,10 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
 
     private void turnOffAirplaneMode() throws Exception {
         getDevice().executeShellCommand("cmd connectivity airplane-mode disable");
+    }
+
+    private boolean restartModem() throws Exception {
+        String response = getDevice().executeShellCommand("cmd phone restart-modem");
+        return response.contains("true");
     }
 }
