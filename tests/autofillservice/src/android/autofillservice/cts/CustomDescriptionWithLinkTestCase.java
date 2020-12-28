@@ -71,6 +71,12 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
+        final int width = mUiBot.getDevice().getDisplayWidth();
+        final int height = mUiBot.getDevice().getDisplayHeight();
+        final int min = Math.min(width, height);
+
+        assumeTrue("Screen size is too small (" + width + "x" + height + ")", min >= 500);
+
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
             saveUiRestoredAfterTappingLinkTest(
