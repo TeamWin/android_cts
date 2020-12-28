@@ -39,8 +39,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
 
-    private static final String PROPERTY_LOCALE = "persist.sys.locale";
-
     @Rule
     public RuleChain ruleChain =
             RuleChain
@@ -64,25 +62,6 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         int abortedOpcode = CecMessage.getParams(message,
                 CecOperand.GET_MENU_LANGUAGE.toString().length());
         assertThat(CecOperand.getOperand(abortedOpcode)).isEqualTo(CecOperand.GET_MENU_LANGUAGE);
-    }
-
-    private String getSystemLocale() throws Exception {
-        ITestDevice device = getDevice();
-        return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
-    }
-
-    private void setSystemLocale(String locale) throws Exception {
-        ITestDevice device = getDevice();
-        device.executeShellCommand("setprop " + PROPERTY_LOCALE + " " + locale);
-    }
-
-    private boolean isLanguageEditable() throws Exception {
-        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
-        return val.trim().equals("true") ? true : false;
-    }
-
-    private static String extractLanguage(String locale) {
-        return locale.split("[^a-zA-Z]")[0];
     }
 
     /**
