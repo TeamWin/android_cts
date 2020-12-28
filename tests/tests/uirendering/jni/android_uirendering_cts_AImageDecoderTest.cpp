@@ -144,6 +144,92 @@ static jint setDataSpace(JNIEnv*, jobject, jlong decoder, jint dataSpace) {
                                       dataSpace);
 }
 
+static jlong createFrameInfo(JNIEnv*, jobject) {
+    return reinterpret_cast<jlong>(AImageDecoderFrameInfo_create());
+}
+
+static void deleteFrameInfo(JNIEnv*, jobject, jlong frameInfo) {
+    AImageDecoderFrameInfo_delete(reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static jint getFrameInfo(JNIEnv*, jobject, jlong decoder, jlong frameInfo) {
+    return AImageDecoder_getFrameInfo(reinterpret_cast<AImageDecoder*>(decoder),
+                                      reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static void testNullFrameInfo(JNIEnv* env, jobject, jobject jAssets, jstring jFile) {
+    AImageDecoderFrameInfo_delete(nullptr);
+
+    {
+        auto* frameInfo = AImageDecoderFrameInfo_create();
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_getFrameInfo(nullptr,
+                                                                                  frameInfo));
+        AImageDecoderFrameInfo_delete(frameInfo);
+    }
+    {
+        auto asset = openAsset(env, nullptr, jAssets, jFile);
+        auto decoder = createFromAsset(env, nullptr, asset);
+        AImageDecoderFrameInfo* info = nullptr;
+        ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, getFrameInfo(env, nullptr, decoder,
+                reinterpret_cast<jlong>(info)));
+
+        deleteDecoder(env, nullptr, decoder);
+        closeAsset(env, nullptr, asset);
+    }
+    {
+        ARect rect = AImageDecoderFrameInfo_getFrameRect(nullptr);
+        ASSERT_EQ(0, rect.left);
+        ASSERT_EQ(0, rect.top);
+        ASSERT_EQ(0, rect.right);
+        ASSERT_EQ(0, rect.bottom);
+    }
+
+    ASSERT_EQ(0, AImageDecoderFrameInfo_getDuration(nullptr));
+    ASSERT_FALSE(AImageDecoderFrameInfo_hasAlphaWithinBounds(nullptr));
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getDisposeOp(nullptr));
+    ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getBlendOp(nullptr));
+}
+
+static jlong getDuration(JNIEnv*, jobject, jlong frameInfo) {
+    return AImageDecoderFrameInfo_getDuration(reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static void testGetFrameRect(JNIEnv* env, jobject, jlong jFrameInfo, jint expectedLeft,
+                             jint expectedTop, jint expectedRight, jint expectedBottom) {
+    auto* frameInfo = reinterpret_cast<AImageDecoderFrameInfo*>(jFrameInfo);
+    ARect rect = AImageDecoderFrameInfo_getFrameRect(frameInfo);
+    if (rect.left != expectedLeft || rect.top != expectedTop || rect.right != expectedRight
+        || rect.bottom != expectedBottom) {
+        fail(env, "Mismatched frame rect! Expected: %i %i %i %i Actual: %i %i %i %i", expectedLeft,
+             expectedTop, expectedRight, expectedBottom, rect.left, rect.top, rect.right,
+             rect.bottom);
+    }
+}
+
+static jboolean getFrameAlpha(JNIEnv*, jobject, jlong frameInfo) {
+    return AImageDecoderFrameInfo_hasAlphaWithinBounds(
+            reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static jboolean getAlpha(JNIEnv*, jobject, jlong decoder) {
+    const auto* info = AImageDecoder_getHeaderInfo(reinterpret_cast<AImageDecoder*>(decoder));
+    return AImageDecoderHeaderInfo_getAlphaFlags(info) != ANDROID_BITMAP_FLAGS_ALPHA_OPAQUE;
+}
+
+static jint getDisposeOp(JNIEnv*, jobject, jlong frameInfo) {
+    return AImageDecoderFrameInfo_getDisposeOp(
+            reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static jint getBlendOp(JNIEnv*, jobject, jlong frameInfo) {
+    return AImageDecoderFrameInfo_getBlendOp(
+            reinterpret_cast<AImageDecoderFrameInfo*>(frameInfo));
+}
+
+static jint getRepeatCount(JNIEnv*, jobject, jlong decoder) {
+    return AImageDecoder_getRepeatCount(reinterpret_cast<AImageDecoder*>(decoder));
+}
+
 #define ASSET_MANAGER "Landroid/content/res/AssetManager;"
 #define STRING "Ljava/lang/String;"
 #define BITMAP "Landroid/graphics/Bitmap;"
@@ -164,6 +250,17 @@ static JNINativeMethod gMethods[] = {
     { "nSetUnpremultipliedRequired", "(JZ)I", (void*) setUnpremultipliedRequired },
     { "nSetAndroidBitmapFormat", "(JI)I", (void*) setAndroidBitmapFormat },
     { "nSetDataSpace", "(JI)I", (void*) setDataSpace },
+    { "nCreateFrameInfo", "()J", (void*) createFrameInfo },
+    { "nDeleteFrameInfo", "(J)V", (void*) deleteFrameInfo },
+    { "nGetFrameInfo", "(JJ)I", (void*) getFrameInfo },
+    { "nTestNullFrameInfo", "(" ASSET_MANAGER STRING ")V", (void*) testNullFrameInfo },
+    { "nGetDuration", "(J)J", (void*) getDuration },
+    { "nTestGetFrameRect", "(JIIII)V", (void*) testGetFrameRect },
+    { "nGetFrameAlpha", "(J)Z", (void*) getFrameAlpha },
+    { "nGetAlpha", "(J)Z", (void*) getAlpha },
+    { "nGetDisposeOp", "(J)I", (void*) getDisposeOp },
+    { "nGetBlendOp", "(J)I", (void*) getBlendOp },
+    { "nGetRepeatCount", "(J)I", (void*) getRepeatCount },
 };
 
 int register_android_uirendering_cts_AImageDecoderTest(JNIEnv* env) {

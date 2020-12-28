@@ -346,7 +346,7 @@ class AImageDecoderTest {
 
     fun nonAnimatedAssets() = arrayOf(
         "blue-16bit-prophoto.png", "green-p3.png", "linear-rgba16f.png", "orange-prophotorgb.png",
-        "animated_000.gif", "animated_001.gif", "animated_002.gif", "sunset1.jpg"
+        "animated_001.gif", "animated_002.gif", "sunset1.jpg"
     )
 
     @Test
@@ -569,6 +569,260 @@ class AImageDecoderTest {
         nCloseAsset(asset)
     }
 
+    @Test
+    @Parameters(method = "nonAnimatedAssets")
+    fun testGetFrameInfoSucceedsNonAnimated(image: String) {
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+        val frameInfo = nCreateFrameInfo()
+        assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nGetFrameInfo(decoder, frameInfo))
+
+        if (image.startsWith("animated")) {
+            // Although these images have only one frame, they still contain encoded frame info.
+            val ANDROID_IMAGE_DECODER_INFINITE = Integer.MAX_VALUE
+            assertEquals(ANDROID_IMAGE_DECODER_INFINITE, nGetRepeatCount(decoder))
+            assertEquals(250_000_000L, nGetDuration(frameInfo))
+            assertEquals(ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, nGetDisposeOp(frameInfo))
+        } else {
+            // Since these are not animated and have no encoded frame info, they should use
+            // defaults.
+            assertEquals(0, nGetRepeatCount(decoder))
+            assertEquals(0L, nGetDuration(frameInfo))
+            assertEquals(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, nGetDisposeOp(frameInfo))
+        }
+
+        nTestGetFrameRect(frameInfo, 0, 0, nGetWidth(decoder), nGetHeight(decoder))
+        if (image.endsWith("gif")) {
+            // GIFs do not support SRC, so they always report SRC_OVER.
+            assertEquals(ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, nGetBlendOp(frameInfo))
+        } else {
+            assertEquals(ANDROID_IMAGE_DECODER_BLEND_OP_SRC, nGetBlendOp(frameInfo))
+        }
+        assertEquals(nGetAlpha(decoder), nGetFrameAlpha(frameInfo))
+
+        nDeleteFrameInfo(frameInfo)
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
+    @Test
+    fun testNullFrameInfo() = nTestNullFrameInfo(getAssets(), "animated.gif")
+
+    @Test
+    @Parameters(method = "animationsAndFrames")
+    fun testGetFrameInfo(image: String, frameName: String, numFrames: Int) {
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+        val frameInfo = nCreateFrameInfo()
+        for (i in 0 until numFrames) {
+            assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nGetFrameInfo(decoder, frameInfo))
+            val result = nAdvanceFrame(decoder)
+            val expectedResult = if (i == numFrames - 1) ANDROID_IMAGE_DECODER_FINISHED
+                                 else ANDROID_IMAGE_DECODER_SUCCESS
+            assertEquals(expectedResult, result)
+        }
+
+        assertEquals(ANDROID_IMAGE_DECODER_FINISHED, nGetFrameInfo(decoder, frameInfo))
+
+        nDeleteFrameInfo(frameInfo)
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
+    fun animationsAndDurations() = arrayOf(
+        arrayOf<Any>("animated.gif", LongArray(4) { 250_000_000 }),
+        arrayOf<Any>("animated_webp.webp", LongArray(4) { 250_000_000 }),
+        arrayOf<Any>("required_gif.gif", LongArray(7) { 100_000_000 }),
+        arrayOf<Any>("required_webp.webp", LongArray(7) { 100_000_000 }),
+        arrayOf<Any>("alphabetAnim.gif", LongArray(13) { 100_000_000 }),
+        arrayOf<Any>("blendBG.webp", longArrayOf(525_000_000, 500_000_000,
+                525_000_000, 437_000_000, 609_000_000, 729_000_000, 444_000_000)),
+        arrayOf<Any>("stoplight.webp", longArrayOf(1_000_000_000, 500_000_000,
+                                                    1_000_000_000))
+    )
+
+    @Test
+    @Parameters(method = "animationsAndDurations")
+    fun testDurations(image: String, durations: LongArray) = testFrameInfo(image) {
+        frameInfo, i ->
+            assertEquals(durations[i], nGetDuration(frameInfo))
+    }
+
+    /**
+     * Iterate through all frames and call a lambda that tests an individual frame's info.
+     *
+     * @param image Name of the image asset to test
+     * @param test Lambda with two parameters: A pointer to the native decoder, and the
+     *             current frame number.
+     */
+    private fun testFrameInfo(image: String, test: (Long, Int) -> Unit) {
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+        val frameInfo = nCreateFrameInfo()
+        var frame = 0
+        do {
+            assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nGetFrameInfo(decoder, frameInfo),
+                "Failed to getFrameInfo for frame $frame of $image!")
+            test(frameInfo, frame)
+            frame++
+        } while (ANDROID_IMAGE_DECODER_SUCCESS == nAdvanceFrame(decoder))
+
+        nDeleteFrameInfo(frameInfo)
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
+    fun animationsAndRects() = arrayOf(
+        // Each group of four Ints represents a frame's rectangle
+        arrayOf<Any>("animated.gif", intArrayOf(0, 0, 278, 183,
+                                                0, 0, 278, 183,
+                                                0, 0, 278, 183,
+                                                0, 0, 278, 183)),
+        arrayOf<Any>("animated_webp.webp", intArrayOf(0, 0, 278, 183,
+                                                      0, 0, 278, 183,
+                                                      0, 0, 278, 183,
+                                                      0, 0, 278, 183)),
+        arrayOf<Any>("required_gif.gif", intArrayOf(0, 0, 100, 100,
+                                                    0, 0, 75, 75,
+                                                    0, 0, 50, 50,
+                                                    0, 0, 60, 60,
+                                                    0, 0, 100, 100,
+                                                    0, 0, 50, 50,
+                                                    0, 0, 75, 75)),
+        arrayOf<Any>("required_webp.webp", intArrayOf(0, 0, 100, 100,
+                                                      0, 0, 75, 75,
+                                                      0, 0, 50, 50,
+                                                      0, 0, 60, 60,
+                                                      0, 0, 100, 100,
+                                                      0, 0, 50, 50,
+                                                      0, 0, 75, 75)),
+        arrayOf<Any>("alphabetAnim.gif", intArrayOf(25, 25, 75, 75,
+                                                    25, 25, 75, 75,
+                                                    25, 25, 75, 75,
+                                                    37, 37, 62, 62,
+                                                    37, 37, 62, 62,
+                                                    25, 25, 75, 75,
+                                                    0, 0, 50, 50,
+                                                    0, 0, 100, 100,
+                                                    25, 25, 75, 75,
+                                                    25, 25, 75, 75,
+                                                    0, 0, 100, 100,
+                                                    25, 25, 75, 75,
+                                                    37, 37, 62, 62)),
+
+        arrayOf<Any>("blendBG.webp", intArrayOf(0, 0, 200, 200,
+                                                0, 0, 200, 200,
+                                                0, 0, 200, 200,
+                                                0, 0, 200, 200,
+                                                0, 0, 200, 200,
+                                                100, 100, 200, 200,
+                                                100, 100, 200, 200)),
+        arrayOf<Any>("stoplight.webp", intArrayOf(0, 0, 145, 55,
+                                                  0, 0, 145, 55,
+                                                  0, 0, 145, 55))
+    )
+
+    @Test
+    @Parameters(method = "animationsAndRects")
+    fun testFrameRects(image: String, rects: IntArray) = testFrameInfo(image) {
+        frameInfo, i ->
+            val left = rects[i * 4]
+            val top = rects[i * 4 + 1]
+            val right = rects[i * 4 + 2]
+            val bottom = rects[i * 4 + 3]
+            try {
+                nTestGetFrameRect(frameInfo, left, top, right, bottom)
+            } catch (t: Throwable) {
+                throw AssertionError("$image, frame $i: ${t.message}", t)
+            }
+    }
+
+    fun animationsAndAlphas() = arrayOf(
+        arrayOf<Any>("animated.gif", BooleanArray(4) { true }),
+        arrayOf<Any>("animated_webp.webp", BooleanArray(4) { true }),
+        arrayOf<Any>("required_gif.gif", booleanArrayOf(false, true, true, true,
+                true, true, true, true)),
+        arrayOf<Any>("required_webp.webp", BooleanArray(7) { false }),
+        arrayOf<Any>("alphabetAnim.gif", booleanArrayOf(true, false, true, false,
+                true, true, true, true, true, true, true, true, true)),
+        arrayOf<Any>("blendBG.webp", booleanArrayOf(false, true, false, true,
+                                                 false, true, true)),
+        arrayOf<Any>("stoplight.webp", BooleanArray(3) { false })
+    )
+
+    @Test
+    @Parameters(method = "animationsAndAlphas")
+    fun testAlphas(image: String, alphas: BooleanArray) = testFrameInfo(image) {
+        frameInfo, i ->
+            assertEquals(alphas[i], nGetFrameAlpha(frameInfo), "Mismatch in alpha for $image frame $i "
+                    + "expected ${alphas[i]}")
+    }
+
+    private val ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE = 1
+    private val ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND = 2
+    private val ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS = 3
+
+    fun animationsAndDisposeOps() = arrayOf(
+        arrayOf<Any>("animated.gif", IntArray(4) { ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND }),
+        arrayOf<Any>("animated_webp.webp", IntArray(4) { ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE }),
+        arrayOf<Any>("required_gif.gif", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)),
+        arrayOf<Any>("required_webp.webp", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)),
+        arrayOf<Any>("alphabetAnim.gif", intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND, ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, ANDROID_IMAGE_DECODER_DISPOSE_OP_BACKGROUND,
+                ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)),
+        arrayOf<Any>("blendBG.webp", IntArray(7) { ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE }),
+        arrayOf<Any>("stoplight.webp", IntArray(4) { ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE })
+    )
+
+    @Test
+    @Parameters(method = "animationsAndDisposeOps")
+    fun testDisposeOps(image: String, disposeOps: IntArray) = testFrameInfo(image) {
+        frameInfo, i ->
+            assertEquals(disposeOps[i], nGetDisposeOp(frameInfo))
+    }
+
+    private val ANDROID_IMAGE_DECODER_BLEND_OP_SRC = 1
+    private val ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER = 2
+
+    fun animationsAndBlendOps() = arrayOf(
+        arrayOf<Any>("animated.gif", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
+        arrayOf<Any>("animated_webp.webp", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC }),
+        arrayOf<Any>("required_gif.gif", IntArray(7) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
+        arrayOf<Any>("required_webp.webp", intArrayOf(ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER)),
+        arrayOf<Any>("alphabetAnim.gif", IntArray(13) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER }),
+        arrayOf<Any>("blendBG.webp", intArrayOf(ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC, ANDROID_IMAGE_DECODER_BLEND_OP_SRC,
+                ANDROID_IMAGE_DECODER_BLEND_OP_SRC, ANDROID_IMAGE_DECODER_BLEND_OP_SRC)),
+        arrayOf<Any>("stoplight.webp", IntArray(4) { ANDROID_IMAGE_DECODER_BLEND_OP_SRC_OVER })
+    )
+
+    @Test
+    @Parameters(method = "animationsAndBlendOps")
+    fun testBlendOps(image: String, blendOps: IntArray) = testFrameInfo(image) {
+        frameInfo, i ->
+            assertEquals(blendOps[i], nGetBlendOp(frameInfo), "Mismatch in blend op for $image "
+                        + "frame $i, expected: ${blendOps[i]}")
+    }
+
     private external fun nTestNullDecoder()
     private external fun nOpenAsset(assets: AssetManager, name: String): Long
     private external fun nCloseAsset(asset: Long)
@@ -584,4 +838,21 @@ class AImageDecoderTest {
     private external fun nSetUnpremultipliedRequired(decoder: Long, required: Boolean): Int
     private external fun nSetAndroidBitmapFormat(decoder: Long, format: Int): Int
     private external fun nSetDataSpace(decoder: Long, format: Int): Int
+    private external fun nCreateFrameInfo(): Long
+    private external fun nDeleteFrameInfo(frameInfo: Long)
+    private external fun nGetFrameInfo(decoder: Long, frameInfo: Long): Int
+    private external fun nTestNullFrameInfo(assets: AssetManager, name: String)
+    private external fun nGetDuration(frameInfo: Long): Long
+    private external fun nTestGetFrameRect(
+        frameInfo: Long,
+        expectedLeft: Int,
+        expectedTop: Int,
+        expectedRight: Int,
+        expectedBottom: Int
+    )
+    private external fun nGetFrameAlpha(frameInfo: Long): Boolean
+    private external fun nGetAlpha(decoder: Long): Boolean
+    private external fun nGetDisposeOp(frameInfo: Long): Int
+    private external fun nGetBlendOp(frameInfo: Long): Int
+    private external fun nGetRepeatCount(decoder: Long): Int
 }
