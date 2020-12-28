@@ -53,7 +53,9 @@ public class TestImpl extends ITest.Stub {
   public void TestVoidReturn() {}
 
   @Override
-  public void TestOneway() {}
+  public void TestOneway() throws RemoteException {
+    throw new RemoteException("Oneway call errors should be ignored");
+  }
 
   @Override
   public int GiveMeMyCallingPid() {
