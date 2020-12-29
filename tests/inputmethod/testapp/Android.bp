@@ -25,6 +25,7 @@ android_test_helper_app {
     compile_multilib: "both",
     static_libs: [
         "androidx.annotation_annotation",
+        "compatibility-device-util-axt",
     ],
     srcs: [
         "src/**/*.java",
