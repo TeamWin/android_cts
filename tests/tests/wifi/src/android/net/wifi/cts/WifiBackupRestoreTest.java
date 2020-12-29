@@ -49,7 +49,6 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -249,8 +248,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
             byte[] backupData = mWifiManager.retrieveSoftApBackupData();
 
             // Modify softap config and set it.
+            String origSsid = origSoftApConfig.getSsid();
+            char lastOrigSsidChar = origSsid.charAt(origSsid.length() - 1);
+            String updatedSsid = new StringBuilder(origSsid.substring(0, origSsid.length() - 1))
+                    .append((lastOrigSsidChar == 'a' || lastOrigSsidChar == 'A') ? 'b' : 'a')
+                    .toString();
             SoftApConfiguration modSoftApConfig = new SoftApConfiguration.Builder(origSoftApConfig)
-                    .setSsid(origSoftApConfig.getSsid() + "b")
+                    .setSsid(updatedSsid)
                     .build();
             mWifiManager.setSoftApConfiguration(modSoftApConfig);
             // Ensure that it does not match the orig softap config.
