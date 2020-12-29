@@ -350,6 +350,10 @@ public class ImsCallProfileTest {
 
     @Test
     public void testCallComposerExtras() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
         ImsCallProfile data = new ImsCallProfile();
 
         // EXTRA_PRIORITY
@@ -402,8 +406,10 @@ public class ImsCallProfileTest {
         Location locationFromData = data.getCallExtraParcelable(ImsCallProfile.EXTRA_LOCATION);
         Location locationFromUnparceledData = unparceledData.getCallExtraParcelable(
                 ImsCallProfile.EXTRA_LOCATION);
-        assertEquals("unparceled data for EXTRA_LOCATION is not valid!",
-                locationFromData, locationFromUnparceledData);
+        assertEquals("unparceled data for EXTRA_LOCATION latitude is not valid!",
+                locationFromData.getLatitude(), locationFromUnparceledData.getLatitude());
+        assertEquals("unparceled data for EXTRA_LOCATION Longitude is not valid!",
+                locationFromData.getLongitude(), locationFromUnparceledData.getLongitude());
 
         assertEquals("unparceled data for EXTRA_PICTURE_URL is not valid!",
                 data.getCallExtra(ImsCallProfile.EXTRA_PICTURE_URL),
