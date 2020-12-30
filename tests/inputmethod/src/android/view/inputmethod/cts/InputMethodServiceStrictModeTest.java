@@ -24,8 +24,6 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 
-import static org.junit.Assert.assertTrue;
-
 import android.content.Context;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
@@ -40,7 +38,6 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
-import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -152,7 +149,7 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
      * throw strict mode violations.
      */
     @Test
-    public void testIncorrectContextUseOnImsDerivedDisplayContext() throws Exception{
+    public void testIncorrectContextUseOnImsDerivedDisplayContext() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -169,7 +166,7 @@ public class InputMethodServiceStrictModeTest extends EndToEndImeTestBase {
                     TIMEOUT);
 
             expectEvent(stream, event -> "onStrictModeViolated".equals(event.getEventName()),
-                   CHECK_ALL, TIMEOUT);
+                    CHECK_ALL, TIMEOUT);
 
             // Verify if obtaining a ViewConfiguration on an InputMethodService derived display
             // context throws a strict mode violation.

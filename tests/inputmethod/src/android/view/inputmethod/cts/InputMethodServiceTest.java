@@ -62,7 +62,6 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -440,10 +439,10 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     @Test
     public void testCursorAfterLaunchAnotherActivity() throws Exception {
         final AtomicReference<EditText> firstEditTextRef = new AtomicReference<>();
-        final int NEW_CURSOR_OFFSET = 5;
-        final String INITIAL_TEXT = "Initial";
-        final String FIRST_COMMIT_MSG = "First";
-        final String SECOND_COMMIT_MSG = "Second";
+        final int newCursorOffset = 5;
+        final String initialText = "Initial";
+        final String firstCommitMsg = "First";
+        final String secondCommitMsg = "Second";
 
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -461,7 +460,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 editText.setPrivateImeOptions(marker);
                 editText.setSingleLine(false);
                 firstEditTextRef.set(editText);
-                editText.setText(INITIAL_TEXT);
+                editText.setText(initialText);
                 layout.addView(editText);
                 editText.requestFocus();
                 return layout;
@@ -473,18 +472,18 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // Verify onStartInput when first activity launch
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
-            final ImeCommand commit = imeSession.callCommitText(FIRST_COMMIT_MSG, 1);
+            final ImeCommand commit = imeSession.callCommitText(firstCommitMsg, 1);
             expectCommand(stream, commit, TIMEOUT);
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(
-                            firstEditText.getText(), INITIAL_TEXT + FIRST_COMMIT_MSG), TIMEOUT);
+                            firstEditText.getText(), initialText + firstCommitMsg), TIMEOUT);
 
             // Get current position
             int originalSelectionStart = firstEditText.getSelectionStart();
             int originalSelectionEnd = firstEditText.getSelectionEnd();
 
-            assertEquals(INITIAL_TEXT.length() + FIRST_COMMIT_MSG.length(), originalSelectionStart);
-            assertEquals(INITIAL_TEXT.length() + FIRST_COMMIT_MSG.length(), originalSelectionEnd);
+            assertEquals(initialText.length() + firstCommitMsg.length(), originalSelectionStart);
+            assertEquals(initialText.length() + firstCommitMsg.length(), originalSelectionEnd);
 
             // Launch second test activity
             final Intent intent = new Intent()
@@ -499,7 +498,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
             // Commit some messages on second activity
-            final ImeCommand secondCommit = imeSession.callCommitText(SECOND_COMMIT_MSG, 1);
+            final ImeCommand secondCommit = imeSession.callCommitText(secondCommitMsg, 1);
             expectCommand(stream, secondCommit, TIMEOUT);
 
             // Back to first activity
@@ -515,13 +514,13 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
             // Update cursor to a new position
-            int newCursorPosition = originalSelectionStart - NEW_CURSOR_OFFSET;
+            int newCursorPosition = originalSelectionStart - newCursorOffset;
             final ImeCommand setSelection =
                     imeSession.callSetSelection(newCursorPosition, newCursorPosition);
             expectCommand(stream, setSelection, TIMEOUT);
 
             // Commit to first activity again
-            final ImeCommand commitFirstAgain = imeSession.callCommitText(FIRST_COMMIT_MSG, 1);
+            final ImeCommand commitFirstAgain = imeSession.callCommitText(firstCommitMsg, 1);
             expectCommand(stream, commitFirstAgain, TIMEOUT);
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(firstEditText.getText(), "InitialFirstFirst"), TIMEOUT);
@@ -530,8 +529,8 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             int newSelectionStart = firstEditText.getSelectionStart();
             int newSelectionEnd = firstEditText.getSelectionEnd();
 
-            assertEquals(newSelectionStart, newCursorPosition + FIRST_COMMIT_MSG.length());
-            assertEquals(newSelectionEnd, newCursorPosition + FIRST_COMMIT_MSG.length());
+            assertEquals(newSelectionStart, newCursorPosition + firstCommitMsg.length());
+            assertEquals(newSelectionEnd, newCursorPosition + firstCommitMsg.length());
         }
     }
 

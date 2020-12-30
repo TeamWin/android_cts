@@ -25,7 +25,6 @@ import androidx.annotation.NonNull;
 
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /**
