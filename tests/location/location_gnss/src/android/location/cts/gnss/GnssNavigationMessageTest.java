@@ -97,9 +97,6 @@ public class GnssNavigationMessageTest extends GnssTestCase {
 
         boolean success = mTestGnssNavigationMessageListener.await();
 
-        if (!mTestGnssNavigationMessageListener.verifyState()) {
-            return;
-        }
         SoftAssert softAssert = new SoftAssert(TAG);
         softAssert.assertTrue(
             "Time elapsed without getting enough navigation messages."
