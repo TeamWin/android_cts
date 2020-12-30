@@ -53,6 +53,9 @@ class AImageDecoderTest {
     @Test
     fun testNullDecoder() = nTestNullDecoder()
 
+    @Test
+    fun testToString() = nTestToString()
+
     private enum class Crop {
         Top,    // Crop a section of the image that contains the top
         Left,   // Crop a section of the image that contains the left
@@ -824,6 +827,7 @@ class AImageDecoderTest {
     }
 
     private external fun nTestNullDecoder()
+    private external fun nTestToString()
     private external fun nOpenAsset(assets: AssetManager, name: String): Long
     private external fun nCloseAsset(asset: Long)
     private external fun nCreateFromAsset(asset: Long): Long

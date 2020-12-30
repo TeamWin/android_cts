@@ -26,6 +26,8 @@
 #include "NativeTestHelpers.h"
 
 #include <cstdlib>
+#include <cstring>
+#include <initializer_list>
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
@@ -35,6 +37,37 @@ static void testNullDecoder(JNIEnv* env, jobject) {
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_advanceFrame(nullptr));
 
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_rewind(nullptr));
+}
+
+static void testToString(JNIEnv* env, jobject) {
+    struct {
+        int resultCode;
+        const char* string;
+    } map[] = {
+        { ANDROID_IMAGE_DECODER_SUCCESS,            "ANDROID_IMAGE_DECODER_SUCCESS" },
+        { ANDROID_IMAGE_DECODER_INCOMPLETE,         "ANDROID_IMAGE_DECODER_INCOMPLETE" },
+        { ANDROID_IMAGE_DECODER_ERROR,              "ANDROID_IMAGE_DECODER_ERROR" },
+        { ANDROID_IMAGE_DECODER_INVALID_CONVERSION, "ANDROID_IMAGE_DECODER_INVALID_CONVERSION" },
+        { ANDROID_IMAGE_DECODER_INVALID_SCALE,      "ANDROID_IMAGE_DECODER_INVALID_SCALE" },
+        { ANDROID_IMAGE_DECODER_BAD_PARAMETER,      "ANDROID_IMAGE_DECODER_BAD_PARAMETER" },
+        { ANDROID_IMAGE_DECODER_INVALID_INPUT,      "ANDROID_IMAGE_DECODER_INVALID_INPUT" },
+        { ANDROID_IMAGE_DECODER_SEEK_ERROR,         "ANDROID_IMAGE_DECODER_SEEK_ERROR" },
+        { ANDROID_IMAGE_DECODER_INTERNAL_ERROR,     "ANDROID_IMAGE_DECODER_INTERNAL_ERROR" },
+        { ANDROID_IMAGE_DECODER_UNSUPPORTED_FORMAT, "ANDROID_IMAGE_DECODER_UNSUPPORTED_FORMAT" },
+        { ANDROID_IMAGE_DECODER_FINISHED,           "ANDROID_IMAGE_DECODER_FINISHED" },
+        { ANDROID_IMAGE_DECODER_INVALID_STATE,      "ANDROID_IMAGE_DECODER_INVALID_STATE" },
+    };
+
+    for (const auto& item : map) {
+        const char* str = AImageDecoder_resultToString(item.resultCode);
+        ASSERT_EQ(0, strcmp(item.string, str));
+    }
+
+    for (int i : { ANDROID_IMAGE_DECODER_SUCCESS + 1,
+                   ANDROID_IMAGE_DECODER_INVALID_STATE - 1,
+                   2, 7, 37, 42 }) {
+        ASSERT_EQ(nullptr, AImageDecoder_resultToString(i));
+    }
 }
 
 static jlong openAsset(JNIEnv* env, jobject, jobject jAssets, jstring jFile) {
@@ -58,7 +91,8 @@ static jlong createFromAsset(JNIEnv* env, jobject, jlong asset) {
     AImageDecoder* decoder = nullptr;
     int result = AImageDecoder_createFromAAsset(reinterpret_cast<AAsset*>(asset), &decoder);
     if (ANDROID_IMAGE_DECODER_SUCCESS != result || !decoder) {
-        fail(env, "Failed to create AImageDecoder with error %i!", result);
+        fail(env, "Failed to create AImageDecoder with %s!",
+             AImageDecoder_resultToString(result));
     }
     return reinterpret_cast<jlong>(decoder);
 }
@@ -105,7 +139,8 @@ static void decode(JNIEnv* env, jobject, jlong decoder_ptr, jobject jBitmap, jin
     const int result = AImageDecoder_decodeImage(decoder, pixels, info.stride,
                                                  info.stride * info.height);
     if (result != expected) {
-        fail(env, "Unexpected result from AImageDecoder_decodeImage: %i", result);
+        fail(env, "Unexpected result from AImageDecoder_decodeImage: %s",
+             AImageDecoder_resultToString(result));
         // Don't return yet, so we can unlockPixels.
     }
 
@@ -236,6 +271,7 @@ static jint getRepeatCount(JNIEnv*, jobject, jlong decoder) {
 
 static JNINativeMethod gMethods[] = {
     { "nTestNullDecoder", "()V", (void*) testNullDecoder },
+    { "nTestToString", "()V", (void*) testToString },
     { "nOpenAsset", "(" ASSET_MANAGER STRING ")J", (void*) openAsset },
     { "nCloseAsset", "(J)V", (void*) closeAsset },
     { "nCreateFromAsset", "(J)J", (void*) createFromAsset },
