@@ -45,14 +45,12 @@ import android.telephony.PreciseDataConnectionState;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
 import android.telephony.SmsManager;
-import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyDisplayInfo;
 import android.telephony.TelephonyManager;
 import android.telephony.TelephonyManager.DataEnabledReason;
 import android.telephony.emergency.EmergencyNumber;
 import android.telephony.ims.ImsReasonInfo;
 import android.util.Log;
-import android.util.Pair;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -64,9 +62,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 public class PhoneStateListenerTest {
 
@@ -100,6 +97,8 @@ public class PhoneStateListenerTest {
     private boolean mOnTelephonyDisplayInfoChanged;
     private boolean mOnPhysicalChannelConfigCalled;
     private boolean mOnDataEnabledChangedCalled;
+    private boolean mOnAllowedNetworkTypesChangedCalled;
+    private Map<Integer, Long> mAllowedNetworkTypes;
     @RadioPowerState private int mRadioPowerState;
     @SimActivationState private int mVoiceActivationState;
     private BarringInfo mBarringInfo;
@@ -2238,5 +2237,66 @@ public class PhoneStateListenerTest {
 
         // Test unregister
         unRegisterPhoneStateListener(mOnDataEnabledChangedCalled, mDataEnabledChangedListener);
+    }
+
+    private AllowedNetworkTypesChangedListener mAllowedNetworkTypesChangedListenerListener;
+
+    private class AllowedNetworkTypesChangedListener extends PhoneStateListener
+            implements PhoneStateListener.AllowedNetworkTypesChangedListener {
+        @Override
+        public void onAllowedNetworkTypesChanged(Map<Integer, Long> allowedNetworkTypesList) {
+            synchronized (mLock) {
+                mAllowedNetworkTypes = allowedNetworkTypesList;
+                mOnAllowedNetworkTypesChangedCalled = true;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testOnAllowedNetworkTypesChangedByRegisterPhoneStateListener() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+        assertThat(mOnAllowedNetworkTypesChangedCalled).isFalse();
+
+        mHandler.post(() -> {
+            mAllowedNetworkTypesChangedListenerListener = new AllowedNetworkTypesChangedListener();
+            registerPhoneStateListenerWithPermission(mAllowedNetworkTypesChangedListenerListener);
+        });
+        synchronized (mLock) {
+            if (!mOnAllowedNetworkTypesChangedCalled) {
+                mLock.wait(WAIT_TIME);
+            }
+        }
+        long allowedNetworkTypeUser = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                }
+        );
+        long allowedNetworkTypePower = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                }
+        );
+        long allowedNetworkTypeCarrier = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+                }
+        );
+        assertThat(allowedNetworkTypeUser).isEqualTo(
+                mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER));
+        assertThat(allowedNetworkTypePower).isEqualTo(
+                mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER));
+        assertThat(allowedNetworkTypeCarrier).isEqualTo(
+                mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER));
+
+        // Test unregister
+        unRegisterPhoneStateListener(mOnAllowedNetworkTypesChangedCalled,
+                mAllowedNetworkTypesChangedListenerListener);
     }
 }
