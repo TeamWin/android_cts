@@ -27,6 +27,7 @@ import static java.util.Collections.singletonList;
 import android.app.slice.Slice;
 import android.app.slice.SliceSpec;
 import android.content.ClipData;
+import android.content.Intent;
 import android.content.IntentSender;
 import android.net.Uri;
 import android.os.Parcel;
@@ -230,6 +231,13 @@ public class DatasetTest {
         assertThat(dataset.getFieldIds()).isEqualTo(singletonList(mId));
         assertThat(dataset.getFieldContent()).isEqualTo(mContent);
         assertThat(dataset.getFieldValues()).isEqualTo(singletonList(null));
+    }
+
+    @Test
+    public void testBuilder_setContentWithIntentIsNotAllowed() {
+        Dataset.Builder builder = new Dataset.Builder();
+        ClipData clip = ClipData.newIntent("", new Intent());
+        assertThrows(IllegalArgumentException.class, () -> builder.setContent(mId, clip));
     }
 
     @Test
