@@ -422,6 +422,11 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
         }
 
         void resizeDisplay() {
+            if (mSimulateDisplay) {
+                throw new IllegalStateException(
+                        "Please use ReportedDisplayMetrics#setDisplayMetrics to resize"
+                                + " simulate display");
+            }
             executeShellCommand(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY)
                     + " -f 0x20000000" + " --es " + KEY_COMMAND + " " + COMMAND_RESIZE_DISPLAY);
         }
