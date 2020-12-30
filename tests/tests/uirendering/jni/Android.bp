@@ -17,6 +17,7 @@ cc_test_library {
     gtest: false,
     srcs: [
         "CtsUiRenderingJniOnLoad.cpp",
+        "android_uirendering_cts_AImageDecoderTest.cpp",
         "NativeTestHelpers.cpp",
     ],
     include_dirs: ["system/core/include"],
