@@ -325,7 +325,7 @@ public class BitmapTest {
                 HARDWARE_OPTIONS);
         assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
 
-        Bitmap ret = Bitmap.createBitmap(hardwareBitmap, 0, 0, 100, 100, null, false);
+        Bitmap ret = Bitmap.createBitmap(hardwareBitmap, 0, 0, 96, 96, null, false);
         assertEquals(Config.HARDWARE, ret.getConfig());
         assertFalse(ret.isMutable());
     }
