@@ -1173,6 +1173,22 @@ public class StagedInstallTest {
                 .contains("AVB footer verification failed");
     }
 
+    /**
+     * Test non-priv apps cannot access /data/app-staging folder contents
+     */
+    @Test
+    public void testAppStagingDirCannotBeReadByNonPrivApps() throws Exception {
+        final int sessionId = stageSingleApk(TestApp.A1).assertSuccessful().getSessionId();
+        // Non-priv apps should not be able to view contents of app-staging directory
+        final File appStagingDir = new File("/data/app-staging");
+        assertThat(appStagingDir.exists()).isTrue();
+        assertThat(appStagingDir.listFiles()).isNull();
+        // Non-owner user should not be able to access sub-dirs of app-staging directory
+        final File appStagingSubDir = new File("/data/app-staging/session_" + sessionId);
+        assertThat(appStagingSubDir.exists()).isFalse();
+        assertThat(appStagingDir.listFiles()).isNull();
+    }
+
     private static long getInstalledVersion(String packageName) {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager pm = context.getPackageManager();
