@@ -16,6 +16,8 @@
 
 package com.android.cts.splitapp;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
@@ -76,6 +78,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class SplitAppTest {
@@ -431,6 +434,62 @@ public class SplitAppTest {
         intent.setPackage(PKG);
         List<ResolveInfo> result = pm.queryBroadcastReceivers(intent, 0);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testInheritUpdatedBase_withRevisionA() throws Exception {
+        final Resources r = getContext().getResources();
+        final PackageManager pm = getContext().getPackageManager();
+
+        // Resources should have been updated
+        assertEquals(true, r.getBoolean(R.bool.my_receiver_enabled));
+
+        assertEquals("blue-revision", r.getString(R.string.my_string1));
+        assertEquals("purple-revision", r.getString(R.string.my_string2));
+
+        assertEquals(0xff00ffff, r.getColor(R.color.my_color));
+        assertEquals(456, r.getInteger(R.integer.my_integer));
+
+        // Also, new resources could be found
+        assertEquals("new string", r.getString(r.getIdentifier(
+                "my_new_string", "string", PKG)));
+
+        assertAssetContents(r, "fileA.txt", "FILEA");
+        assertAssetContents(r, "dir/dirfileA.txt", "DIRFILEA");
+
+        // Activity of ACTION_MAIN should have been updated to .revision_a.MyActivity
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setPackage(PKG);
+        final List<String> activityNames = pm.queryIntentActivities(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(activityNames).contains("com.android.cts.splitapp.revision_a.MyActivity");
+
+        // Receiver of DATE_CHANGED should have been updated to .revision_a.MyReceiver
+        intent = new Intent(Intent.ACTION_DATE_CHANGED);
+        intent.setPackage(PKG);
+        final List<String> receiverNames = pm.queryBroadcastReceivers(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(receiverNames).contains("com.android.cts.splitapp.revision_a.MyReceiver");
+
+        // Provider should have been updated to .revision_a.MyProvider
+        final ProviderInfo info = pm.resolveContentProvider("com.android.cts.splitapp", 0);
+        assertEquals("com.android.cts.splitapp.revision_a.MyProvider", info.name);
+
+        // And assert that we spun up the provider in this process
+        final Class<?> provider = Class.forName("com.android.cts.splitapp.revision_a.MyProvider");
+        final Field field = provider.getDeclaredField("sCreated");
+        assertTrue("Expected provider to have been created", (boolean) field.get(null));
+
+        // Camera permission has been removed
+        try {
+            getContext().enforceCallingOrSelfPermission(android.Manifest.permission.CAMERA, null);
+            fail("Camera permission should not be granted");
+        } catch (SecurityException expected) {
+        }
+
+        // New Vibrate permision should be granted
+        getContext().enforceCallingOrSelfPermission(android.Manifest.permission.VIBRATE, null);
     }
 
     /**
