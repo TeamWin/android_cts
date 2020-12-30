@@ -59,6 +59,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import androidx.test.rule.ActivityTestRule;
 
@@ -114,17 +115,18 @@ public class WindowInputTests {
     @Test
     public void testMoveWindowAndTap() throws Throwable {
         final WindowManager wm = mActivity.getWindowManager();
-        Point displaySize = new Point();
-        mActivity.getDisplay().getSize(displaySize);
-
         final WindowManager.LayoutParams p = new WindowManager.LayoutParams();
+        p.setFitInsetsTypes(WindowInsets.Type.systemBars()
+                | WindowInsets.Type.systemGestures());
+        p.flags = WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                | WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        p.width = p.height = 20;
+        p.gravity = Gravity.LEFT | Gravity.TOP;
 
         // Set up window.
         mActivityRule.runOnUiThread(() -> {
             mView = new View(mActivity);
-            p.width = 20;
-            p.height = 20;
-            p.gravity = Gravity.LEFT | Gravity.TOP;
+            mView.setBackgroundColor(Color.RED);
             mView.setOnClickListener((v) -> {
                 mClickCount++;
             });
@@ -132,11 +134,10 @@ public class WindowInputTests {
         });
         mInstrumentation.waitForIdleSync();
 
-        WindowInsets insets = mActivity.getWindow().getDecorView().getRootWindowInsets();
-        final Rect windowBounds = new Rect(insets.getSystemWindowInsetLeft(),
-                insets.getSystemWindowInsetTop(),
-                displaySize.x - insets.getSystemWindowInsetRight(),
-                displaySize.y - insets.getSystemWindowInsetBottom());
+        final WindowMetrics windowMetrics = wm.getCurrentWindowMetrics();
+        final WindowInsets windowInsets = windowMetrics.getWindowInsets();
+        final Rect windowBounds = new Rect(windowMetrics.getBounds());
+        windowBounds.inset(windowInsets.getInsetsIgnoringVisibility(p.getFitInsetsTypes()));
 
         // Move the window to a random location in the window and attempt to tap on view multiple
         // times.
@@ -155,8 +156,18 @@ public class WindowInputTests {
 
             mInstrumentation.waitForIdleSync();
             if (mClickCount != previousCount + 1) {
+                final int vW = mView.getWidth();
+                final int vH = mView.getHeight();
+                final int[] viewOnScreenXY = new int[2];
+                mView.getLocationOnScreen(viewOnScreenXY);
+                final Point tapPosition =
+                        new Point(viewOnScreenXY[0] + vW / 2, viewOnScreenXY[1] + vH / 2);
+                final Rect realBounds = new Rect(viewOnScreenXY[0], viewOnScreenXY[1],
+                        viewOnScreenXY[0] + vW, viewOnScreenXY[1] + vH);
+                final Rect requestedBounds = new Rect(p.x, p.y, p.x + p.width, p.y + p.height);
                 dumpWindows("Dumping windows due to failure");
-                fail("Tap #" + i + " on " + locationInWindow + " failed");
+                fail("Tap #" + i + " on " + tapPosition + " failed; realBounds=" + realBounds
+                        + " requestedBounds=" + requestedBounds);
             }
         }
 

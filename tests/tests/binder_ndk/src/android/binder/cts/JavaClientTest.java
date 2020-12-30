@@ -108,9 +108,19 @@ public class JavaClientTest {
     }
 
     @Test
-    public void testTrivial() throws RemoteException {
+    public void testVoidReturn() throws RemoteException {
         mInterface.TestVoidReturn();
-        mInterface.TestOneway();
+    }
+
+    @Test
+    public void testOneway() throws RemoteException {
+        boolean isLocalJava = !mShouldBeRemote && mExpectedName == "JAVA";
+        try {
+            mInterface.TestOneway();
+            assertFalse("local Java should throw exception", isLocalJava);
+        } catch (RemoteException e) {
+            assertTrue("only local Java should report error", isLocalJava);
+        }
     }
 
     private void checkDump(String expected, String[] args) throws RemoteException, IOException {
