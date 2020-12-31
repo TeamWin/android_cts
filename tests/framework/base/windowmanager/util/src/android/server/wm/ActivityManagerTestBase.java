@@ -16,7 +16,6 @@
 
 package android.server.wm;
 
-import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.app.Instrumentation.ActivityMonitor;
@@ -828,10 +827,7 @@ public abstract class ActivityManagerTestBase {
             if (mUseTaskOrganizer) {
                 mTaskOrganizer.putTaskInSplitPrimary(taskId);
             } else {
-                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
-                        SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                        true /* onTop */, false /* animate */,
-                        null /* initialBounds */, true /* showRecents */);
+                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, true /* onTop */);
             }
 
             mWmState.waitForValidState(
@@ -860,10 +856,7 @@ public abstract class ActivityManagerTestBase {
             if (mUseTaskOrganizer) {
                 mTaskOrganizer.putTaskInSplitPrimary(taskId);
             } else {
-                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
-                        SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
-                        false /* animate */, null /* initialBounds */,
-                        false /* showRecents */);
+                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, true /* onTop */);
             }
 
             // Wait for split screen ready
