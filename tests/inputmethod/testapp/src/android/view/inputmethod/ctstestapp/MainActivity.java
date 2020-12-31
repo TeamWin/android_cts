@@ -95,7 +95,7 @@ public final class MainActivity extends Activity {
             textView.setText("This is DialogActivity");
             layout.addView(textView);
 
-            mDialog= new AlertDialog.Builder(this)
+            mDialog = new AlertDialog.Builder(this)
                     .setView(new LinearLayout(this))
                     .create();
             mDialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);

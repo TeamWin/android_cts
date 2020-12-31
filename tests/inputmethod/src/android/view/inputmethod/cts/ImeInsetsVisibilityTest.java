@@ -56,16 +56,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.MediumTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
-
-import androidx.test.filters.MediumTest;
-import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -294,8 +293,8 @@ public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
             lastEditTextPos = new Point(curEditPos);
             curEditPos = getLocationOnScreenForView(editText);
 
-            assertTrue("Insets visibility & EditText position should persist when " +
-                            "the above IME window shown",
+            assertTrue("Insets visibility & EditText position should persist when "
+                            + "the above IME window shown",
                     isInsetsVisible(insetsFromActivity[0], WindowInsets.Type.ime())
                             && curEditPos.equals(lastEditTextPos));
 

@@ -471,7 +471,7 @@ public final class MockIme extends InputMethodService {
                             .detectIncorrectContextUse()
                             .penaltyLog()
                             .penaltyListener(Runnable::run,
-                                    v -> getTracer().onStrictModeViolated(() -> {}))
+                                    v -> getTracer().onStrictModeViolated(() -> { }))
                             .build());
         }
 
