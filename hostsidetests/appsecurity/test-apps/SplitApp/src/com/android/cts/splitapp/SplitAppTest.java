@@ -492,6 +492,58 @@ public class SplitAppTest {
         getContext().enforceCallingOrSelfPermission(android.Manifest.permission.VIBRATE, null);
     }
 
+    @Test
+    public void testInheritUpdatedSplit_withRevisionA() throws Exception {
+        final Resources r = getContext().getResources();
+        final PackageManager pm = getContext().getPackageManager();
+
+        // Resources should have been updated
+        assertEquals("red-revision", r.getString(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_string", "string", PKG)));
+        assertEquals(456, r.getInteger(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
+
+        // Also, new resources could be found
+        assertEquals("feature new string", r.getString(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_new_string", "string", PKG)));
+
+        assertAssetContents(r, "fileFA.txt", "FILE_FA");
+        assertAssetContents(r, "dir/dirfileFA.txt", "DIRFILE_FA");
+
+        // Activity of ACTION_MAIN should have been updated to .revision_a.FeatureActivity
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setPackage(PKG);
+        final List<String> activityNames = pm.queryIntentActivities(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(activityNames).contains("com.android.cts.splitapp.revision_a.FeatureActivity");
+
+        // Receiver of DATE_CHANGED could not be found
+        intent = new Intent(Intent.ACTION_DATE_CHANGED);
+        intent.setPackage(PKG);
+        final List<String> receiverNames = pm.queryBroadcastReceivers(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(receiverNames).doesNotContain("com.android.cts.splitapp.FeatureReceiver");
+
+        // Service of splitapp should have been updated to .revision_a.FeatureService
+        intent = new Intent("com.android.cts.splitapp.service");
+        intent.setPackage(PKG);
+        final List<String> serviceNames = pm.queryIntentServices(intent, 0).stream()
+                .map(info -> info.serviceInfo.name).collect(Collectors.toList());
+        assertThat(serviceNames).contains("com.android.cts.splitapp.revision_a.FeatureService");
+
+        // Provider should have been updated to .revision_a.FeatureProvider
+        final ProviderInfo info = pm.resolveContentProvider(
+                "com.android.cts.splitapp.provider", 0);
+        assertEquals("com.android.cts.splitapp.revision_a.FeatureProvider", info.name);
+
+        // And assert that we spun up the provider in this process
+        final Class<?> provider = Class.forName(
+                "com.android.cts.splitapp.revision_a.FeatureProvider");
+        final Field field = provider.getDeclaredField("sCreated");
+        assertTrue("Expected provider to have been created", (boolean) field.get(null));
+    }
+
     /**
      * Write app data in a number of locations that expect to remain intact over
      * long periods of time, such as across app moves.

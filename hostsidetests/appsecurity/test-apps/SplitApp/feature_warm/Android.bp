@@ -64,3 +64,28 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+// Define a variant with different codes and resources for the inherit updated test of the
+// feature_warm apk
+android_test_helper_app {
+    name: "CtsSplitAppFeatureWarmRevisionA",
+    defaults: ["CtsSplitAppFeatureWarmDefaults"],
+    srcs: ["src/**/*.java", "revision_a/src/**/*.java"],
+    resource_dirs: ["res", "revision_a/res"],
+    asset_dirs: ["revision_a/assets"],
+    manifest : "revision_a/AndroidManifest.xml",
+    package_splits: ["v7"],
+    certificate: ":cts-testkey1",
+    aaptflags: [
+        "--version-code 100",
+        "--revision-code 10",
+        "--version-name OneHundredRevisionTen",
+        "--replace-version",
+        "--package-id 0x80",
+        "--auto-add-overlay",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}

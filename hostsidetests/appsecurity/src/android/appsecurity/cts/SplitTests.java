@@ -82,6 +82,7 @@ public class SplitTests extends BaseAppSecurityTest {
     private static final String APK_FEATURE_ROSE_v23 = "CtsSplitAppFeatureRose_v23.apk";
 
     private static final String APK_REVISION_A = "CtsSplitAppRevisionA.apk";
+    private static final String APK_FEATURE_WARM_REVISION_A = "CtsSplitAppFeatureWarmRevisionA.apk";
 
     static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
 
@@ -506,8 +507,18 @@ public class SplitTests extends BaseAppSecurityTest {
 
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
-    public void testInheritUpdatedSplit() throws Exception {
-        // TODO: flesh out this test
+    public void testInheritUpdatedSplit_full() throws Exception {
+        testInheritUpdatedSplit(false);
+    }
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testInheritUpdatedSplit_instant() throws Exception {
+        testInheritUpdatedSplit(true);
+    }
+    private void testInheritUpdatedSplit(boolean instant) throws Exception {
+        new InstallMultiple(instant).addFile(APK).addFile(APK_FEATURE_WARM).run();
+        new InstallMultiple(instant).inheritFrom(PKG).addFile(APK_FEATURE_WARM_REVISION_A).run();
+        runDeviceTests(PKG, CLASS, "testInheritUpdatedSplit_withRevisionA", instant);
     }
 
     @Test
