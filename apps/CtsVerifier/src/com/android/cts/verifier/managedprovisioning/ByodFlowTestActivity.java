@@ -39,7 +39,6 @@ import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestListActivity;
 import com.android.cts.verifier.TestListAdapter.TestListItem;
 import com.android.cts.verifier.TestResult;
-import com.android.cts.verifier.location.LocationListenerActivity;
 
 /**
  * CTS verifier test for BYOD managed provisioning flow
