@@ -2510,11 +2510,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // assert that the country code is all uppercase
         assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
 
-        if (WifiFeature.isTelephonySupported(getContext())) {
-            String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
-                    .getNetworkCountryIso();
-            assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        // skip if Telephony is unsupported
+        if (!WifiFeature.isTelephonySupported(getContext())) {
+            return;
         }
+
+        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                .getNetworkCountryIso();
+
+        // skip if Telephony country code is unavailable
+        if (telephonyCountryCode == null || telephonyCountryCode.isEmpty()) {
+            return;
+        }
+
+        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
     }
 
     /**
