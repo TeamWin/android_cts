@@ -89,6 +89,24 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Test 11.1.2-3
+     *
+     * <p>Tests that the device responds correctly to a {@code <Request Active Source>} message when
+     * it is the current active source.
+     */
+    @Test
+    public void cect_11_1_2_3_DutDoesRespondToRequestActiveSourceMessage() throws Exception {
+        // Make the TV device the active source.
+        HdmiControlManagerUtility.setActiveSource(
+                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.BROADCAST,
+                CecOperand.REQUEST_ACTIVE_SOURCE);
+        hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+    }
+
+    /**
      * Test 11.1.2-4
      *
      * <p>Tests that the device accepts {@code <Inactive Source>} message.
