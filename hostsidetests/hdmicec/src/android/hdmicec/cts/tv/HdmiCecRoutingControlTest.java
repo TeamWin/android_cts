@@ -19,6 +19,7 @@ package android.hdmicec.cts.tv;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -63,6 +64,28 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.broadcastActiveSource(
                     hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
         }
+    }
+
+    /**
+     * Test 11.1.2-2
+     *
+     * <p>Tests that the device doesn't respond to a {@code <Request Active Source>} message when it
+     * is not the current active source.
+     */
+    @Test
+    public void cect_11_1_2_2_DutDoesNotRespondToRequestActiveSourceMessage() throws Exception {
+        // Ensure that DUT is the active source.
+        HdmiControlManagerUtility.setActiveSource(
+                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        hdmiCecClient.checkExpectedOutput(CecOperand.ACTIVE_SOURCE);
+        // Broadcast an active source from the client device.
+        hdmiCecClient.broadcastActiveSource(hdmiCecClient.getSelfDevice());
+        hdmiCecClient.sendCecMessage(
+                hdmiCecClient.getSelfDevice(),
+                LogicalAddress.BROADCAST,
+                CecOperand.REQUEST_ACTIVE_SOURCE);
+        hdmiCecClient.checkOutputDoesNotContainMessage(
+                LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
     }
 
     /**
