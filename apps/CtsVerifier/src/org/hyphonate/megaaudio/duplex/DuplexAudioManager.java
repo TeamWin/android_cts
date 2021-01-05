@@ -19,6 +19,7 @@ import android.media.AudioDeviceInfo;
 import android.util.Log;
 
 import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.Player;
@@ -32,6 +33,7 @@ public class DuplexAudioManager {
     private static final String TAG = DuplexAudioManager.class.getSimpleName();
 
     // Player
+    //TODO - explain these constants
     private int mNumPlayerChannels = 2;
     private int mPlayerSampleRate = 48000;
     private int mNumPlayerBufferFrames;
@@ -48,13 +50,16 @@ public class DuplexAudioManager {
     private Recorder mRecorder;
     private AudioSinkProvider mSinkProvider;
     private AudioDeviceInfo mRecorderSelectedDevice;
+    private int mInputPreset = Recorder.INPUT_PRESET_NONE;
 
     public DuplexAudioManager(AudioSourceProvider sourceProvider, AudioSinkProvider sinkProvider) {
         mSourceProvider = sourceProvider;
         mSinkProvider = sinkProvider;
     }
 
-    public boolean setupStreams(int playerType, int recorderType) {
+    public void setInputPreset(int preset) { mInputPreset = preset; }
+
+    public int setupStreams(int playerType, int recorderType) {
         // Recorder
         if ((recorderType & BuilderBase.TYPE_MASK) != BuilderBase.TYPE_NONE) {
             try {
@@ -62,19 +67,20 @@ public class DuplexAudioManager {
                         .setRecorderType(recorderType)
                         .setAudioSinkProvider(mSinkProvider)
                         .build();
-//                if (mSelectedPreset != -1) {
-//                    mRecorder!!.setInputPreset(mSelectedPreset);
-//                }
+                if (mInputPreset != Recorder.INPUT_PRESET_NONE) {
+                    mRecorder.setInputPreset(mInputPreset);
+                }
                 mRecorder.setRouteDevice(mRecorderSelectedDevice);
-                if (!mRecorder.setupStream(
-                        mNumRecorderChannels, mRecorderSampleRate, mNumRecorderBufferFrames)) {
+                int errorCode = mRecorder.setupStream(
+                        mNumRecorderChannels, mRecorderSampleRate, mNumRecorderBufferFrames);
+                if (errorCode != StreamBase.OK) {
                     Log.e(TAG, "Recorder setupStream() failed");
-                    return false;
+                    return errorCode;
                 }
                 mNumRecorderBufferFrames = mRecorder.getNumBufferFrames();
             } catch (RecorderBuilder.BadStateException ex) {
                 Log.e(TAG, "Recorder - BadStateException" + ex);
-                return false;
+                return StreamBase.ERROR_UNSUPPORTED;
             }
         }
 
@@ -88,39 +94,50 @@ public class DuplexAudioManager {
                         .setSourceProvider(mSourceProvider)
                         .build();
                 mPlayer.setRouteDevice(mPlayerSelectedDevice);
-                if (!mPlayer.setupStream(mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBufferFrames)) {
+                int errorCode = mPlayer.setupStream(
+                        mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBufferFrames);
+                if (errorCode != StreamBase.OK) {
                     Log.e(TAG, "Player - setupStream() failed");
-                    return false;
+                    return errorCode;
                 }
             } catch (PlayerBuilder.BadStateException ex) {
                 Log.e(TAG, "Player - BadStateException" + ex);
-                return false;
+                return StreamBase.ERROR_UNSUPPORTED;
             }
         }
 
-        return true;
+        return StreamBase.OK;
     }
 
-    public boolean start() {
-        if (mRecorder != null && !mRecorder.startStream()) {
-            return false;
+    public int start() {
+        int result = StreamBase.OK;
+        if (mRecorder != null && (result = mRecorder.startStream()) != StreamBase.OK) {
+            return result;
         }
 
-        if (mPlayer != null && !mPlayer.startStream()) {
-            return false;
+        if (mPlayer != null && (result = mPlayer.startStream()) != StreamBase.OK) {
+            return result;
         }
 
-        return true;
+        return result;
     }
 
-    public void stop() {
+    public int stop() {
+        int playerResult = StreamBase.OK;
         if (mPlayer != null) {
-            mPlayer.stopStream();
+           int result1 = mPlayer.stopStream();
+           int result2 = mPlayer.teardownStream();
+           playerResult = result1 != StreamBase.OK ? result1 : result2;
         }
 
+        int recorderResult = StreamBase.OK;
         if (mRecorder != null) {
-            mRecorder.stopStream();
+            int result1 = mRecorder.stopStream();
+            int result2 = mRecorder.teardownStream();
+            recorderResult = result1 != StreamBase.OK ? result1 : result2;
         }
+
+        return playerResult != StreamBase.OK ? playerResult: recorderResult;
     }
 
     public int getNumPlayerBufferFrames() {

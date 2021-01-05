@@ -22,7 +22,12 @@ import org.hyphonate.megaaudio.common.StreamBase;
 
 public abstract class Recorder extends StreamBase {
     protected AudioSinkProvider mSinkProvider;
-    public static final int DEFAULT_INPUT_PRESET = -1;
+
+    // This value is to indicate that no explicit call to set an input preset in the builder
+    // will be made.
+    // Constants can be found here:
+    // https://developer.android.com/reference/android/media/MediaRecorder.AudioSource
+    public static final int INPUT_PRESET_NONE = -1;
 
     public Recorder(AudioSinkProvider sinkProvider) {
         mSinkProvider = sinkProvider;

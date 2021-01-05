@@ -31,7 +31,7 @@ public class OboePlayer extends Player {
 
     @Override
     public int getNumBufferFrames() {
-        return getNumBufferFramesN(mNativePlayer);
+        return getBufferFrameCountN(mNativePlayer);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class OboePlayer extends Player {
     public boolean isPlaying() { return mPlaying; }
 
     @Override
-    public boolean setupStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBurstFrames) {
         mChannelCount = channelCount;
         mSampleRate = sampleRate;
         return setupStreamN(
@@ -52,35 +52,36 @@ public class OboePlayer extends Player {
     }
 
     @Override
-    public void teardownStream() {
-        teardownStreamN(mNativePlayer);
+    public int teardownStream() {
+        int errCode = teardownStreamN(mNativePlayer);
 
         mChannelCount = 0;
         mSampleRate = 0;
+
+        return errCode;
     }
 
     @Override
-    public boolean startStream() {
+    public int startStream() {
         return startStreamN(mNativePlayer, mPlayerSubtype);
     }
 
     @Override
-    public void stopStream() {
+    public int stopStream() {
         mPlaying = false;
 
-        stopN(mNativePlayer);
+        return stopN(mNativePlayer);
     }
 
     private native long allocNativePlayer(long nativeSource, int playerSubtype);
 
-    private native boolean setupStreamN(long nativePlayer, int channelCount, int sampleRate, int routeDeviceId);
-    private native void teardownStreamN(long nativePlayer);
+    private native int setupStreamN(long nativePlayer, int channelCount, int sampleRate, int routeDeviceId);
+    private native int teardownStreamN(long nativePlayer);
 
-    private native boolean startStreamN(long nativePlayer, int playerSubtype);
-    private native boolean stopN(long nativePlayer);
+    private native int startStreamN(long nativePlayer, int playerSubtype);
+    private native int stopN(long nativePlayer);
 
     private native int getBufferFrameCountN(long mNativePlayer);
-    private native int getNumBufferFramesN(long nativePlayer);
 
     private native int getRoutedDeviceIdN(long nativePlayer);
 }

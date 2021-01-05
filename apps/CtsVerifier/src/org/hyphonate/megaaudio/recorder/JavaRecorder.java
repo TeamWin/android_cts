@@ -30,7 +30,7 @@ import org.hyphonate.megaaudio.recorder.sinks.NopAudioSinkProvider;
  * API, i.e. AudioRecord.
  */
 public class JavaRecorder extends Recorder {
-    @SuppressWarnings("unused") private static String TAG = JavaRecorder.class.getSimpleName();
+    @SuppressWarnings("unused") private static final String TAG = JavaRecorder.class.getSimpleName();
     @SuppressWarnings("unused") private static final boolean LOG = true;
 
     /** The buffer to receive the recorder samples */
@@ -48,7 +48,7 @@ public class JavaRecorder extends Recorder {
 
     private AudioSink mAudioSink;
 
-    private int mInputPreset = DEFAULT_INPUT_PRESET;
+    private int mInputPreset = INPUT_PRESET_NONE;
 
     @Override
     public int getRoutedDeviceId() {
@@ -91,7 +91,7 @@ public class JavaRecorder extends Recorder {
     }
 
     @Override
-    public boolean setupStream(int channelCount, int sampleRate, int numBurstFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBurstFrames) {
         if (LOG) {
             Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate +
                     ", frames:" + numBurstFrames);
@@ -102,14 +102,18 @@ public class JavaRecorder extends Recorder {
         try {
             int frameSize = calcFrameSizeInBytes(mChannelCount);
 
-            mAudioRecord = new AudioRecord.Builder()
-                    .setAudioFormat(new AudioFormat.Builder()
+            AudioRecord.Builder builder = new AudioRecord.Builder();
+
+            builder.setAudioFormat(new AudioFormat.Builder()
                             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                             .setSampleRate(mSampleRate)
                             .setChannelIndexMask(StreamBase.channelCountToIndexMask(mChannelCount))
-                            .build())
+                            .build());
                     // .setBufferSizeInBytes(numBurstFrames * frameSize)
-                    .build();
+            if (mInputPreset != Recorder.INPUT_PRESET_NONE) {
+                builder.setAudioSource(mInputPreset);
+            }
+            mAudioRecord = builder.build();
             mAudioRecord.setPreferredDevice(mRouteDevice);
 
             mNumBuffFrames = mAudioRecord.getBufferSizeInFrames();
@@ -122,7 +126,7 @@ public class JavaRecorder extends Recorder {
             mAudioSink = mSinkProvider.allocJavaSink();
             mAudioSink.init(mNumBuffFrames, mChannelCount);
             mListener = new JavaSinkHandler(this, mAudioSink, Looper.getMainLooper());
-            return true;
+            return OK;
         } catch (UnsupportedOperationException ex) {
             if (LOG) {
                 Log.i(TAG, "Couldn't open AudioRecord: " + ex);
@@ -131,12 +135,12 @@ public class JavaRecorder extends Recorder {
             mNumBuffFrames = 0;
             mRecorderBuffer = null;
 
-            return false;
+            return ERROR_UNSUPPORTED;
         }
     }
 
     @Override
-    public void teardownStream() {
+    public int teardownStream() {
         stopStream();
 
         waitForStreamThreadToExit();
@@ -148,15 +152,18 @@ public class JavaRecorder extends Recorder {
 
         mChannelCount = 0;
         mSampleRate = 0;
+
+        //TODO Retrieve errors from above
+        return OK;
     }
 
     @Override
-    public boolean startStream() {
+    public int startStream() {
         if (LOG) {
             Log.i(TAG, "startStream() mAudioRecord:" + mAudioRecord);
         }
         if (mAudioRecord == null) {
-            return false;
+            return ERROR_INVALID_STATE;
         }
 //        // Routing
 //        mAudioRecord.setPreferredDevice(mRoutingDevice);
@@ -180,7 +187,7 @@ public class JavaRecorder extends Recorder {
         mRecording = true;
         mStreamThread.start();
 
-        return true;
+        return OK;
     }
 
     /**
@@ -189,8 +196,9 @@ public class JavaRecorder extends Recorder {
      * Returns immediately, though a call to AudioSource.push() may be in progress.
      */
     @Override
-    public void stopStream() {
+    public int stopStream() {
         mRecording = false;
+        return OK;
     }
 
     // @Override
