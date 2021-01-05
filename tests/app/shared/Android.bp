@@ -13,11 +13,13 @@
 // limitations under the License.
 
 
-java_library {
+android_library {
     name: "CtsAppTestStubsShared",
     defaults: ["cts_support_defaults"],
     srcs: [
         "src/**/*.java",
         "src/**/*.aidl",
     ],
+    platform_apis: true,
+    min_sdk_version: "14",
 }
