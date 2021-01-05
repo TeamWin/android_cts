@@ -266,7 +266,15 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
     }
 
     private long getDeviceUptime() throws DeviceNotAvailableException {
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+        String uptime = null;
+        int attempts = 5;
+        do {
+            if (attempts-- <= 0) {
+                throw new RuntimeException("could not get device uptime");
+            }
+            getDevice().waitForDeviceAvailable();
+            uptime = getDevice().executeShellCommand("cat /proc/uptime").trim();
+        } while (uptime.isEmpty());
         return Long.parseLong(uptime.substring(0, uptime.indexOf('.')));
     }
 
