@@ -47,8 +47,9 @@ public class NoAudioPermissionTest extends AndroidTestCase {
         boolean muteState = mAudioManager.isMicrophoneMute();
         int originalMode = mAudioManager.getMode();
         // If there is no permission of MODIFY_AUDIO_SETTINGS, setMicrophoneMute does nothing.
-        if (!muteState) {
+        if (muteState) {
             Log.w(TAG, "Mic seems muted by hardware! Please unmute and rerrun the test.");
+        } else {
             mAudioManager.setMicrophoneMute(!muteState);
             assertEquals(muteState, mAudioManager.isMicrophoneMute());
         }
