@@ -16,6 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
+import static android.hardware.lights.LightsRequest.Builder;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -27,6 +31,9 @@ import static org.mockito.Mockito.verify;
 
 import android.hardware.Battery;
 import android.hardware.input.InputManager;
+import android.hardware.lights.Light;
+import android.hardware.lights.LightState;
+import android.hardware.lights.LightsManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -36,6 +43,7 @@ import android.view.InputDevice;
 
 import com.android.cts.input.HidBatteryTestData;
 import com.android.cts.input.HidDevice;
+import com.android.cts.input.HidLightTestData;
 import com.android.cts.input.HidResultData;
 import com.android.cts.input.HidTestData;
 import com.android.cts.input.HidVibratorTestData;
@@ -45,7 +53,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,52 +78,64 @@ public class InputHidTestCase extends InputTestCase {
         mRegisterResourceId = registerResourceId;
     }
 
-    /**
-     * Get a vibrator from input device with specified Vendor Id and Product Id
-     * from device registration command.
-     * @return Vibrator object in specified InputDevice
-     */
-    private Vibrator getVibrator() {
+    /** Check if input device has specific capability */
+    interface Capability {
+        boolean check(InputDevice inputDevice);
+    }
+
+    /** Gets an input device with specific capability */
+    private InputDevice getInputDevice(Capability capability) {
         final InputManager inputManager =
                 mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         final int[] inputDeviceIds = inputManager.getInputDeviceIds();
-        final int vid = mParser.readVendorId(mRegisterResourceId);
-        final int pid = mParser.readProductId(mRegisterResourceId);
-
         for (int inputDeviceId : inputDeviceIds) {
             final InputDevice inputDevice = inputManager.getInputDevice(inputDeviceId);
-            Vibrator vibrator = inputDevice.getVibrator();
-            if (vibrator.hasVibrator() && inputDevice.getVendorId() == vid
-                    && inputDevice.getProductId() == pid) {
-                return vibrator;
+            if (inputDevice.getVendorId() == mVid && inputDevice.getProductId() == mPid
+                    && capability.check(inputDevice)) {
+                return inputDevice;
             }
         }
-        fail("getVibrator() returns null");
         return null;
     }
 
     /**
-     * Get a battery from input device with specified Vendor Id and Product Id
+     * Gets a vibrator from input device with specified Vendor Id and Product Id
+     * from device registration command.
+     * @return Vibrator object in specified InputDevice
+     */
+    private Vibrator getVibrator() {
+        InputDevice inputDevice = getInputDevice((d) -> d.getVibrator().hasVibrator());
+        if (inputDevice == null) {
+            fail("Failed to find test device with vibrator");
+        }
+        return inputDevice.getVibrator();
+    }
+
+    /**
+     * Gets a battery from input device with specified Vendor Id and Product Id
      * from device registration command.
      * @return Battery object in specified InputDevice
      */
     private Battery getBattery() {
-        final InputManager inputManager =
-                mInstrumentation.getTargetContext().getSystemService(InputManager.class);
-        final int[] inputDeviceIds = inputManager.getInputDeviceIds();
-        final int vid = mParser.readVendorId(mRegisterResourceId);
-        final int pid = mParser.readProductId(mRegisterResourceId);
-
-        for (int inputDeviceId : inputDeviceIds) {
-            final InputDevice inputDevice = inputManager.getInputDevice(inputDeviceId);
-            Battery battery = inputDevice.getBattery();
-            if (battery.hasBattery() && inputDevice.getVendorId() == vid
-                    && inputDevice.getProductId() == pid) {
-                return battery;
-            }
+        InputDevice inputDevice = getInputDevice((d) -> d.getBattery().hasBattery());
+        if (inputDevice == null) {
+            fail("Failed to find test device with battery");
         }
-        fail("getBattery() returns null");
-        return null;
+        return inputDevice.getBattery();
+    }
+
+    /**
+     * Gets a light manager object from input device with specified Vendor Id and Product Id
+     * from device registration command.
+     * @return LightsManager object in specified InputDevice
+     */
+    private LightsManager getLightsManager() {
+        InputDevice inputDevice = getInputDevice(
+                (d) -> !d.getLightsManager().getLights().isEmpty());
+        if (inputDevice == null) {
+            fail("Failed to find test device with light");
+        }
+        return inputDevice.getLightsManager();
     }
 
     @Override
@@ -152,7 +171,7 @@ public class InputHidTestCase extends InputTestCase {
         }
     }
 
-    private boolean verifyReportData(HidVibratorTestData test, HidResultData result) {
+    private boolean verifyVibratorReportData(HidVibratorTestData test, HidResultData result) {
         for (Map.Entry<Integer, Integer> entry : test.verifyMap.entrySet()) {
             final int index = entry.getKey();
             final int value = entry.getValue();
@@ -168,7 +187,7 @@ public class InputHidTestCase extends InputTestCase {
         return ffLeft > 0 && ffRight > 0;
     }
 
-    public void testInputVibratorEvents(int resourceId) {
+    public void testInputVibratorEvents(int resourceId) throws Exception {
         final List<HidVibratorTestData> tests = mParser.getHidVibratorTestData(resourceId);
 
         for (HidVibratorTestData test : tests) {
@@ -213,28 +232,26 @@ public class InputHidTestCase extends InputTestCase {
             while (vibrationCount < totalVibrations
                     && SystemClock.elapsedRealtime() - startTime < timeoutMills) {
                 SystemClock.sleep(1000);
-                try {
-                    results = mHidDevice.getResults(mDeviceId, UHID_EVENT_TYPE_UHID_OUTPUT);
-                    if (results.size() < totalVibrations) {
-                        continue;
-                    }
-                    vibrationCount = 0;
-                    for (int i = 0; i < results.size(); i++) {
-                        HidResultData result = results.get(i);
-                        if (result.deviceId == mDeviceId && verifyReportData(test, result)) {
-                            int ffLeft = result.reportData[test.leftFfIndex] & 0xFF;
-                            int ffRight = result.reportData[test.rightFfIndex] & 0xFF;
-                            Log.v(TAG, "eventId=" + result.eventId + " reportType="
-                                    + result.reportType + " left=" + ffLeft + " right=" + ffRight);
-                            // Check the amplitudes of FF effect are expected.
-                            if (ffLeft == test.amplitudes.get(vibrationCount)
-                                    && ffRight == test.amplitudes.get(vibrationCount)) {
-                                vibrationCount++;
-                            }
+
+                results = mHidDevice.getResults(mDeviceId, UHID_EVENT_TYPE_UHID_OUTPUT);
+                if (results.size() < totalVibrations) {
+                    continue;
+                }
+                vibrationCount = 0;
+                for (int i = 0; i < results.size(); i++) {
+                    HidResultData result = results.get(i);
+                    if (result.deviceId == mDeviceId
+                            && verifyVibratorReportData(test, result)) {
+                        int ffLeft = result.reportData[test.leftFfIndex] & 0xFF;
+                        int ffRight = result.reportData[test.rightFfIndex] & 0xFF;
+                        Log.v(TAG, "eventId=" + result.eventId + " reportType="
+                                + result.reportType + " left=" + ffLeft + " right=" + ffRight);
+                        // Check the amplitudes of FF effect are expected.
+                        if (ffLeft == test.amplitudes.get(vibrationCount)
+                                && ffRight == test.amplitudes.get(vibrationCount)) {
+                            vibrationCount++;
                         }
                     }
-                } catch (IOException ex) {
-                    throw new RuntimeException("Could not get JSON results from HidDevice");
                 }
             }
             assertEquals(vibrationCount, totalVibrations);
@@ -247,7 +264,7 @@ public class InputHidTestCase extends InputTestCase {
         }
     }
 
-    public void testInputVibratorManagerEvents(int resourceId) {
+    public void testInputVibratorManagerEvents(int resourceId) throws Exception {
         final List<HidVibratorTestData> tests = mParser.getHidVibratorTestData(resourceId);
 
         for (HidVibratorTestData test : tests) {
@@ -283,28 +300,26 @@ public class InputHidTestCase extends InputTestCase {
             while (vibrationCount < totalVibrations
                     && SystemClock.elapsedRealtime() - startTime < timeoutMills) {
                 SystemClock.sleep(1000);
-                try {
-                    results = mHidDevice.getResults(mDeviceId, UHID_EVENT_TYPE_UHID_OUTPUT);
-                    if (results.size() < totalVibrations) {
-                        continue;
-                    }
-                    vibrationCount = 0;
-                    for (int i = 0; i < results.size(); i++) {
-                        HidResultData result = results.get(i);
-                        if (result.deviceId == mDeviceId && verifyReportData(test, result)) {
-                            int ffLeft = result.reportData[test.leftFfIndex] & 0xFF;
-                            int ffRight = result.reportData[test.rightFfIndex] & 0xFF;
-                            Log.v(TAG, "eventId=" + result.eventId + " reportType="
-                                    + result.reportType + " left=" + ffLeft + " right=" + ffRight);
-                            // Check the amplitudes of FF effect are expected.
-                            if (ffLeft == test.amplitudes.get(vibrationCount)
-                                    && ffRight == test.amplitudes.get(vibrationCount)) {
-                                vibrationCount++;
-                            }
+
+                results = mHidDevice.getResults(mDeviceId, UHID_EVENT_TYPE_UHID_OUTPUT);
+                if (results.size() < totalVibrations) {
+                    continue;
+                }
+                vibrationCount = 0;
+                for (int i = 0; i < results.size(); i++) {
+                    HidResultData result = results.get(i);
+                    if (result.deviceId == mDeviceId
+                            && verifyVibratorReportData(test, result)) {
+                        int ffLeft = result.reportData[test.leftFfIndex] & 0xFF;
+                        int ffRight = result.reportData[test.rightFfIndex] & 0xFF;
+                        Log.v(TAG, "eventId=" + result.eventId + " reportType="
+                                + result.reportType + " left=" + ffLeft + " right=" + ffRight);
+                        // Check the amplitudes of FF effect are expected.
+                        if (ffLeft == test.amplitudes.get(vibrationCount)
+                                && ffRight == test.amplitudes.get(vibrationCount)) {
+                            vibrationCount++;
                         }
                     }
-                } catch (IOException ex) {
-                    throw new RuntimeException("Could not get JSON results from HidDevice");
                 }
             }
             assertEquals(vibrationCount, totalVibrations);
@@ -329,6 +344,67 @@ public class InputHidTestCase extends InputTestCase {
             int status = battery.getStatus();
             assertEquals("Test: " + testData.name, testData.capacity, capacity, 0.01f);
             assertEquals("Test: " + testData.name, testData.status, status);
+        }
+    }
+
+    public void testInputLightsManager(int resourceId) throws Exception {
+        final LightsManager lightsManager = getLightsManager();
+        final List<Light> lights = lightsManager.getLights();
+
+        final List<HidLightTestData> tests = mParser.getHidLightTestData(resourceId);
+        for (HidLightTestData test : tests) {
+            Light light = null;
+            for (int i = 0; i < lights.size(); i++) {
+                if (lights.get(i).getType() == test.lightType
+                        && test.lightName.equals(lights.get(i).getName())) {
+                    light = lights.get(i);
+                }
+            }
+            assertNotNull("Light type " + test.lightType + " name " + test.lightName
+                    + " does not exist", light);
+            try (LightsManager.LightsSession session = lightsManager.openSession()) {
+                // Can't set both player id and color in same LightState
+                assertFalse(test.lightColor > 0 && test.lightPlayerId > 0);
+                // Issue the session requests to turn single light on
+                if (test.lightPlayerId > 0) {
+                    session.requestLights(new Builder()
+                            .addLight(light, LightState.forPlayerId(test.lightPlayerId))
+                            .build());
+                } else {
+                    session.requestLights(new Builder()
+                            .addLight(light, LightState.forColor(test.lightColor))
+                            .build());
+                }
+                // Some devices (e.g. Sixaxis) defer sending output packets until they've seen at
+                // least one input packet.
+                if (!test.report.isEmpty()) {
+                    mHidDevice.sendHidReport(test.report);
+                }
+                // Delay before sysfs node was updated.
+                SystemClock.sleep(200);
+                // Verify HID report data
+                List<HidResultData> results = mHidDevice.getResults(mDeviceId,
+                        test.hidEventType);
+                assertFalse(results.isEmpty());
+                // We just check the last HID output to be expected.
+                HidResultData result = results.get(results.size() - 1);
+                for (Map.Entry<Integer, Integer> entry : test.expectedHidData.entrySet()) {
+                    final int index = entry.getKey();
+                    final int value = entry.getValue();
+                    int actual = result.reportData[index] & 0xFF;
+                    assertEquals("Led data index " + index, value, actual);
+
+                }
+
+                // Then the light state should be what we requested.
+                if (test.lightPlayerId > 0) {
+                    assertThat(lightsManager.getLightState(light).getPlayerId())
+                            .isEqualTo(test.lightPlayerId);
+                } else {
+                    assertThat(lightsManager.getLightState(light).getColor())
+                            .isEqualTo(test.lightColor);
+                }
+            }
         }
     }
 

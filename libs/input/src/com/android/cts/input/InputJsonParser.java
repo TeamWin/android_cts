@@ -19,6 +19,7 @@ package com.android.cts.input;
 import static org.junit.Assert.assertEquals;
 
 import android.content.Context;
+import android.hardware.lights.Light;
 import android.util.ArrayMap;
 import android.util.SparseArray;
 import android.view.InputDevice;
@@ -340,6 +341,41 @@ public class InputJsonParser {
                 tests.add(testData);
             } catch (JSONException e) {
                 throw new RuntimeException("Could not process entry " + testCaseNumber + " " + e);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of HidLightTestData, which contains
+     * the light type and light state request, and the hid output verification data.
+     */
+    public List<HidLightTestData> getHidLightTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<HidLightTestData> tests = new ArrayList<HidLightTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            HidLightTestData testData = new HidLightTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                testData.lightType = lightTypeFromString(testcaseEntry.getString("lightType"));
+                testData.lightName = testcaseEntry.getString("lightName");
+                testData.lightColor = testcaseEntry.getInt("lightColor");
+                testData.lightPlayerId = testcaseEntry.getInt("lightPlayerId");
+                testData.hidEventType = uhidEventFromString(
+                        testcaseEntry.getString("hidEventType"));
+                testData.report = testcaseEntry.getString("report");
+
+                JSONArray outputArray = testcaseEntry.getJSONArray("ledsHidOutput");
+                testData.expectedHidData = new ArrayMap<Integer, Integer>();
+                for (int i = 0; i < outputArray.length(); i++) {
+                    JSONObject item = outputArray.getJSONObject(i);
+                    int index = item.getInt("index");
+                    int data = item.getInt("data");
+                    testData.expectedHidData.put(index, data);
+                }
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber + " : " + e);
             }
         }
         return tests;
@@ -674,5 +710,30 @@ public class InputJsonParser {
                 return MotionEvent.BUTTON_TERTIARY;
         }
         throw new RuntimeException("Unknown button specified: " + button);
+    }
+
+    private static int lightTypeFromString(String typeString) {
+        switch (typeString.toUpperCase()) {
+            case "INPUT_SINGLE":
+                return Light.LIGHT_TYPE_INPUT_SINGLE;
+            case "INPUT_PLAYER_ID":
+                return Light.LIGHT_TYPE_INPUT_PLAYER_ID;
+            case "INPUT_RGB":
+                return Light.LIGHT_TYPE_INPUT_RGB;
+        }
+        throw new RuntimeException("Unknown light type specified: " + typeString);
+    }
+
+    // Return the enum uhid_event_type in kernel linux/uhid.h.
+    private static byte uhidEventFromString(String eventString) {
+        switch (eventString.toUpperCase()) {
+            case "UHID_OUTPUT":
+                return 6;
+            case "UHID_GET_REPORT":
+                return 9;
+            case "UHID_SET_REPORT":
+                return 13;
+        }
+        throw new RuntimeException("Unknown uhid event type specified: " + eventString);
     }
 }
