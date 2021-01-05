@@ -56,6 +56,8 @@ public class CodecEncoderSurfaceTest {
     private final int mBitrate;
     private final int mFrameRate;
     private final int mMaxBFrames;
+    private int mLatency;
+    private boolean mReviseLatency;
 
     private MediaExtractor mExtractor;
     private MediaCodec mEncoder;
@@ -92,6 +94,8 @@ public class CodecEncoderSurfaceTest {
         mBitrate = bitrate;
         mFrameRate = frameRate;
         mMaxBFrames = 0;
+        mLatency = mMaxBFrames;
+        mReviseLatency = false;
         mAsyncHandleDecoder = new CodecAsyncHandler();
         mAsyncHandleEncoder = new CodecAsyncHandler();
     }
@@ -157,6 +161,10 @@ public class CodecEncoderSurfaceTest {
         resetContext(isAsync, signalEOSWithLastFrame);
         mAsyncHandleEncoder.setCallBack(mEncoder, isAsync);
         mEncoder.configure(encFormat, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
+        if (mEncoder.getInputFormat().containsKey(MediaFormat.KEY_LATENCY)) {
+            mReviseLatency = true;
+            mLatency = mEncoder.getInputFormat().getInteger(MediaFormat.KEY_LATENCY);
+        }
         mSurface = mEncoder.createInputSurface();
         assertTrue("Surface is not valid", mSurface.isValid());
         mAsyncHandleDecoder.setCallBack(mDecoder, isAsync);
@@ -254,6 +262,23 @@ public class CodecEncoderSurfaceTest {
     private void tryEncoderOutput(long timeOutUs) throws InterruptedException {
         if (mIsCodecInAsyncMode) {
             if (!hasSeenError() && !mSawEncOutputEOS) {
+                int retry = 0;
+                while (mReviseLatency) {
+                    if (mAsyncHandleEncoder.hasOutputFormatChanged()) {
+                        mReviseLatency = false;
+                        int actualLatency = mAsyncHandleEncoder.getOutputFormat()
+                                .getInteger(MediaFormat.KEY_LATENCY, mLatency);
+                        if (mLatency < actualLatency) {
+                            mLatency = actualLatency;
+                            return;
+                        }
+                    } else {
+                        if (retry > 10) throw new InterruptedException(
+                                "did not receive output format changed for encoder");
+                        Thread.sleep(timeOutUs / 1000);
+                        retry ++;
+                    }
+                }
                 Pair<Integer, MediaCodec.BufferInfo> element = mAsyncHandleEncoder.getOutput();
                 if (element != null) {
                     dequeueEncoderOutput(element.first, element.second);
@@ -265,6 +290,9 @@ public class CodecEncoderSurfaceTest {
                 int outputBufferId = mEncoder.dequeueOutputBuffer(outInfo, timeOutUs);
                 if (outputBufferId >= 0) {
                     dequeueEncoderOutput(outputBufferId, outInfo);
+                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    mLatency = mEncoder.getOutputFormat()
+                            .getInteger(MediaFormat.KEY_LATENCY, mLatency);
                 }
             }
         }
@@ -304,8 +332,7 @@ public class CodecEncoderSurfaceTest {
                 Pair<Integer, MediaCodec.BufferInfo> decOp = mAsyncHandleDecoder.getOutput();
                 if (decOp != null) dequeueDecoderOutput(decOp.first, decOp.second);
                 if (mSawDecOutputEOS) mEncoder.signalEndOfInputStream();
-                // TODO: remove fixed constant and change it according to encoder latency
-                if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+                if (mDecOutputCount - mEncOutputCount > mLatency) {
                     tryEncoderOutput(-1);
                 }
             }
@@ -318,8 +345,7 @@ public class CodecEncoderSurfaceTest {
                     dequeueDecoderOutput(outputBufferId, outInfo);
                 }
                 if (mSawDecOutputEOS) mEncoder.signalEndOfInputStream();
-                // TODO: remove fixed constant and change it according to encoder latency
-                if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+                if (mDecOutputCount - mEncOutputCount > mLatency) {
                     tryEncoderOutput(-1);
                 }
             }
@@ -347,8 +373,7 @@ public class CodecEncoderSurfaceTest {
                 // check decoder EOS
                 if (mSawDecOutputEOS) mEncoder.signalEndOfInputStream();
                 // encoder output
-                // TODO: remove fixed constant and change it according to encoder latency
-                if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+                if (mDecOutputCount - mEncOutputCount > mLatency) {
                     tryEncoderOutput(-1);
                 }
             }
@@ -370,8 +395,7 @@ public class CodecEncoderSurfaceTest {
                 // check decoder EOS
                 if (mSawDecOutputEOS) mEncoder.signalEndOfInputStream();
                 // encoder output
-                // TODO: remove fixed constant and change it according to encoder latency
-                if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+                if (mDecOutputCount - mEncOutputCount > mLatency) {
                     tryEncoderOutput(-1);
                 }
             }
