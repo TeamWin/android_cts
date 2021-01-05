@@ -288,7 +288,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
         mTestAppInterface.startAndKeepTestActivity();
 
-        mTestAppInterface.scheduleJob(false, true);
+        mTestAppInterface.scheduleJob(false, true, false);
 
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
         assertTrue("Job with metered connectivity constraint did not fire on mobile.",
@@ -299,6 +299,29 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 "Job with metered connectivity constraint for foreground app was stopped when"
                         + " Data Saver was turned on.",
                 mTestAppInterface.awaitJobStop(30_000));
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when Data Saver is on and the device is not connected to WiFi.
+     */
+    public void testExpeditedJobExecutes_DataSaverOn() throws Exception {
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+        disconnectWifiToConnectToMobile();
+        setDataSaverEnabled(true);
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setExpedited(true)
+                        .build());
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+
+        assertTrue("Expedited job requiring metered connectivity did not fire with Data Saver on.",
+                kTestEnvironment.awaitExecution());
     }
 
     // --------------------------------------------------------------------------------------------
