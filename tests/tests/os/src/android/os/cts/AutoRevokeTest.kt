@@ -33,6 +33,7 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
 import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
@@ -428,10 +429,13 @@ class AutoRevokeTest {
         waitForIdle()
         return eventually {
             val ui = instrumentation.uiAutomation.rootInActiveWindow
-            return@eventually ui.lowestCommonAncestor(
-                { node -> node.textAsString == "Remove permissions if app isn’t used" },
-                { node -> node.className == Switch::class.java.name }
-            ).assertNotNull {
+            val node = ui.lowestCommonAncestor(
+                    { node -> node.textAsString == "Remove permissions if app isn’t used" },
+                    { node -> node.className == Switch::class.java.name })
+            if (node == null) {
+                ui.depthFirstSearch { it.isScrollable }?.performAction(ACTION_SCROLL_FORWARD)
+            }
+            return@eventually node.assertNotNull {
                 "No auto-revoke whitelist toggle found in\n${uiDump(ui)}"
             }.depthFirstSearch { node -> node.className == Switch::class.java.name }!!
         }
