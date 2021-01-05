@@ -135,11 +135,6 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
             mLocationListener = new TestLocationListener(LOCATIONS_COUNT);
             mTestLocationManager.requestLocationUpdates(mLocationListener);
 
-            mMeasurementListener.awaitStatus();
-            if (!mMeasurementListener.verifyStatus()) {
-                return; // exit peacefully (if not already asserted out inside verifyStatus)
-            }
-
             // Wait for two measurement events - this is better than waiting for a location
             // calculation because the test generally completes much faster.
             mMeasurementListener.await();
