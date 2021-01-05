@@ -20,6 +20,9 @@ java_test_host {
     name: "CtsLocationTimeZoneManagerHostTest",
     srcs:  ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed"],
+    static_libs: [
+        "cts-statsd-atom-host-test-utils",
+    ],
     test_suites: ["general-tests", "cts"],
     test_config: "host/AndroidTest.xml",
 }
