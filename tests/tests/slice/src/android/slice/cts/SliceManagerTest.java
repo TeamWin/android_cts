@@ -145,7 +145,8 @@ public class SliceManagerTest {
         };
         try {
             Uri uri = BASE_URI.buildUpon().path("permission").build();
-            PendingIntent intent = PendingIntent.getBroadcast(mContext, 0, new Intent(""), 0);
+            PendingIntent intent = PendingIntent.getBroadcast(mContext, 0, new Intent(""),
+                    PendingIntent.FLAG_IMMUTABLE);
 
             when(LocalSliceProvider.sProxy.onCreatePermissionRequest(any())).thenReturn(intent);
 
