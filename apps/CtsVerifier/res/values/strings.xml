@@ -2571,10 +2571,12 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="provisioning_byod_pattern_work_challenge">Confirm pattern lock test</string>
     <string name="provisioning_byod_pattern_work_challenge_description">
-        This test verifies that when a work pattern lock is set, a work app can open correctly.
+        This test verifies that when a work pattern lock is set, a work app can open correctly.\n
 
         1. Verify that you get sent to the page for Choosing a new work lock.\n
         2. Set a pattern lock.\n
+        Some devices have the pattern lock option disabled and it will not show up in the list.\n
+        If that\'s the case then mark the test as passed.\n
         3. Press the power button to turn the screen off and then back on and swipe to unlock.\n
         4. Open a work app.\n
         5. Verify that a screen asking you for your work credentials is shown.\n
