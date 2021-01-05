@@ -160,6 +160,13 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.capture.pointerCaptureEnabled = msg.body.capture.pointerCaptureEnabled;
             break;
         }
+        case InputMessage::Type::DRAG: {
+            outMsg->body.capture.eventId = msg.body.capture.eventId;
+            outMsg->body.drag.isExiting = msg.body.drag.isExiting;
+            outMsg->body.drag.x = msg.body.drag.x;
+            outMsg->body.drag.y = msg.body.drag.y;
+            break;
+        }
     }
 }
 
@@ -223,7 +230,7 @@ int main() {
 
     InputMessage::Type types[] = {
             InputMessage::Type::KEY,   InputMessage::Type::MOTION,  InputMessage::Type::FINISHED,
-            InputMessage::Type::FOCUS, InputMessage::Type::CAPTURE,
+            InputMessage::Type::FOCUS, InputMessage::Type::CAPTURE, InputMessage::Type::DRAG,
     };
     for (InputMessage::Type type : types) {
         bool success = checkMessage(*server, *client, type);
