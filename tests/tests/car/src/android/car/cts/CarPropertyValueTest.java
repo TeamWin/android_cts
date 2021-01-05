@@ -17,6 +17,7 @@ package android.car.cts;
 
 import android.car.Car;
 import android.car.VehicleAreaType;
+import android.car.VehiclePropertyIds;
 import android.car.hardware.CarPropertyConfig;
 import android.car.hardware.CarPropertyValue;
 import android.car.hardware.property.CarPropertyManager;
@@ -65,6 +66,11 @@ public class CarPropertyValueTest extends CarApiTestBase {
     @Test
     public void testGetPropertyAreaId() {
         for (CarPropertyValue propertyValue : mCarPropertyValues) {
+            // Skip checking INFO_DRIVER_SEAT because the area ID is wrong(VehicleArea:SEAT) in HAL
+            // 2.0, and will be fixed(VehicleArea:GLOBAL) in later version of HAL (b/153502607)
+            if (propertyValue.getPropertyId() == VehiclePropertyIds.INFO_DRIVER_SEAT) {
+                continue;
+            }
             int areaId = propertyValue.getAreaId();
             CarPropertyConfig cfg = mPropIdToConfig.get(propertyValue.getPropertyId());
             if (cfg.isGlobalProperty()) {
