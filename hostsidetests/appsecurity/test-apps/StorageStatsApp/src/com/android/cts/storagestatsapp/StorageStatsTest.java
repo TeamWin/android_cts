@@ -296,6 +296,8 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long targetB = doAllocateProvider(PKG_B, 2.0, 1420070400);
         final long totalAllocated = targetA + targetB;
 
+        MediaStore.waitForIdle(getContext().getContentResolver());
+
         // Apps using up some cache space shouldn't change how much we can
         // allocate, or how much we think is free; but it should decrease real
         // disk space.
