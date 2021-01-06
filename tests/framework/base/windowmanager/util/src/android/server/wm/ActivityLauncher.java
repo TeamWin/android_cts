@@ -242,7 +242,7 @@ public class ActivityLauncher {
         try {
             if (getBoolean(extras, KEY_LAUNCH_PENDING)) {
                 PendingIntent pendingIntent = PendingIntent.getActivity(launchContext,
-                        0, newIntent, 0);
+                        0, newIntent, PendingIntent.FLAG_IMMUTABLE);
                 pendingIntent.send();
             } else {
                 launchContext.startActivity(newIntent, optionsBundle);
