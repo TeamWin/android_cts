@@ -49,6 +49,7 @@ import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.SubsystemRestartTrackingCallback;
 import android.net.wifi.WifiManager.WifiLock;
 import android.net.wifi.WifiNetworkConnectionStatistics;
 import android.net.wifi.WifiNetworkSuggestion;
@@ -241,6 +242,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mProvisioningComplete = true;
         }
     };
+    private int mSubsystemRestartStatus = 0; // 0: nada, 1: restarting, 2: restarted
+    private SubsystemRestartTrackingCallback mSubsystemRestartTrackingCallback =
+            new SubsystemRestartTrackingCallback() {
+                @Override
+                public void onSubsystemRestarting() {
+                    synchronized (mLock) {
+                        mSubsystemRestartStatus = 1;
+                        mLock.notify();
+                    }
+                }
+
+                @Override
+                public void onSubsystemRestarted() {
+                    synchronized (mLock) {
+                        mSubsystemRestartStatus = 2;
+                        mLock.notify();
+                    }
+                }
+            };
     private static final String TEST_SSID = "TEST SSID";
     private static final String TEST_FRIENDLY_NAME = "Friendly Name";
     private static final Map<String, String> TEST_FRIENDLY_NAMES =
@@ -508,6 +528,43 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("The restartWifiSubsystem should not succeed - privileged call");
         } catch (SecurityException e) {
             // expected
+        }
+    }
+
+    /**
+     * Restart WiFi subsystem and verify transition through states.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testRestartWifiSubsystem() throws Exception {
+        mSubsystemRestartStatus = 0; // 0: uninitialized
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.registerSubsystemRestartTrackingCallback(mExecutor,
+                    mSubsystemRestartTrackingCallback);
+            synchronized (mLock) {
+                mWifiManager.restartWifiSubsystem("CTS triggered");
+                mLock.wait(TEST_WAIT_DURATION_MS);
+            }
+            assertEquals(mSubsystemRestartStatus, 1); // 1: restarting
+            waitForExpectedWifiState(false);
+            assertFalse(mWifiManager.isWifiEnabled());
+            synchronized (mLock) {
+                mLock.wait(TEST_WAIT_DURATION_MS);
+                assertEquals(mSubsystemRestartStatus, 2); // 2: restarted
+            }
+            waitForExpectedWifiState(true);
+            assertTrue(mWifiManager.isWifiEnabled());
+        } finally {
+            // cleanup
+            mWifiManager.unregisterWifiSubsystemRestartTrackingCallback(
+                    mSubsystemRestartTrackingCallback);
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
