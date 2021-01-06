@@ -26,6 +26,6 @@ LOCAL_SDK_VERSION := current
 LOCAL_MIN_SDK_VERSION := 23
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests sts
 
 include $(BUILD_CTS_PACKAGE)
