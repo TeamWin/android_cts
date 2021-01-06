@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
@@ -345,6 +346,74 @@ public class ImsCallProfileTest {
         assertEquals("unparceled data for EXTRA_CALL_NETWORK_TYPE is not valid!",
                 data.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE),
                 unparceledData.getCallExtraInt(ImsCallProfile.EXTRA_CALL_NETWORK_TYPE));
+    }
+
+    @Test
+    public void testCallComposerExtras() {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsCallProfile data = new ImsCallProfile();
+
+        // EXTRA_PRIORITY
+        data.setCallExtraInt(ImsCallProfile.EXTRA_PRIORITY,
+                ImsCallProfile.PRIORITY_URGENT);
+        assertEquals(ImsCallProfile.PRIORITY_URGENT,
+                data.getCallExtraInt(ImsCallProfile.EXTRA_PRIORITY));
+        data.setCallExtraInt(ImsCallProfile.EXTRA_PRIORITY,
+                ImsCallProfile.PRIORITY_NORMAL);
+        assertEquals(ImsCallProfile.PRIORITY_NORMAL,
+                data.getCallExtraInt(ImsCallProfile.EXTRA_PRIORITY));
+
+        // EXTRA_CALL_SUBJECT
+        String testCallSubject = "TEST_CALL_SUBJECT";
+        data.setCallExtra(ImsCallProfile.EXTRA_CALL_SUBJECT, testCallSubject);
+        assertEquals(testCallSubject, data.getCallExtra(ImsCallProfile.EXTRA_CALL_SUBJECT));
+
+        // EXTRA_CALL_LOCATION
+        Location testLocation = new Location("ImsCallProfileTest");
+        double latitude = 123;
+        double longitude = 456;
+        testLocation.setLatitude(latitude);
+        testLocation.setLongitude(longitude);
+        data.setCallExtraParcelable(ImsCallProfile.EXTRA_LOCATION, testLocation);
+        Location testGetLocation = (Location) data.getCallExtraParcelable(
+                ImsCallProfile.EXTRA_LOCATION);
+        assertEquals(latitude, testGetLocation.getLatitude(), 0);
+        assertEquals(longitude, testGetLocation.getLongitude(), 0);
+
+        // EXTRA_PICTURE_URL
+        String testPictureUrl = "TEST_PICTURE_URL";
+        data.setCallExtra(ImsCallProfile.EXTRA_PICTURE_URL, testPictureUrl);
+        assertEquals(testPictureUrl, data.getCallExtra(ImsCallProfile.EXTRA_PICTURE_URL));
+
+        // Test the whole Parcel ImsCallProfile
+        Parcel dataParceled = Parcel.obtain();
+        data.writeToParcel(dataParceled, 0);
+        dataParceled.setDataPosition(0);
+        ImsCallProfile unparceledData = ImsCallProfile.CREATOR.createFromParcel(dataParceled);
+        dataParceled.recycle();
+
+        assertEquals("unparceled data for EXTRA_PRIORITY is not valid!",
+                data.getCallExtraInt(ImsCallProfile.EXTRA_PRIORITY),
+                        unparceledData.getCallExtraInt(ImsCallProfile.EXTRA_PRIORITY));
+
+        assertEquals("unparceled data for EXTRA_CALL_SUBJECT is not valid!",
+                data.getCallExtra(ImsCallProfile.EXTRA_CALL_SUBJECT),
+                        unparceledData.getCallExtra(ImsCallProfile.EXTRA_CALL_SUBJECT));
+
+        Location locationFromData = data.getCallExtraParcelable(ImsCallProfile.EXTRA_LOCATION);
+        Location locationFromUnparceledData = unparceledData.getCallExtraParcelable(
+                ImsCallProfile.EXTRA_LOCATION);
+        assertEquals("unparceled data for EXTRA_LOCATION latitude is not valid!",
+                locationFromData.getLatitude(), locationFromUnparceledData.getLatitude());
+        assertEquals("unparceled data for EXTRA_LOCATION Longitude is not valid!",
+                locationFromData.getLongitude(), locationFromUnparceledData.getLongitude());
+
+        assertEquals("unparceled data for EXTRA_PICTURE_URL is not valid!",
+                data.getCallExtra(ImsCallProfile.EXTRA_PICTURE_URL),
+                        unparceledData.getCallExtra(ImsCallProfile.EXTRA_PICTURE_URL));
     }
 
     /**
