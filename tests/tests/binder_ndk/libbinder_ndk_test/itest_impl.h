@@ -456,7 +456,8 @@ class MyTest : public ::aidl::test_package::BnTest,
       const ::aidl::test_package::ExtendableParcelable& in_input,
       ::aidl::test_package::ExtendableParcelable* out_output) {
     RepeatExtendableParcelableWithoutExtension(in_input, out_output);
-    std::unique_ptr<MyExt> ext = in_input.ext.getParcelable<MyExt>();
+    std::optional<MyExt> ext;
+    in_input.ext.getParcelable(&ext);
     MyExt ext2;
     ext2.a = ext->a;
     ext2.b = ext->b;
