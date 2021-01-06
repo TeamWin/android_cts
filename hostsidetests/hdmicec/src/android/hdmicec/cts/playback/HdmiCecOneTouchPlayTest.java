@@ -38,22 +38,6 @@ import org.junit.runner.RunWith;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
-    private static final int PHYSICAL_ADDRESS = 0x1000;
-    /**
-     * The package name of the APK.
-     */
-    private static final String HDMI_CEC_HELPER_PACKAGE = "android.hdmicec.app";
-    /**
-     * The class name of the main activity in the APK.
-     */
-    private static final String HDMI_CONTROL_HELPER_CLASS = "HdmiControlManagerHelper";
-    /**
-     * Intent to trigger an OTP.
-     */
-    private static final String OTP_ACTION = String.format(
-        "android.hdmicec.app.OTP -n %s/%s.%s", HDMI_CEC_HELPER_PACKAGE, HDMI_CEC_HELPER_PACKAGE,
-        HDMI_CONTROL_HELPER_CLASS);
-
     /** Intent to launch the remote pairing activity */
     private static final String ACTION_CONNECT_INPUT_NORMAL =
             "com.google.android.intent.action.CONNECT_INPUT";
@@ -82,10 +66,9 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
 
     /**
      * Test 11.2.1-1
-     * Tests that the device sends a <TEXT_VIEW_ON> when the home key is pressed on device, followed
-     * by a <ACTIVE_SOURCE> message.
+     * Tests that the device sends a {@code <Text View On>} when the "One Touch Play" function is
+     * invoked on the device, followed by a {@code <Active Source>} message.
      */
-    @Ignore("b/169755426")
     @Test
     public void cect_11_2_1_1_OneTouchPlay() throws Exception {
         ITestDevice device = getDevice();
@@ -97,8 +80,8 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
     }
 
     /**
-     * Tests that the device sends a <TEXT_VIEW_ON> when the pairing activity is started on
-     * device, followed by a <ACTIVE_SOURCE> message.
+     * Tests that the device sends a {@code <Text View On>} when the pairing activity is started on
+     * device, followed by a {@code <Active Source>} message.
      */
     @Test
     public void cect_PairingActivity_OneTouchPlay() throws Exception {
@@ -112,11 +95,6 @@ public final class HdmiCecOneTouchPlayTest extends BaseHdmiCecCtsTest {
     }
 
     private void sendOtp(ITestDevice device) throws Exception {
-        // Clear activity
-        device.executeShellCommand(FORCE_STOP_COMMAND + HDMI_CEC_HELPER_PACKAGE);
-        // Clear logcat.
-        device.executeAdbCommand("logcat", "-c");
-        // Start the APK and wait for it to complete.
-        device.executeShellCommand(START_COMMAND + OTP_ACTION);
+        device.executeShellCommand("cmd hdmi_control onetouchplay");
     }
 }
