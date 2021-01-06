@@ -799,7 +799,7 @@ public class AtomTests {
         BroadcastReceiver receiver =
                 registerReceiver(context, onReceiveLatch, new IntentFilter(name));
         AlarmManager manager = (AlarmManager) (context.getSystemService(AlarmManager.class));
-        PendingIntent pintent = PendingIntent.getBroadcast(context, 0, new Intent(name), 0);
+        PendingIntent pintent = PendingIntent.getBroadcast(context, 0, new Intent(name), PendingIntent.FLAG_IMMUTABLE);
         manager.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
             SystemClock.elapsedRealtime() + 2_000, pintent);
         waitForReceiver(context, 10_000, onReceiveLatch, receiver);
