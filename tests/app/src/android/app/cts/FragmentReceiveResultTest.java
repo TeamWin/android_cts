@@ -146,7 +146,7 @@ public class FragmentReceiveResultTest extends
                 intent.putExtra(FragmentResultActivity.EXTRA_RESULT_CONTENT, content);
 
                 PendingIntent pendingIntent = PendingIntent.getActivity(mActivity,
-                        requestCode, intent, 0);
+                        requestCode, intent, PendingIntent.FLAG_IMMUTABLE);
 
                 try {
                     mFragment.startIntentSenderForResult(pendingIntent.getIntentSender(),
