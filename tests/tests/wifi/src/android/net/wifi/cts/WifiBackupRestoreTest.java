@@ -35,6 +35,7 @@ import android.net.StaticIpConfiguration;
 import android.net.Uri;
 import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiManager;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
@@ -165,6 +166,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         }
     }
 
+    /** WifiConfiguration#isEnterprise() is @hide, so copy/paste partial implementation here. */
+    private static boolean isEnterprise(WifiConfiguration config) {
+        WifiEnterpriseConfig enterpriseConfig = config.enterpriseConfig;
+        return enterpriseConfig != null
+                && enterpriseConfig.getEapMethod() != WifiEnterpriseConfig.Eap.NONE;
+    }
+
     /**
      * Tests for {@link WifiManager#retrieveBackupData()} &
      * {@link WifiManager#restoreBackupData(byte[])}
@@ -180,16 +188,20 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
-            // Pick any saved network to modify;
+            // Pick a regular saved network to modify (non-enterprise, non-Passpoint)
             origNetwork = mWifiManager.getConfiguredNetworks().stream()
-                    .filter(n -> mContext.checkPermission(
-                            android.Manifest.permission.OVERRIDE_WIFI_CONFIG, -1, n.creatorUid)
-                            == PERMISSION_GRANTED)
+                    .filter(n -> {
+                        boolean canOverrideConfig = mContext.checkPermission(
+                                android.Manifest.permission.OVERRIDE_WIFI_CONFIG, -1, n.creatorUid)
+                                == PERMISSION_GRANTED;
+                        return canOverrideConfig && !isEnterprise(n) && !n.isPasspoint();
+                    })
                     .findAny()
                     .orElse(null);
             if (origNetwork == null) {
-                Log.e(TAG, "Need a network created by an app holding OVERRIDE_WIFI_CONFIG "
-                        + "permission to fully evaluate the functionality");
+                Log.e(TAG, "Need a non-enterprise and non-Passpoint network created by an app "
+                        + "holding OVERRIDE_WIFI_CONFIG permission to fully evaluate the "
+                        + "functionality");
             }
 
             // Retrieve backup data.
