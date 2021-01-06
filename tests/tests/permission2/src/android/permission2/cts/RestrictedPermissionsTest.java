@@ -414,7 +414,8 @@ public class RestrictedPermissionsTest {
 
             final Intent intent = new Intent(action);
             final IntentSender intentSender = PendingIntent.getBroadcast(getContext(),
-                    1, intent, PendingIntent.FLAG_ONE_SHOT).getIntentSender();
+                    1, intent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE)
+                    .getIntentSender();
 
             // Commit as shell to avoid confirm UI
             runWithShellPermissionIdentity(() -> {
