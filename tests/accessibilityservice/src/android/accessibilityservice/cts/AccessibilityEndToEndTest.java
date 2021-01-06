@@ -459,7 +459,7 @@ public class AccessibilityEndToEndTest {
                             .setSmallIcon(android.R.drawable.stat_notify_call_mute)
                             .setContentIntent(PendingIntent.getActivity(mActivity, 0,
                                     new Intent(),
-                                    PendingIntent.FLAG_CANCEL_CURRENT))
+            PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE))
                             .setTicker(message)
                             .setContentTitle("")
                             .setContentText("")
