@@ -577,7 +577,7 @@ public class UsageStatsTest {
                         .setContentTitle("My notification")
                         .setContentText("Hello World!");
         final PendingIntent pi = PendingIntent.getActivity(mContext, 1,
-                new Intent(Settings.ACTION_SETTINGS), 0);
+                new Intent(Settings.ACTION_SETTINGS), PendingIntent.FLAG_IMMUTABLE);
         mBuilder.setContentIntent(pi);
         mNotificationManager.notify(1, mBuilder.build());
         Thread.sleep(500);
