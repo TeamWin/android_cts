@@ -1214,6 +1214,96 @@ public class ImsServiceTest {
         }
     }
 
+    @Test
+    public void testCallComposerCapabilityStatusCallback() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        // Wait for the framework to set the capabilities on the ImsService
+        sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_MMTEL_CAP_SET);
+        MmTelFeature.MmTelCapabilities fwCaps = sServiceConnector.getCarrierService()
+                .getMmTelFeature().getCapabilities();
+        // Make sure we start off with every capability unavailable
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities());
+
+        // Make sure the capabilities match the API getter for capabilities
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        // Latch will count down here (we callback on the state during registration).
+        try {
+            automan.adoptShellPermissionIdentity();
+            // Make sure we are tracking voice capability over LTE properly.
+            assertEquals(fwCaps.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE),
+                    mmTelManager.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE,
+                    ImsRegistrationImplBase.REGISTRATION_TECH_LTE));
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        LinkedBlockingQueue<MmTelFeature.MmTelCapabilities> mQueue = new LinkedBlockingQueue<>();
+        ImsMmTelManager.CapabilityCallback callback = new ImsMmTelManager.CapabilityCallback() {
+
+            @Override
+            public void onCapabilitiesStatusChanged(MmTelFeature.MmTelCapabilities capabilities) {
+                mQueue.offer(capabilities);
+            }
+        };
+
+        // Latch will count down here (we callback on the state during registration).
+        try {
+            automan.adoptShellPermissionIdentity();
+            mmTelManager.registerMmTelCapabilityCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        try {
+            mmTelManager.registerMmTelCapabilityCallback(getContext().getMainExecutor(), callback);
+            fail("registerMmTelCapabilityCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        // We should not have voice availability here, we notified the framework earlier.
+        MmTelFeature.MmTelCapabilities capCb = waitForResult(mQueue);
+        assertFalse(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+
+        // Now enable call composer availability
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities(
+                MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+        capCb = waitForResult(mQueue);
+        assertNotNull(capCb);
+        assertTrue(capCb.isCapable(MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER));
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            assertTrue(ImsUtils.retryUntilTrue(() -> mmTelManager.isAvailable(
+                    MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_CALL_COMPOSER,
+                    ImsRegistrationImplBase.REGISTRATION_TECH_LTE)));
+
+            mmTelManager.unregisterMmTelCapabilityCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        try {
+            mmTelManager.unregisterMmTelCapabilityCallback(callback);
+            fail("unregisterMmTelCapabilityCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+    }
+
     /**
      * We are specifically testing a race case here such that IsAvailable returns the correct
      * capability status during the callback.
