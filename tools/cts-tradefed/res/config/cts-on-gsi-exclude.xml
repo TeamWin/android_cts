@@ -59,9 +59,6 @@
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActionBarTest#testOptionsMenuKey" />
     <option name="compatibility:exclude-filter" value="CtsAppTestCases android.app.cts.ActivityKeyboardShortcutsTest#testRequestShowKeyboardShortcuts" />
 
-    <!-- b/71958344: Exclude until CTS releases it -->
-    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.OverlayHostTest#testInstallingOverlayHasNoEffect" />
-
     <!-- b/161837932: Fix MediaPlayerTests that use "too small" resolution -->
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testOnSubtitleDataListener" />
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.MediaPlayerTest#testChangeSubtitleTrack" />
