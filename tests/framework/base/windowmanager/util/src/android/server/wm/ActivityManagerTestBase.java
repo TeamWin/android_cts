@@ -593,12 +593,6 @@ public abstract class ActivityManagerTestBase {
         SystemUtil.runWithShellPermissionIdentity(ActivityManager::resumeAppSwitches);
     }
 
-    protected void moveTopActivityToPinnedRootTask(int rootTaskId) {
-        runWithShellPermission(
-                () -> mAtm.moveTopActivityToPinnedRootTask(rootTaskId, new Rect(0, 0, 500, 500))
-        );
-    }
-
     protected void startActivityOnDisplay(int displayId, ComponentName component) {
         final ActivityOptions options = ActivityOptions.makeBasic();
         options.setLaunchDisplayId(displayId);

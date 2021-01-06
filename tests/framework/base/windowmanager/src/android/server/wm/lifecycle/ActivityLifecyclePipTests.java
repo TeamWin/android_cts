@@ -16,7 +16,6 @@
 
 package android.server.wm.lifecycle;
 
-import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ENTER_PIP;
@@ -29,11 +28,9 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.MediumTest;
@@ -65,17 +62,13 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Launch Pip-capable activity
-        final Activity pipActivity = launchActivityAndWait(PipActivity.class);
+        final PipActivity pipActivity = launchActivityAndWait(PipActivity.class);
 
         waitAndAssertActivityStates(state(firstActivity, ON_STOP));
 
         // Move activity to Picture-In-Picture
         getLifecycleLog().clear();
-        final ComponentName pipActivityName = getComponentName(PipActivity.class);
-        mWmState.computeState(pipActivityName);
-        final int stackId = mWmState.getStackIdByActivity(pipActivityName);
-        assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedRootTask(stackId);
+        pipActivity.enterPip();
 
         // Wait and assert lifecycle
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME), state(pipActivity, ON_PAUSE));

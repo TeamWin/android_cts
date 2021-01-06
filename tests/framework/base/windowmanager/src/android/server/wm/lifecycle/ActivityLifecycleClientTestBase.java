@@ -252,8 +252,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
      * time.
      * @return The launched Activity instance.
      */
-    Activity launchActivityAndWait(Class<? extends Activity> activityClass) throws Exception {
-        return new Launcher(activityClass).launch();
+    @SuppressWarnings("unchecked")
+    <T extends Activity> T launchActivityAndWait(Class<? extends Activity> activityClass)
+            throws Exception {
+        return (T) new Launcher(activityClass).launch();
     }
 
     /**
@@ -646,8 +648,12 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
 
             // Enter picture in picture with the given aspect ratio if provided
             if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
+                enterPip();
             }
+        }
+
+        void enterPip() {
+            enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
         }
     }
 
