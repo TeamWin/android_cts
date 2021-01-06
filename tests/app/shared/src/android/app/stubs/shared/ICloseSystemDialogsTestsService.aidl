@@ -16,6 +16,20 @@
 
 package android.app.stubs.shared;
 
+import android.os.ResultReceiver;
+
 interface ICloseSystemDialogsTestsService {
     void sendCloseSystemDialogsBroadcast();
+
+    const int RESULT_OK = 0;
+    const int RESULT_SECURITY_EXCEPTION = 1;
+
+    /**
+     * Posts a notification with id {@code notificationId} with a broadcast pending intent, then in
+     * that pending intent sends {@link android.content.Intent#ACTION_CLOSE_SYSTEM_DIALOGS}.
+     *
+     * The caller is responsible for trigerring the notification. The passed in {@code receiver}
+     * will be called once the intent has been sent.
+     */
+    void postNotification(int notificationId, in ResultReceiver receiver);
 }

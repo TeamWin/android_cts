@@ -48,6 +48,8 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+import static android.app.cts.android.app.cts.tools.NotificationHelper.MAX_WAIT_TIME;
+import static android.app.cts.android.app.cts.tools.NotificationHelper.SHORT_WAIT_TIME;
 import static android.app.stubs.BubblesTestService.EXTRA_TEST_CASE;
 import static android.app.stubs.BubblesTestService.TEST_CALL;
 import static android.app.stubs.BubblesTestService.TEST_MESSAGING;
@@ -74,6 +76,7 @@ import android.app.PendingIntent;
 import android.app.Person;
 import android.app.UiAutomation;
 import android.app.cts.android.app.cts.tools.FutureServiceConnection;
+import android.app.cts.android.app.cts.tools.NotificationHelper;
 import android.app.stubs.AutomaticZenRuleActivity;
 import android.app.stubs.BubbledActivity;
 import android.app.stubs.BubblesTestService;
@@ -168,8 +171,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String DELEGATOR = "com.android.test.notificationdelegator";
     private static final String DELEGATE_POST_CLASS = DELEGATOR + ".NotificationDelegateAndPost";
     private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
-    private static final long SHORT_WAIT_TIME = 100;
-    private static final long MAX_WAIT_TIME = 2000;
     private static final String SHARE_SHORTCUT_ID = "shareShortcut";
     private static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
@@ -201,6 +202,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private boolean mBubblesEnabledSettingToRestore;
     private INotificationUriAccessService mNotificationUriAccessService;
     private FutureServiceConnection mTrampolineConnection;
+    private NotificationHelper mNotificationHelper;
 
     @Override
     protected void setUp() throws Exception {
@@ -209,6 +211,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mId = UUID.randomUUID().toString();
         mNotificationManager = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
+        mNotificationHelper = new NotificationHelper(mContext, () -> mListener);
         // clear the deck so that our getActiveNotifications results are predictable
         mNotificationManager.cancelAll();
 
@@ -385,38 +388,15 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private StatusBarNotification findPostedNotification(int id, boolean all) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 1000ms before giving up
-        for (long totalWait = 0; totalWait < MAX_WAIT_TIME; totalWait += SHORT_WAIT_TIME) {
-            StatusBarNotification n = findNotificationNoWait(id, all);
-            if (n != null) {
-                return n;
-            }
-            try {
-                Thread.sleep(SHORT_WAIT_TIME);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        return findNotificationNoWait(id, all);
+        return mNotificationHelper.findPostedNotification(id, all);
     }
 
     private StatusBarNotification findNotificationNoWait(int id, boolean all) {
-        for (StatusBarNotification sbn : getActiveNotifications(all)) {
-            if (sbn.getId() == id) {
-                return sbn;
-            }
-        }
-        return null;
+        return mNotificationHelper.findNotificationNoWait(id, all);
     }
 
     private StatusBarNotification[] getActiveNotifications(boolean all) {
-        if (all) {
-            return mListener.getActiveNotifications();
-        } else {
-            return mNotificationManager.getActiveNotifications();
-        }
+        return mNotificationHelper.getActiveNotifications(all);
     }
 
     private PendingIntent getPendingIntent() {
@@ -685,12 +665,16 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     private void toggleListenerAccess(boolean on) throws IOException {
+        toggleListenerAccess(mContext, on);
+    }
+
+    public static void toggleListenerAccess(Context context, boolean on) throws IOException {
         String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
                 + TestNotificationListener.getId();
 
         runCommand(command, InstrumentationRegistry.getInstrumentation());
 
-        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        final NotificationManager nm = context.getSystemService(NotificationManager.class);
         final ComponentName listenerComponent = TestNotificationListener.getComponentName();
         assertEquals(listenerComponent + " has incorrect listener access",
                 on, nm.isNotificationListenerAccessGranted(listenerComponent));
@@ -733,7 +717,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
-    private void runCommand(String command, Instrumentation instrumentation) throws IOException {
+    private static void runCommand(String command, Instrumentation instrumentation)
+            throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
