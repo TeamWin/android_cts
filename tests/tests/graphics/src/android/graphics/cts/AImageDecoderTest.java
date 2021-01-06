@@ -860,6 +860,20 @@ public class AImageDecoderTest {
         assertEquals(100, bm.getWidth());
         assertEquals(80,  bm.getHeight());
 
+        // First verify that the info (and in particular, the width and height)
+        // are correct. This uses a separate ParcelFileDescriptor/aimagedecoder
+        // because the native methods delete the aimagedecoder.
+        try (ParcelFileDescriptor pfd = open(resId)) {
+            long aimagedecoder = nCreateFromFd(pfd.getFd());
+
+            String mimeType = uri.toString().contains("webp") ? "image/webp" : "image/jpeg";
+            nTestInfo(aimagedecoder, 100, 80, mimeType, false,
+                    DataSpace.fromColorSpace(bm.getColorSpace()));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            fail("Could not open " + uri + " to check info");
+        }
+
         try (ParcelFileDescriptor pfd = open(resId)) {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
