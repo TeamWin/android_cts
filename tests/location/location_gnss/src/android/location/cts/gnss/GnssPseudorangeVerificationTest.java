@@ -136,11 +136,6 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
 
     Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
 
-    if (!mMeasurementListener.verifyStatus()) {
-      // If verifyStatus returns false, an assert exception happens and test fails.
-      return; // exit (with pass)
-    }
-
     List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
     int eventCount = events.size();
     Log.i(TAG, "Number of GNSS measurement events received = " + eventCount);

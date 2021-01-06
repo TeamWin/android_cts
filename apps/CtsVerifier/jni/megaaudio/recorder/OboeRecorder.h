@@ -39,17 +39,15 @@ public:
     //
     virtual bool isRecording() override { return mStreamStarted; }
 
-    virtual bool setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
-    virtual void teardownStream() override;
+    virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
 
-    virtual bool startStream() override;
-    virtual void stopStream() override;
+    virtual Result startStream() override;
 
+    static const int DEFAULT_INPUT_NONE = -1;  // from Recorder.java
     void setInputPreset(int inputPreset) { mInputPreset = inputPreset; }
 
 private:
     int32_t mInputPreset;
-    void teardownStream_l();
 };
 
 #endif // MEGA_RECORDER_OBOERECORDER_H

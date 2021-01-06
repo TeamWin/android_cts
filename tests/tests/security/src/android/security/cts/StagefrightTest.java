@@ -1259,6 +1259,42 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3658() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3658);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-05")
+    public void testStagefright_cve_2020_3633() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3633);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3660() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3660);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3661() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3661);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-01")
+    public void testStagefright_cve_2019_14013() throws Exception {
+        doStagefrightTest(R.raw.cve_2019_14013);
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2020-06")
+    public void testStagefright_cve_2020_3662() throws Exception {
+        doStagefrightTest(R.raw.cve_2020_3662);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2021-01")
     public void testStagefright_cve_2021_0312() throws Exception {
         assumeFalse(ModuleDetector.moduleIsPlayManaged(

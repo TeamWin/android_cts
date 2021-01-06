@@ -17,11 +17,20 @@
 #ifndef MEGA_COMMON_OBOESTREAM_H
 #define MEGA_COMMON_OBOESTREAM_H
 
+#include <cstdint>
 #include <mutex>
 
 #include <StreamBase.h>
 
 class OboeStream: public StreamBase {
+public:
+    static Result OboeErrorToMegaAudioError(oboe::Result oboeError);
+
+    virtual Result teardownStream() override;
+
+    virtual Result startStream() override;
+    virtual Result stopStream() override;
+
 protected:
     OboeStream(int32_t subtype) : mSubtype(subtype), mStreamStarted(false) {}
 
@@ -34,6 +43,8 @@ protected:
     bool    mStreamStarted;
 
     std::mutex mStreamLock;
+
+    Result teardownStream_l();
 };
 
 #endif //MEGA_COMMON_OBOESTREAM_H

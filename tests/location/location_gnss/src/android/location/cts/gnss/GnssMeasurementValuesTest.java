@@ -113,12 +113,6 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
 
         Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
 
-        if (!mMeasurementListener.verifyStatus()) {
-            // If test is strict and verifyStatus returns false, an assert exception happens and
-            // test fails.   If test is not strict, we arrive here, and:
-            return; // exit (with pass)
-        }
-
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         int eventCount = events.size();
         Log.i(TAG, "Number of Gps Event received = " + eventCount);

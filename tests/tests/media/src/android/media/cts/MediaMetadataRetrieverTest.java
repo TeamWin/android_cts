@@ -1070,6 +1070,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 1 /*imageCount*/, 0 /*primary*/, false /*useGrid*/, true /*checkColor*/);
     }
 
+    public void testGetImageAtIndexAvifGrid() throws Exception {
+        testGetImage("sample_grid2x4.avif", 1920, 1080, "image/avif", 0 /*rotation*/,
+                1 /*imageCount*/, 0 /*primary*/, true /*useGrid*/, true /*checkColor*/);
+    }
+
     /**
      * Determines if two color values are approximately equal.
      */

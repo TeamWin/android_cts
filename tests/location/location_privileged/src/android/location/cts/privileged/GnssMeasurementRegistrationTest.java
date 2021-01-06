@@ -104,11 +104,6 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
                 new GnssRequest.Builder().setFullTracking(true).build());
 
         mMeasurementListener.await();
-        if (!mMeasurementListener.verifyStatus()) {
-            // If test is strict verifyStatus will assert conditions are good for further testing.
-            // Else this returns false and, we arrive here, and then return from here (pass.)
-            return;
-        }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());

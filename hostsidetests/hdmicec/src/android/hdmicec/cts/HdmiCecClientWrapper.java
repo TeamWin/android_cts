@@ -247,7 +247,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
                 "(" + source + "\\p{XDigit}):(.*)",
             Pattern.CASE_INSENSITIVE);
 
-        while ((endTime - startTime <= duration)) {
+        while ((endTime - startTime <= (duration * 1000))) {
             if (mInputConsole.ready()) {
                 String line = mInputConsole.readLine();
                 if (pattern.matcher(line).matches()) {

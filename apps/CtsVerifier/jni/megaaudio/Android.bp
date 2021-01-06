@@ -17,6 +17,8 @@
 cc_test_library {
     name: "libmegaaudio_jni",
     srcs: [
+        "common/OboeStream.cpp",
+        "common/StreamBase.cpp",
         "player/NativeAudioSource.cpp",
         "player/NoiseAudioSource.cpp",
         "player/OboePlayer.cpp",

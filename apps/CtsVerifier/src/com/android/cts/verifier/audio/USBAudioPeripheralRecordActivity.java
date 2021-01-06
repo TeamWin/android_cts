@@ -28,6 +28,7 @@ import com.android.cts.verifier.audio.audiolib.WaveScopeView;
 
 // MegaAudio imports
 import org.hyphonate.megaaudio.common.BuilderBase;
+import org.hyphonate.megaaudio.common.StreamBase;
 import org.hyphonate.megaaudio.duplex.DuplexAudioManager;
 import org.hyphonate.megaaudio.player.sources.SinAudioSourceProvider;
 import org.hyphonate.megaaudio.recorder.RecorderBuilder;
@@ -86,16 +87,16 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
                 withLoopback ? new SinAudioSourceProvider() : null,
                 new AppCallbackAudioSinkProvider(new ScopeRefreshCallback()));
 
-        if (!mDuplexManager.setupStreams(
+        if (mDuplexManager.setupStreams(
                 withLoopback ? BuilderBase.TYPE_JAVA : BuilderBase.TYPE_NONE,
-                BuilderBase.TYPE_JAVA)) {
+                BuilderBase.TYPE_JAVA) != StreamBase.OK) {
             Toast.makeText(
                     this, "Couldn't create recorder. Please check permissions.", Toast.LENGTH_LONG)
                     .show();
             return mIsRecording = false;
         }
 
-        if (!mDuplexManager.start()) {
+        if (mDuplexManager.start() != StreamBase.OK) {
             Toast.makeText(
                     this, "Couldn't start recording. Please check permissions.", Toast.LENGTH_LONG)
                     .show();
@@ -107,11 +108,14 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralActivity
         return mIsRecording;
     }
 
-    public void stopRecording() {
+    public int stopRecording() {
+        int result = StreamBase.OK;
         if (mDuplexManager != null) {
-            mDuplexManager.stop();
+            result = mDuplexManager.stop();
         }
         mIsRecording = false;
+
+        return result;
     }
 
     public boolean isRecording() {

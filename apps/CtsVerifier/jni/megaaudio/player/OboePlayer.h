@@ -32,14 +32,7 @@ public:
     virtual void onErrorAfterClose(oboe::AudioStream *oboeStream, oboe::Result error) override;
     virtual void onErrorBeforeClose(oboe::AudioStream * oboeStream, oboe::Result error) override;
 
-    virtual bool setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
-    virtual void teardownStream() override;
-
-    virtual bool startStream() override;
-    virtual void stopStream() override;
-
-private:
-    void teardownStream_l();
+    virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
 };
 
 #endif // MEGA_PLAYER_OBOEPLAYER_H

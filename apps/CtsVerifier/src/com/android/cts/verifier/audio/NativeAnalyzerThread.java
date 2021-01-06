@@ -121,18 +121,17 @@ public class NativeAnalyzerThread {
     }
 
     // return a result code. < 0 indicates an error
-//    private native int startAudio(long audio_context);
     private int startAudio(long audio_context) {
-        return mAudioPlayer.startStream() ? 0 : -1;
+        return mAudioPlayer.startStream();
     }
 
-    private void stopAudio(long audio_context) {
-        mAudioPlayer.stopStream();
+    private int stopAudio(long audio_context) {
+        return mAudioPlayer.stopStream();
     }
 
     // return a result code. < 0 indicates an error
-    private void closeAudio(long audio_context) {
-        mAudioPlayer.teardownStream();
+    private int closeAudio(long audio_context) {
+        return mAudioPlayer.teardownStream();
     }
 
     private native int getError(long audio_context);

@@ -14,25 +14,6 @@
  * limitations under the License.
  */
 
-#ifndef MEGA_RECORDER_RECORDER_H
-#define MEGA_RECORDER_RECORDER_H
+#include "StreamBase.h"
 
-#include <OboeStream.h>
-
-class AudioSink;
-
-class Recorder: public OboeStream {
-public:
-    Recorder(AudioSink* sink, int subtype) : OboeStream(subtype), mAudioSink(sink) {}
-    virtual ~Recorder() {}
-
-    //
-    // State
-    //
-    virtual bool isRecording() = 0;
-
-protected:
-    std::shared_ptr<AudioSink>    mAudioSink;
-};
-
-#endif // MEGA_RECORDER_RECORDER_H
+//TODO Currently there are no, non-inline, non-pure-virtual methods of StreamBase.
