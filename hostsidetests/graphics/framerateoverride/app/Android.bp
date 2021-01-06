@@ -32,6 +32,7 @@ android_test_helper_app {
         "junit",
         "junit-params",
         "mockito-target-minus-junit4",
+        "SurfaceFlingerProperties",
         "testng",
         "truth-prebuilt",
     ],
