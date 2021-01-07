@@ -2132,6 +2132,45 @@ public class TelephonyManagerTest {
     }
 
     /**
+     * Tests TelephonyManager.setCallComposerStatus and TelephonyManager.getCallComposerStatus.
+     */
+    @Test
+    public void testSetGetCallComposerStatus() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        boolean hasImsFeature = mPackageManager.hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_IMS);
+
+        if (hasImsFeature) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_OFF));
+            int status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_ON);
+        } else {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_OFF));
+            int status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
+        }
+    }
+
+    /**
      * Tests {@link TelephonyManager#getSupportedRadioAccessFamily()}
      */
     @Test
