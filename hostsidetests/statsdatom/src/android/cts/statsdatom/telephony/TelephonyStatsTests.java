@@ -148,6 +148,25 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         }
     }
 
+    public void testCarrierIdTableVersion() throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        int expectedVersion = getCarrierIdTableVersion();
+
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.CARRIER_ID_TABLE_VERSION_FIELD_NUMBER);
+
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<AtomsProto.Atom> data = ReportUtils.getGaugeMetricAtoms(getDevice());
+        assertThat(data).isNotEmpty();
+        AtomsProto.CarrierIdTableVersion atom = data.get(0).getCarrierIdTableVersion();
+        assertThat(atom.getTableVersion()).isEqualTo(expectedVersion);
+    }
+
     public void testAirplaneModeEvent_shortToggle() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_TELEPHONY)) {
             return;
@@ -265,6 +284,12 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         return Math.toIntExact(count);
     }
 
+    private Queue<String> getTelephonyDumpEntries() throws Exception {
+        String response =
+                getDevice().executeShellCommand("dumpsys activity service TelephonyDebugService");
+        return new LinkedList<>(Arrays.asList(response.split("[\\r\\n]+")));
+    }
+
     /**
      * Returns a list of fields and values for {@code className} from {@link TelephonyDebugService}
      * output.
@@ -280,9 +305,7 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
         Pattern classNamePattern = Pattern.compile("^(\\s*)" + Pattern.quote(className) + ":.*$");
         // Matches pattern for key-value pairs, e.g. "     mPhoneId=1"
         Pattern keyValuePattern = Pattern.compile("^(\\s*)([a-zA-Z]+[a-zA-Z0-9_]*)\\=(.+)$");
-        String response =
-                getDevice().executeShellCommand("dumpsys activity service TelephonyDebugService");
-        Queue<String> responseLines = new LinkedList<>(Arrays.asList(response.split("[\\r\\n]+")));
+        Queue<String> responseLines = getTelephonyDumpEntries();
 
         List<Map<String, String>> results = new ArrayList<>();
         while (responseLines.peek() != null) {
@@ -312,6 +335,21 @@ public class TelephonyStatsTests extends DeviceTestCase implements IBuildReceive
             }
         }
         return results;
+    }
+
+    private int getCarrierIdTableVersion() throws Exception {
+        Queue<String> responseLines = getTelephonyDumpEntries();
+        for (String line : responseLines) {
+            if (line.contains("carrier_list_version")) {
+                String version = line.replaceFirst("^\\s*carrier_list_version:\\s*", "");
+                try {
+                    return Integer.parseInt(version);
+                } catch (NumberFormatException e) {
+                    return 0;
+                }
+            }
+        }
+        return 0;
     }
 
     private void turnOnAirplaneMode() throws Exception {
