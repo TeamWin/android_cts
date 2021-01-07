@@ -21,6 +21,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkUtils;
+import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.OsConstants;
 import android.test.AndroidTestCase;
@@ -85,6 +86,7 @@ public class MultinetworkApiTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "CHANGE_NETWORK_STATE permission can't be granted to instant apps")
     public void testSetprocnetwork() throws ErrnoException {
         // Hopefully no prior test in this process space has set a default network.
         assertNull(mCM.getProcessDefaultNetwork());
@@ -127,6 +129,7 @@ public class MultinetworkApiTest extends AndroidTestCase {
         }
     }
 
+    @AppModeFull(reason = "CHANGE_NETWORK_STATE permission can't be granted to instant apps")
     public void testSetsocknetwork() throws ErrnoException {
         for (Network network : getTestableNetworks()) {
             int errno = runSetsocknetwork(network.getNetworkHandle());
