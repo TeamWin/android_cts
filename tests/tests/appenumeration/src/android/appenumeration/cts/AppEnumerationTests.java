@@ -588,7 +588,7 @@ public class AppEnumerationTests {
                 new Intent("android.appenumeration.cts.action.SEND_RESULT").setComponent(
                         new ComponentName(targetPackageName,
                                 "android.appenumeration.cts.query.TestActivity")),
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 pendingIntent /*queryIntent*/, Constants.ACTION_START_SENDER_FOR_RESULT);
