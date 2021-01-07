@@ -24,6 +24,7 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.app.assist.AssistStructure;
 import android.autofillservice.cts.testcore.CtsAugmentedAutofillService.AugmentedFillRequest;
 import android.content.ComponentName;
 import android.service.autofill.augmented.FillRequest;
@@ -77,27 +78,13 @@ public final class AugmentedHelper {
 
     public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
             @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
-            @NonNull AutofillValue expectedFocusedValue) {
-        assertBasicRequestInfo(request, activity, expectedFocusedId,
-                expectedFocusedValue.getTextValue().toString());
-    }
-
-    public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
-            @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
-            @NonNull String expectedFocusedValue) {
+            @Nullable AutofillValue expectedFocusedValue) {
         assertBasicRequestInfo(request, activity, expectedFocusedId, expectedFocusedValue, true);
     }
 
     public static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
             @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
-            @NonNull AutofillValue expectedFocusedValue, boolean hasInlineRequest) {
-        assertBasicRequestInfo(request, activity, expectedFocusedId,
-                expectedFocusedValue.getTextValue().toString(), hasInlineRequest);
-    }
-
-    private static void assertBasicRequestInfo(@NonNull AugmentedFillRequest request,
-            @NonNull Activity activity, @NonNull AutofillId expectedFocusedId,
-            @NonNull String expectedFocusedValue, boolean hasInlineRequest) {
+            @Nullable AutofillValue expectedFocusedValue, boolean hasInlineRequest) {
         Objects.requireNonNull(activity);
         Objects.requireNonNull(expectedFocusedId);
         assertWithMessage("no AugmentedFillRequest").that(request).isNotNull();
@@ -119,8 +106,27 @@ public final class AugmentedHelper {
         assertWithMessage("wrong focused id on %s", request).that(actualFocusedId)
                 .isEqualTo(expectedFocusedId);
         final AutofillValue actualFocusedValue = request.request.getFocusedValue();
-        assertWithMessage("no focused value on %s", request).that(actualFocusedValue).isNotNull();
-        assertAutofillValue(expectedFocusedValue, actualFocusedValue);
+        if (expectedFocusedValue != null) {
+            assertWithMessage("no focused value on %s", request).that(
+                    actualFocusedValue).isNotNull();
+            assertAutofillValue(expectedFocusedValue, actualFocusedValue);
+        } else {
+            assertWithMessage("expecting null focused value on %s", request).that(
+                    actualFocusedValue).isNull();
+        }
+        if (expectedFocusedId.isNonVirtual()) {
+            final AssistStructure.ViewNode focusedViewNode = request.request.getFocusedViewNode();
+            assertWithMessage("no focused view node on %s", request).that(
+                    focusedViewNode).isNotNull();
+            assertWithMessage("wrong autofill id in focused view node %s", focusedViewNode).that(
+                    focusedViewNode.getAutofillId()).isEqualTo(expectedFocusedId);
+            assertWithMessage("unexpected autofill value in focused view node %s",
+                    focusedViewNode).that(focusedViewNode.getAutofillValue()).isEqualTo(
+                    expectedFocusedValue);
+            assertWithMessage("children nodes should not be populated for focused view node %s",
+                    focusedViewNode).that(
+                    focusedViewNode.getChildCount()).isEqualTo(0);
+        }
         final InlineSuggestionsRequest inlineRequest =
                 request.request.getInlineSuggestionsRequest();
         if (hasInlineRequest) {

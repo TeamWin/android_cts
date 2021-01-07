@@ -1032,7 +1032,7 @@ public class AugmentedLoginActivityTest
         final AugmentedFillRequest request2 = sAugmentedReplier.getNextFillRequest();
 
         // Assert 2nd request
-        assertBasicRequestInfo(request2, mActivity, usernameId, "DOH");
+        assertBasicRequestInfo(request2, mActivity, usernameId, AutofillValue.forText("DOH"));
 
         // Make sure UIs were not shown
         mUiBot.assertNoDatasetsEver();
