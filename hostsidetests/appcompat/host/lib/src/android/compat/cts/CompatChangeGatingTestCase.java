@@ -46,6 +46,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -355,4 +356,15 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
         getDevice().executeShellCommand(command, receiver);
         return receiver.getOutput();
     }
+
+    /**
+     * Get the on device compat config.
+     */
+    protected List<Change> getOnDeviceCompatConfig() throws Exception {
+        String config = runCommand("dumpsys platform_compat");
+        return Arrays.stream(config.split("\n"))
+                .map(Change::fromString)
+                .collect(Collectors.toList());
+    }
+
 }
