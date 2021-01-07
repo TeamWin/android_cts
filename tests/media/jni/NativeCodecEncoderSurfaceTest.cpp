@@ -50,6 +50,8 @@ class CodecEncoderSurfaceTest {
     int mEncBitrate;
     int mEncFramerate;
     int mMaxBFrames;
+    int mLatency;
+    bool mReviseLatency;
     int mMuxTrackID;
 
     OutputManager* mOutputBuff;
@@ -91,6 +93,8 @@ CodecEncoderSurfaceTest::CodecEncoderSurfaceTest(const char* mime, int bitrate, 
     mEncoder = nullptr;
     resetContext(false, false);
     mMaxBFrames = 0;
+    mLatency = mMaxBFrames;
+    mReviseLatency = false;
     mMuxTrackID = -1;
 }
 
@@ -167,6 +171,9 @@ bool CodecEncoderSurfaceTest::configureCodec(bool isAsync, bool signalEOSWithLas
     CHECK_STATUS(AMediaCodec_configure(mEncoder, mEncFormat, nullptr, nullptr,
                                        AMEDIACODEC_CONFIGURE_FLAG_ENCODE),
                  "AMediaCodec_configure failed");
+    AMediaFormat* inpFormat = AMediaCodec_getInputFormat(mEncoder);
+    mReviseLatency = AMediaFormat_getInt32(inpFormat, AMEDIAFORMAT_KEY_LATENCY, &mLatency);
+    AMediaFormat_delete(inpFormat);
     CHECK_STATUS(AMediaCodec_createInputSurface(mEncoder, &mWindow),
                  "AMediaCodec_createInputSurface failed");
     CHECK_STATUS(mAsyncHandleDecoder.setCallBack(mDecoder, isAsync),
@@ -301,6 +308,24 @@ bool CodecEncoderSurfaceTest::dequeueEncoderOutput(size_t bufferIndex,
 bool CodecEncoderSurfaceTest::tryEncoderOutput(long timeOutUs) {
     if (mIsCodecInAsyncMode) {
         if (!hasSeenError() && !mSawEncOutputEOS) {
+            int retry = 0;
+            while (mReviseLatency) {
+                if (mAsyncHandleEncoder.hasOutputFormatChanged()) {
+                    int actualLatency;
+                    mReviseLatency = false;
+                    if (AMediaFormat_getInt32(mAsyncHandleEncoder.getOutputFormat(),
+                                              AMEDIAFORMAT_KEY_LATENCY, &actualLatency)) {
+                        if (mLatency < actualLatency) {
+                            mLatency = actualLatency;
+                            return !hasSeenError();
+                        }
+                    }
+                } else {
+                    if (retry > 10) return false;
+                    usleep(timeOutUs);
+                    retry ++;
+                }
+            }
             callbackObject element = mAsyncHandleEncoder.getOutput();
             if (element.bufferIndex >= 0) {
                 if (!dequeueEncoderOutput(element.bufferIndex, &element.bufferInfo)) return false;
@@ -313,6 +338,9 @@ bool CodecEncoderSurfaceTest::tryEncoderOutput(long timeOutUs) {
             if (bufferID >= 0) {
                 if (!dequeueEncoderOutput(bufferID, &outInfo)) return false;
             } else if (bufferID == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
+                AMediaFormat* outFormat = AMediaCodec_getOutputFormat(mEncoder);
+                AMediaFormat_getInt32(outFormat, AMEDIAFORMAT_KEY_LATENCY, &mLatency);
+                AMediaFormat_delete(outFormat);
             } else if (bufferID == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
             } else if (bufferID == AMEDIACODEC_INFO_OUTPUT_BUFFERS_CHANGED) {
             } else {
@@ -366,7 +394,7 @@ bool CodecEncoderSurfaceTest::queueEOS() {
                 if (!dequeueDecoderOutput(element.bufferIndex, &element.bufferInfo)) return false;
             }
             if (mSawDecOutputEOS) AMediaCodec_signalEndOfInputStream(mEncoder);
-            if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+            if (mDecOutputCount - mEncOutputCount > mLatency) {
                 if (!tryEncoderOutput(-1)) return false;
             }
         }
@@ -388,7 +416,7 @@ bool CodecEncoderSurfaceTest::queueEOS() {
                 }
             }
             if (mSawDecOutputEOS) AMediaCodec_signalEndOfInputStream(mEncoder);
-            if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+            if (mDecOutputCount - mEncOutputCount > mLatency) {
                 if (!tryEncoderOutput(-1)) return false;
             }
         }
@@ -415,8 +443,7 @@ bool CodecEncoderSurfaceTest::doWork(int frameLimit) {
             // check decoder EOS
             if (mSawDecOutputEOS) AMediaCodec_signalEndOfInputStream(mEncoder);
             // encoder output
-            // TODO: remove fixed constant and change it according to encoder latency
-            if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+            if (mDecOutputCount - mEncOutputCount > mLatency) {
                 if (!tryEncoderOutput(-1)) return false;
             }
         }
@@ -444,8 +471,7 @@ bool CodecEncoderSurfaceTest::doWork(int frameLimit) {
                 return false;
             }
             if (mSawDecOutputEOS) AMediaCodec_signalEndOfInputStream(mEncoder);
-            // TODO: remove fixed constant and change it according to encoder latency
-            if (mDecOutputCount - mEncOutputCount > mMaxBFrames) {
+            if (mDecOutputCount - mEncOutputCount > mLatency) {
                 if (!tryEncoderOutput(-1)) return false;
             }
         }
