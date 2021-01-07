@@ -45,6 +45,18 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/17769851
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     **/
+    @SecurityTest(minPatchLevel = "2015-12")
+    public void testPocCVE_2015_6616() throws Exception {
+        pocPusher.only64();
+        String inputFiles[] = {"cve_2015_6616.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2015-6616",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
      * b/157650336
      * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
      */
