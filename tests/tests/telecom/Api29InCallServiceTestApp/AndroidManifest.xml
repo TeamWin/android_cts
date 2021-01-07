@@ -28,7 +28,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.CONTROL_INCALL_EXPERIENCE" />
 
-    <application android:label="Api29CTSInCallService">
+    <application android:label="Api29CTSInCallService"
+                 android:debuggable="true">
         <service android:name=".CtsApi29InCallService"
                  android:permission="android.permission.BIND_INCALL_SERVICE"
                  android:launchMode="singleInstance"
