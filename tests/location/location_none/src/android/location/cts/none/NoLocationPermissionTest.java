@@ -102,45 +102,6 @@ public class NoLocationPermissionTest {
     }
 
     @Test
-    public void testHasProvider() {
-        for (String provider : mLocationManager.getAllProviders()) {
-            assertThat(mLocationManager.hasProvider(provider)).isTrue();
-        }
-
-        assertThat(mLocationManager.hasProvider("fake")).isFalse();
-    }
-
-    @Test
-    public void testGetProviderProperties() {
-        for (String provider : mLocationManager.getAllProviders()) {
-            mLocationManager.getProviderProperties(provider);
-        }
-
-        try {
-            mLocationManager.getProviderProperties("fake");
-            fail("Should throw IllegalArgumentException for non-existent provider");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-    }
-
-    @Test
-    public void testGetProvider() {
-        for (String provider : mLocationManager.getAllProviders()) {
-            mLocationManager.getProvider(provider);
-        }
-
-        assertThat(mLocationManager.getProvider("fake")).isNull();
-    }
-
-    @Test
-    public void testIsProviderEnabled() {
-        for (String provider : mLocationManager.getAllProviders()) {
-            mLocationManager.isProviderEnabled(provider);
-        }
-    }
-
-    @Test
     public void testAddTestProvider() {
         for (String provider : mLocationManager.getAllProviders()) {
             try {

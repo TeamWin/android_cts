@@ -47,9 +47,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.location.Criteria;
-import android.location.GnssAntennaInfo;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
@@ -63,6 +61,9 @@ import android.location.cts.common.BroadcastCapture;
 import android.location.cts.common.GetCurrentLocationCapture;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.location.cts.common.gnss.GnssAntennaInfoCapture;
+import android.location.cts.common.gnss.GnssMeasurementsCapture;
+import android.location.cts.common.gnss.GnssNavigationMessageCapture;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -161,6 +162,10 @@ public class LocationManagerFineTest {
 
         mManager.setTestProviderEnabled(TEST_PROVIDER, true);
         assertThat(mManager.isProviderEnabled(TEST_PROVIDER)).isTrue();
+
+        for (String provider : mManager.getAllProviders()) {
+            mManager.isProviderEnabled(provider);
+        }
 
         try {
             mManager.isProviderEnabled(null);
@@ -803,7 +808,7 @@ public class LocationManagerFineTest {
     @Test
     @AppModeFull(reason = "Instant apps can't hold ACCESS_LOCATION_EXTRA_COMMANDS permission")
     public void testRequestGpsUpdates_B9758659() throws Exception {
-        assumeTrue(hasGpsFeature());
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
 
         // test for b/9758659, where the gps provider may reuse network provider positions creating
         // an unnatural feedback loop
@@ -1015,7 +1020,7 @@ public class LocationManagerFineTest {
     @Test
     public void testGetAllProviders() {
         List<String> providers = mManager.getAllProviders();
-        if (hasGpsFeature()) {
+        if (mManager.hasProvider(GPS_PROVIDER)) {
             assertThat(providers.contains(LocationManager.GPS_PROVIDER)).isTrue();
         }
         assertThat(providers.contains(PASSIVE_PROVIDER)).isTrue();
@@ -1119,16 +1124,41 @@ public class LocationManagerFineTest {
         assertThat(provider.getName()).isEqualTo(TEST_PROVIDER);
 
         provider = mManager.getProvider(LocationManager.GPS_PROVIDER);
-        if (hasGpsFeature()) {
+        if (mManager.hasProvider(GPS_PROVIDER)) {
             assertThat(provider).isNotNull();
             assertThat(provider.getName()).isEqualTo(LocationManager.GPS_PROVIDER);
         } else {
             assertThat(provider).isNull();
         }
 
+        assertThat(mManager.getProvider("fake")).isNull();
+
         try {
             mManager.getProvider(null);
             fail("Should throw IllegalArgumentException when provider is null!");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testHasProvider() {
+        for (String provider : mManager.getAllProviders()) {
+            assertThat(mManager.hasProvider(provider)).isTrue();
+        }
+
+        assertThat(mManager.hasProvider("fake")).isFalse();
+    }
+
+    @Test
+    public void testGetProviderProperties() {
+        for (String provider : mManager.getAllProviders()) {
+            mManager.getProviderProperties(provider);
+        }
+
+        try {
+            mManager.getProviderProperties("fake");
+            fail("Should throw IllegalArgumentException for non-existent provider");
         } catch (IllegalArgumentException e) {
             // expected
         }
@@ -1357,14 +1387,20 @@ public class LocationManagerFineTest {
     }
 
     @Test
+    public void testGetGnssCapabilities() {
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
+        assertThat(mManager.getGnssCapabilities()).isNotNull();
+    }
+
+    @Test
     public void testGetGnssYearOfHardware() {
-        assumeTrue(hasGpsFeature());
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
         mManager.getGnssYearOfHardware();
     }
 
     @Test
     public void testGetGnssHardwareModelName() {
-        assumeTrue(hasGpsFeature());
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
 
         // model name should be longer than 4 characters
         String gnssHardwareModelName = mManager.getGnssHardwareModelName();
@@ -1375,6 +1411,16 @@ public class LocationManagerFineTest {
             return;
         }
         assertThat(gnssHardwareModelName.length()).isGreaterThan(3);
+    }
+
+    @Test
+    public void testGetGnssAntennaInfos() {
+        assumeTrue(mManager.hasProvider(GPS_PROVIDER));
+        if (mManager.getGnssCapabilities().hasAntennaInfo()) {
+            assertThat(mManager.getGnssAntennaInfos()).isNotNull();
+        } else {
+            assertThat(mManager.getGnssAntennaInfos()).isNull();
+        }
     }
 
     @Test
@@ -1396,33 +1442,33 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testRegisterGnssMeasurementsCallback() {
-        GnssMeasurementsEvent.Callback callback = new GnssMeasurementsEvent.Callback() {
-        };
+    public void testRegisterGnssMeasurementsCallback() throws Exception {
+        try (GnssMeasurementsCapture capture = new GnssMeasurementsCapture(mContext)) {
+            mManager.registerGnssMeasurementsCallback(Runnable::run, capture);
 
-        mManager.registerGnssMeasurementsCallback(Executors.newSingleThreadExecutor(), callback);
-        mManager.unregisterGnssMeasurementsCallback(callback);
+            // test deprecated status messages
+            Integer status = capture.getNextStatus(TIMEOUT_MS);
+            assertThat(status).isNotNull();
+            assertThat(status).isEqualTo(GnssMeasurementsEvent.Callback.STATUS_READY);
+        }
     }
 
     @Test
     public void testRegisterGnssAntennaInfoCallback() {
-        GnssAntennaInfo.Listener listener = (gnssAntennaInfos) -> {};
-
-        mManager.registerAntennaInfoListener(Executors.newSingleThreadExecutor(), listener);
-        mManager.unregisterAntennaInfoListener(listener);
+        try (GnssAntennaInfoCapture capture = new GnssAntennaInfoCapture(mContext)) {
+            mManager.registerAntennaInfoListener(Runnable::run, capture);
+        }
     }
 
     @Test
-    public void testRegisterGnssNavigationMessageCallback() {
-        GnssNavigationMessage.Callback callback = new GnssNavigationMessage.Callback() {
-        };
+    public void testRegisterGnssNavigationMessageCallback() throws Exception {
+        try (GnssNavigationMessageCapture capture = new GnssNavigationMessageCapture(mContext)) {
+            mManager.registerGnssNavigationMessageCallback(Runnable::run, capture);
 
-        mManager.registerGnssNavigationMessageCallback(Executors.newSingleThreadExecutor(), callback);
-        mManager.unregisterGnssNavigationMessageCallback(callback);
-    }
-
-    private boolean hasGpsFeature() {
-        return mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_LOCATION_GPS);
+            // test deprecated status messages
+            Integer status = capture.getNextStatus(TIMEOUT_MS);
+            assertThat(status).isNotNull();
+            assertThat(status).isEqualTo(GnssNavigationMessage.Callback.STATUS_READY);
+        }
     }
 }
