@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.tv;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -30,6 +32,8 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.TimeUnit;
+
 /** HDMI CEC Routing control tests (Section 11.1.2) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
@@ -42,7 +46,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecRoutingControlTest() {
-        super(LogicalAddress.TV);
+        super(LogicalAddress.TV, "-t", "r", "-t", "t", "-t", "p");
     }
 
     @Before
@@ -64,6 +68,28 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             hdmiCecClient.broadcastActiveSource(
                     hdmiCecClient.getSelfDevice(), hdmiCecClient.getPhysicalAddress());
         }
+    }
+
+    /**
+     * Test 11.1.2-1
+     *
+     * <p>Tests that the device sends a {@code <Set Stream Path>} message if the user selects
+     * another source device.
+     */
+    @Test
+    public void cect_11_1_2_1_DutSendsSetStreamPathMessage() throws Exception {
+        // Broadcast a <Report Physical Address> [2.1.0.0] message from Logical Address 3.
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.TUNER_1, 0x2100);
+        // Broadcast a <Report Physical Address> [2.2.0.0] message from Logical Address 4.
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.PLAYBACK_1, 0x2200);
+        TimeUnit.SECONDS.sleep(2);
+        // Make the device with LA 4 as the active source.
+        HdmiControlManagerUtility.setActiveSource(
+                getDevice(), LogicalAddress.PLAYBACK_1.getLogicalAddressAsInt());
+        String message = hdmiCecClient.checkExpectedOutput(CecOperand.SET_STREAM_PATH);
+        assertWithMessage("Device has not sent a Set Stream Path message to the selected device")
+                .that(CecMessage.getParams(message))
+                .isEqualTo(0x2200);
     }
 
     /**
