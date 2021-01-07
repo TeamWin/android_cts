@@ -66,6 +66,13 @@ public final class QueryService extends Service {
         }
 
         @Override
+        public Bundle getNext(long id, Bundle data) {
+            Instant earliestLogtime = (Instant) data.getSerializable(EARLIEST_LOG_TIME_KEY);
+            Event e = clients.get(id).querier.getNext(earliestLogtime);
+            return prepareReturnBundle(e);
+        }
+
+        @Override
         public Bundle next(long id, Bundle data) {
             Instant earliestLogtime = (Instant) data.getSerializable(EARLIEST_LOG_TIME_KEY);
             Event e = clients.get(id).querier.next(earliestLogtime);
