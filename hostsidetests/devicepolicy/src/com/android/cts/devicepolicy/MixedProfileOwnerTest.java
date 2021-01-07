@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -80,6 +81,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTaskAfterReboot() throws Exception {
         super.testLockTaskAfterReboot();
@@ -87,6 +89,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTaskAfterReboot_tryOpeningSettings() throws Exception {
         super.testLockTaskAfterReboot_tryOpeningSettings();
@@ -94,6 +97,7 @@ public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     @FlakyTest(bugId = 140932104)
+    @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTask_exitIfNoLongerAllowed() throws Exception {
         super.testLockTask_exitIfNoLongerAllowed();
