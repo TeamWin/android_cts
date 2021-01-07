@@ -16,6 +16,8 @@
 
 package com.android.eventlib;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +26,8 @@ import java.util.WeakHashMap;
 
 /** Event store for the current package. */
 class Events {
+
+    private static final String TAG = "Events";
 
     /** Interface used to be informed when new events are logged. */
     interface EventListener {
@@ -38,9 +42,9 @@ class Events {
 
     /** Saves the event so it can be queried. */
     void log(Event event) {
-        // TODO: This should probably be synchronized to avoid race conditions
+        Log.d(TAG, event.toString());
 
-        mEventList.add(event);
+        mEventList.add(event); // TODO: This should be made immutable before adding
         triggerEventListeners(event);
         // TODO: Serialize in case the process crashes
     }
@@ -57,12 +61,16 @@ class Events {
 
     /** Register an {@link EventListener} to be called when a new {@link Event} is logged. */
     public void registerEventListener(EventListener listener) {
-        mEventListeners.add(listener);
+        synchronized (Events.class) {
+            mEventListeners.add(listener);
+        }
     }
 
     private void triggerEventListeners(Event event) {
-        for (EventListener listener : mEventListeners) {
-            listener.onNewEvent(event);
+        synchronized (Events.class) {
+            for (EventListener listener : mEventListeners) {
+                listener.onNewEvent(event);
+            }
         }
     }
 

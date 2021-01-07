@@ -31,6 +31,9 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class CustomEventTest {
 
+    // TODO: We need a standard pattern for testing that events log correctly cross-process
+    // (when within the process serialization never happens)
+
     private static final Context CONTEXT = InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TAG_1 = "TAG_1";
     private static final String TAG_2 = "TAG_2";
