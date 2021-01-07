@@ -18,6 +18,7 @@ package android.hdmicec.cts.tv;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
+import android.hdmicec.cts.HdmiControlManagerUtility;
 import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -93,5 +94,37 @@ public class HdmiCecTvOneTouchPlayTest extends BaseHdmiCecCtsTest {
                     .that(getDumpsysActiveSourceLogicalAddress())
                     .isEqualTo(testDevice);
         }
+    }
+
+    /**
+     * Test 11.1.1-5
+     *
+     * <p>Tests that the DUT broadcasts an {@code <Active Source>} message when changing to an
+     * internal source from previously displaying an external source.
+     */
+    @Test
+    public void cect_11_1_1_5_DutBroadcastsActiveSourceWhenChangingToInternal() throws Exception {
+        // Ensure that an external source is the active source.
+        try {
+            /*
+             * Check for the broadcasted <ACTIVE_SOURCE> message from Recorder_1, which was sent as
+             * a response to <SET_STREAM_PATH> message from the TV.
+             */
+            String message =
+                    hdmiCecClient.checkExpectedMessageFromClient(
+                            LogicalAddress.RECORDER_1, CecOperand.ACTIVE_SOURCE);
+        } catch (Exception e) {
+            /*
+             * In case the TV does not send <Set Stream Path> to CEC adapter, or the client does
+             * not make recorder active source, broadcast an <Active Source> message from the
+             * adapter.
+             */
+            hdmiCecClient.broadcastActiveSource(
+                    LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+        }
+        // Make the TV device the active source.
+        HdmiControlManagerUtility.setActiveSource(
+                getDevice(), LogicalAddress.TV.getLogicalAddressAsInt());
+        hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
     }
 }
