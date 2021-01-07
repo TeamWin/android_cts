@@ -1113,6 +1113,36 @@ public class ScopedStorageDeviceTest {
         }
     }
 
+    @Test
+    public void testInsertDefaultPrimaryCaseInsensitiveCheck() throws Exception {
+        final File podcastsDir = getPodcastsDir();
+        final File podcastsDirLowerCase =
+                new File(getExternalStorageDir(), Environment.DIRECTORY_PODCASTS.toLowerCase());
+        final File fileInPodcastsDirLowerCase = new File(podcastsDirLowerCase, AUDIO_FILE_NAME);
+        try {
+            // Delete the directory if it already exists
+            if (podcastsDir.exists()) {
+                deleteAsLegacyApp(podcastsDir);
+            }
+            assertThat(podcastsDir.exists()).isFalse();
+            assertThat(podcastsDirLowerCase.exists()).isFalse();
+
+            // Create the directory with lower case
+            assertThat(podcastsDirLowerCase.mkdir()).isTrue();
+            // Because of case-insensitivity, even though directory is created
+            // with lower case, we should be able to see both directory names.
+            assertThat(podcastsDirLowerCase.exists()).isTrue();
+            assertThat(podcastsDir.exists()).isTrue();
+
+            // File creation with lower case path of podcasts directory should not fail
+            assertThat(fileInPodcastsDirLowerCase.createNewFile()).isTrue();
+        } finally {
+            fileInPodcastsDirLowerCase.delete();
+            podcastsDirLowerCase.delete();
+            podcastsDir.mkdirs();
+        }
+    }
+
     private void createDeleteCreate(File create, File delete) throws Exception {
         try {
             assertThat(create.createNewFile()).isTrue();
