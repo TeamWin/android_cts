@@ -16,12 +16,15 @@
 
 package android.webkit.cts;
 
+import android.net.http.SslError;
 import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.ValueCallback;
+import android.webkit.cts.WebViewSyncLoader.WaitForLoadedClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -337,7 +340,14 @@ public class CookieManagerTest extends
             // port. Instead we cheat making some of the urls come from localhost and some
             // from 127.0.0.1 which count (both in theory and pratice) as having different
             // origins.
-            server = new CtsTestServer(getActivity());
+            server = new CtsTestServer(getActivity(), /* secure */ true);
+            mOnUiThread.setWebViewClient(new WaitForLoadedClient(mOnUiThread) {
+                @Override
+                public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                    // ignore the test server's invalid SSL cert
+                    handler.proceed();
+                }
+            });
 
             // Turn on Javascript (otherwise <script> aren't fetched spoiling the test).
             mOnUiThread.getSettings().setJavaScriptEnabled(true);
@@ -353,7 +363,7 @@ public class CookieManagerTest extends
             // ...we can't set third party cookies.
             // First on the third party server we get a url which tries to set a cookie.
             String cookieUrl = toThirdPartyUrl(
-                    server.getSetCookieUrl("cookie_1.js", "test1", "value1"));
+                    server.getSetCookieUrl("cookie_1.js", "test1", "value1", "SameSite=None; Secure"));
             // Then we create a url on the first party server which links to the first url.
             String url = server.getLinkedScriptUrl("/content_1.html", cookieUrl);
             mOnUiThread.loadUrlAndWaitForCompletion(url);
@@ -365,7 +375,7 @@ public class CookieManagerTest extends
 
             // ...we can set third party cookies.
             cookieUrl = toThirdPartyUrl(
-                    server.getSetCookieUrl("/cookie_2.js", "test2", "value2"));
+                    server.getSetCookieUrl("/cookie_2.js", "test2", "value2", "SameSite=None; Secure"));
             url = server.getLinkedScriptUrl("/content_2.html", cookieUrl);
             mOnUiThread.loadUrlAndWaitForCompletion(url);
             waitForCookie(cookieUrl);
