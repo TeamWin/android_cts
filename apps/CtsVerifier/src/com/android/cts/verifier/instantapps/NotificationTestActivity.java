@@ -29,22 +29,44 @@ import com.android.cts.verifier.R;
  */
 public class NotificationTestActivity extends BaseTestActivity {
 
+    private String gms_package_name = "com.google.android.gms";
+    private String store_package_name = "com.android.vending";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setInfoResources(R.string.ia_notification, R.string.ia_notification_info, -1);
         TextView extraText = (TextView) findViewById(R.id.instruction_extra_text);
-        if (deviceHasPlayStore()) {
+        if (deviceIsGms()) {
             extraText.setText(R.string.ia_notification_instruction_label);
         } else {
             extraText.setText(R.string.ia_notification_instruction_label_no_app_market_version);
         }
     }
 
+    private boolean deviceIsGms() {
+        return deviceHasGmsCore() && deviceHasPlayStore() && !deviceHasCnFeature();
+    }
+
+    private boolean deviceHasCnFeature() {
+        boolean hasCnFeature = getApplicationContext().getPackageManager().hasSystemFeature("cn.google.services");
+        return hasCnFeature;
+    }
+
+    private boolean deviceHasGmsCore() {
+        try {
+            return getPackageManager().getApplicationInfo(gms_package_name, PackageManager.MATCH_DIRECT_BOOT_AUTO) != null;
+        } catch (PackageManager.NameNotFoundException ex) {
+            return false;
+        }
+    }
+
     private boolean deviceHasPlayStore() {
-        boolean hasCnGmsVersion =
-                getApplicationContext().getPackageManager().hasSystemFeature("cn.google.services");
-        return !hasCnGmsVersion;
+        try {
+            return getPackageManager().getApplicationInfo(store_package_name, PackageManager.MATCH_DIRECT_BOOT_AUTO) != null;
+        } catch (PackageManager.NameNotFoundException ex) {
+            return false;
+        }
     }
 }
