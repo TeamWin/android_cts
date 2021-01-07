@@ -16,12 +16,10 @@
 
 package android.server.wm;
 
-import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.Intent.ACTION_MAIN;
@@ -36,11 +34,9 @@ import static android.server.wm.VirtualDisplayHelper.waitForDefaultDisplayState;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
-import static android.server.wm.app.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.DOCKED_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
-import static android.server.wm.app.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
 import static android.server.wm.app.Components.MOVE_TASK_TO_BACK_ACTIVITY;
 import static android.server.wm.app.Components.MoveTaskToBackActivity.EXTRA_FINISH_POINT;
 import static android.server.wm.app.Components.MoveTaskToBackActivity.FINISH_POINT_ON_PAUSE;
@@ -64,7 +60,6 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -90,33 +85,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
 
-    @Test
-    public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
-        if (!supportsPip()) {
-            return;
-        }
-
-        executeShellCommand(getAmStartCmdOverHome(LAUNCH_PIP_ON_PIP_ACTIVITY));
-        mWmState.waitForValidState(LAUNCH_PIP_ON_PIP_ACTIVITY);
-        // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
-        // translucent activity.
-        final int stackId = mWmState.getStackIdByActivity(
-                LAUNCH_PIP_ON_PIP_ACTIVITY);
-
-        assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedRootTask(stackId);
-        mWmState.waitForValidState(
-                new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
-                        .setWindowingMode(WINDOWING_MODE_PINNED)
-                        .setActivityType(ACTIVITY_TYPE_STANDARD)
-                        .build());
-
-        mWmState.assertFrontStack("Pinned stack must be the front stack.",
-                WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
-        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
-    }
-
     /**
      * Asserts that the home activity is visible when a translucent activity is launched in the
      * fullscreen stack over the home activity.
@@ -128,41 +96,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
 
         launchHomeActivity();
-        launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+        launchActivity(TRANSLUCENT_ACTIVITY);
 
         mWmState.assertFrontStack("Fullscreen stack must be the front stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
-        mWmState.assertHomeActivityVisible(true);
-    }
-
-    /**
-     * Assert that the home activity is visible if a task that was launched from home is pinned
-     * and also assert the next task in the fullscreen stack isn't visible.
-     */
-    @Test
-    public void testHomeVisibleOnActivityTaskPinned() throws Exception {
-        if (!supportsPip() || !hasHomeScreen()) {
-            return;
-        }
-
-        launchHomeActivity();
-        launchActivity(TEST_ACTIVITY);
-        launchHomeActivity();
-        launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
-        final int stackId = mWmState.getStackIdByActivity(
-                ALWAYS_FOCUSABLE_PIP_ACTIVITY);
-
-        assertNotEquals(stackId, INVALID_STACK_ID);
-        moveTopActivityToPinnedRootTask(stackId);
-        mWmState.waitForValidState(
-                new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
-                        .setWindowingMode(WINDOWING_MODE_PINNED)
-                        .setActivityType(ACTIVITY_TYPE_STANDARD)
-                        .build());
-
-        mWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
-        mWmState.assertVisibility(TEST_ACTIVITY, false);
+        mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
         mWmState.assertHomeActivityVisible(true);
     }
 
