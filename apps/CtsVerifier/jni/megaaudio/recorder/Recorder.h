@@ -30,11 +30,6 @@ public:
     // State
     //
     virtual bool isRecording() = 0;
-    virtual bool setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) = 0;
-    virtual void teardownStream() = 0;
-
-    virtual bool startStream() = 0;
-    virtual void stopStream() = 0;
 
 protected:
     std::shared_ptr<AudioSink>    mAudioSink;

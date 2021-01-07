@@ -100,11 +100,10 @@ public class LightBarTests extends LightBarTestBase {
         assumeHasColoredStatusBar(mActivityRule);
 
         runInNotificationSession(() -> {
-            final int darkBackground = Color.rgb(128, 0, 0);
             final LightBarActivity activity = mActivityRule.getActivity();
             activity.runOnUiThread(() -> {
-                activity.getWindow().setStatusBarColor(darkBackground);
-                activity.getWindow().setNavigationBarColor(darkBackground);
+                activity.getWindow().setStatusBarColor(LIGHT_BG_COLOR);
+                activity.getWindow().setNavigationBarColor(LIGHT_BG_COLOR);
 
                 activity.setLightStatusBarLegacy(true);
                 activity.setLightNavigationBarLegacy(true);
@@ -117,7 +116,7 @@ public class LightBarTests extends LightBarTestBase {
             Thread.sleep(WAIT_TIME);
 
             Bitmap bitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
-            Stats s = evaluateDarkBarBitmap(bitmap, darkBackground, 0);
+            Stats s = evaluateDarkBarBitmap(bitmap, LIGHT_BG_COLOR, 0);
             assertStats(bitmap, s, false /* light */);
         });
     }
@@ -128,11 +127,10 @@ public class LightBarTests extends LightBarTestBase {
         assumeHasColoredStatusBar(mActivityRule);
 
         runInNotificationSession(() -> {
-            final int darkBackground = Color.rgb(128, 0, 0);
             final LightBarActivity activity = mActivityRule.getActivity();
             activity.runOnUiThread(() -> {
-                activity.getWindow().setStatusBarColor(darkBackground);
-                activity.getWindow().setNavigationBarColor(darkBackground);
+                activity.getWindow().setStatusBarColor(LIGHT_BG_COLOR);
+                activity.getWindow().setNavigationBarColor(LIGHT_BG_COLOR);
 
                 activity.setLightStatusBarAppearance(false);
                 activity.setLightNavigationBarAppearance(false);
@@ -145,7 +143,7 @@ public class LightBarTests extends LightBarTestBase {
             Thread.sleep(WAIT_TIME);
 
             Bitmap bitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
-            Stats s = evaluateDarkBarBitmap(bitmap, darkBackground, 0);
+            Stats s = evaluateDarkBarBitmap(bitmap, LIGHT_BG_COLOR, 0);
             assertStats(bitmap, s, false /* light */);
         });
     }

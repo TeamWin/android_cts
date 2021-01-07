@@ -19,8 +19,11 @@ package com.android.cts.verifier.managedprovisioning;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.provider.Telephony;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 
 import com.android.cts.verifier.R;
@@ -240,7 +243,8 @@ public class UserRestrictions {
                 boolean isCellBroadcastAppLinkEnabled = context.getResources().getBoolean(resId);
                 try {
                     if (isCellBroadcastAppLinkEnabled) {
-                        if (pm.getApplicationEnabledSetting("com.android.cellbroadcastreceiver")
+                        String packageName = getDefaultCellBroadcastReceiverPackageName(context);
+                        if (packageName == null || pm.getApplicationEnabledSetting(packageName)
                                 == PackageManager.COMPONENT_ENABLED_STATE_DISABLED) {
                             isCellBroadcastAppLinkEnabled = false;  // CMAS app disabled
                         }
@@ -271,6 +275,32 @@ public class UserRestrictions {
             default:
                 return true;
         }
+    }
+
+    /**
+     * Utility method to query the default CBR's package name.
+     * from frameworks/base/telephony/common/com/android/internal/telephony/CellBroadcastUtils.java
+     */
+    private static String getDefaultCellBroadcastReceiverPackageName(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        ResolveInfo resolveInfo = packageManager.resolveActivity(
+                new Intent(Telephony.Sms.Intents.SMS_CB_RECEIVED_ACTION),
+                PackageManager.MATCH_SYSTEM_ONLY);
+        String packageName;
+
+        if (resolveInfo == null) {
+            return null;
+        }
+
+        packageName = resolveInfo.activityInfo.applicationInfo.packageName;
+
+        if (TextUtils.isEmpty(packageName) || packageManager.checkPermission(
+            android.Manifest.permission.READ_CELL_BROADCASTS, packageName)
+                == PackageManager.PERMISSION_DENIED) {
+            return null;
+        }
+
+        return packageName;
     }
 
     private static class UserRestrictionItem {

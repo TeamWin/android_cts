@@ -62,7 +62,6 @@ import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 
-import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -438,13 +437,12 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
 
     /** Test the cursor position of {@link EditText} is correct after typing on another activity. */
     @Test
-    @FlakyTest(bugId = 175821058)
     public void testCursorAfterLaunchAnotherActivity() throws Exception {
         final AtomicReference<EditText> firstEditTextRef = new AtomicReference<>();
-        final int NEW_CURSOR_OFFSET = 6;
-        final String INITIAL_TEXT = "initial";
-        final String COMMIT_MSG = "commit msg";
-        final String SECOND_COMMIT_MSG = "second commit msg";
+        final int newCursorOffset = 5;
+        final String initialText = "Initial";
+        final String firstCommitMsg = "First";
+        final String secondCommitMsg = "Second";
 
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
@@ -462,7 +460,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 editText.setPrivateImeOptions(marker);
                 editText.setSingleLine(false);
                 firstEditTextRef.set(editText);
-                editText.setText(INITIAL_TEXT);
+                editText.setText(initialText);
                 layout.addView(editText);
                 editText.requestFocus();
                 return layout;
@@ -474,15 +472,18 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             // Verify onStartInput when first activity launch
             expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
-            final ImeCommand commit = imeSession.callCommitText(COMMIT_MSG, 1);
+            final ImeCommand commit = imeSession.callCommitText(firstCommitMsg, 1);
             expectCommand(stream, commit, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(
+                            firstEditText.getText(), initialText + firstCommitMsg), TIMEOUT);
 
             // Get current position
             int originalSelectionStart = firstEditText.getSelectionStart();
             int originalSelectionEnd = firstEditText.getSelectionEnd();
 
-            assertEquals(INITIAL_TEXT.length() + COMMIT_MSG.length(), originalSelectionStart);
-            assertEquals(INITIAL_TEXT.length() + COMMIT_MSG.length(), originalSelectionEnd);
+            assertEquals(initialText.length() + firstCommitMsg.length(), originalSelectionStart);
+            assertEquals(initialText.length() + firstCommitMsg.length(), originalSelectionEnd);
 
             // Launch second test activity
             final Intent intent = new Intent()
@@ -493,8 +494,11 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             TestActivity secondActivity = (TestActivity) InstrumentationRegistry
                     .getInstrumentation().startActivitySync(intent);
 
+            // Verify onStartInput when second activity launch
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
             // Commit some messages on second activity
-            final ImeCommand secondCommit = imeSession.callCommitText(SECOND_COMMIT_MSG, 1);
+            final ImeCommand secondCommit = imeSession.callCommitText(secondCommitMsg, 1);
             expectCommand(stream, secondCommit, TIMEOUT);
 
             // Back to first activity
@@ -504,22 +508,29 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             TestUtils.waitOnMainUntil(() -> secondActivity.getOnBackPressedCallCount() > 0,
                     TIMEOUT, "Activity#onBackPressed() should be called");
 
+            TestUtils.runOnMainSync(firstEditText::requestFocus);
+
+            // Verify onStartInput when first activity launch
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
             // Update cursor to a new position
-            int newCursorPosition = originalSelectionStart - NEW_CURSOR_OFFSET;
+            int newCursorPosition = originalSelectionStart - newCursorOffset;
             final ImeCommand setSelection =
                     imeSession.callSetSelection(newCursorPosition, newCursorPosition);
             expectCommand(stream, setSelection, TIMEOUT);
 
             // Commit to first activity again
-            final ImeCommand commitFirstAgain = imeSession.callCommitText(COMMIT_MSG, 1);
+            final ImeCommand commitFirstAgain = imeSession.callCommitText(firstCommitMsg, 1);
             expectCommand(stream, commitFirstAgain, TIMEOUT);
+            TestUtils.waitOnMainUntil(
+                    () -> TextUtils.equals(firstEditText.getText(), "InitialFirstFirst"), TIMEOUT);
 
             // get new position
             int newSelectionStart = firstEditText.getSelectionStart();
             int newSelectionEnd = firstEditText.getSelectionEnd();
 
-            assertEquals(newSelectionStart, newCursorPosition + COMMIT_MSG.length());
-            assertEquals(newSelectionEnd, newCursorPosition + COMMIT_MSG.length());
+            assertEquals(newSelectionStart, newCursorPosition + firstCommitMsg.length());
+            assertEquals(newSelectionEnd, newCursorPosition + firstCommitMsg.length());
         }
     }
 

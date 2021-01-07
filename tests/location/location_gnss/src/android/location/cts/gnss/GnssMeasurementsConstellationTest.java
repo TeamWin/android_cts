@@ -90,9 +90,6 @@ public class GnssMeasurementsConstellationTest extends GnssTestCase {
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         mMeasurementListener.await();
-        if (!mMeasurementListener.verifyStatus()) {
-            return;
-        }
 
         List<GnssMeasurementsEvent> events = mMeasurementListener.getEvents();
         Log.i(TAG, "Number of GnssMeasurement events received = " + events.size());

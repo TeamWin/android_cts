@@ -103,9 +103,6 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
         mTestLocationManager.registerGnssNavigationMessageCallback(mTestGnssNavigationMessageListener);
 
         mTestGnssNavigationMessageListener.await();
-        if (!mTestGnssNavigationMessageListener.verifyState()) {
-            return;
-        }
 
         List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
         if (!events.isEmpty()) {

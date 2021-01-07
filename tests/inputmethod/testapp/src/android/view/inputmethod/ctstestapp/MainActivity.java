@@ -18,7 +18,6 @@ package android.view.inputmethod.ctstestapp;
 import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE;
-import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -31,11 +30,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
+
+import com.android.compatibility.common.util.ImeAwareEditText;
 
 /**
  * A test {@link Activity} that automatically shows the input method.
@@ -95,22 +95,22 @@ public final class MainActivity extends Activity {
             textView.setText("This is DialogActivity");
             layout.addView(textView);
 
-            mDialog= new AlertDialog.Builder(this)
+            mDialog = new AlertDialog.Builder(this)
                     .setView(new LinearLayout(this))
                     .create();
             mDialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
             mDialog.getWindow().setSoftInputMode(SOFT_INPUT_ADJUST_PAN);
             mDialog.show();
         } else {
-            final EditText editText = new EditText(this);
+            final ImeAwareEditText editText = new ImeAwareEditText(this);
             editText.setHint("editText");
             final String privateImeOptions = getStringIntentExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
             if (privateImeOptions != null) {
                 editText.setPrivateImeOptions(privateImeOptions);
             }
             editText.requestFocus();
+            editText.scheduleShowSoftInput();
             layout.addView(editText);
-            getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
 
         setContentView(layout);

@@ -284,7 +284,7 @@ public class JobThrottlingTest {
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        mTestAppInterface.scheduleJob(false, true);
+        mTestAppInterface.scheduleJob(false, true, false);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -383,7 +383,7 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
-        mTestAppInterface.scheduleJob(false, true);
+        mTestAppInterface.scheduleJob(false, true, false);
         runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
@@ -479,7 +479,7 @@ public class JobThrottlingTest {
         BatteryUtils.enableBatterySaver(true);
         tempWhitelistTestApp(6_000);
         sendScheduleJobBroadcast(false);
-        assertTrue("New job in uid-active app failed to start with battery saver OFF",
+        assertTrue("New job in uid-active app failed to start with battery saver ON",
                 mTestAppInterface.awaitJobStart(3_000));
     }
 
@@ -502,6 +502,63 @@ public class JobThrottlingTest {
         tempWhitelistTestApp(120_000);
         assertTrue("New job in uid-active app failed to start with battery saver OFF",
                 mTestAppInterface.awaitJobStart(120_000));
+    }
+
+
+    @Test
+    public void testExpeditedJobBypassesBatterySaverOn() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        BatteryUtils.assumeBatterySaverFeature();
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        assertTrue("New expedited job failed to start with battery saver ON",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testExpeditedJobBypassesBatterySaver_toggling() throws Exception {
+        assumeFalse("not testable in automotive device", mAutomotiveDevice);
+        assumeFalse("not testable in leanback device", mLeanbackOnly);
+
+        BatteryUtils.assumeBatterySaverFeature();
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(false);
+        mTestAppInterface.scheduleJob(false, false, true);
+        assertTrue("New expedited job failed to start with battery saver ON",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        BatteryUtils.enableBatterySaver(true);
+        assertFalse("Job stopped when battery saver turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testExpeditedJobBypassesDeviceIdle() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
+        toggleDeviceIdleState(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testExpeditedJobBypassesDeviceIdle_toggling() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
+        toggleDeviceIdleState(false);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        toggleDeviceIdleState(true);
+        assertFalse("Job stopped when device enabled turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
     }
 
     @After
@@ -561,7 +618,7 @@ public class JobThrottlingTest {
     }
 
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
-        mTestAppInterface.scheduleJob(allowWhileIdle, false);
+        mTestAppInterface.scheduleJob(allowWhileIdle, false, false);
     }
 
     private void toggleDeviceIdleState(final boolean idle) throws Exception {

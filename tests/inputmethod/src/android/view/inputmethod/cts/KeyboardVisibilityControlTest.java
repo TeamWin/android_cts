@@ -36,9 +36,11 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEventWithKeyValue;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.waitForInputViewLayoutStable;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.AlertDialog;
@@ -81,6 +83,7 @@ import androidx.test.uiautomator.Until;
 
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
@@ -98,6 +101,7 @@ import java.util.function.Predicate;
 public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+    private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
     private static final ComponentName TEST_ACTIVITY = new ComponentName(
             "android.view.inputmethod.ctstestapp",
@@ -638,11 +642,20 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             final ImeEventStream stream = imeSession.openEventStream();
             final String marker = getTestMarker();
 
+            // Make sure that MockIme isn't shown in the initial state.
+            final ImeLayoutInfo lastLayout =
+                    waitForInputViewLayoutStable(stream, LAYOUT_STABLE_THRESHOLD);
+            assertNull(lastLayout);
+            expectImeInvisible(TIMEOUT);
+            // Flush all the events happened before launching the test Activity.
+            stream.skipAll();
+
             // Launch test activity with focusing an editor from remote process and expect the
             // IME is visible.
             try (AutoCloseable closable = launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
                     Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker))) {
                 expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
                 expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
                         View.VISIBLE, TIMEOUT);

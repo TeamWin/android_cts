@@ -19,6 +19,11 @@ package android.net.wifi.cts;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
+import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
+import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
+import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
+import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
+import static android.net.wifi.WifiScanner.WIFI_BAND_5_GHZ;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -41,6 +46,7 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.net.TetheringManager;
 import android.net.Uri;
+import android.net.wifi.CoexUnsafeChannel;
 import android.net.wifi.ScanResult;
 import android.net.wifi.SoftApCapability;
 import android.net.wifi.SoftApConfiguration;
@@ -2510,11 +2516,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // assert that the country code is all uppercase
         assertEquals(wifiCountryCode.toUpperCase(Locale.US), wifiCountryCode);
 
-        if (WifiFeature.isTelephonySupported(getContext())) {
-            String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
-                    .getNetworkCountryIso();
-            assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
+        // skip if Telephony is unsupported
+        if (!WifiFeature.isTelephonySupported(getContext())) {
+            return;
         }
+
+        String telephonyCountryCode = getContext().getSystemService(TelephonyManager.class)
+                .getNetworkCountryIso();
+
+        // skip if Telephony country code is unavailable
+        if (telephonyCountryCode == null || telephonyCountryCode.isEmpty()) {
+            return;
+        }
+
+        assertEquals(telephonyCountryCode, wifiCountryCode.toLowerCase(Locale.US));
     }
 
     /**
@@ -3300,6 +3315,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         public void onCoexUnsafeChannelsChanged() {
             synchronized (mCoexLock) {
                 mOnCoexUnsafeChannelChangedCount++;
+                mLock.notify();
             }
         }
 
@@ -3345,6 +3361,72 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             fail("unregisterCoexCallback should not succeed - privileged call");
         } catch (SecurityException e) {
             // expected
+        }
+    }
+
+    /**
+     * Test that coex-related methods succeed in setting the current unsafe channels and notifying
+     * the listener. Since the default coex algorithm may be enabled, no-op is also valid behavior.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testListenOnCoexUnsafeChannels() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // These below API's only work with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Set<CoexUnsafeChannel> prevUnsafeChannels = null;
+        int prevRestrictions = -1;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Save the current state to reset after the test.
+            prevUnsafeChannels = mWifiManager.getCoexUnsafeChannels();
+            prevRestrictions = mWifiManager.getCoexRestrictions();
+
+            // Register callback
+            final TestCoexCallback callback = new TestCoexCallback(mLock);
+            mWifiManager.registerCoexCallback(mExecutor, callback);
+            Set<CoexUnsafeChannel> unsafeChannels = new HashSet<>();
+            unsafeChannels.add(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 6));
+            final int restrictions = COEX_RESTRICTION_WIFI_DIRECT | COEX_RESTRICTION_SOFTAP
+                    | COEX_RESTRICTION_WIFI_AWARE;
+
+            synchronized (mLock) {
+                try {
+                    // Callback should be called if the default algorithm is disabled.
+                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
+                    mWifiManager.unregisterCoexCallback(callback);
+                    // Callback should not be called here since it was unregistered.
+                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
+                    // now wait for callback
+                    mLock.wait(TEST_WAIT_DURATION_MS);
+                } catch (InterruptedException e) {
+                    fail("Thread interrupted unexpectedly while waiting on mLock");
+                }
+            }
+
+            if (callback.mOnCoexUnsafeChannelChangedCount == 0) {
+                // Default algorithm enabled, setter should have done nothing
+                assertEquals(prevUnsafeChannels, mWifiManager.getCoexUnsafeChannels());
+                assertEquals(prevRestrictions, mWifiManager.getCoexRestrictions());
+            } else if (callback.mOnCoexUnsafeChannelChangedCount == 1) {
+                // Default algorithm disabled, setter should set the getter values.
+                assertEquals(unsafeChannels, mWifiManager.getCoexUnsafeChannels());
+                assertEquals(restrictions, mWifiManager.getCoexRestrictions());
+            } else {
+                fail("Coex callback called " + callback.mOnCoexUnsafeChannelChangedCount
+                        + " times. Expected 1 call." );
+            }
+        } finally {
+            // Reset the previous unsafe channels if we overrode them.
+            if (prevRestrictions != -1) {
+                mWifiManager.setCoexUnsafeChannels(prevUnsafeChannels, prevRestrictions);
+            }
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 }

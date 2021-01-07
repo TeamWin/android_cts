@@ -43,6 +43,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -1128,6 +1129,8 @@ public class ActivityManagerFgsBgStartTest {
             uid1Watcher.finish();
             uid2Watcher.finish();
             enableFgsRestriction(false, true, null);
+            // Sleep 10 seconds to let the temp allowlist expire so it won't affect next test case.
+            SystemClock.sleep(10000);
         }
 
     }

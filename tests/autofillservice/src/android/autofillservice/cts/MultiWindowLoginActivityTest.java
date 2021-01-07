@@ -15,7 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.autofillservice.cts.testcore.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
@@ -98,8 +97,7 @@ public class MultiWindowLoginActivityTest
      * Put activity in TOP, will be followed by amStartActivity()
      */
     protected void splitWindow(Activity activity) {
-        mAtm.setTaskWindowingModeSplitScreenPrimary(activity.getTaskId(),
-                SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true, false, null, true);
+        mAtm.setTaskWindowingModeSplitScreenPrimary(activity.getTaskId(), true /* toTop */);
     }
 
     protected void amStartActivity(Class<? extends Activity> activity2) {

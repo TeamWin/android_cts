@@ -100,7 +100,7 @@ public class JavaPlayer extends Player {
      * State
      */
     @Override
-    public boolean setupStream(int channelCount, int sampleRate, int numBufferFrames) {
+    public int setupStream(int channelCount, int sampleRate, int numBufferFrames) {
         if (LOG) {
             Log.i(TAG, "setupStream(chans:" + channelCount + ", rate:" + sampleRate +
                     ", frames:" + numBufferFrames);
@@ -133,14 +133,14 @@ public class JavaPlayer extends Player {
                 Log.i(TAG, "Couldn't open AudioTrack: " + ex);
             }
             mAudioTrack = null;
-            return false;
+            return ERROR_UNSUPPORTED;
         }
 
-        return true;
+        return OK;
     }
 
     @Override
-    public void teardownStream() {
+    public int teardownStream() {
         stopStream();
 
         waitForStreamThreadToExit();
@@ -152,6 +152,9 @@ public class JavaPlayer extends Player {
 
         mChannelCount = 0;
         mSampleRate = 0;
+
+        //TODO - Retrieve errors from above
+        return OK;
     }
 
     /**
@@ -162,9 +165,9 @@ public class JavaPlayer extends Player {
      * call to the AudioSource.pull() method.
      */
     @Override
-    public boolean startStream() {
+    public int startStream() {
         if (mAudioTrack == null) {
-            return false;
+            return ERROR_INVALID_STATE;
         }
         waitForStreamThreadToExit(); // just to be sure.
 
@@ -172,7 +175,7 @@ public class JavaPlayer extends Player {
         mPlaying = true;
         mStreamThread.start();
 
-        return true;
+        return OK;
     }
 
     /**
@@ -181,8 +184,9 @@ public class JavaPlayer extends Player {
      * Returns immediately, though a call to AudioSource.pull() may be in progress.
      */
     @Override
-    public void stopStream() {
+    public int stopStream() {
         mPlaying = false;
+        return OK;
     }
 
     //
