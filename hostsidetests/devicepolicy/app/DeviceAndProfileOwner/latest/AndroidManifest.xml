@@ -122,6 +122,14 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".SimpleKeyguardService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.BIND_SECONDARY_LOCKSCREEN_SERVICE" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation

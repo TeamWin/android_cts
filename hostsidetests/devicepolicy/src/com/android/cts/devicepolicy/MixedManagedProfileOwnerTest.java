@@ -418,4 +418,11 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
                 "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mUserId);
     }
+
+    @Override
+    @LockSettingsTest
+    @Test
+    public void testSecondaryLockscreen() throws Exception {
+        // Managed profiles cannot have secondary lockscreens set.
+    }
 }
