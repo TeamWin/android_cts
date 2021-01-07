@@ -395,8 +395,6 @@ public class MediaStore_Images_MediaTest {
 
     @Test
     public void testLocationRedaction() throws Exception {
-        // STOPSHIP: remove this once isolated storage is always enabled
-        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
         final Uri publishUri = ProviderTestUtils.stageMedia(R.raw.lg_g4_iso_800_jpg, mExternalImages,
                 "image/jpeg");
         final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
