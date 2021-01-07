@@ -40,7 +40,10 @@ public class ConversationActionTest {
     private static final String TEXT = "TEXT";
     private static final float FLOAT_TOLERANCE = 0.01f;
     private static final PendingIntent PENDING_INTENT = PendingIntent.getActivity(
-            InstrumentationRegistry.getTargetContext(), 0, new Intent(), 0);
+            InstrumentationRegistry.getTargetContext(),
+            0,
+            new Intent(),
+            PendingIntent.FLAG_IMMUTABLE);
     private static final RemoteAction REMOTE_ACTION = new RemoteAction(
             Icon.createWithData(new byte[0], 0, 0),
             TEXT,

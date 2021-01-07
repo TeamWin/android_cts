@@ -64,12 +64,18 @@ public class TextClassificationTest {
         final float addressScore = 0.1f;
         final float emailScore = 0.9f;
         final PendingIntent intent1 = PendingIntent.getActivity(
-                InstrumentationRegistry.getTargetContext(), 0, new Intent(), 0);
+                InstrumentationRegistry.getTargetContext(),
+                0,
+                new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         final String label1 = "label1";
         final String description1 = "description1";
         final Icon icon1 = generateTestIcon(16, 16, Color.RED);
         final PendingIntent intent2 = PendingIntent.getActivity(
-                InstrumentationRegistry.getTargetContext(), 0, new Intent(), 0);
+                InstrumentationRegistry.getTargetContext(),
+                0,
+                new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         final String label2 = "label2";
         final String description2 = "description2";
         final Icon icon2 = generateTestIcon(16, 16, Color.GREEN);

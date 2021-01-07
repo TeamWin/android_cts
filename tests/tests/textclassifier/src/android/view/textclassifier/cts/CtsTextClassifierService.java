@@ -107,7 +107,11 @@ public final class CtsTextClassifierService extends TextClassifierService {
                         ICON_RES,
                         "Test Action",
                         "Test Action",
-                        PendingIntent.getActivity(this, 0, new Intent(), 0)))
+                        PendingIntent.getActivity(
+                            this,
+                            0,
+                            new Intent(),
+                            PendingIntent.FLAG_IMMUTABLE)))
                 .build();
         callback.onSuccess(classification);
     }
