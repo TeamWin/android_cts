@@ -84,7 +84,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * fullscreen stack over the home activity.
      */
     @Test
-    public void testTranslucentActivityOnTopOfHome() throws Exception {
+    public void testTranslucentActivityOnTopOfHome() {
         if (!hasHomeScreen()) {
             return;
         }
@@ -99,8 +99,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testTranslucentActivityOverDockedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+    public void testTranslucentActivityOverMultiWindowActivity() {
+        if (!supportsMultiWindow()) {
             // Skipping test: no multi-window support
             return;
         }
@@ -108,15 +108,11 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-        launchActivity(TRANSLUCENT_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        launchActivityInSecondarySplit(TRANSLUCENT_ACTIVITY);
         mWmState.computeState(
                 new WaitForValidActivityState(TEST_ACTIVITY),
                 new WaitForValidActivityState(DOCKED_ACTIVITY),
                 new WaitForValidActivityState(TRANSLUCENT_ACTIVITY));
-        mWmState.assertContainsStack("Must contain fullscreen stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertContainsStack("Must contain docked stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
         mWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mWmState.assertVisibility(TEST_ACTIVITY, true);
         mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
@@ -150,39 +146,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         // send the visible request to apply the flags and turn on screen.
         testTurnScreenOnActivity(lockScreenSession, activityClient, true /* useWindowFlags */,
                 true /* showWhenLocked */, 1000 /* sleepMsInOnCreate */);
-    }
-
-    @Test
-    public void testTurnScreenOnActivity_DismissSplitScreen() {
-        assumeTrue(supportsLockScreen());
-        assumeTrue(supportsSplitScreenMultiWindow());
-
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        final ActivitySessionClient activityClient = createManagedActivityClientSession();
-        testTurnScreenOnActivityMustDismissSplitScreen(lockScreenSession, activityClient,
-                true /* useWindowFlags */, true /* showWhenLocked */);
-        testTurnScreenOnActivityMustDismissSplitScreen(lockScreenSession, activityClient,
-                true /* useWindowFlags */, false /* showWhenLocked */);
-        testTurnScreenOnActivityMustDismissSplitScreen(lockScreenSession, activityClient,
-                false /* useWindowFlags */, true /* showWhenLocked */);
-        testTurnScreenOnActivityMustDismissSplitScreen(lockScreenSession, activityClient,
-                false /* useWindowFlags */, false /* showWhenLocked */);
-    }
-
-    private void testTurnScreenOnActivityMustDismissSplitScreen(LockScreenSession lockScreenSession,
-            ActivitySessionClient activityClient, boolean useWindowFlags, boolean showWhenLocked) {
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
-        mWmState.assertContainsStack("Must contain split screen secondary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertContainsStack("Must contain split screen primary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        testTurnScreenOnActivity(lockScreenSession, activityClient, useWindowFlags, showWhenLocked);
-        mWmState.assertDoesNotContainStack("Must not contain split screen secondary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertDoesNotContainStack("Must not contain split screen primary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
     }
 
     private void testTurnScreenOnActivity(LockScreenSession lockScreenSession,
@@ -259,8 +222,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testFinishActivityInNonFocusedStack() throws Exception {
-        if (!supportsSplitScreenMultiWindow()) {
+    public void testFinishActivityInNonFocusedStack() {
+        if (!supportsMultiWindow()) {
             // Skipping test: no multi-window support
             return;
         }
@@ -273,9 +236,8 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 .setUseInstrumentation()
                 .execute();
         mWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
-        // Launch something to fullscreen stack to make it focused.
-        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        mWmState.assertVisibility(TEST_ACTIVITY, true);
+        // Launch something to second split to make it focused.
+        launchActivityInSecondarySplit(TEST_ACTIVITY);
         // Finish activity in non-focused (docked) stack.
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
@@ -304,16 +266,16 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testFinishActivityWithMoveTaskToBackAfterPause() throws Exception {
+    public void testFinishActivityWithMoveTaskToBackAfterPause() {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_PAUSE);
     }
 
     @Test
-    public void testFinishActivityWithMoveTaskToBackAfterStop() throws Exception {
+    public void testFinishActivityWithMoveTaskToBackAfterStop() {
         performFinishActivityWithMoveTaskToBack(FINISH_POINT_ON_STOP);
     }
 
-    private void performFinishActivityWithMoveTaskToBack(String finishPoint) throws Exception {
+    private void performFinishActivityWithMoveTaskToBack(String finishPoint) {
         // Make sure home activity is visible.
         launchHomeActivity();
         if (hasHomeScreen()) {
@@ -350,7 +312,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * behavior.
      */
     @Test
-    public void testReorderToFrontBackstack() throws Exception {
+    public void testReorderToFrontBackstack() {
         // Start with home on top
         launchHomeActivity();
         if (hasHomeScreen()) {
@@ -386,7 +348,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
      * home stack.
      */
     @Test
-    public void testReorderToFrontChangingStack() throws Exception {
+    public void testReorderToFrontChangingStack() {
         // Start with home on top
         launchHomeActivity();
         if (hasHomeScreen()) {
@@ -515,7 +477,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     @Test
     public void testTurnScreenOnAttrNoLockScreen_SplitScreen() {
         assumeTrue(supportsLockScreen());
-        assumeTrue(supportsSplitScreenMultiWindow());
+        assumeTrue(supportsMultiWindow());
 
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
@@ -571,37 +533,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testTurnScreenOnShowOnLockAttrDismissSplitScreen() {
-        assumeTrue(supportsLockScreen());
-        assumeTrue(supportsSplitScreenMultiWindow());
-
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY));
-
-        mWmState.assertContainsStack("Must contain split screen secondary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertContainsStack("Must contain split screen primary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-
-        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
-        lockScreenSession.sleepDevice();
-        mWmState.waitForAllStoppedActivities();
-
-        launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        mWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
-        assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
-
-        lockScreenSession.unlockDevice();
-        mWmState.assertDoesNotContainStack("Must not contain split screen secondary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertDoesNotContainStack("Must not contain split screen primary stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-    }
-
-    @Test
-    public void testChangeToFullscrenWhenLockWithAttrInFreeform() {
+    public void testChangeToFullscreenWhenLockWithAttrInFreeform() {
         assumeTrue(supportsLockScreen());
         assumeTrue(supportsFreeform());
 
@@ -686,7 +618,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testGoingHomeMultipleTimes() throws Exception {
+    public void testGoingHomeMultipleTimes() {
         for (int i = 0; i < 10; i++) {
             // Start activity normally
             launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
@@ -704,7 +636,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPressingHomeButtonMultipleTimes() throws Exception {
+    public void testPressingHomeButtonMultipleTimes() {
         for (int i = 0; i < 10; i++) {
             // Start activity normally
             launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);
@@ -724,7 +656,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPressingHomeButtonMultipleTimesQuick() throws Exception {
+    public void testPressingHomeButtonMultipleTimesQuick() {
         for (int i = 0; i < 10; i++) {
             // Start activity normally
             launchActivityOnDisplay(TEST_ACTIVITY, DEFAULT_DISPLAY);

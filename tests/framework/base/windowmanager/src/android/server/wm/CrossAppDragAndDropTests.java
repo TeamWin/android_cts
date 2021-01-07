@@ -197,7 +197,8 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
             launchFreeformActivity(targetComponentName, targetMode, mTargetLogTag,
                 displaySize, false /* leftSide */);
         } else {
-            launchActivitiesInSplitScreen(getLaunchActivityBuilder()
+            launchActivitiesInLegacySplitScreen
+                    (getLaunchActivityBuilder()
                     .setTargetActivity(sourceComponentName)
                     .setIntentExtra(bundle -> {
                         bundle.putString(EXTRA_MODE, sourceMode);
