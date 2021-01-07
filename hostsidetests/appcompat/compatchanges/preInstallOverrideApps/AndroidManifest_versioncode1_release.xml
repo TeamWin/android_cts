@@ -15,16 +15,10 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.appcompat.compatchanges">
-    <!-- targetSdkVersion for this test must be below 1234 -->
-    <uses-sdk android:targetSdkVersion="29"/>
-    <application
-        android:debuggable="true">
-        <uses-library android:name="android.test.runner" />
+        package="com.android.cts.appcompat.preinstalloverride"
+        android:versionCode="1">
+    <uses-sdk android:targetSdkVersion="30"/>
+    <application android:debuggable="false">
+         <activity android:name=".Empty" android:exported="true" />
     </application>
-
-    <instrumentation
-        android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="com.android.cts.appcompat.compatchanges" />
-
 </manifest>
