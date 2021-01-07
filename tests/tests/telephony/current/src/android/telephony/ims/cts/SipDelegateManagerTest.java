@@ -55,6 +55,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -299,6 +300,7 @@ public class SipDelegateManagerTest {
                 + "false", result);
     }
 
+    @Ignore("Disabling for integration b/175766573")
     @Test
     public void testIsSupportedWithSipTransportCapableOnlyRcs() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
@@ -307,7 +309,12 @@ public class SipDelegateManagerTest {
         PersistableBundle b = new PersistableBundle();
         b.putBoolean(CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, true);
         overrideCarrierConfig(b);
+
         assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
+        // set SipTransport as supported with RCS only attached.
+        sServiceConnector.getCarrierService().addCapabilities(
+                ImsService.CAPABILITY_SIP_DELEGATE_CREATION);
+        sServiceConnector.getCarrierService().setSipTransportImplemented();
 
         ImsFeatureConfiguration c = getConfigForRcs();
         assertTrue(sServiceConnector.triggerFrameworkConnectionToCarrierImsService(c));
@@ -319,7 +326,7 @@ public class SipDelegateManagerTest {
                         ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that the ImsService is only "
-                + "attached for MMTEL and not MMTEL and RCS", result);
+                + "attached for RCS and not MMTEL and RCS", result);
     }
 
 
