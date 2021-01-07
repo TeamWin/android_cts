@@ -22,11 +22,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-import static android.content.Intent.ACTION_MAIN;
-import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
-import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
@@ -58,14 +55,11 @@ import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_FROM_T
 import static android.server.wm.app.Components.TopActivity.ACTION_CONVERT_TO_TRANSLUCENT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
-import android.content.Intent;
-import android.content.pm.ResolveInfo;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.ActivitySessionClient;
@@ -102,34 +96,6 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
         mWmState.assertHomeActivityVisible(true);
-    }
-
-    @Test
-    public void testHomeVisibleOnEmptyDisplay() throws Exception {
-        if (!hasHomeScreen()) {
-            return;
-        }
-
-        removeRootTasksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        forceStopHome();
-
-        assertEquals(mWmState.getResumedActivitiesCount(), 0);
-        assertEquals(mWmState.getRootTasksCount() , 0);
-
-        pressHomeButton();
-
-        mWmState.waitForHomeActivityVisible();
-        mWmState.assertHomeActivityVisible(true);
-    }
-
-    private void forceStopHome() {
-        final Intent intent = new Intent(ACTION_MAIN);
-        intent.addCategory(CATEGORY_HOME);
-        final ResolveInfo resolveInfo =
-                mContext.getPackageManager().resolveActivity(intent, MATCH_DEFAULT_ONLY);
-        String KILL_APP_COMMAND = "am force-stop " + resolveInfo.activityInfo.packageName;
-
-        executeShellCommand(KILL_APP_COMMAND);
     }
 
     @Test

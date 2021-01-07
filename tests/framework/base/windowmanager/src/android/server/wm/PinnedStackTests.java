@@ -1066,7 +1066,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(LAUNCH_PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        enterPipAndAssertPinnedTaskExists(LAUNCH_PIP_ON_PIP_ACTIVITY);
+        enterPipAndAssertPinnedTaskExists(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
         assertPinnedStackIsOnTop();
         mWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
