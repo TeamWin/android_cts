@@ -18,6 +18,18 @@ package com.android.cts.deviceowner;
 import static android.app.admin.DevicePolicyManager.OPERATION_CREATE_AND_MANAGE_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_REBOOT;
 import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_USER;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_APPLICATION_HIDDEN;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_APPLICATION_RESTRICTIONS;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_KEEP_UNINSTALLED_PACKAGES;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_KEYGUARD_DISABLED;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_LOCK_TASK_FEATURES;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_LOCK_TASK_PACKAGES;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_PACKAGES_SUSPENDED;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_STATUS_BAR_DISABLED;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_SYSTEM_SETTING;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_SYSTEM_UPDATE_POLICY;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_TRUST_AGENT_CONFIGURATION;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_CONTROL_DISABLED_PACKAGES;
 import static android.app.admin.DevicePolicyManager.OPERATION_START_USER_IN_BACKGROUND;
 import static android.app.admin.DevicePolicyManager.OPERATION_STOP_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SWITCH_USER;
@@ -25,9 +37,13 @@ import static android.app.admin.DevicePolicyManager.OPERATION_WIPE_DATA;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.os.Bundle;
 import android.os.UserHandle;
 
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
+
+import java.util.Arrays;
+import java.util.List;
 
 // TODO(b/174859111): move to automotive-only section
 /**
@@ -38,6 +54,10 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
 
     private static final int NO_FLAGS = 0;
     private static final UserHandle USER_HANDLE = UserHandle.of(42);
+    public static final String TEST_PACKAGE = BasicAdminReceiver.class.getPackage().getName();
+    public static final ComponentName TEST_COMPONENT = new ComponentName(
+            TEST_PACKAGE, BasicAdminReceiver.class.getName());
+    public static final List<String> TEST_PACKAGES = Arrays.asList(TEST_PACKAGE);
 
     private final DevicePolicySafetyCheckerIntegrationTester mTester =
             new DevicePolicySafetyCheckerIntegrationTester() {
@@ -48,6 +68,18 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     OPERATION_CREATE_AND_MANAGE_USER,
                     OPERATION_REBOOT,
                     OPERATION_REMOVE_USER,
+                    OPERATION_SET_APPLICATION_HIDDEN,
+                    OPERATION_SET_APPLICATION_RESTRICTIONS,
+                    OPERATION_SET_KEEP_UNINSTALLED_PACKAGES,
+                    OPERATION_SET_KEYGUARD_DISABLED,
+                    OPERATION_SET_LOCK_TASK_FEATURES,
+                    OPERATION_SET_LOCK_TASK_PACKAGES,
+                    OPERATION_SET_PACKAGES_SUSPENDED,
+                    OPERATION_SET_STATUS_BAR_DISABLED,
+                    OPERATION_SET_SYSTEM_SETTING,
+                    OPERATION_SET_SYSTEM_UPDATE_POLICY,
+                    OPERATION_SET_TRUST_AGENT_CONFIGURATION,
+                    OPERATION_SET_USER_CONTROL_DISABLED_PACKAGES,
                     OPERATION_START_USER_IN_BACKGROUND,
                     OPERATION_STOP_USER,
                     OPERATION_SWITCH_USER,
@@ -75,6 +107,44 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     break;
                 case OPERATION_REMOVE_USER:
                     dpm.removeUser(admin, USER_HANDLE);
+                    break;
+                case OPERATION_SET_APPLICATION_HIDDEN:
+                    dpm.setApplicationHidden(admin, TEST_PACKAGE, /* hidden= */true);
+                    break;
+                case OPERATION_SET_APPLICATION_RESTRICTIONS:
+                    dpm.setApplicationRestrictions(admin, TEST_PACKAGE, new Bundle());
+                    break;
+                case OPERATION_SET_KEEP_UNINSTALLED_PACKAGES:
+                    dpm.setKeepUninstalledPackages(admin, TEST_PACKAGES);
+                    break;
+                case OPERATION_SET_KEYGUARD_DISABLED:
+                    dpm.setKeyguardDisabled(admin, true);
+                    break;
+                case OPERATION_SET_LOCK_TASK_FEATURES:
+                    dpm.setLockTaskFeatures(admin, NO_FLAGS);
+                    break;
+                case OPERATION_SET_LOCK_TASK_PACKAGES:
+                    dpm.setLockTaskPackages(admin, new String[] { TEST_PACKAGE });
+                    break;
+                case OPERATION_SET_PACKAGES_SUSPENDED:
+                    dpm.setPackagesSuspended(admin,  new String[] { TEST_PACKAGE },
+                            /* suspend= */ true);
+                    break;
+                case OPERATION_SET_STATUS_BAR_DISABLED:
+                    dpm.setStatusBarDisabled(admin, true);
+                    break;
+                case OPERATION_SET_SYSTEM_SETTING:
+                    dpm.setSystemSetting(admin, "TestSetting", "0");
+                    break;
+                case OPERATION_SET_SYSTEM_UPDATE_POLICY:
+                    dpm.setSystemUpdatePolicy(admin, null);
+                    break;
+                case OPERATION_SET_TRUST_AGENT_CONFIGURATION:
+                    dpm.setTrustAgentConfiguration(admin, TEST_COMPONENT,
+                            /* configuration= */ null);
+                    break;
+                case OPERATION_SET_USER_CONTROL_DISABLED_PACKAGES:
+                    dpm.setUserControlDisabledPackages(admin, TEST_PACKAGES);
                     break;
                 case OPERATION_START_USER_IN_BACKGROUND:
                     dpm.startUserInBackground(admin, USER_HANDLE);
