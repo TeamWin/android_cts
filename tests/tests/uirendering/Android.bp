@@ -15,6 +15,7 @@
 android_test {
     name: "CtsUiRenderingTestCases",
     sdk_version: "test_current",
+    compile_multilib: "both",
 
     srcs: [
         "src/**/*.java",
@@ -30,6 +31,7 @@ android_test {
         "kotlin-test",
         "testng"
     ],
+    jni_libs: ["libctsuirendering_jni"],
 
     libs: ["android.test.runner"],
 
