@@ -96,18 +96,35 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         Thread.sleep(WAIT_TIME_SHORT);
 
-        executeBackgroundService(ACTION_LMK);
-        Thread.sleep(15_000);
+        // In 32bit userspace and 64bit kernelspace system with large RAM,
+        // LMK is not always worked on only one process.
+        // Exponentially increasing requested memory will run out of
+        // address space before all the memory will be used.
+        // So, run multiple processes.
+        for (int i = 0; i < MAX_NUM_OF_TEST_PROCESS; i++) {
+            executeBackgroundServiceForLmk(i);
+            Thread.sleep(15_000);
 
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+            // Sorted list of events in order in which they occurred.
+            List<EventMetricData> data = getEventMetricDataList();
 
-        assertEquals(1, data.size());
-        assertTrue(data.get(0).getAtom().hasLmkKillOccurred());
-        LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-        assertEquals(getUid(), atom.getUid());
-        assertEquals(DEVICE_SIDE_TEST_PACKAGE, atom.getProcessName());
-        assertTrue(500 <= atom.getOomAdjScore());
+            if (data.size() == 0) {
+                // LMK don't work. start the next process.
+                continue;
+            }
+
+            assertEquals(1, data.size());
+            assertTrue(data.get(0).getAtom().hasLmkKillOccurred());
+            LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
+            assertEquals(getUid(), atom.getUid());
+            assertTrue(atom.getProcessName().contains(
+                DEVICE_SIDE_TEST_PACKAGE + PROCESS_SUFFIX_NAME));
+            assertTrue(500 <= atom.getOomAdjScore());
+            return;
+        }
+
+        // Even if running multiple processes, LMK is not worked.
+        fail("LMK is not worked.");
     }
 
     public void testAppCrashOccurred() throws Exception {

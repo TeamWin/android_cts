@@ -38,6 +38,9 @@ Java_com_android_server_cts_device_statsd_StatsdCtsBackgroundService_cmain(JNIEn
     long long allocCount = 0;
     while (1) {
         char *ptr = (char *) malloc(s);
+        if (ptr == NULL) {
+            continue;
+        }
         memset(ptr, (int) allocCount >> 10, s);
         std::stringstream ss;
         ss << "total alloc: " << (allocCount >> 20) << endl;
