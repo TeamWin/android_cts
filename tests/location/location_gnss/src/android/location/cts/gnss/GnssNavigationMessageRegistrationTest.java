@@ -104,6 +104,12 @@ public class GnssNavigationMessageRegistrationTest extends GnssTestCase {
 
         mTestGnssNavigationMessageListener.await();
 
+        if (!mTestLocationManager.getLocationManager().getGnssCapabilities()
+                .hasNavigationMessages()) {
+            Log.i(TAG, "Skip the test since NavigationMessage is not supported.");
+            return;
+        }
+
         List<GnssNavigationMessage> events = mTestGnssNavigationMessageListener.getEvents();
         if (!events.isEmpty()) {
             // Verify mandatory GnssNavigationMessage field values.
