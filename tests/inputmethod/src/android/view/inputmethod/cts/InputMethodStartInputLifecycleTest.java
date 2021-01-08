@@ -38,6 +38,7 @@ import android.inputmethodservice.InputMethodService;
 import android.os.IBinder;
 import android.os.Process;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -84,6 +85,7 @@ public class InputMethodStartInputLifecycleTest extends EndToEndImeTestBase {
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
+    @AppModeFull(reason = "KeyguardManager is not accessible from instant apps")
     @Test
     public void testInputConnectionStateWhenScreenStateChanges() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
