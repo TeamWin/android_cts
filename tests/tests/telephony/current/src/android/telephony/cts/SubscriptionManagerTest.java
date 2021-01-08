@@ -41,6 +41,8 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.os.PersistableBundle;
+import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
@@ -348,6 +350,9 @@ public class SubscriptionManagerTest {
         mSm.setSubscriptionPlans(mSubId,
                 Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
 
+        // TODO: Remove this check after b/176119724 is fixed.
+        if (!isUnmetered5GSupported()) return;
+
         // Cellular is metered by default
         assertFalse(cm.getNetworkCapabilities(net).hasCapability(
                 NET_CAPABILITY_TEMPORARILY_NOT_METERED));
@@ -379,6 +384,9 @@ public class SubscriptionManagerTest {
                 .getSystemService(ConnectivityManager.class);
         final Network net = findCellularNetwork();
         assertNotNull("Active cellular network required", net);
+
+        // TODO: Remove this check after b/176119724 is fixed.
+        if (!isUnmetered5GSupported()) return;
 
         // Make ourselves the owner and define some plans
         setSubPlanOwner(mSubId, mPackageName);
@@ -943,5 +951,24 @@ public class SubscriptionManagerTest {
     private static void setSubPlanOwner(int subId, String packageName) throws Exception {
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
                 "cmd netpolicy set sub-plan-owner " + subId + " " + packageName);
+    }
+
+    private boolean isUnmetered5GSupported() {
+        final CarrierConfigManager ccm = InstrumentationRegistry.getContext()
+                .getSystemService(CarrierConfigManager.class);
+        PersistableBundle carrierConfig = ccm.getConfigForSubId(mSubId);
+
+        final TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class);
+        int dataNetworkType = tm.getDataNetworkType(mSubId);
+        long supportedRats = ShellIdentityUtils.invokeMethodWithShellPermissions(tm,
+                TelephonyManager::getSupportedRadioAccessFamily);
+
+        boolean validCarrier = carrierConfig.getBoolean("network_temp_not_metered_supported_bool");
+        boolean validCapabilities = (supportedRats & TelephonyManager.NETWORK_TYPE_BITMASK_NR) != 0;
+        // TODO: need to check for TelephonyDisplayInfo override for NR NSA
+        boolean validNetworkType = dataNetworkType == TelephonyManager.NETWORK_TYPE_NR;
+
+        return validCarrier && validNetworkType && validCapabilities;
     }
 }
