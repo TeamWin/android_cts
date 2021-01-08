@@ -71,7 +71,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
         hdmiCecClient.setTargetLogicalAddress(mDutLogicalAddress);
         boolean startAsTv =
                 mDutLogicalAddress.getDeviceType() != HdmiCecConstants.CEC_DEVICE_TYPE_TV;
-        hdmiCecClient.init(startAsTv);
+        hdmiCecClient.init(startAsTv, getDevice());
     }
 
     /** Class with predefined rules which can be used by HDMI CEC CTS tests. */
