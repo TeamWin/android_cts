@@ -154,8 +154,12 @@ public class TextClassifierServiceSwapTest {
                 "android.textclassifier.cts2.QueryTextClassifierServiceActivity"));
         outsideActivity.setFlags(FLAG_ACTIVITY_NEW_TASK);
         final Intent broadcastIntent = new Intent(actionQueryActivityFinish);
-        final PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, broadcastIntent,
-                0);
+        final PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(
+                    context,
+                    0,
+                    broadcastIntent,
+                    PendingIntent.FLAG_IMMUTABLE);
         outsideActivity.putExtra("finishBroadcast", pendingIntent);
         context.startActivity(outsideActivity);
 
