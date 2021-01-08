@@ -16,15 +16,13 @@
 
 package com.android.cts.devicepolicy;
 
-import com.android.cts.devicepolicy.annotations.PermissionsTest;
-
 import org.junit.Test;
 
 /**
- * Set of tests for managed profile owner use cases that also apply to device owners.
- * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
+ * Set of tests for managed profile owner use cases that may also apply to device owner.
+ * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi30.
  */
-public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTestApi25 {
+public class MixedManagedProfileOwnerTestApi30 extends DeviceAndProfileOwnerTestApi30 {
     private int mParentUserId = -1;
 
     @Override
@@ -59,10 +57,19 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
         super.tearDown();
     }
 
-    @Override
-    @PermissionsTest
     @Test
-    public void testPermissionGrantPreMApp() throws Exception {
-        super.testPermissionGrantPreMApp();
+    public void testPasswordMinimumRestrictions() throws Exception {
+        if (!mHasFeature || !mHasSecureLockScreen) {
+            return;
+        }
+        executeDeviceTestClass(".PasswordMinimumRestrictionsTest");
+    }
+
+    @Test
+    public void testPasswordComplexityAndQuality() throws Exception {
+        if (!mHasFeature || !mHasSecureLockScreen) {
+            return;
+        }
+        executeDeviceTestClass(".PasswordQualityAndComplexityTest");
     }
 }
