@@ -16,6 +16,7 @@
 package android.autofillservice.cts.activities;
 
 import android.autofillservice.cts.testcore.Timeouts;
+import android.util.Log;
 
 import com.android.compatibility.common.util.RetryableException;
 
@@ -27,8 +28,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class MultiWindowEmptyActivity extends EmptyActivity {
 
+    private static final String TAG = "MultiWindowEmptyActivity";
     private static MultiWindowEmptyActivity sLastInstance;
     private static CountDownLatch sLastInstanceLatch;
+    private static CountDownLatch sDestroyLastInstanceLatch;
 
     @Override
     protected void onStart() {
@@ -55,10 +58,36 @@ public class MultiWindowEmptyActivity extends EmptyActivity {
     public static MultiWindowEmptyActivity waitNewInstance() throws InterruptedException {
         if (!sLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
                 TimeUnit.MILLISECONDS)) {
-            throw new RetryableException("New MultiWindowLoginActivity didn't start",
+            throw new RetryableException("New MultiWindowEmptyActivity didn't start",
                     Timeouts.ACTIVITY_RESURRECTION);
         }
         sLastInstanceLatch = null;
         return sLastInstance;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        if (sDestroyLastInstanceLatch != null) {
+            sDestroyLastInstanceLatch.countDown();
+        }
+    }
+
+    public static void finishAndWaitDestroy() {
+        if (sLastInstance != null) {
+            sLastInstance.finish();
+
+            sDestroyLastInstanceLatch = new CountDownLatch(1);
+            try {
+                sDestroyLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
+                        TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                Log.e(TAG, "interrupted waiting for MultiWindowEmptyActivity to be destroyed");
+                Thread.currentThread().interrupt();
+            }
+            sDestroyLastInstanceLatch = null;
+            sLastInstance = null;
+        }
     }
 }

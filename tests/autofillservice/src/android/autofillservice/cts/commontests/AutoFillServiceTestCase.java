@@ -244,6 +244,7 @@ public final class AutoFillServiceTestCase {
                     // exception:
                     //     Could not launch intent Intent { ... } within 45 seconds.
                     mTestWatcher.cleanAllActivities();
+                    cleanAllActivities();
                 });
 
         private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
@@ -470,6 +471,12 @@ public final class AutoFillServiceTestCase {
         protected AutofillManager getAutofillManager() {
             return mContext.getSystemService(AutofillManager.class);
         }
+
+        /**
+         * Used to clean all activities that started by test case and does not control by the
+         * AutofillTestWatcher.
+         */
+        protected void cleanAllActivities() {}
     }
 
     protected static final UiBot sDefaultUiBot = new UiBot();
