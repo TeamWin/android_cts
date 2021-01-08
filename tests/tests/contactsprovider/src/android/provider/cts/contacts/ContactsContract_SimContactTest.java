@@ -23,18 +23,23 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.SystemClock;
 import android.provider.ContactsContract.SimAccount;
 import android.provider.ContactsContract.SimContacts;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @MediumTest
 public class ContactsContract_SimContactTest extends AndroidTestCase {
+    private static final int ASYNC_TIMEOUT_LIMIT_SEC = 60;
+
     // Using unique account name and types because these tests may break or be broken by
     // other tests running.  No other tests should use the following accounts.
     private static final String SIM_ACCT_NAME_1 = "test sim acct name 1";
@@ -47,7 +52,7 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
 
     private ContentResolver mResolver;
     private List<Intent> mReceivedIntents;
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             mReceivedIntents.add(intent);
@@ -58,7 +63,7 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
         mResolver = getContext().getContentResolver();
-        mReceivedIntents = new ArrayList<>();
+        mReceivedIntents = Collections.synchronizedList(new ArrayList<>());
     }
 
     @Override
@@ -106,7 +111,7 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
      * When a SIM account is added, {@link SimContacts#ACTION_SIM_ACCOUNTS_CHANGED} should be
      * broadcast.
      */
-    public void testAddSimAccount_broadcastsChange() {
+    public void testAddSimAccount_broadcastsChange() throws Exception {
         getContext().registerReceiver(mBroadcastReceiver,
                 new IntentFilter(SimContacts.ACTION_SIM_ACCOUNTS_CHANGED));
 
@@ -115,7 +120,8 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
                     SimAccount.ADN_EF_TYPE);
         });
 
-        assertThat(mReceivedIntents).hasSize(1);
+        TestUtils.waitUntil("Broadcast has not been received in time", ASYNC_TIMEOUT_LIMIT_SEC,
+                () -> mReceivedIntents.size() == 1);
         Intent receivedIntent = mReceivedIntents.get(0);
         assertThat(SimContacts.ACTION_SIM_ACCOUNTS_CHANGED).isEqualTo(receivedIntent.getAction());
     }
@@ -124,7 +130,7 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
      * When a SIM account is removed, {@link SimContacts#ACTION_SIM_ACCOUNTS_CHANGED} should be
      * broadcast.
      */
-    public void testRemoveSimAccount_broadcastsChange() {
+    public void testRemoveSimAccount_broadcastsChange() throws Exception {
         SystemUtil.runWithShellPermissionIdentity(() -> {
             SimContacts.addSimAccount(mResolver, SIM_ACCT_NAME_1, SIM_ACCT_TYPE_1, SIM_SLOT_0,
                     SimAccount.ADN_EF_TYPE);
@@ -136,7 +142,8 @@ public class ContactsContract_SimContactTest extends AndroidTestCase {
             SimContacts.removeSimAccounts(mResolver, SIM_SLOT_0);
         });
 
-        assertThat(mReceivedIntents).hasSize(1);
+        TestUtils.waitUntil("Broadcast has not been received in time", ASYNC_TIMEOUT_LIMIT_SEC,
+                () -> mReceivedIntents.size() == 1);
         Intent receivedIntent = mReceivedIntents.get(0);
         assertThat(SimContacts.ACTION_SIM_ACCOUNTS_CHANGED).isEqualTo(receivedIntent.getAction());
     }
