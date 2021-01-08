@@ -38,8 +38,6 @@
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
-#pragma GCC diagnostic ignored "-Wnonnull"
-
 using AssetCloser = std::unique_ptr<AAsset, decltype(&AAsset_close)>;
 using DecoderDeleter = std::unique_ptr<AImageDecoder, decltype(&AImageDecoder_delete)>;
 
@@ -93,6 +91,10 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
     ASSERT_NE(asset, nullptr);
     AssetCloser assetCloser(asset, AAsset_close);
 
+    AImageDecoder_delete(nullptr);
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
     {
         int result = AImageDecoder_createFromAAsset(asset, nullptr);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
@@ -175,6 +177,7 @@ static void testNullDecoder(JNIEnv* env, jclass, jobject jAssets, jstring jFile)
         int result = AImageDecoder_getRepeatCount(nullptr);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
     }
+#pragma clang diagnostic pop
 }
 
 static void testInfo(JNIEnv* env, jclass, jlong imageDecoderPtr, jint width, jint height,
@@ -541,8 +544,11 @@ static void testDecode(JNIEnv* env, jclass, jlong imageDecoderPtr,
 
     {
         // Try some invalid parameters.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
         result = AImageDecoder_decodeImage(decoder, nullptr, minStride, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+#pragma clang diagnostic pop
 
         result = AImageDecoder_decodeImage(decoder, pixels, minStride - 1, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
@@ -859,8 +865,11 @@ static void testDecodeScaled(JNIEnv* env, jclass, jlong imageDecoderPtr,
 
     {
         // Try some invalid parameters.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
         result = AImageDecoder_decodeImage(decoder, nullptr, minStride, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+#pragma clang diagnostic pop
 
         result = AImageDecoder_decodeImage(decoder, pixels, minStride - 1, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
@@ -1076,8 +1085,11 @@ static void testDecodeCrop(JNIEnv* env, jclass, jlong imageDecoderPtr,
 
     {
         // Try some invalid parameters.
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
         result = AImageDecoder_decodeImage(decoder, nullptr, minStride, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);
+#pragma clang diagnostic pop
 
         result = AImageDecoder_decodeImage(decoder, pixels, minStride - 1, size);
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, result);

@@ -31,12 +31,13 @@
 
 #define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
 
-#pragma GCC diagnostic ignored "-Wnonnull"
-
 static void testNullDecoder(JNIEnv* env, jobject) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_advanceFrame(nullptr));
 
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_rewind(nullptr));
+#pragma clang diagnostic pop
 }
 
 static void testToString(JNIEnv* env, jobject) {
@@ -195,6 +196,8 @@ static jint getFrameInfo(JNIEnv*, jobject, jlong decoder, jlong frameInfo) {
 static void testNullFrameInfo(JNIEnv* env, jobject, jobject jAssets, jstring jFile) {
     AImageDecoderFrameInfo_delete(nullptr);
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wnonnull"
     {
         auto* frameInfo = AImageDecoderFrameInfo_create();
         ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_getFrameInfo(nullptr,
@@ -223,6 +226,7 @@ static void testNullFrameInfo(JNIEnv* env, jobject, jobject jAssets, jstring jFi
     ASSERT_FALSE(AImageDecoderFrameInfo_hasAlphaWithinBounds(nullptr));
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getDisposeOp(nullptr));
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoderFrameInfo_getBlendOp(nullptr));
+#pragma clang diagnostic pop
 }
 
 static jlong getDuration(JNIEnv*, jobject, jlong frameInfo) {
