@@ -599,8 +599,10 @@ public class SipDelegateManagerTest {
         createSipDelegateConnectionNoDelegateExpected(manager, delegateConn, transportImpl);
 
         // Make this app the DMA
+        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
         assertTrue(sServiceConnector.setDefaultSmsApp());
-        verifyTriggerDeregistrationCalled(regImpl);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
         TestSipDelegate delegate = getSipDelegate(transportImpl, Collections.emptySet(), 0);
         verifyUpdateRegistrationCalled(regImpl);
         SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
@@ -642,8 +644,10 @@ public class SipDelegateManagerTest {
 
         // Move DMA to another app, we should receive a registration update.
         delegateConn.setOperationCountDownLatch(1);
+        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
         sServiceConnector.restoreDefaultSmsApp();
-        verifyTriggerDeregistrationCalled(regImpl);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         // we should get another reg update with all tags denied.
         delegateConn.setOperationCountDownLatch(1);
@@ -860,13 +864,9 @@ public class SipDelegateManagerTest {
 
     private void verifyUpdateRegistrationCalled(TestImsRegistration regImpl) {
         regImpl.resetLatch(TestImsRegistration.LATCH_UPDATE_REGISTRATION, 1);
+        // it is okay to reset and wait here (without race conditions) because there is a
+        // second delay between triggering update registration and the latch being triggered.
         assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_UPDATE_REGISTRATION,
-                ImsUtils.TEST_TIMEOUT_MS));
-    }
-
-    private void verifyTriggerDeregistrationCalled(TestImsRegistration regImpl) {
-        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
-        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
                 ImsUtils.TEST_TIMEOUT_MS));
     }
 
@@ -926,15 +926,6 @@ public class SipDelegateManagerTest {
         DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
         for (String t : deregisterTags) {
             b.addDeregisteringFeatureTag(t, reason);
-        }
-        return b.build();
-    }
-
-    private DelegateRegistrationState getDeregistedState(Set<String> deregisterTags,
-            int reason) {
-        DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
-        for (String t : deregisterTags) {
-            b.addDeregisteredFeatureTag(t, reason);
         }
         return b.build();
     }
