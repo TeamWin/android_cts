@@ -25,10 +25,12 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.ServiceConnectionHandler;
@@ -219,11 +221,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
-    private void startActivityAndWaitForShow(final Intent intent) throws Exception {
+    private void startActivityAndWaitForShow(
+            final Intent intent, ActivityOptions options) throws Exception {
         mInstrumentation.getUiAutomation().executeAndWaitForEvent(
                 () -> {
                     try {
-                        mTargetContext.startActivity(intent);
+                        mTargetContext.startActivity(intent, options.toBundle());
                     } catch (Exception e) {
                         fail("Cannot start activity: " + intent);
                     }
@@ -1218,7 +1221,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
                 PackageManager.FEATURE_CANT_SAVE_STATE)) {
             return true;
         }
-
         return false;
     }
 
@@ -1386,6 +1388,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         homeIntent.addCategory(Intent.CATEGORY_HOME);
         homeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
+        final ActivityOptions activityOptions = ActivityOptions.makeBasic();
+        activityOptions.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
         UiDevice device = UiDevice.getInstance(mInstrumentation);
 
@@ -1410,7 +1414,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         try {
             // Start the first heavy-weight app, should launch like a normal app.
-            mTargetContext.startActivity(activity1Intent);
+            mTargetContext.startActivity(activity1Intent, activityOptions.toBundle());
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
 
@@ -1420,14 +1424,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
-            mTargetContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent, activityOptions.toBundle());
 
             // Wait for process to go down to background heavy-weight.
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Start the second heavy-weight app, should ask us what to do with the two apps
-            startActivityAndWaitForShow(activity2Intent);
+            startActivityAndWaitForShow(activity2Intent, activityOptions);
 
             // First, let's try returning to the original app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
@@ -1439,12 +1443,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
-            mTargetContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent, activityOptions.toBundle());
             uid1Watcher.expect(WatchUidRunner.CMD_CACHED, null);
             uid1Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again try starting second heavy-weight app to get prompt.
-            startActivityAndWaitForShow(activity2Intent);
+            startActivityAndWaitForShow(activity2Intent, activityOptions);
 
             // Now we'll switch to the new app.
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
@@ -1465,12 +1469,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid1Watcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Return to home.
-            mTargetContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent, activityOptions.toBundle());
             uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Try starting the first heavy weight app, but return to the existing second.
-            startActivityAndWaitForShow(activity1Intent);
+            startActivityAndWaitForShow(activity1Intent, activityOptions);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_old"));
             waitForAppFocus(CANT_SAVE_STATE_2_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
@@ -1478,12 +1482,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
 
             // Return to home.
-            mTargetContext.startActivity(homeIntent);
+            mTargetContext.startActivity(homeIntent, activityOptions.toBundle());
             uid2Watcher.waitFor(WatchUidRunner.CMD_CACHED, null);
             uid2Watcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_HEAVY_WEIGHT);
 
             // Again start the first heavy weight app, this time actually switching to it
-            startActivityAndWaitForShow(activity1Intent);
+            startActivityAndWaitForShow(activity1Intent, activityOptions);
             maybeClick(device, new UiSelector().resourceId("android:id/switch_new"));
             waitForAppFocus(CANT_SAVE_STATE_1_PACKAGE_NAME, WAIT_TIME);
             device.waitForIdle();
