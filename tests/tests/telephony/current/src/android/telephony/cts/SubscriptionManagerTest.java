@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
@@ -355,13 +356,12 @@ public class SubscriptionManagerTest {
         if (!isUnmetered5GSupported()) return;
 
         // Cellular is metered by default
-        assertFalse(cm.getNetworkCapabilities(net).hasCapability(
-                NET_CAPABILITY_TEMPORARILY_NOT_METERED));
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
 
         // Override should make it go temporarily unmetered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
+                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, true, 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
@@ -370,7 +370,7 @@ public class SubscriptionManagerTest {
         // Clearing override should make it go metered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return !caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
+                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, false, 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
