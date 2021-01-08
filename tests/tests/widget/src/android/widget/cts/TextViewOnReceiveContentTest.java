@@ -33,7 +33,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import android.annotation.NonNull;
@@ -55,7 +54,6 @@ import android.text.style.UnderlineSpan;
 import android.view.ContentInfo;
 import android.view.DragEvent;
 import android.view.OnReceiveContentListener;
-import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.autofill.AutofillValue;
 import android.view.inputmethod.EditorInfo;
@@ -181,42 +179,6 @@ public class TextViewOnReceiveContentTest {
         InputConnection ic = mTextView.onCreateInputConnection(editorInfo);
         assertThat(ic).isNotNull();
         assertThat(editorInfo.contentMimeTypes).isEqualTo(receiverMimeTypes);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testTextView_getAutofillType_noCustomReceiver() throws Exception {
-        initTextViewForEditing("", 0);
-        assertThat(mTextView.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testTextView_getAutofillType_customReceiver() throws Exception {
-        initTextViewForEditing("", 0);
-
-        // Setup: Configure the receiver to a mock impl that supports text and images.
-        String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiver);
-
-        // Assert that the autofill type returned is still AUTOFILL_TYPE_TEXT.
-        assertThat(mTextView.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
-        verifyZeroInteractions(mMockReceiver);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testTextView_getAutofillType_customReceiver_oldTargetSdk() throws Exception {
-        configureAppTargetSdkToR();
-        initTextViewForEditing("", 0);
-
-        // Setup: Configure the receiver to a mock impl that supports text and images.
-        String[] receiverMimeTypes = new String[] {"text/*", "image/*"};
-        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiver);
-
-        // Assert that the autofill type returned is still AUTOFILL_TYPE_TEXT.
-        assertThat(mTextView.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
-        verifyZeroInteractions(mMockReceiver);
     }
 
     // ============================================================================================
@@ -659,8 +621,7 @@ public class TextViewOnReceiveContentTest {
         initTextViewForEditing("xz", 1);
 
         // Trigger autofill. This should execute the default receiver.
-        ClipData clip = ClipData.newPlainText("test", "y");
-        triggerAutofill(clip);
+        triggerAutofill("y");
         assertTextAndCursorPosition("y", 1);
     }
 
@@ -672,46 +633,12 @@ public class TextViewOnReceiveContentTest {
         mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiver);
 
         // Trigger autofill and assert that the custom receiver was executed.
-        ClipData clip = ClipData.newPlainText("test", "y");
-        triggerAutofill(clip);
+        triggerAutofill("y");
+        ClipData clip = ClipData.newPlainText("", "y");
         verify(mMockReceiver, times(1)).onReceiveContent(
                 eq(mTextView), contentEq(clip, SOURCE_AUTOFILL, 0));
         verifyNoMoreInteractions(mMockReceiver);
         assertTextAndCursorPosition("xz", 1);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testAutofill_customReceiver_unsupportedMimeType() throws Exception {
-        initTextViewForEditing("xz", 1);
-        String[] receiverMimeTypes = new String[] {"text/*"};
-        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiver);
-
-        // Trigger autofill and assert that the custom receiver was executed.
-        ClipData clip = new ClipData("test", new String[]{"video/mp4"},
-                new ClipData.Item("y", null, SAMPLE_CONTENT_URI));
-        triggerAutofill(clip);
-        verify(mMockReceiver, times(1)).onReceiveContent(
-                eq(mTextView), contentEq(clip, SOURCE_AUTOFILL, 0));
-        verifyNoMoreInteractions(mMockReceiver);
-        assertTextAndCursorPosition("xz", 1);
-    }
-
-    @UiThreadTest
-    @Test
-    public void testAutofill_oldTargetSdk() throws Exception {
-        configureAppTargetSdkToR();
-        initTextViewForEditing("xz", 1);
-
-        // Try autofill with text. This should fill the field.
-        CharSequence text = "abc";
-        triggerAutofill(text);
-        assertTextAndCursorPosition("abc", 3);
-
-        // Try autofill with a ClipData. This should fill the field.
-        ClipData clip = ClipData.newPlainText("test", "xyz");
-        triggerAutofill(clip);
-        assertTextAndCursorPosition("xyz", 3);
     }
 
     @UiThreadTest
@@ -824,10 +751,6 @@ public class TextViewOnReceiveContentTest {
 
     private void triggerAutofill(CharSequence text) {
         mTextView.autofill(AutofillValue.forText(text));
-    }
-
-    private void triggerAutofill(ClipData clip) {
-        mTextView.autofill(AutofillValue.forRichContent(clip));
     }
 
     private boolean triggerDropEvent(ClipData clip) {

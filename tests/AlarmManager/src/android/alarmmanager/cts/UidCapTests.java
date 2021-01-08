@@ -84,7 +84,7 @@ public class UidCapTests {
         for (int i = 1; i <= SUFFICIENT_NUM_ALARMS; i++) {
             try {
                 final PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
-                        new Intent(ACTION_PREFIX + i), 0);
+                        new Intent(ACTION_PREFIX + i), PendingIntent.FLAG_IMMUTABLE);
                 mAlarmManager.set(ALARM_TYPES[i % ALARM_TYPES.length], Long.MAX_VALUE, pi);
                 mAlarmsSet.add(pi);
             } catch (Exception e) {
@@ -100,13 +100,13 @@ public class UidCapTests {
         setMaxAlarmsPerUid(limit);
         for (int i = 0; i < limit; i++) {
             final PendingIntent pi = PendingIntent.getBroadcast(mContext, 0,
-                    new Intent(ACTION_PREFIX + i), 0);
+                    new Intent(ACTION_PREFIX + i), PendingIntent.FLAG_IMMUTABLE);
             mAlarmManager.set(ALARM_TYPES[i % ALARM_TYPES.length], Long.MAX_VALUE, pi);
             mAlarmsSet.add(pi);
         }
 
         final PendingIntent lastPi = PendingIntent.getBroadcast(mContext, 0,
-                new Intent(ACTION_PREFIX + limit), 0);
+                new Intent(ACTION_PREFIX + limit), PendingIntent.FLAG_IMMUTABLE);
         for (int type : ALARM_TYPES) {
             try {
                 mAlarmManager.set(type, Long.MAX_VALUE, lastPi);

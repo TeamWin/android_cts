@@ -183,10 +183,7 @@ public class ImageDecoderTest {
             File dir = new File(context.getFilesDir(), "images");
             dir.mkdirs();
             file = new File(dir, "test_file" + resId);
-            if (!file.createNewFile()) {
-                if (file.exists()) {
-                    return file;
-                }
+            if (!file.createNewFile() && !file.exists()) {
                 fail("Failed to create new File!");
             }
 
@@ -2017,6 +2014,25 @@ public class ImageDecoderTest {
             } catch (IOException e) {
                 fail("Decoding " + uri.toString() + " yielded " + e);
             }
+        }
+    }
+
+    @Test
+    public void testOrientationWithSampleSize() {
+        Uri uri = Utils.getAsResourceUri(R.drawable.orientation_6);
+        ImageDecoder.Source src = ImageDecoder.createSource(getContentResolver(), uri);
+        final int sampleSize = 7;
+        try {
+            Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setTargetSampleSize(sampleSize);
+            });
+            assertNotNull(bm);
+
+            // The unsampled image, after rotation, is 100 x 80
+            assertEquals(100 / sampleSize, bm.getWidth());
+            assertEquals( 80 / sampleSize, bm.getHeight());
+        } catch (IOException e) {
+            fail("Failed to decode " + uri.toString() + " with a sampleSize (" + sampleSize + ")");
         }
     }
 

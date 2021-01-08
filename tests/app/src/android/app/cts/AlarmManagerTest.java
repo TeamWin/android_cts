@@ -89,12 +89,12 @@ public class AlarmManagerTest extends AndroidTestCase {
 
         mIntent = new Intent(MOCKACTION)
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND | Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-        mSender = PendingIntent.getBroadcast(mContext, 0, mIntent, 0);
+        mSender = PendingIntent.getBroadcast(mContext, 0, mIntent, PendingIntent.FLAG_IMMUTABLE);
         mMockAlarmReceiver = new MockAlarmReceiver(mIntent.getAction());
 
         mIntent2 = new Intent(MOCKACTION2)
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND | Intent.FLAG_RECEIVER_REGISTERED_ONLY);
-        mSender2 = PendingIntent.getBroadcast(mContext, 0, mIntent2, 0);
+        mSender2 = PendingIntent.getBroadcast(mContext, 0, mIntent2, PendingIntent.FLAG_IMMUTABLE);
         mMockAlarmReceiver2 = new MockAlarmReceiver(mIntent2.getAction());
 
         IntentFilter filter = new IntentFilter(mIntent.getAction());
@@ -310,7 +310,8 @@ public class AlarmManagerTest extends AndroidTestCase {
             final long wakeupTimeSecond = System.currentTimeMillis()
                     + TEST_ALARM_FUTURITY;
             PendingIntent showIntentSecond = PendingIntent.getBroadcast(getContext(), 0,
-                    new Intent(getContext(), AlarmManagerTest.class).setAction("SHOW_INTENT"), 0);
+                    new Intent(getContext(), AlarmManagerTest.class).setAction("SHOW_INTENT"),
+                    PendingIntent.FLAG_IMMUTABLE);
             mAm.setAlarmClock(new AlarmClockInfo(wakeupTimeSecond, showIntentSecond),
                     mSender2);
 

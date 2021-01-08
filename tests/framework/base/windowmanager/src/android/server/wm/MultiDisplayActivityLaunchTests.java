@@ -990,7 +990,7 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
         intent.setClassName(activity.getPackageName(), activity.getClassName());
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         return PendingIntent.getActivity(mContext, 1 /* requestCode */, intent,
-                PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     public static class ImmediateLaunchTestActivity extends Activity {}

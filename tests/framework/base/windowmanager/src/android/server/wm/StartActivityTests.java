@@ -59,6 +59,9 @@ public class StartActivityTests extends ActivityManagerTestBase {
 
     @Test
     public void testStartHomeIfNoActivities() {
+        if (!hasHomeScreen()) {
+            return;
+        }
         final ComponentName defaultHome = getDefaultHomeComponent();
         final int[] allActivityTypes = Arrays.copyOf(ALL_ACTIVITY_TYPE_BUT_HOME,
                 ALL_ACTIVITY_TYPE_BUT_HOME.length + 1);
