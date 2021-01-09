@@ -15,6 +15,7 @@
 android_test {
     name: "CtsUiRenderingTestCases",
     sdk_version: "test_current",
+    compile_multilib: "both",
 
     srcs: [
         "src/**/*.java",
@@ -28,8 +29,10 @@ android_test {
         "mockito-target-minus-junit4",
         "androidx.test.rules",
         "kotlin-test",
-        "testng"
+        "testng",
+        "junit-params",
     ],
+    jni_libs: ["libctsuirendering_jni"],
 
     libs: ["android.test.runner"],
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.appcompat;
+package com.android.cts.appcompat.compatchanges;
 
 import static com.google.common.truth.Truth.assertThat;
 

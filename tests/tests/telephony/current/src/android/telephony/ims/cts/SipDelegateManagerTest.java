@@ -55,6 +55,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -299,6 +300,7 @@ public class SipDelegateManagerTest {
                 + "false", result);
     }
 
+    @Ignore("Disabling for integration b/175766573")
     @Test
     public void testIsSupportedWithSipTransportCapableOnlyRcs() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
@@ -307,7 +309,12 @@ public class SipDelegateManagerTest {
         PersistableBundle b = new PersistableBundle();
         b.putBoolean(CarrierConfigManager.Ims.KEY_IMS_SINGLE_REGISTRATION_REQUIRED_BOOL, true);
         overrideCarrierConfig(b);
+
         assertTrue(sServiceConnector.connectCarrierImsServiceLocally());
+        // set SipTransport as supported with RCS only attached.
+        sServiceConnector.getCarrierService().addCapabilities(
+                ImsService.CAPABILITY_SIP_DELEGATE_CREATION);
+        sServiceConnector.getCarrierService().setSipTransportImplemented();
 
         ImsFeatureConfiguration c = getConfigForRcs();
         assertTrue(sServiceConnector.triggerFrameworkConnectionToCarrierImsService(c));
@@ -319,7 +326,7 @@ public class SipDelegateManagerTest {
                         ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that the ImsService is only "
-                + "attached for MMTEL and not MMTEL and RCS", result);
+                + "attached for RCS and not MMTEL and RCS", result);
     }
 
 
@@ -592,8 +599,10 @@ public class SipDelegateManagerTest {
         createSipDelegateConnectionNoDelegateExpected(manager, delegateConn, transportImpl);
 
         // Make this app the DMA
+        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
         assertTrue(sServiceConnector.setDefaultSmsApp());
-        verifyTriggerDeregistrationCalled(regImpl);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
         TestSipDelegate delegate = getSipDelegate(transportImpl, Collections.emptySet(), 0);
         verifyUpdateRegistrationCalled(regImpl);
         SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
@@ -635,8 +644,10 @@ public class SipDelegateManagerTest {
 
         // Move DMA to another app, we should receive a registration update.
         delegateConn.setOperationCountDownLatch(1);
+        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
         sServiceConnector.restoreDefaultSmsApp();
-        verifyTriggerDeregistrationCalled(regImpl);
+        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
+                ImsUtils.TEST_TIMEOUT_MS));
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         // we should get another reg update with all tags denied.
         delegateConn.setOperationCountDownLatch(1);
@@ -853,13 +864,9 @@ public class SipDelegateManagerTest {
 
     private void verifyUpdateRegistrationCalled(TestImsRegistration regImpl) {
         regImpl.resetLatch(TestImsRegistration.LATCH_UPDATE_REGISTRATION, 1);
+        // it is okay to reset and wait here (without race conditions) because there is a
+        // second delay between triggering update registration and the latch being triggered.
         assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_UPDATE_REGISTRATION,
-                ImsUtils.TEST_TIMEOUT_MS));
-    }
-
-    private void verifyTriggerDeregistrationCalled(TestImsRegistration regImpl) {
-        regImpl.resetLatch(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION, 1);
-        assertTrue(regImpl.waitForLatchCountDown(TestImsRegistration.LATCH_TRIGGER_DEREGISTRATION,
                 ImsUtils.TEST_TIMEOUT_MS));
     }
 
@@ -919,15 +926,6 @@ public class SipDelegateManagerTest {
         DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
         for (String t : deregisterTags) {
             b.addDeregisteringFeatureTag(t, reason);
-        }
-        return b.build();
-    }
-
-    private DelegateRegistrationState getDeregistedState(Set<String> deregisterTags,
-            int reason) {
-        DelegateRegistrationState.Builder b = new DelegateRegistrationState.Builder();
-        for (String t : deregisterTags) {
-            b.addDeregisteredFeatureTag(t, reason);
         }
         return b.build();
     }

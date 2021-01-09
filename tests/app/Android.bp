@@ -36,6 +36,7 @@ android_test {
     ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "NotificationListener/src/com/android/test/notificationlistener/INotificationUriAccessService.aidl",
     ],
     // Tag this module as a cts test artifact

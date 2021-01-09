@@ -373,11 +373,23 @@ public class CtsTestServer {
     /**
      * getSetCookieUrl returns a URL that attempts to set the cookie
      * "key=value" when fetched.
-     * @param path a suffix to disambiguate mulitple Cookie URLs.
+     * @param path a suffix to disambiguate multiple Cookie URLs.
      * @param key the key of the cookie.
      * @return the url for a page that attempts to set the cookie.
      */
     public String getSetCookieUrl(String path, String key, String value) {
+        return getSetCookieUrl(path, key, value, null);
+    }
+
+    /**
+     * getSetCookieUrl returns a URL that attempts to set the cookie
+     * "key=value" with the given list of attributes when fetched.
+     * @param path a suffix to disambiguate multiple Cookie URLs.
+     * @param key the key of the cookie
+     * @param attributes the attributes to set
+     * @return the url for a page that attempts to set the cookie.
+     */
+    public String getSetCookieUrl(String path, String key, String value, String attributes) {
         StringBuilder sb = new StringBuilder(getBaseUri());
         sb.append(SET_COOKIE_PREFIX);
         sb.append(path);
@@ -385,6 +397,10 @@ public class CtsTestServer {
         sb.append(key);
         sb.append("&value=");
         sb.append(value);
+        if (attributes != null) {
+            sb.append("&attributes=");
+            sb.append(attributes);
+        }
         return sb.toString();
     }
 
@@ -697,7 +713,11 @@ public class CtsTestServer {
             Uri parsedUri = Uri.parse(uriString);
             String key = parsedUri.getQueryParameter("key");
             String value = parsedUri.getQueryParameter("value");
+            String attributes = parsedUri.getQueryParameter("attributes");
             String cookie = key + "=" + value;
+            if (attributes != null) {
+                cookie = cookie + "; " + attributes;
+            }
             response.addHeader("Set-Cookie", cookie);
             response.setEntity(createPage(cookie, cookie));
         } else if (path.startsWith(LINKED_SCRIPT_PREFIX)) {
