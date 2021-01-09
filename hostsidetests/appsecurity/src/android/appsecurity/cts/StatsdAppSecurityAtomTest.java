@@ -95,49 +95,6 @@ public class StatsdAppSecurityAtomTest extends BaseHostJUnit4Test {
         assertThat(verifiedKnowRoleState).isTrue();
     }
 
-    @Test
-    public void testDangerousPermissionState() throws Exception {
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED = 1 << 8;
-        final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED = 1 << 9;
-
-        // Set up what to collect
-        ConfigUtils.uploadConfigForPulledAtom(getDevice(), STATSD_APP_PKG,
-                AtomsProto.Atom.DANGEROUS_PERMISSION_STATE_FIELD_NUMBER);
-
-        boolean verifiedKnowPermissionState = false;
-
-        // Pull a report
-        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
-
-        int testAppId = getAppId(DeviceUtils.getAppUid(getDevice(), STATSD_APP_PKG));
-
-        for (AtomsProto.Atom atom : ReportUtils.getGaugeMetricAtoms(getDevice())) {
-            AtomsProto.DangerousPermissionState permissionState =
-                    atom.getDangerousPermissionState();
-
-            assertThat(permissionState.getPermissionName()).isNotNull();
-            assertThat(permissionState.getUid()).isAtLeast(0);
-            assertThat(permissionState.getPackageName()).isNotNull();
-
-            if (getAppId(permissionState.getUid()) == testAppId) {
-
-                if (permissionState.getPermissionName().contains(
-                        "ACCESS_FINE_LOCATION")) {
-                    assertThat(permissionState.getIsGranted()).isTrue();
-                    assertThat(permissionState.getPermissionFlags() & ~(
-                            FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
-                                    | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
-                            .isEqualTo(0);
-
-                    verifiedKnowPermissionState = true;
-                }
-            }
-        }
-
-        assertThat(verifiedKnowPermissionState).isTrue();
-    }
-
     /**
      * The app id from a uid.
      *
