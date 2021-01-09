@@ -24,8 +24,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
@@ -145,11 +145,7 @@ import android.util.DisplayMetrics;
 import android.util.EventLog;
 import android.util.EventLog.Event;
 import android.view.Display;
-import android.view.InputDevice;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
 import androidx.annotation.NonNull;
@@ -175,7 +171,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -558,7 +553,8 @@ public abstract class ActivityManagerTestBase {
 
         runWithShellPermission(() -> {
             // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
-            mTaskOrganizer = new TestTaskOrganizer();
+            mTaskOrganizer = new TestTaskOrganizer(
+                    mContext.createDisplayContext(mDm.getDisplay(DEFAULT_DISPLAY)));
             // Clear launch params for all test packages to make sure each test is run in a clean
             // state.
             mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
@@ -807,6 +803,24 @@ public abstract class ActivityManagerTestBase {
         executeShellCommand(getAmStartCmd(activityName, displayId, extras));
     }
 
+    protected void launchActivityInPrimarySplit(ComponentName activityName) {
+        runWithShellPermission(() -> {
+            launchActivity(activityName);
+            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+            mTaskOrganizer.putTaskInSplitPrimary(taskId);
+            mWmState.waitForValidState(activityName);
+        });
+    }
+
+    protected void launchActivityInSecondarySplit(ComponentName activityName) {
+        runWithShellPermission(() -> {
+            launchActivity(activityName);
+            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+            mTaskOrganizer.putTaskInSplitSecondary(taskId);
+            mWmState.waitForValidState(activityName);
+        });
+    }
+
     /**
      * Launches {@param activityName} into split-screen primary windowing mode and also makes
      * the recents activity visible to the side of it.
@@ -882,6 +896,46 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
+     * Moves the device into split-screen with the specified task into the primary stack.
+     * @param taskId             The id of the task to move into the primary stack.
+     * @param showSideActivity   Whether to show the home activity or a placeholder activity in
+     *                           secondary split-screen.
+     *                           If {@code true} it will also wait for activity in the primary
+     *                           split-screen stack to be resumed.
+     */
+    public void moveTaskToPrimaryLegacySplitScreen(int taskId, boolean showSideActivity) {
+        runWithShellPermission(() -> {
+            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, true /* onTop */);
+
+            // Wait for split screen ready
+            mWmState.waitForWithAmState(state -> {
+                final WindowManagerState.ActivityTask task =
+                        state.getStandardStackByWindowingMode(
+                                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+                return task != null && task.getResumedActivity() != null;
+            }, "home activity in the secondary split-screen task must be resumed");
+
+            if (showSideActivity) {
+                // Launch Placeholder Side Activity
+                final ComponentName sideActivityName =
+                        new ComponentName(mContext, SideActivity.class);
+                mContext.startActivity(new Intent().setComponent(sideActivityName)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                mWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
+
+                // Wait for the state of the activity on primary split screen to resumed, so the
+                // LifecycleLog won't affect the following tests.
+                mWmState.waitForWithAmState(state -> {
+                    final WindowManagerState.ActivityTask stack =
+                            state.getStandardStackByWindowingMode(
+                                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+                    return stack != null && stack.getResumedActivity() != null;
+                }, "activity in the primary split-screen stack must be resumed");
+            }
+        });
+    }
+
+    /**
      * Launches {@param primaryActivity} into split-screen primary windowing mode
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
      */
@@ -893,9 +947,42 @@ public abstract class ActivityManagerTestBase {
                 .setWaitForLaunched(true)
                 .execute();
 
+        final int primaryTaskId = mWmState.getTaskByActivity(
+                primaryActivity.mTargetActivity).mTaskId;
+        mTaskOrganizer.putTaskInSplitPrimary(primaryTaskId);
+
+        // Launch split-screen secondary
+        secondaryActivity
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .setNewTask(true)
+                .setMultipleTask(true)
+                .execute();
+
+        final int secondaryTaskId = mWmState.getTaskByActivity(
+                secondaryActivity.mTargetActivity).mTaskId;
+        mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId);
+        mWmState.computeState(primaryActivity.getTargetActivity(),
+                secondaryActivity.getTargetActivity());
+        log("launchActivitiesInSplitScreen(), primaryTaskId=" + primaryTaskId +
+                ", secondaryTaskId=" + secondaryTaskId);
+    }
+
+    /**
+     * Launches {@param primaryActivity} into split-screen primary windowing mode
+     * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
+     */
+    protected void launchActivitiesInLegacySplitScreen(LaunchActivityBuilder primaryActivity,
+            LaunchActivityBuilder secondaryActivity) {
+        // Launch split-screen primary.
+        primaryActivity
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+
         final int taskId = mWmState.getTaskByActivity(
                 primaryActivity.mTargetActivity).mTaskId;
-        moveTaskToPrimarySplitScreen(taskId);
+        moveTaskToPrimaryLegacySplitScreen(taskId, false /* showSideActivity */);
 
         // Launch split-screen secondary
         // Recents become focused, so we can just launch new task in focused stack
@@ -1082,6 +1169,12 @@ public abstract class ActivityManagerTestBase {
         }
 
         return uiModeLockedToVrHeadset;
+    }
+
+    protected boolean supportsMultiWindow() {
+        Display defaultDisplay = mDm.getDisplay(DEFAULT_DISPLAY);
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(
+                mContext.createDisplayContext(defaultDisplay));
     }
 
     /** Returns true if the default display supports split screen multi-window. */

@@ -99,6 +99,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testMinimalSizeDocked() throws Exception {
+        mUseTaskOrganizer = false;
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         testMinimalSize(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
