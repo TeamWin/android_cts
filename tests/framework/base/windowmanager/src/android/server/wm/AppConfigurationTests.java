@@ -856,6 +856,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
      * Asserts that initial and final reported sizes in docked stack are the same.
      */
     private void moveActivitySplitFullSplit(ComponentName activityName) {
+        mUseTaskOrganizer = false;
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         // Launch to docked stack and record size.

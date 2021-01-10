@@ -16,30 +16,112 @@
 
 package android.server.wm;
 
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import android.app.ActivityManager;
-import android.view.Display;
+import android.content.Context;
+import android.graphics.Rect;
+import android.os.Binder;
+import android.os.IBinder;
+import android.os.SystemClock;
+import android.util.ArraySet;
+import android.util.Log;
 import android.view.SurfaceControl;
+import android.view.WindowManager;
+import android.window.TaskAppearedInfo;
 import android.window.TaskOrganizer;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 
+import org.junit.Assert;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
 class TestTaskOrganizer extends TaskOrganizer {
+    private static final String TAG = TestTaskOrganizer.class.getSimpleName();
+    public static final int INVALID_TASK_ID = -1;
 
     private boolean mRegistered;
-    final HashMap<Integer, ActivityManager.RunningTaskInfo> mKnownTasks = new HashMap<>();
     private ActivityManager.RunningTaskInfo mRootPrimary;
-    private boolean mRootPrimaryHasChild;
     private ActivityManager.RunningTaskInfo mRootSecondary;
+    private IBinder mPrimaryCookie;
+    private IBinder mSecondaryCookie;
+    private final HashMap<Integer, ActivityManager.RunningTaskInfo> mKnownTasks = new HashMap<>();
+    private final ArraySet<Integer> mPrimaryChildrenTaskIds = new ArraySet<>();
+    private final ArraySet<Integer> mSecondaryChildrenTaskIds = new ArraySet<>();
+    private final Rect mPrimaryBounds = new Rect();
+    private final Rect mSecondaryBounds = new Rect();
+
+    TestTaskOrganizer(Context displayContext) {
+        super();
+        Rect bounds = displayContext.getSystemService(WindowManager.class)
+                .getCurrentWindowMetrics()
+                .getBounds();
+        boolean isLandscape = bounds.width() > bounds.height();
+        mPrimaryBounds.set(
+                0, 0,
+                isLandscape ? bounds.width() / 2 : bounds.width(),
+                isLandscape ? bounds.height() : bounds.height() / 2);
+        mSecondaryBounds.set(
+                isLandscape ? bounds.width() / 2 : 0,
+                isLandscape ? 0 : bounds.height() / 2,
+                0, 0);
+    }
+
+    @Override
+    public List<TaskAppearedInfo> registerOrganizer() {
+        synchronized (this) {
+            final List<TaskAppearedInfo> taskInfos = super.registerOrganizer();
+            for (int i = 0; i < taskInfos.size(); i++) {
+                final TaskAppearedInfo info = taskInfos.get(i);
+                onTaskAppeared(info.getTaskInfo(), info.getLeash());
+            }
+            createRootTasksIfNeeded();
+            return taskInfos;
+        }
+    }
+
+    private void createRootTasksIfNeeded() {
+        synchronized (this) {
+            if (mPrimaryCookie != null) return;
+            mPrimaryCookie = new Binder();
+            mSecondaryCookie = new Binder();
+
+            createRootTask(DEFAULT_DISPLAY, WINDOWING_MODE_MULTI_WINDOW, mPrimaryCookie);
+            createRootTask(DEFAULT_DISPLAY, WINDOWING_MODE_MULTI_WINDOW, mSecondaryCookie);
+
+            waitForAndAssert(o -> mRootPrimary != null && mRootSecondary != null,
+                    "Failed to get root tasks");
+            Log.e(TAG, "createRootTasksIfNeeded primary=" + mRootPrimary.taskId
+                    + " secondary=" + mRootSecondary.taskId);
+        }
+    }
+
+    private void waitForAndAssert(Predicate<Object> condition, String failureMessage) {
+        waitFor(condition);
+        if (!condition.test(this)) {
+            Assert.fail(failureMessage);
+        }
+    }
+
+    private void waitFor(Predicate<Object> condition) {
+        final long waitTillTime = SystemClock.elapsedRealtime() + TimeUnit.SECONDS.toMillis(5);
+        while (!condition.test(this)
+                && SystemClock.elapsedRealtime() < waitTillTime) {
+            try {
+                wait(TimeUnit.SECONDS.toMillis(5));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     private void registerOrganizerIfNeeded() {
         if (mRegistered) return;
@@ -49,152 +131,196 @@ class TestTaskOrganizer extends TaskOrganizer {
     }
 
     void unregisterOrganizerIfNeeded() {
-        if (!mRegistered) return;
-        mRegistered = false;
-        NestedShellPermission.run(() -> {
-            dismissedSplitScreen();
-            super.unregisterOrganizer();
-        });
+        synchronized (this) {
+            if (!mRegistered) return;
+            mRegistered = false;
+
+            NestedShellPermission.run(() -> {
+                dismissedSplitScreen();
+
+                deleteRootTask(mRootPrimary.getToken());
+                mRootPrimary = null;
+                mPrimaryCookie = null;
+                mPrimaryChildrenTaskIds.clear();
+                deleteRootTask(mRootSecondary.getToken());
+                mRootSecondary = null;
+                mSecondaryCookie = null;
+                mSecondaryChildrenTaskIds.clear();
+
+                super.unregisterOrganizer();
+            });
+        }
     }
 
     void putTaskInSplitPrimary(int taskId) {
-        registerOrganizerIfNeeded();
-        ActivityManager.RunningTaskInfo taskInfo = getTaskInfo(taskId);
-        final WindowContainerTransaction t = new WindowContainerTransaction();
-        t.setBounds(taskInfo.getToken(), null);
-        t.reparent(taskInfo.getToken(), mRootPrimary.getToken(), true /* onTop */);
-        t.reorder(mRootPrimary.getToken(), true /* onTop */);
-        applyTransaction(t);
-    }
-
-    void dismissedSplitScreen() {
         NestedShellPermission.run(() -> {
-            // Re-set default launch root.
-            setLaunchRoot(Display.DEFAULT_DISPLAY, null);
+            synchronized (this) {
+                registerOrganizerIfNeeded();
+                ActivityManager.RunningTaskInfo taskInfo = getTaskInfo(taskId);
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setBounds(mRootPrimary.getToken(), mPrimaryBounds)
+                        .setBounds(taskInfo.getToken(), null)
+                        .setWindowingMode(taskInfo.getToken(), WINDOWING_MODE_UNDEFINED)
+                        .reparent(taskInfo.getToken(), mRootPrimary.getToken(), true /* onTop */)
+                        .reorder(mRootPrimary.getToken(), true /* onTop */);
+                applyTransaction(t);
 
-            // Re-parent everything back to the display from the splits so that things are as they were.
-            final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
-            final List<ActivityManager.RunningTaskInfo> primaryChildren =
-                    getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
-            if (primaryChildren != null && !primaryChildren.isEmpty()) {
-                children.addAll(primaryChildren);
-            }
-            final List<ActivityManager.RunningTaskInfo> secondaryChildren =
-                    getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
-            if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
-                children.addAll(secondaryChildren);
-            }
-            if (children.isEmpty()) {
-                return;
-            }
+                waitForAndAssert(
+                        o -> mPrimaryChildrenTaskIds.contains(taskId),
+                        "Can't put putTaskInSplitPrimary taskId=" + taskId);
 
-            final WindowContainerTransaction t = new WindowContainerTransaction();
-            for (ActivityManager.RunningTaskInfo task : children) {
-                t.reparent(task.getToken(), null /* parent */, true /* onTop */);
+                Log.e(TAG, "putTaskInSplitPrimary taskId=" + taskId);
             }
-            applyTransaction(t);
         });
     }
 
-    /** Also completes the process of entering split mode. */
-    private void processRootPrimaryTaskInfoChanged() {
-        List<ActivityManager.RunningTaskInfo> children =
-                getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
-        final boolean hasChild = !children.isEmpty();
-        if (mRootPrimaryHasChild == hasChild) return;
-        mRootPrimaryHasChild = hasChild;
-        if (!hasChild) return;
+    void putTaskInSplitSecondary(int taskId) {
+        NestedShellPermission.run(() -> {
+            synchronized (this) {
+                registerOrganizerIfNeeded();
+                ActivityManager.RunningTaskInfo taskInfo = getTaskInfo(taskId);
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setBounds(mRootSecondary.getToken(), mSecondaryBounds)
+                        .setBounds(taskInfo.getToken(), null)
+                        .setWindowingMode(taskInfo.getToken(), WINDOWING_MODE_UNDEFINED)
+                        .reparent(taskInfo.getToken(), mRootSecondary.getToken(), true /* onTop */)
+                        .reorder(mRootSecondary.getToken(), true /* onTop */);
+                applyTransaction(t);
 
-        // Finish entering split-screen mode
+                waitForAndAssert(
+                        o -> mSecondaryChildrenTaskIds.contains(taskId),
+                        "Can't put putTaskInSplitSecondary taskId=" + taskId);
 
-        // Set launch root for the default display to secondary...for no good reason...
-        setLaunchRoot(DEFAULT_DISPLAY, mRootSecondary.getToken());
-
-        List<ActivityManager.RunningTaskInfo> rootTasks =
-                getRootTasks(DEFAULT_DISPLAY, null /* activityTypes */);
-        if (rootTasks.isEmpty()) return;
-        // Move all root fullscreen task to secondary split.
-        final WindowContainerTransaction t = new WindowContainerTransaction();
-        for (int i = rootTasks.size() - 1; i >= 0; --i) {
-            final ActivityManager.RunningTaskInfo task = rootTasks.get(i);
-            if (task.getConfiguration().windowConfiguration.getWindowingMode()
-                    == WINDOWING_MODE_FULLSCREEN) {
-                t.reparent(task.getToken(), mRootSecondary.getToken(), true /* onTop */);
+                Log.e(TAG, "putTaskInSplitSecondary taskId=" + taskId);
             }
+        });
+    }
+
+    void dismissedSplitScreen() {
+        synchronized (this) {
+            NestedShellPermission.run(() -> {
+                // Re-parent everything back to the display from the splits so that things are as they were.
+                final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
+                final List<ActivityManager.RunningTaskInfo> primaryChildren =
+                        getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
+                if (primaryChildren != null && !primaryChildren.isEmpty()) {
+                    children.addAll(primaryChildren);
+                }
+                final List<ActivityManager.RunningTaskInfo> secondaryChildren =
+                        getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
+                if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
+                    children.addAll(secondaryChildren);
+                }
+                if (children.isEmpty()) {
+                    return;
+                }
+
+                final WindowContainerTransaction t = new WindowContainerTransaction();
+                for (ActivityManager.RunningTaskInfo task : children) {
+                    t.reparent(task.getToken(), null /* parent */, true /* onTop */);
+                }
+                applyTransaction(t);
+            });
         }
-        // Move the secondary split-forward.
-        t.reorder(mRootSecondary.getToken(), true /* onTop */);
-        applyTransaction(t);
+    }
+
+    int getPrimarySplitTaskCount() {
+        return mPrimaryChildrenTaskIds.size();
+    }
+
+    int getSecondarySplitTaskCount() {
+        return mSecondaryChildrenTaskIds.size();
+    }
+
+    int getPrimarySplitTaskId() {
+        return mRootPrimary != null ? mRootPrimary.taskId : INVALID_TASK_ID;
+    }
+
+    int getSecondarySplitTaskId() {
+        return mRootSecondary != null ? mRootSecondary.taskId : INVALID_TASK_ID;
     }
 
     ActivityManager.RunningTaskInfo getTaskInfo(int taskId) {
-        ActivityManager.RunningTaskInfo taskInfo = mKnownTasks.get(taskId);
-        if (taskInfo != null) return taskInfo;
+        synchronized (this) {
+            ActivityManager.RunningTaskInfo taskInfo = mKnownTasks.get(taskId);
+            if (taskInfo != null) return taskInfo;
 
-        final List<ActivityManager.RunningTaskInfo> rootTasks = getRootTasks(DEFAULT_DISPLAY, null);
-        for (ActivityManager.RunningTaskInfo info : rootTasks) {
-            addTask(info);
+            final List<ActivityManager.RunningTaskInfo> rootTasks = getRootTasks(DEFAULT_DISPLAY,
+                    null);
+            for (ActivityManager.RunningTaskInfo info : rootTasks) {
+                addTask(info);
+            }
+
+            return mKnownTasks.get(taskId);
         }
-
-        return mKnownTasks.get(taskId);
     }
 
     @Override
     public void onTaskAppeared(@NonNull ActivityManager.RunningTaskInfo taskInfo,
             SurfaceControl leash) {
-        if (taskInfo.hasParentTask()) {
-            // Tasks with parent created by organizer are also organized now, update the surface as
-            // well to prevent timeout tests when polling for Activity#hasWindowFocus.
+        synchronized (this) {
             SurfaceControl.Transaction t = new SurfaceControl.Transaction();
             t.setVisibility(leash, true /* visible */);
             t.apply();
+
+            NestedShellPermission.run(() -> addTask(taskInfo));
         }
-        NestedShellPermission.run(() -> addTask(taskInfo));
     }
 
     @Override
     public void onTaskVanished(@NonNull ActivityManager.RunningTaskInfo taskInfo) {
-        removeTask(taskInfo);
+        synchronized (this) {
+            removeTask(taskInfo);
+        }
     }
 
     @Override
     public void onTaskInfoChanged(ActivityManager.RunningTaskInfo taskInfo) {
-        NestedShellPermission.run(() -> addTask(taskInfo));
+        synchronized (this) {
+            NestedShellPermission.run(() -> addTask(taskInfo));
+        }
     }
 
     private void addTask(ActivityManager.RunningTaskInfo taskInfo) {
         mKnownTasks.put(taskInfo.taskId, taskInfo);
+        notifyAll();
+        if (taskInfo.hasParentTask()){
+            if (mRootPrimary != null
+                    && mRootPrimary.taskId == taskInfo.getParentTaskId()) {
+                mPrimaryChildrenTaskIds.add(taskInfo.taskId);
+            } else if (mRootSecondary != null
+                    && mRootSecondary.taskId == taskInfo.getParentTaskId()) {
+                mSecondaryChildrenTaskIds.add(taskInfo.taskId);
+            }
+            return;
+        }
 
-        final int windowingMode =
-                taskInfo.getConfiguration().windowConfiguration.getWindowingMode();
-        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_PRIMARY
-                && (mRootPrimary == null || mRootPrimary.taskId == taskInfo.taskId)) {
+        if (mRootPrimary == null
+                && mPrimaryCookie != null
+                && taskInfo.containsLaunchCookie(mPrimaryCookie)) {
             mRootPrimary = taskInfo;
-            processRootPrimaryTaskInfoChanged();
-            addChildTasks(taskInfo);
+            return;
         }
 
-        if (windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
-                && (mRootSecondary == null || mRootSecondary.taskId == taskInfo.taskId)) {
+        if (mRootSecondary == null
+                && mSecondaryCookie != null
+                && taskInfo.containsLaunchCookie(mSecondaryCookie)) {
             mRootSecondary = taskInfo;
-            addChildTasks(taskInfo);
-        }
-    }
-
-    private void addChildTasks(ActivityManager.RunningTaskInfo taskInfo) {
-        List<ActivityManager.RunningTaskInfo> children =
-                getChildTasks(taskInfo.getToken(), null /* activityTypes */);
-        for (ActivityManager.RunningTaskInfo child : children) {
-            mKnownTasks.put(child.taskId, child);
         }
     }
 
     private void removeTask(ActivityManager.RunningTaskInfo taskInfo) {
         final int taskId = taskInfo.taskId;
         // ignores cleanup on duplicated removal request
-        if (mKnownTasks.remove(taskId) != null) {
-            if (mRootPrimary != null && taskId == mRootPrimary.taskId) mRootPrimary = null;
-            if (mRootSecondary != null && taskId == mRootSecondary.taskId) mRootSecondary = null;
+        if (mKnownTasks.remove(taskId) == null) {
+            return;
+        }
+        mPrimaryChildrenTaskIds.remove(taskId);
+        mSecondaryChildrenTaskIds.remove(taskId);
+
+        if ((mRootPrimary != null && taskId == mRootPrimary.taskId)
+                || (mRootSecondary != null && taskId == mRootSecondary.taskId)) {
+            unregisterOrganizerIfNeeded();
         }
     }
 }
