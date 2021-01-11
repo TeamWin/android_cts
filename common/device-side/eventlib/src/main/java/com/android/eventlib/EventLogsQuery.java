@@ -43,7 +43,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
 
     private final Class<E> mEventClass;
     private final String mPackageName;
-    private final Set<Function<E, Boolean>> filters = new HashSet<>();
+    private final transient Set<Function<E, Boolean>> filters = new HashSet<>();
 
     protected EventLogsQuery(Class<E> eventClass, String packageName) {
         if (eventClass == null || packageName == null) {
@@ -79,9 +79,12 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
      * Returns true if {@code E} matches custom and default filters for this {@link Event} subclass.
      */
     protected final boolean filterAll(E event) {
-        for (Function<E, Boolean> filter : filters) {
-            if (!filter.apply(event)) {
-                return false;
+        if (filters != null) {
+            // Filters will be null when called remotely
+            for (Function<E, Boolean> filter : filters) {
+                if (!filter.apply(event)) {
+                    return false;
+                }
             }
         }
         return filter(event);

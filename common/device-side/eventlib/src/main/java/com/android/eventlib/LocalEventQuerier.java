@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implements EventQuerier<E>, Events.EventListener {
     private final EventLogsQuery<E, F> mEventLogsQuery;
     private final BlockingDeque<Event> mEvents;
+    private int skippedGet = 0;
 
     LocalEventQuerier(EventLogsQuery<E, F> eventLogsQuery) {
         mEventLogsQuery = eventLogsQuery;
@@ -38,9 +39,12 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
 
     @Override
     public E get(Instant earliestLogTime) {
+        int skipped = 0;
         for (Event event : Events.EVENTS.getEvents()) {
             if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
+                    continue;
+                } else if (skipped++ < skippedGet) {
                     continue;
                 }
 
@@ -51,6 +55,17 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
             }
         }
         return null;
+    }
+
+    /**
+     * Same as {@link #get(Instant)} but incremements the number of skipped results.
+     *
+     * <p>This should be used when the current result from {@link #get(Instant)} does not pass
+     * additional filters.
+     */
+    public E getNext(Instant earliestLogTime) {
+        skippedGet += 1;
+        return get(earliestLogTime);
     }
 
     @Override

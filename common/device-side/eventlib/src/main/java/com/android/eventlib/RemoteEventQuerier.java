@@ -30,6 +30,7 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import java.time.Duration;
@@ -44,6 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class
     RemoteEventQuerier<E extends Event, F extends EventLogsQuery> implements EventQuerier<E> {
 
+    private static final String LOG_TAG = "RemoteEventQuerier";
     private static final Context CONTEXT =
             InstrumentationRegistry.getInstrumentation().getContext();
 
@@ -67,7 +69,7 @@ public class
 
                 @Override
                 public void onServiceDisconnected(ComponentName className) {
-                    // TODO: Deal with this
+                    Log.i(LOG_TAG, "Service disconnected from " + className);
                 }
             };
 
@@ -78,6 +80,10 @@ public class
         try {
             Bundle resultMessage = mQuery.get().get(id, data);
             E e = (E) resultMessage.getSerializable(EVENT_KEY);
+            while (e != null && !mEventLogsQuery.filterAll(e)) {
+                resultMessage = mQuery.get().getNext(id, data);
+                e = (E) resultMessage.getSerializable(EVENT_KEY);
+            }
             return e;
         } catch (RemoteException e) {
             throw new AssertionError("Error making cross-process call", e);
@@ -91,6 +97,10 @@ public class
         try {
             Bundle resultMessage = mQuery.get().next(id, data);
             E e = (E) resultMessage.getSerializable(EVENT_KEY);
+            while (e != null && !mEventLogsQuery.filterAll(e)) {
+                resultMessage = mQuery.get().next(id, data);
+                e = (E) resultMessage.getSerializable(EVENT_KEY);
+            }
             return e;
         } catch (RemoteException e) {
             throw new AssertionError("Error making cross-process call", e);
@@ -100,11 +110,19 @@ public class
     @Override
     public E poll(Instant earliestLogTime, Duration timeout) {
         ensureInitialised();
+        Instant endTime = Instant.now().plus(timeout);
         Bundle data = createRequestBundle();
-        data.putSerializable(TIMEOUT_KEY, timeout);
+        Duration remainingTimeout = Duration.between(Instant.now(), endTime);
+        data.putSerializable(TIMEOUT_KEY, remainingTimeout);
         try {
             Bundle resultMessage = mQuery.get().poll(id, data);
             E e = (E) resultMessage.getSerializable(EVENT_KEY);
+            while (e != null && !mEventLogsQuery.filterAll(e)) {
+                remainingTimeout = Duration.between(Instant.now(), endTime);
+                data.putSerializable(TIMEOUT_KEY, remainingTimeout);
+                resultMessage = mQuery.get().poll(id, data);
+                e = (E) resultMessage.getSerializable(EVENT_KEY);
+            }
             return e;
         } catch (RemoteException e) {
             throw new AssertionError("Error making cross-process call", e);
