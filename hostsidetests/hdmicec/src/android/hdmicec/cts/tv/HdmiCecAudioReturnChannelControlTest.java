@@ -90,6 +90,22 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
     }
 
     /**
+     * Test 11.1.17-3
+     *
+     * <p>Tests that the DUT sends a directly addressed {@code <Request ARC Termination>} message.
+     */
+    @Ignore("b/187168483")
+    @Test
+    public void cect_11_1_17_3_DutSendsRequestArcTermination() throws Exception {
+        // Ensure that ARC is on.
+        changeArcState(true);
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.AUDIO_SYSTEM);
+        assertWithMessage("DUT does not send a <Request ARC Termination> message.")
+                .that(changeArcState(false))
+                .isTrue();
+    }
+
+    /**
      * Test 11.1.17-2,4
      *
      * <p>Tests that the DUT responds with a directly addressed {@code <Report ARC terminated>}
