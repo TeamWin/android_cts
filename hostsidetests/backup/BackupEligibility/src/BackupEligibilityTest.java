@@ -14,7 +14,7 @@
  * limitations under the License
  */
 
-package android.cts.backup.backupnotallowedapp;
+package android.cts.backup.backupeligibilityapp;
 
 import static androidx.test.InstrumentationRegistry.getTargetContext;
 
@@ -44,7 +44,7 @@ import java.util.Random;
  */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull
-public class AllowBackupTest {
+public class BackupEligibilityTest {
     public static final String TAG = "AllowBackupCTSApp";
     private static final int FILE_SIZE_BYTES = 1024 * 1024;
 
@@ -70,8 +70,7 @@ public class AllowBackupTest {
     @Test
     public void createFiles() throws Exception {
         // Make sure the data does not exist from before
-        deleteAllFiles();
-        assertNoFilesExist();
+        deleteFilesAndAssertNoneExist();
 
         // Create test data
         generateFiles();
@@ -80,6 +79,12 @@ public class AllowBackupTest {
         Log.d(TAG, "Test files created: \n"
                 + mDoBackupFile.getAbsolutePath() + "\n"
                 + mDoBackupFile2.getAbsolutePath());
+    }
+
+    @Test
+    public void deleteFilesAndAssertNoneExist() {
+        deleteAllFiles();
+        assertNoFilesExist();
     }
 
     @Test

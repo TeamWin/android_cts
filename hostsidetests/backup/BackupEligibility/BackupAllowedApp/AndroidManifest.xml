@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.cts.backup.backupnotallowedapp">
+    package="android.cts.backup.backupeligibilityapp">
 
     <application android:label="BackupAllowedApp">
         <uses-library android:name="android.test.runner" />
@@ -24,6 +24,6 @@
 
     <instrumentation
         android:name="androidx.test.runner.AndroidJUnitRunner"
-        android:targetPackage="android.cts.backup.backupnotallowedapp" />
+        android:targetPackage="android.cts.backup.backupeligibilityapp" />
 
 </manifest>
