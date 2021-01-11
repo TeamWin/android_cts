@@ -111,7 +111,7 @@ public class NoReceiveSmsPermissionTest extends AndroidTestCase {
         getContext().registerReceiver(receiver, filter);
 
         PendingIntent receivedIntent = PendingIntent.getBroadcast(getContext(), 0,
-                new Intent(APP_SPECIFIC_SMS_RECEIVED_ACTION), PendingIntent.FLAG_ONE_SHOT);
+                new Intent(APP_SPECIFIC_SMS_RECEIVED_ACTION), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         String token = SmsManager.getDefault().createAppSpecificSmsToken(receivedIntent);
         String message = "test message, token=" + token;
@@ -132,9 +132,9 @@ public class NoReceiveSmsPermissionTest extends AndroidTestCase {
 
     private void sendSMSToSelf(String message) {
         PendingIntent sentIntent = PendingIntent.getBroadcast(getContext(), 0,
-                new Intent(MESSAGE_SENT_ACTION), PendingIntent.FLAG_ONE_SHOT);
+                new Intent(MESSAGE_SENT_ACTION), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         PendingIntent deliveryIntent = PendingIntent.getBroadcast(getContext(), 0,
-                new Intent(MESSAGE_STATUS_RECEIVED_ACTION), PendingIntent.FLAG_ONE_SHOT);
+                new Intent(MESSAGE_STATUS_RECEIVED_ACTION), PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         TelephonyManager telephony = (TelephonyManager)
                  getContext().getSystemService(Context.TELEPHONY_SERVICE);

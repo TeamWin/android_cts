@@ -534,7 +534,7 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
     private Notification.BubbleMetadata.Builder getIntentBubble() {
         Context context = getApplicationContext();
         Intent intent = new Intent(context, BubbleActivity.class);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         return new Notification.BubbleMetadata.Builder(pendingIntent,
                 Icon.createWithResource(getApplicationContext(),
@@ -546,14 +546,14 @@ public class BubblesVerifierActivity extends PassFailButtons.Activity {
             @NonNull CharSequence content) {
         Context context = getApplicationContext();
         Intent intent = new Intent(context, BubbleActivity.class);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();
         RemoteInput remoteInput = new RemoteInput.Builder("reply_key").setLabel("reply").build();
         PendingIntent inputIntent = PendingIntent.getActivity(getApplicationContext(), 0,
-                new Intent(), 0);
+                new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Icon icon = Icon.createWithResource(getApplicationContext(), R.drawable.ic_android);
         Notification.Action replyAction = new Notification.Action.Builder(icon, "Reply",
                 inputIntent).addRemoteInput(remoteInput)

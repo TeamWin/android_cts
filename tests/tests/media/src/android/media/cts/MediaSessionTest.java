@@ -278,7 +278,7 @@ public class MediaSessionTest extends AndroidTestCase {
 
             // test setSessionActivity
             Intent intent = new Intent("cts.MEDIA_SESSION_ACTION");
-            PendingIntent pi = PendingIntent.getActivity(getContext(), 555, intent, 0);
+            PendingIntent pi = PendingIntent.getActivity(getContext(), 555, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
             mSession.setSessionActivity(pi);
             assertEquals(pi, controller.getSessionActivity());
 
@@ -313,7 +313,7 @@ public class MediaSessionTest extends AndroidTestCase {
     public void testSetMediaButtonReceiver_broadcastReceiver() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonBroadcastReceiver.class);
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -357,7 +357,7 @@ public class MediaSessionTest extends AndroidTestCase {
     public void testSetMediaButtonReceiver_service() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonReceiverService.class);
-        PendingIntent pi = PendingIntent.getService(mContext, 0, intent, 0);
+        PendingIntent pi = PendingIntent.getService(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -402,7 +402,7 @@ public class MediaSessionTest extends AndroidTestCase {
     public void testSetMediaButtonReceiver_implicitIntent() throws Exception {
         // Note: No such broadcast receiver exists.
         Intent intent = new Intent("android.media.cts.ACTION_MEDIA_TEST");
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -506,7 +506,7 @@ public class MediaSessionTest extends AndroidTestCase {
 
         Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON).setComponent(
                 new ComponentName(getContext(), getContext().getClass()));
-        PendingIntent pi = PendingIntent.getBroadcast(getContext(), 0, mediaButtonIntent, 0);
+        PendingIntent pi = PendingIntent.getBroadcast(getContext(), 0, mediaButtonIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         mSession.setMediaButtonReceiver(pi);
 
         // Set state to STATE_PLAYING to get higher priority.

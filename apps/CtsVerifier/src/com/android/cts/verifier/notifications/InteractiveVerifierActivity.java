@@ -415,7 +415,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         Intent intent = new Intent(tag);
         intent.setComponent(new ComponentName(mContext, DismissService.class));
         PendingIntent pi = PendingIntent.getService(mContext, code, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         return pi;
     }
 
@@ -423,7 +423,7 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         Intent intent = new Intent(tag);
         intent.setComponent(new ComponentName(mContext, ActionTriggeredReceiver.class));
         PendingIntent pi = PendingIntent.getBroadcast(mContext, code, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         return pi;
     }
 
