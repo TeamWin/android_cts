@@ -112,7 +112,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Dock a task
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         mWmState.assertContainsStack("Must contain fullscreen stack.",
@@ -299,7 +299,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             // is also visible
             if (supportsSplitScreenMultiWindow() &&  assistantRunsOnPrimaryDisplay()) {
                 removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
-                launchActivitiesInSplitScreen(
+                launchActivitiesInLegacySplitScreen(
                         getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
                 mWmState.assertContainsStack("Must contain docked stack.",

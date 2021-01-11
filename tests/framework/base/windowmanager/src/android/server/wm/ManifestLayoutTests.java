@@ -112,7 +112,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
             launchActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(BOTTOM_RIGHT_LAYOUT_ACTIVITY, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
-            launchActivitiesInSplitScreen(
+            launchActivitiesInLegacySplitScreen(
                     getLaunchActivityBuilder().setTargetActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY),
                     getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
             resizePrimarySplitScreen(1, 1, 1, 1);
