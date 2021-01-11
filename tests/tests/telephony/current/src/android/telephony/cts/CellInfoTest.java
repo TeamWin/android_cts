@@ -68,8 +68,18 @@ import java.util.concurrent.Executor;
 /**
  * Test TelephonyManager.getAllCellInfo()
  * <p>
- * TODO(chesnutt): test onCellInfoChanged() once the implementation
- * of async callbacks is complete (see http://b/13788638)
+ *
+ * Test that the Cellular Location APIs return proper and complete information.
+ * <ul>
+ *     <li>At least one cell must be reported as the registered cell.
+ *     <li>Registered cells must report the technology-specific fields consisting of a globally
+ *         unique cell identifier.
+ *     <li>All cells must report a technology-specific physical cell identifier, such as a tuple
+ *         of the frequency and a phyisical cell ID that allows them to be uniquely identified
+ *         given a known global cell.
+ *     <li>All cells must report at least one valid power measurement.
+ * </ul>
+ *
  */
 public class CellInfoTest {
     private static final String TAG = "android.telephony.cts.CellInfoTest";
@@ -655,8 +665,7 @@ public class CellInfoTest {
         // Only physical cell id is available for LTE neighbor.
         int pci = lte.getPci();
         // Physical cell id should be within [0, 503].
-        assertTrue("getPci() out of range [0, 503], pci=" + pci,
-                (pci == CellInfo.UNAVAILABLE) || (pci >= 0 && pci <= PCI));
+        assertTrue("getPci() out of range [0, 503], pci=" + pci, (pci >= 0 && pci <= PCI));
 
         // Tracking area code ranges from 0 to 65535.
         int tac = lte.getTac();
@@ -688,7 +697,7 @@ public class CellInfoTest {
         }
         assertTrue(
                 "getEarfcn() out of range [" + minEarfcn + "," + maxEarfcn + "], earfcn=" + earfcn,
-                earfcn == CellInfo.UNAVAILABLE || (earfcn >= minEarfcn && earfcn <= maxEarfcn));
+                (earfcn >= minEarfcn && earfcn <= maxEarfcn));
 
         if (mRadioHalVersion >= RADIO_HAL_VERSION_1_5) {
             int[] bands = lte.getBands();
@@ -698,11 +707,7 @@ public class CellInfoTest {
             }
         }
 
-        String mobileNetworkOperator = lte.getMobileNetworkOperator();
-        assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
-                        + mobileNetworkOperator,
-                mobileNetworkOperator == null
-                        || mobileNetworkOperator.matches("^[0-9]{5,6}$"));
+        verifyPlmnId(lte.getMobileNetworkOperator());
 
         for (String plmnId : lte.getAdditionalPlmns()) {
             verifyPlmnId(plmnId);
@@ -720,6 +725,8 @@ public class CellInfoTest {
                     lte.getMccString() != null || lte.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
                     lte.getMncString() != null || lte.getMnc() != CellInfo.UNAVAILABLE);
+            assertFalse("PLMN-ID is required for registered cells",
+                    TextUtils.isEmpty(lte.getMobileNetworkOperator()));
         }
     }
 
@@ -836,14 +843,9 @@ public class CellInfoTest {
         // Verify wcdma primary scrambling code information.
         // Primary scrambling code should be within [0, 511].
         int psc = wcdma.getPsc();
-        assertTrue("getPsc() out of range [0, 511], psc=" + psc,
-                (psc >= 0 && psc <= PSC) || psc == CellInfo.UNAVAILABLE);
+        assertTrue("getPsc() out of range [0, 511], psc=" + psc, psc >= 0 && psc <= PSC);
 
-        String mobileNetworkOperator = wcdma.getMobileNetworkOperator();
-        assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
-                        + mobileNetworkOperator,
-                mobileNetworkOperator == null
-                        || mobileNetworkOperator.matches("^[0-9]{5,6}$"));
+        verifyPlmnId(wcdma.getMobileNetworkOperator());
 
         int uarfcn = wcdma.getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
@@ -866,6 +868,8 @@ public class CellInfoTest {
                     wcdma.getMccString() != null || wcdma.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
                     wcdma.getMncString() != null || wcdma.getMnc() != CellInfo.UNAVAILABLE);
+            assertFalse("PLMN-ID is required for registered cells",
+                    TextUtils.isEmpty(wcdma.getMobileNetworkOperator()));
         }
 
         verifyCellIdentityWcdmaLocationSanitation(wcdma);
@@ -964,19 +968,13 @@ public class CellInfoTest {
         assertTrue("getArfcn() out of range [0,1024], arfcn=" + arfcn,
                 arfcn == CellInfo.UNAVAILABLE || (arfcn >= 0 && arfcn <= ARFCN));
 
-        String mobileNetworkOperator = gsm.getMobileNetworkOperator();
-        assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
-                        + mobileNetworkOperator,
-                mobileNetworkOperator == null
-                        || mobileNetworkOperator.matches("^[0-9]{5,6}$"));
-
         int bsic = gsm.getBsic();
-        // TODO(b/32774471) - Bsic should always be valid
-        //assertTrue("getBsic() out of range [0,63]", bsic >= 0 && bsic <=63);
+        assertTrue("getBsic() out of range [0,63]", bsic >= 0 && bsic <= 63);
 
         for (String plmnId : gsm.getAdditionalPlmns()) {
             verifyPlmnId(plmnId);
         }
+        verifyPlmnId(gsm.getMobileNetworkOperator());
 
         // If the cell is reported as registered, then all the logical cell info must be reported
         if (isRegistered) {
@@ -986,6 +984,8 @@ public class CellInfoTest {
                     gsm.getMccString() != null || gsm.getMcc() != CellInfo.UNAVAILABLE);
             assertTrue("MNC is required for registered cells",
                     gsm.getMncString() != null || gsm.getMnc() != CellInfo.UNAVAILABLE);
+            assertFalse("PLMN-ID is required for registered cells",
+                    TextUtils.isEmpty(gsm.getMobileNetworkOperator()));
         }
 
         verifyCellIdentityGsmLocationSanitation(gsm);
@@ -1085,11 +1085,7 @@ public class CellInfoTest {
         int cpid = tdscdma.getCpid();
         assertTrue("getCpid() out of range [0, 127], cpid=" + cpid, (cpid >= 0 && cpid <= CPID));
 
-        String mobileNetworkOperator = tdscdma.getMobileNetworkOperator();
-        assertTrue("getMobileNetworkOperator() out of range [0, 999999], mobileNetworkOperator="
-                        + mobileNetworkOperator,
-                mobileNetworkOperator == null
-                        || mobileNetworkOperator.matches("^[0-9]{5,6}$"));
+        verifyPlmnId(tdscdma.getMobileNetworkOperator());
 
         int uarfcn = tdscdma.getUarfcn();
         // Reference 3GPP 25.101 Table 5.2
@@ -1110,6 +1106,8 @@ public class CellInfoTest {
             assertTrue("CID is required for registered cells", cid != CellInfo.UNAVAILABLE);
             assertTrue("MCC is required for registered cells", tdscdma.getMccString() != null);
             assertTrue("MNC is required for registered cells", tdscdma.getMncString() != null);
+            assertFalse("PLMN-ID is required for registered cells",
+                    TextUtils.isEmpty(tdscdma.getMobileNetworkOperator()));
         }
 
         verifyCellIdentityTdscdmaLocationSanitation(tdscdma);
