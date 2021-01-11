@@ -19,5 +19,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.android.eventlib">
     <application>
+        <service android:name="com.android.eventlib.QueryService" android:exported="true"/>
     </application>
 </manifest>

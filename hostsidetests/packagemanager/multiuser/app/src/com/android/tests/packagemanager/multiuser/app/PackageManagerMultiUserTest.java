@@ -53,4 +53,15 @@ public class PackageManagerMultiUserTest {
 
         packageInstaller.uninstallExistingPackage(pkgName, null);
     }
+
+    /**
+     * Calling PackageManager#getInstalledModules on a secondary user without INTERACT_ACROSS_USERS
+     * should not throw SecurityException.
+     */
+    @Test
+    public void testGetInstalledModules() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        PackageManager packageManager = context.getPackageManager();
+        packageManager.getInstalledModules(0);
+    }
 }

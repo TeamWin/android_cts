@@ -124,6 +124,7 @@ public class WindowInsetsPolicyTest extends ActivityManagerTestBase {
      */
     @Test
     public void testForcedConsumedTopInsets() throws Exception {
+        mUseTaskOrganizer = false;
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
 

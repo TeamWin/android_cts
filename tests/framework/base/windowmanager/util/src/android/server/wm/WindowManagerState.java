@@ -825,14 +825,19 @@ public class WindowManagerState {
     }
 
     public ActivityTask getTaskByActivity(ComponentName activityName) {
-        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED);
+        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, -1);
     }
 
-    public ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {
+    public ActivityTask getTaskByActivity(ComponentName activityName, int excludeTaskId) {
+        return getTaskByActivity(activityName, WINDOWING_MODE_UNDEFINED, excludeTaskId);
+    }
+
+    private ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode,
+            int excludeTaskId) {
         for (ActivityTask stack : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {
-                Activity activity = stack.getActivity(activityName);
+                Activity activity = stack.getActivity(activityName, excludeTaskId);
                 if (activity != null) return activity.task;
             }
         }
@@ -1379,6 +1384,13 @@ public class WindowManagerState {
         public Activity getActivity(ComponentName activityName) {
             final String fullName = getActivityName(activityName);
             return getActivity((activity) -> activity.name.equals(fullName));
+        }
+
+        public Activity getActivity(ComponentName activityName, int excludeTaskId) {
+            final String fullName = getActivityName(activityName);
+            return getActivity((activity) ->
+                    activity.task.mTaskId != excludeTaskId
+                            && activity.name.equals(fullName));
         }
 
         boolean containsActivity(ComponentName activityName) {

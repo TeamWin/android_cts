@@ -39,8 +39,8 @@ public final class CustomEvent extends Event {
 
     public static final class CustomEventQuery
             extends EventLogsQuery<CustomEvent, CustomEventQuery> {
-        private String mTag = null;
-        private Serializable mData = null;
+        String mTag = null;
+        Serializable mData = null;
 
         private CustomEventQuery(String packageName) {
             super(CustomEvent.class, packageName);

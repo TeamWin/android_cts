@@ -277,6 +277,9 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.app.stubs.NotificationHostActivity"
+            android:label="NotificationHostActivity"/>
+
         <activity android:name="android.app.stubs.MockTabActivity"
              android:label="MockTabActivity"/>
 

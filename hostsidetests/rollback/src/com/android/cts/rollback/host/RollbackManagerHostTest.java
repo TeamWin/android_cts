@@ -19,9 +19,11 @@ package com.android.cts.rollback.host;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.hamcrest.CoreMatchers.endsWith;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
+import static org.junit.Assume.assumeThat;
 
 import android.cts.install.lib.host.InstallUtilsHost;
 
@@ -88,11 +90,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkOnlyStagedRollback() throws Exception {
-        run("testApkOnlyStagedRollback_Phase1");
+        run("testApkOnlyStagedRollback_Phase1_Install");
         getDevice().reboot();
-        run("testApkOnlyStagedRollback_Phase2");
+        run("testApkOnlyStagedRollback_Phase2_RollBack");
         getDevice().reboot();
-        run("testApkOnlyStagedRollback_Phase3");
+        run("testApkOnlyStagedRollback_Phase3_Confirm");
     }
 
     /**
@@ -103,11 +105,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support file-system checkpoint",
                 mHostUtils.isCheckpointSupported());
 
-        run("testApkOnlyMultipleStagedRollback_Phase1");
+        run("testApkOnlyMultipleStagedRollback_Phase1_Install");
         getDevice().reboot();
-        run("testApkOnlyMultipleStagedRollback_Phase2");
+        run("testApkOnlyMultipleStagedRollback_Phase2_RollBack");
         getDevice().reboot();
-        run("testApkOnlyMultipleStagedRollback_Phase3");
+        run("testApkOnlyMultipleStagedRollback_Phase3_Confirm");
     }
 
     /**
@@ -118,11 +120,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support file-system checkpoint",
                 mHostUtils.isCheckpointSupported());
 
-        run("testApkOnlyMultipleStagedPartialRollback_Phase1");
+        run("testApkOnlyMultipleStagedPartialRollback_Phase1_Install");
         getDevice().reboot();
-        run("testApkOnlyMultipleStagedPartialRollback_Phase2");
+        run("testApkOnlyMultipleStagedPartialRollback_Phase2_RollBack");
         getDevice().reboot();
-        run("testApkOnlyMultipleStagedPartialRollback_Phase3");
+        run("testApkOnlyMultipleStagedPartialRollback_Phase3_Confirm");
     }
 
     /**
@@ -132,13 +134,13 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlyStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        run("testApexOnlyStagedRollback_Phase1");
+        run("testApexOnlyStagedRollback_Phase1_InstallFirst");
         getDevice().reboot();
-        run("testApexOnlyStagedRollback_Phase2");
+        run("testApexOnlyStagedRollback_Phase2_InstallSecond");
         getDevice().reboot();
-        run("testApexOnlyStagedRollback_Phase3");
+        run("testApexOnlyStagedRollback_Phase3_RollBack");
         getDevice().reboot();
-        run("testApexOnlyStagedRollback_Phase4");
+        run("testApexOnlyStagedRollback_Phase4_Confirm");
     }
 
     /**
@@ -148,11 +150,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexOnlySystemVersionStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        run("testApexOnlySystemVersionStagedRollback_Phase1");
+        run("testApexOnlySystemVersionStagedRollback_Phase1_Install");
         getDevice().reboot();
-        run("testApexOnlySystemVersionStagedRollback_Phase2");
+        run("testApexOnlySystemVersionStagedRollback_Phase2_RollBack");
         getDevice().reboot();
-        run("testApexOnlySystemVersionStagedRollback_Phase3");
+        run("testApexOnlySystemVersionStagedRollback_Phase3_Confirm");
     }
 
     /**
@@ -160,15 +162,22 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApexAndApkStagedRollback() throws Exception {
+        assumeSystemUser();
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        run("testApexAndApkStagedRollback_Phase1");
+        run("testApexAndApkStagedRollback_Phase1_InstallFirst");
         getDevice().reboot();
-        run("testApexAndApkStagedRollback_Phase2");
+        run("testApexAndApkStagedRollback_Phase2_InstallSecond");
         getDevice().reboot();
-        run("testApexAndApkStagedRollback_Phase3");
+        run("testApexAndApkStagedRollback_Phase3_RollBack");
         getDevice().reboot();
-        run("testApexAndApkStagedRollback_Phase4");
+        run("testApexAndApkStagedRollback_Phase4_Confirm");
+    }
+
+    private void assumeSystemUser() throws Exception {
+        String systemUser = "0";
+        assumeThat("Current user is not system user",
+                getDevice().executeShellCommand("am get-current-user").trim(), equalTo(systemUser));
     }
 
     /**
@@ -178,11 +187,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexRollbackExpiration() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        run("testApexRollbackExpiration_Phase1");
+        run("testApexRollbackExpiration_Phase1_InstallFirst");
         getDevice().reboot();
-        run("testApexRollbackExpiration_Phase2");
+        run("testApexRollbackExpiration_Phase2_InstallSecond");
         getDevice().reboot();
-        run("testApexRollbackExpiration_Phase3");
+        run("testApexRollbackExpiration_Phase3_Confirm");
     }
 
     /**
@@ -192,11 +201,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
     public void testApexKeyRotationStagedRollback() throws Exception {
         assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
 
-        run("testApexKeyRotationStagedRollback_Phase1");
+        run("testApexKeyRotationStagedRollback_Phase1_Install");
         getDevice().reboot();
-        run("testApexKeyRotationStagedRollback_Phase2");
+        run("testApexKeyRotationStagedRollback_Phase2_RollBack");
         getDevice().reboot();
-        run("testApexKeyRotationStagedRollback_Phase3");
+        run("testApexKeyRotationStagedRollback_Phase3_Confirm");
     }
 
     /**
@@ -204,8 +213,8 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testApkRollbackByAnotherInstaller() throws Exception {
-        run("testApkRollbackByAnotherInstaller_Phase1");
-        run2("testApkRollbackByAnotherInstaller_Phase2");
+        run("testApkRollbackByAnotherInstaller_Phase1_FirstInstaller");
+        run2("testApkRollbackByAnotherInstaller_Phase2_SecondInstaller");
     }
 
     /**
@@ -216,11 +225,11 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         assumeTrue("Device does not support file-system checkpoint",
                 mHostUtils.isCheckpointSupported());
 
-        run("testRollbackFailsBlockingSessions_Phase1");
+        run("testRollbackFailsBlockingSessions_Phase1_Install");
         getDevice().reboot();
-        run("testRollbackFailsBlockingSessions_Phase2");
+        run("testRollbackFailsBlockingSessions_Phase2_RollBack");
         getDevice().reboot();
-        run("testRollbackFailsBlockingSessions_Phase3");
+        run("testRollbackFailsBlockingSessions_Phase3_Confirm");
     }
 
     /**
@@ -233,9 +242,9 @@ public class RollbackManagerHostTest extends BaseHostJUnit4Test {
         try {
             getDevice().executeShellCommand("setprop persist.pm.mock-upgrade true");
 
-            run("testFingerprintChange_Phase1");
+            run("testFingerprintChange_Phase1_Install");
             getDevice().reboot();
-            run("testFingerprintChange_Phase2");
+            run("testFingerprintChange_Phase2_Confirm");
         } finally {
             getDevice().executeShellCommand("setprop persist.pm.mock-upgrade false");
         }

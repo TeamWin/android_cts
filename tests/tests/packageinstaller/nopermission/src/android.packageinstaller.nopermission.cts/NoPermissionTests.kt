@@ -122,7 +122,7 @@ class NoPermissionTests {
 
         // Commit session
         val pendingIntent = PendingIntent.getBroadcast(context, 0, Intent(ACTION),
-                PendingIntent.FLAG_UPDATE_CURRENT)
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         session.commit(pendingIntent.intentSender)
     }
 

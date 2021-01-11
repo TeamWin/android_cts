@@ -16,8 +16,6 @@
 
 package com.android.eventlib;
 
-import android.util.Log;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.BlockingDeque;
@@ -83,7 +81,6 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
                 Duration remainingTimeout = Duration.between(Instant.now(), endTime);
                 event = mEvents.pollFirst(remainingTimeout.toMillis(), TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                Log.e("LocalInternalEventQuerier", "Interrupted waiting for event", e);
                 return null;
             }
 

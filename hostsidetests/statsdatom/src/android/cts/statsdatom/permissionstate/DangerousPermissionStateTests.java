@@ -31,7 +31,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PermissionStateTests extends DeviceTestCase implements IBuildReceiver {
+public class DangerousPermissionStateTests extends DeviceTestCase implements IBuildReceiver {
     private static final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED = 1 << 8;
 
     private IBuildInfo mCtsBuild;
@@ -62,6 +62,8 @@ public class PermissionStateTests extends DeviceTestCase implements IBuildReceiv
     public void testDangerousPermissionState() throws Exception {
 
         final int FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED = 1 << 9;
+        final int PROTECTION_FLAG_DANGEROUS = 1;
+        final int PROTECTION_FLAG_INSTANT = 0x1000;
 
         // Set up what to collect
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
@@ -91,6 +93,9 @@ public class PermissionStateTests extends DeviceTestCase implements IBuildReceiv
                             FLAG_PERMISSION_USER_SENSITIVE_WHEN_DENIED
                                     | FLAG_PERMISSION_USER_SENSITIVE_WHEN_GRANTED))
                             .isEqualTo(0);
+                    assertThat(permissionState.getProtectionFlags()).isEqualTo(
+                            PROTECTION_FLAG_DANGEROUS | PROTECTION_FLAG_INSTANT
+                    );
 
                     verifiedKnowPermissionState = true;
                 }
@@ -162,6 +167,8 @@ public class PermissionStateTests extends DeviceTestCase implements IBuildReceiv
             assertThat(permissionState.getIsGranted()).isEqualTo(referenceState.getIsGranted());
             assertThat(permissionState.getPermissionName()).isEqualTo(
                     referenceState.getPermissionName());
+            assertThat(permissionState.getProtectionFlags()).isEqualTo(
+                    referenceState.getProtectionFlags());
 
             fullIndex++;
         }
