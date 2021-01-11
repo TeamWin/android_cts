@@ -32,9 +32,9 @@ import static org.junit.Assume.assumeFalse;
 
 import static java.util.stream.Collectors.toList;
 
+import android.app.NotificationManager;
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
-import android.compat.Compatibility;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -43,10 +43,8 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.ConditionVariable;
-import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.provider.Settings;
-import android.util.ArraySet;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -67,8 +65,6 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.TestUtils;
-import com.android.internal.compat.CompatibilityChangeConfig;
-import com.android.internal.compat.IPlatformCompat;
 
 import junit.framework.Assert;
 
@@ -80,7 +76,6 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -104,7 +99,6 @@ public class ToastTest {
     private static final ComponentName COMPONENT_TRANSLUCENT_ACTIVITY =
             ComponentName.unflattenFromString("android.widget.cts.app/.TranslucentActivity");
     private static final double TOAST_DURATION_ERROR_TOLERANCE_FRACTION = 0.25;
-    private static final long RATE_LIMIT_TOASTS_CHANGE_ID = 154198299L;
 
     // The following two fields work together to define rate limits for toasts, where each limit is
     // defined as TOAST_RATE_LIMITS[i] toasts are allowed in the window of length
@@ -118,7 +112,7 @@ public class ToastTest {
     private ViewTreeObserver.OnGlobalLayoutListener mLayoutListener;
     private ConditionVariable mToastShown;
     private ConditionVariable mToastHidden;
-    private IPlatformCompat mPlatformCompat;
+    private NotificationManager mNotificationManager;
 
     @Rule
     public ActivityTestRule<CtsActivity> mActivityRule =
@@ -130,16 +124,19 @@ public class ToastTest {
         mContext = getInstrumentation().getContext();
         mUiAutomation = getInstrumentation().getUiAutomation();
         mLayoutListener = () -> mLayoutDone = true;
-        mPlatformCompat = IPlatformCompat.Stub.asInterface(
-                ServiceManager.getService(Context.PLATFORM_COMPAT_SERVICE));
-        setToastRateLimitingEnabled(false);
+        mNotificationManager =
+                mContext.getSystemService(NotificationManager.class);
+        // disable rate limiting for tests
+        SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
+                .setToastRateLimitingEnabled(false));
     }
 
     @After
     public void teardown() {
         waitForToastToExpire();
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                mPlatformCompat.clearOverridesForTest(mContext.getPackageName()));
+        // re-enable rate limiting
+        SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
+                .setToastRateLimitingEnabled(true));
     }
 
     @UiThreadTest
@@ -256,23 +253,6 @@ public class ToastTest {
         if (view != null && view.getParent() != null) {
             PollingCheck.waitFor(TIME_OUT, () -> view.getParent() == null);
         }
-    }
-
-    /** Enable or disable the compat change for rate limiting toasts. */
-    private void setToastRateLimitingEnabled(boolean enable) {
-        Set<Long> enabled = new ArraySet<>();
-        Set<Long> disabled = new ArraySet<>();
-        if (enable) {
-            enabled.add(RATE_LIMIT_TOASTS_CHANGE_ID);
-        } else {
-            disabled.add(RATE_LIMIT_TOASTS_CHANGE_ID);
-        }
-
-        CompatibilityChangeConfig overrides =
-                new CompatibilityChangeConfig(
-                        new Compatibility.ChangeConfig(enabled, disabled));
-        SystemUtil.runWithShellPermissionIdentity(() ->
-                mPlatformCompat.setOverridesForTest(overrides, mContext.getPackageName()));
     }
 
     @Test
@@ -952,7 +932,9 @@ public class ToastTest {
 
     @Test
     public void testRateLimitingToasts() throws Throwable {
-        setToastRateLimitingEnabled(true);
+        // enable rate limiting to test it
+        SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
+                .setToastRateLimitingEnabled(true));
 
         long totalTimeSpentMs = 0;
         int shownToastsNum = 0;
