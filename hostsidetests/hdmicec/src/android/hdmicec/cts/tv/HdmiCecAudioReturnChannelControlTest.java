@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts.tv;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
@@ -46,6 +48,22 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
                     .around(CecRules.requiresLeanback(this))
                     .around(CecRules.requiresDeviceType(this, TV_DEVICE))
                     .around(hdmiCecClient);
+
+    /**
+     * Test 11.1.17-1
+     *
+     * <p>Tests that the DUT sends a directly addressed {@code <Request ARC Initiation>} message.
+     */
+    @Ignore("b/187168483")
+    @Test
+    public void cect_11_1_17_1_DutSendsRequestArcInitiation() throws Exception {
+        // Ensure that ARC is off.
+        changeArcState(false);
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.AUDIO_SYSTEM);
+        assertWithMessage("DUT does not send a <Request ARC Initiation> message.")
+                .that(changeArcState(true))
+                .isTrue();
+    }
 
     /**
      * Test 11.1.17-2
@@ -116,6 +134,26 @@ public final class HdmiCecAudioReturnChannelControlTest extends BaseHdmiCecCtsTe
         } finally {
             /* Restore physical address */
             hdmiCecClient.setPhysicalAddress(originalPhyAdd);
+        }
+    }
+
+    /**
+     * This method will turn on/off the ARC and ensure that it is processed successfully.
+     *
+     * @param enabled boolean value. Value true to turn ARC on.
+     * @return {@code true} if ARC process was successful.
+     */
+    private boolean changeArcState(boolean enabled) throws Exception {
+        getDevice().executeShellCommand("cmd hdmi_control setarc " + (enabled ? "on" : "off"));
+        try {
+            hdmiCecClient.checkExpectedOutput(
+                    LogicalAddress.AUDIO_SYSTEM,
+                    enabled
+                            ? CecOperand.REQUEST_ARC_INITIATION
+                            : CecOperand.REQUEST_ARC_TERMINATION);
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 }
