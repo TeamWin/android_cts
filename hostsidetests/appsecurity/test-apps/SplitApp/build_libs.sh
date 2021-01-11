@@ -22,7 +22,8 @@ NDK_BUILD="$HOME/Android/android-ndk-r16b/ndk-build"
 function generateCopyRightComment {
   local year=$1
 
-  copyrightInMk=$(cat <<COPYRIGHT_COMMENT
+  copyrightInMk=$(
+    cat <<COPYRIGHT_COMMENT
 # Copyright (C) ${year} The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,27 +42,27 @@ function generateCopyRightComment {
 # DO NOT MODIFY THIS FILE.
 
 COPYRIGHT_COMMENT
-)
+  )
   echo "${copyrightInMk}"
 }
 
 function generateLibsAndroidMk {
   local targetFile=$1
   local copyrightInMk=$(generateCopyRightComment "2015")
-(
-cat <<LIBS_ANDROID_MK
+  (
+    cat <<LIBS_ANDROID_MK
 ${copyrightInMk}
 include \$(call all-subdir-makefiles)
 LIBS_ANDROID_MK
-) > "${targetFile}"
+  ) >"${targetFile}"
 
 }
 
 function generateAndroidManifest {
   local targetFile=$1
   local arch=$2
-(
-cat <<ANDROIDMANIFEST
+  (
+    cat <<ANDROIDMANIFEST
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Automatically generated file from build_libs.sh. -->
 <!-- DO NOT MODIFY THIS FILE. -->
@@ -71,36 +72,58 @@ cat <<ANDROIDMANIFEST
     <application android:hasCode="false" />
 </manifest>
 ANDROIDMANIFEST
-) > "${targetFile}"
+  ) >"${targetFile}"
 
 }
 
-function generateAndroidMk {
-  local targetFile="$1"
-  local arch="$2"
-  local copyrightInMk=$(generateCopyRightComment "2014")
-(
-cat <<LIBS_ARCH_ANDROID_MK
-#
-${copyrightInMk}
-LOCAL_PATH := \$(call my-dir)
+function generateModuleForContentPartialMk {
+  local arch="$1"
+  local packagePartialName=""
+  local rawDir="raw"
+  local aaptRevisionFlags=""
+  if [[ -n "$2" ]]; then
+    packagePartialName="_revision${2}"
+    rawDir="raw_revision"
+    aaptRevisionFlags=" --revision-code ${2}"
+  fi
+
+  localPackage=$(
+    cat <<MODULE_CONTENT_FOR_PARTIAL_MK
 
 include \$(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsSplitApp_${arch}
+LOCAL_PACKAGE_NAME := CtsSplitApp${packagePartialName}_${arch}
 LOCAL_SDK_VERSION := current
 
-LOCAL_JAVA_RESOURCE_DIRS := raw
+LOCAL_JAVA_RESOURCE_DIRS := ${rawDir}
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
-LOCAL_AAPT_FLAGS := --version-code 100 --replace-version
+LOCAL_AAPT_FLAGS := --version-code 100 --replace-version${aaptRevisionFlags}
 
 include \$(BUILD_CTS_SUPPORT_PACKAGE)
+MODULE_CONTENT_FOR_PARTIAL_MK
+  )
+  echo "${localPackage}"
+}
+
+function generateAndroidMk() {
+  local targetFile="$1"
+  local arch="$2"
+  local copyrightInMk=$(generateCopyRightComment "2014")
+  local baseSplitMkModule=$(generateModuleForContentPartialMk "${arch}")
+  local revisionSplitMkModule=$(generateModuleForContentPartialMk "${arch}" 12)
+  (
+    cat <<LIBS_ARCH_ANDROID_MK
+#
+${copyrightInMk}
+LOCAL_PATH := \$(call my-dir)
+${baseSplitMkModule}
+${revisionSplitMkModule}
 LIBS_ARCH_ANDROID_MK
-) > "${targetFile}"
+  ) >"${targetFile}"
 }
 
 # Go build everything
@@ -110,16 +133,20 @@ $NDK_BUILD clean
 $NDK_BUILD
 cd ../
 
-for arch in `ls libs/`;
-do
-    (
+for arch in $(ls libs/); do
+  (
     mkdir -p tmp/$arch/raw/lib/$arch/
     mv libs/$arch/* tmp/$arch/raw/lib/$arch/
+
+    # The library file name in the new revision apk should have the same file name with base apk.
+    mkdir -p tmp/$arch/raw_revision/lib/$arch/
+    mv tmp/$arch/raw/lib/$arch/libsplitappjni_revision.so \
+      tmp/$arch/raw_revision/lib/$arch/libsplitappjni.so
 
     generateAndroidManifest "tmp/$arch/AndroidManifest.xml" "${arch//[^a-zA-Z0-9_]/_}"
 
     generateAndroidMk "tmp/$arch/Android.mk" "$arch"
-    )
+  )
 done
 
 generateLibsAndroidMk "tmp/Android.mk"
