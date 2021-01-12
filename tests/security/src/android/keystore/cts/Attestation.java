@@ -66,6 +66,11 @@ public class Attestation {
      *                                     attestation extension.
      */
     public Attestation(X509Certificate x509Cert) throws CertificateParsingException {
+        this(x509Cert, true);
+    }
+
+    public Attestation(X509Certificate x509Cert, boolean strictParsing)
+            throws CertificateParsingException {
         ASN1Sequence seq = getAttestationSequence(x509Cert);
         unexpectedExtensionOids = retrieveUnexpectedExtensionOids(x509Cert);
 
@@ -79,8 +84,18 @@ public class Attestation {
 
         uniqueId = Asn1Utils.getByteArrayFromAsn1(seq.getObjectAt(Attestation.UNIQUE_ID_INDEX));
 
-        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX));
-        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX));
+        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX), strictParsing);
+        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX), strictParsing);
+    }
+
+    public static Attestation loadFromCertificate(X509Certificate x509Cert)
+            throws CertificateParsingException {
+        return new Attestation(x509Cert);
+    }
+
+    public static Attestation loadFromCertificate(X509Certificate x509Cert, boolean strictParsing)
+            throws CertificateParsingException {
+        return new Attestation(x509Cert, strictParsing);
     }
 
     public static String securityLevelToString(int attestationSecurityLevel) {
