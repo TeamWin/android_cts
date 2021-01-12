@@ -1850,7 +1850,7 @@ public class ImsServiceTest {
             return;
         }
 
-        triggerFrameworkConnectToCarrierImsServiceBindMmtelRcsFeature();
+        triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
 
         final int errorCode = 403;
         final String errorString = "Forbidden";
@@ -1935,7 +1935,7 @@ public class ImsServiceTest {
             return;
         }
 
-        triggerFrameworkConnectToCarrierImsServiceBindMmtelRcsFeature();
+        triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
 
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         LinkedBlockingQueue<Integer> clientQueue = new LinkedBlockingQueue<>();
@@ -1997,7 +1997,7 @@ public class ImsServiceTest {
             return;
         }
 
-        triggerFrameworkConnectToCarrierImsServiceBindMmtelRcsFeature();
+        triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
 
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         LinkedBlockingQueue<Integer> clientQueue = new LinkedBlockingQueue<>();
@@ -2034,7 +2034,7 @@ public class ImsServiceTest {
         }
         RcsClientConfiguration rcc = new RcsClientConfiguration(
                 "1.0", "UP_1.0", "Android", "RCSAndrd-1.0");
-        triggerFrameworkConnectToCarrierImsServiceBindMmtelRcsFeature();
+        triggerFrameworkConnectToLocalImsServiceBindRcsFeature();
 
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         LinkedBlockingQueue<Integer> actionQueue = new LinkedBlockingQueue<>();
@@ -2174,33 +2174,6 @@ public class ImsServiceTest {
                 .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
         assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
                 sServiceConnector.getCarrierService().getMmTelFeature());
-        int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
-        assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
-                        + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
-                sTestSlot, serviceSlot);
-    }
-
-    private void triggerFrameworkConnectToCarrierImsServiceBindMmtelRcsFeature() throws Exception {
-        // Connect to the ImsService with the MmTel feature.
-        assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
-                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
-                .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
-                .build()));
-        // The MmTelFeature is created when the ImsService is bound. If it wasn't created, then the
-        // Framework did not call it.
-        assertTrue("Did not receive createMmTelFeature", sServiceConnector.getCarrierService()
-                .waitForLatchCountdown(TestImsService.LATCH_CREATE_MMTEL));
-        assertTrue("Did not receive MmTelFeature#onReady", sServiceConnector.getCarrierService()
-                .waitForLatchCountdown(TestImsService.LATCH_MMTEL_READY));
-        assertNotNull("ImsService created, but ImsService#createMmTelFeature was not called!",
-                sServiceConnector.getCarrierService().getMmTelFeature());
-        // The RcsFeature is created when the ImsService is bound. If it wasn't created, then the
-        // Framework did not call it.
-        assertTrue("Did not receive createRcsFeature", sServiceConnector.getCarrierService()
-                .waitForLatchCountdown(TestImsService.LATCH_CREATE_RCS));
-        // Make sure the RcsFeature was created in the test service.
-        assertNotNull("Device ImsService created, but TestDeviceImsService#createRcsFeature was not"
-                + "called!", sServiceConnector.getCarrierService().getRcsFeature());
         int serviceSlot = sServiceConnector.getCarrierService().getMmTelFeature().getSlotIndex();
         assertEquals("The slot specified for the test (" + sTestSlot + ") does not match the "
                         + "assigned slot (" + serviceSlot + "+ for the associated MmTelFeature",
