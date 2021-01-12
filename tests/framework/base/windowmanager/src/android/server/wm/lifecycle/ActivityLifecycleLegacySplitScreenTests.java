@@ -62,7 +62,7 @@ import java.util.List;
 @MediumTest
 @Presubmit
 @android.server.wm.annotation.Group3
-public class ActivityLifecycleSplitScreenTests extends ActivityLifecycleClientTestBase {
+public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleClientTestBase {
 
     @Before
     public void setUp() throws Exception {
