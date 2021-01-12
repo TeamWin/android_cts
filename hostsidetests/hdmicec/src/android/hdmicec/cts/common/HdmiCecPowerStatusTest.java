@@ -69,12 +69,21 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
         // Move device to standby
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
 
         // Turn device on
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
 
         String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_POWER_STATUS);
+
+        if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_STANDBY) {
+            // Received the "turning off" broadcast, check for the next broadcast message
+            reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                    CecOperand.REPORT_POWER_STATUS);
+        }
+
         assertThat(CecMessage.getParams(reportPowerStatus)).isEqualTo(
                 HdmiCecConstants.CEC_POWER_STATUS_ON);
     }
@@ -92,12 +101,21 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
 
         // Turn device on
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
 
         // Move device to standby
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        TimeUnit.SECONDS.sleep(WAIT_TIME);
 
         String reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
                 CecOperand.REPORT_POWER_STATUS);
+
+        if (CecMessage.getParams(reportPowerStatus) == HdmiCecConstants.CEC_POWER_STATUS_ON) {
+            // Received the "wake up" broadcast, check for the next broadcast message
+            reportPowerStatus = hdmiCecClient.checkExpectedOutput(LogicalAddress.BROADCAST,
+                    CecOperand.REPORT_POWER_STATUS);
+        }
+
         assertThat(CecMessage.getParams(reportPowerStatus)).isEqualTo(
                 HdmiCecConstants.CEC_POWER_STATUS_STANDBY);
     }
