@@ -21,6 +21,7 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSea
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.annotation.NonNull;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
@@ -37,10 +38,8 @@ import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
-import com.android.server.appsearch.testing.GlobalSearchSessionShimImpl;
-
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,7 +49,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class GlobalSearchSessionCtsTest {
+public abstract class GlobalSearchSessionCtsTestBase {
     private AppSearchSessionShim mDb1;
     private static final String DB_NAME_1 = AppSearchManager.DEFAULT_DATABASE_NAME;
     private AppSearchSessionShim mDb2;
@@ -58,29 +57,23 @@ public class GlobalSearchSessionCtsTest {
 
     private GlobalSearchSessionShim mGlobalAppSearchManager;
 
+    protected abstract ListenableFuture<AppSearchSessionShim> createSearchSession(
+            @NonNull String dbName);
+
+    protected abstract ListenableFuture<GlobalSearchSessionShim> createGlobalSearchSession();
+
     @Before
     public void setUp() throws Exception {
         Context context = ApplicationProvider.getApplicationContext();
 
-        mDb1 =
-                AppSearchSessionShimImpl.createSearchSession(
-                                new AppSearchManager.SearchContext.Builder()
-                                        .setDatabaseName(DB_NAME_1)
-                                        .build())
-                        .get();
-        mDb2 =
-                AppSearchSessionShimImpl.createSearchSession(
-                                new AppSearchManager.SearchContext.Builder()
-                                        .setDatabaseName(DB_NAME_2)
-                                        .build())
-                        .get();
+        mDb1 = createSearchSession(DB_NAME_1).get();
+        mDb2 = createSearchSession(DB_NAME_2).get();
 
         // Cleanup whatever documents may still exist in these databases. This is needed in
         // addition to tearDown in case a test exited without completing properly.
         cleanup();
 
-        mGlobalAppSearchManager =
-                GlobalSearchSessionShimImpl.createGlobalSearchSession().get();
+        mGlobalAppSearchManager = createGlobalSearchSession().get();
     }
 
     @After
