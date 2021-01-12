@@ -486,6 +486,9 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
                         .setToSide(true)
                         .setTargetActivity(VIRTUAL_DISPLAY_ACTIVITY)
                         .execute();
+                final int secondaryTaskId =
+                        mWmState.getTaskByActivity(VIRTUAL_DISPLAY_ACTIVITY).mTaskId;
+                mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId);
             } else {
                 launchActivity(VIRTUAL_DISPLAY_ACTIVITY);
             }
