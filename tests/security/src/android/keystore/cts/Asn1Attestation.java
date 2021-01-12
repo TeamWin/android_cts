@@ -40,7 +40,13 @@ public class Asn1Attestation extends Attestation {
      * @throws CertificateParsingException if the certificate does not contain a properly-formatted
      *     attestation extension.
      */
+
     public Asn1Attestation(X509Certificate x509Cert) throws CertificateParsingException {
+        this(x509Cert, true);
+    }
+
+    public Asn1Attestation(X509Certificate x509Cert, boolean strictParsing)
+            throws CertificateParsingException {
         super(x509Cert);
         ASN1Sequence seq = getAttestationSequence(x509Cert);
 
@@ -57,8 +63,8 @@ public class Asn1Attestation extends Attestation {
 
         uniqueId = Asn1Utils.getByteArrayFromAsn1(seq.getObjectAt(UNIQUE_ID_INDEX));
 
-        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX));
-        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX));
+        softwareEnforced = new AuthorizationList(seq.getObjectAt(SW_ENFORCED_INDEX), strictParsing);
+        teeEnforced = new AuthorizationList(seq.getObjectAt(TEE_ENFORCED_INDEX), strictParsing);
     }
 
     ASN1Sequence getAttestationSequence(X509Certificate x509Cert)
