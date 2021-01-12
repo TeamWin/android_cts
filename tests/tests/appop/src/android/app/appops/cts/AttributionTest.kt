@@ -108,14 +108,14 @@ class AttributionTest {
 
     @Test(expected = SecurityException::class)
     fun cannotUseUndeclaredAttributionTag() {
-        noteForAttribution("invalid attribution tag")
+        withEnabledCompatChange(SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE, APP_PKG) {
+            noteForAttribution("invalid attribution tag")
+        }
     }
 
     @Test
     fun canUseUndeclaredAttributionTagIfChangeForBlameeIsDisabled() {
-        withDisabledCompatChange(SECURITY_EXCEPTION_ON_INVALID_ATTRIBUTION_TAG_CHANGE, APP_PKG) {
-            noteForAttribution("invalid attribution tag")
-        }
+        noteForAttribution("invalid attribution tag")
     }
 
     @Test(expected = AssertionError::class)
