@@ -20,6 +20,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
+
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class BasicAdminReceiver extends DeviceAdminReceiver {
@@ -37,6 +38,15 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     public static ComponentName getComponentName(Context context) {
         return new ComponentName(context, BasicAdminReceiver.class);
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (intent.getAction().equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
+            DevicePolicyManagerWrapper.onReceive(this, context, intent);
+            return;
+        }
+        super.onReceive(context, intent);
     }
 
     @Override

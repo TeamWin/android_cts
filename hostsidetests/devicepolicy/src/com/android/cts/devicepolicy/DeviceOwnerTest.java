@@ -109,14 +109,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
-            installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
-            mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
+            installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
+            mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
                     /*expectFailure*/ false);
 
             if (!mDeviceOwnerSet) {
-                removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
+                removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId);
                 getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-                fail("Failed to set device owner for user " + mPrimaryUserId);
+                fail("Failed to set device owner for user " + mDeviceOwnerUserId);
             }
 
             // Enable the notification listener
@@ -130,8 +130,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     public void tearDown() throws Exception {
         if (mHasFeature) {
             if (mDeviceOwnerSet) {
-                assertTrue("Failed to remove device owner for user " + mPrimaryUserId,
-                        removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId));
+                assertTrue("Failed to remove device owner for user " + mDeviceOwnerUserId,
+                        removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId));
             }
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
