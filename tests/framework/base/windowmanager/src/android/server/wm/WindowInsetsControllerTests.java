@@ -25,8 +25,7 @@ import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
-import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_SWIPE;
-import static android.view.WindowInsetsController.BEHAVIOR_SHOW_BARS_BY_TOUCH;
+import static android.view.WindowInsetsController.BEHAVIOR_DEFAULT;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
@@ -66,7 +65,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
@@ -217,26 +215,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
-    @FlakyTest(detail = "~1% flaky")
-    public void testSetSystemBarsBehavior_showBarsByTouch() throws InterruptedException {
-        final TestActivity activity = startActivity(TestActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-
-        // The show-by-touch behavior will only be applied while navigation bars get hidden.
-        final int types = navigationBars();
-        assumeTrue(rootView.getRootWindowInsets().isVisible(types));
-
-        rootView.getWindowInsetsController().setSystemBarsBehavior(BEHAVIOR_SHOW_BARS_BY_TOUCH);
-
-        hideInsets(rootView, types);
-
-        // Touching on display can show bars.
-        tapOnDisplay(rootView.getWidth() / 2f, rootView.getHeight() / 2f);
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
-    }
-
-    @Test
-    public void testSetSystemBarsBehavior_showBarsBySwipe() throws InterruptedException {
+    public void testSetSystemBarsBehavior_default() throws InterruptedException {
         final TestActivity activity = startActivity(TestActivity.class);
         final View rootView = activity.getWindow().getDecorView();
 
@@ -244,7 +223,7 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final int types = statusBars();
         assumeTrue(rootView.getRootWindowInsets().isVisible(types));
 
-        rootView.getWindowInsetsController().setSystemBarsBehavior(BEHAVIOR_SHOW_BARS_BY_SWIPE);
+        rootView.getWindowInsetsController().setSystemBarsBehavior(BEHAVIOR_DEFAULT);
 
         hideInsets(rootView, types);
 
@@ -345,46 +324,6 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         PollingCheck.waitFor(TIMEOUT, () -> targetSysUiVis[0] == sysUiFlag);
         getInstrumentation().runOnMainSync(() -> controlTarget.setSystemUiVisibility(0));
         PollingCheck.waitFor(TIMEOUT, () -> targetSysUiVis[0] == 0);
-    }
-
-    @Test
-    public void testSetSystemUiVisibilityAfterCleared_showBarsByTouch() throws Exception {
-        final TestActivity activity = startActivity(TestActivity.class);
-        final View rootView = activity.getWindow().getDecorView();
-
-        // The show-by-touch behavior will only be applied while navigation bars get hidden.
-        final int types = navigationBars();
-        assumeTrue(rootView.getRootWindowInsets().isVisible(types));
-
-        // If we don't have any of the immersive flags, the default behavior will be show-bars-by-
-        // touch.
-        final int targetFlag = SYSTEM_UI_FLAG_HIDE_NAVIGATION;
-
-        // Use flags to hide navigation bar.
-        ANIMATION_CALLBACK.reset();
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
-            rootView.setSystemUiVisibility(targetFlag);
-        });
-        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
-        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
-
-        // Touching on display can show bars.
-        tapOnDisplay(rootView.getWidth() / 2f, rootView.getHeight() / 2f);
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
-
-        // Use flags to hide navigation bar again.
-        ANIMATION_CALLBACK.reset();
-        getInstrumentation().runOnMainSync(() -> {
-            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
-            rootView.setSystemUiVisibility(targetFlag);
-        });
-        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
-        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
-
-        // Touching on display can show bars.
-        tapOnDisplay(rootView.getWidth() / 2f, rootView.getHeight() / 2f);
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
     }
 
     @Test
