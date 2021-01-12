@@ -52,7 +52,7 @@
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 
-    <style name="Theme_NoSwipeDismiss">
+    <style name="Theme_NoSwipeDismiss" parent="android:Theme">
         <item name="android:windowSwipeToDismiss">false</item>
     </style>
 </resources>
