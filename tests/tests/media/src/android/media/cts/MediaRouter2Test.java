@@ -82,6 +82,7 @@ public class MediaRouter2Test {
     private MediaRouter2 mRouter2;
     private Executor mExecutor;
     private AudioManager mAudioManager;
+    private RouteCallback mRouterDummyCallback = new RouteCallback(){};
     private StubMediaRoute2ProviderService mService;
 
     private static final int TIMEOUT_MS = 5000;
@@ -102,6 +103,16 @@ public class MediaRouter2Test {
         mExecutor = Executors.newSingleThreadExecutor();
         mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
 
+        MediaRouter2TestActivity.startActivity(mContext);
+
+        // In order to make the system bind to the test service,
+        // set a non-empty discovery preference while app is in foreground.
+        List<String> features = new ArrayList<>();
+        features.add("A test feature");
+        RouteDiscoveryPreference preference =
+                new RouteDiscoveryPreference.Builder(features, false).build();
+        mRouter2.registerRouteCallback(mExecutor, mRouterDummyCallback, preference);
+
         new PollingCheck(TIMEOUT_MS) {
             @Override
             protected boolean check() {
@@ -120,6 +131,8 @@ public class MediaRouter2Test {
 
     @After
     public void tearDown() throws Exception {
+        mRouter2.unregisterRouteCallback(mRouterDummyCallback);
+        MediaRouter2TestActivity.finishActivity();
         if (mService != null) {
             mService.clear();
             mService = null;
