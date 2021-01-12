@@ -2100,6 +2100,27 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .collect(Collectors.toList());
     }
 
+    @Test
+    public void testEnrollmentSpecificIdCorrectCalculation() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testCorrectCalculationOfEsid", mUserId);
+    }
+
+    @Test
+    public void testEnrollmentSpecificIdEmptyAndMultipleSet() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testThrowsForEmptyOrganizationId", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testThrowsWhenTryingToReSetOrganizationId", mUserId);
+    }
+
+
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
