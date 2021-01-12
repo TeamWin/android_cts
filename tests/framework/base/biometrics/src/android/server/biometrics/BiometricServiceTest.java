@@ -17,8 +17,8 @@
 package android.server.biometrics;
 
 import static android.os.PowerManager.FULL_WAKE_LOCK;
-import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
 import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_ACTIVITY;
+import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
 import static android.server.biometrics.SensorStates.SensorState;
 import static android.server.biometrics.SensorStates.UserState;
 
@@ -59,6 +59,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.server.biometrics.nano.BiometricServiceStateProto;
+import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.After;
 import org.junit.Before;
@@ -238,6 +239,20 @@ public class BiometricServiceTest extends BiometricTestBase {
         for (SensorProperties prop : mSensorProperties) {
             assertTrue(state.mSensorStates.sensorStates.contains(prop.getSensorId()));
         }
+    }
+
+    @Test
+    public void testPackageManagerAndDumpsysMatch() throws Exception {
+        final BiometricServiceState state = getCurrentState();
+
+        final PackageManager pm = mContext.getPackageManager();
+
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT),
+                state.mSensorStates.containsModality(SensorStateProto.FINGERPRINT));
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FACE),
+                state.mSensorStates.containsModality(SensorStateProto.FACE));
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_IRIS),
+                state.mSensorStates.containsModality(SensorStateProto.IRIS));
     }
 
     private void enrollForSensor(@NonNull BiometricTestSession session, int sensorId)
