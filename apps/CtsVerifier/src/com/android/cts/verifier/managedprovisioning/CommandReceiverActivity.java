@@ -528,14 +528,14 @@ public class CommandReceiverActivity extends Activity {
         session.fsync(out);
         in.close();
         out.close();
-        session.commit(PendingIntent.getBroadcast(this, 0, new Intent(ACTION_INSTALL_COMPLETE), 0)
+        session.commit(PendingIntent.getBroadcast(this, 0, new Intent(ACTION_INSTALL_COMPLETE), PendingIntent.FLAG_MUTABLE_UNAUDITED)
                 .getIntentSender());
     }
 
     private void uninstallHelperPackage() {
         try {
             getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
-                    PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), 0)
+                    PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), PendingIntent.FLAG_MUTABLE_UNAUDITED)
                             .getIntentSender());
         } catch (IllegalArgumentException e) {
             // The package is not installed: that's fine

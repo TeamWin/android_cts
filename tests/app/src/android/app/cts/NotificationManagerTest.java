@@ -401,7 +401,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private PendingIntent getPendingIntent() {
         return PendingIntent.getActivity(
-                getContext(), 0, new Intent(getContext(), this.getClass()), 0);
+                getContext(), 0, new Intent(getContext(), this.getClass()), PendingIntent.FLAG_MUTABLE_UNAUDITED);
     }
 
     private boolean isGroupSummary(Notification n) {
@@ -517,7 +517,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         if (data == null) {
             data = new Notification.BubbleMetadata.Builder(pendingIntent,

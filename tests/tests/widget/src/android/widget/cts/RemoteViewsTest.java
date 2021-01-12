@@ -696,7 +696,7 @@ public class RemoteViewsTest {
         assertNull(newActivity);
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         mRemoteViews.setOnClickPendingIntent(R.id.remoteView_image, pendingIntent);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         mActivityRule.runOnUiThread(() -> view.performClick());

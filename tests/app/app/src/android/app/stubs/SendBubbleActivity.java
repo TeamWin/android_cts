@@ -61,7 +61,7 @@ public class SendBubbleActivity extends Activity {
     public void sendInvalidBubble(boolean autoExpand) {
         Context context = getApplicationContext();
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)
                 .setWhen(System.currentTimeMillis())
@@ -109,7 +109,7 @@ public class SendBubbleActivity extends Activity {
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.setAction(Intent.ACTION_MAIN);
         final PendingIntent pendingIntent =
-                PendingIntent.getActivity(context, 0, intent, 0);
+                PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         return new Notification.BubbleMetadata.Builder(pendingIntent,
                 Icon.createWithResource(context, R.drawable.black))

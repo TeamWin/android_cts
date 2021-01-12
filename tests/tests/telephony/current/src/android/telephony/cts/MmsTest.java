@@ -212,7 +212,7 @@ public class MmsTest {
                 .build();
         // Send
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, new Intent(ACTION_MMS_SENT), 0);
+                context, 0, new Intent(ACTION_MMS_SENT), PendingIntent.FLAG_MUTABLE_UNAUDITED);
         smsManager.sendMultimediaMessage(context,
                 contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent);
         assertTrue(mSentReceiver.waitForSuccess(SENT_TIMEOUT));
