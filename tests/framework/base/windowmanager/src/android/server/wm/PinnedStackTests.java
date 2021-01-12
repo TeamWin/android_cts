@@ -1074,42 +1074,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testPinnedStackWithDockedStack() throws Exception {
-        assumeTrue(supportsSplitScreenMultiWindow());
-
-        launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
-        waitForEnterPip(PIP_ACTIVITY);
-        launchActivitiesInLegacySplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
-                        .setRandomData(true)
-                        .setMultipleTask(false)
-        );
-        mWmState.assertVisibility(PIP_ACTIVITY, true);
-        mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mWmState.assertVisibility(TEST_ACTIVITY, true);
-
-        // Launch the activities again to take focus and make sure nothing is hidden
-        launchActivitiesInLegacySplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
-                        .setRandomData(true)
-                        .setMultipleTask(false)
-        );
-        mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-        mWmState.assertVisibility(TEST_ACTIVITY, true);
-
-        // Go to recents to make sure that fullscreen stack is invisible
-        // Some devices do not support recents or implement it differently (instead of using a
-        // separate stack id or as an activity), for those cases the visibility asserts will be
-        // ignored
-        if (pressAppSwitchButtonAndWaitForRecents()) {
-            mWmState.assertVisibility(LAUNCHING_ACTIVITY, true);
-            mWmState.assertVisibility(TEST_ACTIVITY, false);
-        }
-    }
-
-    @Test
     public void testLaunchTaskByComponentMatchMultipleTasks() throws Exception {
         // Launch a fullscreen activity which will launch a PiP activity in a new task with the same
         // affinity
