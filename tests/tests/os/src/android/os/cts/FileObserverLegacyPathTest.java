@@ -21,6 +21,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.FileObserver;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 import java.io.File;
@@ -61,6 +62,7 @@ public class FileObserverLegacyPathTest extends AndroidTestCase {
      * services (e.g., file indexing) that may access the newly created file,
      * generating spurious events that this test doesn't care of and filters
      * them out. */
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testCreateFile() throws Exception {
         String imageName = "image" + System.currentTimeMillis() + ".jpg";
 

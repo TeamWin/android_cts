@@ -63,9 +63,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Tests for {@link MusicRecognitionManager}.
  */
@@ -98,14 +95,10 @@ public class MusicRecognitionManagerTest {
 
     @After
     public void tearDown() {
-        try {
-            resetService();
-            mWatcher.awaitOnDestroy();
-        } finally {
-            mWatcher = null;
-            CtsMusicRecognitionService.clearWatcher();
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
-        }
+        resetService();
+        mWatcher = null;
+        CtsMusicRecognitionService.clearWatcher();
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     @Test
@@ -158,6 +151,23 @@ public class MusicRecognitionManagerTest {
 
         pipe[0].close();
         pipe[1].close();
+    }
+
+    /**
+     * Verifies the shell override is only allowed when the caller of the api is also the owner of
+     * the override service.
+     */
+    @Test
+    public void testDoesntBindToForeignService() {
+        setService(
+                "android.musicrecognition.cts2/android.musicrecognition.cts2"
+                        + ".OutsideOfPackageService");
+
+        invokeMusicRecognitionApi();
+
+        verify(mCallback, timeout(VERIFY_TIMEOUT_MS)).onRecognitionFailed(any(),
+                eq(MusicRecognitionManager.RECOGNITION_FAILED_SERVICE_UNAVAILABLE));
+        verify(mCallback, never()).onRecognitionSucceeded(any(), any(), any());
     }
 
     private RecognitionRequest invokeMusicRecognitionApi() {

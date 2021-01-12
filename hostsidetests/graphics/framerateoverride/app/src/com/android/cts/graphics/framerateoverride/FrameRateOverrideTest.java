@@ -22,6 +22,7 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.uiautomator.UiDevice;
+import android.sysprop.SurfaceFlingerProperties;
 import android.util.Log;
 import android.view.Display;
 import android.view.Window;
@@ -114,6 +115,9 @@ public final class FrameRateOverrideTest {
     // resolution (for example, a 120Hz mode when the device also supports a 60Hz mode).
     private List<Display.Mode> getModesToTest() {
         List<Display.Mode> modesToTest = new ArrayList<>();
+        if (!SurfaceFlingerProperties.enable_frame_rate_override().orElse(true)) {
+            return modesToTest;
+        }
         Display.Mode[] modes = mActivityRule.getActivity().getDisplay().getSupportedModes();
         for (Display.Mode mode : modes) {
             for (Display.Mode otherMode : modes) {

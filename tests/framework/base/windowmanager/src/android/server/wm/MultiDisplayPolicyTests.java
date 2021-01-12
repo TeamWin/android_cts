@@ -405,7 +405,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity into docked stack.
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
@@ -424,7 +424,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Setup split-screen.
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY));
         mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);

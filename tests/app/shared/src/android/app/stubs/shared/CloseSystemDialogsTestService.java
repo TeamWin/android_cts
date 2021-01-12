@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,25 @@
  * limitations under the License.
  */
 
-package android.app.stubs;
+package android.app.stubs.shared;
 
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
 
+import android.app.IActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.app.stubs.shared.ICloseSystemDialogsTestsService;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.ResultReceiver;
+import android.os.ServiceManager;
+import android.view.IWindowManager;
 
 /**
  * This is a bound service used in conjunction with CloseSystemDialogsTest.
@@ -41,12 +44,18 @@ public class CloseSystemDialogsTestService extends Service {
 
     private final ICloseSystemDialogsTestsService mBinder = new Binder();
     private NotificationManager mNotificationManager;
+    private IWindowManager mWindowManager;
+    private IActivityManager mActivityManager;
     private BroadcastReceiver mNotificationReceiver;
 
     @Override
     public void onCreate() {
         super.onCreate();
         mNotificationManager = getSystemService(NotificationManager.class);
+        mWindowManager = IWindowManager.Stub.asInterface(
+                ServiceManager.getService(Context.WINDOW_SERVICE));
+        mActivityManager = IActivityManager.Stub.asInterface(
+                ServiceManager.getService(Context.ACTIVITY_SERVICE));
     }
 
     @Override
@@ -89,6 +98,16 @@ public class CloseSystemDialogsTestService extends Service {
             CloseSystemDialogsTestService.this.notify(
                     notificationId,
                     PendingIntent.getBroadcast(mContext, 0, intent, FLAG_IMMUTABLE));
+        }
+
+        @Override
+        public void closeSystemDialogsViaWindowManager(String reason) throws RemoteException {
+            mWindowManager.closeSystemDialogs(reason);
+        }
+
+        @Override
+        public void closeSystemDialogsViaActivityManager(String reason) throws RemoteException {
+            mActivityManager.closeSystemDialogs(reason);
         }
     }
 

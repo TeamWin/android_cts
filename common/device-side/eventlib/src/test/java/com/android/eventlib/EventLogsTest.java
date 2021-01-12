@@ -773,6 +773,17 @@ public class EventLogsTest {
     }
 
     @Test
+    public void get_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG2);
+    }
+
+    @Test
     public void poll_obeysLambdaFilter() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -782,6 +793,18 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
+    public void poll_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()));
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
@@ -805,6 +828,18 @@ public class EventLogsTest {
     }
 
     @Test
+    public void next_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
     public void get_obeysMultipleLambdaFilters() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -818,6 +853,21 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.get();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+    }
+
+    @Test
+    public void get_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -850,6 +900,22 @@ public class EventLogsTest {
     }
 
     @Test
+    public void poll_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.poll();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
     public void next_obeysMultipleLambdaFilters() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -863,6 +929,22 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.next();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void next_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -993,7 +1075,6 @@ public class EventLogsTest {
                 (Runnable) this::logCustomEventOnTestApp, 1, TimeUnit.SECONDS);
     }
 
-    // TODO: Add support for lambda filtering across processes
     // TODO: Add a test that when using another package (or another user) - if the other process
     // gets killed, the log is persisted
 

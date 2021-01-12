@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.managedprofile;
+package com.android.cts.deviceandprofileowner;
 
 import static android.app.admin.DevicePolicyManager.PASSWORD_QUALITY_COMPLEX;
 
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /** Tests minimum password restriction APIs, including on parent profile instances. */
-public class PasswordMinimumRestrictionsTest extends BaseManagedProfileTest {
+public class PasswordMinimumRestrictionsTest extends BaseDeviceAdminTest {
 
     private static final int TEST_PASSWORD_LENGTH = 5;
     private static final int TEST_PASSWORD_LENGTH_LOW = 2;

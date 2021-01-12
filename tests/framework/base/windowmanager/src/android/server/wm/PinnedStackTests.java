@@ -1079,7 +1079,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         launchActivity(PIP_ACTIVITY, extraString(EXTRA_ENTER_PIP, "true"));
         waitForEnterPip(PIP_ACTIVITY);
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                         .setRandomData(true)
@@ -1090,7 +1090,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         mWmState.assertVisibility(TEST_ACTIVITY, true);
 
         // Launch the activities again to take focus and make sure nothing is hidden
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
                         .setRandomData(true)
