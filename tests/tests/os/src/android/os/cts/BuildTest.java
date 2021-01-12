@@ -207,17 +207,17 @@ public class BuildTest extends TestCase {
     }
 
     private static final Pattern BOARD_PATTERN =
-        Pattern.compile("^([0-9A-Za-z._-]+)$");
+        Pattern.compile("^([0-9A-Za-z_-]+)$");
     private static final Pattern BRAND_PATTERN =
-        Pattern.compile("^([0-9A-Za-z._-]+)$");
+        Pattern.compile("^([0-9A-Za-z_-]+)$");
     private static final Pattern DEVICE_PATTERN =
-        Pattern.compile("^([0-9A-Za-z._-]+)$");
+        Pattern.compile("^([0-9A-Za-z_-]+)$");
     private static final Pattern ID_PATTERN =
         Pattern.compile("^([0-9A-Za-z._-]+)$");
     private static final Pattern HARDWARE_PATTERN =
         Pattern.compile("^([0-9A-Za-z.,_-]+)$");
     private static final Pattern PRODUCT_PATTERN =
-        Pattern.compile("^([0-9A-Za-z._-]+)$");
+        Pattern.compile("^([0-9A-Za-z_-]+)$");
     private static final Pattern SERIAL_NUMBER_PATTERN =
         Pattern.compile("^([0-9A-Za-z]{6,20})$");
     private static final Pattern TAGS_PATTERN =
