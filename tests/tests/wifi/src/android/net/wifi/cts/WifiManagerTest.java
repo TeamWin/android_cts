@@ -53,6 +53,7 @@ import android.net.wifi.SoftApConfiguration;
 import android.net.wifi.SoftApInfo;
 import android.net.wifi.WifiClient;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.SubsystemRestartTrackingCallback;
@@ -180,6 +181,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final String TYPE_WIFI_CONFIG = "application/x-wifi-config";
     private static final String TEST_PSK_CAP = "[RSN-PSK-CCMP]";
     private static final String TEST_BSSID = "00:01:02:03:04:05";
+    public static final String TEST_DOM_SUBJECT_MATCH = "domSubjectMatch";
 
     private IntentFilter mIntentFilter;
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -3482,6 +3484,59 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             // Reset the previous unsafe channels if we overrode them.
             if (prevRestrictions != -1) {
                 mWifiManager.setCoexUnsafeChannels(prevUnsafeChannels, prevRestrictions);
+            }
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+
+    /**
+     * Verify that insecure WPA-Enterprise network configurations are rejected.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testInsecureEnterpriseConfigurationsRejected() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        WifiConfiguration wifiConfiguration = new WifiConfiguration();
+        wifiConfiguration.SSID = SSID1;
+        wifiConfiguration.setSecurityParams(WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE);
+        wifiConfiguration.enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TTLS);
+        int networkId = INVALID_NETWORK_ID;
+
+        // These below API's only work with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+
+            // Verify that an insecure network is rejected
+            assertEquals(INVALID_NETWORK_ID, mWifiManager.addNetwork(wifiConfiguration));
+
+            // Now configure it correctly with a Root CA cert and domain name
+            wifiConfiguration.enterpriseConfig.setCaCertificate(FakeKeys.CA_CERT0);
+            wifiConfiguration.enterpriseConfig.setAltSubjectMatch(TEST_DOM_SUBJECT_MATCH);
+
+            // Verify that the network is added
+            networkId = mWifiManager.addNetwork(wifiConfiguration);
+            assertNotEquals(INVALID_NETWORK_ID, networkId);
+
+            // Verify that the update API accepts configurations configured securely
+            wifiConfiguration.networkId = networkId;
+            assertEquals(networkId, mWifiManager.updateNetwork(wifiConfiguration));
+
+            // Now clear the security configuration
+            wifiConfiguration.enterpriseConfig.setCaCertificate(null);
+            wifiConfiguration.enterpriseConfig.setAltSubjectMatch(null);
+
+            // Verify that the update API rejects insecure configurations
+            assertEquals(INVALID_NETWORK_ID, mWifiManager.updateNetwork(wifiConfiguration));
+        } finally {
+            if (networkId != INVALID_NETWORK_ID) {
+                // Clean up the previously added network
+                mWifiManager.removeNetwork(networkId);
             }
             uiAutomation.dropShellPermissionIdentity();
         }
