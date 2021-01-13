@@ -77,6 +77,32 @@ public class DynamicSystemClientTest implements DynamicSystemClient.OnStatusChan
         }
     }
 
+    @Test
+    public void testDynamicSystemClient_withoutOnStatusChangedListener() {
+        DynamicSystemClient dSClient = new DynamicSystemClient(mInstrumentation.getTargetContext());
+        try {
+            dSClient.bind();
+        } catch (SecurityException e) {
+            fail();
+        }
+        Uri uri = Uri.parse("https://www.google.com/").buildUpon().build();
+        try {
+            dSClient.start(uri, 1024L << 10);
+        } catch (SecurityException e) {
+            fail();
+        }
+        try {
+            Thread.sleep(3 * 1000);
+        } catch (InterruptedException e) {
+            fail();
+        }
+        try {
+            dSClient.unbind();
+        } catch (SecurityException e) {
+            fail();
+        }
+    }
+
     @After
     public void tearDown() {
         mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
