@@ -103,16 +103,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
             "usb_mass_storage_enabled";
 
+    private boolean mDeviceOwnerSet;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
             installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
-            if (!setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
-                    /*expectFailure*/ false)) {
+            mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
+                    /*expectFailure*/ false);
+
+            if (!mDeviceOwnerSet) {
                 removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
                 getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-                fail("Failed to set device owner");
+                fail("Failed to set device owner for user " + mPrimaryUserId);
             }
 
             // Enable the notification listener
@@ -125,8 +129,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
-            assertTrue("Failed to remove device owner.",
-                    removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId));
+            if (mDeviceOwnerSet) {
+                assertTrue("Failed to remove device owner for user " + mPrimaryUserId,
+                        removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId));
+            }
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
