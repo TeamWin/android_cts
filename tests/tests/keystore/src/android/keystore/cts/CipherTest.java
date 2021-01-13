@@ -437,6 +437,7 @@ public class CipherTest extends AndroidTestCase {
      */
     public void testEncryptsAndDecryptsInterrupted()
             throws Exception {
+
         Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
         assertNotNull(provider);
         final byte[] originalPlaintext = EmptyArray.BYTE;
@@ -546,8 +547,6 @@ public class CipherTest extends AndroidTestCase {
                         KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
                         false, isUnlockedDeviceRequired, isUserAuthRequired)) {
                     try {
-                        // Encrypt the data with the device locked
-                        dl.performDeviceLock();
                         Key encryptionKey = key.getKeystoreBackedEncryptionKey();
                         byte[] plaintext = truncatePlaintextIfNecessary(
                                algorithm, encryptionKey, originalPlaintext);
@@ -569,8 +568,9 @@ public class CipherTest extends AndroidTestCase {
                                    expectedPlaintext, modulusLengthBytes);
                         }
 
-                        // Then attempt to decrypt the data with the device still locked
-                        // This should fail.
+                        dl.performDeviceLock();
+
+                        // Attempt to decrypt the data with the device locked.
                         cipher = Cipher.getInstance(algorithm, provider);
                         assertFalse(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
 
