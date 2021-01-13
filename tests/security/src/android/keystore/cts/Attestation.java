@@ -58,7 +58,12 @@ public abstract class Attestation {
      *     attestation extension, if it contains multiple attestation extensions, or if the
      *     attestation extension can not be parsed.
      */
+
     public static Attestation loadFromCertificate(X509Certificate x509Cert)
+            throws CertificateParsingException {
+        return Attestation.loadFromCertificate(x509Cert, true);
+    }
+    public static Attestation loadFromCertificate(X509Certificate x509Cert, boolean strictParsing)
             throws CertificateParsingException {
         if (x509Cert.getExtensionValue(EAT_OID) == null
                 && x509Cert.getExtensionValue(ASN1_OID) == null) {
@@ -74,7 +79,7 @@ public abstract class Attestation {
                 throw new CertificateParsingException("Unable to parse EAT extension", cbe);
             }
         }
-        return new Asn1Attestation(x509Cert);
+        return new Asn1Attestation(x509Cert, strictParsing);
     }
 
     Attestation(X509Certificate x509Cert) {
