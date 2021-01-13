@@ -43,15 +43,21 @@ public class SensorStates {
 
     public static class SensorState {
         private final boolean mIsBusy;
+        private final int mModality;
         @NonNull private final SparseArray<UserState> mUserStates;
 
-        public SensorState(boolean isBusy, @NonNull SparseArray<UserState> userStates) {
+        public SensorState(boolean isBusy, int modality, @NonNull SparseArray<UserState> userStates) {
             this.mIsBusy = isBusy;
+            this.mModality = modality;
             this.mUserStates = userStates;
         }
 
         public boolean isBusy() {
             return mIsBusy;
+        }
+
+        public int getModality() {
+            return mModality;
         }
 
         @NonNull public SparseArray<UserState> getUserStates() {
@@ -77,7 +83,8 @@ public class SensorStates {
                 userStates.put(userStateProto.userId, new UserState(userStateProto.numEnrolled));
             }
 
-            final SensorState sensorState = new SensorState(sensorStateProto.isBusy, userStates);
+            final SensorState sensorState = new SensorState(sensorStateProto.isBusy,
+                    sensorStateProto.modality, userStates);
             sensorStates.put(sensorStateProto.sensorId, sensorState);
         }
 
@@ -113,6 +120,15 @@ public class SensorStates {
             }
         }
         return true;
+    }
+
+    public boolean containsModality(int modality) {
+        for (int i = 0; i < sensorStates.size(); i++) {
+            if (sensorStates.valueAt(i).getModality() == modality) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private SensorStates(@NonNull SparseArray<SensorState> sensorStates) {
