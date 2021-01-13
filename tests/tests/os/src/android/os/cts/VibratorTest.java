@@ -44,6 +44,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import java.util.concurrent.Executors;
 
@@ -60,6 +62,9 @@ public class VibratorTest {
                     InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                     android.Manifest.permission.ACCESS_VIBRATOR_STATE);
 
+    @Rule
+    public final MockitoRule mMockitoRule = MockitoJUnit.rule();
+
     private static final AudioAttributes AUDIO_ATTRIBUTES =
             new AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_MEDIA)
@@ -74,7 +79,6 @@ public class VibratorTest {
 
     @Before
     public void setUp() {
-        MockitoAnnotations.initMocks(this);
         mVibrator = InstrumentationRegistry.getInstrumentation().getContext().getSystemService(
                 Vibrator.class);
     }
@@ -165,6 +169,12 @@ public class VibratorTest {
 
         mVibrator.cancel();
         PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+    }
+
+    @Test
+    public void testGetId() {
+        // The system vibrator should not be mapped to any physical vibrator and use a default id.
+        assertEquals(-1, mVibrator.getId());
     }
 
     @Test
