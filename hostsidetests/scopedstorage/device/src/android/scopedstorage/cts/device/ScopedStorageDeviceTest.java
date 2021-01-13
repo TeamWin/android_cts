@@ -81,11 +81,16 @@ import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryVideoFile;
 import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestApp;
 import static android.scopedstorage.cts.lib.TestUtils.revokePermission;
+import static android.scopedstorage.cts.lib.TestUtils.setAppOpsModeForUid;
 import static android.scopedstorage.cts.lib.TestUtils.setAttrAs;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.updateDisplayNameWithMediaProvider;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPrivateDirViaRelativePath_denied;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalPrivateDirsViaRelativePath_denied;
 import static android.system.OsConstants.F_OK;
 import static android.system.OsConstants.O_APPEND;
 import static android.system.OsConstants.O_CREAT;
@@ -2461,6 +2466,42 @@ public class ScopedStorageDeviceTest {
         } finally {
             hiddenFile.delete();
             jpgFile.delete();
+        }
+    }
+
+    @Test
+    public void testInsertFromExternalDirsViaRelativePath() throws Exception {
+        verifyInsertFromExternalMediaDirViaRelativePath_allowed();
+        verifyInsertFromExternalPrivateDirViaRelativePath_denied();
+    }
+
+    @Test
+    public void testUpdateToExternalDirsViaRelativePath() throws Exception {
+        verifyUpdateToExternalMediaDirViaRelativePath_allowed();
+        verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
+    }
+
+    @Test
+    public void testInsertFromExternalDirsViaRelativePathAsSystemGallery() throws Exception {
+        int uid = Process.myUid();
+        try {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ALLOWED, SYSTEM_GALERY_APPOPS);
+            verifyInsertFromExternalMediaDirViaRelativePath_allowed();
+            verifyInsertFromExternalPrivateDirViaRelativePath_denied();
+        } finally {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ERRORED, SYSTEM_GALERY_APPOPS);
+        }
+    }
+
+    @Test
+    public void testUpdateToExternalDirsViaRelativePathAsSystemGallery() throws Exception {
+        int uid = Process.myUid();
+        try {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ALLOWED, SYSTEM_GALERY_APPOPS);
+            verifyUpdateToExternalMediaDirViaRelativePath_allowed();
+            verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
+        } finally {
+            setAppOpsModeForUid(uid, AppOpsManager.MODE_ERRORED, SYSTEM_GALERY_APPOPS);
         }
     }
 
