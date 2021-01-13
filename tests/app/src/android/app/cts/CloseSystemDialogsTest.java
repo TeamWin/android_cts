@@ -35,6 +35,7 @@ import android.app.stubs.shared.FakeView;
 import android.app.stubs.shared.ICloseSystemDialogsTestsService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -44,6 +45,7 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ResultReceiver;
+import android.provider.Settings;
 import android.view.Display;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
@@ -88,6 +90,7 @@ public class CloseSystemDialogsTest {
     private Instrumentation mInstrumentation;
     private FutureServiceConnection mConnection;
     private Context mContext;
+    private ContentResolver mResolver;
     private ICloseSystemDialogsTestsService mService;
     private volatile WindowManager mSawWindowManager;
     private volatile Context mSawContext;
@@ -98,18 +101,25 @@ public class CloseSystemDialogsTest {
     private Handler mMainHandler;
     private TestNotificationListener mNotificationListener;
     private NotificationHelper mNotificationHelper;
+    private String mPreviousHiddenApiPolicy;
 
 
     @Before
     public void setUp() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mContext = mInstrumentation.getTargetContext();
+        mResolver = mContext.getContentResolver();
         mMainHandler = new Handler(Looper.getMainLooper());
         toggleListenerAccess(mContext, true);
         mNotificationListener = TestNotificationListener.getInstance();
         mNotificationHelper = new NotificationHelper(mContext, () -> mNotificationListener);
         compat(APP_COMPAT_ENABLE, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
         setTargetCurrent();
+
+        // We need to test that a few hidden APIs are properly protected in the helper app. The
+        // helper app we're using doesn't have the checks disabled because it's not the target of
+        // instrumentation, see comment on APP_HELPER for details.
+        mPreviousHiddenApiPolicy = setHiddenApiPolicy("1");
 
         // Add a receiver that will verify if the intent was sent or not
         mIntentReceiver = new IntentReceiver();
@@ -135,6 +145,7 @@ public class CloseSystemDialogsTest {
         }
         mMainHandler.post(() -> mSawWindowManager.removeViewImmediate(mFakeView));
         mContext.unregisterReceiver(mIntentReceiver);
+        setHiddenApiPolicy(mPreviousHiddenApiPolicy);
         compat(APP_COMPAT_RESET, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
         compat(APP_COMPAT_RESET, ActivityManager.LOCK_DOWN_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
         compat(APP_COMPAT_RESET, "NOTIFICATION_TRAMPOLINE_BLOCK", APP_HELPER);
@@ -348,6 +359,15 @@ public class CloseSystemDialogsTest {
         intent.setComponent(ComponentName.createRelative(packageName, TEST_SERVICE));
         assertTrue(mContext.bindService(intent, mConnection, Context.BIND_AUTO_CREATE));
         return mConnection;
+    }
+
+    private String setHiddenApiPolicy(String policy) throws Exception {
+        return SystemUtil.callWithShellPermissionIdentity(() -> {
+            String previous = Settings.Global.getString(mResolver,
+                    Settings.Global.HIDDEN_API_POLICY);
+            Settings.Global.putString(mResolver, Settings.Global.HIDDEN_API_POLICY, policy);
+            return previous;
+        });
     }
 
     private static void compat(String command, String changeId, String packageName) {
