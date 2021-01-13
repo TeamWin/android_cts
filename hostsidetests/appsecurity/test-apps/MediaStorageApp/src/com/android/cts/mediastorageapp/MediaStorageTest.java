@@ -404,6 +404,52 @@ public class MediaStorageTest {
     }
 
     @Test
+    public void testMediaEscalation_RequestWriteFilePathSupport() throws Exception {
+        doMediaEscalation_RequestWrite_withFilePathSupport(
+                MediaStorageTest::createAudio);
+        doMediaEscalation_RequestWrite_withFilePathSupport(
+                MediaStorageTest::createVideo);
+        doMediaEscalation_RequestWrite_withFilePathSupport(
+                MediaStorageTest::createImage);
+        doMediaEscalation_RequestWrite_withFilePathSupport(
+                MediaStorageTest::createPlaylist);
+        doMediaEscalation_RequestWrite_withFilePathSupport(
+                MediaStorageTest::createSubtitle);
+    }
+
+    private void doMediaEscalation_RequestWrite_withFilePathSupport(
+            Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        assertNotNull(red);
+        String path = queryForSingleColumn(red, MediaColumns.DATA);
+        File file = new File(path);
+        assertTrue(file.exists());
+        assertTrue(file.canRead());
+        assertTrue(file.canWrite());
+
+        clearMediaOwner(red, mUserId);
+        assertFalse(file.canWrite());
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            fail("Expected write access to be blocked");
+        } catch (SecurityException expected) {
+        }
+
+        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)));
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+        }
+
+        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+        final UiDevice device = UiDevice.getInstance(inst);
+        device.executeShellCommand("setprop sys.filepathsupport.mediauri true");
+        assertTrue(file.canRead());
+        assertTrue(file.canWrite());
+        // TODO(b/173648980): Write to file and read back to verify.
+        device.executeShellCommand("setprop sys.filepathsupport.mediauri false");
+    }
+
+    @Test
     public void testMediaEscalation_RequestWrite() throws Exception {
         doMediaEscalation_RequestWrite(MediaStorageTest::createAudio);
         doMediaEscalation_RequestWrite(MediaStorageTest::createVideo);
