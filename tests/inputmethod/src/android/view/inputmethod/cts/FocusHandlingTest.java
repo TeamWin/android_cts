@@ -513,7 +513,6 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
     @AppModeFull(reason = "Instant apps cannot hold android.permission.SYSTEM_ALERT_WINDOW")
     @Test
-    @FlakyTest(bugId = 176926757)
     public void testMultiWindowFocusHandleOnDifferentUiThread() throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
         try (CloseOnce session = CloseOnce.of(new ServiceSession(instrumentation.getContext()));
