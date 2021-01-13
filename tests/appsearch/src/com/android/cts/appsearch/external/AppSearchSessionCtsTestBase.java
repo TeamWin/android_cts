@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.expectThrows;
 
+import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
@@ -44,8 +45,7 @@ import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
 
-import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
-
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
@@ -57,29 +57,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
-public class AppSearchSessionCtsTest {
+public abstract class AppSearchSessionCtsTestBase {
     private AppSearchSessionShim mDb1;
     private static final String DB_NAME_1 = AppSearchManager.DEFAULT_DATABASE_NAME;
     private AppSearchSessionShim mDb2;
     private static final String DB_NAME_2 = "testDb2";
 
+    protected abstract ListenableFuture<AppSearchSessionShim> createSearchSession(
+            @NonNull String dbName);
+
+    protected abstract ListenableFuture<AppSearchSessionShim> createSearchSession(
+            @NonNull String dbName, @NonNull ExecutorService executor);
+
     @Before
     public void setUp() throws Exception {
         Context context = ApplicationProvider.getApplicationContext();
 
-        mDb1 =
-                AppSearchSessionShimImpl.createSearchSession(
-                                new AppSearchManager.SearchContext.Builder()
-                                        .setDatabaseName(DB_NAME_1)
-                                        .build())
-                        .get();
-        mDb2 =
-                AppSearchSessionShimImpl.createSearchSession(
-                        new AppSearchManager.SearchContext.Builder()
-                                .setDatabaseName(DB_NAME_2)
-                                .build())
-                        .get();
+        mDb1 = createSearchSession(DB_NAME_1).get();
+        mDb2 = createSearchSession(DB_NAME_2).get();
 
         // Cleanup whatever documents may still exist in these databases. This is needed in
         // addition to tearDown in case a test exited without completing properly.
@@ -626,6 +623,47 @@ public class AppSearchSessionCtsTest {
         documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(1);
         assertThat(documents).containsExactly(expectedEmail);
+    }
+
+    @Test
+    public void testQuery_getPackageName() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index a document
+        AppSearchEmail inEmail =
+                new AppSearchEmail.Builder("uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+
+        // Query for the document
+        SearchResultsShim searchResults =
+                mDb1.query(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
+
+        List<SearchResult> results;
+        List<GenericDocument> documents = new ArrayList<>();
+        // keep loading next page until it's empty.
+        do {
+            results = searchResults.getNextPage().get();
+            for (SearchResult result : results) {
+                assertThat(result.getDocument()).isEqualTo(inEmail);
+                assertThat(result.getPackageName())
+                        .isEqualTo(ApplicationProvider.getApplicationContext().getPackageName());
+                documents.add(result.getDocument());
+            }
+        } while (results.size() > 0);
+        assertThat(documents).hasSize(1);
     }
 
     @Test
@@ -1374,22 +1412,21 @@ public class AppSearchSessionCtsTest {
                         .setSubject("testPut example")
                         .setBody("This is the body of the testPut email")
                         .build();
-        checkIsBatchResultSuccess(mDb1.putDocuments(
-                new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
 
         // close and re-open the appSearchSession
         mDb1.close();
-
-        mDb1 = AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder()
-                        .setDatabaseName(DB_NAME_1)
-                        .build())
-                .get();
+        mDb1 = createSearchSession(DB_NAME_1).get();
 
         // Query for the document
-        SearchResultsShim searchResults = mDb1.query("body", new SearchSpec.Builder()
-                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                .build());
+        SearchResultsShim searchResults =
+                mDb1.query(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .build());
         List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).containsExactly(inEmail);
     }
@@ -1400,37 +1437,37 @@ public class AppSearchSessionCtsTest {
         // Create a same-thread database by inject an executor which could help us maintain the
         // execution order of those async tasks.
         Context context = ApplicationProvider.getApplicationContext();
-        AppSearchSessionShim sameThreadDb = AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder()
-                        .setDatabaseName("sameThreadDb")
-                        .build(),
-                MoreExecutors.newDirectExecutorService())
-                .get();
+        AppSearchSessionShim sameThreadDb =
+                createSearchSession("sameThreadDb", MoreExecutors.newDirectExecutorService()).get();
 
         try {
             // Schema registration -- just mutate something
-            sameThreadDb.setSchema(
-                    new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()).get();
+            sameThreadDb
+                    .setSchema(
+                            new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                    .get();
 
             // Close the database. No further call will be allowed.
             sameThreadDb.close();
 
             // Try to query the closed database
             // We are using the same-thread db here to make sure it has been closed.
-            IllegalStateException e = expectThrows(IllegalStateException.class, () ->
-                    sameThreadDb.query("query", new SearchSpec.Builder()
-                            .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
-                            .build()));
+            IllegalStateException e =
+                    expectThrows(
+                            IllegalStateException.class,
+                            () ->
+                                    sameThreadDb.query(
+                                            "query",
+                                            new SearchSpec.Builder()
+                                                    .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                                    .build()));
             assertThat(e).hasMessageThat().contains("AppSearchSession has already been closed");
         } finally {
             // To clean the data that has been added in the test, need to re-open the session and
             // set an empty schema.
-            AppSearchSessionShim reopen = AppSearchSessionShimImpl.createSearchSession(
-                    new AppSearchManager.SearchContext.Builder()
-                            .setDatabaseName("sameThreadDb")
-                            .build(),
-                    MoreExecutors.newDirectExecutorService())
-                    .get();
+            AppSearchSessionShim reopen =
+                    createSearchSession("sameThreadDb", MoreExecutors.newDirectExecutorService())
+                            .get();
             reopen.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
         }
     }

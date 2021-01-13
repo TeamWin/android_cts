@@ -629,9 +629,9 @@ public class SmsManagerTest {
         mReceivedDataSms = false;
         sMessageId = 0L;
         mSentIntent = PendingIntent.getBroadcast(mContext, 0, mSendIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
         mDeliveredIntent = PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent,
-                PendingIntent.FLAG_ONE_SHOT);
+                PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
     }
 
     /**
@@ -647,8 +647,8 @@ public class SmsManagerTest {
             ArrayList<PendingIntent> sentIntents = new ArrayList<PendingIntent>();
             ArrayList<PendingIntent> deliveryIntents = new ArrayList<PendingIntent>();
             for (int i = 0; i < numPartsSent; i++) {
-                sentIntents.add(PendingIntent.getBroadcast(mContext, 0, mSendIntent, 0));
-                deliveryIntents.add(PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent, 0));
+                sentIntents.add(PendingIntent.getBroadcast(mContext, 0, mSendIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
+                deliveryIntents.add(PendingIntent.getBroadcast(mContext, 0, mDeliveryIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
             }
             sendMultiPartTextMessage(mDestAddr, parts, sentIntents, deliveryIntents, addMessageId);
         }

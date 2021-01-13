@@ -110,6 +110,12 @@ class CtsAngleCommon {
         return (angleSupported != null) && (angleSupported.equals("true"));
     }
 
+    static boolean isNativeDriverAngle(ITestDevice device) throws Exception {
+        String driverProp = device.getProperty("ro.hardware.egl");
+
+        return (driverProp != null) && (driverProp.equals("angle"));
+    }
+
     static void startActivity(ITestDevice device, String action) throws Exception {
         // Run the ANGLE activity so it'll clear up any 'default' settings.
         device.executeShellCommand("am start --user " + device.getCurrentUser() +

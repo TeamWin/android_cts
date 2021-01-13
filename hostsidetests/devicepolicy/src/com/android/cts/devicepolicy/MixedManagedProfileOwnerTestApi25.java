@@ -65,13 +65,4 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
     public void testPermissionGrantPreMApp() throws Exception {
         super.testPermissionGrantPreMApp();
     }
-
-    @Test
-    public void testPasswordMinimumRestrictions() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
-        executeDeviceTestClass(".PasswordMinimumRestrictionsTest");
-    }
-
 }

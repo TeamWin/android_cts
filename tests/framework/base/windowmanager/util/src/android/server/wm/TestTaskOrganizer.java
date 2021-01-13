@@ -16,6 +16,11 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -58,6 +63,18 @@ class TestTaskOrganizer extends TaskOrganizer {
     private final ArraySet<Integer> mSecondaryChildrenTaskIds = new ArraySet<>();
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSecondaryBounds = new Rect();
+
+    private static final int[] CONTROLLED_ACTIVITY_TYPES = {
+            ACTIVITY_TYPE_STANDARD,
+            ACTIVITY_TYPE_HOME,
+            ACTIVITY_TYPE_RECENTS,
+            ACTIVITY_TYPE_UNDEFINED
+    };
+    private static final int[] CONTROLLED_WINDOWING_MODES = {
+            WINDOWING_MODE_FULLSCREEN,
+            WINDOWING_MODE_MULTI_WINDOW,
+            WINDOWING_MODE_UNDEFINED
+    };
 
     TestTaskOrganizer(Context displayContext) {
         super();
@@ -199,26 +216,27 @@ class TestTaskOrganizer extends TaskOrganizer {
     void dismissedSplitScreen() {
         synchronized (this) {
             NestedShellPermission.run(() -> {
-                // Re-parent everything back to the display from the splits so that things are as they were.
-                final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
-                final List<ActivityManager.RunningTaskInfo> primaryChildren =
-                        getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
-                if (primaryChildren != null && !primaryChildren.isEmpty()) {
-                    children.addAll(primaryChildren);
-                }
-                final List<ActivityManager.RunningTaskInfo> secondaryChildren =
-                        getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
-                if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
-                    children.addAll(secondaryChildren);
-                }
-                if (children.isEmpty()) {
-                    return;
-                }
-
-                final WindowContainerTransaction t = new WindowContainerTransaction();
-                for (ActivityManager.RunningTaskInfo task : children) {
-                    t.reparent(task.getToken(), null /* parent */, true /* onTop */);
-                }
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setLaunchRoot(
+                                mRootPrimary.getToken(),
+                                null,
+                                null)
+                        .setLaunchRoot(
+                                mRootSecondary.getToken(),
+                                null,
+                                null)
+                        .reparentTasks(
+                                mRootPrimary.getToken(),
+                                null /* newParent */,
+                                CONTROLLED_WINDOWING_MODES,
+                                CONTROLLED_ACTIVITY_TYPES,
+                                true /* onTop */)
+                        .reparentTasks(
+                                mRootSecondary.getToken(),
+                                null /* newParent */,
+                                CONTROLLED_WINDOWING_MODES,
+                                CONTROLLED_ACTIVITY_TYPES,
+                                true /* onTop */);
                 applyTransaction(t);
             });
         }

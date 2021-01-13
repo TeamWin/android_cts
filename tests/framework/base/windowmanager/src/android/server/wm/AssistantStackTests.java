@@ -20,7 +20,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.CliIntentExtra.extraString;
@@ -52,7 +51,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
-import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.settings.SettingsSession;
@@ -112,13 +110,9 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
         // Dock a task
-        launchActivitiesInLegacySplitScreen(
+        launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-        mWmState.assertContainsStack("Must contain fullscreen stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertContainsStack("Must contain docked stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Enable the assistant and launch an assistant activity, ensure it is on top
         try (final AssistantSession assistantSession = new AssistantSession()) {
@@ -150,10 +144,6 @@ public class AssistantStackTests extends ActivityManagerTestBase {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-        mWmState.assertContainsStack("Must contain fullscreen stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
-        mWmState.assertContainsStack("Must contain docked stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
     }
@@ -299,11 +289,9 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             // is also visible
             if (supportsSplitScreenMultiWindow() &&  assistantRunsOnPrimaryDisplay()) {
                 removeRootTasksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
-                launchActivitiesInLegacySplitScreen(
+                launchActivitiesInSplitScreen(
                         getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-                mWmState.assertContainsStack("Must contain docked stack.",
-                        WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
                 launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                         extraString(EXTRA_ASSISTANT_IS_TRANSLUCENT, "true"));
                 waitForValidStateWithActivityType(

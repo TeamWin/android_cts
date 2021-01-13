@@ -226,7 +226,7 @@ public class LauncherAppsTest {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 mUsageStatsManager.registerAppUsageLimitObserver(
                         observerId, SETTINGS_PACKAGE_GROUP, timeLimit, timeUsed,
-                        PendingIntent.getActivity(mContext, -1, new Intent(), 0)));
+                        PendingIntent.getActivity(mContext, -1, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED)));
     }
 
     private void unregisterObserver(int observerId) {

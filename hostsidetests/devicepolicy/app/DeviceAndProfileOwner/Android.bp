@@ -72,6 +72,36 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsDeviceAndProfileOwnerApp30",
+    defaults: ["cts_defaults"],
+    platform_apis: true,
+    srcs: ["src/**/*.java"],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "ub-uiautomator",
+        "cts-security-test-support-library",
+        "androidx.legacy_legacy-support-v4",
+        "cts-devicepolicy-suspensionchecker",
+        "devicepolicy-deviceside-common",
+    ],
+    resource_dirs: ["res"],
+    asset_dirs: ["assets"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "arcts",
+        "cts",
+        "general-tests",
+        "mts",
+    ],
+    manifest: "api30/AndroidManifest.xml",
+}
+
+android_test_helper_app {
     name: "CtsDeviceAndProfileOwnerApp",
     defaults: ["cts_defaults"],
     platform_apis: true,

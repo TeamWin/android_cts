@@ -836,7 +836,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         rotationSession.set(orientation);
 
         // Launch activities that request orientations and check that device doesn't rotate.
-        launchActivitiesInSplitScreen(
+        launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(activity).setMultipleTask(true));
 
