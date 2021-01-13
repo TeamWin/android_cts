@@ -25,7 +25,7 @@ import android.app.blob.BlobStoreManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 
-import com.android.utils.blob.DummyBlobData;
+import com.android.utils.blob.FakeBlobData;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +42,7 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
 
     @Test
     public void testCreateSession() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+        final FakeBlobData blobData = new FakeBlobData.Builder(mContext)
                 .setRandomSeed(24)
                 .setFileName("test_blob_data")
                 .build();
@@ -79,7 +79,7 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
 
     @Test
     public void testCommitBlob() throws Exception {
-        final DummyBlobData blobData = new DummyBlobData.Builder(mContext)
+        final FakeBlobData blobData = new FakeBlobData.Builder(mContext)
                 .setRandomSeed(24)
                 .setFileName("test_blob_data")
                 .setLabel("test_data_blob_label")
