@@ -125,6 +125,7 @@ public class KeyAttestationTest extends AndroidTestCase {
     private static final Pattern OS_PATCH_LEVEL_STRING_PATTERN = Pattern
             .compile("([0-9]{4})-([0-9]{2})-[0-9]{2}");
 
+    private static final int KM_ERROR_CANNOT_ATTEST_IDS = -66;
     private static final int KM_ERROR_INVALID_INPUT_LENGTH = -21;
     private static final int KM_ERROR_PERMISSION_DENIED = 6;
 
@@ -180,6 +181,14 @@ public class KeyAttestationTest extends AndroidTestCase {
                                         curves[curveIndex], keySizes[curveIndex],
                                         purposes[purposeIndex], devicePropertiesAttestation);
                             } catch (Throwable e) {
+                                if (devicePropertiesAttestation
+                                        && (e.getCause() instanceof KeyStoreException)
+                                        && KM_ERROR_CANNOT_ATTEST_IDS ==
+                                                ((KeyStoreException) e.getCause()).getErrorCode()) {
+                                    Log.i(TAG, "key attestation with device IDs not supported; "
+                                            + "test skipped");
+                                    continue;
+                                }
                                 throw new Exception("Failed on curve " + curveIndex +
                                         " challenge " + challengeIndex + " purpose " +
                                         purposeIndex + " includeValidityDates " +
@@ -501,6 +510,12 @@ public class KeyAttestationTest extends AndroidTestCase {
                 testRsaAttestation(challenge, false /* includeValidityDates */, keySize, purpose,
                         paddings, devicePropertiesAttestation);
             } catch (Throwable e) {
+                if (devicePropertiesAttestation && (e.getCause() instanceof KeyStoreException)
+                        && KM_ERROR_CANNOT_ATTEST_IDS ==
+                                ((KeyStoreException) e.getCause()).getErrorCode()) {
+                    Log.i(TAG, "key attestation with device IDs not supported; test skipped");
+                    continue;
+                }
                 throw new Exception("Failed on key size " + keySize + " challenge [" +
                         new String(challenge) + "], purposes " +
                         buildPurposeSet(purpose) + " paddings " +
