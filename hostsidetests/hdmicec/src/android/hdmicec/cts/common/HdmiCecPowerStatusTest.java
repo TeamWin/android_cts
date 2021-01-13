@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package android.hdmicec.cts.playback;
+package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -49,57 +46,57 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     private static final int WAIT_TIME = 5;
     private static final int MAX_SLEEP_TIME = 8;
 
-    public HdmiCecPowerStatusTest() {
-        super(LogicalAddress.PLAYBACK_1);
-    }
-
     @Rule
     public RuleChain ruleChain =
         RuleChain
             .outerRule(CecRules.requiresCec(this))
             .around(CecRules.requiresLeanback(this))
-            .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
 
     /**
-     * Test 11.2.14-1
-     * Tests that the device broadcasts a <REPORT_POWER_STATUS> with params 0x0 when the device is
-     * powered on.
+     * Test 11.1.14-1, 11.2.14-1
+     *
+     * <p>Tests that the device sends a {@code <REPORT_POWER_STATUS>} with params 0x0 when the
+     * device is powered on.
      */
     @Test
-    public void cect_11_2_14_1_PowerStatusWhenOn() throws Exception {
+    public void cect_PowerStatusWhenOn() throws Exception {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-        hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
-        String message = hdmiCecClient.checkExpectedOutput(LogicalAddress.TV,
-            CecOperand.REPORT_POWER_STATUS);
+        LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
+        hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
+        String message =
+                hdmiCecClient.checkExpectedOutput(cecClientDevice, CecOperand.REPORT_POWER_STATUS);
         assertThat(CecMessage.getParams(message)).isEqualTo(ON);
     }
 
     /**
-     * Test 11.2.14-2
-     * Tests that the device broadcasts a <REPORT_POWER_STATUS> with params 0x1 when the device is
-     * powered off.
+     * Test 11.2.14-1, 11.2.14-2
+     *
+     * <p>Tests that the device sends a {@code <REPORT_POWER_STATUS>} with params 0x1 when the
+     * device is powered off.
      */
     @Test
-    public void cect_11_2_14_2_PowerStatusWhenOff() throws Exception {
+    public void cect_PowerStatusWhenOff() throws Exception {
         ITestDevice device = getDevice();
         try {
             /* Make sure the device is not booting up/in standby */
             device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
-            /* Home Key to prevent device from going to deep suspend state */
-            device.executeShellCommand("input keyevent KEYCODE_HOME");
+            /* The sleep below could send some devices into a deep suspend state. */
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
             TimeUnit.SECONDS.sleep(WAIT_TIME);
             int waitTimeSeconds = WAIT_TIME;
             int powerStatus;
+            LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
             do {
                 TimeUnit.SECONDS.sleep(SLEEP_TIMESTEP_SECONDS);
                 waitTimeSeconds += SLEEP_TIMESTEP_SECONDS;
-                hdmiCecClient.sendCecMessage(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
-                powerStatus = CecMessage.getParams(hdmiCecClient.checkExpectedOutput(
-                        LogicalAddress.TV, CecOperand.REPORT_POWER_STATUS));
+                hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
+                powerStatus =
+                        CecMessage.getParams(
+                                hdmiCecClient.checkExpectedOutput(
+                                        cecClientDevice, CecOperand.REPORT_POWER_STATUS));
             } while (powerStatus == IN_TRANSITION_TO_STANDBY && waitTimeSeconds <= MAX_SLEEP_TIME);
             assertThat(powerStatus).isEqualTo(OFF);
         } finally {
