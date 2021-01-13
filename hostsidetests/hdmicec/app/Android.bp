@@ -19,9 +19,12 @@ android_test_helper_app {
     certificate: "platform",
     srcs: ["src/**/*.java"],
     static_libs: [
-        "services.core",
-        "guava",
         "androidx.test.runner",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "guava",
+        "services.core",
+        "truth-prebuilt",
     ],
     min_sdk_version: "28",
 }
