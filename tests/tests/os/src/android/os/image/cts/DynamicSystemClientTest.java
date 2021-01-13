@@ -21,9 +21,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.net.Uri;
-import android.os.SystemProperties;
 import android.os.image.DynamicSystemClient;
-import android.util.FeatureFlagUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -50,16 +48,8 @@ public class DynamicSystemClientTest implements DynamicSystemClient.OnStatusChan
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
     }
 
-    private boolean featureFlagEnabled() {
-        return SystemProperties.getBoolean(
-                FeatureFlagUtils.PERSIST_PREFIX + FeatureFlagUtils.DYNAMIC_SYSTEM, false);
-    }
-
     @Test
     public void testDynamicSystemClient() {
-        if (!featureFlagEnabled()) {
-            return;
-        }
         DynamicSystemClient dSClient = new DynamicSystemClient(mInstrumentation.getTargetContext());
         dSClient.setOnStatusChangedListener(this);
         try {
