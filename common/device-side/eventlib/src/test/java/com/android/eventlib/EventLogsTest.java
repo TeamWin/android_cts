@@ -23,8 +23,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.app.ActivityManager;
+import android.app.AlarmManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -1040,6 +1044,51 @@ public class EventLogsTest {
         assertThat(eventLogs.pollOrFail()).isNotNull();
     }
 
+    @Test
+    public void otherProcessGetsKilled_stillReturnsLogs() {
+        logCustomEventOnTestApp(/* tag= */ null, /* data= */ null);
+
+        killTestApp();
+
+        assertThat(CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME).get()).isNotNull();
+    }
+
+    @Test
+    public void otherProcessGetsKilledMultipleTimes_stillReturnsOriginalLog() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        killTestApp();
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        assertThat(
+                CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME).get().tag()).isEqualTo(TEST_TAG1);
+    }
+
+    @Test
+    public void otherProcessGetsKilled_returnsLogsInCorrectOrder() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void otherProcessGetsKilledMultipleTimes_returnsLogsInCorrectOrder() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        killTestApp();
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
     private void scheduleCustomEventInOneSecond() {
         hasScheduledEvents = true;
 
@@ -1075,7 +1124,9 @@ public class EventLogsTest {
                 (Runnable) this::logCustomEventOnTestApp, 1, TimeUnit.SECONDS);
     }
 
-    // TODO: Add a test that when using another package (or another user) - if the other process
-    // gets killed, the log is persisted
-
+    private void killTestApp() {
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        CONTEXT.getSystemService(ActivityManager.class).forceStopPackage(TEST_APP_PACKAGE_NAME);
+    }
 }
