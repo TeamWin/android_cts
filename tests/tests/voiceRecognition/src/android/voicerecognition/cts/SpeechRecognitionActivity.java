@@ -20,8 +20,11 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
+
+import java.util.concurrent.CountDownLatch;
 
 /**
  * An activity that uses SpeechRecognition APIs. SpeechRecognition will bind the RecognitionService
@@ -34,6 +37,11 @@ public class SpeechRecognitionActivity extends Activity {
     private SpeechRecognizer mRecognizer;
     private Intent mRecognizerIntent;
     private Handler mHandler;
+    private SpeechRecognizerListener mListener;
+
+    public boolean mStartListeningCalled;
+
+    public CountDownLatch mCountDownLatch;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,5 +74,58 @@ public class SpeechRecognitionActivity extends Activity {
     private void init() {
         mHandler = new Handler(getMainLooper());
         mRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        mListener = new SpeechRecognizerListener();
+        mRecognizer.setRecognitionListener(mListener);
+        mStartListeningCalled = false;
+        mCountDownLatch = new CountDownLatch(1);
+    }
+
+    private class SpeechRecognizerListener implements RecognitionListener {
+
+        @Override
+        public void onReadyForSpeech(Bundle params) {
+
+        }
+
+        @Override
+        public void onBeginningOfSpeech() {
+
+        }
+
+        @Override
+        public void onRmsChanged(float rmsdB) {
+
+        }
+
+        @Override
+        public void onBufferReceived(byte[] buffer) {
+
+        }
+
+        @Override
+        public void onEndOfSpeech() {
+
+        }
+
+        @Override
+        public void onError(int error) {
+
+        }
+
+        @Override
+        public void onResults(Bundle results) {
+            mStartListeningCalled = true;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPartialResults(Bundle partialResults) {
+
+        }
+
+        @Override
+        public void onEvent(int eventType, Bundle params) {
+
+        }
     }
 }

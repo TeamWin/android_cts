@@ -35,12 +35,13 @@ import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
-import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.After;
 import org.junit.Before;
@@ -69,20 +70,25 @@ public final class RecognitionServiceMicIndicatorTest {
     private final long INDICATOR_DISMISS_TIMEOUT = 5000L;
     private final long UI_WAIT_TIMEOUT = 1000L;
 
+    protected final Context mContext = InstrumentationRegistry.getTargetContext();
+    private final String mOriginalVoiceRecognizer = Settings.Secure.getString(
+            mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
     private UiDevice mUiDevice;
     private SpeechRecognitionActivity mActivity;
-    private Context mContext;
-    private String mOriginalVoiceRecognizer;
     private String mCameraLabel;
 
     @Rule
     public ActivityTestRule<SpeechRecognitionActivity> mActivityTestRule =
             new ActivityTestRule<>(SpeechRecognitionActivity.class);
 
+    @Rule
+    public final SettingsStateChangerRule mVoiceRcognitionrviceSetterRule =
+            new SettingsStateChangerRule(mContext, VOICE_RECOGNITION_SERVICE,
+                    mOriginalVoiceRecognizer);
+
     @Before
     public void setup() {
         prepareDevice();
-        mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mActivity = mActivityTestRule.getActivity();
 
@@ -92,17 +98,12 @@ public final class RecognitionServiceMicIndicatorTest {
                     pm).toString();
         } catch (PackageManager.NameNotFoundException e) {
         }
-        // get original voice service
-        mOriginalVoiceRecognizer = Settings.Secure.getString(
-                mContext.getContentResolver(), VOICE_RECOGNITION_SERVICE);
     }
 
     @After
     public void teardown() {
         // press back to close the dialog
-        mUiDevice.pressBack();
-        // restore to original voice service
-        setCurrentRecognizer(mOriginalVoiceRecognizer);
+        mUiDevice.pressHome();
     }
 
     private void prepareDevice() {
