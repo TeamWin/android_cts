@@ -30,7 +30,6 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.platform.test.annotations.AppModeFull;
 
-import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -74,10 +73,6 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
             WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveConnectionInfoAndReturnStatusActivity";
     private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_SERVICE =
             WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveConnectionInfoAndReturnStatusService";
-    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_TRANSPORT_INFO_ACTIVITY =
-            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveTransportInfoAndReturnStatusActivity";
-    private static final String WIFI_LOCATION_TEST_APP_RETRIEVE_TRANSPORT_INFO_SERVICE =
-            WIFI_LOCATION_TEST_APP_PACKAGE_NAME + ".RetrieveTransportInfoAndReturnStatusService";
 
     private static final int DURATION_MS = 10_000;
     private static final int WIFI_CONNECT_TIMEOUT_MILLIS = 30_000;
@@ -226,17 +221,6 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
                 WIFI_LOCATION_TEST_APP_RETRIEVE_CONNECTION_INFO_SERVICE), status);
     }
 
-    private void retrieveTransportInfoFgActivityAndAssertStatusIs(boolean status)
-            throws Exception {
-        startFgActivityAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
-                WIFI_LOCATION_TEST_APP_RETRIEVE_TRANSPORT_INFO_ACTIVITY), status);
-    }
-
-    private void retrieveTransportInfoBgServiceAndAssertStatusIs(boolean status) throws Exception {
-        startBgServiceAndAssertStatusIs(new ComponentName(WIFI_LOCATION_TEST_APP_PACKAGE_NAME,
-                WIFI_LOCATION_TEST_APP_RETRIEVE_TRANSPORT_INFO_SERVICE), status);
-    }
-
     @Test
     public void testScanTriggerNotAllowedForForegroundActivityWithNoLocationPermission()
             throws Exception {
@@ -333,55 +317,5 @@ public class WifiLocationInfoTest extends WifiJUnit4TestBase {
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
                 WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
         retrieveConnectionInfoBgServiceAndAssertStatusIs(false);
-    }
-
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    @Test
-    public void testTransportInfoRetrievalNotAllowedForForegroundActivityWithNoLocationPermission()
-            throws Exception {
-        retrieveTransportInfoFgActivityAndAssertStatusIs(false);
-    }
-
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    @Test
-    public void testTransportInfoRetrievalAllowedForForegroundActivityWithFineLocationPermission()
-            throws Exception {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
-        retrieveTransportInfoFgActivityAndAssertStatusIs(true);
-    }
-
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    @Test
-    public void
-    testTransportInfoRetrievalAllowedForBackgroundServiceWithBackgroundLocationPermission()
-            throws Exception {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_BACKGROUND_LOCATION);
-        retrieveTransportInfoBgServiceAndAssertStatusIs(true);
-    }
-
-    /**
-     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
-     */
-    @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    @Test
-    public void
-    testTransportInfoRetrievalNotAllowedForBackgroundServiceWithFineLocationPermission()
-            throws Exception {
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                WIFI_LOCATION_TEST_APP_PACKAGE_NAME, ACCESS_FINE_LOCATION);
-        retrieveTransportInfoBgServiceAndAssertStatusIs(false);
     }
 }
