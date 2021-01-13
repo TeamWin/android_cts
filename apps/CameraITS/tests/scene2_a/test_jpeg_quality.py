@@ -26,7 +26,7 @@ import matplotlib.pyplot
 import numpy as np
 
 JPEG_APPN_MARKERS = [[255, 224], [255, 225], [255, 226], [255, 227], [255, 228],
-                     [255, 235]]
+                     [255, 229], [255, 230], [255, 231], [255, 232], [255, 235]]
 JPEG_DHT_MARKER = [255, 196]  # JPEG Define Huffman Table
 JPEG_DQT_MARKER = [255, 219]  # JPEG Define Quantization Table
 JPEG_DQT_TOL = 0.8  # -20% for each +20 in jpeg.quality (empirical number)
