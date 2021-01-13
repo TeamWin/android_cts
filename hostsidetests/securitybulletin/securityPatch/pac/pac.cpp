@@ -20,15 +20,22 @@
 #include <codecvt>
 #include <fstream>
 #include <iostream>
+#include "../includes/common.h"
 
 const char16_t* spec = u"";
 const char16_t* host = u"";
 
 int main(int argc, char *argv[]) {
+  bool shouldRunMultipleTimes = false;
   if (argc != 2) {
-    std::cout << "incorrect number of arguments" << std::endl;
-    std::cout << "usage: ./pacrunner mypac.pac" << std::endl;
-    return EXIT_FAILURE;
+    if (argc != 3) {
+      std::cout << "incorrect number of arguments" << std::endl;
+      std::cout << "usage: ./pacrunner mypac.pac (or)" << std::endl;
+      std::cout << "usage: ./pacrunner mypac.pac true" << std::endl;
+      return EXIT_FAILURE;
+    } else {
+      shouldRunMultipleTimes = true;
+    }
   }
 
   ProxyResolverV8Handle* handle = ProxyResolverV8Handle_new();
@@ -50,7 +57,10 @@ int main(int argc, char *argv[]) {
         std::codecvt_utf8_utf16<char16_t>, char16_t>{}.from_bytes(u8Script);
 
   ProxyResolverV8Handle_SetPacScript(handle, u16Script.data());
-  ProxyResolverV8Handle_GetProxyForURL(handle, spec, host);
+  time_t currentTime = start_timer();
+  do {
+    ProxyResolverV8Handle_GetProxyForURL(handle, spec, host);
+  } while (shouldRunMultipleTimes && timer_active(currentTime));
 
   ProxyResolverV8Handle_delete(handle);
   return EXIT_SUCCESS;
