@@ -20,11 +20,15 @@ import androidx.test.InstrumentationRegistry
 
 import android.content.res.AssetManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.ImageDecoder
 import android.graphics.Rect
 import android.uirendering.cts.bitmapcomparers.MSSIMComparer
+import android.uirendering.cts.bitmapverifiers.BitmapVerifier
 import android.uirendering.cts.bitmapverifiers.ColorVerifier
 import android.uirendering.cts.bitmapverifiers.GoldenImageVerifier
+import android.uirendering.cts.bitmapverifiers.RectVerifier
+import android.uirendering.cts.bitmapverifiers.RegionVerifier
 import junitparams.JUnitParamsRunner
 import junitparams.Parameters
 import org.junit.Test
@@ -826,6 +830,92 @@ class AImageDecoderTest {
                         + "frame $i, expected: ${blendOps[i]}")
     }
 
+    @Test
+    fun testHandleDisposePrevious() {
+        // The first frame is ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE, followed by a single
+        // ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS frame. The third frame looks different
+        // depending on whether that is respected.
+        val image = "RestorePrevious.gif"
+        val disposeOps = intArrayOf(ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE,
+                                    ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS,
+                                    ANDROID_IMAGE_DECODER_DISPOSE_OP_NONE)
+        val asset = nOpenAsset(getAssets(), image)
+        val decoder = nCreateFromAsset(asset)
+
+        val width = nGetWidth(decoder)
+        val height = nGetHeight(decoder)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888, true)
+
+        val verifiers = arrayOf<BitmapVerifier>(
+            ColorVerifier(Color.BLACK, 0),
+            RectVerifier(Color.BLACK, Color.RED, Rect(0, 0, 100, 80), 0),
+            RectVerifier(Color.BLACK, Color.GREEN, Rect(0, 0, 100, 50), 0))
+
+        with(nCreateFrameInfo()) {
+            for (i in 0..2) {
+                nGetFrameInfo(decoder, this)
+                assertEquals(disposeOps[i], nGetDisposeOp(this))
+
+                nDecode(decoder, bitmap, ANDROID_IMAGE_DECODER_SUCCESS)
+                assertTrue(verifiers[i].verify(bitmap))
+                nAdvanceFrame(decoder)
+            }
+            nDeleteFrameInfo(this)
+        }
+
+        // Now redecode without letting AImageDecoder handle
+        // ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS.
+        bitmap.eraseColor(Color.TRANSPARENT)
+        assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nRewind(decoder))
+        nSetHandleDisposePrevious(decoder, false)
+
+        // If the client does not handle ANDROID_IMAGE_DECODER_DISPOSE_OP_PREVIOUS
+        // the final frame does not match.
+        for (i in 0..2) {
+            nDecode(decoder, bitmap, ANDROID_IMAGE_DECODER_SUCCESS)
+            assertEquals(i != 2, verifiers[i].verify(bitmap))
+
+            if (i == 2) {
+                // Not only can we verify that frame 2 does not look as expected, but it
+                // should look as if we decoded frame 1 and did not revert it.
+                val verifier = RegionVerifier()
+                verifier.addVerifier(Rect(0, 0, 100, 50), ColorVerifier(Color.GREEN, 0))
+                verifier.addVerifier(Rect(0, 50, 100, 80), ColorVerifier(Color.RED, 0))
+                verifier.addVerifier(Rect(0, 80, 100, 100), ColorVerifier(Color.BLACK, 0))
+                assertTrue(verifier.verify(bitmap))
+            }
+            nAdvanceFrame(decoder)
+        }
+
+        // Now redecode and manually store/restore the first frame.
+        bitmap.eraseColor(Color.TRANSPARENT)
+        assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nRewind(decoder))
+        nDecode(decoder, bitmap, ANDROID_IMAGE_DECODER_SUCCESS)
+        val storedFrame = bitmap
+        for (i in 1..2) {
+            assertEquals(nAdvanceFrame(decoder), ANDROID_IMAGE_DECODER_SUCCESS)
+            val frame = storedFrame.copy(storedFrame.config, true)
+            nDecode(decoder, frame, ANDROID_IMAGE_DECODER_SUCCESS)
+            assertTrue(verifiers[i].verify(frame))
+            frame.recycle()
+        }
+
+        // This setting can be switched back, so that AImageDecoder handles it.
+        bitmap.eraseColor(Color.TRANSPARENT)
+        assertEquals(ANDROID_IMAGE_DECODER_SUCCESS, nRewind(decoder))
+        nSetHandleDisposePrevious(decoder, true)
+
+        for (i in 0..2) {
+            nDecode(decoder, bitmap, ANDROID_IMAGE_DECODER_SUCCESS)
+            assertTrue(verifiers[i].verify(bitmap))
+            nAdvanceFrame(decoder)
+        }
+
+        bitmap.recycle()
+        nDeleteDecoder(decoder)
+        nCloseAsset(asset)
+    }
+
     private external fun nTestNullDecoder()
     private external fun nTestToString()
     private external fun nOpenAsset(assets: AssetManager, name: String): Long
@@ -859,4 +949,5 @@ class AImageDecoderTest {
     private external fun nGetDisposeOp(frameInfo: Long): Int
     private external fun nGetBlendOp(frameInfo: Long): Int
     private external fun nGetRepeatCount(decoder: Long): Int
+    private external fun nSetHandleDisposePrevious(decoder: Long, handle: Boolean)
 }
