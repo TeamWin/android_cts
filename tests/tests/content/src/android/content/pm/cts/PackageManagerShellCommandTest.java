@@ -213,8 +213,7 @@ public class PackageManagerShellCommandTest {
         String commandResult = executeShellCommand("pm " + mInstall + " -t -g -S " + file.length(),
                 new File[]{});
         if (mIncremental) {
-            assertEquals("Failure [INSTALL_FAILED_MEDIA_UNAVAILABLE: Failed to prepare image.]\n",
-                    commandResult);
+            assertTrue(commandResult, commandResult.startsWith("Failure ["));
         } else {
             assertTrue(commandResult,
                     commandResult.startsWith("Failure [INSTALL_PARSE_FAILED_NOT_APK"));
