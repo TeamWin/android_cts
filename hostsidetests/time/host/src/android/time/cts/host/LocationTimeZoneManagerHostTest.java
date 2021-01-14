@@ -17,6 +17,8 @@
 package android.time.cts.host;
 
 
+import static android.time.cts.host.LocationManager.SHELL_COMMAND_IS_LOCATION_ENABLED;
+import static android.time.cts.host.LocationManager.SHELL_COMMAND_SET_LOCATION_ENABLED;
 import static android.time.cts.host.LocationTimeZoneManager.DUMP_STATE_OPTION_PROTO;
 import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_NAME;
 import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_DISABLED;
@@ -158,16 +160,13 @@ public class LocationTimeZoneManagerHostTest extends BaseHostJUnit4Test {
     }
 
     private boolean isLocationEnabledForCurrentUser() throws Exception {
-        // TODO Ask Location team to add a shell command for this. Until then, there's a method on
-        //  the TimeZoneDetector service.
-        byte[] result = executeTimeZoneDetectorCommand(
-                TimeZoneDetector.SHELL_COMMAND_IS_LOCATION_ENABLED);
+        byte[] result = executeLocationManagerCommand(SHELL_COMMAND_IS_LOCATION_ENABLED);
         return parseShellCommandBytesAsBoolean(result);
     }
 
     private void setLocationEnabledForCurrentUser(boolean enabled) throws Exception {
         executeLocationManagerCommand(
-                "%s %s", LocationManager.SHELL_COMMAND_SET_LOCATION_ENABLED, enabled);
+                "%s %s", SHELL_COMMAND_SET_LOCATION_ENABLED, enabled);
     }
 
     private boolean isAutoDetectionEnabled() throws Exception {
