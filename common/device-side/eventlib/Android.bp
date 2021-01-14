@@ -8,6 +8,7 @@ android_library {
     static_libs: [
         "androidx.test.ext.junit"],
     manifest: "src/main/AndroidManifest.xml",
+    min_sdk_version: "26"
 }
 
 android_test {
@@ -25,7 +26,9 @@ android_test {
         "truth-prebuilt",
         "testng", // for assertThrows
         "mockito-target-minus-junit4", // TODO(scottjonathan): Remove once we can get rid of mocks
+        "compatibility-device-util-axt", // used for SystemUtil.runShellCommandOrThrow
     ],
     data: [":EventLibTestApp"],
     manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "26"
 }

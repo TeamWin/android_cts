@@ -16,6 +16,8 @@
 
 package com.android.eventlib;
 
+import android.os.UserHandle;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -44,6 +46,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
     private final Class<E> mEventClass;
     private final String mPackageName;
     private final transient Set<Function<E, Boolean>> filters = new HashSet<>();
+    private transient UserHandle mUserHandle = null; // null is default, meaning current user
 
     protected EventLogsQuery(Class<E> eventClass, String packageName) {
         if (eventClass == null || packageName == null) {
@@ -70,6 +73,7 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         return mQuerier;
     }
 
+    /** Apply a lambda filter to the results. */
     public F filter(Function<E, Boolean> filter) {
         filters.add(filter);
         return (F) this;
@@ -92,4 +96,17 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
 
     /** Returns true if {@code E} matches the custom filters for this {@link Event} subclass. */
     protected abstract boolean filter(E event);
+
+    /** Query a package running on another user. */
+    public F onUser(UserHandle userHandle) {
+        if (userHandle == null) {
+            throw new NullPointerException();
+        }
+        mUserHandle = userHandle;
+        return (F) this;
+    }
+
+    UserHandle getUserHandle() {
+        return mUserHandle;
+    }
 }
