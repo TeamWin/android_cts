@@ -75,6 +75,33 @@ public class ColorTest {
                 { 0xff000000, android.R.color.widget_edittext_dark },
         };
 
+        int systemColors[] = {
+                android.R.color.system_main_0,
+                android.R.color.system_main_50,
+                android.R.color.system_main_100,
+                android.R.color.system_main_200,
+                android.R.color.system_main_300,
+                android.R.color.system_main_400,
+                android.R.color.system_main_500,
+                android.R.color.system_main_600,
+                android.R.color.system_main_700,
+                android.R.color.system_main_800,
+                android.R.color.system_main_900,
+                android.R.color.system_main_1000,
+                android.R.color.system_accent_0,
+                android.R.color.system_accent_50,
+                android.R.color.system_accent_100,
+                android.R.color.system_accent_200,
+                android.R.color.system_accent_300,
+                android.R.color.system_accent_400,
+                android.R.color.system_accent_500,
+                android.R.color.system_accent_600,
+                android.R.color.system_accent_700,
+                android.R.color.system_accent_800,
+                android.R.color.system_accent_900,
+                android.R.color.system_accent_1000,
+        };
+
         List<Integer> expectedColorStateLists = Arrays.asList(
                 android.R.color.primary_text_dark,
                 android.R.color.primary_text_dark_nodisable,
@@ -124,7 +151,7 @@ public class ColorTest {
         }
 
         // System-API colors are used to allow updateable platform components to use the same colors
-        // as the system. The actualy value of the color does not matter. Hence only enforce that
+        // as the system. The actual value of the color does not matter. Hence only enforce that
         // 'colors' contains all the public colors and ignore System-api colors.
         int numPublicApiColors = 0;
         for (Field declaredColor : android.R.color.class.getDeclaredFields()) {
@@ -137,7 +164,7 @@ public class ColorTest {
         }
 
         assertEquals("Test no longer in sync with colors in android.R.color",
-                colors.length, numPublicApiColors);
+                colors.length + systemColors.length, numPublicApiColors);
     }
 
     @Test
