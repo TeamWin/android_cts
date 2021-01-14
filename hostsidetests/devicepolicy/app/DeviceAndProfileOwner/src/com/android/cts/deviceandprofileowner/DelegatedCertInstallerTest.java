@@ -60,6 +60,8 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
     private static final String ACTION_INSTALL_KEYPAIR =
             "com.android.cts.certinstaller.install_keypair";
     private static final String ACTION_CERT_OPERATION_DONE = "com.android.cts.certinstaller.done";
+    private static final String ACTION_READ_ENROLLMENT_SPECIFIC_ID =
+            "com.android.cts.certinstaller.read_esid";
 
     private static final String EXTRA_CERT_DATA = "extra_cert_data";
     private static final String EXTRA_KEY_DATA = "extra_key_data";
@@ -313,6 +315,19 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
         assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isNull();
     }
 
+    public void testCanReadEnrollmentSpecificId() throws InterruptedException {
+        // Set the organization ID only if not already set, to avoid potential conflict
+        // with other tests.
+        if (mDpm.getEnrollmentSpecificId().isEmpty()) {
+            mDpm.setOrganizationId("SOME_ID");
+        }
+        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, CERT_INSTALLER_PACKAGE,
+                CERT_INSTALL_SCOPES);
+
+        readEnrollmentId();
+        assertResult("testCanReadEnrollmentSpecificId", true);
+    }
+
     private void installCaCert(byte[] cert) {
         Intent intent = new Intent();
         intent.setAction(ACTION_INSTALL_CERT);
@@ -370,6 +385,14 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
         intent.putExtra(EXTRA_CERT_DATA, cert);
         intent.putExtra(EXTRA_KEY_DATA, key);
         intent.putExtra(EXTRA_KEY_ALIAS, alias);
+        intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        mContext.sendBroadcast(intent);
+    }
+
+    private void readEnrollmentId() {
+        Intent intent = new Intent();
+        intent.setAction(ACTION_READ_ENROLLMENT_SPECIFIC_ID);
+        intent.setComponent(CERT_INSTALLER_COMPONENT);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         mContext.sendBroadcast(intent);
     }
