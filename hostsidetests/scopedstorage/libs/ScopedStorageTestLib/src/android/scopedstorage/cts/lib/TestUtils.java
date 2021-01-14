@@ -21,6 +21,7 @@ import static android.scopedstorage.cts.lib.RedactionTestHelper.EXIF_METADATA_QU
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
 
@@ -124,7 +125,9 @@ public class TestUtils {
     public static void setupDefaultDirectories() {
         for (File dir : getDefaultTopLevelDirs()) {
             dir.mkdir();
-            assertThat(dir.exists()).isTrue();
+            assertWithMessage("Could not setup default dir [%s]", dir.toString())
+                    .that(dir.exists())
+                    .isTrue();
         }
     }
 
