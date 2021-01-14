@@ -18,8 +18,11 @@ package android.hdmicec.app;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-
 import static com.google.common.truth.Truth.assertThat;
+
+import static junit.framework.Assert.fail;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.hardware.hdmi.HdmiControlManager;
@@ -38,6 +41,8 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -47,6 +52,8 @@ import java.util.List;
 public class HdmiControlManagerTest {
 
     private static final int DEVICE_TYPE_SWITCH = 6;
+
+    private static final int TIMEOUT_CONTENT_CHANGE_SEC = 3;
 
     private HdmiControlManager mHdmiControlManager;
 
@@ -146,6 +153,43 @@ public class HdmiControlManagerTest {
                 mHdmiControlManager.setHdmiCecEnabled(value);
                 assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(value);
             }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setHdmiCecEnabled(originalValue);
+            assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_HdmiCecEnabled_Listener() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getHdmiCecEnabled();
+        assumeTrue("Skipping because option not user-modifiable",
+                mHdmiControlManager.getUserCecSettings().contains(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED));
+        CountDownLatch notifyLatch1 = new CountDownLatch(1);
+        CountDownLatch notifyLatch2 = new CountDownLatch(2);
+        HdmiControlManager.CecSettingChangeListener listener =
+                new HdmiControlManager.CecSettingChangeListener() {
+                    @Override
+                    public void onChange(String setting) {
+                        notifyLatch1.countDown();
+                        notifyLatch2.countDown();
+                        assertThat(setting).isEqualTo(
+                                HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED);
+                    }
+                };
+        try {
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
+            mHdmiControlManager.addHdmiCecEnabledChangeListener(listener);
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_ENABLED);
+            if (!notifyLatch1.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS)) {
+                fail("Timed out waiting for the notify callback");
+            }
+            mHdmiControlManager.removeHdmiCecEnabledChangeListener(listener);
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
+            notifyLatch2.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS);
+            assertThat(notifyLatch2.getCount()).isEqualTo(1);
         } finally {
             // Restore original value
             mHdmiControlManager.setHdmiCecEnabled(originalValue);
