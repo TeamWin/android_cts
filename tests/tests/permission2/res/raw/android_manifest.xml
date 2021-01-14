@@ -2678,6 +2678,12 @@
         android:description="@string/permdesc_systemAlertWindow"
         android:protectionLevel="signature|appop|installer|pre23|development|recents" />
 
+    <!-- @SystemApi @hide Allows the holder to create privileged application overlays that can not
+         be hidden by other applications
+         <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.SYSTEM_APPLICATION_OVERLAY"
+                android:protectionLevel="signature|wellbeing"/>
+
     <!-- @deprecated Use {@link android.Manifest.permission#REQUEST_COMPANION_RUN_IN_BACKGROUND}
          @hide
     -->
