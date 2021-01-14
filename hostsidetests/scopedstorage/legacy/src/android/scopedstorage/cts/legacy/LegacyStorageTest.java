@@ -34,16 +34,27 @@ import static android.scopedstorage.cts.lib.TestUtils.deleteFileAsNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.deleteWithMediaProviderNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.denyAppOpsToUid;
 import static android.scopedstorage.cts.lib.TestUtils.executeShellCommand;
+import static android.scopedstorage.cts.lib.TestUtils.getAndroidMediaDir;
 import static android.scopedstorage.cts.lib.TestUtils.getContentResolver;
 import static android.scopedstorage.cts.lib.TestUtils.getDcimDir;
+import static android.scopedstorage.cts.lib.TestUtils.getExternalFilesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getFileOwnerPackageFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
+import static android.scopedstorage.cts.lib.TestUtils.insertFile;
+import static android.scopedstorage.cts.lib.TestUtils.insertFileFromExternalMedia;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.pollForPermission;
+import static android.scopedstorage.cts.lib.TestUtils.resetDefaultExternalStorageVolume;
 import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
+import static android.scopedstorage.cts.lib.TestUtils.updateFile;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaData_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyInsertFromExternalPrivateDirViaRelativePath_denied;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalMediaDirViaRelativePath_allowed;
+import static android.scopedstorage.cts.lib.TestUtils.verifyUpdateToExternalPrivateDirsViaRelativePath_denied;
 
 import static androidx.test.InstrumentationRegistry.getContext;
 
@@ -898,6 +909,68 @@ public class LegacyStorageTest {
         } finally {
             jpgFile.delete();
         }
+    }
+
+    /**
+     * Make sure inserting files from app private directories in legacy apps is allowed via DATA.
+     */
+    @Test
+    public void testInsertFromExternalDirsViaData() throws Exception {
+        verifyInsertFromExternalMediaDirViaData_allowed();
+
+        ContentValues values = new ContentValues();
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        insertFile(values);
+
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        insertFile(values);
+    }
+
+    /**
+     * Make sure inserting files from app private directories in legacy apps is not allowed via
+     * RELATIVE_PATH.
+     */
+    @Test
+    public void testInsertFromExternalDirsViaRelativePath() throws Exception {
+        verifyInsertFromExternalMediaDirViaRelativePath_allowed();
+        verifyInsertFromExternalPrivateDirViaRelativePath_denied();
+    }
+
+    /**
+     * Make sure updating files to app private directories in legacy apps is allowed via DATA.
+     */
+    @Test
+    public void testUpdateToExternalDirsViaData() throws Exception {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(false);
+
+        final String androidMediaDirFile =
+                getAndroidMediaDir().toString() + "/" + System.currentTimeMillis();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, androidMediaDirFile);
+        assertNotEquals(0, updateFile(uri, values));
+
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        assertNotEquals(0, updateFile(uri, values));
+
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        assertNotEquals(0, updateFile(uri, values));
+    }
+
+    /**
+     * Make sure updating files to app private directories in legacy apps is not allowed via
+     * RELATIVE_PATH.
+     */
+    @Test
+    public void testUpdateToExternalDirsViaRelativePath() throws Exception {
+        verifyUpdateToExternalMediaDirViaRelativePath_allowed();
+        verifyUpdateToExternalPrivateDirsViaRelativePath_denied();
     }
 
     private static void assertCanCreateFile(File file) throws IOException {

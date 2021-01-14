@@ -468,9 +468,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         }
         AwareResources resources = mWifiAwareManager.getAvailableAwareResources();
         assertNotNull("Available aware resources are null", resources);
-        assertTrue(resources.getNumOfAvailablePublishSessions() > 0);
-        assertTrue(resources.getNumOfAvailableSubscribeSessions() > 0);
-        assertTrue(resources.getNumOfAvailableDataPaths() > 0);
+        assertTrue(resources.getAvailableDataPathsCount() > 0);
+        assertTrue(resources.getAvailablePublishSessionsCount() > 0);
+        assertTrue(resources.getAvailableSubscribeSessionsCount() > 0);
     }
 
     /**
@@ -575,7 +575,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         int numOfAllPublishSessions = 0;
         if (BuildCompat.isAtLeastS()) {
             numOfAllPublishSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions();
+                    .getAvailableAwareResources().getAvailablePublishSessionsCount();
         }
 
         // 1. publish
@@ -590,7 +590,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
         if (BuildCompat.isAtLeastS()) {
             assertEquals(numOfAllPublishSessions - 1, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions());
+                    .getAvailableAwareResources().getAvailablePublishSessionsCount());
         }
         // 2. update-publish
         publishConfig = new PublishConfig.Builder().setServiceName(
@@ -610,7 +610,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
         if (BuildCompat.isAtLeastS()) {
             assertEquals(numOfAllPublishSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailablePublishSessions());
+                    .getAvailableAwareResources().getAvailablePublishSessionsCount());
         }
         session.close();
     }
@@ -674,7 +674,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
         int numOfAllSubscribeSessions = 0;
         if (BuildCompat.isAtLeastS()) {
             numOfAllSubscribeSessions = mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions();
+                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount();
         }
         // 1. subscribe
         session.subscribe(subscribeConfig, discoveryCb, mHandler);
@@ -688,7 +688,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_DISCOVERED_LOST));
         if (BuildCompat.isAtLeastS()) {
             assertEquals(numOfAllSubscribeSessions - 1, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions());
+                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
         }
 
         // 2. update-subscribe
@@ -717,7 +717,7 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
                 DiscoverySessionCallbackTest.ON_SESSION_CONFIG_UPDATED));
         if (BuildCompat.isAtLeastS()) {
             assertEquals(numOfAllSubscribeSessions, mWifiAwareManager
-                    .getAvailableAwareResources().getNumOfAvailableSubscribeSessions());
+                    .getAvailableAwareResources().getAvailableSubscribeSessionsCount());
         }
         session.close();
     }

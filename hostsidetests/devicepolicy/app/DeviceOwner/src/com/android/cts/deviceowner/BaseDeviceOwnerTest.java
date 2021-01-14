@@ -15,10 +15,13 @@
  */
 package com.android.cts.deviceowner;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
+import android.os.UserHandle;
 import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 
@@ -52,10 +55,18 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     }
 
     private void assertDeviceOwner() {
-        assertNotNull(mDevicePolicyManager);
-        assertTrue(mDevicePolicyManager.isAdminActive(getWho()));
-        assertTrue(mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName()));
-        assertFalse(mDevicePolicyManager.isManagedProfile(getWho()));
+        int myUserId = UserHandle.myUserId();
+        assertWithMessage("null DPM for user %s", myUserId).that(mDevicePolicyManager).isNotNull();
+
+        ComponentName admin = getWho();
+        assertWithMessage("Component %s is not admin for user %s", admin, myUserId)
+                .that(mDevicePolicyManager.isAdminActive(admin)).isTrue();
+
+        String pkgName = mContext.getPackageName();
+        assertWithMessage("Component %s is not device owner for user %s", admin, myUserId)
+                .that(mDevicePolicyManager.isDeviceOwnerApp(pkgName)).isTrue();
+        assertWithMessage("Component %s is not profile owner for user %s", admin, myUserId)
+                .that(mDevicePolicyManager.isManagedProfile(admin)).isFalse();
     }
 
     protected ComponentName getWho() {

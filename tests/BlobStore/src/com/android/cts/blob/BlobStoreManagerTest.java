@@ -1604,45 +1604,45 @@ public class BlobStoreManagerTest {
         // and tag are equal.
         {
             final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1111L, "tag");
+                    "Fake blob", 1111L, "tag");
             final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1111L, "tag");
+                    "Fake blob", 1111L, "tag");
             assertThat(blobHandle1).isEqualTo(blobHandle2);
         }
 
         // Check that BlobHandle objects are not equal if digests are not equal.
         {
             final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest1".getBytes(),
-                    "Dummy blob", 1111L, "tag");
+                    "Fake blob", 1111L, "tag");
             final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest2".getBytes(),
-                    "Dummy blob", 1111L, "tag");
+                    "Fake blob", 1111L, "tag");
             assertThat(blobHandle1).isNotEqualTo(blobHandle2);
         }
 
         // Check that BlobHandle objects are not equal if expiry times are not equal.
         {
             final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1111L, "tag");
+                    "Fake blob", 1111L, "tag");
             final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1112L, "tag");
+                    "Fake blob", 1112L, "tag");
             assertThat(blobHandle1).isNotEqualTo(blobHandle2);
         }
 
         // Check that BlobHandle objects are not equal if labels are not equal.
         {
             final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob1", 1111L, "tag");
+                    "Fake blob1", 1111L, "tag");
             final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob2", 1111L, "tag");
+                    "Fake blob2", 1111L, "tag");
             assertThat(blobHandle1).isNotEqualTo(blobHandle2);
         }
 
         // Check that BlobHandle objects are not equal if tags are not equal.
         {
             final BlobHandle blobHandle1 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1111L, "tag1");
+                    "Fake blob", 1111L, "tag1");
             final BlobHandle blobHandle2 = BlobHandle.createWithSha256("digest".getBytes(),
-                    "Dummy blob", 1111L, "tag2");
+                    "Fake blob", 1111L, "tag2");
             assertThat(blobHandle1).isNotEqualTo(blobHandle2);
         }
     }

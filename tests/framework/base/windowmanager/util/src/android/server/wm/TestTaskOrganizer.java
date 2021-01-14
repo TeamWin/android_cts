@@ -37,6 +37,7 @@ import android.view.SurfaceControl;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
 import android.window.TaskOrganizer;
+import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
@@ -237,6 +238,24 @@ class TestTaskOrganizer extends TaskOrganizer {
                                 CONTROLLED_WINDOWING_MODES,
                                 CONTROLLED_ACTIVITY_TYPES,
                                 true /* onTop */);
+                applyTransaction(t);
+            });
+        }
+    }
+
+    void setRootPrimaryTaskBounds(Rect bounds) {
+        setTaskBounds(mRootPrimary.getToken(), bounds);
+    }
+
+    void setRootSecondaryTaskBounds(Rect bounds) {
+        setTaskBounds(mRootSecondary.getToken(), bounds);
+    }
+
+    private void setTaskBounds(WindowContainerToken container, Rect bounds) {
+        synchronized (this) {
+            NestedShellPermission.run(() -> {
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setBounds(container, bounds);
                 applyTransaction(t);
             });
         }

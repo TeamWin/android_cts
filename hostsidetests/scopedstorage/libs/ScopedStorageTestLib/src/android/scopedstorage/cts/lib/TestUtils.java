@@ -22,6 +22,10 @@ import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
@@ -287,6 +291,147 @@ public class TestUtils {
             throws Exception {
         String actionName = forWrite ? CAN_OPEN_FILE_FOR_WRITE_QUERY : CAN_OPEN_FILE_FOR_READ_QUERY;
         return getResultFromTestApp(testApp, file.getPath(), actionName);
+    }
+
+    public static Uri insertFileFromExternalMedia(boolean useRelative) throws IOException {
+        ContentValues values = new ContentValues();
+        String filePath =
+                getAndroidMediaDir().toString() + "/" + getContext().getPackageName() + "/"
+                        + System.currentTimeMillis();
+        if (useRelative) {
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    "Android/media/" + getContext().getPackageName());
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, System.currentTimeMillis());
+        } else {
+            values.put(MediaStore.MediaColumns.DATA, filePath);
+        }
+
+        return getContentResolver().insert(
+                MediaStore.Files.getContentUri(sStorageVolumeName), values);
+    }
+
+    public static void insertFile(ContentValues values) {
+        assertNotNull(getContentResolver().insert(
+                MediaStore.Files.getContentUri(sStorageVolumeName), values));
+    }
+
+    public static int updateFile(Uri uri, ContentValues values) {
+        return getContentResolver().update(uri, values, new Bundle());
+    }
+
+    public static void verifyInsertFromExternalPrivateDirViaRelativePath_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/obb/.. is not allowed.
+        final String androidObbDir = getContext().getObbDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidObbDir.substring(androidObbDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+
+        // Test that inserting files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidDataDir.substring(androidDataDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+    }
+
+    public static void verifyInsertFromExternalMediaDirViaRelativePath_allowed() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/media/.. is allowed.
+        final String androidMediaDir = getExternalMediaDir().toString();
+        final ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidMediaDir.substring(androidMediaDir.indexOf("Android")));
+        insertFile(values);
+    }
+
+    public static void verifyInsertFromExternalPrivateDirViaData_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        ContentValues values = new ContentValues();
+
+        // Test that inserting files from Android/obb/.. is not allowed.
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+
+        // Test that inserting files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+    }
+
+    public static void verifyInsertFromExternalMediaDirViaData_allowed() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/media/.. is allowed.
+        ContentValues values = new ContentValues();
+        final String androidMediaDirFile =
+                getExternalMediaDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidMediaDirFile);
+        insertFile(values);
+    }
+
+    // NOTE: While updating, DATA field should be ignored for all the apps including file manager.
+    public static void verifyUpdateToExternalDirsViaData_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(false);
+
+        final String androidMediaDirFile =
+                getExternalMediaDir().toString() + "/" + System.currentTimeMillis();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, androidMediaDirFile);
+        assertEquals(0, updateFile(uri, values));
+
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        assertEquals(0, updateFile(uri, values));
+
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        assertEquals(0, updateFile(uri, values));
+    }
+
+    public static void verifyUpdateToExternalMediaDirViaRelativePath_allowed()
+            throws IOException {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(true);
+
+        // Test that update to files from Android/media/.. is allowed.
+        final String androidMediaDir = getExternalMediaDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidMediaDir.substring(androidMediaDir.indexOf("Android")));
+        assertNotEquals(0, updateFile(uri, values));
+    }
+
+    public static void verifyUpdateToExternalPrivateDirsViaRelativePath_denied()
+            throws Exception {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(true);
+
+        // Test that update to files from Android/obb/.. is not allowed.
+        final String androidObbDir = getContext().getObbDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidObbDir.substring(androidObbDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> updateFile(uri, values));
+
+        // Test that update to files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidDataDir.substring(androidDataDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> updateFile(uri, values));
     }
 
     /**
@@ -1109,7 +1254,7 @@ public class TestUtils {
      *
      * <p>This method drops shell permission identity.
      */
-    private static void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
+    public static void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
         adoptShellPermissionIdentity(null);
         try {
             for (String op : ops) {

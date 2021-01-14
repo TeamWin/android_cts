@@ -21,9 +21,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.net.Uri;
-import android.os.SystemProperties;
 import android.os.image.DynamicSystemClient;
-import android.util.FeatureFlagUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -50,16 +48,8 @@ public class DynamicSystemClientTest implements DynamicSystemClient.OnStatusChan
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity();
     }
 
-    private boolean featureFlagEnabled() {
-        return SystemProperties.getBoolean(
-                FeatureFlagUtils.PERSIST_PREFIX + FeatureFlagUtils.DYNAMIC_SYSTEM, false);
-    }
-
     @Test
     public void testDynamicSystemClient() {
-        if (!featureFlagEnabled()) {
-            return;
-        }
         DynamicSystemClient dSClient = new DynamicSystemClient(mInstrumentation.getTargetContext());
         dSClient.setOnStatusChangedListener(this);
         try {
@@ -80,6 +70,32 @@ public class DynamicSystemClientTest implements DynamicSystemClient.OnStatusChan
             fail();
         }
         assertTrue(mUpdated);
+        try {
+            dSClient.unbind();
+        } catch (SecurityException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void testDynamicSystemClient_withoutOnStatusChangedListener() {
+        DynamicSystemClient dSClient = new DynamicSystemClient(mInstrumentation.getTargetContext());
+        try {
+            dSClient.bind();
+        } catch (SecurityException e) {
+            fail();
+        }
+        Uri uri = Uri.parse("https://www.google.com/").buildUpon().build();
+        try {
+            dSClient.start(uri, 1024L << 10);
+        } catch (SecurityException e) {
+            fail();
+        }
+        try {
+            Thread.sleep(3 * 1000);
+        } catch (InterruptedException e) {
+            fail();
+        }
         try {
             dSClient.unbind();
         } catch (SecurityException e) {

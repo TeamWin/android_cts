@@ -16,6 +16,8 @@
 
 package com.android.eventlib;
 
+import android.content.Context;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.BlockingDeque;
@@ -28,19 +30,21 @@ import java.util.concurrent.TimeUnit;
  */
 public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implements EventQuerier<E>, Events.EventListener {
     private final EventLogsQuery<E, F> mEventLogsQuery;
-    private final BlockingDeque<Event> mEvents;
+    private final Events mEvents;
+    private final BlockingDeque<Event> mFetchedEvents;
     private int skippedGet = 0;
 
-    LocalEventQuerier(EventLogsQuery<E, F> eventLogsQuery) {
+    LocalEventQuerier(Context context, EventLogsQuery<E, F> eventLogsQuery) {
         mEventLogsQuery = eventLogsQuery;
-        mEvents = new LinkedBlockingDeque<>(Events.EVENTS.getEvents());
-        Events.EVENTS.registerEventListener(this);
+        mEvents = Events.getInstance(context);
+        mFetchedEvents = new LinkedBlockingDeque<>(mEvents.getEvents());
+        mEvents.registerEventListener(this);
     }
 
     @Override
     public E get(Instant earliestLogTime) {
         int skipped = 0;
-        for (Event event : Events.EVENTS.getEvents()) {
+        for (Event event : mEvents.getEvents()) {
             if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
                     continue;
@@ -70,8 +74,8 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
 
     @Override
     public E next(Instant earliestLogTime) {
-        while (!mEvents.isEmpty()) {
-            Event event = mEvents.removeFirst();
+        while (!mFetchedEvents.isEmpty()) {
+            Event event = mFetchedEvents.removeFirst();
 
             if (mEventLogsQuery.eventClass().isInstance(event)) {
                 if (event.mTimestamp.isBefore(earliestLogTime)) {
@@ -94,7 +98,7 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
             Event event = null;
             try {
                 Duration remainingTimeout = Duration.between(Instant.now(), endTime);
-                event = mEvents.pollFirst(remainingTimeout.toMillis(), TimeUnit.MILLISECONDS);
+                event = mFetchedEvents.pollFirst(remainingTimeout.toMillis(), TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 return null;
             }
@@ -119,6 +123,6 @@ public class LocalEventQuerier<E extends Event, F extends EventLogsQuery> implem
 
     @Override
     public void onNewEvent(Event event) {
-        mEvents.addLast(event);
+        mFetchedEvents.addLast(event);
     }
 }
