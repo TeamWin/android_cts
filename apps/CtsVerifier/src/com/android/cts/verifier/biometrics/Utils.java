@@ -19,6 +19,7 @@ package com.android.cts.verifier.biometrics;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.Resources;
 import android.hardware.biometrics.BiometricManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -246,8 +247,9 @@ public class Utils {
     }
 
     static boolean deviceConfigContains(Context context, int authenticator) {
-        final String config[] = context.getResources()
-                .getStringArray(com.android.internal.R.array.config_biometric_sensors);
+        final Resources res = context.getResources();
+        final int resId = res.getIdentifier("config_biometric_sensors", "array", "android");
+        final String config[] = res.getStringArray(resId);
         for (String s : config) {
             Log.d(TAG, s);
             final String[] elems = s.split(":");
