@@ -20,10 +20,14 @@ import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
+import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
+import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATING;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -33,9 +37,12 @@ import static android.view.WindowInsets.Type.systemBars;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -70,8 +77,12 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
+        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.RED, Color.BLACK);
+    }
+
+    private void testSplashScreenColor(ComponentName name, int primaryColor, int secondaryColor) {
         // Activity may not be launched yet even if app transition is in idle state.
-        mWmState.waitForActivityState(SPLASHSCREEN_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(name, STATE_RESUMED);
         mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         final Bitmap image = takeScreenshot();
         final WindowMetrics windowMetrics = mWm.getMaximumWindowMetrics();
@@ -83,7 +94,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         appBounds.intersect(stableBounds);
         // Use ratios to flexibly accommodate circular or not quite rectangular displays
         // Note: Color.BLACK is the pixel color outside of the display region
-        assertColors(image, appBounds, Color.RED, 0.50f, Color.BLACK, 0.02f);
+        assertColors(image, appBounds, primaryColor, 0.50f, secondaryColor, 0.02f);
     }
 
     private void assertColors(Bitmap img, Rect bounds, int primaryColor,
@@ -124,7 +135,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         }
     }
 
-    private void assumeNewAPIsEnable() {
+    private void assumeNewApisEnabled() {
         // Temporary verify by shell command before new APIs enable.
         final String enableTest =
                 executeShellCommand("getprop persist.debug.shell_starting_surface").trim();
@@ -133,17 +144,17 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testHandleExitAnimationOnCreate() throws Exception {
-        assumeNewAPIsEnable();
+        assumeNewApisEnabled();
         launchRuntimeHandleExitAnimationActivity(true, false, false, true);
     }
     @Test
     public void testHandleExitAnimationOnResume() throws Exception {
-        assumeNewAPIsEnable();
+        assumeNewApisEnabled();
         launchRuntimeHandleExitAnimationActivity(false, true, false, true);
     }
     @Test
     public void testHandleExitAnimationCancel() throws Exception {
-        assumeNewAPIsEnable();
+        assumeNewApisEnabled();
         launchRuntimeHandleExitAnimationActivity(true, false, true, false);
     }
 
@@ -162,5 +173,44 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
                 () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+    }
+
+
+    @Test
+    public void testSetBackgroundColorActivity() {
+        assumeNewApisEnabled();
+        launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
+        testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
+    }
+
+    @Test
+    public void testHandleExitIconAnimatingActivity() throws Exception {
+        assumeNewApisEnabled();
+        TestJournalProvider.TestJournalContainer.start();
+        launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true));
+        mWmState.computeState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY);
+        mWmState.assertVisibility(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, true);
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
+        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
+                () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+        assertFalse(journal.extras.getBoolean(ICON_ANIMATING));
+    }
+
+    @Test
+    public void testCancelHandleExitIconAnimatingActivity() {
+        assumeNewApisEnabled();
+        TestJournalProvider.TestJournalContainer.start();
+        launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true),
+                extraBool(CANCEL_HANDLE_EXIT, true));
+        mWmState.waitForActivityState(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
+        assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
     }
 }
