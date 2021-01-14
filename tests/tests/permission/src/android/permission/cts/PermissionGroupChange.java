@@ -31,6 +31,7 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -164,6 +165,7 @@ public class PermissionGroupChange {
 
     @SecurityTest
     @Test
+    @AppModeFull
     public void permissionGroupShouldNotBeAutoGrantedIfNewMember() throws Throwable {
         installApp("CtsAppThatRequestsPermissionAandB");
 
