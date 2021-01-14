@@ -1614,10 +1614,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.REMOVE_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build());
     }
 
@@ -1634,13 +1636,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
                 .setInt(0)
-                .setStrings("RSA")
+                .setStrings("RSA", "notCredentialManagementApp")
                 .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.GENERATE_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
                 .setInt(0)
-                .setStrings("EC")
+                .setStrings("EC", "notCredentialManagementApp")
                 .build());
 
     }
@@ -1656,6 +1658,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEY_PAIR_CERTIFICATE_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build());
     }
 
