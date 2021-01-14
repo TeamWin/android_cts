@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2014 The Android Open Source Project
+<!-- Copyright (C) 2020 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -24,13 +24,17 @@
     <uses-sdk android:minSdkVersion="4" tools:overrideLibrary=
         "androidx.test.runner, androidx.test.rules, androidx.test.monitor"/>
 
-    <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- Remove the CAMERA permission
+    <uses-permission android:name="android.permission.CAMERA"/> -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <!-- Add the VIBRATE permission -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application android:label="SplitApp"
          android:multiArch="true">
-        <activity android:name=".MyActivity"
+        <!-- Updates to .revision_a.MyActivity -->
+        <activity android:name=".revision_a.MyActivity"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -46,7 +50,8 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-        <receiver android:name=".MyReceiver"
+        <!-- Updates to .revision_a.MyReceiver -->
+        <receiver android:name=".revision_a.MyReceiver"
              android:enabled="@bool/my_receiver_enabled"
              android:exported="true">
             <intent-filter>
@@ -67,7 +72,8 @@
             </intent-filter>
         </receiver>
 
-        <provider android:name=".RemoteQueryProvider"
+        <!-- Updates to .revision_a.MyProvider -->
+        <provider android:name=".revision_a.MyProvider"
              android:authorities="com.android.cts.splitapp"
              android:exported="true"
              android:directBootAware="true">

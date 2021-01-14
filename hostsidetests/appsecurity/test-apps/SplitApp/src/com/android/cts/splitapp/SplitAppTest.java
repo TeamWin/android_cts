@@ -16,6 +16,8 @@
 
 package com.android.cts.splitapp;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNull;
@@ -25,7 +27,9 @@ import static junit.framework.Assert.fail;
 import static org.xmlpull.v1.XmlPullParser.END_DOCUMENT;
 import static org.xmlpull.v1.XmlPullParser.START_TAG;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -51,8 +55,12 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.cts.splitapp.TestThemeHelper.ThemeColors;
+
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
@@ -70,6 +78,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class SplitAppTest {
@@ -80,6 +89,15 @@ public class SplitAppTest {
 
     public static boolean sFeatureTouched = false;
     public static String sFeatureValue = null;
+
+    private static final String BASE_THEME_ACTIVITY = ".ThemeActivity";
+    private static final String WARM_THEME_ACTIVITY = ".WarmThemeActivity";
+    private static final String ROSE_THEME_ACTIVITY = ".RoseThemeActivity";
+
+    @Rule
+    public ActivityTestRule<Activity> mActivityRule =
+            new ActivityTestRule<>(Activity.class, true /*initialTouchMode*/,
+                    false /*launchActivity*/);
 
     @Test
     public void testNothing() throws Exception {
@@ -238,7 +256,7 @@ public class SplitAppTest {
     }
 
     @Test
-    public void testFeatureBase() throws Exception {
+    public void testFeatureWarmBase() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
 
@@ -255,9 +273,9 @@ public class SplitAppTest {
 
         // And that we can access resources from feature
         assertEquals("red", r.getString(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_string", "string", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_string", "string", PKG)));
         assertEquals(123, r.getInteger(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);
@@ -392,7 +410,7 @@ public class SplitAppTest {
     }
 
     @Test
-    public void testFeatureApi() throws Exception {
+    public void testFeatureWarmApi() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
 
@@ -401,7 +419,7 @@ public class SplitAppTest {
 
         // And that we can access resources from feature
         assertEquals(321, r.getInteger(r.getIdentifier(
-                "com.android.cts.splitapp.feature:feature_integer", "integer", PKG)));
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
 
         final Class<?> featR = Class.forName("com.android.cts.splitapp.FeatureR");
         final int boolId = (int) featR.getDeclaredField("feature_receiver_enabled").get(null);
@@ -416,6 +434,114 @@ public class SplitAppTest {
         intent.setPackage(PKG);
         List<ResolveInfo> result = pm.queryBroadcastReceivers(intent, 0);
         assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testInheritUpdatedBase_withRevisionA() throws Exception {
+        final Resources r = getContext().getResources();
+        final PackageManager pm = getContext().getPackageManager();
+
+        // Resources should have been updated
+        assertEquals(true, r.getBoolean(R.bool.my_receiver_enabled));
+
+        assertEquals("blue-revision", r.getString(R.string.my_string1));
+        assertEquals("purple-revision", r.getString(R.string.my_string2));
+
+        assertEquals(0xff00ffff, r.getColor(R.color.my_color));
+        assertEquals(456, r.getInteger(R.integer.my_integer));
+
+        // Also, new resources could be found
+        assertEquals("new string", r.getString(r.getIdentifier(
+                "my_new_string", "string", PKG)));
+
+        assertAssetContents(r, "fileA.txt", "FILEA");
+        assertAssetContents(r, "dir/dirfileA.txt", "DIRFILEA");
+
+        // Activity of ACTION_MAIN should have been updated to .revision_a.MyActivity
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setPackage(PKG);
+        final List<String> activityNames = pm.queryIntentActivities(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(activityNames).contains("com.android.cts.splitapp.revision_a.MyActivity");
+
+        // Receiver of DATE_CHANGED should have been updated to .revision_a.MyReceiver
+        intent = new Intent(Intent.ACTION_DATE_CHANGED);
+        intent.setPackage(PKG);
+        final List<String> receiverNames = pm.queryBroadcastReceivers(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(receiverNames).contains("com.android.cts.splitapp.revision_a.MyReceiver");
+
+        // Provider should have been updated to .revision_a.MyProvider
+        final ProviderInfo info = pm.resolveContentProvider("com.android.cts.splitapp", 0);
+        assertEquals("com.android.cts.splitapp.revision_a.MyProvider", info.name);
+
+        // And assert that we spun up the provider in this process
+        final Class<?> provider = Class.forName("com.android.cts.splitapp.revision_a.MyProvider");
+        final Field field = provider.getDeclaredField("sCreated");
+        assertTrue("Expected provider to have been created", (boolean) field.get(null));
+
+        // Camera permission has been removed
+        try {
+            getContext().enforceCallingOrSelfPermission(android.Manifest.permission.CAMERA, null);
+            fail("Camera permission should not be granted");
+        } catch (SecurityException expected) {
+        }
+
+        // New Vibrate permision should be granted
+        getContext().enforceCallingOrSelfPermission(android.Manifest.permission.VIBRATE, null);
+    }
+
+    @Test
+    public void testInheritUpdatedSplit_withRevisionA() throws Exception {
+        final Resources r = getContext().getResources();
+        final PackageManager pm = getContext().getPackageManager();
+
+        // Resources should have been updated
+        assertEquals("red-revision", r.getString(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_string", "string", PKG)));
+        assertEquals(456, r.getInteger(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_integer", "integer", PKG)));
+
+        // Also, new resources could be found
+        assertEquals("feature new string", r.getString(r.getIdentifier(
+                "com.android.cts.splitapp.feature_warm:feature_new_string", "string", PKG)));
+
+        assertAssetContents(r, "fileFA.txt", "FILE_FA");
+        assertAssetContents(r, "dir/dirfileFA.txt", "DIRFILE_FA");
+
+        // Activity of ACTION_MAIN should have been updated to .revision_a.FeatureActivity
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        intent.setPackage(PKG);
+        final List<String> activityNames = pm.queryIntentActivities(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(activityNames).contains("com.android.cts.splitapp.revision_a.FeatureActivity");
+
+        // Receiver of DATE_CHANGED could not be found
+        intent = new Intent(Intent.ACTION_DATE_CHANGED);
+        intent.setPackage(PKG);
+        final List<String> receiverNames = pm.queryBroadcastReceivers(intent, 0).stream()
+                .map(info -> info.activityInfo.name).collect(Collectors.toList());
+        assertThat(receiverNames).doesNotContain("com.android.cts.splitapp.FeatureReceiver");
+
+        // Service of splitapp should have been updated to .revision_a.FeatureService
+        intent = new Intent("com.android.cts.splitapp.service");
+        intent.setPackage(PKG);
+        final List<String> serviceNames = pm.queryIntentServices(intent, 0).stream()
+                .map(info -> info.serviceInfo.name).collect(Collectors.toList());
+        assertThat(serviceNames).contains("com.android.cts.splitapp.revision_a.FeatureService");
+
+        // Provider should have been updated to .revision_a.FeatureProvider
+        final ProviderInfo info = pm.resolveContentProvider(
+                "com.android.cts.splitapp.provider", 0);
+        assertEquals("com.android.cts.splitapp.revision_a.FeatureProvider", info.name);
+
+        // And assert that we spun up the provider in this process
+        final Class<?> provider = Class.forName(
+                "com.android.cts.splitapp.revision_a.FeatureProvider");
+        final Field field = provider.getDeclaredField("sCreated");
+        assertTrue("Expected provider to have been created", (boolean) field.get(null));
     }
 
     /**
@@ -593,6 +719,99 @@ public class SplitAppTest {
         assertEquals(12, info.splitRevisionCodes[0]);
     }
 
+    @Test
+    public void launchBaseActivity_withThemeBase_baseApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeBaseLt_baseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE_LT);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
+    }
+
+    @Test
+    public void launchBaseActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeBase_baseApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeBaseLt_baseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY, R.style.Theme_Base,
+                ThemeColors.BASE_LT);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeRose_roseApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE);
+    }
+
+    @Test
+    public void launchWarmActivity_withThemeRoseLt_roseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(WARM_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE_LT);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeWarm_warmApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeWarmLt_warmLtApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_WARM), ThemeColors.WARM_LT);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeRose_roseApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE);
+    }
+
+    @Test
+    public void launchRoseActivity_withThemeRoseLt_roseLtApplied() {
+        assertActivityLaunchedAndThemeApplied(ROSE_THEME_ACTIVITY,
+                resolveResourceId(TestThemeHelper.THEME_ROSE), ThemeColors.ROSE_LT);
+    }
+
+    private void assertActivityLaunchedAndThemeApplied(String activityName, int themeResId,
+            ThemeColors themeColors) {
+        final Activity activity = mActivityRule.launchActivity(
+                getTestThemeIntent(activityName, themeResId));
+        final TestThemeHelper expected = new TestThemeHelper(activity, themeResId);
+        expected.assertThemeValues(themeColors);
+        expected.assertThemeApplied(activity);
+    }
+
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext();
     }
@@ -659,5 +878,18 @@ public class SplitAppTest {
         } finally {
             is.close();
         }
+    }
+
+    private int resolveResourceId(String nameOfIdentifier) {
+        final int resId = getContext().getResources().getIdentifier(nameOfIdentifier, null, null);
+        assertTrue("Resource not found: " + nameOfIdentifier, resId != 0);
+        return resId;
+    }
+
+    private static Intent getTestThemeIntent(String activityName, int themeResId) {
+        final Intent intent = new Intent(ThemeActivity.INTENT_THEME_TEST);
+        intent.setComponent(ComponentName.createRelative(PKG, activityName));
+        intent.putExtra(ThemeActivity.EXTRAS_THEME_RES_ID, themeResId);
+        return intent;
     }
 }
