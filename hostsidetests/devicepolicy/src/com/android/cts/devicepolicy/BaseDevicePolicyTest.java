@@ -148,6 +148,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     /** Whether DPM is supported. */
     protected boolean mHasFeature;
+    protected int mDeviceOwnerUserId;
     protected int mPrimaryUserId;
 
     /** Record the initial user ID. */
@@ -208,11 +209,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         }
 
         if (!isHeadlessSystemUserMode()) {
-            mPrimaryUserId = getPrimaryUser();
+            mDeviceOwnerUserId = mPrimaryUserId = getPrimaryUser();
         } else {
             // For headless system user, all tests will be executed on current user
             // and therefore, initial user is set as primary user for test purpose.
             mPrimaryUserId = mInitialUserId;
+            mDeviceOwnerUserId = USER_SYSTEM;
         }
 
         mFixedUsers.add(mPrimaryUserId);
