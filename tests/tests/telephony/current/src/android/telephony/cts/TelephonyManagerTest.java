@@ -3212,7 +3212,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaRoamingMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3238,7 +3239,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaSubscriptionMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3259,7 +3261,7 @@ public class TelephonyManagerTest {
 
         // Reset state
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                tm -> tm.setCdmaRoamingMode(cdmaSubscriptionMode));
+                tm -> tm.setCdmaSubscriptionMode(cdmaSubscriptionMode));
     }
 
     @Test

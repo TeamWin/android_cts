@@ -48,7 +48,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(mInstrumentation);
-        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+        mDevicePolicyManager = DevicePolicyManagerWrapper.get(mContext);
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         assertDeviceOwner();

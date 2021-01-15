@@ -17,38 +17,57 @@
 package com.android.cts.deviceandprofileowner;
 
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
-import static org.testng.Assert.assertThrows;
+import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
 
+import static junit.framework.Assert.assertFalse;
+import static junit.framework.Assert.assertTrue;
+
+import static org.junit.Assume.assumeTrue;
+
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.PowerManager;
 import android.os.Process;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
-import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
-public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
+@RunWith(AndroidJUnit4.class)
+public class SecondaryLockscreenTest {
 
-    private static final int UI_AUTOMATOR_WAIT_TIME_MILLIS = 5000;
+    private static final int UI_AUTOMATOR_WAIT_TIME_MILLIS = 10000;
     private static final String TAG = "SecondaryLockscreenTest";
 
+    private Context mContext;
+    private DevicePolicyManager mDevicePolicyManager;
     private UiDevice mUiDevice;
 
     @Before
-    @Override
     public void setUp() throws Exception {
-        super.setUp();
+        mContext = InstrumentationRegistry.getContext();
+        assumeTrue(
+                "Device does not support secure lock",
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        runShellCommand("locksettings set-pin 1234");
+        mUiDevice.executeShellCommand("locksettings set-disabled false");
+        mUiDevice.executeShellCommand("locksettings set-pin 1234");
 
         mDevicePolicyManager.clearPackagePersistentPreferredActivities(ADMIN_RECEIVER_COMPONENT,
                 mContext.getPackageName());
@@ -59,14 +78,14 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
     }
 
     @After
-    @Override
     public void tearDown() throws Exception {
-        super.tearDown();
         mDevicePolicyManager.setSecondaryLockscreenEnabled(ADMIN_RECEIVER_COMPONENT, false);
         assertFalse(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
-        runShellCommand("locksettings clear --old 1234");
+        mUiDevice.executeShellCommand("locksettings clear --old 1234");
+        mUiDevice.executeShellCommand("locksettings set-disabled true");
     }
 
+    @Test
     public void testSetSecondaryLockscreenEnabled() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -80,6 +99,7 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
         verifyHomeLauncherIsShown();
     }
 
+    @Test
     public void testHomeButton() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -91,6 +111,7 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
         verifySecondaryLockscreenIsShown();
     }
 
+    @Test
     public void testDismiss() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -107,25 +128,24 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
         verifySecondaryLockscreenIsShown();
     }
 
+    @Test(expected = SecurityException.class)
     public void testSetSecondaryLockscreen_ineligibleAdmin_throwsSecurityException() {
         final ComponentName badAdmin = new ComponentName("com.foo.bar", ".NonProfileOwnerReceiver");
-        assertThrows(SecurityException.class,
-                () -> mDevicePolicyManager.setSecondaryLockscreenEnabled(badAdmin, true));
+        mDevicePolicyManager.setSecondaryLockscreenEnabled(badAdmin, true);
     }
 
     private void enterKeyguardPin() throws Exception {
         final PowerManager pm = mContext.getSystemService(PowerManager.class);
-        runShellCommand("input keyevent KEYCODE_SLEEP");
-        waitUntil("Device still interactive", 5,
-                () -> pm != null && !pm.isInteractive());
-        runShellCommand("input keyevent KEYCODE_WAKEUP");
-        waitUntil("Device still not interactive", 5,
-                () -> pm.isInteractive());
-        runShellCommand("wm dismiss-keyguard");
-        mUiDevice.wait(Until.hasObject(By.res("com.android.systemui", "pinEntry")),
-                UI_AUTOMATOR_WAIT_TIME_MILLIS);
-        runShellCommand("input text 1234");
-        runShellCommand("input keyevent KEYCODE_ENTER");
+        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        waitUntil("Device still interactive", 5, () -> pm != null && !pm.isInteractive());
+        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        waitUntil("Device still not interactive", 5, () -> pm.isInteractive());
+        mUiDevice.executeShellCommand("wm dismiss-keyguard");
+        mUiDevice.wait(
+                Until.hasObject(By.res("com.android.systemui", "pinEntry")),
+                        UI_AUTOMATOR_WAIT_TIME_MILLIS);
+        mUiDevice.executeShellCommand("input text 1234");
+        mUiDevice.executeShellCommand("input keyevent KEYCODE_ENTER");
     }
 
     private void verifyHomeLauncherIsShown() {

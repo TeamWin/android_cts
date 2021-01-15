@@ -835,6 +835,15 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         // Set initial orientation.
         rotationSession.set(orientation);
 
+        // Launch a fullscreen activity first to make it behind the split-screen tasks (in
+        // WINDOWING_MODE_MULTI_WINDOW) that created below to avoid any other visible activities
+        // (e.g Launcher) affects the rotation tests.
+        // TODO(b/177166639): Making activities behind the splits invisible from TaskOrg.
+        getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+
         // Launch activities that request orientations and check that device doesn't rotate.
         launchActivitiesInLegacySplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),

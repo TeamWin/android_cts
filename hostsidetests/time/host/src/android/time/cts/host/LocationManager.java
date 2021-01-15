@@ -31,6 +31,11 @@ final class LocationManager {
      */
     static final String SHELL_COMMAND_SET_LOCATION_ENABLED = "set-location-enabled";
 
+    /**
+     * A shell command that gets the current user's "location enabled" setting value.
+     */
+    static final String SHELL_COMMAND_IS_LOCATION_ENABLED = "is-location-enabled";
+
     private LocationManager() {
         // No need to instantiate.
     }

@@ -176,8 +176,14 @@
              android:resizeableActivity="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
 
+        <activity android:name="android.server.wm.HideOverlayWindowsTest$SystemWindowActivity"
+                  android:process=":swa"
+                  android:exported="true"/>
         <activity android:name="android.server.wm.HideOverlayWindowsTest$InternalSystemWindowActivity"
                   android:process=":iswa"
+                  android:exported="true"/>
+        <activity android:name="android.server.wm.HideOverlayWindowsTest$SystemApplicationOverlayActivity"
+                  android:process=":saoa"
                   android:exported="true"/>
 
         <activity android:name="android.server.wm.KeyguardLockedTests$ShowImeAfterLockscreenActivity"/>

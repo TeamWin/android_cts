@@ -39,6 +39,13 @@
             <meta-data android:name="android.service.wallpaper"
                  android:resource="@xml/my_activity_meta"/>
         </activity>
+        <activity android:name=".ThemeActivity" android:theme="@style/Theme_Base"
+                  android:exported="false">
+            <intent-filter>
+                <action android:name="com.android.cts.splitapp.intent.THEME_TEST"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
         <receiver android:name=".MyReceiver"
              android:enabled="@bool/my_receiver_enabled"
              android:exported="true">

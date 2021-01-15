@@ -24,10 +24,11 @@ import android.os.IBinder;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.Gravity;
 import android.view.SurfaceControlViewHost;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RelativeLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
@@ -62,6 +63,8 @@ public class SimpleKeyguardService extends DevicePolicyKeyguardService {
         title.setText(TITLE_LABEL);
 
         Button button = new Button(context);
+        // Avoid potential all caps text transformation on button. (eg. b/172993563)
+        button.setTransformationMethod(null);
         button.setText(DISMISS_BUTTON_LABEL);
         button.setOnClickListener(ignored -> {
             button.setText("Dismissing...");
@@ -69,7 +72,9 @@ public class SimpleKeyguardService extends DevicePolicyKeyguardService {
             dismiss();
         });
 
-        RelativeLayout rootView = new RelativeLayout(context);
+        LinearLayout rootView = new LinearLayout(context);
+        rootView.setOrientation(LinearLayout.VERTICAL);
+        rootView.setGravity(Gravity.CENTER);
         rootView.setBackgroundColor(Color.WHITE);
         rootView.addView(title);
         rootView.addView(button);

@@ -595,12 +595,20 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
-    public void testTransportControlsPlayAndPrepareFromSearchWithNullDoesNotCrash() {
+    public void testTransportControlsPlayAndPrepareFromSearchWithNullDoesNotCrash()
+            throws Exception {
         MediaController.TransportControls transportControls = mController.getTransportControls();
 
-        // These calls should not crash. Null is accepted on purpose.
-        transportControls.playFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
-        transportControls.prepareFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
+        synchronized (mWaitLock) {
+            // These calls should not crash. Null query is accepted on purpose.
+            transportControls.playFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mCallback.mOnPlayFromSearchCalled);
+
+            transportControls.prepareFromSearch(/*query=*/ null, /*extras=*/ new Bundle());
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mCallback.mOnPrepareFromSearchCalled);
+        }
     }
 
     public void testSendCustomActionWithIllegalArgumentsThrowsIAE() {

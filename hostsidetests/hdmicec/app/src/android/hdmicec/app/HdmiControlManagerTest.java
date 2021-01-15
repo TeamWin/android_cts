@@ -18,8 +18,11 @@ package android.hdmicec.app;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-
 import static com.google.common.truth.Truth.assertThat;
+
+import static junit.framework.Assert.fail;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.hardware.hdmi.HdmiControlManager;
@@ -38,6 +41,8 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -47,6 +52,8 @@ import java.util.List;
 public class HdmiControlManagerTest {
 
     private static final int DEVICE_TYPE_SWITCH = 6;
+
+    private static final int TIMEOUT_CONTENT_CHANGE_SEC = 3;
 
     private HdmiControlManager mHdmiControlManager;
 
@@ -129,6 +136,150 @@ public class HdmiControlManagerTest {
         if (deviceTypes.contains(String.valueOf(DEVICE_TYPE_SWITCH)) || isSwitchDevice) {
             assertThat(mHdmiControlManager.getSwitchClient().getDeviceType()).isEqualTo(
                     DEVICE_TYPE_SWITCH);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_HdmiCecEnabled() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getHdmiCecEnabled();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED)) {
+                mHdmiControlManager.setHdmiCecEnabled(value);
+                assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setHdmiCecEnabled(originalValue);
+            assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_HdmiCecEnabled_Listener() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getHdmiCecEnabled();
+        assumeTrue("Skipping because option not user-modifiable",
+                mHdmiControlManager.getUserCecSettings().contains(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED));
+        CountDownLatch notifyLatch1 = new CountDownLatch(1);
+        CountDownLatch notifyLatch2 = new CountDownLatch(2);
+        HdmiControlManager.CecSettingChangeListener listener =
+                new HdmiControlManager.CecSettingChangeListener() {
+                    @Override
+                    public void onChange(String setting) {
+                        notifyLatch1.countDown();
+                        notifyLatch2.countDown();
+                        assertThat(setting).isEqualTo(
+                                HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_ENABLED);
+                    }
+                };
+        try {
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
+            mHdmiControlManager.addHdmiCecEnabledChangeListener(listener);
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_ENABLED);
+            if (!notifyLatch1.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS)) {
+                fail("Timed out waiting for the notify callback");
+            }
+            mHdmiControlManager.removeHdmiCecEnabledChangeListener(listener);
+            mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
+            notifyLatch2.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS);
+            assertThat(notifyLatch2.getCount()).isEqualTo(1);
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setHdmiCecEnabled(originalValue);
+            assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_HdmiCecVersion() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getHdmiCecVersion();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_VERSION)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_HDMI_CEC_VERSION)) {
+                mHdmiControlManager.setHdmiCecVersion(value);
+                assertThat(mHdmiControlManager.getHdmiCecVersion()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setHdmiCecVersion(originalValue);
+            assertThat(mHdmiControlManager.getHdmiCecVersion()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_PowerControlMode() throws Exception {
+        // Save original value
+        String originalValue = mHdmiControlManager.getPowerControlMode();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE)) {
+            return;
+        }
+        try {
+            for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
+                    HdmiControlManager.CEC_SETTING_NAME_POWER_CONTROL_MODE)) {
+                mHdmiControlManager.setPowerControlMode(value);
+                assertThat(mHdmiControlManager.getPowerControlMode()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setPowerControlMode(originalValue);
+            assertThat(mHdmiControlManager.getPowerControlMode()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_PowerStateChangeOnActiveSourceLost() throws Exception {
+        // Save original value
+        String originalValue = mHdmiControlManager.getPowerStateChangeOnActiveSourceLost();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST)) {
+            return;
+        }
+        try {
+            for (String value : mHdmiControlManager.getAllowedCecSettingStringValues(
+                    HdmiControlManager.CEC_SETTING_NAME_POWER_STATE_CHANGE_ON_ACTIVE_SOURCE_LOST)) {
+                mHdmiControlManager.setPowerStateChangeOnActiveSourceLost(value);
+                assertThat(mHdmiControlManager.getPowerStateChangeOnActiveSourceLost()).isEqualTo(
+                        value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setPowerStateChangeOnActiveSourceLost(originalValue);
+            assertThat(mHdmiControlManager.getPowerStateChangeOnActiveSourceLost()).isEqualTo(
+                    originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_SystemAudioModeMuting() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getSystemAudioModeMuting();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_MODE_MUTING)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_SYSTEM_AUDIO_MODE_MUTING)) {
+                mHdmiControlManager.setSystemAudioModeMuting(value);
+                assertThat(mHdmiControlManager.getSystemAudioModeMuting()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setSystemAudioModeMuting(originalValue);
+            assertThat(mHdmiControlManager.getSystemAudioModeMuting()).isEqualTo(originalValue);
         }
     }
 }
