@@ -82,6 +82,7 @@ public class NotificationChannelTest extends AndroidTestCase {
                         .build());
         channel.setLightColor(Color.RED);
         channel.setDeleted(true);
+        channel.setDeletedTimeMs(1000);
         channel.setFgServiceShown(true);
         channel.setVibrationPattern(new long[] {299, 4562});
         channel.setBlockable(true);
