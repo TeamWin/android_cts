@@ -46,6 +46,7 @@ public class MockConnection extends Connection {
     public static final int ON_DEFLECT = 8;
     public static final int ON_SILENCE = 9;
     public static final int ON_ADD_CONFERENCE_PARTICIPANTS = 10;
+    public static final int ON_CALL_FILTERING_COMPLETED = 11;
 
     private CallAudioState mCallAudioState =
             new CallAudioState(false, CallAudioState.ROUTE_EARPIECE, ROUTE_EARPIECE | ROUTE_SPEAKER);
@@ -257,6 +258,11 @@ public class MockConnection extends Connection {
         if (mInvokeCounterMap.get(ON_SILENCE) != null) {
             mInvokeCounterMap.get(ON_SILENCE).invoke();
         }
+    }
+
+    @Override
+    public void onCallFilteringCompleted(boolean isBlocked, boolean isInContacts) {
+        getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(isBlocked, isInContacts);
     }
 
     public int getCurrentState()  {
