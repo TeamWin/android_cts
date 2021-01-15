@@ -24,7 +24,7 @@
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.BIND_VOICE_INTERACTION" />
 
-    <application>
+    <application android:debuggable="true">
         <activity android:name=".TestActivity"
                 android:resizeableActivity="true"
                 android:supportsPictureInPicture="true"
