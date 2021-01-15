@@ -930,7 +930,8 @@ public class CipherTest extends AndroidTestCase {
                         fail("Unexpectedly produced ciphertext (" + ciphertext.length
                                 + " bytes): " + HexEncoding.encode(ciphertext) + " for "
                                 + plaintext.length + " byte long plaintext");
-                    } catch (IllegalBlockSizeException | BadPaddingException expected) {}
+                    } catch (IllegalBlockSizeException | BadPaddingException |
+                            ArrayIndexOutOfBoundsException expected) {}
 
                     // Encrypting this plaintext using the highest-priority implementation should
                     // fail.
@@ -1609,7 +1610,7 @@ public class CipherTest extends AndroidTestCase {
         try {
             cipher.init(Cipher.DECRYPT_MODE, key, params);
             fail("InvalidKeyException should have been thrown");
-        } catch (InvalidKeyException expected) {}
+        } catch (InvalidKeyException | RuntimeException expected) {}
     }
 
     private void assertInitEncryptSucceeds(String transformation, KeyProtection importParams)

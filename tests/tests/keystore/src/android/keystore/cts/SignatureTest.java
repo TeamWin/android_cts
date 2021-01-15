@@ -692,8 +692,9 @@ public class SignatureTest extends AndroidTestCase {
                     signature.initVerify(keyPair.getPublic());
                     try {
                         signature.update(message);
-                        signature.verify(sigBytes);
-                        fail();
+                        if (signature.verify(sigBytes)) {
+                            fail();
+                        }
                     } catch (SignatureException expected) {}
                     continue;
                 }
