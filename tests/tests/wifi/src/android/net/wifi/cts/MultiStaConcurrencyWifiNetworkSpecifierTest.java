@@ -177,6 +177,10 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         // turn screen on
         turnScreenOn();
 
+        // Clear any existing app state before each test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+
         // We need 2 AP's for the test. If there are 2 networks saved on the device and in range,
         // use those. Otherwise, check if there are 2 BSSID's in range for the only saved network.
         // This assumes a CTS test environment with at least 2 connectable bssid's (Is that ok?).
@@ -223,6 +227,9 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         if (mNrNetworkCallback != null) {
             mConnectivityManager.unregisterNetworkCallback(mNrNetworkCallback);
         }
+        // Clear any existing app state after each test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         turnScreenOff();
     }
 

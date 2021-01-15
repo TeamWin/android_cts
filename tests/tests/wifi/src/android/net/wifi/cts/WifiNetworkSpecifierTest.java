@@ -50,6 +50,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -274,6 +275,12 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // turn screen on
         turnScreenOn();
 
+        // Clear any existing app state before each test.
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        }
+
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         // Pick the last saved network on the device (assumes that it is in range)
@@ -291,6 +298,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // If there is failure, ensure we unregister the previous request.
         if (mNetworkCallback != null) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        }
+        // Clear any existing app state after each test.
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
         turnScreenOff();
     }
