@@ -47,6 +47,7 @@ import java.util.concurrent.TimeoutException;
 
 public class CallComposerTest {
     private static final String TEST_FILE_NAME = "red_velvet_cupcake.png";
+    private static final String TEST_FILE_CONTENT_TYPE = "image/png";
     private static final long TEST_TIMEOUT_MILLIS = 5000;
 
     private String mPreviousDefaultDialer;
@@ -125,11 +126,11 @@ public class CallComposerTest {
         };
 
         if (inputFile != null) {
-            tm.uploadCallComposerPicture(inputFile, Executors.newSingleThreadExecutor(),
-                    callback);
+            tm.uploadCallComposerPicture(inputFile, TEST_FILE_CONTENT_TYPE,
+                    Executors.newSingleThreadExecutor(), callback);
         } else {
-            tm.uploadCallComposerPicture(inputStream, Executors.newSingleThreadExecutor(),
-                    callback);
+            tm.uploadCallComposerPicture(inputStream, TEST_FILE_CONTENT_TYPE,
+                    Executors.newSingleThreadExecutor(), callback);
         }
 
         Pair<ParcelUuid, TelephonyManager.CallComposerException> result;
