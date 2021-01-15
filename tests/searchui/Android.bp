@@ -17,9 +17,11 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.annotation_annotation",
+        "androidx.test.ext.junit",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "truth-prebuilt",
+        "testng",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
