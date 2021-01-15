@@ -4,6 +4,7 @@ import static org.junit.Assert.assertNotNull;
 
 import android.Manifest;
 import android.content.Context;
+import android.location.GnssCapabilities;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementRequest;
 import android.location.GnssMeasurementsEvent;
@@ -13,6 +14,7 @@ import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
 import android.util.Log;
+
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -72,14 +74,15 @@ public class GnssMeasurementValuesTest {
     }
 
     /**
-     * Tests that one can listen for {@link GnssMeasurementsEvent} with correlationVectorOutputs
-     * enabled for collection purposes.
+     * Tests that one can listen for {@link GnssMeasurementsEvent} for collection purposes.
      * It only performs valid checks for the measurements received.
      * This tests uses actual data retrieved from GPS HAL.
      */
     @Test
     public void testListenForGnssMeasurements() throws Exception {
+        boolean isCorrVecSupported = false;
         boolean isSatPvtSupported = false;
+
         // Checks if GPS hardware feature is present, skips test (pass) if not
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
@@ -90,14 +93,20 @@ public class GnssMeasurementValuesTest {
             return;
         }
 
-        isSatPvtSupported = mTestLocationManager.getLocationManager().getGnssCapabilities()
-                                                .hasSatellitePvt();
+        GnssCapabilities capabilities = mTestLocationManager.getLocationManager().
+                getGnssCapabilities();
+        isSatPvtSupported = capabilities.hasSatellitePvt();
+        isCorrVecSupported = capabilities.hasMeasurementCorrelationVectors();
 
         mLocationListener = new TestLocationListener(LOCATION_TO_COLLECT_COUNT);
         mTestLocationManager.requestLocationUpdates(mLocationListener);
 
         mMeasurementListener = new TestGnssMeasurementListener(TAG);
-        mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
+        mTestLocationManager.registerGnssMeasurementCallback(
+                mMeasurementListener,
+                new GnssMeasurementRequest.Builder()
+                        .setCorrelationVectorOutputsEnabled(isCorrVecSupported)
+                        .build());
 
         SoftAssert softAssert = new SoftAssert(TAG);
         boolean success = mLocationListener.await();
@@ -123,7 +132,7 @@ public class GnssMeasurementValuesTest {
             long timeInNs = event.getClock().getTimeNanos();
             for (GnssMeasurement measurement : event.getMeasurements()) {
                 TestMeasurementUtil.assertAllGnssMeasurementSystemFields(mTestLocationManager,
-                    measurement, softAssert, timeInNs, isSatPvtSupported);
+                    measurement, softAssert, timeInNs, isCorrVecSupported, isSatPvtSupported);
             }
         }
         softAssert.assertAll();

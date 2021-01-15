@@ -20,6 +20,7 @@ import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.CorrelationVector;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
@@ -31,6 +32,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -310,10 +312,24 @@ public final class TestMeasurementUtil {
      * @param measurement GnssMeasurement
      * @param softAssert  custom SoftAssert
      * @param timeInNs    event time in ns
+     * @param requireCorrVec assert correlation vectors outputs
+     * @param requireSatPvt  assert satellite PVT outputs
      */
     public static void assertAllGnssMeasurementSystemFields(
         TestLocationManager testLocationManager, GnssMeasurement measurement,
-        SoftAssert softAssert, long timeInNs, boolean requireSatPvt) {
+        SoftAssert softAssert, long timeInNs, boolean requireCorrVec, boolean requireSatPvt) {
+
+        if (requireCorrVec) {
+            softAssert.assertTrue("GnssMeasurement must has correlation vectors",
+                timeInNs,
+                "measurement.hasCorrelationVectors() == true",
+                String.valueOf(measurement.hasCorrelationVectors()),
+                measurement.hasCorrelationVectors());
+        }
+        if (measurement.hasCorrelationVectors()) {
+            verifyCorrelationVectors(measurement, softAssert, timeInNs);
+        }
+
         if (requireSatPvt) {
             softAssert.assertTrue("GnssMeasurement must has satellite PVT",
                 timeInNs,
@@ -323,6 +339,61 @@ public final class TestMeasurementUtil {
         }
         if (measurement.hasSatellitePvt()) {
             verifySatellitePvt(measurement, softAssert, timeInNs);
+        }
+    }
+
+    /**
+     * Verify correlation vectors are in expected range.
+     *
+     * @param measurement GnssMeasurement
+     * @param softAssert  custom SoftAssert
+     * @param timeInNs    event time in ns
+     */
+    private static void verifyCorrelationVectors(GnssMeasurement measurement,
+        SoftAssert softAssert, long timeInNs) {
+        Collection<CorrelationVector> correlationVectors =
+                measurement.getCorrelationVectors();
+        assertNotNull("CorrelationVectors cannot be null.", correlationVectors);
+        softAssert.assertTrue("CorrelationVectors count",
+                timeInNs,
+                "X > 0",
+                String.valueOf(correlationVectors.size()),
+                correlationVectors.size() > 0);
+        for (CorrelationVector correlationVector : correlationVectors) {
+            assertNotNull("CorrelationVector cannot be null.", correlationVector);
+            int[] magnitude = correlationVector.getMagnitude();
+            softAssert.assertTrue("frequency_offset_mps : "
+                    + "Frequency offset from reported pseudorange rate "
+                    + "for this CorrelationVector",
+                    timeInNs,
+                    "X >= 0",
+                    String.valueOf(correlationVector.getFrequencyOffsetMetersPerSecond()),
+                    correlationVector.getFrequencyOffsetMetersPerSecond() >= 0);
+            softAssert.assertTrue("sampling_width_m : "
+                    + "The space between correlation samples in meters",
+                    timeInNs,
+                    "X > 0.0",
+                    String.valueOf(correlationVector.getSamplingWidthMeters()),
+                    correlationVector.getSamplingWidthMeters() > 0.0);
+            softAssert.assertTrue("frequency_offset_mps : "
+                    + "Offset of the first sampling bin in meters",
+                    timeInNs,
+                    "X >= 0.0",
+                    String.valueOf(correlationVector.getSamplingStartMeters()),
+                    correlationVector.getSamplingStartMeters() >= 0.0);
+            softAssert.assertTrue("Magnitude count",
+                    timeInNs,
+                    "X > 0",
+                    String.valueOf(magnitude.length),
+                magnitude.length > 0);
+            for (int value : magnitude) {
+                softAssert.assertTrue("magnitude : Data representing normalized "
+                        + "correlation magnitude values",
+                        timeInNs,
+                        "-32768 <= X < 32767",
+                        String.valueOf(value),
+                        value >= -32768 && value < 32767);
+            }
         }
     }
 
