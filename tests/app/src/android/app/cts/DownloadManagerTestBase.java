@@ -21,6 +21,7 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -49,6 +50,7 @@ import android.webkit.cts.CtsTestServer;
 import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -421,7 +423,13 @@ public class DownloadManagerTestBase {
                     cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)));
             assertEquals(Uri.fromFile(expectedLocation).toString(),
                     cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-            assertTrue(expectedLocation.exists());
+
+            // Use shell to check if file is created as normal app doesn't have
+            // visibility to see other packages dirs.
+            String result = SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                    "file " + expectedLocation.getCanonicalPath());
+            assertFalse("Cannot create file in other packages",
+                    result.contains("No such file or directory"));
         } finally {
             if (cursor != null) {
                 cursor.close();
