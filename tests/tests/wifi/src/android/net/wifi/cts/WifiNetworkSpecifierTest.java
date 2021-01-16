@@ -207,7 +207,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public static void setUpClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(context));
+        if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertNotNull(wifiManager);
@@ -271,6 +271,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
 
         // turn screen on
         turnScreenOn();

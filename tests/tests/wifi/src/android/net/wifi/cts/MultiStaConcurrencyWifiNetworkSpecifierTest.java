@@ -119,19 +119,11 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     @BeforeClass
     public static void setUpClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(context));
-        // skip the test if location is not supported
-        assumeTrue(context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
+        // skip the test if WiFi is not supported. Don't use assumeTrue in @BeforeClass
+        if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertNotNull(wifiManager);
-
-        // skip if multi STA not supported.
-        assumeTrue(wifiManager.isMultiStaConcurrencySupported());
-
-        assertTrue("Please enable location for this test!",
-                context.getSystemService(LocationManager.class).isLocationEnabled());
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -173,6 +165,16 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         mWifiManager = mContext.getSystemService(WifiManager.class);
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+
+        // skip the test if WiFi is not supported
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
+        // skip the test if location is not supported
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
+        // skip if multi STA not supported.
+        assumeTrue(mWifiManager.isMultiStaConcurrencySupported());
+
+        assertTrue("Please enable location for this test!",
+                mContext.getSystemService(LocationManager.class).isLocationEnabled());
 
         // turn screen on
         turnScreenOn();
