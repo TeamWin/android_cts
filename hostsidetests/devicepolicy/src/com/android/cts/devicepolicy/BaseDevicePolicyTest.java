@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.config.Option;
@@ -595,6 +596,18 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected boolean canCreateAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
+    }
+
+    /**
+     * Throws a {@link org.junit.AssumptionViolatedException} if it's not possible to create the
+     * desired number of users.
+     */
+    protected void assumeCanCreateAdditionalUsers(int numberOfUsers)
+            throws DeviceNotAvailableException {
+        int maxUsers = getDevice().getMaxNumberOfUsersSupported();
+        assumeTrue("Tests needs at least " + numberOfUsers + " extra users, but device supports "
+                + "at most " + getMaxNumberOfUsersSupported(),
+                canCreateAdditionalUsers(numberOfUsers));
     }
 
     /** Checks whether it is possible to start the desired number of users. */
