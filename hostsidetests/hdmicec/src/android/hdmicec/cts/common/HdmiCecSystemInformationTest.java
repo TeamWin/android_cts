@@ -34,6 +34,9 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.List;
+
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
@@ -46,18 +49,33 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     /**
-     * Test 11.2.6-2
-     * Tests that the device sends a {@code <Report Physical Address>} in response to a
-     * {@code <Give Physical Address>}
+     * Tests 11.2.6-2, 10.1.1.1-1
+     *
+     * <p>Tests that the device sends a {@code <Report Physical Address>} in response to a {@code
+     * <Give Physical Address>}
      */
     @Test
     public void cect_11_2_6_2_GivePhysicalAddress() throws Exception {
-        hdmiCecClient.sendCecMessage(CecOperand.GIVE_PHYSICAL_ADDRESS);
-        String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
-        /* Check that the physical address taken is valid. */
-        CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
-        int receivedParams = CecMessage.getParams(message);
-        assertThat(receivedParams & 0xFF).isEqualTo(mDutLogicalAddress.getDeviceType());
+        List<LogicalAddress> testDevices =
+                Arrays.asList(
+                        LogicalAddress.TV,
+                        LogicalAddress.RECORDER_1,
+                        LogicalAddress.TUNER_1,
+                        LogicalAddress.PLAYBACK_1,
+                        LogicalAddress.AUDIO_SYSTEM,
+                        LogicalAddress.BROADCAST);
+        for (LogicalAddress testDevice : testDevices) {
+            if (testDevice == mDutLogicalAddress) {
+                /* Skip the DUT logical address */
+                continue;
+            }
+            hdmiCecClient.sendCecMessage(testDevice, CecOperand.GIVE_PHYSICAL_ADDRESS);
+            String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_PHYSICAL_ADDRESS);
+            /* Check that the physical address taken is valid. */
+            CecMessage.assertPhysicalAddressValid(message, getDumpsysPhysicalAddress());
+            int receivedParams = CecMessage.getParams(message);
+            assertThat(receivedParams & 0xFF).isEqualTo(mDutLogicalAddress.getDeviceType());
+        }
     }
 
     /**

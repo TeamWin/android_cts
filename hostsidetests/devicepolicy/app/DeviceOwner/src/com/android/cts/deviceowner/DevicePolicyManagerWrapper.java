@@ -110,9 +110,10 @@ public final class DevicePolicyManagerWrapper {
         Answer<?> answer = (inv) -> {
             Slog.d(TAG, "spying " + inv);
             Object[] args = inv.getArguments();
+            String methodName = inv.getMethod().getName();
             Intent intent = new Intent(ACTION_WRAPPED_DPM_CALL)
                     .setClassName(context, BasicAdminReceiver.class.getName())
-                    .putExtra(EXTRA_METHOD, inv.getMethod().getName())
+                    .putExtra(EXTRA_METHOD, methodName)
                     .putExtra(EXTRA_NUMBER_ARGS, args.length);
             for (int i = 0; i < args.length; i++) {
                 addArg(intent, args, i);
@@ -143,11 +144,12 @@ public final class DevicePolicyManagerWrapper {
 
             if (VERBOSE) Log.d(TAG, "Waiting for response");
             if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                fail("Ordered broadcast not received in " + TIMEOUT_MS + "ms");
+                fail("Ordered broadcast for " + methodName + "() not received in " + TIMEOUT_MS
+                        + "ms");
             }
 
             Result result = resultRef.get();
-            Log.d(TAG, "Received resul on user " + userId + ": " + result);
+            Log.d(TAG, "Received result on user " + userId + ": " + result);
 
             switch (result.code) {
                 case RESULT_OK:
@@ -176,6 +178,10 @@ public final class DevicePolicyManagerWrapper {
         doAnswer(answer).when(spy).setTime(any(), anyLong());
         doAnswer(answer).when(spy).setTimeZone(any(), any());
         doAnswer(answer).when(spy).setGlobalSetting(any(), any(), any());
+
+        // Used by UserControlDisabledPackagesTest
+        doAnswer(answer).when(spy).setUserControlDisabledPackages(any(), any());
+        doAnswer(answer).when(spy).getUserControlDisabledPackages(any());
 
         // TODO(b/176993670): add more methods below as tests are converted
 

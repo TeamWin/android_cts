@@ -46,6 +46,7 @@ public class CookieManagerTest extends
     private WebView mWebView;
     private CookieManager mCookieManager;
     private WebViewOnUiThread mOnUiThread;
+    private CtsTestServer mServer;
 
     public CookieManagerTest() {
         super("android.webkit.cts", CookieSyncManagerCtsActivity.class);
@@ -68,6 +69,13 @@ public class CookieManagerTest extends
             // But accepting cookies.
             mCookieManager.setAcceptCookie(false);
             assertFalse(mCookieManager.acceptCookie());
+        }
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        if (mServer != null) {
+            mServer.shutdown();
         }
     }
 
@@ -103,8 +111,8 @@ public class CookieManagerTest extends
         mCookieManager.setAcceptCookie(false);
         assertFalse(mCookieManager.acceptCookie());
 
-        CtsTestServer server = new CtsTestServer(getActivity(), false);
-        String url = server.getCookieUrl("conquest.html");
+        mServer = new CtsTestServer(getActivity(), false);
+        String url = mServer.getCookieUrl("conquest.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
         Thread.sleep(500);
@@ -113,7 +121,7 @@ public class CookieManagerTest extends
         mCookieManager.setAcceptCookie(true);
         assertTrue(mCookieManager.acceptCookie());
 
-        url = server.getCookieUrl("war.html");
+        url = mServer.getCookieUrl("war.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("0", mOnUiThread.getTitle()); // no cookies passed
         waitForCookie(url);
@@ -125,7 +133,7 @@ public class CookieManagerTest extends
         assertTrue(m.matches());
         assertEquals("0", m.group(1));
 
-        url = server.getCookieUrl("famine.html");
+        url = mServer.getCookieUrl("famine.html");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=0", mOnUiThread.getTitle()); // outgoing cookie
         waitForCookie(url);
@@ -135,7 +143,7 @@ public class CookieManagerTest extends
         assertTrue(m.matches());
         assertEquals("1", m.group(1)); // value got incremented
 
-        url = server.getCookieUrl("death.html");
+        url = mServer.getCookieUrl("death.html");
         mCookieManager.setCookie(url, "count=41");
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=41", mOnUiThread.getTitle()); // outgoing cookie
@@ -328,64 +336,59 @@ public class CookieManagerTest extends
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        CtsTestServer server = null;
-        try {
-            // In theory we need two servers to test this, one server ('the first party')
-            // which returns a response with a link to a second server ('the third party')
-            // at different origin. This second server attempts to set a cookie which should
-            // fail if AcceptThirdPartyCookie() is false.
-            // Strictly according to the letter of RFC6454 it should be possible to set this
-            // situation up with two TestServers on different ports (these count as having
-            // different origins) but Chrome is not strict about this and does not check the
-            // port. Instead we cheat making some of the urls come from localhost and some
-            // from 127.0.0.1 which count (both in theory and pratice) as having different
-            // origins.
-            server = new CtsTestServer(getActivity(), /* secure */ true);
-            mOnUiThread.setWebViewClient(new WaitForLoadedClient(mOnUiThread) {
-                @Override
-                public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                    // ignore the test server's invalid SSL cert
-                    handler.proceed();
-                }
-            });
 
-            // Turn on Javascript (otherwise <script> aren't fetched spoiling the test).
-            mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        // In theory we need two servers to test this, one server ('the first party')
+        // which returns a response with a link to a second server ('the third party')
+        // at different origin. This second server attempts to set a cookie which should
+        // fail if AcceptThirdPartyCookie() is false.
+        // Strictly according to the letter of RFC6454 it should be possible to set this
+        // situation up with two TestServers on different ports (these count as having
+        // different origins) but Chrome is not strict about this and does not check the
+        // port. Instead we cheat making some of the urls come from localhost and some
+        // from 127.0.0.1 which count (both in theory and pratice) as having different
+        // origins.
+        mServer = new CtsTestServer(getActivity(), /* secure */ true);
+        mOnUiThread.setWebViewClient(new WaitForLoadedClient(mOnUiThread) {
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                // ignore the test server's invalid SSL cert
+                handler.proceed();
+            }
+        });
 
-            // Turn global allow on.
-            mCookieManager.setAcceptCookie(true);
-            assertTrue(mCookieManager.acceptCookie());
+        // Turn on Javascript (otherwise <script> aren't fetched spoiling the test).
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
 
-            // When third party cookies are disabled...
-            mOnUiThread.setAcceptThirdPartyCookies(false);
-            assertFalse(mOnUiThread.acceptThirdPartyCookies());
+        // Turn global allow on.
+        mCookieManager.setAcceptCookie(true);
+        assertTrue(mCookieManager.acceptCookie());
 
-            // ...we can't set third party cookies.
-            // First on the third party server we get a url which tries to set a cookie.
-            String cookieUrl = toThirdPartyUrl(
-                    server.getSetCookieUrl("cookie_1.js", "test1", "value1", "SameSite=None; Secure"));
-            // Then we create a url on the first party server which links to the first url.
-            String url = server.getLinkedScriptUrl("/content_1.html", cookieUrl);
-            mOnUiThread.loadUrlAndWaitForCompletion(url);
-            assertNull(mCookieManager.getCookie(cookieUrl));
+        // When third party cookies are disabled...
+        mOnUiThread.setAcceptThirdPartyCookies(false);
+        assertFalse(mOnUiThread.acceptThirdPartyCookies());
 
-            // When third party cookies are enabled...
-            mOnUiThread.setAcceptThirdPartyCookies(true);
-            assertTrue(mOnUiThread.acceptThirdPartyCookies());
+        // ...we can't set third party cookies.
+        // First on the third party server we get a url which tries to set a cookie.
+        String cookieUrl = toThirdPartyUrl(
+                mServer.getSetCookieUrl("cookie_1.js", "test1", "value1", "SameSite=None; Secure"));
+        // Then we create a url on the first party server which links to the first url.
+        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        assertNull(mCookieManager.getCookie(cookieUrl));
 
-            // ...we can set third party cookies.
-            cookieUrl = toThirdPartyUrl(
-                    server.getSetCookieUrl("/cookie_2.js", "test2", "value2", "SameSite=None; Secure"));
-            url = server.getLinkedScriptUrl("/content_2.html", cookieUrl);
-            mOnUiThread.loadUrlAndWaitForCompletion(url);
-            waitForCookie(cookieUrl);
-            String cookie = mCookieManager.getCookie(cookieUrl);
-            assertNotNull(cookie);
-            assertTrue(cookie.contains("test2"));
-        } finally {
-            if (server != null) server.shutdown();
-            mOnUiThread.getSettings().setJavaScriptEnabled(false);
-        }
+        // When third party cookies are enabled...
+        mOnUiThread.setAcceptThirdPartyCookies(true);
+        assertTrue(mOnUiThread.acceptThirdPartyCookies());
+
+        // ...we can set third party cookies.
+        cookieUrl = toThirdPartyUrl(
+                mServer.getSetCookieUrl("/cookie_2.js", "test2", "value2", "SameSite=None; Secure"));
+        url = mServer.getLinkedScriptUrl("/content_2.html", cookieUrl);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        waitForCookie(cookieUrl);
+        String cookie = mCookieManager.getCookie(cookieUrl);
+        assertNotNull(cookie);
+        assertTrue(cookie.contains("test2"));
     }
 
     public void testb3167208() throws Exception {

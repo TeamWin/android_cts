@@ -17,6 +17,7 @@ package com.android.cts.deviceowner;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.annotation.UserIdInt;
 import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -41,6 +42,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
     protected Instrumentation mInstrumentation;
     protected UiDevice mDevice;
     protected boolean mHasSecureLockScreen;
+    /** User running the test (obtained from {@code mContext}). */
+    protected @UserIdInt int mUserId;
 
     @Override
     protected void setUp() throws Exception {
@@ -51,21 +54,23 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         mDevicePolicyManager = DevicePolicyManagerWrapper.get(mContext);
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
+        mUserId = mContext.getUserId();
+
         assertDeviceOwner();
     }
 
     private void assertDeviceOwner() {
         int myUserId = UserHandle.myUserId();
-        assertWithMessage("null DPM for user %s", myUserId).that(mDevicePolicyManager).isNotNull();
+        assertWithMessage("DPM for user %s", myUserId).that(mDevicePolicyManager).isNotNull();
 
         ComponentName admin = getWho();
-        assertWithMessage("Component %s is not admin for user %s", admin, myUserId)
+        assertWithMessage("Component %s is admin for user %s", admin, myUserId)
                 .that(mDevicePolicyManager.isAdminActive(admin)).isTrue();
 
         String pkgName = mContext.getPackageName();
-        assertWithMessage("Component %s is not device owner for user %s", admin, myUserId)
+        assertWithMessage("Component %s is device owner for user %s", admin, myUserId)
                 .that(mDevicePolicyManager.isDeviceOwnerApp(pkgName)).isTrue();
-        assertWithMessage("Component %s is not profile owner for user %s", admin, myUserId)
+        assertWithMessage("Component %s is profile owner for user %s", admin, myUserId)
                 .that(mDevicePolicyManager.isManagedProfile(admin)).isFalse();
     }
 
