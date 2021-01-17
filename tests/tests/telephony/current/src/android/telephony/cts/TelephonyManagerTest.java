@@ -17,6 +17,9 @@
 package android.telephony.cts;
 
 import static android.app.AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
+import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NONE;
+import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
+import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -69,6 +72,7 @@ import android.telephony.CellLocation;
 import android.telephony.DataThrottlingRequest;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NetworkRegistrationInfo;
+import android.telephony.PhoneCapability;
 import android.telephony.PhoneStateListener;
 import android.telephony.PinResult;
 import android.telephony.PreciseCallState;
@@ -138,6 +142,8 @@ public class TelephonyManagerTest {
     private boolean mRadioRebootTriggered = false;
     private boolean mHasRadioPowerOff = false;
     private ServiceState mServiceState;
+    private PhoneCapability mPhoneCapability;
+    private boolean mOnPhoneCapabilityChanged = false;
     private final Object mLock = new Object();
 
     private CarrierConfigManager mCarrierConfigManager;
@@ -1254,6 +1260,63 @@ public class TelephonyManagerTest {
         }
 
         assertNull(mTelephonyManager.createForSubscriptionId(inactiveValidSub).getServiceState());
+    }
+
+    private PhoneCapabilityChangedListener mPhoneCapabilityChangedListener;
+
+    private class PhoneCapabilityChangedListener extends PhoneStateListener
+            implements PhoneStateListener.PhoneCapabilityChangedListener {
+        @Override
+        public void onPhoneCapabilityChanged(PhoneCapability capability) {
+            synchronized (mLock) {
+                mPhoneCapability = capability;
+                mOnPhoneCapabilityChanged = true;
+                mLock.notify();
+            }
+        }
+    }
+
+    @Test
+    public void testGetPhoneCapability() throws Throwable {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+        assertThat(mOnPhoneCapabilityChanged).isFalse();
+
+        TestThread t = new TestThread(new Runnable() {
+            public void run() {
+                Looper.prepare();
+
+                mPhoneCapabilityChangedListener = new PhoneCapabilityChangedListener();
+                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                        (tm) -> tm.registerPhoneStateListener(mSimpleExecutor,
+                                mPhoneCapabilityChangedListener));
+                Looper.loop();
+            }
+        });
+        synchronized (mLock) {
+            t.start();
+            mLock.wait(TOLERANCE);
+        }
+
+        assertEquals(mPhoneCapability, mTelephonyManager.getPhoneCapability());
+    }
+
+    @Test
+    public void testGetPhoneCapabilityAndVerify() {
+        boolean is5gStandalone = getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_telephony5gStandalone);
+        boolean is5gNonStandalone = getContext().getResources().getBoolean(
+                com.android.internal.R.bool.config_telephony5gNonStandalone);
+        int deviceNrCapability =
+                (is5gStandalone ? DEVICE_NR_CAPABILITY_SA : DEVICE_NR_CAPABILITY_NONE) | (
+                        is5gNonStandalone ? DEVICE_NR_CAPABILITY_NSA : DEVICE_NR_CAPABILITY_NONE);
+
+        PhoneCapability phoneCapability = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getPhoneCapability());
+
+        assertEquals(deviceNrCapability, phoneCapability.getDeviceNrCapabilityBitmask());
     }
 
     @Test
