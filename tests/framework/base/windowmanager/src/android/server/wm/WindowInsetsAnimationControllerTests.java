@@ -649,6 +649,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     public static final class LimitedErrorCollector extends ErrorCollector {
         private static final int LIMIT = 1;
+        private static final boolean REPORT_SUPPRESSED_ERRORS = false;
         private int mCount = 0;
 
         @Override
@@ -660,8 +661,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         @Override
         protected void verify() throws Throwable {
-            if (mCount > LIMIT) {
-                super.addError(new AssertionError((mCount - LIMIT) + " errors skipped."));
+            if (mCount > LIMIT && REPORT_SUPPRESSED_ERRORS) {
+                super.addError(new AssertionError((mCount - LIMIT) + " errors suppressed."));
             }
             super.verify();
         }

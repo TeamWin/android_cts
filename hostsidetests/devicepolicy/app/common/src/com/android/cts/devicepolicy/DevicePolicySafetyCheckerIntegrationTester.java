@@ -17,6 +17,13 @@ package com.android.cts.devicepolicy;
 
 import static android.app.admin.DevicePolicyManager.OPERATION_LOCK_NOW;
 import static android.app.admin.DevicePolicyManager.OPERATION_LOGOUT_USER;
+import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_ACTIVE_ADMIN;
+import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_KEY_PAIR;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_ALWAYS_ON_VPN_PACKAGE;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_MASTER_VOLUME_MUTED;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_GRANT_STATE;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_POLICY;
+import static android.app.admin.DevicePolicyManager.OPERATION_SET_RESTRICTIONS_PROVIDER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_RESTRICTION;
 import static android.app.admin.DevicePolicyManager.operationToString;
 
@@ -33,6 +40,7 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Helper class to test that DPM calls fail when determined by the
@@ -47,11 +55,18 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     private static final int[] OPERATIONS = new int[] {
             OPERATION_LOCK_NOW,
             OPERATION_LOGOUT_USER,
-            OPERATION_SET_USER_RESTRICTION
+            OPERATION_REMOVE_ACTIVE_ADMIN,
+            OPERATION_REMOVE_KEY_PAIR,
+            OPERATION_SET_MASTER_VOLUME_MUTED,
+            OPERATION_SET_USER_RESTRICTION,
+            OPERATION_SET_PERMISSION_GRANT_STATE,
+            OPERATION_SET_PERMISSION_POLICY,
+            OPERATION_SET_RESTRICTIONS_PROVIDER
     };
 
     private static final int[] OVERLOADED_OPERATIONS = new int[] {
-            OPERATION_LOCK_NOW
+            OPERATION_LOCK_NOW,
+            OPERATION_SET_ALWAYS_ON_VPN_PACKAGE
     };
 
     /**
@@ -149,7 +164,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     }
 
     private void runCommonOrSpecificOperation(DevicePolicyManager dpm, ComponentName admin,
-            int operation, boolean overloaded) {
+            int operation, boolean overloaded) throws Exception {
         String name = getOperationName(operation, overloaded);
         Log.v(TAG, "runOperation(): " + name);
         switch (operation) {
@@ -163,8 +178,35 @@ public class DevicePolicySafetyCheckerIntegrationTester {
             case OPERATION_LOGOUT_USER:
                 dpm.logoutUser(admin);
                 break;
+            case OPERATION_SET_ALWAYS_ON_VPN_PACKAGE:
+                if (overloaded) {
+                    dpm.setAlwaysOnVpnPackage(admin, "vpnPackage", /* lockdownEnabled= */ true);
+                } else {
+                    dpm.setAlwaysOnVpnPackage(admin, "vpnPackage", /* lockdownEnabled= */ true,
+                            /* lockdownAllowlist= */ Set.of("vpnPackage"));
+                }
+                break;
+            case OPERATION_SET_MASTER_VOLUME_MUTED:
+                dpm.setMasterVolumeMuted(admin, /* on= */ true);
+                break;
+            case OPERATION_SET_PERMISSION_GRANT_STATE:
+                dpm.setPermissionGrantState(admin, "package", "permission", /* grantState= */ 0);
+                break;
+            case OPERATION_SET_PERMISSION_POLICY:
+                dpm.setPermissionPolicy(admin, /* policy= */ 0);
+                break;
+            case OPERATION_SET_RESTRICTIONS_PROVIDER:
+                dpm.setRestrictionsProvider(admin,
+                        /* provider= */ new ComponentName("package", "component"));
+                break;
             case OPERATION_SET_USER_RESTRICTION:
                 dpm.addUserRestriction(admin, UserManager.DISALLOW_REMOVE_USER);
+                break;
+            case OPERATION_REMOVE_ACTIVE_ADMIN:
+                dpm.removeActiveAdmin(admin);
+                break;
+            case OPERATION_REMOVE_KEY_PAIR:
+                dpm.removeKeyPair(admin, "keyAlias");
                 break;
             default:
                 runOperation(dpm, admin, operation, overloaded);

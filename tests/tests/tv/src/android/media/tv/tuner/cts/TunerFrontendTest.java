@@ -545,7 +545,7 @@ public class TunerFrontendTest {
     // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testFrontendInfo() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
-        List<FrontendInfo> infos = mTuner.getFrontendInfoList();
+        List<FrontendInfo> infos = mTuner.getAvailableFrontendInfos();
         Map<Integer, FrontendInfo> infoMap = new HashMap<>();
         for (FrontendInfo info : infos) {
             infoMap.put(info.getId(), info);

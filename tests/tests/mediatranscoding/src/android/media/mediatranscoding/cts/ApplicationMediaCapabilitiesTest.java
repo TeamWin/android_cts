@@ -39,15 +39,10 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     private static final String TAG = "ApplicationMediaCapabilitiesTest";
 
     public void testSetSupportHevc() throws Exception {
-        // Default HEVC support is false.
         ApplicationMediaCapabilities capability =
-                new ApplicationMediaCapabilities.Builder().build();
-        assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
-
-        ApplicationMediaCapabilities capability2 =
                 new ApplicationMediaCapabilities.Builder().addSupportedVideoMimeType(
                         MediaFormat.MIMETYPE_VIDEO_HEVC).build();
-        assertTrue(capability2.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
     }
 
     public void testSetSupportHdr() throws Exception {
@@ -259,6 +254,44 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
             parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
             ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
                     parser);
+        });
+    }
+
+    // Test NameNotFoundException with codec type.
+    // VP9 is not declare in the XML which leads to NameNotFoundException exception.
+    //    <format android:name="HEVC" supported="true"/>
+    //    <format android:name="HDR10" supported="false"/>
+    //    <format android:name="SlowMotion" supported="false"/>
+    public void testUnsupportedCodecMimetype() throws Exception {
+        assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
+            InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
+            final XmlPullParser parser = Xml.newPullParser();
+            parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
+
+            ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
+                    parser);
+
+            boolean supportVP9 = capability.isVideoMimeTypeSupported(
+                    MediaFormat.MIMETYPE_VIDEO_VP9);
+        });
+    }
+
+    // Test NameNotFoundException with hdr type.
+    // DOLBY_VISION is not declare in the XML which leads to NameNotFoundException exception.
+    //    <format android:name="HEVC" supported="true"/>
+    //    <format android:name="HDR10" supported="false"/>
+    //    <format android:name="SlowMotion" supported="false"/>
+    public void testUnsupportedHdrtype() throws Exception {
+        assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
+            InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
+            final XmlPullParser parser = Xml.newPullParser();
+            parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
+
+            ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
+                    parser);
+
+            boolean supportDolbyVision = capability.isHdrTypeSupported(
+                    MediaFeature.HdrType.DOLBY_VISION);
         });
     }
 }
