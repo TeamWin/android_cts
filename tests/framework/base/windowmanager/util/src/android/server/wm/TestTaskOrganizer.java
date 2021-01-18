@@ -44,7 +44,6 @@ import androidx.annotation.NonNull;
 
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -210,6 +209,17 @@ class TestTaskOrganizer extends TaskOrganizer {
                         "Can't put putTaskInSplitSecondary taskId=" + taskId);
 
                 Log.e(TAG, "putTaskInSplitSecondary taskId=" + taskId);
+            }
+        });
+    }
+
+    void setLaunchRoot(int taskId) {
+        NestedShellPermission.run(() -> {
+            synchronized (this) {
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setLaunchRoot(mKnownTasks.get(taskId).getToken(),
+                                CONTROLLED_WINDOWING_MODES, CONTROLLED_ACTIVITY_TYPES);
+                applyTransaction(t);
             }
         });
     }
