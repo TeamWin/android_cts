@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.server.wm.second">
 
-    <application>
+    <application android:debuggable="true">
         <activity
             android:name=".EmbeddingActivity"
             android:resizeableActivity="true"
