@@ -17,7 +17,9 @@
 cc_test_host {
     name: "cts_audio_quality_test",
     srcs: ["*.cpp"],
-
+    test_options: {
+        unit_test: false,
+    },
     static_libs: [
         "libbase",
         "libutils",
