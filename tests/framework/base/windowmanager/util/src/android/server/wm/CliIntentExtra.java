@@ -101,7 +101,7 @@ public final class CliIntentExtra {
     }
 
     /**
-     * Creates a {@link CliIntentExtra} for {@link Integer} intent extra.
+     * Creates a {@link CliIntentExtra} for {@link Boolean} intent extra.
      *
      * @param key the key in the key-value pair passed into the {@link android.content.Intent} extra
      * @param value the value in the key-value pair pased into the {@link android.content.Intent}
@@ -111,5 +111,18 @@ public final class CliIntentExtra {
      */
     public static CliIntentExtra extraBool(String key, boolean value) {
         return new CliIntentExtra("--ez", key, Boolean.toString(value));
+    }
+
+    /**
+     * Creates a {@link CliIntentExtra} for {@link Integer} intent extra.
+     *
+     * @param key the key in the key-value pair passed into the {@link android.content.Intent} extra
+     * @param value the value in the key-value pair pased into the {@link android.content.Intent}
+     *              extra
+     * @return {@link CliIntentExtra} to construct a command with the key value pair as parameters
+     * for an {@link android.content.Intent}
+     */
+    public static CliIntentExtra extraInt(String key, int value) {
+        return new CliIntentExtra("--ei", key, Integer.toString(value));
     }
 }
