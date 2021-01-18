@@ -81,6 +81,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
@@ -717,16 +718,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         Object softApLock;
         int currentState;
         int currentFailureReason;
+        List<SoftApInfo> apInfoList = new ArrayList<>();
+        Map<SoftApInfo, List<WifiClient>> apInfoClients = new HashMap<>();
         List<WifiClient> currentClientList;
-        SoftApInfo currentSoftApInfo;
         SoftApCapability currentSoftApCapability;
         MacAddress lastBlockedClientMacAddress;
         int lastBlockedClientReason;
         boolean onStateChangedCalled = false;
         boolean onSoftApCapabilityChangedCalled = false;
         boolean onConnectedClientCalled = false;
+        boolean onConnectedClientChangedWithInfoCalled = false;
         boolean onBlockedClientConnectingCalled = false;
         int onSoftapInfoChangedCalledCount = 0;
+        int onSoftapInfoChangedWithListCalledCount = 0;
 
         TestSoftApCallback(Object lock) {
             softApLock = lock;
@@ -744,9 +748,21 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
         }
 
+        public int getOnSoftApInfoChangedWithListCalledCount() {
+            synchronized(softApLock) {
+                return onSoftapInfoChangedWithListCalledCount;
+            }
+        }
+
         public boolean getOnSoftApCapabilityChangedCalled() {
             synchronized(softApLock) {
                 return onSoftApCapabilityChangedCalled;
+            }
+        }
+
+        public boolean getOnConnectedClientChangedWithInfoCalled() {
+            synchronized(softApLock) {
+                return onConnectedClientChangedWithInfoCalled;
             }
         }
 
@@ -776,13 +792,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         public List<WifiClient> getCurrentClientList() {
             synchronized(softApLock) {
-                return currentClientList;
+                return new ArrayList<>(currentClientList);
             }
         }
 
         public SoftApInfo getCurrentSoftApInfo() {
             synchronized(softApLock) {
-                return currentSoftApInfo;
+                return apInfoList.size() > 0 ? apInfoList.get(0) : null;
+            }
+        }
+
+        public List<SoftApInfo> getCurrentSoftApInfoList() {
+            synchronized(softApLock) {
+                return new ArrayList<>(apInfoList);
             }
         }
 
@@ -822,9 +844,26 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         @Override
+        public void onConnectedClientsChanged(SoftApInfo info, List<WifiClient> clients) {
+            synchronized(softApLock) {
+                apInfoClients.put(info, clients);
+                onConnectedClientChangedWithInfoCalled = true;
+            }
+        }
+
+        @Override
+        public void onInfoChanged(List<SoftApInfo> infoList) {
+            synchronized(softApLock) {
+                apInfoList = new ArrayList<>(infoList);
+                onSoftapInfoChangedWithListCalledCount++;
+            }
+        }
+
+        @Override
         public void onInfoChanged(SoftApInfo softApInfo) {
             synchronized(softApLock) {
-                currentSoftApInfo = softApInfo;
+                apInfoList.clear();
+                apInfoList.add(softApInfo);
                 onSoftapInfoChangedCalledCount++;
             }
         }
@@ -1665,6 +1704,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (BuildCompat.isAtLeastS()) {
             assertEquals(currentConfig.getMacRandomizationSetting(),
                     testSoftApConfig.getMacRandomizationSetting());
+            assertTrue(Arrays.equals(currentConfig.getBands(),
+                    testSoftApConfig.getBands()));
+            assertEquals(currentConfig.getChannels().toString(),
+                    testSoftApConfig.getChannels().toString());
+            assertEquals(currentConfig.isBridgedModeOpportunisticShutdownEnabled(),
+                    testSoftApConfig.isBridgedModeOpportunisticShutdownEnabled());
+            assertEquals(currentConfig.isIeee80211axEnabled(),
+                    testSoftApConfig.isIeee80211axEnabled());
         }
     }
 
@@ -1683,6 +1730,156 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 "SoftAp turn off failed!", 2_000,
                 () -> mWifiManager.isWifiApEnabled() == false);
             mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
+        }
+    }
+
+    private void verifyBridgedModeSoftApCallback(TestExecutor executor,
+            TestSoftApCallback callback, boolean shouldFallbackSingleApMode, boolean isEnabled)
+            throws Exception {
+            // Verify state and info callback value as expected
+            PollingCheck.check(
+                    "SoftAp state and info on bridged AP mode are mismatch!!!"
+                    + " shouldFallbackSingleApMode = " + shouldFallbackSingleApMode
+                    + ", isEnabled = "  + isEnabled, 5_000,
+                    () -> {
+                        executor.runAll();
+                        int expectedState = isEnabled ? WifiManager.WIFI_AP_STATE_ENABLED
+                                : WifiManager.WIFI_AP_STATE_DISABLED;
+                        int expectedInfoSize = isEnabled
+                                ? (shouldFallbackSingleApMode ? 1 : 2) : 0;
+                        return expectedState == callback.getCurrentState()
+                                && callback.getCurrentSoftApInfoList().size() == expectedInfoSize;
+                    });
+    }
+
+    private boolean shouldFallbackToSingleAp(int[] bands, SoftApCapability capability) {
+        for (int band : bands) {
+            if (capability.getSupportedChannelList(band).length == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Test bridged AP enable succeeful when device supports it.
+     * Also verify the callback info update correctly.
+     * @throws Exception
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testTetheredBridgedAp() throws Exception {
+        // check that softap bridged mode is supported by the device
+        if (!mWifiManager.isBridgedApConcurrencySupported()) {
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        TestExecutor executor = new TestExecutor();
+        TestSoftApCallback callback = new TestSoftApCallback(mLock);
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Off/On Wifi to make sure that we get the supported channel
+            turnOffWifiAndTetheredHotspotIfEnabled();
+            mWifiManager.setWifiEnabled(true);
+            PollingCheck.check(
+                "Wifi turn on failed!", 2_000,
+                () -> mWifiManager.isWifiEnabled() == true);
+            turnOffWifiAndTetheredHotspotIfEnabled();
+            verifyRegisterSoftApCallback(executor, callback);
+
+            // Test bridged SoftApConfiguration set and get (setBands)
+            SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
+                    .setSsid(TEST_SSID_UNQUOTED)
+                    .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
+                    .setBands(new int[] {
+                    SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ})
+                    .build();
+            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testSoftApConfig.getBands(),
+                    callback.getCurrentSoftApCapability());
+            verifySetGetSoftApConfig(testSoftApConfig);
+
+            // start tethering which used to verify startTetheredHotspot
+            mTetheringManager.startTethering(ConnectivityManager.TETHERING_WIFI, executor,
+                new TetheringManager.StartTetheringCallback() {
+                    @Override
+                    public void onTetheringFailed(final int result) {
+                    }
+                });
+            verifyBridgedModeSoftApCallback(executor, callback,
+                    shouldFallbackToSingleAp, true /* enabled */);
+            // stop tethering which used to verify stopSoftAp
+            mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
+            verifyBridgedModeSoftApCallback(executor, callback,
+                    shouldFallbackToSingleAp, false /* disabled */);
+        } finally {
+            mWifiManager.unregisterSoftApCallback(callback);
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test bridged AP with forced channel config enable succeeful when device supports it.
+     * Also verify the callback info update correctly.
+     * @throws Exception
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testTetheredBridgedApWifiForcedChannel() throws Exception {
+        // check that softap bridged mode is supported by the device
+        if (!mWifiManager.isBridgedApConcurrencySupported()) {
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        TestExecutor executor = new TestExecutor();
+        TestSoftApCallback callback = new TestSoftApCallback(mLock);
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Off/On Wifi to make sure that we get the supported channel
+            turnOffWifiAndTetheredHotspotIfEnabled();
+            mWifiManager.setWifiEnabled(true);
+            PollingCheck.check(
+                "Wifi turn on failed!", 2_000,
+                () -> mWifiManager.isWifiEnabled() == true);
+            turnOffWifiAndTetheredHotspotIfEnabled();
+            verifyRegisterSoftApCallback(executor, callback);
+
+            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(
+                    new int[] {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ},
+                    callback.getCurrentSoftApCapability());
+
+            // Test when there are supported channels in both of the bands.
+            if (!shouldFallbackToSingleAp) {
+                // Test bridged SoftApConfiguration set and get (setChannels)
+                SparseIntArray dual_channels = new SparseIntArray(2);
+                dual_channels.put(SoftApConfiguration.BAND_2GHZ,
+                        callback.getCurrentSoftApCapability()
+                        .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ)[0]);
+                dual_channels.put(SoftApConfiguration.BAND_5GHZ,
+                        callback.getCurrentSoftApCapability()
+                        .getSupportedChannelList(SoftApConfiguration.BAND_5GHZ)[0]);
+                SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
+                        .setSsid(TEST_SSID_UNQUOTED)
+                        .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
+                        .setChannels(dual_channels)
+                        .build();
+
+                verifySetGetSoftApConfig(testSoftApConfig);
+
+                // start tethering which used to verify startTetheredHotspot
+                mTetheringManager.startTethering(ConnectivityManager.TETHERING_WIFI, executor,
+                    new TetheringManager.StartTetheringCallback() {
+                        @Override
+                        public void onTetheringFailed(final int result) {
+                        }
+                    });
+                verifyBridgedModeSoftApCallback(executor, callback,
+                        shouldFallbackToSingleAp, true /* enabled */);
+                // stop tethering which used to verify stopSoftAp
+                mTetheringManager.stopTethering(ConnectivityManager.TETHERING_WIFI);
+                verifyBridgedModeSoftApCallback(executor, callback,
+                        shouldFallbackToSingleAp, false /* disabled */);
+            }
+        } finally {
+            mWifiManager.unregisterSoftApCallback(callback);
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
@@ -1755,6 +1952,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 softApConfigBuilder
                         .setPassphrase(TEST_PASSPHRASE,
                         SoftApConfiguration.SECURITY_TYPE_WPA3_SAE);
+                verifySetGetSoftApConfig(softApConfigBuilder.build());
+            }
+
+            // Test 11 AX control config.
+            if (callback.getCurrentSoftApCapability()
+                    .areFeaturesSupported(SoftApCapability.SOFTAP_FEATURE_IEEE80211_AX)) {
+                softApConfigBuilder.setIeee80211axEnabled(true);
                 verifySetGetSoftApConfig(softApConfigBuilder.build());
             }
         } finally {
