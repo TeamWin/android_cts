@@ -86,6 +86,7 @@ public final class DirectActionsActivity extends Activity {
             callback.accept(Collections.emptyList());
             return;
         }
+        Log.v(TAG, "onGetDirectActions()");
         final DirectAction action = new DirectAction.Builder(Utils.DIRECT_ACTIONS_ACTION_ID)
                 .setExtras(Utils.DIRECT_ACTIONS_ACTION_EXTRAS)
                 .setLocusId(Utils.DIRECT_ACTIONS_LOCUS_ID)
@@ -99,6 +100,7 @@ public final class DirectActionsActivity extends Activity {
     @Override
     public void onPerformDirectAction(String actionId, Bundle arguments,
             CancellationSignal cancellationSignal, Consumer<Bundle> callback) {
+        Log.v(TAG, "onPerformDirectAction(): " + Utils.toBundleString(arguments));
         if (arguments == null || !arguments.getString(Utils.DIRECT_ACTIONS_KEY_ARGUMENTS)
                 .equals(Utils.DIRECT_ACTIONS_KEY_ARGUMENTS)) {
             reportActionFailed(callback);
@@ -129,6 +131,7 @@ public final class DirectActionsActivity extends Activity {
 
         Utils.await(latch);
 
+        Log.v(TAG, "detectDestroyedInteractor(): " + Utils.toBundleString(result));
         callback.sendResult(result);
     }
 
