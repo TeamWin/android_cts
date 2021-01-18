@@ -32,6 +32,7 @@ import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassificationSessionId;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLanguage;
+import android.view.textclassifier.TextSelection;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
@@ -120,7 +121,7 @@ public class TextClassifierServiceSwapTest {
     }
 
     @Test
-    public void testResourceIconsRewrittenToContentUriIcons() throws Exception {
+    public void testResourceIconsRewrittenToContentUriIcons_classifyText() throws Exception {
         final TextClassifier tc = ApplicationProvider.getApplicationContext()
                 .getSystemService(TextClassificationManager.class)
                 .getTextClassifier();
@@ -129,6 +130,22 @@ public class TextClassifierServiceSwapTest {
 
         final TextClassification classification = tc.classifyText(request);
         final Icon icon = classification.getActions().get(0).getIcon();
+        assertThat(icon.getType()).isEqualTo(Icon.TYPE_URI);
+        assertThat(icon.getUri()).isEqualTo(CtsTextClassifierService.ICON_URI.getUri());
+    }
+
+    @Test
+    public void testResourceIconsRewrittenToContentUriIcons_suggestSelection() throws Exception {
+        final TextClassifier tc = ApplicationProvider.getApplicationContext()
+                .getSystemService(TextClassificationManager.class)
+                .getTextClassifier();
+        final TextSelection.Request request =
+                new TextSelection.Request.Builder("0800 123 4567", 0, 12)
+                        .setIncludeTextClassification(true)
+                        .build();
+
+        final TextSelection textSelection = tc.suggestSelection(request);
+        final Icon icon = textSelection.getTextClassification().getActions().get(0).getIcon();
         assertThat(icon.getType()).isEqualTo(Icon.TYPE_URI);
         assertThat(icon.getUri()).isEqualTo(CtsTextClassifierService.ICON_URI.getUri());
     }
