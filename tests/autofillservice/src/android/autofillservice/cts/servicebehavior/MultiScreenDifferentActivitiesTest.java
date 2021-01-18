@@ -144,5 +144,8 @@ public class MultiScreenDifferentActivitiesTest
         assertTextAndValue(findNodeByResourceId(structure2, ID_INPUT), "ID");
         final ComponentName component2 = structure2.getActivityComponent();
         assertThat(component2).isEqualTo(activity2.getComponentName());
+        activity2.syncRunOnUiThread(() -> {
+            activity2.mInput.setFocusable(false);
+        });
     }
 }
