@@ -46,6 +46,13 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+        <activity android:name=".feature.warm.EmptyActivity" android:splitName="feature_warm"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.splitapp.intent.SPLIT_NAME_TEST"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
         <receiver android:name=".MyReceiver"
              android:enabled="@bool/my_receiver_enabled"
              android:exported="true">
