@@ -24,11 +24,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
-import android.app.AlarmManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
