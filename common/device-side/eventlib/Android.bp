@@ -23,7 +23,8 @@ android_test {
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "truth-prebuilt",
-        "testng" // for assertThrows
+        "testng", // for assertThrows
+        "mockito-target-minus-junit4", // TODO(scottjonathan): Remove once we can get rid of mocks
     ],
     data: [":EventLibTestApp"],
     manifest: "src/test/AndroidManifest.xml",
