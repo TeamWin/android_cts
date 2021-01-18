@@ -355,7 +355,7 @@ public class TunerTest {
     @Ignore("b/174500129")
     // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testCiCam() throws Exception {
-// open filter to get demux resource
+    // open filter to get demux resource
         mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
 
@@ -367,9 +367,20 @@ public class TunerTest {
     @Ignore("b/174500129")
     // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSyncId() throws Exception {
-// open filter to get demux resource
+    // open filter to get demux resource
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        Settings settings = AvSettings
+                .builder(Filter.TYPE_TS, true)
+                .setPassthrough(false)
+                .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
+                .build();
+        FilterConfiguration config = TsFilterConfiguration
+                .builder()
+                .setTpid(10)
+                .setSettings(settings)
+                .build();
+        f.configure(config);
         int id = mTuner.getAvSyncHwId(f);
         if (id != Tuner.INVALID_AV_SYNC_ID) {
             assertNotEquals(Tuner.INVALID_TIMESTAMP, mTuner.getAvSyncTime(id));

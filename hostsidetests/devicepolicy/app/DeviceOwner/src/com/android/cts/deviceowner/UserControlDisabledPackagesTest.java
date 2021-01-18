@@ -16,6 +16,9 @@
 
 package com.android.cts.deviceowner;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -23,7 +26,6 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * Test {@link DevicePolicyManager#setUserControlDisabledPackages} and
@@ -44,13 +46,12 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
         ArrayList<String> protectedPackages= new ArrayList<>();
         protectedPackages.add(SIMPLE_APP_PKG);
         mDevicePolicyManager.setUserControlDisabledPackages(getWho(), protectedPackages);
-
-        // Launch app so that the app exits stopped state.
+        // Launch an activity so that the app exits stopped state.
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        Log.d(TAG, "Starting " + intent + " on user " + mUserId);
         mContext.startActivity(intent);
-
     }
 
     public void testForceStopWithUserControlDisabled() throws Exception {
@@ -59,29 +60,35 @@ public class UserControlDisabledPackagesTest extends BaseDeviceOwnerTest {
         // Check if package is part of UserControlDisabledPackages before checking if 
         // package is stopped since it is a necessary condition to prevent stopping of
         // package
-        assertEquals(pkgs, mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
-        assertFalse(isPackageStopped(SIMPLE_APP_PKG));
+
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho()))
+                .containsExactly(SIMPLE_APP_PKG);
+        assertPackageStopped(/* stopped= */ false);
     }
 
     public void testClearSetUserControlDisabledPackages() throws Exception {
         final ArrayList<String> pkgs = new ArrayList<>();
         mDevicePolicyManager.setUserControlDisabledPackages(getWho(), pkgs);
-        assertEquals(pkgs, mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho())).isEmpty();
     }
 
     public void testForceStopWithUserControlEnabled() throws Exception {
-        assertTrue(isPackageStopped(SIMPLE_APP_PKG));
-        assertEquals(Collections.emptyList(),
-                mDevicePolicyManager.getUserControlDisabledPackages(getWho()));
+        assertPackageStopped(/* stopped= */ true);
+        assertThat(mDevicePolicyManager.getUserControlDisabledPackages(getWho())).isEmpty();
     }
 
     private boolean isPackageStopped(String packageName) throws Exception {
         PackageInfo packageInfo = mContext.getPackageManager()
                 .getPackageInfo(packageName, PackageManager.GET_META_DATA);
-        Log.d(TAG, "Application flags for " + packageName + " = "
-                + Integer.toHexString(packageInfo.applicationInfo.flags));
-        return ((packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_STOPPED)
-                == ApplicationInfo.FLAG_STOPPED) ? true : false;
+        boolean stopped = (packageInfo.applicationInfo.flags & ApplicationInfo.FLAG_STOPPED)
+                == ApplicationInfo.FLAG_STOPPED;
+        Log.d(TAG, "Application flags for " + packageName + " on user " + mUserId + " = "
+                + Integer.toHexString(packageInfo.applicationInfo.flags) + ". Stopped: " + stopped);
+        return stopped;
     }
 
+    private void assertPackageStopped(boolean stopped) throws Exception {
+        assertWithMessage("Package %s stopped for user %s", SIMPLE_APP_PKG, mUserId)
+                .that(isPackageStopped(SIMPLE_APP_PKG)).isEqualTo(stopped);
+    }
 }

@@ -49,6 +49,7 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -241,6 +242,7 @@ public class AppStandbyTests {
     }
 
     @Test
+    @Ignore("Broken until b/171306433 is completed")
     public void testAllowWhileIdleAlarms() throws Exception {
         setAppStandbyBucket("active");
         final long firstTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;

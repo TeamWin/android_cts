@@ -44,7 +44,13 @@
                 <action android:name="android.hdmicec.app.OTP" />
             </intent-filter>
         </activity>
+
+        <uses-library android:name="android.test.runner" />
     </application>
+
+
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="android.hdmicec.app" />
 
     <uses-sdk android:minSdkVersion="28"   android:targetSdkVersion="28" />
 

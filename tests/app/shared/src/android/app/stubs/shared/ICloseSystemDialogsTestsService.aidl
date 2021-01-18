@@ -20,6 +20,8 @@ import android.os.ResultReceiver;
 
 interface ICloseSystemDialogsTestsService {
     void sendCloseSystemDialogsBroadcast();
+    void closeSystemDialogsViaWindowManager(String reason);
+    void closeSystemDialogsViaActivityManager(String reason);
 
     const int RESULT_OK = 0;
     const int RESULT_SECURITY_EXCEPTION = 1;

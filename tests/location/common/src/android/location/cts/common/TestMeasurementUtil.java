@@ -16,18 +16,23 @@
 
 package android.location.cts.common;
 
+import static org.junit.Assert.assertNotNull;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.CorrelationVector;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
+import android.location.SatellitePvt;
 import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -298,7 +303,98 @@ public final class TestMeasurementUtil {
                 measurement.getAutomaticGainControlLevelDb() >= -100
                     && measurement.getAutomaticGainControlLevelDb() <= 100);
         }
+    }
 
+    /**
+     * Assert all SystemApi fields in Gnss Measurement are in expected range.
+     *
+     * @param testLocationManager TestLocationManager
+     * @param measurement GnssMeasurement
+     * @param softAssert  custom SoftAssert
+     * @param timeInNs    event time in ns
+     * @param requireCorrVec assert correlation vectors outputs
+     * @param requireSatPvt  assert satellite PVT outputs
+     */
+    public static void assertAllGnssMeasurementSystemFields(
+        TestLocationManager testLocationManager, GnssMeasurement measurement,
+        SoftAssert softAssert, long timeInNs, boolean requireCorrVec, boolean requireSatPvt) {
+
+        if (requireCorrVec) {
+            softAssert.assertTrue("GnssMeasurement must has correlation vectors",
+                timeInNs,
+                "measurement.hasCorrelationVectors() == true",
+                String.valueOf(measurement.hasCorrelationVectors()),
+                measurement.hasCorrelationVectors());
+        }
+        if (measurement.hasCorrelationVectors()) {
+            verifyCorrelationVectors(measurement, softAssert, timeInNs);
+        }
+
+        if (requireSatPvt) {
+            softAssert.assertTrue("GnssMeasurement must has satellite PVT",
+                timeInNs,
+                "measurement.hasSatellitePvt() == true",
+                String.valueOf(measurement.hasSatellitePvt()),
+                measurement.hasSatellitePvt());
+        }
+        if (measurement.hasSatellitePvt()) {
+            verifySatellitePvt(measurement, softAssert, timeInNs);
+        }
+    }
+
+    /**
+     * Verify correlation vectors are in expected range.
+     *
+     * @param measurement GnssMeasurement
+     * @param softAssert  custom SoftAssert
+     * @param timeInNs    event time in ns
+     */
+    private static void verifyCorrelationVectors(GnssMeasurement measurement,
+        SoftAssert softAssert, long timeInNs) {
+        Collection<CorrelationVector> correlationVectors =
+                measurement.getCorrelationVectors();
+        assertNotNull("CorrelationVectors cannot be null.", correlationVectors);
+        softAssert.assertTrue("CorrelationVectors count",
+                timeInNs,
+                "X > 0",
+                String.valueOf(correlationVectors.size()),
+                correlationVectors.size() > 0);
+        for (CorrelationVector correlationVector : correlationVectors) {
+            assertNotNull("CorrelationVector cannot be null.", correlationVector);
+            int[] magnitude = correlationVector.getMagnitude();
+            softAssert.assertTrue("frequency_offset_mps : "
+                    + "Frequency offset from reported pseudorange rate "
+                    + "for this CorrelationVector",
+                    timeInNs,
+                    "X >= 0",
+                    String.valueOf(correlationVector.getFrequencyOffsetMetersPerSecond()),
+                    correlationVector.getFrequencyOffsetMetersPerSecond() >= 0);
+            softAssert.assertTrue("sampling_width_m : "
+                    + "The space between correlation samples in meters",
+                    timeInNs,
+                    "X > 0.0",
+                    String.valueOf(correlationVector.getSamplingWidthMeters()),
+                    correlationVector.getSamplingWidthMeters() > 0.0);
+            softAssert.assertTrue("frequency_offset_mps : "
+                    + "Offset of the first sampling bin in meters",
+                    timeInNs,
+                    "X >= 0.0",
+                    String.valueOf(correlationVector.getSamplingStartMeters()),
+                    correlationVector.getSamplingStartMeters() >= 0.0);
+            softAssert.assertTrue("Magnitude count",
+                    timeInNs,
+                    "X > 0",
+                    String.valueOf(magnitude.length),
+                magnitude.length > 0);
+            for (int value : magnitude) {
+                softAssert.assertTrue("magnitude : Data representing normalized "
+                        + "correlation magnitude values",
+                        timeInNs,
+                        "-32768 <= X < 32767",
+                        String.valueOf(value),
+                        value >= -32768 && value < 32767);
+            }
+        }
     }
 
     /**
@@ -875,5 +971,72 @@ public final class TestMeasurementUtil {
             return GnssBand.GNSS_E6;
         }
         return GnssBand.GNSS_L1; // default to L1 band
+    }
+
+    /**
+     * Assert most of the fields in Satellite PVT are in expected range.
+     *
+     * @param measurement GnssMeasurement
+     * @param softAssert  custom SoftAssert
+     * @param timeInNs    event time in ns
+     */
+    private static void verifySatellitePvt(GnssMeasurement measurement,
+        SoftAssert softAssert, long timeInNs) {
+        SatellitePvt satellitePvt = measurement.getSatellitePvt();
+        assertNotNull("SatellitePvt cannot be null when HAS_SATELLITE_PVT is true.", satellitePvt);
+        softAssert.assertTrue("x_meters : "
+                + "Satellite position X in WGS84 ECEF (meters)",
+                timeInNs,
+                "-43000000 <= X <= 43000000",
+                String.valueOf(satellitePvt.getPositionEcef().getXMeters()),
+                satellitePvt.getPositionEcef().getXMeters() >= -43000000 &&
+                    satellitePvt.getPositionEcef().getXMeters() <= 43000000);
+        softAssert.assertTrue("y_meters : "
+                + "Satellite position Y in WGS84 ECEF (meters)",
+                timeInNs,
+                "-43000000 <= X <= 43000000",
+                String.valueOf(satellitePvt.getPositionEcef().getYMeters()),
+                satellitePvt.getPositionEcef().getYMeters() >= -43000000 &&
+                    satellitePvt.getPositionEcef().getYMeters() <= 43000000);
+        softAssert.assertTrue("z_meters : "
+                + "Satellite position Z in WGS84 ECEF (meters)",
+                timeInNs,
+                "-43000000 <= X <= 43000000",
+                String.valueOf(satellitePvt.getPositionEcef().getZMeters()),
+                satellitePvt.getPositionEcef().getZMeters() >= -43000000 &&
+                    satellitePvt.getPositionEcef().getZMeters() <= 43000000);
+        softAssert.assertTrue("ure_meters : "
+                + "The Signal in Space User Range Error (URE) (meters)",
+                timeInNs,
+                "X > 0",
+                String.valueOf(satellitePvt.getPositionEcef().getUreMeters()),
+                satellitePvt.getPositionEcef().getUreMeters() > 0);
+        softAssert.assertTrue("x_mps : "
+                + "Satellite velocity X in WGS84 ECEF (meters per second)",
+                timeInNs,
+                "-4000 <= X <= 4000",
+                String.valueOf(satellitePvt.getVelocityEcef().getXMetersPerSecond()),
+                satellitePvt.getVelocityEcef().getXMetersPerSecond() >= -4000 &&
+                    satellitePvt.getVelocityEcef().getXMetersPerSecond() <= 4000);
+        softAssert.assertTrue("y_mps : "
+                + "Satellite velocity Y in WGS84 ECEF (meters per second)",
+                timeInNs,
+                "-4000 <= X <= 4000",
+                String.valueOf(satellitePvt.getVelocityEcef().getYMetersPerSecond()),
+                satellitePvt.getVelocityEcef().getYMetersPerSecond() >= -4000 &&
+                    satellitePvt.getVelocityEcef().getYMetersPerSecond() <= 4000);
+        softAssert.assertTrue("z_mps : "
+                + "Satellite velocity Z in WGS84 ECEF (meters per second)",
+                timeInNs,
+                "-4000 <= X <= 4000",
+                String.valueOf(satellitePvt.getVelocityEcef().getZMetersPerSecond()),
+                satellitePvt.getVelocityEcef().getZMetersPerSecond() >= -4000 &&
+                    satellitePvt.getVelocityEcef().getZMetersPerSecond() <= 4000);
+        softAssert.assertTrue("ure_rate_mps : "
+                + "The Signal in Space User Range Error Rate (URE Rate) (meters per second)",
+                timeInNs,
+                "X > 0",
+                String.valueOf(satellitePvt.getVelocityEcef().getUreRateMetersPerSecond()),
+                satellitePvt.getVelocityEcef().getUreRateMetersPerSecond() > 0);
     }
 }

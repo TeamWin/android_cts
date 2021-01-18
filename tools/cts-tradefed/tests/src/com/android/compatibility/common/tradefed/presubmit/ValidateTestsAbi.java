@@ -79,6 +79,21 @@ public class ValidateTestsAbi {
          * and embed native libraries.
          */
         MODULE_EXCEPTIONS.add("CtsExtractNativeLibsAppFalse64");
+
+
+        /**
+         * This module builds security exploits that may only be feasible on a specific bitness.
+         * It uses a special file pusher that pushes 32-bit only files to both 32-bit and 64-bit
+         * devices and 64-bit files to only 64-bit devices. Part of STS.
+         */
+        MODULE_EXCEPTIONS.add("CtsSecurityBulletinHostTestCases");
+
+        /**
+         * This module builds security exploits that may only be feasible on a specific bitness.
+         * It uses a special file pusher that pushes 32-bit only files to both 32-bit and 64-bit
+         * devices and 64-bit files to only 64-bit devices. Part of STS.
+         */
+        MODULE_EXCEPTIONS.add("StsHostTestCases");
     }
 
     private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();

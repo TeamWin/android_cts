@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.RestrictedBuildTest;
 import android.platform.test.annotations.SecurityTest;
 
 import com.android.ddmlib.Log;
@@ -187,7 +188,11 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     /**
      * Test that an app cannot instrument another app that is signed with different certificate.
      */
-    @Test
+    // RestrictedBuildTest ensures the build only runs on user builds where the signature
+    // verification will be performed, but JUnit4TestNotRun reports the test will not be run because
+    // the method does not have the @Test annotation.
+    @SuppressWarnings("JUnit4TestNotRun")
+    @RestrictedBuildTest
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstrumentationDiffCert_full() throws Exception {
         testInstrumentationDiffCert(false, false);

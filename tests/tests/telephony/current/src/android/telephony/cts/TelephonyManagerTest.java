@@ -2216,6 +2216,13 @@ public class TelephonyManagerTest {
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(
+                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
@@ -2229,6 +2236,13 @@ public class TelephonyManagerTest {
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(
+                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
@@ -3212,7 +3226,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaRoamingMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3238,7 +3253,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaSubscriptionMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3259,7 +3275,7 @@ public class TelephonyManagerTest {
 
         // Reset state
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                tm -> tm.setCdmaRoamingMode(cdmaSubscriptionMode));
+                tm -> tm.setCdmaSubscriptionMode(cdmaSubscriptionMode));
     }
 
     @Test

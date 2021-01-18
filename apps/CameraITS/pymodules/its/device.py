@@ -449,6 +449,7 @@ class ItsSession(object):
                 self._hidden_physical_id, self._camera_id)
             assert self._hidden_physical_id in physical_ids, e_msg
             props = self.get_camera_properties_by_id(self._hidden_physical_id)
+            self.props = props
         return props
 
     def get_camera_properties(self):

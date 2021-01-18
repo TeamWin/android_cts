@@ -50,6 +50,7 @@ def main():
                 "\nThe scene setup should be: " + scene_desc )
         # Converge 3A prior to capture.
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         cam.do_3a(do_af=do_af, lock_ae=its.caps.ae_lock(props),
                   lock_awb=its.caps.awb_lock(props))
         req = its.objects.fastest_auto_capture_request(props)

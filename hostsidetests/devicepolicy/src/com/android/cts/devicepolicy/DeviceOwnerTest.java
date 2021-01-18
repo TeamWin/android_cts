@@ -103,16 +103,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
             "usb_mass_storage_enabled";
 
+    private boolean mDeviceOwnerSet;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         if (mHasFeature) {
-            installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
-            if (!setDeviceOwner(DEVICE_OWNER_COMPONENT, mPrimaryUserId,
-                    /*expectFailure*/ false)) {
-                removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
+            installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
+            mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
+                    /*expectFailure*/ false);
+
+            if (!mDeviceOwnerSet) {
+                removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId);
                 getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-                fail("Failed to set device owner");
+                fail("Failed to set device owner for user " + mDeviceOwnerUserId);
             }
 
             // Enable the notification listener
@@ -125,8 +129,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     @Override
     public void tearDown() throws Exception {
         if (mHasFeature) {
-            assertTrue("Failed to remove device owner.",
-                    removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId));
+            if (mDeviceOwnerSet) {
+                assertTrue("Failed to remove device owner for user " + mDeviceOwnerUserId,
+                        removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId));
+            }
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
@@ -993,7 +999,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             // The simple app package seems to be set into stopped state on reboot.
             // Launch the activity again to get it out of stopped state.
             startActivityAsUser(mPrimaryUserId, SIMPLE_APP_PKG, SIMPLE_APP_ACTIVITY);
-            forceStopPackageForUser(SIMPLE_APP_PKG, mPrimaryUserId);
+            forceStopPackageForUser(SIMPLE_APP_PKG, mDeviceOwnerUserId);
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
                     "testForceStopWithUserControlDisabled");
             executeDeviceTestMethod(".UserControlDisabledPackagesTest",
