@@ -29,14 +29,17 @@ public class Components extends ComponentsBase {
         ComponentName COMPONENT = component("OverlayActivity");
         String EXTRA_OPACITY = "opacity";
         String EXTRA_TOUCHABLE = "touchable";
+        String EXTRA_TOKEN_RECEIVER = "token_receiver";
+        String EXTRA_TOKEN = "token";
     }
 
-    public interface OpaqueActivity {
-        ComponentName COMPONENT = component("OpaqueActivity");
+    public interface ExitAnimationActivity {
+        ComponentName COMPONENT = component("ExitAnimationActivity");
     }
 
-    public interface ActivityReceiver {
-        String ACTION_FINISH = "android.server.wm.overlay.ActivityReceiver.ACTION_FINISH";
+    public interface ExitAnimationActivityReceiver {
+        String ACTION_FINISH =
+                "android.server.wm.overlay.ExitAnimationActivityReceiver.ACTION_FINISH";
         String EXTRA_ANIMATION = "animation";
         int EXTRA_VALUE_ANIMATION_EMPTY = 0;
         int EXTRA_VALUE_ANIMATION_0_7 = 1;

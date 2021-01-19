@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-package android.server.wm.app;
+package android.server.wm.shared;
+
+import android.os.IBinder;
 
 interface IUntrustedTouchTestService {
     void showToast();
     void showSystemAlertWindow(String windowName, float opacity);
+    void showActivityChildWindow(String windowName, in IBinder token);
     void removeOverlays();
 }
