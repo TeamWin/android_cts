@@ -46,10 +46,6 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-
-        <activity android:name=".AppUriAuthenticationActivity"
-                  android:exported="true">
-        </activity>
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.devicepolicy.cts"

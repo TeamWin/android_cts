@@ -27,9 +27,7 @@ import static org.testng.Assert.assertThrows;
 import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Process;
@@ -44,9 +42,10 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.activitycontext.ActivityContext;
+import com.android.compatibility.common.util.BlockingCallback;
 import com.android.compatibility.common.util.FakeKeys;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.eventlib.events.CustomEvent;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -69,8 +68,6 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class CredentialManagementAppTest {
-
-    private static final String TAG = "KeyPairManagementTest";
 
     private static final PrivateKey PRIVATE_KEY =
             getPrivateKey(FakeKeys.FAKE_RSA_1.privateKey, "RSA");
@@ -234,21 +231,28 @@ public class CredentialManagementAppTest {
         try {
             // Install keypair as credential management app
             mDpm.installKeyPair(null, PRIVATE_KEY, new Certificate[]{CERTIFICATE}, ALIAS, 0);
+            KeyChainAliasCallback callback = new KeyChainAliasCallback();
 
-            // Start activity that will call KeyChain.choosePrivateKeyAlias to verify the
-            // credential management app is able to select which alias should be used given
-            // an app package name and URI.
-            Intent intent = new Intent();
-            intent.setComponent(new ComponentName(CONTEXT, AppUriAuthenticationActivity.class));
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            CONTEXT.startActivity(intent);
-            String setAlias = (String) CustomEvent.queryPackage(CONTEXT.getPackageName())
-                    .withTag("credentialManagementAppAliasFetched").pollOrFail().data();
-            assertThat(setAlias).isEqualTo(ALIAS);
+            ActivityContext.runWithContext((activity) ->
+                    KeyChain.choosePrivateKeyAlias(activity, callback,
+                            /* keyTypes= */ null, /* issuers= */ null, URI, /* alias = */ null)
+            );
+
+            assertThat(callback.await()).isEqualTo(ALIAS);
         } finally {
             // Remove keypair as credential management app
             mDpm.removeKeyPair(/* admin = */ null, ALIAS);
             removeCredentialManagementApp();
+        }
+    }
+
+    // TODO(scottjonathan): Using either code generation or reflection we could remove the need for
+    //  these boilerplate classes
+    private static class KeyChainAliasCallback extends BlockingCallback<String> implements
+            android.security.KeyChainAliasCallback {
+        @Override
+        public void alias(final String chosenAlias) {
+            callbackTriggered(chosenAlias);
         }
     }
 
