@@ -44,15 +44,6 @@ public class HdmiControlManagerHostTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         mHasFeature = ApiLevelUtil.isAtLeast(getDevice(), 28) && hasDeviceFeature(FEATURE_HDMI_CEC);
         assumeTrue("Skipping HdmiControlService tests for this device", mHasFeature);
-
-        installPackage(APK);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        if (mHasFeature) {
-            uninstallPackage(APK);
-        }
     }
 
     private void runTest(String className) throws Exception {
