@@ -223,6 +223,29 @@ class SpellCheckerTest : EndToEndImeTestBase() {
         }
     }
 
+    @Test
+    fun textServicesManagerApi() {
+        val tsm = context.getSystemService(TextServicesManager::class.java)!!
+        assertThat(tsm).isNotNull()
+        assertThat(tsm!!.isSpellCheckerEnabled()).isTrue()
+        val spellCheckerInfo = tsm.getCurrentSpellChecker()
+        assertThat(spellCheckerInfo).isNotNull()
+        assertThat(spellCheckerInfo!!.getPackageName()).isEqualTo(
+            "com.android.cts.mockspellchecker")
+        assertThat(spellCheckerInfo!!.getSubtypeCount()).isEqualTo(1)
+        val spellCheckerSubtypeAllowImplicitlySelected = tsm.getCurrentSpellCheckerSubtype(true)
+        assertThat(spellCheckerSubtypeAllowImplicitlySelected).isNotNull()
+        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getLanguageTag()).isEqualTo("en-US")
+        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getLocale()).isEqualTo("en")
+        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getExtraValue()).isEmpty()
+        val spellCheckerSubtypeNotAllowImplicitlySelected =
+            tsm.getCurrentSpellCheckerSubtype(false)
+        assertThat(spellCheckerSubtypeNotAllowImplicitlySelected).isNull()
+        assertThat(tsm.getEnabledSpellCheckersList()!!.size).isAtLeast(1)
+        assertThat(tsm.getEnabledSpellCheckersList()!!.map { it.getPackageName() })
+                        .contains("com.android.cts.mockspellchecker")
+    }
+
     private fun findSuggestionSpanWithFlags(editText: EditText, flags: Int): SuggestionSpan? =
             getSuggestionSpans(editText).find { (it.flags and flags) == flags }
 
