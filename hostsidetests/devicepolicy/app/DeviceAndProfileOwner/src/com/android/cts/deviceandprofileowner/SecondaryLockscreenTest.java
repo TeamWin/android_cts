@@ -59,11 +59,11 @@ public class SecondaryLockscreenTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
         assumeTrue(
                 "Device does not support secure lock",
                 mContext.getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_SECURE_LOCK_SCREEN));
-        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
 
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.executeShellCommand("locksettings set-disabled false");
