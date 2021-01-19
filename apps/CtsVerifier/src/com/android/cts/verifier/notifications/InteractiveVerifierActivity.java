@@ -16,7 +16,9 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS;
 import static android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS;
+import static android.provider.Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -505,8 +507,8 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
         @Override
         protected void test() {
             mNm.cancelAll();
-            Intent settings = new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
-            if (settings.resolveActivity(mPackageManager) == null) {
+
+            if (getIntent().resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
                 status = FAIL;
             } else {
@@ -529,7 +531,10 @@ public abstract class InteractiveVerifierActivity extends PassFailButtons.Activi
 
         @Override
         protected Intent getIntent() {
-            return new Intent(ACTION_NOTIFICATION_LISTENER_SETTINGS);
+            Intent settings = new Intent(ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS);
+            settings.putExtra(EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                    MockListener.COMPONENT_NAME.flattenToString());
+            return settings;
         }
     }
 
