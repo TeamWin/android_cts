@@ -16,8 +16,17 @@
 android_library {
     name: "CtsAppTestStubsShared",
     defaults: ["cts_support_defaults"],
+    libs: [
+        "android.test.base",
+    ],
+    static_libs: [
+        "androidx.test.core",
+        "androidx.test.rules",
+        "kotlin-test",
+    ],
     srcs: [
         "src/**/*.java",
+        "src/**/*.kt",
         "src/**/*.aidl",
     ],
     platform_apis: true,
