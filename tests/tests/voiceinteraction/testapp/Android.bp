@@ -15,7 +15,11 @@
 android_test_helper_app {
     name: "CtsVoiceInteractionApp",
     defaults: ["cts_support_defaults"],
-    static_libs: ["CtsVoiceInteractionCommon", "androidx.core_core"],
+    static_libs: [
+        "CtsVoiceInteractionCommon",
+        "androidx.core_core",
+        "compatibility-device-util-axt",
+    ],
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",
     // Tag this module as a cts test artifact
