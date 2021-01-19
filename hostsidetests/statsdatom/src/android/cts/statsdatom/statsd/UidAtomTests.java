@@ -170,15 +170,45 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
 
         assertThat(data).hasSize(1);
         AppCrashOccurred atom = data.get(0).getAtom().getAppCrashOccurred();
+        // UID should belong to the run activity, not any system service.
+        assertThat(atom.getUid()).isGreaterThan(10000);
         assertThat(atom.getEventType()).isEqualTo("crash");
         assertThat(atom.getIsInstantApp().getNumber())
                 .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
         assertThat(atom.getForegroundState().getNumber())
                 .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         // TODO(b/172866626): add tests for incremental packages that crashed during loading
         assertFalse(atom.getIsPackageLoading());
     }
+
+    public void testAppCrashOccurredNative() throws Exception {
+        final int atomTag = Atom.APP_CRASH_OCCURRED_FIELD_NUMBER;
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.native_crash");
+
+        // Sorted list of events in order in which they occurred.
+        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data).hasSize(1);
+        AppCrashOccurred atom = data.get(0).getAtom().getAppCrashOccurred();
+        // UID should belong to the run activity, not any system service.
+        assertThat(atom.getUid()).isGreaterThan(10000);
+        assertThat(atom.getEventType()).isEqualTo("native_crash");
+        assertThat(atom.getIsInstantApp().getNumber())
+                .isEqualTo(AppCrashOccurred.InstantApp.FALSE_VALUE);
+        assertThat(atom.getForegroundState().getNumber())
+                .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
+        assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
+        assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
+        // TODO(b/172866626): add tests for incremental packages that crashed during loading
+        assertFalse(atom.getIsPackageLoading());
+    }
+
 
     public void testAudioState() throws Exception {
         if (!DeviceUtils.hasFeature(getDevice(), FEATURE_AUDIO_OUTPUT)) return;
