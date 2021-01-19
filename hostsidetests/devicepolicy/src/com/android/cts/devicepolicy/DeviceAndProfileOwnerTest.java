@@ -870,9 +870,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
-        boolean isManagedProfile = (mPrimaryUserId != mUserId);
-
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest",
@@ -2104,12 +2101,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testEnrollmentSpecificIdCorrectCalculation() throws DeviceNotAvailableException {
+    public void testEnrollmentSpecificIdCorrectCalculation() throws Exception {
         if (!mHasFeature) {
             return;
         }
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
-                "testCorrectCalculationOfEsid", mUserId);
+        boolean isManagedProfile = (mPrimaryUserId != mUserId);
+
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".EnrollmentSpecificIdTest",
+                    "testCorrectCalculationOfEsid");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_ID_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(isManagedProfile)
+                .build());
     }
 
     @Test
