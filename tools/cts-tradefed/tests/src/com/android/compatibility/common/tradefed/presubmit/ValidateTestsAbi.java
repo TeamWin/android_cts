@@ -84,6 +84,15 @@ public class ValidateTestsAbi {
     private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();
     static {
         /**
+         * Tests that build for either 32 bit or 64 bit only.
+         */
+        BINARY_EXCEPTIONS.add("CVE-2017-0684" + "32");
+        BINARY_EXCEPTIONS.add("CVE_2019_2135" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0037" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0038" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0039" + "64");
+
+        /**
          * This binary is a host side helper, so we do not need to check it.
          */
         BINARY_EXCEPTIONS.add("sepolicy-analyze");
