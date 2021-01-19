@@ -22,6 +22,7 @@ import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVIT
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
 import static android.server.wm.app.Components.SPLASH_SCREEN_REPLACE_ICON_ACTIVITY;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
@@ -173,6 +174,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
                 () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
+        assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
     }
 
 
@@ -197,6 +199,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
         assertFalse(journal.extras.getBoolean(ICON_ANIMATING));
+        assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
     }
 
     @Test
