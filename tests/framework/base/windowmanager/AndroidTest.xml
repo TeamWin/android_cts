@@ -56,19 +56,10 @@
                 value="settings put secure android.car.ENABLE_INITIAL_NOTICE_SCREEN_TO_USER 1" />
     </target_preparer>
 
-    <!-- Enabling change id allows that package to access @TestApi methods -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.app" />
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.shareuid.a" />
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.shareuid.b" />
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.second" />
-        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.server.wm.app27" />
-
-        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.app" />
-        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.shareuid.a" />
-        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.shareuid.b" />
-        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.second" />
-        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.server.wm.app27" />
+      <!-- Disable hidden API checking, see b/166236554 -->
+        <option name="run-command" value="settings put global hidden_api_policy 1" />
+        <option name="teardown-command" value="settings delete global hidden_api_policy" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
