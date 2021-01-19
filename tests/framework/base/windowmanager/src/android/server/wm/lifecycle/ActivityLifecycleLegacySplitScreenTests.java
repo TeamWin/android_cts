@@ -20,6 +20,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.wm.app.Components.TopActivity.EXTRA_FINISH_IN_ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
@@ -32,6 +33,7 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_GAINED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_TOP_POSITION_LOST;
+import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_USER_LEAVE_HINT;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.server.wm.lifecycle.LifecycleVerifier.transition;
 
@@ -360,5 +362,23 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
         LifecycleVerifier.assertTransitionObserved(getLifecycleLog(),
                 transition(ConfigChangeHandlingActivity.class, ON_TOP_POSITION_GAINED),
                 "exitSplitScreen");
+    }
+
+    @Test
+    public void testOnUserLeaveHint() throws Exception {
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder()
+                        .setTargetActivity(getComponentName(ConfigChangeHandlingActivity.class)),
+                getLaunchActivityBuilder()
+                        .setIntentExtra(
+                                extra -> extra.putBoolean(EXTRA_ACTIVITY_ON_USER_LEAVE_HINT, true))
+                        .setTargetActivity(getComponentName(FirstActivity.class)));
+
+        getLifecycleLog().clear();
+        launchActivityAndWait(SecondActivity.class);
+
+        LifecycleVerifier.assertOrder(getLifecycleLog(), FirstActivity.class,
+                Arrays.asList(ON_USER_LEAVE_HINT, ON_PAUSE, ON_STOP),
+                "moveFromSplitScreen");
     }
 }
