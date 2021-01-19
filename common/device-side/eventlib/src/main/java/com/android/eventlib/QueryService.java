@@ -53,7 +53,8 @@ public final class QueryService extends Service {
         @Override
         public void init(long id, Bundle data) {
             EventLogsQuery<?, ?> query = (EventLogsQuery<?, ?>) data.getSerializable(QUERIER_KEY);
-            LocalEventQuerier<?, ?> querier = new LocalEventQuerier<>(getApplicationContext(), query);
+            LocalEventQuerier<?, ?> querier =
+                    new LocalEventQuerier<>(getApplicationContext(), query);
 
             clients.put(id, new QueryClient(query, querier));
         }

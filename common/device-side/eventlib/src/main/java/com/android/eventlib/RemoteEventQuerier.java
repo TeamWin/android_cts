@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -45,6 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class
     RemoteEventQuerier<E extends Event, F extends EventLogsQuery> implements EventQuerier<E> {
 
+    private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String LOG_TAG = "RemoteEventQuerier";
     private static final Context CONTEXT =
             InstrumentationRegistry.getInstrumentation().getContext();
@@ -159,9 +161,19 @@ public class
         Intent intent = new Intent();
         intent.setPackage(mPackageName);
         intent.setClassName(mPackageName, "com.android.eventlib.QueryService");
-        if (CONTEXT.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE)) {
+
+        boolean didBind;
+        if (mEventLogsQuery.getUserHandle() != null) {
+            didBind = CONTEXT.bindServiceAsUser(
+                    intent, connection, /* flags= */ BIND_AUTO_CREATE,
+                    mEventLogsQuery.getUserHandle());
+        } else {
+            didBind = CONTEXT.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE);
+        }
+
+        if (didBind) {
             try {
-                mConnectionCountdown.await();
+                mConnectionCountdown.await(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 throw new AssertionError("Interrupted while binding to service", e);
             }
