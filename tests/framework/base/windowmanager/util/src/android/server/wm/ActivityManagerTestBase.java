@@ -219,7 +219,7 @@ public abstract class ActivityManagerTestBase {
     private static Boolean sSupportsSystemDecorsOnSecondaryDisplays = null;
     private static Boolean sSupportsInsecureLockScreen = null;
     private static Boolean sIsAssistantOnTop = null;
-    private static boolean sStackTaskLeakFound;
+    private static boolean sIllegalTaskStateFound;
 
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
@@ -2569,14 +2569,13 @@ public abstract class ActivityManagerTestBase {
     private class PostAssertionRule extends ErrorCollector {
         @Override
         protected void verify() throws Throwable {
-            if (!sStackTaskLeakFound) {
-                // Skip empty stack/task check if a leakage was already found in previous test, or
-                // all tests afterward would also fail (since the leakage is always there) and fire
-                // unnecessary false alarms.
+            if (!sIllegalTaskStateFound) {
+                // Skip if a illegal task state was already found in previous test, or all tests
+                // afterward could also fail and fire unnecessary false alarms.
                 try {
-                    mWmState.assertNoneEmptyTasks();
+                    mWmState.assertIllegalTaskState();
                 } catch (Throwable t) {
-                    sStackTaskLeakFound = true;
+                    sIllegalTaskStateFound = true;
                     addError(t);
                 }
             }
