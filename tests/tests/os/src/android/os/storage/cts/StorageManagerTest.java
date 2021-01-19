@@ -24,7 +24,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.ProxyFileDescriptorCallback;
+import android.os.UserHandle;
 import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
@@ -333,6 +335,11 @@ public class StorageManagerTest extends AndroidTestCase {
                 }
             }
         };
+
+        // Unmount storage data and obb dirs before test so test process won't be killed.
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
+                "sm unmount-app-data-dirs " + mContext.getPackageName() + " "
+                        + Process.myPid() + " " + UserHandle.myUserId());
 
         // Unmount primary storage, verify we can see it take effect
         mStorageManager.registerStorageVolumeCallback(mContext.getMainExecutor(), callback);
