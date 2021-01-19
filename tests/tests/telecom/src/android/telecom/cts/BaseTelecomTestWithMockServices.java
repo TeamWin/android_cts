@@ -25,6 +25,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
+import android.app.AppOpsManager;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
@@ -37,6 +38,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.Process;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -154,6 +156,11 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // Assume we start in normal mode at the start of all Telecom tests; a failure to leave car
         // mode in any of the tests would cause subsequent test failures.
         assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
+        AppOpsManager aom = mContext.getSystemService(AppOpsManager.class);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(aom,
+                (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_PROCESS_OUTGOING_CALLS,
+                Process.myUid(), AppOpsManager.MODE_ALLOWED));
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         mTelephonyManager = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
