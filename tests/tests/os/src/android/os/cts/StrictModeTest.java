@@ -31,6 +31,7 @@ import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
@@ -98,6 +99,7 @@ import java.util.function.Consumer;
 public class StrictModeTest {
     private static final String TAG = "StrictModeTest";
     private static final String REMOTE_SERVICE_ACTION = "android.app.REMOTESERVICE";
+    private static final String UNSAFE_INTENT_LAUNCH = "UnsafeIntentLaunch";
 
     private StrictMode.ThreadPolicy mThreadPolicy;
     private StrictMode.VmPolicy mVmPolicy;
@@ -813,6 +815,113 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToActivity_ThrowsViolation() throws Exception {
+        // The UnsafeIntentLaunch StrictMode check is intended to detect and report unparceling and
+        // launching of Intents from the delivered Intent. This test verifies a violation is
+        // reported when an inner Intent is unparceled from the Intent delivered to an Activity and
+        // used to start another Activity.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchActivity.getTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToActivityCheckDisabled_NoViolation()
+            throws Exception {
+        // This test verifies the StrictMode violation is not reported when unsafe intent launching
+        // is permitted through the VmPolicy Builder permit API.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .permitUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchActivity.getTestIntent(context);
+
+        assertNoViolation(() -> context.startActivity(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToBoundService_ThrowsViolation()
+            throws Exception {
+        // This test verifies a violation is reported when an inner Intent is unparceled from the
+        // Intent delivered to a bound Service and used to bind to another service.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchService.getTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH,
+                () -> context.bindService(intent, IntentLaunchService.getServiceConnection(),
+                        Context.BIND_AUTO_CREATE));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToStartedService_ThrowsViolation()
+            throws Exception {
+        // This test verifies a violation is reported when an inner Intent is unparceled from the
+        // Intent delivered to a started Service and used to start another service.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchService.getTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startService(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToStaticReceiver_ThrowsViolation()
+            throws Exception {
+        // This test verifies a violation is reported when an inner Intent is unparceled from the
+        // Intent delivered to a statically declared BroadcastReceiver and used to send another
+        // broadcast.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = new Intent(context, IntentLaunchReceiver.class);
+        Intent innerIntent = new Intent("android.os.cts.TEST_BROADCAST_ACTION");
+        intent.putExtra(IntentLaunchReceiver.INNER_INTENT_KEY, innerIntent);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.sendBroadcast(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentToDynamicReceiver_ThrowsViolation()
+            throws Exception {
+        // This test verifies a violation is reported when an inner Intent is unparceled from the
+        // Intent delivered to a dynamically registered BroadcastReceiver and used to send another
+        // broadcast.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        String receiverAction = "android.os.cts.TEST_INTENT_LAUNCH_RECEIVER_ACTION";
+        context.registerReceiver(new IntentLaunchReceiver(), new IntentFilter(receiverAction));
+        Intent intent = new Intent(receiverAction);
+        Intent innerIntent = new Intent("android.os.cts.TEST_BROADCAST_ACTION");
+        intent.putExtra(IntentLaunchReceiver.INNER_INTENT_KEY, innerIntent);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.sendBroadcast(intent));
     }
 
     private Context createWindowContext() {
