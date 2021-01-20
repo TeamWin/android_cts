@@ -75,7 +75,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Test
     public void testHasLauncherActivityAppHasAppDetailsActivityInjected() throws Exception {
-        if (!mHasLauncherApps) {
+        if (!mHasFeature || !mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -85,7 +85,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Test
     public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
-        if (!mHasLauncherApps) {
+        if (!mHasFeature || !mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -95,7 +95,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Test
     public void testNoLauncherActivityAppNotInjected() throws Exception {
-        if (!mHasLauncherApps) {
+        if (!mHasFeature || !mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -105,7 +105,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Test
     public void testNoPermissionAppNotInjected() throws Exception {
-        if (!mHasLauncherApps) {
+        if (!mHasFeature || !mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -115,7 +115,7 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Test
     public void testGetSetSyntheticAppDetailsActivityEnabled() throws Exception {
-        if (!mHasLauncherApps) {
+        if (!mHasFeature || !mHasLauncherApps) {
             return;
         }
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
