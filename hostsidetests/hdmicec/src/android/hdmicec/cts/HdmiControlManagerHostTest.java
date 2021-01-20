@@ -28,6 +28,7 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,6 +69,7 @@ public class HdmiControlManagerHostTest extends BaseHostJUnit4Test {
 
     /** test HdmiControlManager */
     @Test
+    @Ignore("b/174345748")
     public void testHdmiControlManager() throws Exception {
         CLog.logAndDisplay(Log.LogLevel.INFO,
                 "HdmiControlManagerHostTest: running HdmiControlManagerTest");
