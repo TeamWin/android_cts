@@ -31,6 +31,7 @@ import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
+import android.app.appsearch.AppSearchSchema.StringPropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByUriRequest;
@@ -101,18 +102,18 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema emailSchema =
                 new AppSearchSchema.Builder("Email")
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("body")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("body")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()).get();
@@ -124,18 +125,18 @@ public abstract class AppSearchSessionCtsTestBase {
                 new AppSearchSchema.Builder("Email")
                         .setVersion(1)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("body")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("body")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
 
@@ -148,18 +149,18 @@ public abstract class AppSearchSessionCtsTestBase {
                 new AppSearchSchema.Builder("Email")
                         .setVersion(2)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("body")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("body")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
 
@@ -200,38 +201,35 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema oldEmailSchema =
                 new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
         AppSearchSchema newEmailSchema =
                 new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("body")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("body")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
         AppSearchSchema giftSchema =
                 new AppSearchSchema.Builder("Gift")
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("price")
-                                        .setDataType(PropertyConfig.DATA_TYPE_INT64)
+                                new AppSearchSchema.Int64PropertyConfig.Builder("price")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_NONE)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_NONE)
                                         .build())
                         .build();
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(oldEmailSchema).build()).get();
@@ -273,11 +271,11 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema emailSchema =
                 new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()).get();
@@ -348,11 +346,11 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema emailSchema =
                 new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE)
                         .addProperty(
-                                new AppSearchSchema.PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()).get();
@@ -471,6 +469,356 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(failResult.isSuccess()).isFalse();
         assertThat(failResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
+    }
+
+    @Test
+    public void testGetDocuments_projection() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection(AppSearchEmail.SCHEMA_TYPE, "subject", "to")
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned with only the "subject" and "to"
+        // properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testGetDocuments_projectionEmpty() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection(AppSearchEmail.SCHEMA_TYPE, Collections.emptyList())
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned without any properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testGetDocuments_projectionNonExistentType() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection("NonExistentType", Collections.emptyList())
+                        .addProjection(AppSearchEmail.SCHEMA_TYPE, "subject", "to")
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned with only the "subject" and "to"
+        // properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testGetDocuments_wildcardProjection() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection(
+                                GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD, "subject", "to")
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned with only the "subject" and "to"
+        // properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testGetDocuments_wildcardProjectionEmpty() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection(
+                                GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD,
+                                Collections.emptyList())
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned without any properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testGetDocuments_wildcardProjectionNonExistentType() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index two documents
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.putDocuments(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocument(email1, email2)
+                                .build()));
+
+        // Get with type property paths {"Email", ["subject", "to"]}
+        GetByUriRequest request =
+                new GetByUriRequest.Builder()
+                        .setNamespace("namespace")
+                        .addUri("uri1", "uri2")
+                        .addProjection("NonExistentType", Collections.emptyList())
+                        .addProjection(
+                                GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD, "subject", "to")
+                        .build();
+        List<GenericDocument> outDocuments = doGet(mDb1, request);
+
+        // The two email documents should have been returned with only the "subject" and "to"
+        // properties.
+        AppSearchEmail expected1 =
+                new AppSearchEmail.Builder("uri2")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        AppSearchEmail expected2 =
+                new AppSearchEmail.Builder("uri1")
+                        .setNamespace("namespace")
+                        .setCreationTimestampMillis(1000)
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .build();
+        assertThat(outDocuments).containsExactly(expected1, expected2);
     }
 
     @Test
@@ -628,11 +976,11 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema genericSchema =
                 new AppSearchSchema.Builder("Generic")
                         .addProperty(
-                                new PropertyConfig.Builder("foo")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("foo")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
                                         .build())
                         .build();
         mDb1.setSchema(
@@ -899,33 +1247,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -991,33 +1333,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -1081,33 +1417,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -1174,33 +1504,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -1266,33 +1590,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -1355,33 +1673,27 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .addSchema(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("title")
+                                                        new StringPropertyConfig.Builder("title")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .addProperty(
-                                                        new PropertyConfig.Builder("body")
+                                                        new StringPropertyConfig.Builder("body")
                                                                 .setCardinality(
                                                                         PropertyConfig
                                                                                 .CARDINALITY_REQUIRED)
-                                                                .setDataType(
-                                                                        PropertyConfig
-                                                                                .DATA_TYPE_STRING)
                                                                 .setIndexingType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .INDEXING_TYPE_EXACT_TERMS)
                                                                 .setTokenizerType(
-                                                                        PropertyConfig
+                                                                        StringPropertyConfig
                                                                                 .TOKENIZER_TYPE_PLAIN)
                                                                 .build())
                                                 .build())
@@ -1501,11 +1813,11 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema genericSchema =
                 new AppSearchSchema.Builder("Generic")
                         .addProperty(
-                                new PropertyConfig.Builder("subject")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
                                         .build())
                         .build();
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(genericSchema).build()).get();
@@ -1873,11 +2185,11 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchSchema genericSchema =
                 new AppSearchSchema.Builder("Generic")
                         .addProperty(
-                                new PropertyConfig.Builder("foo")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new StringPropertyConfig.Builder("foo")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
                                         .build())
                         .build();
         mDb1.setSchema(
