@@ -1692,20 +1692,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        executeDeviceTestClass(".InputMethodsTest");
+        executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethodsThrowsIfWrongAdmin");
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethods");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
+                .setStrings(NOT_CALLED_FROM_PARENT, new String[0])
                 .build(),
         new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
+                .setStrings(NOT_CALLED_FROM_PARENT, new String[0])
                 .build(),
         new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings("com.google.pkg.one", "com.google.pkg.two")
+                .setStrings(NOT_CALLED_FROM_PARENT, "com.google.pkg.one", "com.google.pkg.two")
                 .build());
     }
 

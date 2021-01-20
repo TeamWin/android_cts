@@ -531,6 +531,33 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @Test
+    public void testPermittedInputMethods() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".InputMethodsTest", mUserId);
+    }
+
+    @Test
+    public void testPermittedInputMethodsLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () ->
+                        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".InputMethodsTest",
+                                "testPermittedInputMethodsOnParent", mUserId),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(CALLED_FROM_PARENT, new String[0])
+                        .build(),
+                new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
+                        .setAdminPackageName(DEVICE_ADMIN_PKG)
+                        .setStrings(CALLED_FROM_PARENT, new String[0])
+                        .build());
+    }
+
     private void setupIme(String imeComponent, int userId) throws Exception {
         // Wait until IMS service is registered by the system.
         waitForOutput("Failed waiting for IME to become available",
