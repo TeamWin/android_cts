@@ -31,5 +31,5 @@ android_test {
     ],
 
     // android.test.base exists starting from 28
-    sdk_version: "28",
+    sdk_version: "30",
 }
