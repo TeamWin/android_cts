@@ -778,8 +778,9 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
             mErrorCollector.checkThat("onEnd for this animation was already dispatched",
                     mEndedAnimations, not(hasItem(animation)));
-            mErrorCollector.checkThat("onEnd: mRunningAnimations",
-                    mRunningAnimations, hasItem(animation));
+            mErrorCollector.checkThat("onEnd: animation must be either running or prepared",
+                    mRunningAnimations.contains(animation) || mEndedAnimations.contains(animation),
+                    is(true));
             mRunningAnimations.remove(animation);
             mPreparedAnimations.remove(animation);
             mEndedAnimations.add(animation);
@@ -789,6 +790,8 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         public void assertNoPendingAnimations() {
             mErrorCollector.checkThat("Animations with onStart but missing onEnd:",
                     mRunningAnimations, equalTo(Set.of()));
+            mErrorCollector.checkThat("Animations with onPrepare but missing onStart:",
+                    mPreparedAnimations, equalTo(Set.of()));
         }
     }
 
