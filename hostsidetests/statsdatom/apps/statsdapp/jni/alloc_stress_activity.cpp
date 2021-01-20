@@ -31,12 +31,11 @@
 
 using namespace std;
 
-size_t s = 4 * (1 << 20); // 4 MB
+size_t s = 8 * (1 << 20); // 8 MB
 void *gptr;
-extern "C"
-JNIEXPORT void JNICALL
-Java_com_android_server_cts_device_statsdatom_StatsdCtsBackgroundService_cmain(JNIEnv* , jobject /* this */)
-{
+extern "C" JNIEXPORT void JNICALL
+Java_com_android_server_cts_device_statsdatom_StatsdCtsForegroundActivity_cmain(
+        JNIEnv *, jobject /* this */) {
     long long allocCount = 0;
     while (1) {
         char *ptr = (char *)malloc(s);
@@ -44,10 +43,14 @@ Java_com_android_server_cts_device_statsdatom_StatsdCtsBackgroundService_cmain(J
         for (int i = 0; i < s; i += 4096) {
             *((long long *)&ptr[i]) = allocCount + i;
         }
+        allocCount += s;
         std::stringstream ss;
         ss << "total alloc: " << allocCount / (1 << 20);
         LOG(ss.str().c_str());
         gptr = ptr;
-        allocCount += s;
+
+        // If we are too aggressive allocating, we will end up triggering the
+        // OOM reaper instead of LMKd.
+        usleep(1000);
     }
 }
