@@ -83,6 +83,7 @@ public class AppSearchSchemaCtsTest {
     public void testEquals_identical() {
         AppSearchSchema schema1 =
                 new AppSearchSchema.Builder("Email")
+                        .setVersion(12345)
                         .addProperty(
                                 new PropertyConfig.Builder("subject")
                                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
@@ -93,6 +94,7 @@ public class AppSearchSchemaCtsTest {
                         .build();
         AppSearchSchema schema2 =
                 new AppSearchSchema.Builder("Email")
+                        .setVersion(12345)
                         .addProperty(
                                 new PropertyConfig.Builder("subject")
                                         .setDataType(PropertyConfig.DATA_TYPE_STRING)
@@ -132,7 +134,7 @@ public class AppSearchSchemaCtsTest {
     }
 
     @Test
-    public void testEquals_failure() {
+    public void testEquals_failure_differentProperty() {
         AppSearchSchema schema1 =
                 new AppSearchSchema.Builder("Email")
                         .addProperty(
@@ -155,6 +157,14 @@ public class AppSearchSchemaCtsTest {
                                         .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
                                         .build())
                         .build();
+        assertThat(schema1).isNotEqualTo(schema2);
+        assertThat(schema1.hashCode()).isNotEqualTo(schema2.hashCode());
+    }
+
+    @Test
+    public void testEquals_failure_differentVersion() {
+        AppSearchSchema schema1 = new AppSearchSchema.Builder("Email").setVersion(12345).build();
+        AppSearchSchema schema2 = new AppSearchSchema.Builder("Email").setVersion(54321).build();
         assertThat(schema1).isNotEqualTo(schema2);
         assertThat(schema1.hashCode()).isNotEqualTo(schema2.hashCode());
     }
