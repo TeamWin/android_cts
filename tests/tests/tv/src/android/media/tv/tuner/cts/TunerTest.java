@@ -35,6 +35,7 @@ import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
 import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
 
 import android.media.tv.tuner.filter.AudioDescriptor;
+import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.DownloadEvent;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
@@ -271,6 +272,16 @@ public class TunerTest {
         // open filter to get demux resource
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        Settings settings = AvSettings
+                .builder(Filter.TYPE_TS, true)
+                .setPassthrough(false)
+                .build();
+        FilterConfiguration config = TsFilterConfiguration
+                .builder()
+                .setTpid(10)
+                .setSettings(settings)
+                .build();
+        f.configure(config);
         int id = mTuner.getAvSyncHwId(f);
         if (id != Tuner.INVALID_AV_SYNC_ID) {
             assertNotEquals(Tuner.INVALID_TIMESTAMP, mTuner.getAvSyncTime(id));
