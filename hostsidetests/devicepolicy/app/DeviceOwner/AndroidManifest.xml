@@ -67,6 +67,11 @@
             </intent-filter>
         </receiver>
 
+        <!--  TODO(b/176993670): remove if DevicePolicyManagerWrapper goes away -->
+        <receiver android:name="com.android.cts.deviceowner.DevicePolicyManagerWrapper$BridgeReceiver"
+             android:exported="true">
+        </receiver>
+
         <service android:name="com.android.cts.deviceowner.CreateAndManageUserTest$PrimaryUserService"
              android:exported="true"
              android:permission="android.permission.BIND_DEVICE_ADMIN">
