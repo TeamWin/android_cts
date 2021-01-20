@@ -151,8 +151,6 @@ public class MediaCodecTest extends AndroidTestCase {
         tested = verifyException(format, false /* isEncoder */) || tested;
 
         // video encoder (H.264/AVC may not be present on some Android devices)
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
         tested = verifyException(format, true /* isEncoder */) || tested;
 
         // signal test is skipped due to no device media codecs.
@@ -190,6 +188,12 @@ public class MediaCodecTest extends AndroidTestCase {
         }
 
         final boolean isVideoEncoder = isEncoder && mimeType.startsWith("video/");
+
+        if (isVideoEncoder) {
+            format = new MediaFormat(format);
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
+        }
 
         // create codec (enter Initialized State)
         MediaCodec codec;
@@ -382,6 +386,11 @@ public class MediaCodecTest extends AndroidTestCase {
         if (mIsAtLeastR) {
             // recreate
             codec = createCodecByType(format.getString(MediaFormat.KEY_MIME), isEncoder);
+
+            if (isVideoEncoder) {
+                format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                        MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
+            }
 
             // configure improperly
             try {
