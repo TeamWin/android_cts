@@ -110,6 +110,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         super.setUp();
         if (mHasFeature) {
             installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
+
+            if (isHeadlessSystemUserMode()) {
+                installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
+            }
+
             mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
                     /*expectFailure*/ false);
 

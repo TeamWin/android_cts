@@ -67,7 +67,7 @@ public class SilentProvisioningTestManager {
     public boolean startProvisioningAndWait(Intent provisioningIntent) throws InterruptedException {
         wakeUpAndDismissInsecureKeyguard();
         mContext.startActivity(getStartIntent(provisioningIntent));
-        Log.i(TAG, "startActivity with intent: " + provisioningIntent);
+        Log.i(TAG, "startActivity on user " + mContext.getUserId() + " with " + provisioningIntent);
 
         if (ACTION_PROVISION_MANAGED_PROFILE.equals(provisioningIntent.getAction())) {
             return waitManagedProfileProvisioning();

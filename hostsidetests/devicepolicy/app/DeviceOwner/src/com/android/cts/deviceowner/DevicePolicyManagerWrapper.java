@@ -183,6 +183,10 @@ public final class DevicePolicyManagerWrapper {
         doAnswer(answer).when(spy).setUserControlDisabledPackages(any(), any());
         doAnswer(answer).when(spy).getUserControlDisabledPackages(any());
 
+        // Used by DeviceOwnerProvisioningTest
+        doAnswer(answer).when(spy).enableSystemApp(any(), any(String.class));
+        doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
+
         // TODO(b/176993670): add more methods below as tests are converted
 
         sSpies.put(context, spy);
