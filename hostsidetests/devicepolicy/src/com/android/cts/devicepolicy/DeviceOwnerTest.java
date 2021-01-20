@@ -29,6 +29,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -88,8 +89,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     private static final String GLOBAL_SETTING_DATA_ROAMING = "data_roaming";
     private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
             "usb_mass_storage_enabled";
-
-    private boolean mDeviceOwnerSet;
 
     @Test
     public void testDeviceOwnerSetup() throws Exception {
@@ -848,10 +847,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         wakeupAndDismissKeyguard();
 
         // Setting the same affiliation ids on both users
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
+        CLog.d("createAffiliatedSecondaryUser(): deviceOwnerId=" + mDeviceOwnerUserId
+                + ", primaryUserId=" + mPrimaryUserId + ", newUserId=" + userId);
+        affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, userId);
+
         return userId;
     }
 
