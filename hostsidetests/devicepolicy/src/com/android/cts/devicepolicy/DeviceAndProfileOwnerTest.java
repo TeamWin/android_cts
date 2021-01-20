@@ -1240,9 +1240,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     @Ignore("Ignored while migrating to new infrastructure b/175377361")
     public void testLockTask_defaultDialer() throws Exception {
-        if (!mHasFeature || !mHasTelephony || !mHasConnectionService) {
-            return;
-        }
+        assumeHasTelephonyAndConnectionServiceFeatures();
+
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchDefaultDialer");
@@ -1253,9 +1252,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testLockTask_emergencyDialer() throws Exception {
-        if (!mHasFeature || !mHasTelephony) {
-            return;
-        }
+        assumeHasTelephonyFeature();
+
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchEmergencyDialer");
