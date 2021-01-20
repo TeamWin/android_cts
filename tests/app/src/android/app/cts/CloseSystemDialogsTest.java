@@ -85,7 +85,7 @@ public class CloseSystemDialogsTest {
      * instrumentation, hence it also has shell powers for {@link
      * Intent#ACTION_CLOSE_SYSTEM_DIALOGS} and we don't want those powers under simulation.
      */
-    private static final String APP_HELPER = "com.android.app1";
+    private static final String APP_HELPER = "com.android.app4";
 
     private Instrumentation mInstrumentation;
     private FutureServiceConnection mConnection;
@@ -113,8 +113,7 @@ public class CloseSystemDialogsTest {
         toggleListenerAccess(mContext, true);
         mNotificationListener = TestNotificationListener.getInstance();
         mNotificationHelper = new NotificationHelper(mContext, () -> mNotificationListener);
-        compat(APP_COMPAT_ENABLE, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
-        setTargetCurrent();
+        enableUserFinal();
 
         // We need to test that a few hidden APIs are properly protected in the helper app. The
         // helper app we're using doesn't have the checks disabled because it's not the target of
@@ -145,8 +144,8 @@ public class CloseSystemDialogsTest {
         }
         mMainHandler.post(() -> mSawWindowManager.removeViewImmediate(mFakeView));
         mContext.unregisterReceiver(mIntentReceiver);
+        resetUserFinal();
         setHiddenApiPolicy(mPreviousHiddenApiPolicy);
-        compat(APP_COMPAT_RESET, ActivityManager.DROP_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
         compat(APP_COMPAT_RESET, ActivityManager.LOCK_DOWN_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
         compat(APP_COMPAT_RESET, "NOTIFICATION_TRAMPOLINE_BLOCK", APP_HELPER);
         mNotificationListener.resetData();
@@ -156,6 +155,7 @@ public class CloseSystemDialogsTest {
 
     @Test
     public void testCloseSystemDialogs_whenTargetSdkCurrent_isBlockedAndThrows() throws Exception {
+        setTargetCurrent();
         mService = getService(APP_HELPER);
 
         assertThrows(SecurityException.class, () -> mService.sendCloseSystemDialogsBroadcast());
@@ -165,7 +165,6 @@ public class CloseSystemDialogsTest {
 
     @Test
     public void testCloseSystemDialogs_whenTargetSdk30_isBlockedButDoesNotThrow() throws Exception {
-        setTargetSdk30();
         mService = getService(APP_HELPER);
 
         mService.sendCloseSystemDialogsBroadcast();
@@ -191,6 +190,7 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogs_inTrampolineWhenTargetSdkCurrent_isBlockedAndThrows()
             throws Exception {
+        setTargetCurrent();
         int notificationId = 42;
         CompletableFuture<Integer> result = new CompletableFuture<>();
         mService = getService(APP_HELPER);
@@ -205,7 +205,6 @@ public class CloseSystemDialogsTest {
 
     @Test
     public void testCloseSystemDialogs_inTrampolineWhenTargetSdk30_isSent() throws Exception {
-        setTargetSdk30();
         int notificationId = 43;
         CompletableFuture<Integer> result = new CompletableFuture<>();
         mService = getService(APP_HELPER);
@@ -244,6 +243,7 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogsViaWindowManager_whenTargetSdkCurrent_isBlockedAndThrows()
             throws Exception {
+        setTargetCurrent();
         mService = getService(APP_HELPER);
 
         assertThrows(SecurityException.class,
@@ -256,7 +256,6 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogsViaWindowManager_whenTargetSdk30_isBlockedButDoesNotThrow()
             throws Exception {
-        setTargetSdk30();
         mService = getService(APP_HELPER);
 
         mService.closeSystemDialogsViaWindowManager(REASON);
@@ -292,6 +291,7 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogsViaActivityManager_whenTargetSdkCurrent_isBlockedAndThrows()
             throws Exception {
+        setTargetCurrent();
         mService = getService(APP_HELPER);
 
         assertThrows(SecurityException.class,
@@ -304,7 +304,6 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogsViaActivityManager_whenTargetSdk30_isBlockedButDoesNotThrow()
             throws Exception {
-        setTargetSdk30();
         mService = getService(APP_HELPER);
 
         mService.closeSystemDialogsViaActivityManager(REASON);
@@ -313,17 +312,10 @@ public class CloseSystemDialogsTest {
         assertCloseSystemDialogsNotReceived();
     }
 
-    private void setTargetSdk30() {
-        // TODO(b/159105552): For now we emulate targetSdk 30 by force-disabling the feature.
-        //   Remove this once the feature is enabled and use another app with lower targetSdk.
-        compat(APP_COMPAT_DISABLE, ActivityManager.LOCK_DOWN_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
-        compat(APP_COMPAT_DISABLE, "NOTIFICATION_TRAMPOLINE_BLOCK", APP_HELPER);
-    }
-
     private void setTargetCurrent() {
-        // TODO(b/159105552): For now we emulate current targetSdk by force-enabling the feature.
-        //   Remove this once the feature is enabled by default.
+        // The helper app has targetSdk=30, opting-in to changes emulates targeting latest sdk.
         compat(APP_COMPAT_ENABLE, ActivityManager.LOCK_DOWN_CLOSE_SYSTEM_DIALOGS, APP_HELPER);
+        compat(APP_COMPAT_ENABLE, "NOTIFICATION_TRAMPOLINE_BLOCK", APP_HELPER);
     }
 
     private void assertCloseSystemDialogsNotReceived() {
@@ -368,6 +360,16 @@ public class CloseSystemDialogsTest {
             Settings.Global.putString(mResolver, Settings.Global.HIDDEN_API_POLICY, policy);
             return previous;
         });
+    }
+
+    private static void enableUserFinal() {
+        SystemUtil.runShellCommand(
+                "settings put global force_non_debuggable_final_build_for_compat 1");
+    }
+
+    private static void resetUserFinal() {
+        SystemUtil.runShellCommand(
+                "settings put global force_non_debuggable_final_build_for_compat 0");
     }
 
     private static void compat(String command, String changeId, String packageName) {

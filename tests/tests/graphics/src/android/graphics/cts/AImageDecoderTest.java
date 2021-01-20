@@ -578,19 +578,34 @@ public class AImageDecoderTest {
             // SkRawCodec does not support sampling.
             return;
         }
-        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
-                record.resId);
-        String name = Utils.getAsResourceUri(record.resId).toString();
+        testComputeSampledSizeInternal(record.resId, sampleSize);
+    }
+
+    private void testComputeSampledSizeInternal(int resId, int sampleSize)
+            throws IOException {
+        ImageDecoder.Source src = ImageDecoder.createSource(getResources(), resId);
+        String name = Utils.getAsResourceUri(resId).toString();
         Bitmap bm = decodeSampled(name, src, sampleSize);
         assertNotNull(bm);
 
-        try (ParcelFileDescriptor pfd = open(record.resId)) {
+        try (ParcelFileDescriptor pfd = open(resId)) {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
             nTestComputeSampledSize(aimagedecoder, bm, sampleSize);
         } catch (FileNotFoundException e) {
             fail("Could not open " + name + ": " + e);
         }
+    }
+
+    private static Object[] getExifsSample() {
+        return Utils.crossProduct(getExifImages(), new Object[] { 2, 3, 4, 8, 16 });
+    }
+
+    @Test
+    @Parameters(method = "getExifsSample")
+    public void testComputeSampledSizeExif(int resId, int sampleSize)
+            throws IOException {
+        testComputeSampledSizeInternal(resId, sampleSize);
     }
 
     private Bitmap decodeScaled(String name, ImageDecoder.Source src) {

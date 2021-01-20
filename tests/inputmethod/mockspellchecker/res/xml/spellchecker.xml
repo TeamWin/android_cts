@@ -20,5 +20,6 @@
     <subtype
         android:label="English"
         android:subtypeLocale="en"
+        android:languageTag="en-US"
     />
 </spell-checker>

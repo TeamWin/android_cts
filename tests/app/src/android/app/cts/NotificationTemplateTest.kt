@@ -17,31 +17,23 @@ package android.app.cts
 
 import android.R
 import android.app.Notification
-import android.app.stubs.NotificationHostActivity
-import android.content.Intent
 import android.graphics.Bitmap
-import android.test.AndroidTestCase
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.RemoteViews
-import androidx.annotation.DimenRes
-import androidx.lifecycle.Lifecycle
-import androidx.test.core.app.ActivityScenario
-import androidx.test.core.app.ActivityScenario.ActivityAction
+import android.widget.TextView
 import com.google.common.truth.Truth.assertThat
 
-class NotificationTemplateTest : AndroidTestCase() {
+class NotificationTemplateTest : NotificationTemplateTestBase() {
+
     fun testWideIcon_inCollapsedState_cappedTo16By9() {
-        val bitmap = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
-                .setLargeIcon(bitmap)
+                .setLargeIcon(icon)
                 .createContentView()
-        checkViews(views) { activity ->
-            val root = activity.notificationRoot
-            val iconView = findIconView(root, bitmap)!!
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 16 / 9).toFloat())
@@ -49,16 +41,14 @@ class NotificationTemplateTest : AndroidTestCase() {
     }
 
     fun testWideIcon_inCollapsedState_canShowExact4By3() {
-        val bitmap = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
-                .setLargeIcon(bitmap)
+                .setLargeIcon(icon)
                 .createContentView()
-        checkViews(views) { activity ->
-            val root = activity.notificationRoot
-            val iconView = findIconView(root, bitmap)
-                    ?: throw NullPointerException("Unable to find ")
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width.toFloat())
                     .isWithin(1f)
                     .of((iconView.height * 4 / 3).toFloat())
@@ -66,55 +56,271 @@ class NotificationTemplateTest : AndroidTestCase() {
     }
 
     fun testWideIcon_inCollapsedState_neverNarrowerThanSquare() {
-        val bitmap = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
-                .setLargeIcon(bitmap)
+                .setLargeIcon(icon)
                 .createContentView()
-        checkViews(views) { activity ->
-            val root = activity.notificationRoot
-            val iconView = findIconView(root, bitmap)!!
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
             assertThat(iconView.width).isEqualTo(iconView.height)
         }
     }
 
-    private fun findIconView(root: View, icon: Bitmap): ImageView? {
-        (root as? ImageView)?.drawable?.also { drawable ->
-            if (drawable.intrinsicWidth == icon.width && drawable.intrinsicHeight == icon.height) {
-                return root
-            }
+    fun testWideIcon_inBigBaseState_cappedTo16By9() {
+        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 16 / 9).toFloat())
         }
-        if (root is ViewGroup) {
-            for (i in 0 until root.childCount) {
-                findIconView(root.getChildAt(i), icon)?.also { return it }
-            }
-        }
-        return null
     }
 
-    private fun checkViews(
-        views: RemoteViews,
-        @DimenRes heightDimen: Int? = null,
-        activityAction: ActivityAction<NotificationHostActivity>
-    ) {
-        val activityIntent = Intent(context, NotificationHostActivity::class.java)
-        activityIntent.putExtra(NotificationHostActivity.EXTRA_REMOTE_VIEWS, views)
-        heightDimen?.also {
-            activityIntent.putExtra(NotificationHostActivity.EXTRA_HEIGHT,
-                    context.resources.getDimensionPixelSize(it))
+    fun testWideIcon_inBigBaseState_canShowExact4By3() {
+        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
         }
-        ActivityScenario.launch<NotificationHostActivity>(activityIntent).also { scenario ->
-            scenario.moveToState(Lifecycle.State.RESUMED)
-            scenario.moveToState(Lifecycle.State.STARTED)
-            scenario.moveToState(Lifecycle.State.CREATED)
-            scenario.onActivity(activityAction)
-            scenario.moveToState(Lifecycle.State.DESTROYED)
+    }
+
+    fun testWideIcon_inBigBaseState_neverNarrowerThanSquare() {
+        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width).isEqualTo(iconView.height)
+        }
+    }
+
+    fun testWideIcon_inBigPicture_cappedTo16By9() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigPictureStyle().bigPicture(picture))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 16 / 9).toFloat())
+        }
+    }
+
+    fun testWideIcon_inBigPicture_canShowExact4By3() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigPictureStyle().bigPicture(picture))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+        }
+    }
+
+    fun testWideIcon_inBigPicture_neverNarrowerThanSquare() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigPictureStyle().bigPicture(picture))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width).isEqualTo(iconView.height)
+        }
+    }
+
+    fun testWideIcon_inBigText_cappedTo16By9() {
+        val icon = Bitmap.createBitmap(200, 100, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigTextStyle().bigText("Big\nText\nContent"))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 16 / 9).toFloat())
+        }
+    }
+
+    fun testWideIcon_inBigText_canShowExact4By3() {
+        val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigTextStyle().bigText("Big\nText\nContent"))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+        }
+    }
+
+    fun testWideIcon_inBigText_neverNarrowerThanSquare() {
+        val icon = Bitmap.createBitmap(200, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigTextStyle().bigText("Big\nText\nContent"))
+                .createBigContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width).isEqualTo(iconView.height)
+        }
+    }
+
+    fun testBaseTemplate_hasExpandedStateWithoutActions() {
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .createBigContentView()
+        assertThat(views).isNotNull()
+    }
+
+    fun testDecoratedCustomViewStyle_collapsedState() {
+        val customContent = makeCustomContent()
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setCustomContentView(customContent)
+                .setStyle(Notification.DecoratedCustomViewStyle())
+                .createContentView()
+        checkViews(views) { activity ->
+            // first check that the custom view is actually shown
+            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(customTextView.text).isEqualTo("Example Text")
+
+            // check that the icon shows
+            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+        }
+    }
+
+    fun testDecoratedCustomViewStyle_expandedState() {
+        val customContent = makeCustomContent()
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setCustomBigContentView(customContent)
+                .setStyle(Notification.DecoratedCustomViewStyle())
+                .createBigContentView()
+        checkViews(views) { activity ->
+            // first check that the custom view is actually shown
+            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(customTextView.text).isEqualTo("Example Text")
+
+            // check that the app name text shows
+            val appNameView = requireViewByIdName<TextView>(activity, "app_name_text")
+            assertThat(appNameView.visibility).isEqualTo(View.VISIBLE)
+
+            // check that the icon shows
+            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+        }
+    }
+
+    fun testCustomViewNotification_collapsedState_isDecorated() {
+        val customContent = makeCustomContent()
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setCustomContentView(customContent)
+                .createContentView()
+        checkViews(views) { activity ->
+            // first check that the custom view is actually shown
+            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
+
+            assertThat(customTextView.text).isEqualTo("Example Text")
+
+            // check that the icon shows
+            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+        }
+    }
+
+    fun testCustomViewNotification_expandedState_isDecorated() {
+        val customContent = makeCustomContent()
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setCustomBigContentView(customContent)
+                .createBigContentView()
+        checkViews(views) { activity ->
+            // first check that the custom view is actually shown
+            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(customTextView.text).isEqualTo("Example Text")
+
+            // check that the app name text shows
+            val appNameView = requireViewByIdName<TextView>(activity, "app_name_text")
+            assertThat(appNameView.visibility).isEqualTo(View.VISIBLE)
+
+            // check that the icon shows
+            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+        }
+    }
+
+    fun testCustomViewNotification_headsUpState_isDecorated() {
+        val customContent = makeCustomContent()
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setCustomHeadsUpContentView(customContent)
+                .createHeadsUpContentView()
+        checkViews(views) { activity ->
+            // first check that the custom view is actually shown
+            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(customTextView.text).isEqualTo("Example Text")
+
+            // check that the icon shows
+            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
 
     companion object {
-        const val DEBUG = false
         val TAG = NotificationTemplateTest::class.java.simpleName
         const val NOTIFICATION_CHANNEL_ID = "NotificationTemplateTest"
     }
