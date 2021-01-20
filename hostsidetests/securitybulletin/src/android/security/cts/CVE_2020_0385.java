@@ -22,6 +22,8 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.device.ITestDevice;
 
+import static org.junit.Assume.*;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class CVE_2020_0385 extends SecurityTestCase {
 
@@ -32,6 +34,7 @@ public class CVE_2020_0385 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-09")
     @Test
     public void testPocCVE_2020_0385() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.media"));
         String inputFiles[] = {"cve_2020_0385.xmf", "cve_2020_0385.info"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0385",
                 AdbUtils.TMP_PATH + inputFiles[0] + " " + AdbUtils.TMP_PATH + inputFiles[1],
