@@ -1,4 +1,4 @@
-Fixed APKs used in ChecksumsTest.java.
+Fixed APKs, along with v4 signatures and digests used in ChecksumsTest.java.
 Has to be submitted instead of built to keep hashes constant.
 
 Generation of these apks was performed using the `apksigner` command-line tool,
@@ -17,3 +17,7 @@ apksigner sign --v2-signing-enabled true --v3-signing-enabled true --v4-signing-
 
 !Please note that all hardcoded hashes in ChecksumsTest.java will have to be changed!
 Use md5sum, sha1sum, sha256sum, sha512sum to regenerate full apk hashes.
+
+To enable fs-verity signature check, use ApkChecksums.writeChecksums to store the required checksums and
+m fsverity
+fsverity sign CtsPkgInstallTinyAppV2V3V4.digests CtsPkgInstallTinyAppV2V3V4.digests.fsv_sig --key=fsverity-debug-key.pem --cert=fsverity-debug.x509.pem
