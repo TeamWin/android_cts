@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package android.telecom.cts.carmodetestapp;
+package android.telecom.cts.thirdptyincallservice;
 
-interface ICtsCarModeInCallServiceControl {
-    boolean isBound();
-    boolean isUnbound();
-    void reset();
-    int getCallCount();
-    void enableCarMode(int priority);
-    void disableCarMode();
-    void disconnectCalls();
-    boolean requestAutomotiveProjection();
-    void releaseAutomotiveProjection();
-    boolean checkBindStatus(boolean bind);
+import android.app.Activity;
+
+public class CtsThirdPartyInCallServiceActivity extends Activity {
 }
