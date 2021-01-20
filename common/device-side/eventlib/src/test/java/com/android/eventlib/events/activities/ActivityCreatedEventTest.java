@@ -18,16 +18,13 @@ package com.android.eventlib.events.activities;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.activitycontext.ActivityContext;
 import com.android.eventlib.EventLogs;
 
 import org.junit.Before;
@@ -40,108 +37,157 @@ public final class ActivityCreatedEventTest {
 
     private static final Context CONTEXT =
             InstrumentationRegistry.getInstrumentation().getContext();
+    private static final String STRING_KEY = "Key";
+    private static final String STRING_VALUE = "Value";
+    private static final String DIFFERENT_STRING_VALUE = "Value2";
 
-    // TODO(scottjonathan): Replace mock with ContextActivity when ready
-    private final Activity mActivity = mock(Activity.class);
     private final Bundle mSavedInstanceState = new Bundle();
     private final PersistableBundle mPersistentState = new PersistableBundle();
 
-    // These values come from the mock
-    private final String DEFAULT_ACTIVITY_NAME = mActivity.getClass().getName();
-    private final String DEFAULT_ACTIVITY_SIMPLE_NAME = mActivity.getClass().getSimpleName();
+    private final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
 
-    private static final String CUSTOM_ACTIVITY_NAME = "customActivityName";
+    private static final String CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName";
+    private static final String DIFFERENT_CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName2";
 
     @Before
     public void setUp() {
-        when(mActivity.getApplicationContext()).thenReturn(CONTEXT);
         EventLogs.resetLogs();
     }
 
     @Test
-    public void querySavedInstanceState_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState).log();
+    public void whereSavedInstanceState_works() throws Exception {
+        mSavedInstanceState.putString(STRING_KEY, STRING_VALUE);
+        ActivityContext.runWithContext((activity) ->
+                ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                        .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withSavedInstanceState(mSavedInstanceState);
+                        .whereSavedInstanceState()
+                            .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
         assertThat(eventLogs.get().savedInstanceState()).isEqualTo(mSavedInstanceState);
     }
 
     @Test
-    public void queryPersistentState_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .setPersistentState(mPersistentState)
-                .log();
+    public void whereSavedInstanceState_skipsNonMatching() throws Exception {
+        Bundle differentInstanceState = new Bundle();
+        differentInstanceState.putString(STRING_KEY, DIFFERENT_STRING_VALUE);
+        mSavedInstanceState.putString(STRING_KEY, STRING_VALUE);
+
+        ActivityContext.runWithContext((activity) -> {
+            ActivityCreatedEvent.logger(activity, differentInstanceState)
+                    .log();
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .log();
+        });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withPersistentState(mPersistentState);
+                        .whereSavedInstanceState()
+                            .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
+
+        assertThat(eventLogs.get().savedInstanceState()).isEqualTo(mSavedInstanceState);
+    }
+
+    @Test
+    public void wherePersistentState_works() throws Exception {
+        mPersistentState.putString(STRING_KEY, STRING_VALUE);
+        ActivityContext.runWithContext((activity) ->
+                ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                        .setPersistentState(mPersistentState)
+                        .log());
+
+        EventLogs<ActivityCreatedEvent> eventLogs =
+                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                        .wherePersistentState()
+                            .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
         assertThat(eventLogs.get().persistentState()).isEqualTo(mPersistentState);
     }
 
     @Test
-    public void queryName_customValueOnLogger_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .setName(CUSTOM_ACTIVITY_NAME)
-                .log();
+    public void wherePersistentState_skipsNonMatching() throws Exception {
+        PersistableBundle differentPersistentState = new PersistableBundle();
+        differentPersistentState.putString(STRING_KEY, DIFFERENT_STRING_VALUE);
+        mPersistentState.putString(STRING_KEY, STRING_VALUE);
+        ActivityContext.runWithContext((activity) -> {
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .setPersistentState(differentPersistentState)
+                    .log();
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .setPersistentState(mPersistentState)
+                    .log();
+        });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                .withActivityName(CUSTOM_ACTIVITY_NAME);
+                        .wherePersistentState()
+                            .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
-        assertThat(eventLogs.get().name()).isEqualTo(CUSTOM_ACTIVITY_NAME);
+        assertThat(eventLogs.get().persistentState()).isEqualTo(mPersistentState);
     }
 
     @Test
-    public void querySimpleName_customValueOnLogger_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .setSimpleName(CUSTOM_ACTIVITY_NAME)
-                .log();
+    public void whereActivity_customValueOnLogger_works() throws Exception {
+        ActivityContext.runWithContext((activity) ->
+                ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                        .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
+                        .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withActivitySimpleName(CUSTOM_ACTIVITY_NAME);
+                .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().simpleName()).isEqualTo(CUSTOM_ACTIVITY_NAME);
+        assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
     }
 
     @Test
-    public void queryName_defaultValue_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .log();
+    public void whereActivity_customValueOnLogger_skipsNonMatching() throws Exception {
+        ActivityContext.runWithContext((activity) -> {
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .setActivity(DIFFERENT_CUSTOM_ACTIVITY_CLASS_NAME)
+                    .log();
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
+                    .log();
+        });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withActivityName(DEFAULT_ACTIVITY_NAME);
+                        .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().name()).isEqualTo(DEFAULT_ACTIVITY_NAME);
+        assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
     }
 
     @Test
-    public void querySimpleName_defaultValue_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .log();
+    public void whereActivity_defaultValue_works() throws Exception {
+        ActivityContext.runWithContext((activity) ->
+                ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                        .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withActivitySimpleName(DEFAULT_ACTIVITY_SIMPLE_NAME);
+                        .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get().simpleName()).isEqualTo(DEFAULT_ACTIVITY_SIMPLE_NAME);
+        assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
     }
 
     @Test
-    public void queryActivityClass_works() {
-        ActivityCreatedEvent.logger(mActivity, mSavedInstanceState)
-                .log();
+    public void whereActivity_defaultValue_skipsNonMatching() throws Exception {
+        ActivityContext.runWithContext((activity) -> {
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .setActivity(CUSTOM_ACTIVITY_CLASS_NAME)
+                    .log();
+            ActivityCreatedEvent.logger(activity, mSavedInstanceState)
+                    .log();
+        });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
                 ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
-                        .withActivityClass(mActivity.getClass());
+                        .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
-        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
     }
 
 }
