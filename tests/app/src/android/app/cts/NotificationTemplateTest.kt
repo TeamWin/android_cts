@@ -206,6 +206,86 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    fun testPromoteBigPicture_withoutLargeIcon() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(Notification.BigPictureStyle()
+                        .bigPicture(picture)
+                        .showBigPictureWhenCollapsed(true)
+                )
+        checkIconView(builder.createContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
+        }
+        checkIconView(builder.createBigContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.GONE)
+        }
+    }
+
+    fun testPromoteBigPicture_withLargeIcon() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val icon = Bitmap.createBitmap(80, 65, Bitmap.Config.ARGB_8888)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .setStyle(Notification.BigPictureStyle()
+                        .bigPicture(picture)
+                        .showBigPictureWhenCollapsed(true)
+                )
+        checkIconView(builder.createContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
+        }
+        checkIconView(builder.createBigContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 80 / 65).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(80)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(65)
+        }
+    }
+
+    fun testPromoteBigPicture_withBigLargeIcon() {
+        val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val bigIcon = Bitmap.createBitmap(80, 75, Bitmap.Config.ARGB_8888)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(Notification.BigPictureStyle()
+                        .bigPicture(picture)
+                        .bigLargeIcon(bigIcon)
+                        .showBigPictureWhenCollapsed(true)
+                )
+        checkIconView(builder.createContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(40)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(30)
+        }
+        checkIconView(builder.createBigContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 80 / 75).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(80)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(75)
+        }
+    }
+
     fun testBaseTemplate_hasExpandedStateWithoutActions() {
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
