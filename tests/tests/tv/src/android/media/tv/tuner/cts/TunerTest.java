@@ -175,60 +175,87 @@ public class TunerTest {
 
         FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
         int res = mTuner.tune(createFrontendSettings(info));
-        FrontendStatus status = mTuner.getFrontendStatus(
-                new int[] {
-                        FrontendStatus.FRONTEND_STATUS_TYPE_DEMOD_LOCK,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_SNR,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_BER,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_PER,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_PRE_BER,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_QUALITY,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_STRENGTH,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_SYMBOL_RATE,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_FEC,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_LNB_VOLTAGE,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_PLP_ID,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_EWBS,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_AGC,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_LNA,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_MER,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK,
-                        FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO
-                });
+
+        int[] statusCapabilities = info.getStatusCapabilities();
+        assertNotNull(statusCapabilities);
+        FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
         assertNotNull(status);
 
-        status.isDemodLocked();
-        status.getSnr();
-        status.getBer();
-        status.getPer();
-        status.getPerBer();
-        status.getSignalQuality();
-        status.getSignalStrength();
-        status.getSymbolRate();
-        status.getInnerFec();
-        status.getModulation();
-        status.getSpectralInversion();
-        status.getLnbVoltage();
-        status.getPlpId();
-        status.isEwbs();
-        status.getAgc();
-        status.isLnaOn();
-        status.getLayerErrors();
-        status.getMer();
-        status.getFreqOffset();
-        status.getHierarchy();
-        status.isRfLocked();
-        Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
-        if (tuningInfos != null) {
-            for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
-                tuningInfo.getPlpId();
-                tuningInfo.isLocked();
-                tuningInfo.getUec();
+        for (int i = 0; i < statusCapabilities.length; i++) {
+            switch (statusCapabilities[i]) {
+                case FrontendStatus.FRONTEND_STATUS_TYPE_DEMOD_LOCK:
+                    status.isDemodLocked();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_SNR:
+                    status.getSnr();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_BER:
+                    status.getBer();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_PER:
+                    status.getPer();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_PRE_BER:
+                    status.getPerBer();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_QUALITY:
+                    status.getSignalQuality();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_STRENGTH:
+                    status.getSignalStrength();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_SYMBOL_RATE:
+                    status.getSymbolRate();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_FEC:
+                    status.getInnerFec();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION:
+                    status.getModulation();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL:
+                    status.getSpectralInversion();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_LNB_VOLTAGE:
+                    status.getLnbVoltage();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_PLP_ID:
+                    status.getPlpId();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_EWBS:
+                    status.isEwbs();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_AGC:
+                    status.getAgc();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_LNA:
+                    status.isLnaOn();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR:
+                    status.getLayerErrors();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_MER:
+                    status.getMer();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET:
+                    status.getFreqOffset();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY:
+                    status.getHierarchy();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK:
+                    status.isRfLocked();
+                    break;
+                case FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO:
+                    Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
+                    if (tuningInfos != null) {
+                        for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
+                            tuningInfo.getPlpId();
+                            tuningInfo.isLocked();
+                            tuningInfo.getUec();
+                        }
+                    }
+                    break;
             }
         }
     }
