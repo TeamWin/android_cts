@@ -50,6 +50,7 @@ public class StatsdCtsForegroundActivity extends Activity {
     public static final String ACTION_SHOW_NOTIFICATION = "action.show_notification";
     public static final String ACTION_CREATE_CHANNEL_GROUP = "action.create_channel_group";
     public static final String ACTION_POLL_NETWORK_STATS = "action.poll_network_stats";
+    public static final String ACTION_LMK = "action.lmk";
 
     public static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
     public static final int SLEEP_OF_ACTION_SHOW_APPLICATION_OVERLAY = 2_000;
@@ -57,6 +58,7 @@ public class StatsdCtsForegroundActivity extends Activity {
 
     static {
         System.loadLibrary("crashhelper");
+        System.loadLibrary("lmkhelper_statsdatom");
     }
 
     @Override
@@ -99,6 +101,9 @@ public class StatsdCtsForegroundActivity extends Activity {
                 break;
             case ACTION_POLL_NETWORK_STATS:
                 doPollNetworkStats();
+                break;
+            case ACTION_LMK:
+                new Thread(this::cmain).start();
                 break;
             default:
                 Log.e(TAG, "Intent had invalid action " + action);
@@ -213,4 +218,9 @@ public class StatsdCtsForegroundActivity extends Activity {
     }
 
     private native void segfault();
+
+    /**
+     *  Keep allocating memory until the process is killed by LMKD.
+     **/
+    public native void cmain();
 }
