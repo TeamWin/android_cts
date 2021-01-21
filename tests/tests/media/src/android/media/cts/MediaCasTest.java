@@ -193,9 +193,17 @@ public class MediaCasTest extends AndroidTestCase {
                 if (mediaCas == null) {
                     fail("Enumerated " + descriptors[i] + " but cannot instantiate MediaCas.");
                 }
-                descrambler = new MediaDescrambler(CA_system_id);
-                if (descrambler == null) {
-                    fail("Enumerated " + descriptors[i] + " but cannot instantiate MediaDescrambler.");
+                try {
+                    descrambler = new MediaDescrambler(CA_system_id);
+                } catch (UnsupportedCasException e) {
+                    // The descrambler can be supported through Tuner since R.
+                    if (mIsAtLeastR) {
+                        Log.d(TAG, "Enumerated "
+                            + descriptors[i] + ", it doesn't support MediaDescrambler.");
+                    } else {
+                        fail("Enumerated " + descriptors[i]
+                            + " but cannot instantiate MediaDescrambler.");
+                    }
                 }
 
                 // Should always accept a listener (even if the plugin doesn't use it)
