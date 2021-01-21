@@ -562,9 +562,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         CLog.d("Device online, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
         CLog.d("Boot complete, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
-        waitForOutput("LSS unavailable", "service check lock_settings",
-                s -> s.trim().equals("Service lock_settings: found"), 120 /* seconds */);
-        CLog.d("LSS ready.");
+        // TODO(b/178092640) remove when waitForBootComplete guarantees this property.
+        waitForOutput("Timeout waiting for boot complete property", "getprop dev.bootcomplete",
+                s -> s.trim().equals("1"), 120 /* seconds */);
     }
 
     /** Returns true if the system supports the split between system and primary user. */
