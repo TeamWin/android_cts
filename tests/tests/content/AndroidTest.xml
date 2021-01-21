@@ -77,6 +77,7 @@
         <option name="push-file" key="CtsPkgInstallTinyAppV1.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV1.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.apk.idsig" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk.idsig" />
+        <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4.digests.fsv_sig" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.digests.fsv_sig" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk.idsig" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4.apk-Sha512withEC.idsig" />
         <option name="push-file" key="CtsPkgInstallTinyAppV2V3V4-Verity.apk" value="/data/local/tmp/cts/content/CtsPkgInstallTinyAppV2V3V4-Verity.apk" />

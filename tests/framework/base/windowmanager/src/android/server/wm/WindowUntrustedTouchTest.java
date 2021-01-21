@@ -34,6 +34,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.Instrumentation;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -135,6 +136,7 @@ public class WindowUntrustedTouchTest {
     private InputManager mInputManager;
     private WindowManager mWindowManager;
     private ActivityManager mActivityManager;
+    private NotificationManager mNotificationManager;
     private TestActivity mActivity;
     private View mContainer;
     private Toast mToast;
@@ -164,11 +166,14 @@ public class WindowUntrustedTouchTest {
         mInputManager = mContext.getSystemService(InputManager.class);
         mWindowManager = mContext.getSystemService(WindowManager.class);
         mActivityManager = mContext.getSystemService(ActivityManager.class);
+        mNotificationManager = mContext.getSystemService(NotificationManager.class);
 
         mPreviousSawAppOp = AppOpsUtils.getOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW);
         AppOpsUtils.setOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW, MODE_ALLOWED);
         mPreviousTouchOpacity = setMaximumObscuringOpacityForTouch(MAXIMUM_OBSCURING_OPACITY);
         mPreviousMode = setBlockUntrustedTouchesMode(FEATURE_MODE_BLOCK);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mNotificationManager.setToastRateLimitingEnabled(false));
 
         pressWakeupButton();
         pressUnlockButton();
@@ -186,6 +191,8 @@ public class WindowUntrustedTouchTest {
         for (String app : APPS) {
             stopPackage(app);
         }
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mNotificationManager.setToastRateLimitingEnabled(true));
         setBlockUntrustedTouchesMode(mPreviousMode);
         setMaximumObscuringOpacityForTouch(mPreviousTouchOpacity);
         AppOpsUtils.setOpMode(APP_SELF, OPSTR_SYSTEM_ALERT_WINDOW, mPreviousSawAppOp);

@@ -36,6 +36,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     int notificationVisibleCount = 0;
     int notificationSeenCount = 0;
     int notificationHiddenCount = 0;
+    int notificationClickCount = 0;
     String snoozedKey;
     String snoozedUntilContext;
     private NotificationManager mNotificationManager;
@@ -121,4 +122,11 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     public void onPanelRevealed(int items) {
         isPanelOpen = true;
     }
+
+    void resetNotificationClickCount() {
+        notificationClickCount = 0;
+    }
+
+    @Override
+    public void onNotificationClicked(String key) { notificationClickCount++; }
 }

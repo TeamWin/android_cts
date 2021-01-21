@@ -22,7 +22,7 @@
     <!-- The androidx test libraries uses minSdkVersion 14. Applies an overrideLibrary rule here
          to pass the build error, since tests need to use minSdkVersion 4. -->
     <uses-sdk android:minSdkVersion="4" tools:overrideLibrary=
-        "androidx.test.runner, androidx.test.rules, androidx.test.monitor"/>
+        "androidx.test.runner, androidx.test.rules, androidx.test.monitor, androidx.test.services.storage"/>
 
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
@@ -43,6 +43,13 @@
                   android:exported="false">
             <intent-filter>
                 <action android:name="com.android.cts.splitapp.intent.THEME_TEST"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity android:name=".feature.warm.EmptyActivity" android:splitName="feature_warm"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.cts.splitapp.intent.SPLIT_NAME_TEST"/>
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>

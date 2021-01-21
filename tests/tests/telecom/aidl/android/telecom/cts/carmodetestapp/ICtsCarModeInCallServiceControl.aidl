@@ -26,4 +26,5 @@ interface ICtsCarModeInCallServiceControl {
     void disconnectCalls();
     boolean requestAutomotiveProjection();
     void releaseAutomotiveProjection();
+    boolean checkBindStatus(boolean bind);
 }

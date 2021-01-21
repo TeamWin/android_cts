@@ -24,6 +24,6 @@ android_test_helper_app {
         "truth-prebuilt",
     ],
     min_sdk_version: "29",
-    sdk_version: "29",
+    sdk_version: "30",
     target_sdk_version: "29",
 }

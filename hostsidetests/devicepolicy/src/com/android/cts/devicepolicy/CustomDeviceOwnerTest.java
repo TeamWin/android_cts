@@ -127,6 +127,9 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testIsProvisioningAllowed() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         // Must install the apk since the test runs in the DO apk.
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {

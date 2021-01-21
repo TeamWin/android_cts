@@ -65,7 +65,7 @@ public class BuildVersionTest extends TestCase {
      * Verifies {@link Build#FINGERPRINT} follows expected format:
      * <p/>
      * <code>
-     * (BRAND)/(PRODUCT)/(DEVICE):(VERSION.RELEASE)/(BUILD_ID)/
+     * (BRAND)/(PRODUCT)/(DEVICE):(VERSION.RELEASE_OR_CODENAME)/(BUILD_ID)/
      * (BUILD_NUMBER):(BUILD_VARIANT)/(TAGS)
      * </code>
      */
@@ -83,7 +83,7 @@ public class BuildVersionTest extends TestCase {
         String[] devicePlatform = fingerprintSegs[2].split(":");
         assertEquals(2, devicePlatform.length);
         assertEquals(Build.DEVICE, devicePlatform[0]);
-        assertEquals(Build.VERSION.RELEASE, devicePlatform[1]);
+        assertEquals(Build.VERSION.RELEASE_OR_CODENAME, devicePlatform[1]);
 
         assertEquals(Build.ID, fingerprintSegs[3]);
 

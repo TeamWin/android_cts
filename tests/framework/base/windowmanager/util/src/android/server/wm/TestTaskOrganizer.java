@@ -81,15 +81,12 @@ class TestTaskOrganizer extends TaskOrganizer {
         Rect bounds = displayContext.getSystemService(WindowManager.class)
                 .getCurrentWindowMetrics()
                 .getBounds();
-        boolean isLandscape = bounds.width() > bounds.height();
-        mPrimaryBounds.set(
-                0, 0,
-                isLandscape ? bounds.width() / 2 : bounds.width(),
-                isLandscape ? bounds.height() : bounds.height() / 2);
-        mSecondaryBounds.set(
-                isLandscape ? bounds.width() / 2 : 0,
-                isLandscape ? 0 : bounds.height() / 2,
-                0, 0);
+        final boolean isLandscape = bounds.width() > bounds.height();
+        if (isLandscape) {
+            bounds.splitVertically(mPrimaryBounds, mSecondaryBounds);
+        } else {
+            bounds.splitHorizontally(mPrimaryBounds, mSecondaryBounds);
+        }
     }
 
     @Override
@@ -118,6 +115,11 @@ class TestTaskOrganizer extends TaskOrganizer {
                     "Failed to get root tasks");
             Log.e(TAG, "createRootTasksIfNeeded primary=" + mRootPrimary.taskId
                     + " secondary=" + mRootSecondary.taskId);
+
+            // Set the roots as adjacent to each other.
+            final WindowContainerTransaction wct = new WindowContainerTransaction();
+            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken());
+            applyTransaction(wct);
         }
     }
 

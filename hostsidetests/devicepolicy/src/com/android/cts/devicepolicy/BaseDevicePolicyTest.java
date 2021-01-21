@@ -556,9 +556,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     /** Reboots the device and block until the boot complete flag is set. */
-    protected void rebootAndWaitUntilReady() throws DeviceNotAvailableException {
+    protected void rebootAndWaitUntilReady() throws Exception {
         getDevice().rebootUntilOnline();
+        // TODO(b/177668649) remove excessive diagnostic logging.
+        CLog.d("Device online, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
+        CLog.d("Boot complete, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
+        waitForOutput("LSS unavailable", "service check lock_settings",
+                s -> s.trim().equals("Service lock_settings: found"), 120 /* seconds */);
+        CLog.d("LSS ready.");
     }
 
     /** Returns true if the system supports the split between system and primary user. */
