@@ -208,7 +208,13 @@ public class BiometricServiceTest extends BiometricTestBase {
             final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
                 final UserState userState = sensorState.getUserStates().valueAt(j);
-                assertEquals("SensorId: " + sensorId, 0, userState.numEnrolled);
+                final int userId = sensorState.getUserStates().keyAt(j);
+                if (userState.numEnrolled != 0) {
+                    Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
+                    BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
+                    session.cleanupInternalState(userId);
+                    session.close();
+                }
             }
         }
 
