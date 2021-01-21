@@ -45,7 +45,7 @@ public class SensorStates {
 
     @NonNull public final SparseArray<SensorState> sensorStates;
 
-    private static class SchedulerState {
+    public static class SchedulerState {
         private final int mCurrentOperation;
         private final int mTotalOperations;
         @NonNull private final List<Integer> mRecentOperations;
@@ -60,6 +60,11 @@ public class SensorStates {
             mCurrentOperation = currentOperation;
             mTotalOperations = totalOperations;
             mRecentOperations = recentOperations;
+        }
+
+        @NonNull
+        public List<Integer> getRecentOperations() {
+            return mRecentOperations;
         }
     }
 

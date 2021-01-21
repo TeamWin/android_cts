@@ -21,9 +21,12 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import android.content.ComponentName;
 import android.os.ParcelFileDescriptor;
 
+import androidx.annotation.NonNull;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 
 public class Utils {
 
@@ -55,5 +58,18 @@ public class Utils {
     public static void forceStopActivity(ComponentName componentName) {
         executeShellCommand("am force-stop " + componentName.getPackageName()
                 + " " + componentName.getShortClassName().replaceAll("\\.", ""));
+    }
+
+    public static int numberOfSpecifiedOperations(@NonNull BiometricServiceState state,
+            int sensorId, int operation) {
+        int count = 0;
+        final List<Integer> recentOps = state.mSensorStates.sensorStates.get(sensorId)
+                .getSchedulerState().getRecentOperations();
+        for (Integer i : recentOps) {
+            if (i == operation) {
+                count++;
+            }
+        }
+        return count;
     }
 }
