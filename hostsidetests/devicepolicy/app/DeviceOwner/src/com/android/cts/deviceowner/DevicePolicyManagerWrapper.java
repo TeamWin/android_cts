@@ -19,6 +19,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 
@@ -44,6 +45,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -71,8 +73,9 @@ public final class DevicePolicyManagerWrapper {
     // but unfortunately there is no Intent.putObjectExtra() method (and intent.getBundle() returns
     // a copy, so we need to explicitly marshal any supported type).
     private static final String TYPE_BOOLEAN = "boolean";
-    private static final String TYPE_STRING = "string";
+    private static final String TYPE_INT = "int";
     private static final String TYPE_LONG = "long";
+    private static final String TYPE_STRING = "string";
     private static final String TYPE_PARCELABLE = "parcelable";
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
@@ -187,6 +190,10 @@ public final class DevicePolicyManagerWrapper {
         doAnswer(answer).when(spy).enableSystemApp(any(), any(String.class));
         doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
 
+        // Used by HeadlessSystemUserTest
+        doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());
+        doAnswer(answer).when(spy).getProfileOwnerAsUser(any());
+
         // TODO(b/176993670): add more methods below as tests are converted
 
         sSpies.put(context, spy);
@@ -207,24 +214,19 @@ public final class DevicePolicyManagerWrapper {
                     + ", intent=" + intent.getAction() + ", methodName=" + methodName
                     + ", numberArgs=" + numberArgs);
             Object[] args = null;
+            Class<?>[] parameterTypes = null;
             if (numberArgs > 0) {
-                args =  new Object[numberArgs];
+                args = new Object[numberArgs];
+                parameterTypes = new Class<?>[numberArgs];
                 Bundle extras = intent.getExtras();
                 for (int i = 0; i < numberArgs; i++) {
-                    getArg(extras, args, i);
+                    getArg(extras, args, parameterTypes, i);
                 }
-                Log.d(TAG, "onReceive(): args=" + Arrays.toString(args));
-            }
+                Log.d(TAG, "onReceive(): args=" + Arrays.toString(args) + ", types="
+                        + Arrays.toString(parameterTypes));
 
-            Method method = null;
-            for (Method candidate : DevicePolicyManager.class.getDeclaredMethods()) {
-                if (candidate.getName().equals(methodName)) {
-                    // TODO(b/176993670): might need to use args to infer proper method if it's
-                    // overloaded
-                    method = candidate;
-                    break;
-                }
             }
+            Method method = DevicePolicyManager.class.getDeclaredMethod(methodName, parameterTypes);
             if (method == null) {
                 sendError(receiver, new IllegalArgumentException(
                         "Could not find method " + methodName + " using reflection"));
@@ -255,11 +257,11 @@ public final class DevicePolicyManagerWrapper {
             intent.putExtra(extraValueName, ((Boolean) value).booleanValue());
             return;
         }
-        if ((value instanceof String)) {
-            logMarshalling("Adding String", index, extraTypeName, TYPE_STRING,
+        if ((value instanceof Integer)) {
+            logMarshalling("Adding Integer", index, extraTypeName, TYPE_INT,
                     extraValueName, value);
-            intent.putExtra(extraTypeName, TYPE_STRING);
-            intent.putExtra(extraValueName, (String) value);
+            intent.putExtra(extraTypeName, TYPE_INT);
+            intent.putExtra(extraValueName, ((Integer) value).intValue());
             return;
         }
         if ((value instanceof Long)) {
@@ -267,6 +269,13 @@ public final class DevicePolicyManagerWrapper {
                     extraValueName, value);
             intent.putExtra(extraTypeName, TYPE_LONG);
             intent.putExtra(extraValueName, ((Long) value).longValue());
+            return;
+        }
+        if ((value instanceof String)) {
+            logMarshalling("Adding String", index, extraTypeName, TYPE_STRING,
+                    extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_STRING);
+            intent.putExtra(extraValueName, (String) value);
             return;
         }
         if ((value instanceof Parcelable)) {
@@ -306,7 +315,8 @@ public final class DevicePolicyManagerWrapper {
                 + value.getClass());
     }
 
-    static void getArg(Bundle extras, Object[] args, int index) {
+    static void getArg(Bundle extras, Object[] args, @Nullable Class<?>[] parameterTypes,
+            int index) {
         String extraTypeName = getArgExtraTypeName(index);
         String extraValueName = getArgExtraValueName(index);
         String type = extras.getString(extraTypeName);
@@ -316,12 +326,13 @@ public final class DevicePolicyManagerWrapper {
         }
         Object value = null;
         switch (type) {
-            case TYPE_ARRAY_LIST_STRING:
-            case TYPE_STRING:
             case TYPE_BOOLEAN:
+            case TYPE_INT:
             case TYPE_LONG:
+            case TYPE_STRING:
             case TYPE_PARCELABLE:
             case TYPE_SERIALIZABLE:
+            case TYPE_ARRAY_LIST_STRING:
                 value = extras.get(extraValueName);
                 logMarshalling("Got generic", index, extraTypeName, type, extraValueName,
                         value);
@@ -329,6 +340,26 @@ public final class DevicePolicyManagerWrapper {
             default:
                 throw new IllegalArgumentException("Unsupported value type at index " + index + ": "
                         + extraTypeName);
+        }
+        if (parameterTypes != null) {
+            Class<?> parameterType = null;
+            switch (type) {
+                case TYPE_BOOLEAN:
+                    parameterType = boolean.class;
+                    break;
+                case TYPE_INT:
+                    parameterType = int.class;
+                    break;
+                case TYPE_LONG:
+                    parameterType = long.class;
+                    break;
+                case TYPE_ARRAY_LIST_STRING:
+                    parameterType = List.class;
+                    break;
+                default:
+                    parameterType = value.getClass();
+            }
+            parameterTypes[index] = parameterType;
         }
         args[index] = value;
     }
@@ -391,7 +422,7 @@ public final class DevicePolicyManagerWrapper {
                 if (extras != null && !extras.isEmpty()) {
                     Object[] result = new Object[1];
                     int index = 0;
-                    getArg(extras, result, index);
+                    getArg(extras, result, /* parameterTypes= */ null, index);
                     parsedValue = result[index];
                 }
             } catch (Exception e) {
