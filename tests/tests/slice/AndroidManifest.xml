@@ -18,8 +18,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.slice.cts">
 
-    <uses-permission android:name="android.permission.BIND_SLICE" />
-
     <application android:label="Android TestCase"
                 android:icon="@drawable/size_48x48"
                 android:maxRecents="1"
