@@ -26,9 +26,9 @@ import android.hardware.display.DisplayManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.server.wm.app.IUntrustedTouchTestService;
-import android.util.ArraySet;
-import android.util.Log;
+import android.os.RemoteException;
+import android.server.wm.shared.IUntrustedTouchTestService;
+import android.util.ArrayMap;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -38,25 +38,29 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import java.util.Collections;
-import java.util.Set;
+import java.util.Map;
 
 
 public class UntrustedTouchTestService extends Service {
     public static final int BACKGROUND_COLOR = 0xFF00FF00;
 
-    private final IUntrustedTouchTestService mBinder = new Binder();
-    private final Set<View> mSawViews = Collections.synchronizedSet(new ArraySet<>());
+    /** Map from view to the service manager that manages it. */
+    private final Map<View, WindowManager> mViewManagers = Collections.synchronizedMap(
+            new ArrayMap<>());
 
     /** Can only be accessed from the main thread. */
     private Toast mToast;
 
+    private final IUntrustedTouchTestService mBinder = new Binder();
     private volatile Handler mMainHandler;
     private volatile Context mSawContext;
+    private volatile WindowManager mWindowManager;
     private volatile WindowManager mSawWindowManager;
 
     @Override
     public void onCreate() {
         mMainHandler = new Handler(Looper.getMainLooper());
+        mWindowManager = getSystemService(WindowManager.class);
         mSawContext = getContextForSaw(this);
         mSawWindowManager = mSawContext.getSystemService(WindowManager.class);
     }
@@ -84,20 +88,23 @@ public class UntrustedTouchTestService extends Service {
         }
 
         @Override
-        public void showSystemAlertWindow(String windowName, float opacity) {
-            View view = new View(mSawContext);
-            view.setBackgroundColor(BACKGROUND_COLOR);
-            LayoutParams params =
-                    new LayoutParams(
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.MATCH_PARENT,
-                            LayoutParams.TYPE_APPLICATION_OVERLAY,
-                            LayoutParams.FLAG_NOT_TOUCHABLE | LayoutParams.FLAG_NOT_FOCUSABLE,
-                            PixelFormat.TRANSLUCENT);
-            params.setTitle(windowName);
+        public void showSystemAlertWindow(String name, float opacity) {
+            View view = getView(mSawContext);
+            LayoutParams params = newOverlayLayoutParams(name,
+                    LayoutParams.TYPE_APPLICATION_OVERLAY);
+            params.setTitle(name);
             params.alpha = opacity;
             mMainHandler.post(() -> mSawWindowManager.addView(view, params));
-            mSawViews.add(view);
+            mViewManagers.put(view, mSawWindowManager);
+        }
+
+        @Override
+        public void showActivityChildWindow(String name, IBinder token) throws RemoteException {
+            View view = getView(mService);
+            LayoutParams params = newOverlayLayoutParams(name, LayoutParams.TYPE_APPLICATION);
+            params.token = token;
+            mMainHandler.post(() -> mWindowManager.addView(view, params));
+            mViewManagers.put(view, mWindowManager);
         }
 
         public void removeOverlays() {
@@ -106,11 +113,11 @@ public class UntrustedTouchTestService extends Service {
     }
 
     private void removeOverlays() {
-        synchronized (mSawViews) {
-            for (View view : mSawViews) {
-                mSawWindowManager.removeView(view);
+        synchronized (mViewManagers) {
+            for (View view : mViewManagers.keySet()) {
+                mViewManagers.get(view).removeView(view);
             }
-            mSawViews.clear();
+            mViewManagers.clear();
         }
         mMainHandler.post(() -> {
             if (mToast != null) {
@@ -124,5 +131,22 @@ public class UntrustedTouchTestService extends Service {
         Display display = displayManager.getDisplay(DEFAULT_DISPLAY);
         Context displayContext = context.createDisplayContext(display);
         return displayContext.createWindowContext(LayoutParams.TYPE_APPLICATION_OVERLAY, null);
+    }
+
+    private static View getView(Context context) {
+        View view = new View(context);
+        view.setBackgroundColor(BACKGROUND_COLOR);
+        return view;
+    }
+
+    private static LayoutParams newOverlayLayoutParams(String windowName, int type) {
+        LayoutParams params = new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT,
+                type,
+                LayoutParams.FLAG_NOT_TOUCHABLE | LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+        params.setTitle(windowName);
+        return params;
     }
 }
