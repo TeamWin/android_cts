@@ -168,13 +168,6 @@ public class PendingIntentTest extends AndroidTestCase {
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
-
-        try {
-            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent, 0);
-            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
-        } catch (IllegalArgumentException expected) {
-        }
-
     }
 
     private void pendingIntentSendError(PendingIntent pendingIntent) {
@@ -219,13 +212,6 @@ public class PendingIntentTest extends AndroidTestCase {
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
-
-        try {
-            mPendingIntent = PendingIntent.getBroadcast(mContext, 1, mIntent, 0);
-            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
-        } catch (IllegalArgumentException expected) {
-        }
-
     }
 
     // Local receiver for examining delivered broadcast intents
@@ -332,13 +318,6 @@ public class PendingIntentTest extends AndroidTestCase {
             fail("Shouldn't accept both FLAG_IMMUTABLE and FLAG_MUTABLE for the PendingIntent");
         } catch (IllegalArgumentException expected) {
         }
-
-        try {
-            mPendingIntent = PendingIntent.getActivity(mContext, 1, mIntent, 0);
-            fail("One of FLAG_MUTABLE or FLAG_IMMUTABLE should be required");
-        } catch (IllegalArgumentException expected) {
-        }
-
     }
 
     public void testStartServiceOnFinishedHandler() throws InterruptedException, CanceledException {
