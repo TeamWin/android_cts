@@ -32,6 +32,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.widget.RemoteViews;
 
 import androidx.annotation.NonNull;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.Test;
 
@@ -228,6 +229,7 @@ public abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFi
             throws Exception;
 
     @Test
+    @FlakyTest(bugId = 177259617)
     public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
             throws Exception {
         // Reset AutofillOptions to avoid cts package was added to augmented autofill allowlist.

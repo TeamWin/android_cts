@@ -1,7 +1,6 @@
 package com.android.eventlib.tests.testapp;
 
 import android.app.Activity;
-import android.util.Log;
 
 import com.android.eventlib.events.CustomEvent;
 
@@ -10,6 +9,7 @@ import com.android.eventlib.events.CustomEvent;
  * passed in tag and data.
  */
 public class EventLoggingActivity extends Activity {
+
     @Override
     protected void onResume() {
         super.onResume();

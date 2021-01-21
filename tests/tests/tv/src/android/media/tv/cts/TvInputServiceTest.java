@@ -323,6 +323,24 @@ public class TvInputServiceTest {
     }
 
     @Test
+    public void verifyCommandPauseResumeRecording() {
+        final CountingRecordingSession session = tuneForRecording(CHANNEL_0);
+        notifyTuned(CHANNEL_0);
+        mTvRecordingClient.startRecording(CHANNEL_0);
+
+        final Bundle bundle = createTestBundle();
+        mTvRecordingClient.pauseRecording(bundle);
+        PollingCheck.waitFor(TIME_OUT, () -> session.mPauseRecordingWithBundleCount > 0);
+
+        assertThat(session.mPauseRecordingWithBundleCount).isEqualTo(1);
+
+        mTvRecordingClient.resumeRecording(bundle);
+        PollingCheck.waitFor(TIME_OUT, () -> session.mResumeRecordingWithBundleCount > 0);
+
+        assertThat(session.mResumeRecordingWithBundleCount).isEqualTo(1);
+   }
+
+    @Test
     public void verifyCommandStopRecording() {
         final CountingRecordingSession session = tuneForRecording(CHANNEL_0);
         notifyTuned(CHANNEL_0);
@@ -1312,6 +1330,8 @@ public class TvInputServiceTest {
             public volatile int mReleaseCount;
             public volatile int mStartRecordingCount;
             public volatile int mStartRecordingWithBundleCount;
+            public volatile int mPauseRecordingWithBundleCount;
+            public volatile int mResumeRecordingWithBundleCount;
             public volatile int mStopRecordingCount;
             public volatile int mAppPrivateCommandCount;
 
@@ -1319,6 +1339,8 @@ public class TvInputServiceTest {
             public volatile Bundle mTuneWithBundleData;
             public volatile Uri mProgramHint;
             public volatile Bundle mStartRecordingWithBundleData;
+            public volatile Bundle mPauseRecordingWithBundleData;
+            public volatile Bundle mResumeRecordingWithBundleData;
             public volatile String mAppPrivateCommandAction;
             public volatile Bundle mAppPrivateCommandData;
 
@@ -1333,6 +1355,8 @@ public class TvInputServiceTest {
                 mReleaseCount = 0;
                 mStartRecordingCount = 0;
                 mStartRecordingWithBundleCount = 0;
+                mPauseRecordingWithBundleCount = 0;
+                mResumeRecordingWithBundleCount = 0;
                 mStopRecordingCount = 0;
                 mAppPrivateCommandCount = 0;
             }
@@ -1342,6 +1366,8 @@ public class TvInputServiceTest {
                 mTuneWithBundleData = null;
                 mProgramHint = null;
                 mStartRecordingWithBundleData = null;
+                mPauseRecordingWithBundleData = null;
+                mResumeRecordingWithBundleData = null;
                 mAppPrivateCommandAction = null;
                 mAppPrivateCommandData = null;
             }
@@ -1380,6 +1406,19 @@ public class TvInputServiceTest {
                 // Also calls {@link #onStartRecording(Uri)} since it will never be called if the
                 // implementation overrides {@link #onStartRecording(Uri, Bundle)}.
                 onStartRecording(programHint);
+            }
+
+            @Override
+            public void onPauseRecording(Bundle data) {
+                mPauseRecordingWithBundleCount++;
+                mPauseRecordingWithBundleData = data;
+            }
+
+            @Override
+            public void onResumeRecording(Bundle data) {
+                mResumeRecordingWithBundleCount++;
+                mResumeRecordingWithBundleData = data;
+
             }
 
             @Override

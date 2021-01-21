@@ -1217,6 +1217,28 @@ public class StagedInstallTest {
         }
     }
 
+    @Test
+    public void testApexSetsUpdatedSystemAppFlag_preUpdate() throws Exception {
+        final PackageInfo info = InstallUtils.getPackageInfo(SHIM_APEX_PACKAGE_NAME);
+        assertThat(info).isNotNull();
+        boolean isSystemApp = (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+        boolean isUpdatedSystemApp =
+                (info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
+        assertThat(isSystemApp).isTrue();
+        assertThat(isUpdatedSystemApp).isFalse();
+    }
+
+    @Test
+    public void testApexSetsUpdatedSystemAppFlag_postUpdate() throws Exception {
+        final PackageInfo info = InstallUtils.getPackageInfo(SHIM_APEX_PACKAGE_NAME);
+        assertThat(info).isNotNull();
+        boolean isSystemApp = (info.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+        boolean isUpdatedSystemApp =
+                (info.applicationInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0;
+        assertThat(isSystemApp).isFalse();
+        assertThat(isUpdatedSystemApp).isTrue();
+    }
+
     // It becomes harder to maintain this variety of install-related helper methods.
     // TODO(ioffe): refactor install-related helper methods into a separate utility.
     private static int createStagedSession() throws Exception {

@@ -16,13 +16,17 @@
 
 package android.server.wm.overlay;
 
-import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOUCHABLE;
 import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_OPACITY;
+import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOKEN;
+import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOKEN_RECEIVER;
+import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOUCHABLE;
 import static android.server.wm.overlay.UntrustedTouchTestService.BACKGROUND_COLOR;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.ResultReceiver;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager.LayoutParams;
@@ -44,4 +48,22 @@ public class OverlayActivity extends Activity {
             window.addFlags(LayoutParams.FLAG_NOT_TOUCHABLE);
         }
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ResultReceiver receiver = getIntent().getParcelableExtra(EXTRA_TOKEN_RECEIVER);
+        if (receiver != null) {
+            // The token field is set as part of resuming the activity (after onResume()), so
+            // posting a runnable to the same thread guarantees that it gets executed when the token
+            // is set.
+            getWindow().getDecorView().post(() -> {
+                Bundle bundle = new Bundle();
+                bundle.putBinder(EXTRA_TOKEN, getWindow().getAttributes().token);
+                receiver.send(0, bundle);
+            });
+        }
+    }
+
+
 }

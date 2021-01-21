@@ -271,11 +271,14 @@ public abstract class GlobalSearchSessionCtsTestBase {
         AppSearchSchema genericSchema =
                 new AppSearchSchema.Builder("Generic")
                         .addProperty(
-                                new PropertyConfig.Builder("foo")
-                                        .setDataType(PropertyConfig.DATA_TYPE_STRING)
+                                new AppSearchSchema.StringPropertyConfig.Builder("foo")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setTokenizerType(PropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .setIndexingType(PropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(
+                                                AppSearchSchema.StringPropertyConfig
+                                                        .TOKENIZER_TYPE_PLAIN)
+                                        .setIndexingType(
+                                                AppSearchSchema.StringPropertyConfig
+                                                        .INDEXING_TYPE_PREFIXES)
                                         .build())
                         .build();
 

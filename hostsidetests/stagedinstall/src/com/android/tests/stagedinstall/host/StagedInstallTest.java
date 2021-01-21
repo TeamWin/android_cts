@@ -658,6 +658,16 @@ public class StagedInstallTest extends BaseHostJUnit4Test {
         runPhase("testApexWithUnsignedPayloadFailsVerification");
     }
 
+    @Test
+    @LargeTest
+    public void testApexSetsUpdatedSystemAppFlag() throws Exception {
+        assumeTrue("Device does not support updating APEX", mHostUtils.isApexUpdateSupported());
+
+        runPhase("testApexSetsUpdatedSystemAppFlag_preUpdate");
+        installV2Apex();
+        runPhase("testApexSetsUpdatedSystemAppFlag_postUpdate");
+    }
+
     /**
      * Test non-priv apps cannot access /data/app-staging folder contents
      */

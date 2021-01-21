@@ -640,6 +640,35 @@ public class NotificationAssistantServiceTest {
                 NotificationAssistantService.SOURCE_FROM_APP);
     }
 
+    @Test
+    public void testOnNotificationClicked() throws Exception {
+        if (isTelevision()) {
+            return;
+        }
+
+        setUpListeners();
+        turnScreenOn();
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
+
+        mNotificationAssistantService.resetNotificationClickCount();
+
+        // Initialize as closed
+        mStatusBarManager.collapsePanels();
+        sendNotification(1, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        mStatusBarManager.expandNotificationsPanel();
+        Thread.sleep(SLEEP_TIME * 2);
+        mStatusBarManager.clickNotification(sbn.getKey(), 1, 1, true);
+        Thread.sleep(SLEEP_TIME * 2);
+
+        assertEquals(1, mNotificationAssistantService.notificationClickCount);
+
+        mUi.dropShellPermissionIdentity();
+
+    }
+
+
     private StatusBarNotification getFirstNotificationFromPackage(String PKG)
             throws InterruptedException {
         StatusBarNotification sbn = mNotificationListenerService.mPosted.poll(SLEEP_TIME,

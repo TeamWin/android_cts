@@ -145,6 +145,13 @@ public class SplitAppTest {
         assertEquals(1, result.size());
         assertEquals("com.android.cts.splitapp.MyActivity", result.get(0).activityInfo.name);
 
+        // Activity with split name `feature_warm` cannot be found.
+        intent = new Intent("com.android.cts.splitapp.intent.SPLIT_NAME_TEST");
+        intent.setPackage(PKG);
+        assertThat(pm.queryIntentActivities(intent, 0).stream().noneMatch(
+                info -> info.activityInfo.name.equals(
+                        "com.android.cts.splitapp.feature.warm.EmptyActivity"))).isTrue();
+
         // Receiver disabled by default in base
         intent = new Intent(Intent.ACTION_DATE_CHANGED);
         intent.setPackage(PKG);
@@ -344,6 +351,13 @@ public class SplitAppTest {
             fail("Whaaa, we somehow gained permission from feature?");
         } catch (SecurityException expected) {
         }
+
+        // Assert that activity declared in the base can be found after feature_warm installed
+        intent = new Intent("com.android.cts.splitapp.intent.SPLIT_NAME_TEST");
+        intent.setPackage(PKG);
+        assertThat(pm.queryIntentActivities(intent, 0).stream().anyMatch(
+                resolveInfo -> resolveInfo.activityInfo.name.equals(
+                        "com.android.cts.splitapp.feature.warm.EmptyActivity"))).isTrue();
     }
 
     private Intent createLaunchIntent() {

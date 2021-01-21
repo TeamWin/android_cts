@@ -44,60 +44,54 @@ import java.util.Set;
 @RunWith(JUnit4.class)
 public class ValidateTestsAbi {
 
-    private static final Set<String> MODULE_EXCEPTIONS = new HashSet<>();
+    private static final Set<String> APK_EXCEPTIONS = new HashSet<>();
     static {
         /**
          *  This particular module is shipping all its dependencies in all abis with prebuilt stuff.
          *  Excluding it for now to have the test setup.
          */
-        MODULE_EXCEPTIONS.add("CtsSplitApp");
+        APK_EXCEPTIONS.add("CtsSplitApp");
 
         /**
          *  This module tests for security vulnerabilities when installing attacker-devised APKs.
          */
-        MODULE_EXCEPTIONS.add("CtsCorruptApkTests");
+        APK_EXCEPTIONS.add("CtsCorruptApkTests");
 
         /**
          * This module tests for installations of packages that have only 32-bit native libraries
          * and extract native libraries.
          */
-        MODULE_EXCEPTIONS.add("CtsExtractNativeLibsAppTrue32");
+        APK_EXCEPTIONS.add("CtsExtractNativeLibsAppTrue32");
 
         /**
          * This module tests for installations of packages that have only 64-bit native libraries
          * and extract native libraries.
          */
-        MODULE_EXCEPTIONS.add("CtsExtractNativeLibsAppTrue64");
+        APK_EXCEPTIONS.add("CtsExtractNativeLibsAppTrue64");
         /**
          * This module tests for installations of packages that have only 32-bit native libraries
          * and embed native libraries.
          */
-        MODULE_EXCEPTIONS.add("CtsExtractNativeLibsAppFalse32");
+        APK_EXCEPTIONS.add("CtsExtractNativeLibsAppFalse32");
 
         /**
          * This module tests for installations of packages that have only 64-bit native libraries
          * and embed native libraries.
          */
-        MODULE_EXCEPTIONS.add("CtsExtractNativeLibsAppFalse64");
-
-
-        /**
-         * This module builds security exploits that may only be feasible on a specific bitness.
-         * It uses a special file pusher that pushes 32-bit only files to both 32-bit and 64-bit
-         * devices and 64-bit files to only 64-bit devices. Part of STS.
-         */
-        MODULE_EXCEPTIONS.add("CtsSecurityBulletinHostTestCases");
-
-        /**
-         * This module builds security exploits that may only be feasible on a specific bitness.
-         * It uses a special file pusher that pushes 32-bit only files to both 32-bit and 64-bit
-         * devices and 64-bit files to only 64-bit devices. Part of STS.
-         */
-        MODULE_EXCEPTIONS.add("StsHostTestCases");
+        APK_EXCEPTIONS.add("CtsExtractNativeLibsAppFalse64");
     }
 
     private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();
     static {
+        /**
+         * Tests that build for either 32 bit or 64 bit only.
+         */
+        BINARY_EXCEPTIONS.add("CVE-2017-0684" + "32");
+        BINARY_EXCEPTIONS.add("CVE_2019_2135" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0037" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0038" + "64");
+        BINARY_EXCEPTIONS.add("CVE-2020-0039" + "64");
+
         /**
          * This binary is a host side helper, so we do not need to check it.
          */
@@ -120,8 +114,8 @@ public class ValidateTestsAbi {
         File[] listApks = testcases.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                for (String module : MODULE_EXCEPTIONS) {
-                    if (name.startsWith(module)) {
+                for (String apk : APK_EXCEPTIONS) {
+                    if (name.startsWith(apk)) {
                         return false;
                     }
                 }

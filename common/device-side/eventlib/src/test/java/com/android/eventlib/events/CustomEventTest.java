@@ -24,12 +24,13 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.eventlib.EventLogs;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class CustomEventTest {
+public final class CustomEventTest {
 
     // TODO: We need a standard pattern for testing that events log correctly cross-process
     // (when within the process serialization never happens)
@@ -39,6 +40,11 @@ public class CustomEventTest {
     private static final String TAG_2 = "TAG_2";
     private static final String DATA_1 = "DATA_1";
     private static final String DATA_2 = "DATA_2";
+
+    @Before
+    public void setUp() {
+        EventLogs.resetLogs();
+    }
 
     @Test
     public void queryTag_works() {

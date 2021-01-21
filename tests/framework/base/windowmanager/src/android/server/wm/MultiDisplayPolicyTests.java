@@ -463,7 +463,6 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     .setLaunchInSplitScreen(splitScreen)
                     .createDisplay();
             if (splitScreen) {
-                mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
                 // Set the secondary split root task as launch root to verify remaining tasks will
                 // be reparented to matching launch root after removed the virtual display.
                 mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());

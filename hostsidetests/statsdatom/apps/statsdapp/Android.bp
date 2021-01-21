@@ -27,6 +27,18 @@ cc_library_shared {
     sdk_version: "current",
 }
 
+cc_library_shared {
+    name: "libcrashhelper",
+    srcs: ["jni/crash_activity.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    header_libs: ["jni_headers"],
+    stl: "c++_static",
+    sdk_version: "current",
+}
+
 android_test_helper_app {
     name: "CtsStatsdAtomApp",
     defaults: ["cts_defaults"],
@@ -49,7 +61,10 @@ android_test_helper_app {
         "androidx.test.rules",
         "cts-net-utils",
     ],
-    jni_libs: ["liblmkhelper_statsdatom"],
+    jni_libs: [
+        "liblmkhelper_statsdatom",
+        "libcrashhelper",
+    ],
     compile_multilib: "both",
 }
 

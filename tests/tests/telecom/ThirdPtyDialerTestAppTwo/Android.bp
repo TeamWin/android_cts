@@ -1,5 +1,4 @@
-//
-// Copyright (C) 2013 The Android Open Source Project
+// Copyright (C) 2020 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,20 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-cc_test_host {
-    name: "cts_device_opengl_test",
-    srcs: ["MatrixTest.cpp"],
-    cflags: [
-        "-Wall",
-        "-Werror",
+android_test_helper_app {
+    name: "ThirdPtyDialerTestAppTwo",
+    defaults: ["cts_defaults"],
+    srcs: [
+        "src/**/*.java",
+        ":third-pty-dialer-app-srcs",
+        ":third-pty-dialer-app-aidl",
     ],
     static_libs: [
-        "libctsopengl_test",
-        "liblog",
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "androidx.test.rules",
+        "CtsTelecomMockLib",
     ],
-    target: {
-        darwin: {
-            enabled: false,
-        },
-    },
+    sdk_version: "test_current",
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
 }

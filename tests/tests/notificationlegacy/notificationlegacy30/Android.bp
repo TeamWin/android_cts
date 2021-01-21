@@ -18,14 +18,18 @@ android_test {
     static_libs: [
         "androidx.test.rules",
         "ctstestrunner-axt",
-        "androidx.test.rules",
+        "CtsAppTestStubsShared",
         "junit",
+        "truth-prebuilt",
     ],
     libs: [
         "android.test.runner",
         "android.test.base",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

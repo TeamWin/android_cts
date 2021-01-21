@@ -724,6 +724,8 @@ public class AtomTests {
             vib.vibrate(VibrationEffect.createOneShot(
                     500 /* ms */, VibrationEffect.DEFAULT_AMPLITUDE));
         }
+        // Sleep so that the app does not get killed.
+        sleep(1000);
     }
 
     @Test

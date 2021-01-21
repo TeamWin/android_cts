@@ -146,3 +146,39 @@ android_test_helper_app {
         "--rename-manifest-package com.android.app3",
     ],
 }
+
+android_test_helper_app {
+    name: "CtsAppTestStubsApi30",
+    defaults: ["cts_support_defaults"],
+    libs: [
+        "android.test.runner",
+        "telephony-common",
+        "voip-common",
+        "org.apache.http.legacy",
+        "android.test.base",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "ctstestrunner-axt",
+        "ctstestserver",
+        "mockito-target-minus-junit4",
+        "androidx.legacy_legacy-support-v4",
+        "androidx.test.core",
+        "CtsAppTestStubsShared",
+    ],
+    srcs: [
+        "src/**/*.java",
+        "src/android/app/stubs/ISecondary.aidl",
+    ],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    platform_apis: true,
+    target_sdk_version: "30",
+    aaptflags: [
+        "--rename-manifest-package com.android.app4",
+        "--debug-mode",
+    ],
+}

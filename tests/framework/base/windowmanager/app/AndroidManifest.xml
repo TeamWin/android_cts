@@ -27,7 +27,7 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS"/>
 
-    <application>
+    <application android:debuggable="true">
         <activity android:name=".TestActivity"
              android:resizeableActivity="true"
              android:supportsPictureInPicture="true"

@@ -42,6 +42,7 @@ public class StatsdCtsForegroundActivity extends Activity {
 
     public static final String KEY_ACTION = "action";
     public static final String ACTION_CRASH = "action.crash";
+    public static final String ACTION_NATIVE_CRASH = "action.native_crash";
     public static final String ACTION_END_IMMEDIATELY = "action.end_immediately";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_LONG_SLEEP_WHILE_TOP = "action.long_sleep_top";
@@ -53,6 +54,10 @@ public class StatsdCtsForegroundActivity extends Activity {
     public static final int SLEEP_OF_ACTION_SLEEP_WHILE_TOP = 2_000;
     public static final int SLEEP_OF_ACTION_SHOW_APPLICATION_OVERLAY = 2_000;
     public static final int LONG_SLEEP_WHILE_TOP = 60_000;
+
+    static {
+        System.loadLibrary("crashhelper");
+    }
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -73,6 +78,9 @@ public class StatsdCtsForegroundActivity extends Activity {
                 break;
             case ACTION_CRASH:
                 doCrash();
+                break;
+            case ACTION_NATIVE_CRASH:
+                doNativeCrash();
                 break;
             case ACTION_SLEEP_WHILE_TOP:
                 doSleepWhileTop(SLEEP_OF_ACTION_SLEEP_WHILE_TOP);
@@ -198,4 +206,11 @@ public class StatsdCtsForegroundActivity extends Activity {
     private void doCrash() {
         Log.e(TAG, "About to crash the app with 1/0 " + (long) 1 / 0);
     }
+
+    private void doNativeCrash() {
+        Log.e(TAG, "About to segfault the app");
+        segfault();
+    }
+
+    private native void segfault();
 }
