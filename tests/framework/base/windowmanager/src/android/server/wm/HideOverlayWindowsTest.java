@@ -193,15 +193,13 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
             params.height = size.y / 3;
             params.gravity = TOP | LEFT;
             params.setTitle(windowName);
+            params.setSystemApplicationOverlay(
+                    getIntent().getBooleanExtra(SYSTEM_APPLICATION_OVERLAY_EXTRA, false));
 
             mTextView = new TextView(this);
             mTextView.setText(windowName + "   type=" + TYPE_APPLICATION_OVERLAY);
             mTextView.setBackgroundColor(Color.GREEN);
 
-            if (getIntent().getBooleanExtra(SYSTEM_APPLICATION_OVERLAY_EXTRA, false)) {
-                params.privateFlags |=
-                        WindowManager.LayoutParams.SYSTEM_FLAG_SYSTEM_APPLICATION_OVERLAY;
-            }
             getWindowManager().addView(mTextView, params);
         }
 
