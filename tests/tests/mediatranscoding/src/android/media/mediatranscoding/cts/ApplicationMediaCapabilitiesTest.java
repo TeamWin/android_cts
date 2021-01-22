@@ -62,40 +62,31 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         });
     }
 
-    public void testSetSupportSlowMotion() throws Exception {
-        ApplicationMediaCapabilities capability =
-                new ApplicationMediaCapabilities.Builder().setSlowMotionSupported(true).build();
-        assertTrue(capability.isSlowMotionSupported());
-    }
 
     // Test builder with all supports are set to true.
     public void testBuilder() throws Exception {
         ApplicationMediaCapabilities capability =
                 new ApplicationMediaCapabilities.Builder().addSupportedVideoMimeType(
                         MediaFormat.MIMETYPE_VIDEO_HEVC).addSupportedHdrType(
-                        MediaFeature.HdrType.HDR10_PLUS).setSlowMotionSupported(true).build();
+                        MediaFeature.HdrType.HDR10_PLUS).build();
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
         assertTrue(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10_PLUS));
-        assertTrue(capability.isSlowMotionSupported());
     }
 
     //   Test read the application's xml from res/xml folder using the XmlResourceParser.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     public void testReadMediaCapabilitiesXml() throws Exception {
         XmlResourceParser parser = mContext.getResources().getXml(R.xml.mediacapabilities);
         ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
                 parser);
         assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10));
-        assertFalse(capability.isSlowMotionSupported());
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
     }
 
     //   Test read the xml from assets folder using the InputStream.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     public void testReadFromCorrectXmlWithInputStreamInAssets() throws Exception {
         InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
         final XmlPullParser parser = Xml.newPullParser();
@@ -104,7 +95,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
                 parser);
         assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10));
-        assertFalse(capability.isSlowMotionSupported());
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
     }
 
@@ -114,7 +104,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     //    <format android:name="HDR10Plus" supported="true"/>
     //    <format android:name="Dolby-Vision" supported="true"/>
     //    <format android:name="HLG" supported="true"/>
-    //    <format android:name="SlowMotion" supported="true"/>
     public void testReadMediaCapabilitiesXmlWithSupportAllHdr() throws Exception {
         InputStream xmlIs = mContext.getAssets().open("SupportAllHdr.xml");
         final XmlPullParser parser = Xml.newPullParser();
@@ -135,7 +124,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // <MediaCapability xmlns:android="http://schemas.android.com/apk/res/android">
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="true"/>
-    //    <format android:name="SlowMotion" supported="true"/>
     // </MediaCapabilities>
     public void testReadFromWrongMediaCapabilityXml() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
@@ -152,7 +140,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // <MediaCapability xmlns:android="http://schemas.android.com/apk/res/android">
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="true"/>
-    //    <format android:name="SlowMotion" supported="true"/>
     // </MediaCapability>
     public void testReadFromWrongMediaCapabilityXml2() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
@@ -168,7 +155,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // <media-capabilities xmlns:android="http://schemas.android.com/apk/res/android">
     //    <format android:name="HEVC" supported="yes"/>
     //    <format android:name="HDR10" supported="false"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     // </media-capabilities>
     public void testReadFromXmlWithWrongBoolean() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
@@ -184,7 +170,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // Expect UnsupportedOperationException
     // <media-capabilities xmlns:android="http://schemas.android.com/apk/res/android">
     //    <format android:name="HDR10" supported="true"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     // </media-capabilities>
     public void testReadXmlSupportHdrWithoutSupportHevc() throws Exception {
         assertThrows(UnsupportedOperationException.class, () -> {
@@ -261,16 +246,13 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // VP9 is not declare in the XML which leads to NameNotFoundException exception.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     public void testUnsupportedCodecMimetype() throws Exception {
         assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
             InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
             final XmlPullParser parser = Xml.newPullParser();
             parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
-
             ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
                     parser);
-
             boolean supportVP9 = capability.isVideoMimeTypeSupported(
                     MediaFormat.MIMETYPE_VIDEO_VP9);
         });
@@ -280,7 +262,6 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // DOLBY_VISION is not declare in the XML which leads to NameNotFoundException exception.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
-    //    <format android:name="SlowMotion" supported="false"/>
     public void testUnsupportedHdrtype() throws Exception {
         assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
             InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");

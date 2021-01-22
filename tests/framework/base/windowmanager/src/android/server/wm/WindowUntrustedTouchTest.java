@@ -21,6 +21,7 @@ import static android.app.AppOpsManager.OPSTR_SYSTEM_ALERT_WINDOW;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.overlay.Components.OverlayActivity.EXTRA_TOKEN;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -45,13 +46,15 @@ import android.hardware.input.InputManager;
 import android.os.Bundle;
 import android.os.ConditionVariable;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.server.wm.app.IUntrustedTouchTestService;
 import android.server.wm.overlay.Components;
 import android.server.wm.overlay.R;
+import android.server.wm.shared.IUntrustedTouchTestService;
+import android.server.wm.shared.BlockingResultReceiver;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 import android.view.Display;
@@ -99,7 +102,7 @@ public class WindowUntrustedTouchTest {
             Float.intBitsToFloat(0b00111000100000000000000000000000);
 
     private static final float MAXIMUM_OBSCURING_OPACITY = .8f;
-    private static final long BIND_TIMEOUT_MS = 1000L;
+    private static final long TIMEOUT_MS = 3000L;
     private static final long MAX_ANIMATION_DURATION_MS = 3000L;
     private static final long ANIMATION_DURATION_TOLERANCE_MS = 500L;
 
@@ -575,6 +578,52 @@ public class WindowUntrustedTouchTest {
         assertTouchNotReceived();
     }
 
+    /** Activity-type child windows on same activity */
+
+    @Test
+    public void testWhenActivityChildWindowWithSameTokenFromDifferentApp_allowsTouch()
+            throws Exception {
+        IBinder token = mActivity.getWindow().getAttributes().token;
+        addActivityChildWindow(APP_A, WINDOW_1, token);
+
+        mTouchHelper.tapOnViewCenter(mContainer);
+
+        assertTouchReceived();
+    }
+
+    @Test
+    public void testWhenActivityChildWindowWithDifferentTokenFromDifferentApp_blocksTouch()
+            throws Exception {
+        // Creates a new activity with 0 opacity
+        BlockingResultReceiver receiver = new BlockingResultReceiver();
+        addActivityOverlay(APP_A, /* opacity */ 0f, receiver);
+        // Verify it allows touches
+        mTouchHelper.tapOnViewCenter(mContainer);
+        assertTouchReceived();
+        // Now get its token and put a child window from another app with it
+        IBinder token = receiver.getData(TIMEOUT_MS).getBinder(EXTRA_TOKEN);
+        addActivityChildWindow(APP_B, WINDOW_1, token);
+
+        mTouchHelper.tapOnViewCenter(mContainer);
+
+        assertTouchNotReceived();
+    }
+
+    @Test
+    public void testWhenActivityChildWindowWithDifferentTokenFromSameApp_allowsTouch()
+            throws Exception {
+        // Creates a new activity with 0 opacity
+        BlockingResultReceiver receiver = new BlockingResultReceiver();
+        addActivityOverlay(APP_A, /* opacity */ 0f, receiver);
+        // Now get its token and put a child window owned by us
+        IBinder token = receiver.getData(TIMEOUT_MS).getBinder(EXTRA_TOKEN);
+        addActivityChildWindow(APP_SELF, WINDOW_1, token);
+
+        mTouchHelper.tapOnViewCenter(mContainer);
+
+        assertTouchReceived();
+    }
+
     /** Activity transitions */
 
     @Test
@@ -597,9 +646,9 @@ public class WindowUntrustedTouchTest {
         long durationSet = mResources.getInteger(R.integer.long_animation_duration);
         assertThat(durationSet).isGreaterThan(
                 MAX_ANIMATION_DURATION_MS + ANIMATION_DURATION_TOLERANCE_MS);
-        // Translucent activities don't honor custom exit animations
-        addOpaqueActivity(APP_A);
-        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7);
+        addExitAnimationActivity(APP_A);
+        sendFinishToExitAnimationActivity(APP_A,
+                Components.ExitAnimationActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
         long start = SystemClock.elapsedRealtime();
 
@@ -643,9 +692,9 @@ public class WindowUntrustedTouchTest {
 
     @Test
     public void testWhenExitAnimationBelowThreshold_allowsTouch() {
-        // Translucent activities don't honor custom exit animations
-        addOpaqueActivity(APP_A);
-        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_7);
+        addExitAnimationActivity(APP_A);
+        sendFinishToExitAnimationActivity(APP_A,
+                Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_7);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
@@ -656,9 +705,9 @@ public class WindowUntrustedTouchTest {
 
     @Test
     public void testWhenExitAnimationAboveThreshold_blocksTouch() {
-        // Translucent activities don't honor custom exit animations
-        addOpaqueActivity(APP_A);
-        sendFinishToActivity(APP_A, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
+        addExitAnimationActivity(APP_A);
+        sendFinishToExitAnimationActivity(APP_A,
+                Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
@@ -669,9 +718,9 @@ public class WindowUntrustedTouchTest {
 
     @Test
     public void testWhenExitAnimationAboveThresholdFromSameUid_allowsTouch() {
-        // Translucent activities don't honor custom exit animations
-        addOpaqueActivity(APP_SELF);
-        sendFinishToActivity(APP_SELF, Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
+        addExitAnimationActivity(APP_SELF);
+        sendFinishToExitAnimationActivity(APP_SELF,
+                Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_9);
         assertTrue(mWmState.waitForAppTransitionRunningOnDisplay(Display.DEFAULT_DISPLAY));
 
         mTouchHelper.tapOnViewCenter(mContainer, /* waitAnimations*/ false);
@@ -777,11 +826,13 @@ public class WindowUntrustedTouchTest {
     private void assertTouchReceived() {
         mInstrumentation.waitForIdleSync();
         assertThat(mTouchesReceived.get()).isEqualTo(1);
+        mTouchesReceived.set(0);
     }
 
     private void assertTouchNotReceived() {
         mInstrumentation.waitForIdleSync();
         assertThat(mTouchesReceived.get()).isEqualTo(0);
+        mTouchesReceived.set(0);
     }
 
     private void assertAnimationRunning() {
@@ -857,20 +908,18 @@ public class WindowUntrustedTouchTest {
         }
     }
 
-    private void addOpaqueActivity(String packageName) {
-        addActivity(repackage(packageName, Components.OpaqueActivity.COMPONENT), /* extras */ null,
-                /* options */ null);
+    private void addExitAnimationActivity(String packageName) {
+        // This activity responds to broadcasts to exit with animations and it's opaque (translucent
+        // activities don't honor custom exit animations).
+        addActivity(repackage(packageName, Components.ExitAnimationActivity.COMPONENT),
+                /* extras */ null, /* options */ null);
     }
 
-    private void sendFinishToActivity(String packageName, int exitAnimation) {
-        Intent intent = new Intent(Components.ActivityReceiver.ACTION_FINISH);
+    private void sendFinishToExitAnimationActivity(String packageName, int exitAnimation) {
+        Intent intent = new Intent(Components.ExitAnimationActivityReceiver.ACTION_FINISH);
         intent.setPackage(packageName);
-        intent.putExtra(Components.ActivityReceiver.EXTRA_ANIMATION, exitAnimation);
+        intent.putExtra(Components.ExitAnimationActivityReceiver.EXTRA_ANIMATION, exitAnimation);
         mContext.sendBroadcast(intent);
-    }
-
-    private void addActivityOverlay(String packageName, float opacity) {
-        addActivityOverlay(packageName, opacity, /* touchable */ false, /* options */ null);
     }
 
     private void addAnimatedActivityOverlay(String packageName, boolean touchable,
@@ -884,13 +933,39 @@ public class WindowUntrustedTouchTest {
         animationsStarted.block();
     }
 
+    private void addActivityChildWindow(String packageName, String windowSuffix, IBinder token)
+            throws Exception {
+        String name = getWindowName(packageName, windowSuffix);
+        getService(packageName).showActivityChildWindow(name, token);
+        if (!mWmState.waitFor("activity child window " + name,
+                state -> state.isWindowVisible(name) && state.isWindowSurfaceShown(name))) {
+            fail("Activity child window " + name + " did not appear on time");
+        }
+    }
+
+    private void addActivityOverlay(String packageName, float opacity) {
+        addActivityOverlay(packageName, opacity, /* touchable */ false, /* options */ null);
+    }
+
     private void addActivityOverlay(String packageName, float opacity, boolean touchable,
             @Nullable Bundle options) {
-        ComponentName component = repackage(packageName, Components.OverlayActivity.COMPONENT);
         Bundle extras = new Bundle();
         extras.putFloat(Components.OverlayActivity.EXTRA_OPACITY, opacity);
         extras.putBoolean(Components.OverlayActivity.EXTRA_TOUCHABLE, touchable);
-        addActivity(component, extras, options);
+        addActivityOverlay(packageName, extras, options);
+    }
+
+    private void addActivityOverlay(String packageName, float opacity,
+            BlockingResultReceiver tokenReceiver) {
+        Bundle extras = new Bundle();
+        extras.putFloat(Components.OverlayActivity.EXTRA_OPACITY, opacity);
+        extras.putParcelable(Components.OverlayActivity.EXTRA_TOKEN_RECEIVER, tokenReceiver);
+        addActivityOverlay(packageName, extras, /* options */ null);
+    }
+
+    private void addActivityOverlay(String packageName, @Nullable Bundle extras,
+            @Nullable Bundle options) {
+        addActivity(repackage(packageName, Components.OverlayActivity.COMPONENT), extras, options);
     }
 
     private void addActivity(ComponentName component, @Nullable Bundle extras,
@@ -902,12 +977,11 @@ public class WindowUntrustedTouchTest {
         }
         mActivity.startActivity(intent, options);
         String packageName = component.getPackageName();
-        String message = "Activity from app " + packageName + " did not appear on time";
         String activity = ComponentNameUtils.getActivityName(component);
         if (!mWmState.waitFor("activity window " + activity,
                 state -> activity.equals(state.getFocusedActivity())
                         && state.hasActivityState(component, STATE_RESUMED))) {
-            fail(message);
+            fail("Activity from app " + packageName + " did not appear on time");
         }
     }
 
@@ -932,13 +1006,12 @@ public class WindowUntrustedTouchTest {
 
     private void addSawOverlay(String packageName, String windowSuffix, float opacity)
             throws Throwable {
-        String name = packageName + "." + windowSuffix;
+        String name = getWindowName(packageName, windowSuffix);
         getService(packageName).showSystemAlertWindow(name, opacity);
         mSawWindowsAdded.add(name);
-        String message = "Window " + name + " did not appear on time";
-        if (!mWmState.waitFor("window " + name,
+        if (!mWmState.waitFor("saw window " + name,
                 state -> state.isWindowVisible(name) && state.isWindowSurfaceShown(name))) {
-            fail(message);
+            fail("Saw window " + name + " did not appear on time");
         }
     }
 
@@ -988,7 +1061,7 @@ public class WindowUntrustedTouchTest {
     }
 
     private IUntrustedTouchTestService getService(String packageName) throws Exception {
-        return mConnections.computeIfAbsent(packageName, this::connect).get(BIND_TIMEOUT_MS);
+        return mConnections.computeIfAbsent(packageName, this::connect).get(TIMEOUT_MS);
     }
 
     private FutureConnection<IUntrustedTouchTestService> connect(String packageName) {
@@ -998,6 +1071,10 @@ public class WindowUntrustedTouchTest {
         intent.setComponent(repackage(packageName, Components.UntrustedTouchTestService.COMPONENT));
         assertTrue(mContext.bindService(intent, connection, Context.BIND_AUTO_CREATE));
         return connection;
+    }
+
+    private static String getWindowName(String packageName, String windowSuffix) {
+        return packageName + "." + windowSuffix;
     }
 
     private static ComponentName repackage(String packageName, ComponentName baseComponent) {

@@ -18,6 +18,7 @@ package android.provider.cts.contacts;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import android.Manifest;
 import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -111,8 +112,15 @@ public class CallLogTest extends InstrumentationTestCase {
         builder.setLatitude(lat);
         builder.setLongitude(lon);
 
-        Uri uri = ShellIdentityUtils.invokeStaticMethodWithShellPermissions(() ->
-                CallLog.Calls.addCall(context, builder.build()));
+        Uri uri;
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS,
+                        Manifest.permission.READ_VOICEMAIL);
+        try {
+            uri = CallLog.Calls.addCall(context, builder.build());
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
         assertNotNull(uri);
 
         Cursor cursor = context.getContentResolver().query(

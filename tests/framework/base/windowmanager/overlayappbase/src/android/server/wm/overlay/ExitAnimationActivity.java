@@ -29,7 +29,12 @@ import android.view.View;
 import androidx.annotation.AnimRes;
 import androidx.annotation.Nullable;
 
-public class OpaqueActivity extends Activity {
+
+/**
+ * Activity that registers a receiver to listen to actions in {@link
+ * Components.ExitAnimationActivityReceiver} to exit with animations.
+ */
+public class ExitAnimationActivity extends Activity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,7 +47,7 @@ public class OpaqueActivity extends Activity {
     protected void onStart() {
         super.onStart();
         registerReceiver(mReceiver,
-                new IntentFilter(Components.ActivityReceiver.ACTION_FINISH));
+                new IntentFilter(Components.ExitAnimationActivityReceiver.ACTION_FINISH));
     }
 
     @Override
@@ -55,10 +60,10 @@ public class OpaqueActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             switch (intent.getAction()) {
-                case Components.ActivityReceiver.ACTION_FINISH:
+                case Components.ExitAnimationActivityReceiver.ACTION_FINISH:
                     int exitAnimation = intent.getIntExtra(
-                            Components.ActivityReceiver.EXTRA_ANIMATION,
-                            Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY);
+                            Components.ExitAnimationActivityReceiver.EXTRA_ANIMATION,
+                            Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY);
                     finish();
                     overridePendingTransition(getEnterAnimationRes(exitAnimation),
                             getAnimationRes(exitAnimation));
@@ -73,11 +78,11 @@ public class OpaqueActivity extends Activity {
     @AnimRes
     private static int getEnterAnimationRes(int exitAnimation) {
         switch (exitAnimation) {
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY:
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_7:
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_7:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
                 return R.anim.alpha_1;
-            case Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
                 return R.anim.long_alpha_1;
             default:
                 throw new AssertionError("Unknown animation value " + exitAnimation);
@@ -87,13 +92,13 @@ public class OpaqueActivity extends Activity {
     @AnimRes
     private static int getAnimationRes(int animation) {
         switch (animation) {
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_EMPTY:
                 return 0;
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_7:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_7:
                 return R.anim.alpha_0_7;
-            case Components.ActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_ANIMATION_0_9:
                 return R.anim.alpha_0_9;
-            case Components.ActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
+            case Components.ExitAnimationActivityReceiver.EXTRA_VALUE_LONG_ANIMATION_0_7:
                 return R.anim.long_alpha_0_7;
             default:
                 throw new AssertionError("Unknown animation value " + animation);
