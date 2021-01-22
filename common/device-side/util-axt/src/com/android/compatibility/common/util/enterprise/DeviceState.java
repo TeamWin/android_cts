@@ -50,8 +50,6 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -608,9 +606,8 @@ public final class DeviceState implements TestRule {
     private String runCommandWithOutput(String command) {
         ParcelFileDescriptor p = runCommand(command);
 
-        InputStream inputStream = new FileInputStream(p.getFileDescriptor());
-
-        try (Scanner scanner = new Scanner(inputStream, UTF_8.name())) {
+        try (Scanner scanner = new Scanner(new ParcelFileDescriptor.AutoCloseInputStream(p),
+                UTF_8.name())) {
             String s = scanner.useDelimiter("\\A").next();
             Log.d("DeviceState", "Running command " + command + " got output: " + s);
             return s;
