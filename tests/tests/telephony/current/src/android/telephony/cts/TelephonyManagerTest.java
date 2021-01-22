@@ -58,6 +58,9 @@ import android.telephony.CallForwardingInfo;
 import android.telephony.CallQuality;
 import android.telephony.CarrierBandwidth;
 import android.telephony.CarrierConfigManager;
+import android.telephony.CellIdentity;
+import android.telephony.CellIdentityLte;
+import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.DataThrottlingRequest;
@@ -184,6 +187,7 @@ public class TelephonyManagerTest {
     private static final String TESTING_PLMN = "12345";
 
     private static final int RADIO_HAL_VERSION_1_3 = makeRadioVersion(1, 3);
+    private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
     private static final int RADIO_HAL_VERSION_1_6 = makeRadioVersion(1, 6);
 
     static {
@@ -3697,6 +3701,40 @@ public class TelephonyManagerTest {
         assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported("empty"));
         assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(null));
         assertFalse(mTelephonyManager.isRadioInterfaceCapabilitySupported(""));
+    }
+
+    @Test
+    public void testGetAllCellInfo() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) return;
+
+        // For IRadio <1.5, just verify that calling the method doesn't throw an error.
+        if (mRadioVersion < RADIO_HAL_VERSION_1_5) {
+            mTelephonyManager.getAllCellInfo();
+            return;
+        }
+
+        for (CellInfo cellInfo : mTelephonyManager.getAllCellInfo()) {
+            CellIdentity cellIdentity = cellInfo.getCellIdentity();
+            int[] bands;
+            if (cellIdentity instanceof CellIdentityLte) {
+                bands = ((CellIdentityLte) cellIdentity).getBands();
+                for (int band : bands) {
+                    assertTrue(band >= AccessNetworkConstants.EutranBand.BAND_1
+                            && band <= AccessNetworkConstants.EutranBand.BAND_88);
+                }
+            } else if (cellIdentity instanceof CellIdentityNr) {
+                bands = ((CellIdentityNr) cellIdentity).getBands();
+                for (int band : bands) {
+                    assertTrue((band >= AccessNetworkConstants.NgranBands.BAND_1
+                            && band <= AccessNetworkConstants.NgranBands.BAND_95)
+                            || (band >= AccessNetworkConstants.NgranBands.BAND_257
+                            && band <= AccessNetworkConstants.NgranBands.BAND_261));
+                }
+            } else {
+                continue;
+            }
+            assertTrue(bands.length > 0);
+        }
     }
 
     /**
