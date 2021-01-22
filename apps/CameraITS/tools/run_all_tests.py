@@ -306,6 +306,7 @@ def run_rotations(camera_id, test_name):
     """Determine if camera rotation is run for this test."""
     with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         method = {'test_sensor_fusion': {
                           'flag': its.caps.sensor_fusion_test_capable(props, cam),
                           'runs': 10},
