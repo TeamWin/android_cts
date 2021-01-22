@@ -46,7 +46,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
         }
@@ -88,9 +88,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCannotSetDeviceOwnerWhenSecondaryUserPresent() throws Exception {
-        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
-            return;
-        }
+        assumeSupportsMultiUser();
         int userId = -1;
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {

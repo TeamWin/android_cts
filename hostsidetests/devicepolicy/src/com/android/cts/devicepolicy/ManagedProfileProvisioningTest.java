@@ -31,20 +31,17 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
         super.setUp();
 
         // We need multi user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature(
-                "android.software.managed_users");
+        assumeHasManageUsersFeature();
 
-        if (mHasFeature) {
-            removeTestUsers();
-            mParentUserId = mPrimaryUserId;
-            installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
-            mProfileUserId = 0;
-        }
+        removeTestUsers();
+        mParentUserId = mPrimaryUserId;
+        installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
+        mProfileUserId = 0;
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             if (mProfileUserId != 0) {
                 removeUser(mProfileUserId);
             }

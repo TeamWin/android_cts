@@ -32,13 +32,11 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
         super.setUp();
 
         // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
+        assumeHasManageUsersFeature();
 
-        if (mHasFeature) {
-            removeTestUsers();
-            mParentUserId = mPrimaryUserId;
-            createManagedProfile();
-        }
+        removeTestUsers();
+        mParentUserId = mPrimaryUserId;
+        createManagedProfile();
     }
 
     private void createManagedProfile() throws Exception {
@@ -53,7 +51,7 @@ public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTest
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             removeUser(mUserId);
         }
         super.tearDown();

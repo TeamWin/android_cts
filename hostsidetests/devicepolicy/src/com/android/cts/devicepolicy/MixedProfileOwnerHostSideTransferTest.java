@@ -29,15 +29,14 @@ public class MixedProfileOwnerHostSideTransferTest extends
     public void setUp() throws Exception {
         super.setUp();
         // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
-        if (mHasFeature) {
-            int profileOwnerUserId = setupManagedProfile(TRANSFER_OWNER_OUTGOING_APK,
-                    TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
-            if (profileOwnerUserId != -1) {
-                setupTestParameters(profileOwnerUserId, TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
-                        TRANSFER_PROFILE_OWNER_INCOMING_TEST);
-                installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
-            }
+        assumeHasManageUsersFeature();
+
+        int profileOwnerUserId = setupManagedProfile(TRANSFER_OWNER_OUTGOING_APK,
+                TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);
+        if (profileOwnerUserId != -1) {
+            setupTestParameters(profileOwnerUserId, TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
+                    TRANSFER_PROFILE_OWNER_INCOMING_TEST);
+            installAppAsUser(TRANSFER_OWNER_INCOMING_APK, mUserId);
         }
     }
 }

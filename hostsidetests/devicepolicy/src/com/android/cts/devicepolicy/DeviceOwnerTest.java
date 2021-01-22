@@ -567,8 +567,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testAllowProvisioningProperty() throws Exception {
         boolean isProvisioningAllowedForNormalUsers =
                 getBooleanSystemProperty("ro.config.allowuserprovisioning", true);
-        boolean isTv = hasDeviceFeature("android.software.leanback");
-        assertTrue(isProvisioningAllowedForNormalUsers || isTv);
+        assertTrue(isProvisioningAllowedForNormalUsers || isTv());
     }
 
     @Test

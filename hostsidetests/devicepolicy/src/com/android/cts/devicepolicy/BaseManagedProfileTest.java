@@ -16,8 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static org.junit.Assert.fail;
-
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
@@ -46,36 +44,31 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected int mParentUserId;
     // ID of the profile we'll create. This will always be a profile of the parent.
     protected int mProfileUserId;
-    protected boolean mHasNfcFeature;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         // We need multi user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        mHasNfcFeature = hasDeviceFeature("android.hardware.nfc")
-                && hasDeviceFeature("android.sofware.nfc.beam");
+        assumeHasManageUsersFeature();
 
-        if (mHasFeature) {
-            removeTestUsers();
-            mParentUserId = mPrimaryUserId;
-            mProfileUserId = createManagedProfile(mParentUserId);
-            startUserAndWait(mProfileUserId);
+        removeTestUsers();
+        mParentUserId = mPrimaryUserId;
+        mProfileUserId = createManagedProfile(mParentUserId);
+        startUserAndWait(mProfileUserId);
 
-            // Install the APK on both primary and profile user in one single transaction.
-            // If they were installed separately, the second installation would become an app
-            // update and result in the current running test process being killed.
-            installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
-            setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                    mProfileUserId);
-            waitForUserUnlock(mProfileUserId);
-        }
+        // Install the APK on both primary and profile user in one single transaction.
+        // If they were installed separately, the second installation would become an app
+        // update and result in the current running test process being killed.
+        installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
+        setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                mProfileUserId);
+        waitForUserUnlock(mProfileUserId);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             removeUser(mProfileUserId);
             getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
             getDevice().uninstallPackage(INTENT_SENDER_PKG);

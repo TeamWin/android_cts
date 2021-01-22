@@ -45,11 +45,6 @@ import java.util.Map;
  */
 public class ManagedProfileTest extends BaseManagedProfileTest {
 
-    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
-    private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
-    private static final String FEATURE_CAMERA = "android.hardware.camera";
-    private static final String FEATURE_WIFI = "android.hardware.wifi";
-    private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
     private static final String DEVICE_OWNER_PKG = "com.android.cts.deviceowner";
     private static final String DEVICE_OWNER_APK = "CtsDeviceOwnerApp.apk";
     private static final String DEVICE_OWNER_ADMIN =
@@ -74,12 +69,14 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
         if (newUserId > 0) {
             removeUser(newUserId);
-            if (mHasFeature) {
+            if (hasFeature()) {
                 // Exception is Android TV which can create multiple managed profiles
-                if (!hasDeviceFeature("android.software.leanback")) {
+                if (!isTv()) {
                     fail("Device must allow creating only one managed profile");
                 }
             } else {
+                // TODO(b/178230958): STOPSHIP this path will never be executed because
+                // super.setUp() is skipping the test if it doesn't have the feature
                 fail("Device must not allow creating a managed profile");
             }
         }
@@ -90,9 +87,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
      */
     @Test
     public void testProfileWifiCleanup() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
+        assumeHasWifiFeature();
 
         try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
             locationModeSetter.setLocationEnabled(true);
@@ -284,10 +279,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     // Test the bluetooth API from a managed profile.
     @Test
     public void testBluetooth() throws Exception {
-        boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
-        if (!mHasFeature || !hasBluetooth) {
-            return;
-        }
+        assumeHasBluetoothFeature();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
                 "testEnableDisable", mProfileUserId);
@@ -301,10 +293,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCameraPolicy() throws Exception {
-        boolean hasCamera = hasDeviceFeature(FEATURE_CAMERA);
-        if (!mHasFeature || !hasCamera) {
-            return;
-        }
+        assumeHasCameraFeature();
+
         try {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testDisableCameraInManagedProfile",
@@ -404,9 +394,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testNfcRestriction() throws Exception {
-        if (!mHasFeature || !mHasNfcFeature) {
-            return;
-        }
+        assumeHasNfcFeatures();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NfcTest",
                 "testNfcShareEnabled", mProfileUserId);
@@ -439,12 +427,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testPhoneAccountVisibility() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        if (!shouldRunTelecomTest()) {
-            return;
-        }
+        assumeHasTelephonyAndConnectionServiceFeatures();
+
         try {
             // Register phone account in parent user.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
@@ -481,12 +465,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testManagedCall() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        if (!shouldRunTelecomTest()) {
-            return;
-        }
+        assumeHasTelephonyAndConnectionServiceFeatures();
+
         getDevice().executeShellCommand("telecom set-default-dialer " + MANAGED_PROFILE_PKG);
 
         // Place a outgoing call through work phone account using TelecomManager and verify the
@@ -532,9 +512,8 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testTrustAgentInfo() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Set and get trust agent config using child dpm instance.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".TrustAgentInfoTest",
                 "testSetAndGetTrustAgentConfiguration_child",
@@ -573,10 +552,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testBluetoothSharingRestriction() throws Exception {
-        final boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
-        if (!mHasFeature || !hasBluetooth) {
-            return;
-        }
+        assumeHasBluetoothFeature();
 
         // Primary profile should be able to use bluetooth sharing.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothSharingRestrictionPrimaryProfileTest",
@@ -836,9 +812,5 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
         runDeviceTestsAsUser(INTENT_SENDER_PKG, ".AppLinkTest", methodName,
                 mProfileUserId);
-    }
-
-    private boolean shouldRunTelecomTest() throws DeviceNotAvailableException {
-        return hasDeviceFeature(FEATURE_TELEPHONY) && hasDeviceFeature(FEATURE_CONNECTION_SERVICE);
     }
 }

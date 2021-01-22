@@ -23,10 +23,10 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Test;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.junit.Test;
 
 public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     private static final String APK_NON_TEST_ONLY = "CtsAccountCheckNonTestOnlyOwnerApp.apk";
@@ -50,7 +50,7 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
                 runCleanupTestOnlyOwnerAllowingFailure();
                 runCleanupNonTestOnlyOwnerAllowingFailure();

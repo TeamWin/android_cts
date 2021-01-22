@@ -22,11 +22,6 @@ public class DeviceAdminServiceDeviceOwnerTest extends BaseDeviceAdminServiceTes
     }
 
     @Override
-    protected boolean isTestEnabled() {
-        return mHasFeature;
-    }
-
-    @Override
     protected void setAsOwnerOrFail(String component) throws Exception {
         setDeviceOwnerOrFail(component, getUserId());
     }

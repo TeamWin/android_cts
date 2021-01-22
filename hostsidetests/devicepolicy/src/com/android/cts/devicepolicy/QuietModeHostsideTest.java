@@ -47,27 +47,25 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        mHasFeature = mHasFeature & hasDeviceFeature("android.software.managed_users");
+        assumeHasManageUsersFeature();
 
-        if (mHasFeature) {
-            mOriginalLauncher = getDefaultLauncher();
+        mOriginalLauncher = getDefaultLauncher();
 
-            installAppAsUser(TEST_APK, mPrimaryUserId);
-            installAppAsUser(TEST_LAUNCHER_APK, mPrimaryUserId);
+        installAppAsUser(TEST_APK, mPrimaryUserId);
+        installAppAsUser(TEST_LAUNCHER_APK, mPrimaryUserId);
 
-            waitForBroadcastIdle();
+        waitForBroadcastIdle();
 
-            createAndStartManagedProfile();
-            installAppAsUser(TEST_APK, mProfileId);
+        createAndStartManagedProfile();
+        installAppAsUser(TEST_APK, mProfileId);
 
-            waitForBroadcastIdle();
-            wakeupAndDismissKeyguard();
-        }
+        waitForBroadcastIdle();
+        wakeupAndDismissKeyguard();
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             uninstallRequiredApps();
             getDevice().uninstallPackage(TEST_LAUNCHER_PACKAGE);
         }
@@ -77,9 +75,8 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_defaultForegroundLauncher() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Add a lockscreen to test the case that profile with unified challenge can still
         // be turned on without asking the user to enter the lockscreen password.
         changeUserCredential(/* newCredential= */ TEST_PASSWORD, /* oldCredential= */ null,
@@ -208,9 +205,8 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_noCredentialRequest() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Set a separate work challenge so turning on the profile requires entering the
         // separate challenge.
         changeUserCredential(/* newCredential= */ TEST_PASSWORD, /* oldCredential= */ null,
