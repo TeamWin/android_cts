@@ -36,7 +36,7 @@ import android.support.test.uiautomator.UiSelector;
 import android.test.MoreAsserts;
 import android.text.TextUtils;
 import android.util.Log;
-
+import android.graphics.Rect;
 import com.android.cts.documentclient.MyActivity.Result;
 
 import java.util.List;
@@ -410,7 +410,16 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertTrue(findSaveButton().isEnabled());
 
         try {
-            findDocument("Download").click();
+            //When 'Download' and 'SaveButton' display overlap, Swipe 'Download' up
+            Rect saveButtonBounds = findSaveButton().getVisibleBounds();
+            UiObject downloadDoc = findDocument("Download");
+            Rect downloadDocBounds = downloadDoc.getVisibleBounds();
+            while (downloadDocBounds.bottom > saveButtonBounds.top) {
+                mDevice.swipe(mDevice.getDisplayWidth() / 2, mDevice.getDisplayHeight() / 2,
+                        mDevice.getDisplayWidth() / 2, mDevice.getDisplayHeight() / 2 - downloadDocBounds.height(), 40);
+                downloadDocBounds = downloadDoc.getVisibleBounds();
+            }
+            downloadDoc.click();
             mDevice.waitForIdle();
 
             // save button is enabled for Download folder
