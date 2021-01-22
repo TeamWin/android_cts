@@ -27,8 +27,8 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -86,9 +86,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testCrossProfileIntentFilters() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Set up activities: ManagedProfileActivity will only be enabled in the managed profile and
         // PrimaryUserActivity only in the primary one
         disableActivityForUser("ManagedProfileActivity", mParentUserId);
@@ -120,9 +117,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileContent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         // Storage permission shouldn't be granted, we check if missing permissions are respected
         // in ContentTest#testSecurity.
@@ -148,9 +142,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileNotificationListeners_EmptyAllowlist() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
@@ -166,9 +157,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCrossProfileNotificationListeners_NullAllowlist() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
@@ -184,9 +172,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCrossProfileNotificationListeners_InAllowlist() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
@@ -202,9 +187,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCrossProfileNotificationListeners_setAndGet() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(NOTIFICATION_APK, USER_ALL);
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
@@ -215,9 +197,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileCopyPaste() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(INTENT_RECEIVER_APK, USER_ALL);
         installAppAsUser(INTENT_SENDER_APK, USER_ALL);
 
@@ -257,10 +236,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileWidgets() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             installAppAsUser(WIDGET_PROVIDER_APK, USER_ALL);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
@@ -305,10 +280,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testCrossProfileWidgetsLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             installAppAsUser(WIDGET_PROVIDER_APK, USER_ALL);
             getDevice().executeShellCommand("appwidget grantbind --user " + mParentUserId
@@ -338,9 +309,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCrossProfileCalendarPackage() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testCrossProfileCalendarPackage", mProfileUserId);
@@ -353,9 +321,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @Test
     public void testSetCrossProfilePackages_notProfileOwner_throwsSecurityException()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".CrossProfileTest",
@@ -366,9 +331,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @Test
     public void testGetCrossProfilePackages_notProfileOwner_throwsSecurityException()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".CrossProfileTest",
@@ -379,9 +341,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @Test
     public void testGetCrossProfilePackages_notSet_returnsEmpty()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".CrossProfileTest",
@@ -392,9 +351,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @Test
     public void testGetCrossProfilePackages_whenSetTwice_returnsLatestNotConcatenated()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".CrossProfileTest",
@@ -405,9 +361,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @Test
     public void testGetCrossProfilePackages_whenSet_returnsEqual()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
                 ".CrossProfileTest",
@@ -417,9 +370,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSetCrossProfilePackages_isLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAllTestApps();
         assertMetricsLogged(
                 getDevice(),
@@ -434,9 +384,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testDisallowSharingIntoPersonalFromProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Set up activities: PrimaryUserActivity will only be enabled in the personal user
         // This activity is used to find out the ground truth about the system's cross profile
         // intent forwarding activity.
@@ -449,9 +396,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testDisallowSharingIntoProfileFromPersonal() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Set up activities: ManagedProfileActivity will only be enabled in the managed profile
         // This activity is used to find out the ground truth about the system's cross profile
         // intent forwarding activity.
@@ -472,9 +416,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSetCrossProfilePackages_resetsAppOps() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAllTestApps();
         runWorkProfileDeviceTest(
                 ".CrossProfileTest",
@@ -498,9 +439,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSetCrossProfilePackages_sendsBroadcastWhenResettingAppOps() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAllTestApps();
         setupLogcatForTest();
 
@@ -560,9 +498,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSetCrossProfilePackages_resetsAppOps_isLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAllTestApps();
         assertMetricsLogged(
                 getDevice(),
@@ -577,9 +512,6 @@ public class ManagedProfileCrossProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSetCrossProfilePackages_killsApps() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAllTestApps();
         launchAllTestAppsInBothProfiles();
         Map<String, List<String>> maintainedPackagesPids = getPackagesPids(

@@ -73,9 +73,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     @Test
     public void testGetActivitiesWithProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Install app for all users.
         installAppAsUser(SIMPLE_APP_APK, mParentUserId);
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
@@ -109,9 +106,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     @Test
     public void testProfileOwnerAppHiddenInPrimaryProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         String command = "pm disable --user " + mParentUserId + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
         CLog.d("Output for command " + command + ": " + getDevice().executeShellCommand(command));
@@ -122,9 +116,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     @Test
     public void testNoHiddenActivityInProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Install app for all users.
         installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mParentUserId);
         installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mProfileUserId);
@@ -141,9 +132,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     @FlakyTest
     @Test
     public void testLauncherCallbackPackageAddedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         startCallbackService(mPrimaryUserId);
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
@@ -155,9 +143,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     @FlakyTest
     @Test
     public void testLauncherCallbackPackageRemovedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService(mPrimaryUserId);
         getDevice().uninstallPackage(SIMPLE_APP_PKG);
@@ -170,9 +155,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     @FlakyTest
     @Test
     public void testLauncherCallbackPackageChangedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         startCallbackService(mPrimaryUserId);
         installAppAsUser(SIMPLE_APP_APK, /* grantPermissions */ true, /* dontKillApp */ true,
@@ -185,9 +167,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     @Test
     public void testReverseAccessNoThrow() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
 
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,

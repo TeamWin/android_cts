@@ -108,10 +108,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testCannotAddManagedProfileWithDeviceOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         assertCannotCreateManagedProfile(mPrimaryUserId);
     }
 
@@ -126,9 +122,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @Ignore
     public void testCannotAddManagedProfileViaManagedProvisioning()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         int profileUserId = provisionCorpOwnedManagedProfile();
         assertFalse(profileUserId >= 0);
     }
@@ -139,10 +132,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testProvisioningNotAllowedWithDeviceOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         assertProvisionManagedProfileNotAllowed(COMP_DPC_PKG);
     }
 
@@ -183,9 +172,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCannotAddProfileIfRestrictionSet() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // by default, disallow add managed profile users restriction is set.
         assertCannotCreateManagedProfile(mPrimaryUserId);
     }

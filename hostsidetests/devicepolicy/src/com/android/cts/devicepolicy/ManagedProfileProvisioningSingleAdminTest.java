@@ -57,10 +57,6 @@ public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyT
     @FlakyTest
     @Test
     public void testEXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(SINGLE_ADMIN_PKG, ".ProvisioningSingleAdminTest",
                 "testManagedProfileProvisioning", mPrimaryUserId);
 

@@ -78,9 +78,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @LargeTest
     @Test
     public void testScreenCaptureDisabled_allowedPrimaryUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // disable screen capture in profile
         setScreenCaptureDisabled(mUserId, true);
 
@@ -93,9 +90,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest
     @Test
     public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // disable screen capture in profile
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testSetScreenCaptureDisabled_true");
         try {
@@ -221,9 +215,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testCannotClearProfileOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS, mUserId);
     }
 
@@ -236,9 +227,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         setUpDelegatedCertInstallerAndRunTests(() -> {
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DelegatedDeviceIdAttestationTest",
@@ -249,9 +237,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Test that Device ID attestation for the profile owner does not work without grant.
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
                 "testFailsWithoutProfileOwnerIdsGrant", mUserId);
@@ -262,9 +247,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     @Override
     public void testSetKeyguardDisabledFeatures() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
                 "testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO",
                 mUserId);
