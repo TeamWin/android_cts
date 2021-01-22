@@ -29,7 +29,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util-axt \
     compatibility-common-util-devicesidelib \
     guava \
-    platform-test-annotations
+    platform-test-annotations \
+    hamcrest-library \
 
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \
