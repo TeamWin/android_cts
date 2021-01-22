@@ -82,9 +82,7 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
             assertFalse(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
             verifyHomeLauncherIsShown();
         } catch (SecurityException expected) {
-            assertThat(expected.getMessage()).contains(
-                "Unable to set secondary lockscreen setting, "
-                    + "no default supervision component defined");
+            assertThat(expected.getMessage()).contains("default supervision component");
         }
     }
 
@@ -101,9 +99,7 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
             mUiDevice.pressHome();
             verifySecondaryLockscreenIsShown();
         } catch (SecurityException expected) {
-            assertThat(expected.getMessage()).contains(
-                "Unable to set secondary lockscreen setting, "
-                    + "no default supervision component defined");
+            assertThat(expected.getMessage()).contains("default supervision component");
         }
     }
 
@@ -125,9 +121,7 @@ public class SecondaryLockscreenTest extends BaseDeviceAdminTest {
                     UI_AUTOMATOR_WAIT_TIME_MILLIS));
             verifySecondaryLockscreenIsShown();
         } catch (SecurityException expected) {
-            assertThat(expected.getMessage()).contains(
-                "Unable to set secondary lockscreen setting, "
-                    + "no default supervision component defined");
+            assertThat(expected.getMessage()).contains("default supervision component");
         }
     }
 
