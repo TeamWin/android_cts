@@ -29,6 +29,7 @@ import android.os.BugreportManager.BugreportCallback;
 import android.os.BugreportParams;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.SystemUserOnly;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
  * cts-tradefed run cts -m CtsCarrierApiTestCases --test
  * android.carrierapi.cts.BugreportManagerTest`
  */
+@SystemUserOnly(reason = "BugreportManager requires calls to originate from the primary user")
 @RunWith(AndroidJUnit4.class)
 public class BugreportManagerTest {
     private static final String TAG = "BugreportManagerTest";
