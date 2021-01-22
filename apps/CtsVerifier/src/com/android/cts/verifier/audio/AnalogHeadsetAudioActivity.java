@@ -149,6 +149,7 @@ public class AnalogHeadsetAudioActivity
 
         setInfoResources(R.string.analog_headset_test, R.string.analog_headset_test_info, -1);
 
+        setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
     }
 
