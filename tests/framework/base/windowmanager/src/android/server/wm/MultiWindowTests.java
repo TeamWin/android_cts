@@ -160,17 +160,17 @@ public class MultiWindowTests extends ActivityManagerTestBase {
      * set.
      */
     @Test
-    public void testSupportsNonResizeableMultiWindow_legacySplitScreenPrimary() {
+    public void testSupportsNonResizeableMultiWindow_SplitScreenPrimary() {
         createManagedSupportsNonResizableMultiWindowSession().set(1);
 
-        launchActivitiesInLegacySplitScreen(
+        launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
 
         mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
         mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
         assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
     }
 
     /**
@@ -179,17 +179,17 @@ public class MultiWindowTests extends ActivityManagerTestBase {
      * set.
      */
     @Test
-    public void testSupportsNonResizeableMultiWindow_legacySplitScreenSecondary() {
+    public void testSupportsNonResizeableMultiWindow_SplitScreenSecondary() {
         createManagedSupportsNonResizableMultiWindowSession().set(1);
 
-        launchActivitiesInLegacySplitScreen(
+        launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY));
 
         mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
         mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
         assertTrue(mWmState.containsActivityInWindowingMode(
-                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
     }
 
     @Test
