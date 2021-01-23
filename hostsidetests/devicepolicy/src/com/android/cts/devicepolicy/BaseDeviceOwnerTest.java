@@ -21,8 +21,8 @@ import static org.junit.Assert.fail;
 import com.android.tradefed.log.LogUtil.CLog;
 
 /**
- * Base class for {@link DeviceOwnerTest} tests - it provides the common infra, but doesn't run any
- * test.
+ * Base class for {@link DeviceOwnerTest} and {@link HeadlessSystemUserDeviceOwnerTest} - it
+ * provides the common infra, but doesn't have any test method.
  */
 abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
@@ -39,7 +39,8 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        if (!mHasFeature) return;
+
+        assumeHasFeature();
 
         installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
@@ -70,18 +71,12 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     protected final void executeDeviceOwnerTest(String testClassName) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         String testClass = DEVICE_OWNER_PKG + "." + testClassName;
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, testClass, mPrimaryUserId);
     }
 
     protected final void executeDeviceTestMethod(String className, String testName)
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
                 /* deviceOwnerUserId */ mPrimaryUserId);
     }

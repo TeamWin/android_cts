@@ -27,21 +27,16 @@ import org.junit.Test;
  */
 public final class HeadlessSystemUserDeviceOwnerTest extends BaseDeviceOwnerTest {
 
-    private boolean mSupported;
-
     @Override
     public void setUp() throws Exception {
         assumeTrue("device is not headless system user mode", isHeadlessSystemUserMode());
 
         super.setUp();
-
-        assumeTrue("device doesn't support the feature", mHasFeature);
-        mSupported = true;
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!mSupported) return;
+        if (!isHeadlessSystemUserMode()) return;
 
         super.tearDown();
     }

@@ -42,6 +42,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.SystemUserOnly;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
 import android.telephony.AvailableNetworkInfo;
@@ -402,6 +403,7 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    @SystemUserOnly(reason = "b/177921545, broadcast sent only to primary user")
     public void testSendDialerSpecialCode() {
         if (!hasCellular) return;
         try {

@@ -43,6 +43,7 @@
 
     <!-- Exclude not applicable testcases-->
     <option name="compatibility:exclude-filter" value="CtsSignatureTestCases" />
+    <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.AutoRevokeTeandroid.os.cts.AutoRevokeTestst" />
 
     <!--
         Exclude testcases failing on Pixel devices

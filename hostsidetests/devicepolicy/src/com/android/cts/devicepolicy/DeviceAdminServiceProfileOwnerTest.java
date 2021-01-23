@@ -42,8 +42,8 @@ public class DeviceAdminServiceProfileOwnerTest extends BaseDeviceAdminServiceTe
     }
 
     @Override
-    protected boolean isTestEnabled() {
-        return mHasFeature && mSupportsMultiUser;
+    protected boolean isTestEnabled() throws Exception {
+        return hasFeature() && isMultiUserSupported();
     }
 
     @Override

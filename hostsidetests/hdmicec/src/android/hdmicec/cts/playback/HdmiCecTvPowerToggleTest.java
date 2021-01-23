@@ -50,7 +50,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
 
     private static final LogicalAddress PLAYBACK_DEVICE = LogicalAddress.PLAYBACK_1;
     private static final String POWER_CONTROL_MODE =
-            "send_standby_on_sleep";
+            "hdmi_control_send_standby_on_sleep";
     @Rule
     public RuleChain ruleChain =
             RuleChain
