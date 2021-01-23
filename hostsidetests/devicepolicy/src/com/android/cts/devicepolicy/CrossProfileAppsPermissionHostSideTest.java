@@ -16,6 +16,10 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,6 +36,7 @@ import java.util.Map;
  * The rest of the tests for {@link android.content.pm.crossprofile.CrossProfileApps}
  * can be found in {@link CrossProfileAppsHostSideTest}.
  */
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest {
     private static final String TEST_WITH_REQUESTED_PERMISSION_PACKAGE =
             "com.android.cts.crossprofileappstest";
@@ -56,13 +61,15 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
 
     private int mProfileId;
 
+    @Override
+    protected void assumeTestEnabled() throws Exception {
+        assumeSupportsMultiUser();
+    }
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        assumeSupportsMultiUser();
-        assumeHasManageUsersFeature();
     }
 
     @Test

@@ -1,9 +1,12 @@
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
@@ -16,6 +19,7 @@ import java.util.Map;
  * CTS to verify toggling quiet mode in work profile by using
  * {@link android.os.UserManager#requestQuietModeEnabled(boolean, android.os.UserHandle)}.
  */
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     private static final String TEST_PACKAGE = "com.android.cts.launchertests";
     private static final String TEST_CLASS = ".QuietModeTest";
@@ -47,8 +51,6 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeHasManageUsersFeature();
-
         mOriginalLauncher = getDefaultLauncher();
 
         installAppAsUser(TEST_APK, mPrimaryUserId);
@@ -65,10 +67,9 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            uninstallRequiredApps();
-            getDevice().uninstallPackage(TEST_LAUNCHER_PACKAGE);
-        }
+        uninstallRequiredApps();
+        getDevice().uninstallPackage(TEST_LAUNCHER_PACKAGE);
+
         super.tearDown();
     }
 

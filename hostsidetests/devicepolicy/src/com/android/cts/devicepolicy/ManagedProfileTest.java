@@ -28,6 +28,7 @@ import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.util.LocationModeSetter;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.DoesNotRequireFeature;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -57,6 +58,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
                 mProfileUserId);
     }
 
+    @DoesNotRequireFeature
     @Test
     public void testMaxOneManagedProfile() throws Exception {
         int newUserId = -1;
@@ -66,14 +68,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
         }
         if (newUserId > 0) {
             removeUser(newUserId);
-            if (hasFeature()) {
+            if (mFeaturesCheckerRule.hasRequiredFeatures()) {
                 // Exception is Android TV which can create multiple managed profiles
                 if (!isTv()) {
                     fail("Device must allow creating only one managed profile");
                 }
             } else {
-                // TODO(b/178230958): STOPSHIP this path will never be executed because
-                // super.setUp() is skipping the test if it doesn't have the feature
                 fail("Device must not allow creating a managed profile");
             }
         }

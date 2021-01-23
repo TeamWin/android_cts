@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertEquals;
@@ -28,6 +29,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.LocationModeSetter;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
 import org.junit.Ignore;
@@ -514,9 +516,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * Can provision Managed Profile when DO is set by default if they are the same admin.
      */
     @Test
+    @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
     public void testIsManagedProfileProvisioningAllowed_deviceOwnerIsSet() throws Exception {
-        assumeHasManageUsersFeature();
-
         executeDeviceTestMethod(".PreDeviceOwnerTest",
                 "testIsProvisioningNotAllowedForManagedProfileAction");
     }

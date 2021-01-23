@@ -36,9 +36,6 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (!isTestEnabled()) {
-            return;
-        }
         super.tearDown();
         getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
     }
