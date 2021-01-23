@@ -16,9 +16,14 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 
+// We need multi user to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     protected static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     protected static final String INTENT_SENDER_PKG = "com.android.cts.intent.sender";
@@ -49,38 +54,37 @@ public abstract class BaseManagedProfileTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need multi user to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
+        if (mFeaturesCheckerRule.hasRequiredFeatures()) {
 
-        removeTestUsers();
-        mParentUserId = mPrimaryUserId;
-        mProfileUserId = createManagedProfile(mParentUserId);
-        startUserAndWait(mProfileUserId);
+            removeTestUsers();
+            mParentUserId = mPrimaryUserId;
+            mProfileUserId = createManagedProfile(mParentUserId);
+            startUserAndWait(mProfileUserId);
 
-        // Install the APK on both primary and profile user in one single transaction.
-        // If they were installed separately, the second installation would become an app
-        // update and result in the current running test process being killed.
-        installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
-        setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                mProfileUserId);
-        waitForUserUnlock(mProfileUserId);
+            // Install the APK on both primary and profile user in one single transaction.
+            // If they were installed separately, the second installation would become an app
+            // update and result in the current running test process being killed.
+            installAppAsUser(MANAGED_PROFILE_APK, USER_ALL);
+            setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                    mProfileUserId);
+            waitForUserUnlock(mProfileUserId);
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeUser(mProfileUserId);
-            getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
-            getDevice().uninstallPackage(INTENT_SENDER_PKG);
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-            getDevice().uninstallPackage(NOTIFICATION_PKG);
-            getDevice().uninstallPackage(TEST_APP_1_APK);
-            getDevice().uninstallPackage(TEST_APP_2_APK);
-            getDevice().uninstallPackage(TEST_APP_3_APK);
-            getDevice().uninstallPackage(TEST_APP_4_APK);
-            getDevice().uninstallPackage(SHARING_APP_1_APK);
-            getDevice().uninstallPackage(SHARING_APP_2_APK);
-        }
+        removeUser(mProfileUserId);
+        getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
+        getDevice().uninstallPackage(INTENT_SENDER_PKG);
+        getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+        getDevice().uninstallPackage(NOTIFICATION_PKG);
+        getDevice().uninstallPackage(TEST_APP_1_APK);
+        getDevice().uninstallPackage(TEST_APP_2_APK);
+        getDevice().uninstallPackage(TEST_APP_3_APK);
+        getDevice().uninstallPackage(TEST_APP_4_APK);
+        getDevice().uninstallPackage(SHARING_APP_1_APK);
+        getDevice().uninstallPackage(SHARING_APP_2_APK);
+
         super.tearDown();
     }
 

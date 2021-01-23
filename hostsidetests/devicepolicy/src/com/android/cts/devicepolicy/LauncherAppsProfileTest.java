@@ -16,8 +16,11 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.FlakyTest;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Test;
@@ -27,6 +30,7 @@ import java.util.Collections;
 /**
  * Set of tests for LauncherApps with managed profiles.
  */
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
@@ -44,7 +48,6 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        assumeHasManageUsersFeature();
 
         removeTestUsers();
         // Create a managed profile
@@ -63,11 +66,10 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeUser(mProfileUserId);
-            uninstallTestApps();
-            getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
-        }
+        removeUser(mProfileUserId);
+        uninstallTestApps();
+        getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);
+
         super.tearDown();
     }
 

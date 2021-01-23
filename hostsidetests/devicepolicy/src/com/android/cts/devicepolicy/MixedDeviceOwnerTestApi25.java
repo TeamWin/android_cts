@@ -43,10 +43,9 @@ public class MixedDeviceOwnerTestApi25 extends DeviceAndProfileOwnerTestApi25 {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            assertTrue("Failed to remove device owner",
-                    removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
-        }
+        assertTrue("Failed to remove device owner",
+                removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+
         super.tearDown();
     }
 
