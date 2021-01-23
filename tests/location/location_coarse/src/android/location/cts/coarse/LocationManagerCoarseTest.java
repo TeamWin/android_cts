@@ -230,6 +230,7 @@ public class LocationManagerCoarseTest {
         location.setTime(1);
 
         mManager.setTestProviderLocation(GPS_PROVIDER, location);
+        Thread.sleep(200);
         assertTrue(SystemClock.currentGnssTimeClock().millis() < 1000);
 
         location.setTime(java.lang.System.currentTimeMillis());
