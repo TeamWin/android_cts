@@ -932,6 +932,28 @@ abstract class TestUtils extends Assert {
         }
     }
 
+    static KeyProtection getMinimalWorkingImportParametersWithLimitedUsageForSigningingWith(
+            String signatureAlgorithm, int maxUsageCount) {
+        String keyAlgorithm = getSignatureAlgorithmKeyAlgorithm(signatureAlgorithm);
+        String digest = getSignatureAlgorithmDigest(signatureAlgorithm);
+        if (KeyProperties.KEY_ALGORITHM_EC.equalsIgnoreCase(keyAlgorithm)) {
+            return new KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
+                    .setDigests(digest)
+                    .setMaxUsageCount(maxUsageCount)
+                    .build();
+        } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
+            String padding = getSignatureAlgorithmPadding(signatureAlgorithm);
+            return new KeyProtection.Builder(KeyProperties.PURPOSE_SIGN)
+                    .setDigests(digest)
+                    .setSignaturePaddings(padding)
+                    .setMaxUsageCount(maxUsageCount)
+                    .build();
+        } else {
+            throw new IllegalArgumentException(
+                    "Unsupported signature algorithm: " + signatureAlgorithm);
+        }
+    }
+
     static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes) {
         return getMinimalWorkingImportParametersForCipheringWith(transformation, purposes, false);

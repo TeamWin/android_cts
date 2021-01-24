@@ -725,6 +725,30 @@ public class KeyGeneratorTest extends AndroidTestCase {
         }
     }
 
+    public void testLimitedUseKey() throws Exception {
+        testLimitedUseKey(false /* useStrongbox */);
+        if (TestUtils.hasStrongBox(getContext())) {
+            testLimitedUseKey(true /* useStrongbox */);
+        }
+    }
+
+    private void testLimitedUseKey(boolean useStrongbox) throws Exception {
+        int maxUsageCount = 1;
+        for (String algorithm :
+                (useStrongbox ? EXPECTED_STRONGBOX_ALGORITHMS : EXPECTED_ALGORITHMS)) {
+            try {
+                int expectedSizeBits = DEFAULT_KEY_SIZES.get(algorithm);
+                KeyGenerator keyGenerator = getKeyGenerator(algorithm);
+                keyGenerator.init(getWorkingSpec().setMaxUsageCount(maxUsageCount).build());
+                SecretKey key = keyGenerator.generateKey();
+                assertEquals(expectedSizeBits, TestUtils.getKeyInfo(key).getKeySize());
+                assertEquals(maxUsageCount, TestUtils.getKeyInfo(key).getRemainingUsageCount());
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed for " + algorithm, e);
+            }
+        }
+    }
+
     private static KeyGenParameterSpec.Builder getWorkingSpec() {
         return getWorkingSpec(0);
     }
