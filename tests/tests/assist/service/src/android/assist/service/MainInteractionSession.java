@@ -107,6 +107,10 @@ public class MainInteractionSession extends VoiceInteractionSession {
         if ((showFlags & SHOW_WITH_ASSIST) == 0) {
             return;
         }
+        if (args == null) {
+            Log.e(TAG, "onshow() received null args");
+            return;
+        }
         mTestName = args.getString(Utils.TESTCASE_TYPE, "");
         mCurColor = args.getInt(Utils.SCREENSHOT_COLOR_KEY);
         mDisplayHeight = args.getInt(Utils.DISPLAY_HEIGHT_KEY);
