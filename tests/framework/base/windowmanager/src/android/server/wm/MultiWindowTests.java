@@ -21,7 +21,9 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.wm.TestTaskOrganizer.INVALID_TASK_ID;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -109,6 +111,85 @@ public class MultiWindowTests extends ActivityManagerTestBase {
                 NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN));
         mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
         mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+    }
+
+    /**
+     * Non-resizeable activity can enter split-screen if
+     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
+     * set.
+     */
+    @Test
+    public void testSupportsNonResizeableMultiWindow_splitScreenPrimary() {
+        createManagedSupportsNonResizableMultiWindowSession().set(1);
+
+        launchActivityInPrimarySplit(NON_RESIZEABLE_ACTIVITY);
+
+        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
+    }
+
+    /**
+     * Non-resizeable activity can enter split-screen if
+     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
+     * set.
+     */
+    @Test
+    public void testSupportsNonResizeableMultiWindow_splitScreenSecondary() {
+        createManagedSupportsNonResizableMultiWindowSession().set(1);
+
+        launchActivityInPrimarySplit(TEST_ACTIVITY);
+
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                TEST_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
+
+        launchActivityInSecondarySplit(NON_RESIZEABLE_ACTIVITY);
+
+        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW));
+    }
+
+    /**
+     * Non-resizeable activity can enter split-screen if
+     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
+     * set.
+     */
+    @Test
+    public void testSupportsNonResizeableMultiWindow_legacySplitScreenPrimary() {
+        createManagedSupportsNonResizableMultiWindowSession().set(1);
+
+        launchActivitiesInLegacySplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
+
+        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+    }
+
+    /**
+     * Non-resizeable activity can enter split-screen if
+     * {@link android.provider.Settings.Global#DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW} is
+     * set.
+     */
+    @Test
+    public void testSupportsNonResizeableMultiWindow_legacySplitScreenSecondary() {
+        createManagedSupportsNonResizableMultiWindowSession().set(1);
+
+        launchActivitiesInLegacySplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY));
+
+        mWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(NON_RESIZEABLE_ACTIVITY, true);
+        assertTrue(mWmState.containsActivityInWindowingMode(
+                NON_RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_SECONDARY));
     }
 
     @Test

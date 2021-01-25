@@ -719,6 +719,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         int currentState;
         int currentFailureReason;
         List<SoftApInfo> apInfoList = new ArrayList<>();
+        SoftApInfo apInfoOnSingleApMode;
         Map<SoftApInfo, List<WifiClient>> apInfoClients = new HashMap<>();
         List<WifiClient> currentClientList;
         SoftApCapability currentSoftApCapability;
@@ -798,7 +799,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         public SoftApInfo getCurrentSoftApInfo() {
             synchronized(softApLock) {
-                return apInfoList.size() > 0 ? apInfoList.get(0) : null;
+                return apInfoOnSingleApMode;
             }
         }
 
@@ -862,8 +863,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         @Override
         public void onInfoChanged(SoftApInfo softApInfo) {
             synchronized(softApLock) {
-                apInfoList.clear();
-                apInfoList.add(softApInfo);
+                apInfoOnSingleApMode = softApInfo;
                 onSoftapInfoChangedCalledCount++;
             }
         }

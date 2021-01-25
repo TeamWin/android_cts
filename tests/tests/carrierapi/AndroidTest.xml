@@ -17,6 +17,7 @@
   <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
     <option name="config-descriptor:metadata" key="component" value="telecom" />
     <option name="config-descriptor:metadata" key="token" value="UICC_SIM_CARD" />
     <option name="not-shardable" value="true" />

@@ -20,9 +20,13 @@ import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 
+import com.android.server.biometrics.nano.BiometricSchedulerProto;
+import com.android.server.biometrics.nano.BiometricsProto;
 import com.android.server.biometrics.nano.SensorServiceStateProto;
 import com.android.server.biometrics.nano.SensorStateProto;
 import com.android.server.biometrics.nano.UserStateProto;
+
+import com.google.common.primitives.Ints;
 
 import java.util.List;
 
@@ -41,19 +45,47 @@ public class SensorStates {
 
     @NonNull public final SparseArray<SensorState> sensorStates;
 
+    public static class SchedulerState {
+        private final int mCurrentOperation;
+        private final int mTotalOperations;
+        @NonNull private final List<Integer> mRecentOperations;
+
+        public static SchedulerState parseFrom(@NonNull BiometricSchedulerProto proto) {
+            return new SchedulerState(proto.currentOperation, proto.totalOperations,
+                    Ints.asList(proto.recentOperations));
+        }
+
+        public SchedulerState(int currentOperation, int totalOperations,
+                @NonNull List<Integer> recentOperations) {
+            mCurrentOperation = currentOperation;
+            mTotalOperations = totalOperations;
+            mRecentOperations = recentOperations;
+        }
+
+        @NonNull
+        public List<Integer> getRecentOperations() {
+            return mRecentOperations;
+        }
+    }
+
     public static class SensorState {
-        private final boolean mIsBusy;
+        private final SchedulerState mSchedulerState;
         private final int mModality;
         @NonNull private final SparseArray<UserState> mUserStates;
 
-        public SensorState(boolean isBusy, int modality, @NonNull SparseArray<UserState> userStates) {
-            this.mIsBusy = isBusy;
+        public SensorState(@NonNull SchedulerState schedulerState, int modality,
+                @NonNull SparseArray<UserState> userStates) {
+            this.mSchedulerState = schedulerState;
             this.mModality = modality;
             this.mUserStates = userStates;
         }
 
+        public SchedulerState getSchedulerState() {
+            return mSchedulerState;
+        }
+
         public boolean isBusy() {
-            return mIsBusy;
+            return mSchedulerState.mCurrentOperation != BiometricsProto.CM_NONE;
         }
 
         public int getModality() {
@@ -83,7 +115,9 @@ public class SensorStates {
                 userStates.put(userStateProto.userId, new UserState(userStateProto.numEnrolled));
             }
 
-            final SensorState sensorState = new SensorState(sensorStateProto.isBusy,
+            final SchedulerState schedulerState =
+                    SchedulerState.parseFrom(sensorStateProto.scheduler);
+            final SensorState sensorState = new SensorState(schedulerState,
                     sensorStateProto.modality, userStates);
             sensorStates.put(sensorStateProto.sensorId, sensorState);
         }
@@ -140,7 +174,8 @@ public class SensorStates {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < sensorStates.size(); i++) {
             sb.append("{SensorId: ").append(sensorStates.keyAt(i));
-            sb.append(", Busy: ").append(sensorStates.valueAt(i).isBusy());
+            sb.append(", Operation: ").append(sensorStates.valueAt(i)
+                    .getSchedulerState().mCurrentOperation);
 
             final SparseArray<UserState> userStates = sensorStates.valueAt(i).getUserStates();
             for (int j = 0; j < userStates.size(); j++) {

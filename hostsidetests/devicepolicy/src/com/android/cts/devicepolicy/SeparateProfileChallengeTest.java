@@ -20,8 +20,6 @@ import android.platform.test.annotations.SecurityTest;
 
 import org.junit.Test;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-
 /**
  * Host side tests for separate profile challenge permissions.
  * Run the CtsSeparateProfileChallengeApp device side test.
@@ -33,15 +31,20 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     private static final String SEPARATE_PROFILE_TEST_CLASS =
         ".SeparateProfileChallengePermissionsTest";
     private String mPreviousHiddenApiPolicy = "0";
+    private boolean mRunTearDown;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        mRunTearDown = true;
         setHiddenApiPolicyOn();
     }
 
     @Override
     public void tearDown() throws Exception {
+        if (!mRunTearDown) return;
+
         removeTestUsers();
         getDevice().uninstallPackage(SEPARATE_PROFILE_PKG);
         setHiddenApiPolicyPreviousOrOff();
@@ -51,9 +54,7 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     @SecurityTest
     @Test
     public void testSeparateProfileChallengePermissions() throws Exception {
-        if (!mHasFeature || !mSupportsMultiUser) {
-            return;
-        }
+        assumeSupportsMultiUser();
 
         // Create managed profile.
         final int profileUserId = createManagedProfile(mPrimaryUserId);

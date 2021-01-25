@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -558,7 +559,47 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     }
 
     private void setVisibilityAndWait(int type, boolean visible) throws Throwable {
+        assertThat("setVisibilityAndWait must only be called before any"
+                + " WindowInsetsAnimation.Callback was registered", mCallbacks, equalTo(List.of()));
+
+
+        final Set<WindowInsetsAnimation> runningAnimations = new HashSet<>();
+        Callback callback = new Callback(Callback.DISPATCH_MODE_STOP) {
+
+            @NonNull
+            @Override
+            public void onPrepare(@NonNull WindowInsetsAnimation animation) {
+                synchronized (runningAnimations) {
+                    runningAnimations.add(animation);
+                }
+            }
+
+            @NonNull
+            @Override
+            public WindowInsetsAnimation.Bounds onStart(@NonNull WindowInsetsAnimation animation,
+                    @NonNull WindowInsetsAnimation.Bounds bounds) {
+                synchronized (runningAnimations) {
+                    runningAnimations.add(animation);
+                }
+                return bounds;
+            }
+
+            @NonNull
+            @Override
+            public WindowInsets onProgress(@NonNull WindowInsets insets,
+                    @NonNull List<WindowInsetsAnimation> runningAnimations) {
+                return insets;
+            }
+
+            @Override
+            public void onEnd(@NonNull WindowInsetsAnimation animation) {
+                synchronized (runningAnimations) {
+                    runningAnimations.remove(animation);
+                }
+            }
+        };
         runOnUiThread(() -> {
+            mRootView.setWindowInsetsAnimationCallback(callback);
             if (visible) {
                 mRootView.getWindowInsetsController().show(type);
             } else {
@@ -568,6 +609,16 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         waitForOrFail("Timeout waiting for inset to become " + (visible ? "visible" : "invisible"),
                 () -> mActivity.mLastWindowInsets.isVisible(mType) == visible);
+        waitForOrFail("Timeout waiting for animations to end, running=" + runningAnimations,
+                () -> {
+                    synchronized (runningAnimations) {
+                        return runningAnimations.isEmpty();
+                    }
+                });
+
+        runOnUiThread(() -> {
+            mRootView.setWindowInsetsAnimationCallback(null);
+        });
     }
 
     static class ControlListener implements WindowInsetsAnimationControlListener {

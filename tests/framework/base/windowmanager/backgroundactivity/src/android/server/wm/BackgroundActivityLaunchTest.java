@@ -89,6 +89,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+    private static final String SHELL_PACKAGE = "com.android.shell";
 
     /**
      * Tests can be executed as soon as the device has booted. When that happens the broadcast queue
@@ -127,6 +128,7 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         stopTestPackage(TEST_PACKAGE_APP_A);
         stopTestPackage(TEST_PACKAGE_APP_B);
         AppOpsUtils.reset(APP_A_PACKAGE_NAME);
+        AppOpsUtils.reset(SHELL_PACKAGE);
     }
 
     @Test
@@ -138,6 +140,27 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertFalse("Should not able to launch background activity", result);
         assertTaskStack(null, APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testStartBgActivity_usingStartActivitiesFromBackgroundPermission()
+            throws Exception {
+        // Disable SAW app op for shell, since that can also allow starting activities from bg.
+        AppOpsUtils.setOpMode(SHELL_PACKAGE, "android:system_alert_window", MODE_ERRORED);
+
+        // Launch the activity via a shell command, this way the system doesn't have info on which
+        // app launched the activity and thus won't use instrumentation privileges to launch it. But
+        // the shell has the START_ACTIVITIES_FROM_BACKGROUND permission, so we expect it to
+        // succeed.
+        // See testBackgroundActivityBlocked() for a case where an app without the
+        // START_ACTIVITIES_FROM_BACKGROUND permission is blocked from launching the activity from
+        // the background.
+        launchActivity(APP_A_BACKGROUND_ACTIVITY);
+
+        // If the activity launches, it means the START_ACTIVITIES_FROM_BACKGROUND permission works.
+        assertEquals("Launched activity should be at the top",
+                ComponentNameUtils.getActivityName(APP_A_BACKGROUND_ACTIVITY),
+                mWmState.getTopActivityName(0));
     }
 
     @Test

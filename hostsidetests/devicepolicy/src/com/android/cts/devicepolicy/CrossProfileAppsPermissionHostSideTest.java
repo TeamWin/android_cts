@@ -16,8 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static org.junit.Assume.assumeTrue;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,7 +60,9 @@ public class CrossProfileAppsPermissionHostSideTest extends BaseDevicePolicyTest
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        assumeTrue(mSupportsMultiUser && mHasManagedUserFeature);
+
+        assumeSupportsMultiUser();
+        assumeHasManageUsersFeature();
     }
 
     @Test
