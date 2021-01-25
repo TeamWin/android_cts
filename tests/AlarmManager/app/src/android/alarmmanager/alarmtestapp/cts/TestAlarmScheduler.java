@@ -45,9 +45,10 @@ public class TestAlarmScheduler extends BroadcastReceiver {
         final AlarmManager am = context.getSystemService(AlarmManager.class);
         final Intent receiverIntent = new Intent(context, TestAlarmReceiver.class);
         receiverIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        final PendingIntent alarmClockSender =
-                PendingIntent.getBroadcast(context, 0, receiverIntent, 0);
-        final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1, receiverIntent, 0);
+        final PendingIntent alarmClockSender = PendingIntent.getBroadcast(context, 0,
+                receiverIntent, PendingIntent.FLAG_MUTABLE);
+        final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1, receiverIntent,
+                PendingIntent.FLAG_MUTABLE);
         switch (intent.getAction()) {
             case ACTION_SET_ALARM_CLOCK:
                 if (!intent.hasExtra(EXTRA_ALARM_CLOCK_INFO)) {
