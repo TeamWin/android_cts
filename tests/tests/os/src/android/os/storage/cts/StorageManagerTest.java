@@ -773,6 +773,30 @@ public class StorageManagerTest extends AndroidTestCase {
         }
     }
 
+    public void testFatUuidHandling() throws Exception {
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafa01234567"),
+                StorageManager.convert("0123-4567"));
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef"),
+                StorageManager.convert("DEAD-BEEF"));
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef"),
+                StorageManager.convert("dead-BEEF"));
+
+        try {
+            StorageManager.convert("DEADBEEF");
+            fail();
+        } catch (IllegalArgumentException expected) {}
+
+        try {
+            StorageManager.convert("DEAD-BEEF0");
+            fail();
+        } catch (IllegalArgumentException expected) {}
+
+        assertEquals("0123-4567",
+                StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafa01234567")));
+        assertEquals("DEAD-BEEF",
+                StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef")));
+    }
+
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
             throws Exception {
         // Asserts equals() method.
