@@ -182,6 +182,13 @@ public class EncoderColorAspectsTest extends CodecEncoderTestBase {
                 mCodec.release();
                 continue;
             }
+            /* TODO(b/175745576) */
+            if (isPc()) {
+                Log.d(LOG_TAG, "test skipped due to b/175745576");
+                mCodec.release();
+                continue;
+            }
+
             String log = String.format("format: %s \n codec: %s:: ", mConfigFormat, encoder);
             File tmpFile;
             int muxerFormat;
