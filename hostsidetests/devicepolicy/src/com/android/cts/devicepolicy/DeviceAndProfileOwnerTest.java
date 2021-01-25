@@ -2105,6 +2105,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testCorrectCalculationOfEsid", mUserId);
+    }
+
+    @Test
+    public void testEnrollmentSpecificIdCorrectCalculationLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         boolean isManagedProfile = (mPrimaryUserId != mUserId);
 
         assertMetricsLogged(getDevice(), () -> {
