@@ -55,6 +55,9 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         mCarModeIncallServiceControlOne = getControlBinder(CARMODE_APP1_PACKAGE);
         mCarModeIncallServiceControlTwo = getControlBinder(CARMODE_APP2_PACKAGE);
+        // Ensure we start the test without automotive projection set.
+        releaseAutomotiveProjection(mCarModeIncallServiceControlOne);
+        releaseAutomotiveProjection(mCarModeIncallServiceControlTwo);
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
 
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
