@@ -179,6 +179,10 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testDirectBootModeWorks() throws Exception {
+        if (!"file".equals(getDevice().getProperty("ro.crypto.type"))) {
+            LogUtil.CLog.d("Device is NOT encrypted with file-based encryption. skipping test");
+            return;
+        }
         assumeTrue("Screen lock is not supported so skip direct boot test",
                 hasDeviceFeature("android.software.secure_lock_screen"));
         // Install AppA and verify no data stored

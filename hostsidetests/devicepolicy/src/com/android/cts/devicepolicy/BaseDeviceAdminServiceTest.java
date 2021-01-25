@@ -69,7 +69,7 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
     protected abstract int getUserId();
 
-    protected abstract boolean isTestEnabled();
+    protected abstract boolean isTestEnabled() throws Exception;
 
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         runDeviceTestsAsUser(OWNER_PKG, className, testName, getUserId());

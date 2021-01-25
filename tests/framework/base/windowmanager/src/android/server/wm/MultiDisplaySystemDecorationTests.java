@@ -621,6 +621,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
     @Test
     public void testImeWindowCanShownWhenActivityMovedToDisplay() throws Exception {
+        // If config_perDisplayFocusEnabled, the focus will not move even if touching on
+        // the Activity in the different display.
+        assumeFalse(perDisplayFocusEnabled());
         assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
 
         // Launch a regular activity on default display at the test beginning to prevent the test

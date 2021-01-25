@@ -16,6 +16,11 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -32,13 +37,13 @@ import android.view.SurfaceControl;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
 import android.window.TaskOrganizer;
+import android.window.WindowContainerToken;
 import android.window.WindowContainerTransaction;
 
 import androidx.annotation.NonNull;
 
 import org.junit.Assert;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -59,20 +64,29 @@ class TestTaskOrganizer extends TaskOrganizer {
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSecondaryBounds = new Rect();
 
+    private static final int[] CONTROLLED_ACTIVITY_TYPES = {
+            ACTIVITY_TYPE_STANDARD,
+            ACTIVITY_TYPE_HOME,
+            ACTIVITY_TYPE_RECENTS,
+            ACTIVITY_TYPE_UNDEFINED
+    };
+    private static final int[] CONTROLLED_WINDOWING_MODES = {
+            WINDOWING_MODE_FULLSCREEN,
+            WINDOWING_MODE_MULTI_WINDOW,
+            WINDOWING_MODE_UNDEFINED
+    };
+
     TestTaskOrganizer(Context displayContext) {
         super();
         Rect bounds = displayContext.getSystemService(WindowManager.class)
                 .getCurrentWindowMetrics()
                 .getBounds();
-        boolean isLandscape = bounds.width() > bounds.height();
-        mPrimaryBounds.set(
-                0, 0,
-                isLandscape ? bounds.width() / 2 : bounds.width(),
-                isLandscape ? bounds.height() : bounds.height() / 2);
-        mSecondaryBounds.set(
-                isLandscape ? bounds.width() / 2 : 0,
-                isLandscape ? 0 : bounds.height() / 2,
-                0, 0);
+        final boolean isLandscape = bounds.width() > bounds.height();
+        if (isLandscape) {
+            bounds.splitVertically(mPrimaryBounds, mSecondaryBounds);
+        } else {
+            bounds.splitHorizontally(mPrimaryBounds, mSecondaryBounds);
+        }
     }
 
     @Override
@@ -101,6 +115,11 @@ class TestTaskOrganizer extends TaskOrganizer {
                     "Failed to get root tasks");
             Log.e(TAG, "createRootTasksIfNeeded primary=" + mRootPrimary.taskId
                     + " secondary=" + mRootSecondary.taskId);
+
+            // Set the roots as adjacent to each other.
+            final WindowContainerTransaction wct = new WindowContainerTransaction();
+            wct.setAdjacentRoots(mRootPrimary.getToken(), mRootSecondary.getToken());
+            applyTransaction(wct);
         }
     }
 
@@ -196,29 +215,59 @@ class TestTaskOrganizer extends TaskOrganizer {
         });
     }
 
+    void setLaunchRoot(int taskId) {
+        NestedShellPermission.run(() -> {
+            synchronized (this) {
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setLaunchRoot(mKnownTasks.get(taskId).getToken(),
+                                CONTROLLED_WINDOWING_MODES, CONTROLLED_ACTIVITY_TYPES);
+                applyTransaction(t);
+            }
+        });
+    }
+
     void dismissedSplitScreen() {
         synchronized (this) {
             NestedShellPermission.run(() -> {
-                // Re-parent everything back to the display from the splits so that things are as they were.
-                final List<ActivityManager.RunningTaskInfo> children = new ArrayList<>();
-                final List<ActivityManager.RunningTaskInfo> primaryChildren =
-                        getChildTasks(mRootPrimary.getToken(), null /* activityTypes */);
-                if (primaryChildren != null && !primaryChildren.isEmpty()) {
-                    children.addAll(primaryChildren);
-                }
-                final List<ActivityManager.RunningTaskInfo> secondaryChildren =
-                        getChildTasks(mRootSecondary.getToken(), null /* activityTypes */);
-                if (secondaryChildren != null && !secondaryChildren.isEmpty()) {
-                    children.addAll(secondaryChildren);
-                }
-                if (children.isEmpty()) {
-                    return;
-                }
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setLaunchRoot(
+                                mRootPrimary.getToken(),
+                                null,
+                                null)
+                        .setLaunchRoot(
+                                mRootSecondary.getToken(),
+                                null,
+                                null)
+                        .reparentTasks(
+                                mRootPrimary.getToken(),
+                                null /* newParent */,
+                                CONTROLLED_WINDOWING_MODES,
+                                CONTROLLED_ACTIVITY_TYPES,
+                                true /* onTop */)
+                        .reparentTasks(
+                                mRootSecondary.getToken(),
+                                null /* newParent */,
+                                CONTROLLED_WINDOWING_MODES,
+                                CONTROLLED_ACTIVITY_TYPES,
+                                true /* onTop */);
+                applyTransaction(t);
+            });
+        }
+    }
 
-                final WindowContainerTransaction t = new WindowContainerTransaction();
-                for (ActivityManager.RunningTaskInfo task : children) {
-                    t.reparent(task.getToken(), null /* parent */, true /* onTop */);
-                }
+    void setRootPrimaryTaskBounds(Rect bounds) {
+        setTaskBounds(mRootPrimary.getToken(), bounds);
+    }
+
+    void setRootSecondaryTaskBounds(Rect bounds) {
+        setTaskBounds(mRootSecondary.getToken(), bounds);
+    }
+
+    private void setTaskBounds(WindowContainerToken container, Rect bounds) {
+        synchronized (this) {
+            NestedShellPermission.run(() -> {
+                final WindowContainerTransaction t = new WindowContainerTransaction()
+                        .setBounds(container, bounds);
                 applyTransaction(t);
             });
         }

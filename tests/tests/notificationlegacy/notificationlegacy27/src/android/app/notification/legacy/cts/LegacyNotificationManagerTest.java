@@ -314,7 +314,7 @@ public class LegacyNotificationManagerTest {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(icon)

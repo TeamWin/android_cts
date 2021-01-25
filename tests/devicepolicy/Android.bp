@@ -23,6 +23,8 @@ android_test {
         "testng", // used for assertThrows
         // TODO: Remove this once we remove ui automator usage
         "androidx.test.uiautomator_uiautomator",
+        "EventLib",
+        "ActivityContext"
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
@@ -30,5 +32,8 @@ android_test {
         "vts10",
         "general-tests",
     ],
+    test_options: {
+        extra_test_configs: ["DevicePolicyWorkProfileTest.xml", "DevicePolicySecondaryUserTest.xml"]
+    },
     sdk_version: "test_current",
 }

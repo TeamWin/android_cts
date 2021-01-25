@@ -24,7 +24,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.ProxyFileDescriptorCallback;
+import android.os.UserHandle;
 import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
@@ -333,6 +335,11 @@ public class StorageManagerTest extends AndroidTestCase {
                 }
             }
         };
+
+        // Unmount storage data and obb dirs before test so test process won't be killed.
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
+                "sm unmount-app-data-dirs " + mContext.getPackageName() + " "
+                        + Process.myPid() + " " + UserHandle.myUserId());
 
         // Unmount primary storage, verify we can see it take effect
         mStorageManager.registerStorageVolumeCallback(mContext.getMainExecutor(), callback);
@@ -764,6 +771,30 @@ public class StorageManagerTest extends AndroidTestCase {
                 Os.close(bad);
             } catch (ErrnoException ignored) {}
         }
+    }
+
+    public void testFatUuidHandling() throws Exception {
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafa01234567"),
+                StorageManager.convert("0123-4567"));
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef"),
+                StorageManager.convert("DEAD-BEEF"));
+        assertEquals(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef"),
+                StorageManager.convert("dead-BEEF"));
+
+        try {
+            StorageManager.convert("DEADBEEF");
+            fail();
+        } catch (IllegalArgumentException expected) {}
+
+        try {
+            StorageManager.convert("DEAD-BEEF0");
+            fail();
+        } catch (IllegalArgumentException expected) {}
+
+        assertEquals("0123-4567",
+                StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafa01234567")));
+        assertEquals("DEAD-BEEF",
+                StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef")));
     }
 
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)

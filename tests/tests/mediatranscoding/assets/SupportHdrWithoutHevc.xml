@@ -16,5 +16,4 @@
 
 <media-capabilities xmlns:android="http://schemas.android.com/apk/res/android">
     <format android:name="HDR10" supported="true"/>
-    <format android:name="SlowMotion" supported="false"/>
 </media-capabilities>

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.config.Option;
@@ -64,6 +65,14 @@ import javax.annotation.Nullable;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
+
+    private static final String FEATURE_BACKUP = "android.software.backup";
+    private static final String FEATURE_DEVICE_ADMIN  = "android.software.device_admin";
+    private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
+    private static final String FEATURE_MANAGED_USERS = "android.software.managed_users";
+
+    private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     //The maximum time to wait for user to be unlocked.
     private static final long USER_UNLOCK_TIMEOUT_SEC = 30;
@@ -148,26 +157,20 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     /** Whether DPM is supported. */
     protected boolean mHasFeature;
+    protected int mDeviceOwnerUserId;
     protected int mPrimaryUserId;
 
     /** Record the initial user ID. */
     protected int mInitialUserId;
 
     /** Whether multi-user is supported. */
-    protected boolean mSupportsMultiUser;
-
-    /** Whether managed profiles are supported. */
-    protected boolean mHasManagedUserFeature;
+    private boolean mSupportsMultiUser;
 
     /** Whether file-based encryption (FBE) is supported. */
     protected boolean mSupportsFbe;
 
     /** Whether the device has a lock screen.*/
     protected boolean mHasSecureLockScreen;
-
-    /** Whether the device supports telephony. */
-    protected boolean mHasTelephony;
-    protected boolean mHasConnectionService;
 
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
@@ -180,13 +183,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         ensurePackageManagerReady();
         mHasFeature = getDevice().getApiLevel() >= 21; /* Build.VERSION_CODES.L */
         if (!mSkipDeviceAdminFeatureCheck) {
-            mHasFeature = mHasFeature && hasDeviceFeature("android.software.device_admin");
+            mHasFeature = mHasFeature && hasDeviceFeature(FEATURE_DEVICE_ADMIN);
         }
+        assumeHasFeature();
+
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
-        mHasManagedUserFeature = hasDeviceFeature("android.software.managed_users");
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
-        mHasTelephony = hasDeviceFeature("android.hardware.telephony");
-        mHasConnectionService = hasDeviceFeature("android.software.connectionservice");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
@@ -208,11 +210,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         }
 
         if (!isHeadlessSystemUserMode()) {
-            mPrimaryUserId = getPrimaryUser();
+            mDeviceOwnerUserId = mPrimaryUserId = getPrimaryUser();
         } else {
             // For headless system user, all tests will be executed on current user
             // and therefore, initial user is set as primary user for test purpose.
             mPrimaryUserId = mInitialUserId;
+            mDeviceOwnerUserId = USER_SYSTEM;
         }
 
         mFixedUsers.add(mPrimaryUserId);
@@ -275,6 +278,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
+        if (!mHasFeature) return;
+
         // reset the package verifier setting to its original value
         getDevice().executeShellCommand("settings put global verifier_verify_adb_installs "
                 + mPackageVerifier);
@@ -554,14 +559,15 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     /** Reboots the device and block until the boot complete flag is set. */
-    protected void rebootAndWaitUntilReady() throws DeviceNotAvailableException {
+    protected void rebootAndWaitUntilReady() throws Exception {
         getDevice().rebootUntilOnline();
+        // TODO(b/177668649) remove excessive diagnostic logging.
+        CLog.d("Device online, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
-    }
-
-    /** Returns true if the system supports the split between system and primary user. */
-    protected boolean hasUserSplit() throws DeviceNotAvailableException {
-        return getBooleanSystemProperty("ro.fw.system_user_split", false);
+        CLog.d("Boot complete, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
+        // TODO(b/178092640) remove when waitForBootComplete guarantees this property.
+        waitForOutput("Timeout waiting for boot complete property", "getprop dev.bootcomplete",
+                s -> s.trim().equals("1"), 120 /* seconds */);
     }
 
     /** Returns a boolean value of the system property with the specified key. */
@@ -589,10 +595,27 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return listUsers().size() + numberOfUsers <= getMaxNumberOfUsersSupported();
     }
 
+    /**
+     * Throws a {@link org.junit.AssumptionViolatedException} if it's not possible to create the
+     * desired number of users.
+     */
+    protected void assumeCanCreateAdditionalUsers(int numberOfUsers)
+            throws DeviceNotAvailableException {
+        int maxUsers = getDevice().getMaxNumberOfUsersSupported();
+        assumeTrue("Tests needs at least " + numberOfUsers + " extra users, but device supports "
+                + "at most " + getMaxNumberOfUsersSupported(),
+                canCreateAdditionalUsers(numberOfUsers));
+    }
+
     /** Checks whether it is possible to start the desired number of users. */
     protected boolean canStartAdditionalUsers(int numberOfUsers)
             throws DeviceNotAvailableException {
         return listRunningUsers().size() + numberOfUsers <= getMaxNumberOfRunningUsersSupported();
+    }
+
+    protected void assumeCanStartNewUser() throws DeviceNotAvailableException {
+        assumeCanCreateOneManagedUser();
+        assumeTrue("Cannot start a new user", canStartAdditionalUsers(1));
     }
 
     protected int createUser() throws Exception {
@@ -639,6 +662,58 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         int userId = getUserIdFromCreateUserCommandOutput(commandOutput);
         removeUser(userId);
         fail("Expected not to be able to create a managed profile. Output was: " + commandOutput);
+    }
+
+    private void assumeHasDeviceFeature(String feature) throws DeviceNotAvailableException {
+        assumeTrue("device doesn't have " + feature, hasDeviceFeature(feature));
+    }
+
+    protected final boolean hasFeature() throws DeviceNotAvailableException {
+        return hasDeviceFeature(FEATURE_DEVICE_ADMIN);
+    }
+
+    protected final void assumeHasFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_DEVICE_ADMIN);
+    }
+
+    protected final void assumeHasManageUsersFeature() throws DeviceNotAvailableException {
+        assumeHasFeature();
+        assumeHasDeviceFeature(FEATURE_MANAGED_USERS);
+    }
+
+    protected final void assumeCanCreateOneManagedUser() throws DeviceNotAvailableException {
+        assumeSupportsMultiUser();
+        assumeHasManageUsersFeature();
+        assumeCanCreateAdditionalUsers(1);
+    }
+
+    protected final boolean isMultiUserSupported() {
+        return mSupportsMultiUser;
+    }
+
+    protected final void assumeSupportsMultiUser() throws DeviceNotAvailableException {
+        assumeHasFeature();
+        assumeTrue("device doesn't support multiple users", isMultiUserSupported());
+    }
+
+    protected final void assumeHasBackupFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_BACKUP);
+    }
+
+    protected final void assumeHasWifiFeature() throws DeviceNotAvailableException {
+        assumeHasFeature();
+        assumeHasDeviceFeature(FEATURE_WIFI);
+    }
+
+    protected final void assumeHasTelephonyFeature() throws DeviceNotAvailableException {
+        assumeHasFeature();
+        assumeHasDeviceFeature(FEATURE_TELEPHONY);
+    }
+
+    protected final void assumeHasTelephonyAndConnectionServiceFeatures()
+            throws DeviceNotAvailableException {
+        assumeHasTelephonyFeature();
+        assumeHasDeviceFeature(FEATURE_CONNECTION_SERVICE);
     }
 
     private int getUserIdFromCreateUserCommandOutput(String commandOutput) {

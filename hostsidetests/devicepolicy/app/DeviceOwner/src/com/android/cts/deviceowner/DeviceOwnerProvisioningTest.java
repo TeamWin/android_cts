@@ -18,6 +18,9 @@ package com.android.cts.deviceowner;
 import static android.app.admin.DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE;
 import static android.app.admin.DevicePolicyManager.EXTRA_PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static java.util.stream.Collectors.toList;
 
 import android.app.admin.DevicePolicyManager;
@@ -27,24 +30,24 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 
 import com.android.compatibility.common.util.devicepolicy.provisioning.SilentProvisioningTestManager;
+
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
     private static final String TAG = "DeviceOwnerProvisioningTest";
 
     private List<String> mEnabledAppsBeforeTest;
     private PackageManager mPackageManager;
-    private DevicePolicyManager mDpm;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
-        mPackageManager = getContext().getPackageManager();
-        mDpm = getContext().getSystemService(DevicePolicyManager.class);
+        mPackageManager = mContext.getPackageManager();
         mEnabledAppsBeforeTest = getSystemPackageNameList();
+
+        Log.d(TAG, "EnabledAppsBeforeTest: " + mEnabledAppsBeforeTest);
     }
 
     @Override
@@ -75,8 +78,8 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
         disabledApps.removeAll(currentEnabledApps);
 
         for (String disabledSystemApp : disabledApps) {
-            Log.i(TAG, "enable app : " + disabledSystemApp);
-            mDevicePolicyManager.enableSystemApp(BasicAdminReceiver.getComponentName(getContext()),
+            Log.i(TAG, "enabling app " + disabledSystemApp);
+            mDevicePolicyManager.enableSystemApp(BasicAdminReceiver.getComponentName(mContext),
                     disabledSystemApp);
         }
     }
@@ -84,17 +87,20 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
     private Intent getBaseProvisioningIntent() {
         return new Intent(ACTION_PROVISION_MANAGED_DEVICE)
                 .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME,
-                        BasicAdminReceiver.getComponentName(getContext()))
+                        BasicAdminReceiver.getComponentName(mContext))
                 .putExtra(DevicePolicyManager.EXTRA_PROVISIONING_SKIP_ENCRYPTION, true);
     }
 
     private void deviceOwnerProvision(Intent intent) throws Exception {
         SilentProvisioningTestManager provisioningManager =
-                new SilentProvisioningTestManager(getContext());
-        assertTrue(provisioningManager.startProvisioningAndWait(intent));
-        Log.i(TAG, "device owner provisioning successful");
-        assertTrue(mDpm.isDeviceOwnerApp(getContext().getPackageName()));
-        Log.i(TAG, "device owner app: " + getContext().getPackageName());
+                new SilentProvisioningTestManager(mContext);
+        assertWithMessage("provisinioning with intent %s on user %s started", intent, mUserId)
+                .that(provisioningManager.startProvisioningAndWait(intent)).isTrue();
+        Log.i(TAG, "device owner provisioning successful for user " + mUserId);
+        String pkg = mContext.getPackageName();
+        assertWithMessage("%s is deviceOwner", pkg).that(mDevicePolicyManager.isDeviceOwnerApp(pkg))
+                .isTrue();
+        Log.i(TAG, "device owner app: " + pkg);
     }
 
     private List<String> getPackageNameList() {

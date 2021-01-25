@@ -1,0 +1,4 @@
+per-file *AutoRevoke* = eugenesusla@google.com
+per-file *Companion* = eugenesusla@google.com
+per-file *AndroidManifest.xml = eugenesusla@google.com
+per-file *CtsOsTestCases.xml = eugenesusla@google.com

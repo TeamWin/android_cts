@@ -59,7 +59,7 @@ public class BubblesTestService extends Service {
     private Notification getNotificationForTest(int testCase, Context context) {
         final Intent intent = new Intent(context, SendBubbleActivity.class);
         final PendingIntent pendingIntent =
-                PendingIntent.getActivity(getApplicationContext(), 0, intent, 0);
+                PendingIntent.getActivity(getApplicationContext(), 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Person person = new Person.Builder()
                 .setName("bubblebot")
                 .build();

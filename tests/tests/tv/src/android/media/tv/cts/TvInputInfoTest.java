@@ -49,6 +49,7 @@ public class TvInputInfoTest extends AndroidTestCase {
                 && info1.getType() == info2.getType()
                 && info1.getTunerCount() == info2.getTunerCount()
                 && info1.canRecord() == info2.canRecord()
+                && info1.canPauseRecording() == info2.canPauseRecording()
                 && info1.isPassthroughInput() == info2.isPassthroughInput()
                 && TextUtils.equals(info1.loadLabel(context), info2.loadLabel(context));
     }
@@ -187,9 +188,11 @@ public class TvInputInfoTest extends AndroidTestCase {
                 new ComponentName(getContext(), StubTunerTvInputService.class)).build();
         assertEquals(1, defaultInfo.getTunerCount());
         assertFalse(defaultInfo.canRecord());
+        assertTrue(defaultInfo.canPauseRecording());
         assertEquals(mStubInfo.getId(), defaultInfo.getId());
         assertEquals(mStubInfo.getTunerCount(), defaultInfo.getTunerCount());
         assertEquals(mStubInfo.canRecord(), defaultInfo.canRecord());
+        assertEquals(mStubInfo.canPauseRecording(), defaultInfo.canPauseRecording());
 
         Bundle extras = new Bundle();
         final String TEST_KEY = "android.media.tv.cts.TEST_KEY";
@@ -197,10 +200,11 @@ public class TvInputInfoTest extends AndroidTestCase {
         extras.putString(TEST_KEY, TEST_VALUE);
         TvInputInfo updatedInfo = new TvInputInfo.Builder(getContext(),
                 new ComponentName(getContext(), StubTunerTvInputService.class)).setTunerCount(10)
-                .setCanRecord(true).setExtras(extras).build();
+                .setCanRecord(true).setCanPauseRecording(false).setExtras(extras).build();
         assertEquals(mStubInfo.getId(), updatedInfo.getId());
         assertEquals(10, updatedInfo.getTunerCount());
         assertTrue(updatedInfo.canRecord());
+        assertFalse(updatedInfo.canPauseRecording());
         assertEquals(TEST_VALUE, updatedInfo.getExtras().getString(TEST_KEY));
     }
 }

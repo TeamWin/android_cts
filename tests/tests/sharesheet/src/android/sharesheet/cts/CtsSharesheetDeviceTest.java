@@ -531,7 +531,7 @@ public class CtsSharesheetDeviceTest {
                 mContext,
                 9384 /* number not relevant */ ,
                 new Intent(ACTION_INTENT_SENDER_FIRED_ON_CLICK),
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         Intent shareIntent = Intent.createChooser(intent, null, pi.getIntentSender());
 

@@ -21,6 +21,7 @@ import android.util.Log
 import android.view.textservice.SuggestionsInfo
 import android.view.textservice.TextInfo
 import com.android.cts.mockspellchecker.MockSpellCheckerProto.MockSpellCheckerConfiguration
+import com.android.cts.mockspellchecker.MockSpellCheckerProto.SuggestionRule
 import java.io.FileDescriptor
 import java.io.PrintWriter
 
@@ -57,14 +58,20 @@ class MockSpellChecker : SpellCheckerService() {
             textInfo: TextInfo?,
             suggestionsLimit: Int
         ): SuggestionsInfo = withLog(
-            "MockSpellCheckerSession.onGetSuggestions: ${textInfo?.text}") {
+                "MockSpellCheckerSession.onGetSuggestions: ${textInfo?.text}") {
             if (textInfo == null) return emptySuggestionsInfo()
             val configuration = MockSpellCheckerConfiguration.parseFrom(
                     SharedPrefsProvider.get(contentResolver, KEY_CONFIGURATION))
             return configuration.suggestionRulesList
                     .find { it.match == textInfo.text }
-                    ?.let { SuggestionsInfo(it.attributes, it.suggestionsList.toTypedArray()) }
+                    ?.let { suggestionsInfo(it) }
                     ?: emptySuggestionsInfo()
+        }
+
+        private fun suggestionsInfo(rule: SuggestionRule): SuggestionsInfo {
+            // Only use attrs in supportedAttributes
+            val attrs = rule.attributes and supportedAttributes
+            return SuggestionsInfo(attrs, rule.suggestionsList.toTypedArray())
         }
 
         private fun emptySuggestionsInfo() = SuggestionsInfo(0, arrayOf())

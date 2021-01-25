@@ -81,6 +81,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        props = cam.override_with_hidden_physical_camera_props(props)
         cam.do_3a()
         req = its.objects.fastest_auto_capture_request(props)
         print "Capture an image to validate the light level"

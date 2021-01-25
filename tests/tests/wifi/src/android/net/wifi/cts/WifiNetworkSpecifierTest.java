@@ -16,6 +16,7 @@
 
 package android.net.wifi.cts;
 
+import static android.net.NetworkCapabilitiesProto.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilitiesProto.TRANSPORT_WIFI;
 import static android.os.Process.myUid;
 
@@ -49,6 +50,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -83,7 +85,6 @@ import java.util.concurrent.Executors;
  * ConnectivityManager.NetworkCallback)}.
  *
  * Assumes that all the saved networks is either open/WPA1/WPA2/WPA3 authenticated network.
- * TODO(b/150716005): Use assumeTrue for wifi support check.
  */
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
@@ -206,9 +207,9 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public static void setUpClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(context));
+        if (!WifiFeature.isWifiSupported(context)) return;
 
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertNotNull(wifiManager);
 
         // turn on verbose logging for tests
@@ -246,7 +247,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         if (!WifiFeature.isWifiSupported(context)) return;
 
-        WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertNotNull(wifiManager);
 
         if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
@@ -271,8 +272,16 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
 
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
+
         // turn screen on
         turnScreenOn();
+
+        // Clear any existing app state before each test.
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        }
 
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
@@ -291,6 +300,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         // If there is failure, ensure we unregister the previous request.
         if (mNetworkCallback != null) {
             mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        }
+        // Clear any existing app state after each test.
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
         turnScreenOff();
     }
@@ -478,6 +492,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 mConnectivityManager.requestNetwork(
                         new NetworkRequest.Builder()
                                 .addTransportType(TRANSPORT_WIFI)
+                                .removeCapability(NET_CAPABILITY_INTERNET)
                                 .setNetworkSpecifier(specifier)
                                 .build(),
                         mNetworkCallback);
@@ -531,8 +546,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
             } else {
                 fail("Unsupported security type found in saved networks");
             }
-        } else if (!mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
-            specifierBuilder.setIsEnhancedOpen(false);
+        } else if (mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
+            specifierBuilder.setIsEnhancedOpen(true);
         } else if (!mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
             fail("Unsupported security type found in saved networks");
         }

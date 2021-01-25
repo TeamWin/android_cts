@@ -18,11 +18,11 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-import static android.server.wm.WindowManagerState.STATE_RESUMED;
-import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.StateLogger.logE;
+import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.WindowManagerState.STATE_STOPPED;
 import static android.server.wm.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.wm.WindowManagerState.TRANSIT_TASK_OPEN;
 import static android.server.wm.app.Components.BOTTOM_ACTIVITY;
@@ -49,11 +49,11 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
-import android.server.wm.WindowManagerState.DisplayContent;
-import android.server.wm.WindowManagerState.ActivityTask;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
 import android.server.wm.CommandSession.SizeInfo;
+import android.server.wm.WindowManagerState.ActivityTask;
+import android.server.wm.WindowManagerState.DisplayContent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -411,7 +411,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+                WINDOWING_MODE_MULTI_WINDOW);
     }
 
     /**
@@ -430,7 +430,7 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
         mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
-                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+                WINDOWING_MODE_MULTI_WINDOW);
     }
 
     /**
@@ -463,7 +463,9 @@ public class MultiDisplayPolicyTests extends MultiDisplayTestBase {
                     .setLaunchInSplitScreen(splitScreen)
                     .createDisplay();
             if (splitScreen) {
-                mWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
+                // Set the secondary split root task as launch root to verify remaining tasks will
+                // be reparented to matching launch root after removed the virtual display.
+                mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
             }
 
             // Launch activity on new secondary display.

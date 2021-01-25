@@ -114,7 +114,7 @@ public class NotificationTrampolineTestService extends Service {
                     registerReceiver(mReceiver, new IntentFilter(mReceiverAction));
                     Intent intent = new Intent(mReceiverAction);
                     postNotification(notificationId,
-                            PendingIntent.getBroadcast(context, 0, intent, 0));
+                            PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
                     break;
                 }
                 case MESSAGE_SERVICE_NOTIFICATION: {
@@ -123,7 +123,7 @@ public class NotificationTrampolineTestService extends Service {
                     // trampoline) in this case.
                     Intent intent = new Intent(context, NotificationTrampolineTestService.class);
                     postNotification(notificationId,
-                            PendingIntent.getService(context, 0, intent, 0));
+                            PendingIntent.getService(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED));
                     break;
                 }
                 default:

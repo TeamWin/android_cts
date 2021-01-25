@@ -80,6 +80,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -111,6 +113,8 @@ public class ChecksumsTest {
     private static final String TEST_V4_SPLIT4 = "HelloWorld5_xxxhdpi-v4.apk";
 
     private static final String TEST_FIXED_APK = "CtsPkgInstallTinyAppV2V3V4.apk";
+    private static final String TEST_FIXED_APK_DIGEST_SIGNATURE =
+            "CtsPkgInstallTinyAppV2V3V4.digests.fsv_sig";
     private static final String TEST_FIXED_APK_V1 = "CtsPkgInstallTinyAppV1.apk";
     private static final String TEST_FIXED_APK_SHA512 =
             "CtsPkgInstallTinyAppV2V3V4-Sha512withEC.apk";
@@ -124,6 +128,8 @@ public class ChecksumsTest {
     private static final Checksum[] TEST_FIXED_APK_DIGESTS = new Checksum[]{new Checksum(
             TYPE_WHOLE_SHA256, hexStringToBytes(TEST_FIXED_APK_SHA256)), new Checksum(
             TYPE_WHOLE_MD5, hexStringToBytes(TEST_FIXED_APK_MD5))};
+
+    private static final byte[] NO_SIGNATURE = null;
 
     private static final int ALL_CHECKSUMS =
             TYPE_WHOLE_MERKLE_ROOT_4K_SHA256 | TYPE_WHOLE_MD5 | TYPE_WHOLE_SHA1 | TYPE_WHOLE_SHA256
@@ -437,6 +443,27 @@ public class ChecksumsTest {
     }
 
     @Test
+    public void testInstallerChecksumsFsiTrustNone() throws Exception {
+        final byte[] signature = Files.readAllBytes(
+                Paths.get(createApkPath(TEST_FIXED_APK_DIGEST_SIGNATURE)));
+
+        CommitIntentReceiver.checkSuccess(
+                installApkWithChecksums(TEST_FIXED_APK, "file", "file", TEST_FIXED_APK_DIGESTS,
+                        signature));
+
+        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        PackageManager pm = getPackageManager();
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        ApkChecksum[] checksums = receiver.getResult();
+        assertNotNull(checksums);
+        assertEquals(checksums.length, 1);
+        assertEquals(checksums[0].getType(), TYPE_PARTIAL_MERKLE_ROOT_1M_SHA256);
+        assertEquals(bytesToHexString(checksums[0].getValue()), TEST_FIXED_APK_V2_SHA256);
+        assertNull(checksums[0].getInstallerPackageName());
+        assertNull(checksums[0].getInstallerCertificate());
+    }
+
+    @Test
     public void testInstallerChecksumsTrustAll() throws Exception {
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
@@ -548,10 +575,10 @@ public class ChecksumsTest {
             Session session = installer.openSession(sessionId);
 
             writeFileToSession(session, "hw5", TEST_V4_APK);
-            session.addChecksums("hw5", Arrays.asList(digests_base));
+            session.setChecksums("hw5", Arrays.asList(digests_base), NO_SIGNATURE);
 
             writeFileToSession(session, "hw5_split0", TEST_V4_SPLIT0);
-            session.addChecksums("hw5_split0", Arrays.asList(digests_split0));
+            session.setChecksums("hw5_split0", Arrays.asList(digests_split0), NO_SIGNATURE);
 
             CommitIntentReceiver receiver = new CommitIntentReceiver();
             session.commit(receiver.getIntentSender());
@@ -614,7 +641,7 @@ public class ChecksumsTest {
             Session session = installer.openSession(sessionId);
 
             writeFileToSession(session, "hw5_split1", TEST_V4_SPLIT1);
-            session.addChecksums("hw5_split1", Arrays.asList(digests_split1));
+            session.setChecksums("hw5_split1", Arrays.asList(digests_split1), NO_SIGNATURE);
 
             writeFileToSession(session, "hw5_split2", TEST_V4_SPLIT2);
 
@@ -763,10 +790,10 @@ public class ChecksumsTest {
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
             writeFileToSession(session, "file", TEST_FIXED_APK);
-            session.addChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS));
+            session.setChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS), NO_SIGNATURE);
             try {
-                session.addChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS));
-                Assert.fail("addChecksums should throw exception.");
+                session.setChecksums("file", Arrays.asList(TEST_FIXED_APK_DIGESTS), NO_SIGNATURE);
+                Assert.fail("setChecksums should throw exception.");
             } catch (IllegalStateException e) {
                 // expected
             }
@@ -802,6 +829,11 @@ public class ChecksumsTest {
 
     private Intent installApkWithChecksums(String apk, String apkName,
             String checksumsName, Checksum[] checksums) throws Exception {
+        return installApkWithChecksums(apk, apkName, checksumsName, checksums, NO_SIGNATURE);
+    }
+
+    private Intent installApkWithChecksums(String apk, String apkName,
+            String checksumsName, Checksum[] checksums, byte[] signature) throws Exception {
         getUiAutomation().adoptShellPermissionIdentity();
         try {
             final PackageInstaller installer = getPackageInstaller();
@@ -810,7 +842,7 @@ public class ChecksumsTest {
             final int sessionId = installer.createSession(params);
             Session session = installer.openSession(sessionId);
             writeFileToSession(session, apkName, apk);
-            session.addChecksums(checksumsName, Arrays.asList(checksums));
+            session.setChecksums(checksumsName, Arrays.asList(checksums), signature);
 
             CommitIntentReceiver receiver = new CommitIntentReceiver();
             session.commit(receiver.getIntentSender());
@@ -840,7 +872,7 @@ public class ChecksumsTest {
             final Metadata metadata = Metadata.forLocalFile(inPath);
 
             session.addFile(LOCATION_DATA_APP, name, size, metadata.toByteArray(), null);
-            session.addChecksums(name, Arrays.asList(checksums));
+            session.setChecksums(name, Arrays.asList(checksums), NO_SIGNATURE);
 
             CommitIntentReceiver receiver = new CommitIntentReceiver();
             session.commit(receiver.getIntentSender());
@@ -1020,12 +1052,17 @@ public class ChecksumsTest {
                             + result.getExtras().get(Intent.EXTRA_INTENT));
         }
 
-        public static void checkFailure(Intent result, String expectedStatus) {
+        public static void checkFailure(Intent result, int expectedStatus,
+                String expectedStatusMessage) {
             final int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS,
                     PackageInstaller.STATUS_FAILURE);
-            assertEquals(status, PackageInstaller.STATUS_FAILURE);
+            assertEquals(status, expectedStatus);
             assertEquals(result.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE),
-                    expectedStatus);
+                    expectedStatusMessage);
+        }
+
+        public static void checkFailure(Intent result, String expectedStatusMessage) {
+            checkFailure(result, PackageInstaller.STATUS_FAILURE, expectedStatusMessage);
         }
     }
 }

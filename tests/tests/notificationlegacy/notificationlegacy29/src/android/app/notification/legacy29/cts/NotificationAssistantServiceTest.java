@@ -262,7 +262,7 @@ public class NotificationAssistantServiceTest {
         mUi.dropShellPermissionIdentity();
 
         PendingIntent sendIntent = PendingIntent.getActivity(mContext, 0,
-                new Intent(Intent.ACTION_SEND), 0);
+                new Intent(Intent.ACTION_SEND), PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Notification.Action sendAction = new Notification.Action.Builder(ICON_ID, "SEND",
                 sendIntent).build();
 
@@ -530,7 +530,7 @@ public class NotificationAssistantServiceTest {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         Notification.Action action = new Notification.Action.Builder(null, "",
                 pendingIntent).build();
         // This method has to exist and the call cannot fail
@@ -640,6 +640,35 @@ public class NotificationAssistantServiceTest {
                 NotificationAssistantService.SOURCE_FROM_APP);
     }
 
+    @Test
+    public void testOnNotificationClicked() throws Exception {
+        if (isTelevision()) {
+            return;
+        }
+
+        setUpListeners();
+        turnScreenOn();
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
+
+        mNotificationAssistantService.resetNotificationClickCount();
+
+        // Initialize as closed
+        mStatusBarManager.collapsePanels();
+        sendNotification(1, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        mStatusBarManager.expandNotificationsPanel();
+        Thread.sleep(SLEEP_TIME * 2);
+        mStatusBarManager.clickNotification(sbn.getKey(), 1, 1, true);
+        Thread.sleep(SLEEP_TIME * 2);
+
+        assertEquals(1, mNotificationAssistantService.notificationClickCount);
+
+        mUi.dropShellPermissionIdentity();
+
+    }
+
+
     private StatusBarNotification getFirstNotificationFromPackage(String PKG)
             throws InterruptedException {
         StatusBarNotification sbn = mNotificationListenerService.mPosted.poll(SLEEP_TIME,
@@ -675,7 +704,7 @@ public class NotificationAssistantServiceTest {
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         intent.setAction(Intent.ACTION_MAIN);
 
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         final Notification notification =
                 new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                         .setSmallIcon(icon)

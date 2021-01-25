@@ -110,6 +110,10 @@ public class TestUtils {
     public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_3 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
                     SELF_MANAGED_ACCOUNT_ID_3);
+    public static final String SELF_MANAGED_ACCOUNT_ID_4 = "ctstest_SELF_MANAGED_ID_4";
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_4 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    SELF_MANAGED_ACCOUNT_ID_4);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final PhoneAccount TEST_PHONE_ACCOUNT = PhoneAccount.builder(
@@ -204,6 +208,12 @@ public class TestUtils {
         SELF_MANAGED_ACCOUNT_2_EXTRAS = new Bundle();
         SELF_MANAGED_ACCOUNT_2_EXTRAS.putBoolean(PhoneAccount.EXTRA_LOG_SELF_MANAGED_CALLS, true);
     }
+    public static final Bundle SELF_MANAGED_ACCOUNT_4_EXTRAS;
+    static {
+        SELF_MANAGED_ACCOUNT_4_EXTRAS = new Bundle();
+        SELF_MANAGED_ACCOUNT_4_EXTRAS.putBoolean(
+                PhoneAccount.EXTRA_ADD_SELF_MANAGED_CALLS_TO_INCALLSERVICE, true);
+    }
 
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
@@ -229,6 +239,19 @@ public class TestUtils {
             .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .build();
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_4 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_HANDLE_4, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("sip:test@test.com"))
+            .setSubscriptionAddress(Uri.parse("sip:test@test.com"))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_SIP)
+            .setExtras(SELF_MANAGED_ACCOUNT_4_EXTRAS)
             .build();
 
     private static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";

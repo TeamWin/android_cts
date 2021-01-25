@@ -22,12 +22,18 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
+import static org.testng.Assert.fail;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.UserHandle;
+import android.os.UserManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.events.CustomEvent;
 
 import org.junit.After;
@@ -37,6 +43,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -46,6 +53,8 @@ public class EventLogsTest {
     private static final Context CONTEXT =
             InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TEST_APP_PACKAGE_NAME = "com.android.eventlib.tests.testapp";
+    private static final String INCORRECT_PACKAGE_NAME = "com.android.eventlib.tests.notapackage";
+    private static final UserHandle NON_EXISTING_USER_HANDLE = UserHandle.of(1000);
 
     private static final String TEST_TAG1 = "TEST_TAG1";
     private static final String TEST_TAG2 = "TEST_TAG2";
@@ -773,6 +782,17 @@ public class EventLogsTest {
     }
 
     @Test
+    public void get_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG2);
+    }
+
+    @Test
     public void poll_obeysLambdaFilter() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -782,6 +802,18 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
+    public void poll_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()));
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
@@ -805,6 +837,18 @@ public class EventLogsTest {
     }
 
     @Test
+    public void next_differentPackage_obeysLambdaFilter() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()));
+
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
     public void get_obeysMultipleLambdaFilters() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -818,6 +862,21 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.get();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+    }
+
+    @Test
+    public void get_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -850,6 +909,22 @@ public class EventLogsTest {
     }
 
     @Test
+    public void poll_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.poll();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
+    }
+
+    @Test
     public void next_obeysMultipleLambdaFilters() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TEST_TAG1)
@@ -863,6 +938,22 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+                .filter(e -> TEST_TAG2.equals(e.tag()))
+                .filter(e -> DATA_1.equals(e.data()));
+
+        CustomEvent event = eventLogs.next();
+        assertThat(event.tag()).isEqualTo(TEST_TAG2);
+        assertThat(event.data()).isEqualTo(DATA_1);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void next_differentPackage_obeysMultipleLambdaFilters() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ DATA_1);
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -958,6 +1049,139 @@ public class EventLogsTest {
         assertThat(eventLogs.pollOrFail()).isNotNull();
     }
 
+    @Test
+    public void otherProcessGetsKilled_stillReturnsLogs() {
+        logCustomEventOnTestApp(/* tag= */ null, /* data= */ null);
+
+        killTestApp();
+
+        assertThat(CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME).get()).isNotNull();
+    }
+
+    @Test
+    public void otherProcessGetsKilledMultipleTimes_stillReturnsOriginalLog() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        killTestApp();
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        assertThat(
+                CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME).get().tag()).isEqualTo(TEST_TAG1);
+    }
+
+    @Test
+    public void otherProcessGetsKilled_returnsLogsInCorrectOrder() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void otherProcessGetsKilledMultipleTimes_returnsLogsInCorrectOrder() {
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        killTestApp();
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
+        killTestApp();
+
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
+    }
+
+    @Test
+    public void differentUser_queryWorks() {
+        // TODO(scottjonathan): This tests on a profile because otherwise we can't start the
+        //  activity. Once ConnectedTests is available, replace this
+        // TODO(scottjonathan): Once bedstead-Marshall is ready, replace this setup/teardown with
+        // annotations
+        UserHandle userHandle = createProfile();
+        try {
+            installTestAppInUser(userHandle);
+            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG1, /* data= */ null);
+
+            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                    .onUser(userHandle);
+
+            assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
+        } finally {
+            removeUser(userHandle);
+        }
+    }
+
+    @Test
+    public void differentUser_doesntGetEventsFromWrongUser() {
+        UserHandle userHandle = createProfile();
+        try {
+            installTestAppInUser(userHandle);
+            logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG2, /* data= */ null);
+
+            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                    .onUser(userHandle);
+
+            assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+            assertThat(eventLogs.next()).isNull();
+        } finally {
+            removeUser(userHandle);
+        }
+    }
+
+    @Test
+    public void onUser_passesNullUser_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+                () -> CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                        .onUser(/* userHandle= */ null));
+    }
+
+    @Test
+    public void incorrectUserHandle_fails() {
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .onUser(NON_EXISTING_USER_HANDLE);
+
+        assertThrows(AssertionError.class, eventLogs::get);
+    }
+
+    @Test
+    public void incorrectPackageName_fails() {
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(INCORRECT_PACKAGE_NAME);
+
+        assertThrows(AssertionError.class, eventLogs::get);
+    }
+
+    private UserHandle createProfile() {
+        UserManager userManager = CONTEXT.getSystemService(UserManager.class);
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        UserHandle userHandle = userManager.createProfile("profile",
+                UserManager.USER_TYPE_PROFILE_MANAGED, new HashSet<>());
+        SystemUtil.runShellCommandOrThrow("am start-user -w " + userHandle.getIdentifier());
+        return userHandle;
+    }
+
+    private void installTestAppInUser(UserHandle userHandle) {
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            CONTEXT.getPackageManager().installExistingPackageAsUser(
+                    TEST_APP_PACKAGE_NAME, userHandle.getIdentifier());
+
+        } catch (PackageManager.NameNotFoundException e) {
+            fail("Could not install test app in user", e);
+        }
+    }
+
+    private void removeUser(UserHandle userHandle) {
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        CONTEXT.getSystemService(UserManager.class).removeUser(userHandle);
+    }
+
     private void scheduleCustomEventInOneSecond() {
         hasScheduledEvents = true;
 
@@ -967,19 +1191,27 @@ public class EventLogsTest {
         }, 1, TimeUnit.SECONDS);
     }
 
-    private void logCustomEventOnTestApp(String tag, String data) {
+    private void logCustomEventOnTestApp(UserHandle userHandle, String tag, String data) {
         Intent intent = new Intent();
         intent.setPackage(TEST_APP_PACKAGE_NAME);
         intent.setClassName(TEST_APP_PACKAGE_NAME, TEST_APP_PACKAGE_NAME + ".EventLoggingActivity");
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
         intent.putExtra("TAG", tag);
         intent.putExtra("DATA", data);
-        CONTEXT.startActivity(intent);
+
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        CONTEXT.startActivityAsUser(intent, userHandle);
 
         CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .withTag(tag)
                 .withData(data)
+                .onUser(userHandle)
                 .pollOrFail();
+    }
+
+    private void logCustomEventOnTestApp(String tag, String data) {
+        logCustomEventOnTestApp(UserHandle.CURRENT, tag, data);
     }
 
     private void logCustomEventOnTestApp() {
@@ -993,8 +1225,11 @@ public class EventLogsTest {
                 (Runnable) this::logCustomEventOnTestApp, 1, TimeUnit.SECONDS);
     }
 
-    // TODO: Add support for lambda filtering across processes
-    // TODO: Add a test that when using another package (or another user) - if the other process
-    // gets killed, the log is persisted
+    private void killTestApp() {
+        InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation().adoptShellPermissionIdentity();
+        CONTEXT.getSystemService(ActivityManager.class).forceStopPackage(TEST_APP_PACKAGE_NAME);
+    }
 
+    // TODO: Ensure tests work on O+
 }

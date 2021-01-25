@@ -41,8 +41,8 @@ import java.util.Set;
  * 4. Check {@link GnssMeasurementsEvent} status: if the status is not
  *    {@link GnssMeasurementsEvent.Callback#STATUS_READY}, the test will be skipped if the device
  *    does not support the GPS feature.
- *  5. Verify {@link GnssMeasurement}s (all mandatory fields), the test will fail if any of the
- *     mandatory fields is not populated or in the expected range.
+ * 5. Verify {@link GnssMeasurement}s (all mandatory fields), the test will fail if any of the
+ *    mandatory fields is not populated or in the expected range.
  */
 public class GnssMeasurementValuesTest extends GnssTestCase {
 

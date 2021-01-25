@@ -98,7 +98,7 @@ public class TimeChangeTests {
         final Intent alarmIntent = new Intent(ACTION_ALARM)
                 .setPackage(mContext.getPackageName())
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, 0);
+        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
         mDeviceConfigStateHelper =

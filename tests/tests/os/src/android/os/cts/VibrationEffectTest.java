@@ -19,7 +19,6 @@ package android.os.cts;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.fail;
 
 import android.os.Parcel;
@@ -377,31 +376,6 @@ public class VibrationEffectTest {
         TEST_WAVEFORM_NO_AMPLITUDES.describeContents();
         TEST_PREBAKED.describeContents();
         TEST_COMPOSED.describeContents();
-    }
-
-    @Test
-    public void testSetStrength() {
-        VibrationEffect.Prebaked effect = (VibrationEffect.Prebaked)VibrationEffect.get(
-                VibrationEffect.EFFECT_CLICK, true);
-        int[] strengths = {
-                VibrationEffect.EFFECT_STRENGTH_LIGHT,
-                VibrationEffect.EFFECT_STRENGTH_MEDIUM,
-                VibrationEffect.EFFECT_STRENGTH_STRONG
-        };
-        for (int strength : strengths) {
-            effect.setEffectStrength(strength);
-            assertEquals(strength, effect.getEffectStrength());
-        }
-    }
-
-    @Test
-    public void testSetStrengthInvalid() {
-        VibrationEffect.Prebaked effect = (VibrationEffect.Prebaked)VibrationEffect.get(
-                VibrationEffect.EFFECT_CLICK, true);
-        try {
-            effect.setEffectStrength(239017);
-            fail("Illegal strength, should throw IllegalArgumentException");
-        } catch (IllegalArgumentException expected) {}
     }
 
     @Test

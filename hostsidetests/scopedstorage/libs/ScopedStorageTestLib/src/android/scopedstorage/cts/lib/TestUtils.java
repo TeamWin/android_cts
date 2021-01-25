@@ -21,7 +21,12 @@ import static android.scopedstorage.cts.lib.RedactionTestHelper.EXIF_METADATA_QU
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.Manifest;
@@ -45,6 +50,7 @@ import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -67,6 +73,7 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -124,7 +131,9 @@ public class TestUtils {
     public static void setupDefaultDirectories() {
         for (File dir : getDefaultTopLevelDirs()) {
             dir.mkdir();
-            assertThat(dir.exists()).isTrue();
+            assertWithMessage("Could not setup default dir [%s]", dir.toString())
+                    .that(dir.exists())
+                    .isTrue();
         }
     }
 
@@ -287,6 +296,147 @@ public class TestUtils {
             throws Exception {
         String actionName = forWrite ? CAN_OPEN_FILE_FOR_WRITE_QUERY : CAN_OPEN_FILE_FOR_READ_QUERY;
         return getResultFromTestApp(testApp, file.getPath(), actionName);
+    }
+
+    public static Uri insertFileFromExternalMedia(boolean useRelative) throws IOException {
+        ContentValues values = new ContentValues();
+        String filePath =
+                getAndroidMediaDir().toString() + "/" + getContext().getPackageName() + "/"
+                        + System.currentTimeMillis();
+        if (useRelative) {
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                    "Android/media/" + getContext().getPackageName());
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, System.currentTimeMillis());
+        } else {
+            values.put(MediaStore.MediaColumns.DATA, filePath);
+        }
+
+        return getContentResolver().insert(
+                MediaStore.Files.getContentUri(sStorageVolumeName), values);
+    }
+
+    public static void insertFile(ContentValues values) {
+        assertNotNull(getContentResolver().insert(
+                MediaStore.Files.getContentUri(sStorageVolumeName), values));
+    }
+
+    public static int updateFile(Uri uri, ContentValues values) {
+        return getContentResolver().update(uri, values, new Bundle());
+    }
+
+    public static void verifyInsertFromExternalPrivateDirViaRelativePath_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/obb/.. is not allowed.
+        final String androidObbDir = getContext().getObbDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidObbDir.substring(androidObbDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+
+        // Test that inserting files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidDataDir.substring(androidDataDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+    }
+
+    public static void verifyInsertFromExternalMediaDirViaRelativePath_allowed() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/media/.. is allowed.
+        final String androidMediaDir = getExternalMediaDir().toString();
+        final ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidMediaDir.substring(androidMediaDir.indexOf("Android")));
+        insertFile(values);
+    }
+
+    public static void verifyInsertFromExternalPrivateDirViaData_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        ContentValues values = new ContentValues();
+
+        // Test that inserting files from Android/obb/.. is not allowed.
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+
+        // Test that inserting files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        assertThrows(IllegalArgumentException.class, () -> insertFile(values));
+    }
+
+    public static void verifyInsertFromExternalMediaDirViaData_allowed() throws Exception {
+        resetDefaultExternalStorageVolume();
+
+        // Test that inserting files from Android/media/.. is allowed.
+        ContentValues values = new ContentValues();
+        final String androidMediaDirFile =
+                getExternalMediaDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidMediaDirFile);
+        insertFile(values);
+    }
+
+    // NOTE: While updating, DATA field should be ignored for all the apps including file manager.
+    public static void verifyUpdateToExternalDirsViaData_denied() throws Exception {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(false);
+
+        final String androidMediaDirFile =
+                getExternalMediaDir().toString() + "/" + System.currentTimeMillis();
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DATA, androidMediaDirFile);
+        assertEquals(0, updateFile(uri, values));
+
+        final String androidObbDir =
+                getContext().getObbDir().toString() + "/" + System.currentTimeMillis();
+        values.put(MediaStore.MediaColumns.DATA, androidObbDir);
+        assertEquals(0, updateFile(uri, values));
+
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(MediaStore.MediaColumns.DATA, androidDataDir);
+        assertEquals(0, updateFile(uri, values));
+    }
+
+    public static void verifyUpdateToExternalMediaDirViaRelativePath_allowed()
+            throws IOException {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(true);
+
+        // Test that update to files from Android/media/.. is allowed.
+        final String androidMediaDir = getExternalMediaDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidMediaDir.substring(androidMediaDir.indexOf("Android")));
+        assertNotEquals(0, updateFile(uri, values));
+    }
+
+    public static void verifyUpdateToExternalPrivateDirsViaRelativePath_denied()
+            throws Exception {
+        resetDefaultExternalStorageVolume();
+        Uri uri = insertFileFromExternalMedia(true);
+
+        // Test that update to files from Android/obb/.. is not allowed.
+        final String androidObbDir = getContext().getObbDir().toString();
+        ContentValues values = new ContentValues();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidObbDir.substring(androidObbDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> updateFile(uri, values));
+
+        // Test that update to files from Android/data/.. is not allowed.
+        final String androidDataDir = getExternalFilesDir().toString();
+        values.put(
+                MediaStore.MediaColumns.RELATIVE_PATH,
+                androidDataDir.substring(androidDataDir.indexOf("Android")));
+        assertThrows(IllegalArgumentException.class, () -> updateFile(uri, values));
     }
 
     /**
@@ -1109,7 +1259,7 @@ public class TestUtils {
      *
      * <p>This method drops shell permission identity.
      */
-    private static void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
+    public static void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
         adoptShellPermissionIdentity(null);
         try {
             for (String op : ops) {
@@ -1157,10 +1307,34 @@ public class TestUtils {
         return c;
     }
 
+    private static boolean isObbDirUnmounted() {
+        List<String> mounts = new ArrayList<>();
+        try {
+            for (String line : executeShellCommand("cat /proc/mounts").split("\n")) {
+                String[] split = line.split(" ");
+                // Only check obb dirs with tmpfs, as if it's mounted for app data
+                // isolation, it will be tmpfs only.
+                if (split[0].equals("tmpfs") && split[1].startsWith("/storage/")
+                        && split[1].endsWith("/obb")) {
+                    return false;
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to execute shell command", e);
+        }
+        return true;
+    }
+
     /**
      * Creates a new virtual public volume and returns the volume's name.
      */
     public static void createNewPublicVolume() throws Exception {
+        // Unmount data and obb dirs for test app first so test app won't be killed during
+        // volume unmount.
+        executeShellCommand("sm unmount-app-data-dirs " + getContext().getPackageName() + " "
+                        + android.os.Process.myPid() + " " + android.os.UserHandle.myUserId());
+        pollForCondition(TestUtils::isObbDirUnmounted,
+                "Timed out while waiting for unmounting obb dir");
         executeShellCommand("sm set-force-adoptable on");
         executeShellCommand("sm set-virtual-disk true");
         Thread.sleep(2000);
@@ -1170,6 +1344,9 @@ public class TestUtils {
     private static boolean partitionDisk() {
         try {
             final String listDisks = executeShellCommand("sm list-disks").trim();
+            if (TextUtils.isEmpty(listDisks)) {
+                return false;
+            }
             executeShellCommand("sm partition " + listDisks + " public");
             return true;
         } catch (Exception e) {

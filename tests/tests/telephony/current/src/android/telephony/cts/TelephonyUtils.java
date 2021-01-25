@@ -24,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.function.BooleanSupplier;
 
@@ -66,6 +67,25 @@ public class TelephonyUtils {
     private static boolean isOperator(TelephonyManager telephonyManager, String operator) {
         String simOperator = telephonyManager.getSimOperator();
         return simOperator != null && simOperator.equals(operator);
+    }
+
+    public static String parseErrorCodeToString(int errorCode,
+            Class<?> containingClass, String prefix) {
+        for (Field field : containingClass.getDeclaredFields()) {
+            if (field.getName().startsWith(prefix)) {
+                if (field.getType() == Integer.TYPE) {
+                    field.setAccessible(true);
+                    try {
+                        if (field.getInt(null) == errorCode) {
+                            return field.getName();
+                        }
+                    } catch (IllegalAccessException e) {
+                        continue;
+                    }
+                }
+            }
+        }
+        return String.format("??%d??", errorCode);
     }
 
     /**

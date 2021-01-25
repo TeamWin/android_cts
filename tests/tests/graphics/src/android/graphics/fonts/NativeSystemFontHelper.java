@@ -98,11 +98,17 @@ public class NativeSystemFontHelper {
                     font.mSlant = nIsItalic(fontPtr)
                         ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
                     font.mIndex = nGetCollectionIndex(fontPtr);
-                    font.mAxes = new FontVariationAxis[nGetAxisCount(fontPtr)];
-                    for (int i = 0; i < font.mAxes.length; ++i) {
-                        font.mAxes[i] = new FontVariationAxis(
-                            tagToStr(nGetAxisTag(fontPtr, i)), nGetAxisValue(fontPtr, i));
+                    int axesSize = nGetAxisCount(fontPtr);
+                    if (axesSize == 0) {
+                        font.mAxes = null;
+                    } else {
+                        font.mAxes = new FontVariationAxis[axesSize];
+                        for (int i = 0; i < font.mAxes.length; ++i) {
+                            font.mAxes[i] = new FontVariationAxis(
+                                    tagToStr(nGetAxisTag(fontPtr, i)), nGetAxisValue(fontPtr, i));
+                        }
                     }
+
                     font.mLocale = LocaleList.forLanguageTags(nGetLocale(fontPtr));
                     nativeFonts.add(font);
                 } finally {

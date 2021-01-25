@@ -26,14 +26,20 @@ import org.junit.Test;
  */
 public class EphemeralUserTest extends BaseDevicePolicyTest {
 
+    private boolean mRunTearDown;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mHasFeature = canCreateAdditionalUsers(1);
+
+        assumeCanCreateAdditionalUsers(1);
+        mRunTearDown = true;
     }
 
     @Override
     public void tearDown() throws Exception {
+        if (!mRunTearDown) return;
+
         removeTestUsers();
         super.tearDown();
     }
@@ -41,9 +47,6 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
     /** The user should have the ephemeral flag set if it was created as ephemeral. */
     @Test
     public void testCreateEphemeralUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         int userId = createUser(FLAG_EPHEMERAL);
         int flags = getUserFlags(userId);
         assertTrue("ephemeral flag must be set", FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL));
@@ -52,29 +55,9 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
     /** The user should not have the ephemeral flag set if it was not created as ephemeral. */
     @Test
     public void testCreateLongLivedUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         int userId = createUser();
         int flags = getUserFlags(userId);
         assertTrue("ephemeral flag must not be set", 0 == (flags & FLAG_EPHEMERAL));
-    }
-
-    /**
-     * The profile should have the ephemeral flag set automatically if its parent user is
-     * ephemeral.
-     */
-    @Test
-    public void testProfileInheritsEphemeral() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.software.managed_users")
-                || !canCreateAdditionalUsers(2)
-                || !hasUserSplit()) {
-            return;
-        }
-        int userId = createUser(FLAG_EPHEMERAL);
-        int profileId = createManagedProfile(userId);
-        int flags = getUserFlags(profileId);
-        assertTrue("ephemeral flag must be set", FLAG_EPHEMERAL == (flags & FLAG_EPHEMERAL));
     }
 
     /**
@@ -82,9 +65,6 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testRemoveEphemeralOnStop() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         int userId = createUser(FLAG_EPHEMERAL);
         startUser(userId);
         assertTrue("ephemeral user must exists after start", listUsers().contains(userId));
@@ -98,9 +78,6 @@ public class EphemeralUserTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testEphemeralGuestFeature() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Create a guest user.
         int userId = createUser(FLAG_GUEST);
         int flags = getUserFlags(userId);

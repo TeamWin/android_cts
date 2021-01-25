@@ -115,7 +115,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
             launchActivitiesInSplitScreen(
                     getLaunchActivityBuilder().setTargetActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY),
                     getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-            resizePrimarySplitScreen(1, 1, 1, 1);
+            mTaskOrganizer.setRootPrimaryTaskBounds(new Rect(0, 0, 1, 1));
         }
         getDisplayAndWindowState(BOTTOM_RIGHT_LAYOUT_ACTIVITY, false);
 

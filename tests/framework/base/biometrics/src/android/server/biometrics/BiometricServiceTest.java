@@ -17,8 +17,8 @@
 package android.server.biometrics;
 
 import static android.os.PowerManager.FULL_WAKE_LOCK;
-import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
 import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_ACTIVITY;
+import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
 import static android.server.biometrics.SensorStates.SensorState;
 import static android.server.biometrics.SensorStates.UserState;
 
@@ -59,11 +59,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.server.biometrics.nano.BiometricServiceStateProto;
+import com.android.server.biometrics.nano.BiometricsProto;
+import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Presubmit
@@ -71,6 +74,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
     private static final String TAG = "BiometricServiceTest";
     private static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
+    private static final String FLAG_CLEAR_SCHEDULER_LOG = " --clear-scheduler-buffer";
 
     // Negative-side (left) buttons
     private static final String BUTTON_ID_NEGATIVE = "button_negative";
@@ -108,6 +112,14 @@ public class BiometricServiceTest extends BiometricTestBase {
     @NonNull
     private BiometricServiceState getCurrentState() throws Exception {
         final byte[] dump = Utils.executeShellCommand(DUMPSYS_BIOMETRIC);
+        final BiometricServiceStateProto proto = BiometricServiceStateProto.parseFrom(dump);
+        return BiometricServiceState.parseFrom(proto);
+    }
+
+    @NonNull
+    private BiometricServiceState getCurrentStateAndClearSchedulerLog() throws Exception {
+        final byte[] dump = Utils.executeShellCommand(DUMPSYS_BIOMETRIC
+                + FLAG_CLEAR_SCHEDULER_LOG);
         final BiometricServiceStateProto proto = BiometricServiceStateProto.parseFrom(dump);
         return BiometricServiceState.parseFrom(proto);
     }
@@ -207,7 +219,13 @@ public class BiometricServiceTest extends BiometricTestBase {
             final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
                 final UserState userState = sensorState.getUserStates().valueAt(j);
-                assertEquals("SensorId: " + sensorId, 0, userState.numEnrolled);
+                final int userId = sensorState.getUserStates().keyAt(j);
+                if (userState.numEnrolled != 0) {
+                    Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
+                    BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
+                    session.cleanupInternalState(userId);
+                    session.close();
+                }
             }
         }
 
@@ -238,6 +256,20 @@ public class BiometricServiceTest extends BiometricTestBase {
         for (SensorProperties prop : mSensorProperties) {
             assertTrue(state.mSensorStates.sensorStates.contains(prop.getSensorId()));
         }
+    }
+
+    @Test
+    public void testPackageManagerAndDumpsysMatch() throws Exception {
+        final BiometricServiceState state = getCurrentState();
+
+        final PackageManager pm = mContext.getPackageManager();
+
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT),
+                state.mSensorStates.containsModality(SensorStateProto.FINGERPRINT));
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_FACE),
+                state.mSensorStates.containsModality(SensorStateProto.FACE));
+        assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_IRIS),
+                state.mSensorStates.containsModality(SensorStateProto.IRIS));
     }
 
     private void enrollForSensor(@NonNull BiometricTestSession session, int sensorId)
@@ -546,5 +578,74 @@ public class BiometricServiceTest extends BiometricTestBase {
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
         assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
         assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
+    }
+
+    @Test
+    public void testAuthenticatorIdsInvalidated() throws Exception {
+        // On devices with multiple strong sensors, adding enrollments to one strong sensor
+        // must cause authenticatorIds for all other strong sensors to be invalidated, if they
+        // (the other strong sensors) have enrollments.
+        final List<Integer> strongSensors = new ArrayList<>();
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == SensorProperties.STRENGTH_STRONG) {
+                strongSensors.add(prop.getSensorId());
+            }
+        }
+        assumeTrue("numStrongSensors: " + strongSensors.size(), strongSensors.size() >= 2);
+
+        Log.d(TAG, "testAuthenticatorIdsInvalidated, numStrongSensors: " + strongSensors.size());
+
+        for (Integer sensorId : strongSensors) {
+            testAuthenticatorIdsInvalidated_forSensor(sensorId, strongSensors);
+        }
+    }
+
+    /**
+     * Tests that the specified sensorId's authenticatorId when any other strong sensor adds
+     * an enrollment.
+     */
+    private void testAuthenticatorIdsInvalidated_forSensor(int sensorId,
+            @NonNull List<Integer> strongSensors) throws Exception {
+        Log.d(TAG, "testAuthenticatorIdsInvalidated_forSensor: " + sensorId);
+        final List<BiometricTestSession> biometricSessions = new ArrayList<>();
+
+        final BiometricTestSession targetSensorTestSession =
+                mBiometricManager.createTestSession(sensorId);
+
+        // Get the state once. This intentionally clears the scheduler's recent operations dump.
+        BiometricServiceState state = getCurrentStateAndClearSchedulerLog();
+
+        Log.d(TAG, "Enrolling for: " + sensorId);
+        enrollForSensor(targetSensorTestSession, sensorId);
+        biometricSessions.add(targetSensorTestSession);
+        state = getCurrentStateAndClearSchedulerLog();
+
+        // Target sensorId has never been requested to invalidate authenticatorId yet.
+        assertEquals(0, Utils.numberOfSpecifiedOperations(state, sensorId,
+                BiometricsProto.CM_INVALIDATE));
+
+        // Add enrollments for all other sensors. Upon each enrollment, the authenticatorId for
+        // the above sensor should be invalidated.
+        for (Integer id : strongSensors) {
+            if (id != sensorId) {
+                final BiometricTestSession session = mBiometricManager.createTestSession(id);
+                biometricSessions.add(session);
+                Log.d(TAG, "Sensor " + id + " should request invalidation");
+                enrollForSensor(session, id);
+                state = getCurrentStateAndClearSchedulerLog();
+                assertEquals(1, Utils.numberOfSpecifiedOperations(state, sensorId,
+                        BiometricsProto.CM_INVALIDATE));
+
+                // In addition, the sensor that should have enrolled should have been the one that
+                // requested invalidation.
+                assertEquals(1, Utils.numberOfSpecifiedOperations(state, id,
+                        BiometricsProto.CM_INVALIDATION_REQUESTER));
+            }
+        }
+
+        // Cleanup
+        for (BiometricTestSession session : biometricSessions) {
+            session.close();
+        }
     }
 }

@@ -94,7 +94,12 @@ public final class CtsTextClassifierService extends TextClassifierService {
             TextSelection.Request request, CancellationSignal cancellationSignal,
             Callback<TextSelection> callback) {
         handleRequest(sessionId, "onSuggestSelection");
-        callback.onSuccess(TextClassifier.NO_OP.suggestSelection(request));
+        TextSelection.Builder textSelection =
+                new TextSelection.Builder(request.getStartIndex(), request.getEndIndex());
+        if (request.shouldIncludeTextClassification()) {
+            textSelection.setTextClassification(createTextClassification());
+        }
+        callback.onSuccess(textSelection.build());
     }
 
     @Override
@@ -102,18 +107,21 @@ public final class CtsTextClassifierService extends TextClassifierService {
             TextClassification.Request request, CancellationSignal cancellationSignal,
             Callback<TextClassification> callback) {
         handleRequest(sessionId, "onClassifyText");
-        final TextClassification classification = new TextClassification.Builder()
+        callback.onSuccess(createTextClassification());
+    }
+
+    private TextClassification createTextClassification() {
+        return new TextClassification.Builder()
                 .addAction(new RemoteAction(
                         ICON_RES,
                         "Test Action",
                         "Test Action",
                         PendingIntent.getActivity(
-                            this,
-                            0,
-                            new Intent(),
-                            PendingIntent.FLAG_IMMUTABLE)))
+                                this,
+                                0,
+                                new Intent(),
+                                PendingIntent.FLAG_IMMUTABLE)))
                 .build();
-        callback.onSuccess(classification);
     }
 
     @Override

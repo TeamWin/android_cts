@@ -39,6 +39,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
@@ -57,6 +58,7 @@ import android.view.WindowInsetsAnimation;
 import android.view.WindowInsetsAnimation.Callback;
 import android.view.WindowInsetsAnimationControlListener;
 import android.view.WindowInsetsAnimationController;
+import android.view.WindowInsetsController.OnControllableInsetsChangedListener;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
@@ -72,7 +74,6 @@ import com.android.cts.mockime.MockImeSession;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
@@ -81,12 +82,14 @@ import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Test whether {@link android.view.WindowInsetsController#controlWindowInsetsAnimation} properly
@@ -109,7 +112,6 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     List<VerifyingCallback> mCallbacks = new ArrayList<>();
     private boolean mLossOfControlExpected;
 
-    @Rule
     public LimitedErrorCollector mErrorCollector = new LimitedErrorCollector();
 
     /**
@@ -135,8 +137,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     }
 
     @Before
-    public void setUp() throws Exception {
-        super.setUp();
+    public void setUpWindowInsetsAnimationControllerTests() throws Throwable {
         final ImeEventStream mockImeEventStream;
         if (mType == ime()) {
             final Instrumentation instrumentation = getInstrumentation();
@@ -164,6 +165,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                     editorMatcher("onStartInput", mActivity.getEditTextMarker()),
                     TimeUnit.SECONDS.toMillis(10));
         }
+        awaitControl(mType);
     }
 
     @After
@@ -185,6 +187,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             mMockImeSession.close();
             mMockImeSession = null;
         }
+        mErrorCollector.verify();
     }
 
     private void assumeTestCompatibility() {
@@ -194,180 +197,236 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
         }
     }
 
+    private void awaitControl(int type) throws Throwable {
+        CountDownLatch control = new CountDownLatch(1);
+        OnControllableInsetsChangedListener listener = (controller, controllableTypes) -> {
+            if ((controllableTypes & type) != 0)
+                control.countDown();
+        };
+        runOnUiThread(() -> mRootView.getWindowInsetsController()
+                .addOnControllableInsetsChangedListener(listener));
+        try {
+            if (!control.await(10, TimeUnit.SECONDS)) {
+                fail("Timeout waiting for control of " + type);
+            }
+        } finally {
+            runOnUiThread(() -> mRootView.getWindowInsetsController()
+                    .removeOnControllableInsetsChangedListener(listener)
+            );
+        }
+    }
+
+    private void retryIfCancelled(ThrowableThrowingRunnable test) throws Throwable {
+        try {
+            mErrorCollector.verify();
+            test.run();
+        } catch (CancelledWhileWaitingForReadyException e) {
+            // Deflake cancellations waiting for ready - we'll reset state and try again.
+            runOnUiThread(() -> {
+                mCallbacks.clear();
+                if (mRootView != null) {
+                    mRootView.setWindowInsetsAnimationCallback(null);
+                }
+            });
+            mErrorCollector = new LimitedErrorCollector();
+            mListener = new ControlListener(mErrorCollector);
+            awaitControl(mType);
+            test.run();
+        }
+    }
+
     @Presubmit
     @Test
     public void testControl_andCancel() throws Throwable {
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, mCancellationSignal, mListener);
+        retryIfCancelled(() -> {
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, mCancellationSignal, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runOnUiThread(() -> {
+                mCancellationSignal.cancel();
+            });
+
+            mListener.awaitAndAssert(CANCELLED);
+            mListener.assertWasNotCalled(FINISHED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runOnUiThread(() -> {
-            mCancellationSignal.cancel();
-        });
-
-        mListener.awaitAndAssert(CANCELLED);
-        mListener.assertWasNotCalled(FINISHED);
     }
 
     @Test
     public void testControl_andImmediatelyCancel() throws Throwable {
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, mCancellationSignal, mListener);
-            mCancellationSignal.cancel();
-        });
+        retryIfCancelled(() -> {
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, mCancellationSignal, mListener);
+                mCancellationSignal.cancel();
+            });
 
-        mListener.assertWasCalled(CANCELLED);
-        mListener.assertWasNotCalled(READY);
-        mListener.assertWasNotCalled(FINISHED);
+            mListener.assertWasCalled(CANCELLED);
+            mListener.assertWasNotCalled(READY);
+            mListener.assertWasNotCalled(FINISHED);
+        });
     }
 
     @Presubmit
     @Test
     public void testControl_immediately_show() throws Throwable {
-        setVisibilityAndWait(mType, false);
+        retryIfCancelled(() -> {
+            setVisibilityAndWait(mType, false);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runOnUiThread(() -> {
+                mListener.mController.finish(true);
+            });
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runOnUiThread(() -> {
-            mListener.mController.finish(true);
-        });
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Presubmit
     @Test
     public void testControl_immediately_hide() throws Throwable {
-        setVisibilityAndWait(mType, true);
+        retryIfCancelled(() -> {
+            setVisibilityAndWait(mType, true);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runOnUiThread(() -> {
+                mListener.mController.finish(false);
+            });
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runOnUiThread(() -> {
-            mListener.mController.finish(false);
-        });
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Presubmit
     @Test
     public void testControl_transition_show() throws Throwable {
-        setVisibilityAndWait(mType, false);
+        retryIfCancelled(() -> {
+            setVisibilityAndWait(mType, false);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(true);
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(true);
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Presubmit
     @Test
     public void testControl_transition_hide() throws Throwable {
-        setVisibilityAndWait(mType, true);
+        retryIfCancelled(() -> {
+            setVisibilityAndWait(mType, true);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(false);
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(false);
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Presubmit
     @Test
     public void testControl_transition_show_interpolator() throws Throwable {
-        mInterpolator = new DecelerateInterpolator();
-        setVisibilityAndWait(mType, false);
+        retryIfCancelled(() -> {
+            mInterpolator = new DecelerateInterpolator();
+            setVisibilityAndWait(mType, false);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    mInterpolator, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        mInterpolator, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(true);
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(true);
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Presubmit
     @Test
     public void testControl_transition_hide_interpolator() throws Throwable {
-        mInterpolator = new AccelerateInterpolator();
-        setVisibilityAndWait(mType, true);
+        retryIfCancelled(() -> {
+            mInterpolator = new AccelerateInterpolator();
+            setVisibilityAndWait(mType, true);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    mInterpolator, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        mInterpolator, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(false);
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(false);
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     @Test
     public void testControl_andLoseControl() throws Throwable {
-        mInterpolator = new AccelerateInterpolator();
-        setVisibilityAndWait(mType, true);
+        retryIfCancelled(() -> {
+            mInterpolator = new AccelerateInterpolator();
+            setVisibilityAndWait(mType, true);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    mInterpolator, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        mInterpolator, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(false, TimeUnit.MINUTES.toMillis(5));
+            runOnUiThread(() -> {
+                mLossOfControlExpected = true;
+            });
+            launchHomeActivityNoWait();
+
+            mListener.awaitAndAssert(CANCELLED);
+            mListener.assertWasNotCalled(FINISHED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(false, TimeUnit.MINUTES.toMillis(5));
-        runOnUiThread(() -> {
-            mLossOfControlExpected = true;
-        });
-        launchHomeActivityNoWait();
-
-        mListener.awaitAndAssert(CANCELLED);
-        mListener.assertWasNotCalled(FINISHED);
     }
 
     @Presubmit
@@ -377,23 +436,26 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             return;
         }
 
-        setVisibilityAndWait(mType, false);
+        retryIfCancelled(() -> {
+            setVisibilityAndWait(mType, false);
 
-        runOnUiThread(() -> {
-            setupAnimationListener();
-            mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
-                    null, null, mListener);
+            runOnUiThread(() -> {
+                setupAnimationListener();
+                mRootView.getWindowInsetsController().controlWindowInsetsAnimation(mType, 0,
+                        null, null, mListener);
+            });
+
+            mListener.awaitAndAssert(READY);
+
+            runTransition(true);
+            runOnUiThread(() -> {
+                mActivity.getSystemService(InputMethodManager.class).restartInput(
+                        mActivity.mEditor);
+            });
+
+            mListener.awaitAndAssert(FINISHED);
+            mListener.assertWasNotCalled(CANCELLED);
         });
-
-        mListener.awaitAndAssert(READY);
-
-        runTransition(true);
-        runOnUiThread(() -> {
-            mActivity.getSystemService(InputMethodManager.class).restartInput(mActivity.mEditor);
-        });
-
-        mListener.awaitAndAssert(FINISHED);
-        mListener.assertWasNotCalled(CANCELLED);
     }
 
     private void setupAnimationListener() {
@@ -497,7 +559,47 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
     }
 
     private void setVisibilityAndWait(int type, boolean visible) throws Throwable {
+        assertThat("setVisibilityAndWait must only be called before any"
+                + " WindowInsetsAnimation.Callback was registered", mCallbacks, equalTo(List.of()));
+
+
+        final Set<WindowInsetsAnimation> runningAnimations = new HashSet<>();
+        Callback callback = new Callback(Callback.DISPATCH_MODE_STOP) {
+
+            @NonNull
+            @Override
+            public void onPrepare(@NonNull WindowInsetsAnimation animation) {
+                synchronized (runningAnimations) {
+                    runningAnimations.add(animation);
+                }
+            }
+
+            @NonNull
+            @Override
+            public WindowInsetsAnimation.Bounds onStart(@NonNull WindowInsetsAnimation animation,
+                    @NonNull WindowInsetsAnimation.Bounds bounds) {
+                synchronized (runningAnimations) {
+                    runningAnimations.add(animation);
+                }
+                return bounds;
+            }
+
+            @NonNull
+            @Override
+            public WindowInsets onProgress(@NonNull WindowInsets insets,
+                    @NonNull List<WindowInsetsAnimation> runningAnimations) {
+                return insets;
+            }
+
+            @Override
+            public void onEnd(@NonNull WindowInsetsAnimation animation) {
+                synchronized (runningAnimations) {
+                    runningAnimations.remove(animation);
+                }
+            }
+        };
         runOnUiThread(() -> {
+            mRootView.setWindowInsetsAnimationCallback(callback);
             if (visible) {
                 mRootView.getWindowInsetsController().show(type);
             } else {
@@ -507,6 +609,16 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         waitForOrFail("Timeout waiting for inset to become " + (visible ? "visible" : "invisible"),
                 () -> mActivity.mLastWindowInsets.isVisible(mType) == visible);
+        waitForOrFail("Timeout waiting for animations to end, running=" + runningAnimations,
+                () -> {
+                    synchronized (runningAnimations) {
+                        return runningAnimations.isEmpty();
+                    }
+                });
+
+        runOnUiThread(() -> {
+            mRootView.setWindowInsetsAnimationCallback(null);
+        });
     }
 
     static class ControlListener implements WindowInsetsAnimationControlListener {
@@ -514,6 +626,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         WindowInsetsAnimationController mController = null;
         int mTypes = -1;
+        RuntimeException mCancelledStack = null;
 
         ControlListener(ErrorCollector errorCollector) {
             mErrorCollector = errorCollector;
@@ -562,6 +675,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
                 mErrorCollector.checkThat("isFinished", controller.isFinished(), is(false));
                 mErrorCollector.checkThat("isCancelled", controller.isCancelled(), is(true));
             }
+            mCancelledStack = new RuntimeException("onCancelled called here");
             report(CANCELLED);
         }
 
@@ -575,7 +689,12 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             CountDownLatch latch = mLatches[event.ordinal()];
             try {
                 if (!latch.await(10, TimeUnit.SECONDS)) {
-                    fail("Timeout waiting for " + event);
+                    if (event == READY && mCancelledStack != null) {
+                        throw new CancelledWhileWaitingForReadyException(
+                                "expected " + event + " but instead got " + CANCELLED,
+                                mCancelledStack);
+                    }
+                    fail("Timeout waiting for " + event + "; reported events: " + reportedEvents());
                 }
             } catch (InterruptedException e) {
                 throw new AssertionError("Interrupted", e);
@@ -584,12 +703,21 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         void assertWasCalled(Event event) {
             CountDownLatch latch = mLatches[event.ordinal()];
-            assertEquals(event + " expected, but never called", 0, latch.getCount());
+            assertEquals(event + " expected, but never called; called: " + reportedEvents(),
+                    0, latch.getCount());
         }
 
         void assertWasNotCalled(Event event) {
             CountDownLatch latch = mLatches[event.ordinal()];
-            assertEquals(event + " not expected, but was called", 1, latch.getCount());
+            assertEquals(event + " not expected, but was called; called: " + reportedEvents(),
+                    1, latch.getCount());
+        }
+
+        String reportedEvents() {
+            return Arrays.stream(Event.values())
+                    .filter((e) -> mLatches[e.ordinal()].getCount() == 0)
+                    .map(Enum::toString)
+                    .collect(Collectors.joining(",", "<", ">"));
         }
     }
 
@@ -649,6 +777,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
     public static final class LimitedErrorCollector extends ErrorCollector {
         private static final int LIMIT = 1;
+        private static final boolean REPORT_SUPPRESSED_ERRORS = false;
         private int mCount = 0;
 
         @Override
@@ -660,10 +789,20 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
 
         @Override
         protected void verify() throws Throwable {
-            if (mCount > LIMIT) {
-                super.addError(new AssertionError((mCount - LIMIT) + " errors skipped."));
+            if (mCount > LIMIT && REPORT_SUPPRESSED_ERRORS) {
+                super.addError(new AssertionError((mCount - LIMIT) + " errors suppressed."));
             }
             super.verify();
         }
     }
+
+    private interface ThrowableThrowingRunnable {
+        void run() throws Throwable;
+    }
+
+    private static class CancelledWhileWaitingForReadyException extends AssertionError {
+        public CancelledWhileWaitingForReadyException(String message, Throwable cause) {
+            super(message, cause);
+        }
+    };
 }

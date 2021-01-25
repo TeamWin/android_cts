@@ -19,6 +19,7 @@ package com.android.cts.storagestatsapp;
 import static android.os.storage.StorageManager.UUID_DEFAULT;
 
 import static com.android.cts.storageapp.Utils.CACHE_ALL;
+import static com.android.cts.storageapp.Utils.CACHE_EXT;
 import static com.android.cts.storageapp.Utils.CODE_ALL;
 import static com.android.cts.storageapp.Utils.DATA_ALL;
 import static com.android.cts.storageapp.Utils.MB_IN_BYTES;
@@ -130,6 +131,12 @@ public class StorageStatsTest extends InstrumentationTestCase {
         final long deltaCache = CACHE_ALL;
         assertMostlyEquals(deltaCache, afterApp.getCacheBytes() - beforeApp.getCacheBytes());
         assertMostlyEquals(deltaCache, afterUser.getCacheBytes() - beforeUser.getCacheBytes());
+
+        final long deltaExternalCache = CACHE_EXT;
+        assertMostlyEquals(deltaExternalCache,
+                afterApp.getExternalCacheBytes() - beforeApp.getExternalCacheBytes());
+        assertMostlyEquals(deltaExternalCache,
+                afterUser.getExternalCacheBytes() - beforeUser.getExternalCacheBytes());
     }
 
     public void testVerifyStatsMultiple() throws Exception {

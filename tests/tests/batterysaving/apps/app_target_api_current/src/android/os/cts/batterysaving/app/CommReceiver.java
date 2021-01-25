@@ -98,7 +98,7 @@ public class CommReceiver extends BroadcastRpcBase.ReceiverBase<Payload, Payload
             final boolean allowWhileIdle = req.getAllowWhileIdle();
 
             final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1,
-                    new Intent(req.getIntentAction()), 0);
+                    new Intent(req.getIntentAction()), PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
             Log.d(TAG, "Setting alarm: type=" + type + ", triggerTime=" + triggerTime
                     + ", interval=" + interval + ", allowWhileIdle=" + allowWhileIdle);

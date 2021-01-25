@@ -34,8 +34,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.platform.test.annotations.RequiresDevice;
+import android.provider.Settings;
 import android.util.Log;
 
+import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -78,6 +81,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private boolean mInitialRestrictBackground;
     /** Track whether airplane mode was enabled in case we toggle it. */
     private boolean mInitialAirplaneMode;
+    /** Track whether the restricted bucket was enabled in case we toggle it. */
+    private String mInitialRestrictedBucketEnabled;
 
     private JobInfo.Builder mBuilder;
 
@@ -102,6 +107,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         mInitialRestrictBackground = SystemUtil
                 .runShellCommand(getInstrumentation(), RESTRICT_BACKGROUND_GET_CMD)
                 .contains("enabled");
+        mInitialRestrictedBucketEnabled = Settings.Global.getString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET);
         setDataSaverEnabled(false);
         mInitialAirplaneMode = isAirplaneModeOn();
         setAirplaneMode(false);
@@ -114,11 +121,17 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
         mJobScheduler.cancel(CONNECTIVITY_JOB_ID);
 
+        BatteryUtils.runDumpsysBatteryReset();
+
         // Restore initial restrict background data usage policy
         setDataSaverEnabled(mInitialRestrictBackground);
 
         // Restore initial airplane mode status
         setAirplaneMode(mInitialAirplaneMode);
+
+        // Restore initial restricted bucket setting.
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
 
         // Ensure that we leave WiFi in its previous state.
         if (mHasWifi && mWifiManager.isWifiEnabled() != mInitialWiFiState) {
@@ -303,6 +316,66 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /**
      * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when if an app is idle.
+     */
+    public void testExpeditedJobExecutes_IdleApp() throws Exception {
+        if (!AppStandbyUtils.isAppStandbyEnabled()) {
+            Log.d(TAG, "App standby not enabled");
+            return;
+        }
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+        SystemUtil.runShellCommand("am set-standby-bucket "
+                + kJobServiceComponent.getPackageName() + " restricted");
+        disconnectWifiToConnectToMobile();
+        BatteryUtils.runDumpsysBatteryUnplug();
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setExpedited(true)
+                        .build());
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+
+        assertTrue("Expedited job requiring connectivity did not fire when app was idle.",
+                kTestEnvironment.awaitExecution());
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when Battery Saver is on.
+     */
+    public void testExpeditedJobExecutes_BatterySaverOn() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+
+        disconnectWifiToConnectToMobile();
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setExpedited(true)
+                        .build());
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+
+        assertTrue(
+                "Expedited job requiring connectivity did not fire with Battery Saver on.",
+                kTestEnvironment.awaitExecution());
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
      * when Data Saver is on and the device is not connected to WiFi.
      */
     public void testExpeditedJobExecutes_DataSaverOn() throws Exception {
@@ -321,6 +394,44 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
 
         assertTrue("Expedited job requiring metered connectivity did not fire with Data Saver on.",
+                kTestEnvironment.awaitExecution());
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when multiple firewalls are active.
+     */
+    public void testExpeditedJobBypassesSimultaneousFirewalls() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+        if (!AppStandbyUtils.isAppStandbyEnabled()) {
+            Log.d(TAG, "App standby not enabled");
+            return;
+        }
+
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+        SystemUtil.runShellCommand("am set-standby-bucket "
+                + kJobServiceComponent.getPackageName() + " restricted");
+        disconnectWifiToConnectToMobile();
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        setDataSaverEnabled(true);
+
+        kTestEnvironment.setExpectedExecutions(1);
+        mJobScheduler.schedule(
+                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                        .setExpedited(true)
+                        .build());
+        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+
+        assertTrue(
+                "Expedited job requiring metered connectivity did not fire with multiple "
+                        + "firewalls.",
                 kTestEnvironment.awaitExecution());
     }
 

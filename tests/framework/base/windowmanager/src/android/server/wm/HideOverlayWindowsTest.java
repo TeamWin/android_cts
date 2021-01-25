@@ -56,6 +56,8 @@ import org.junit.Test;
 @Presubmit
 public class HideOverlayWindowsTest extends ActivityManagerTestBase {
 
+    private final static String WINDOW_NAME_EXTRA = "window_name";
+    private final static String SYSTEM_APPLICATION_OVERLAY_EXTRA = "system_application_overlay";
     private PongReceiver mPongReceiver;
 
     @Before
@@ -75,12 +77,34 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
     public void testApplicationOverlayHiddenWhenRequested() {
         String windowName = "SYSTEM_ALERT_WINDOW";
         ComponentName componentName = new ComponentName(
-                mContext, HideOverlayWindowsTest.InternalSystemWindowActivity.class);
+                mContext, SystemWindowActivity.class);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             launchActivity(componentName,
-                    CliIntentExtra.extraString(InternalSystemWindowActivity.WINDOW_NAME,
-                            windowName));
+                    CliIntentExtra.extraString(WINDOW_NAME_EXTRA, windowName));
+            mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+        }, Manifest.permission.SYSTEM_ALERT_WINDOW);
+
+        launchActivity(HIDE_OVERLAY_WINDOWS_ACTIVITY);
+        mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+
+        setHideOverlayWindowsAndWaitForPong(true);
+        mWmState.waitAndAssertWindowSurfaceShown(windowName, false);
+
+        setHideOverlayWindowsAndWaitForPong(false);
+        mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+    }
+
+    @Test
+    public void testSystemApplicationOverlayFlagNoEffectWithoutPermission() {
+        String windowName = "SYSTEM_ALERT_WINDOW";
+        ComponentName componentName = new ComponentName(
+                mContext, SystemWindowActivity.class);
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            launchActivity(componentName,
+                    CliIntentExtra.extraString(WINDOW_NAME_EXTRA, windowName),
+                    CliIntentExtra.extraBool(SYSTEM_APPLICATION_OVERLAY_EXTRA, true));
             mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
         }, Manifest.permission.SYSTEM_ALERT_WINDOW);
 
@@ -98,18 +122,50 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
     public void testInternalSystemApplicationOverlaysNotHidden() {
         String windowName = "INTERNAL_SYSTEM_WINDOW";
         ComponentName componentName = new ComponentName(
-                mContext, HideOverlayWindowsTest.InternalSystemWindowActivity.class);
+                mContext, InternalSystemWindowActivity.class);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             launchActivity(componentName,
-                    CliIntentExtra.extraString(InternalSystemWindowActivity.WINDOW_NAME,
-                            windowName));
+                    CliIntentExtra.extraString(WINDOW_NAME_EXTRA, windowName));
             mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
         }, Manifest.permission.INTERNAL_SYSTEM_WINDOW);
 
         launchActivity(HIDE_OVERLAY_WINDOWS_ACTIVITY);
         setHideOverlayWindowsAndWaitForPong(true);
         mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+    }
+
+    @Test
+    public void testSystemApplicationOverlaysNotHidden() {
+        String windowName = "SYSTEM_APPLICATION_OVERLAY";
+        ComponentName componentName = new ComponentName(
+                mContext, SystemApplicationOverlayActivity.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            launchActivity(componentName,
+                    CliIntentExtra.extraString(WINDOW_NAME_EXTRA, windowName),
+                    CliIntentExtra.extraBool(SYSTEM_APPLICATION_OVERLAY_EXTRA, true));
+            mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+        }, Manifest.permission.SYSTEM_APPLICATION_OVERLAY);
+
+        launchActivity(HIDE_OVERLAY_WINDOWS_ACTIVITY);
+        setHideOverlayWindowsAndWaitForPong(true);
+        mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+    }
+
+    @Test
+    public void testSystemApplicationOverlayHiddenWithoutFlag() {
+        String windowName = "SYSTEM_APPLICATION_OVERLAY";
+        ComponentName componentName = new ComponentName(
+                mContext, SystemApplicationOverlayActivity.class);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            launchActivity(componentName,
+                    CliIntentExtra.extraString(WINDOW_NAME_EXTRA, windowName));
+            mWmState.waitAndAssertWindowSurfaceShown(windowName, true);
+        }, Manifest.permission.SYSTEM_APPLICATION_OVERLAY);
+
+        launchActivity(HIDE_OVERLAY_WINDOWS_ACTIVITY);
+        setHideOverlayWindowsAndWaitForPong(true);
+        mWmState.waitAndAssertWindowSurfaceShown(windowName, false);
     }
 
     void setHideOverlayWindowsAndWaitForPong(boolean hide) {
@@ -119,16 +175,14 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
         mPongReceiver.waitForPong();
     }
 
-    public static class InternalSystemWindowActivity extends Activity {
-
-        final static String WINDOW_NAME = "window_name";
+    public static class BaseSystemWindowActivity extends Activity {
 
         TextView mTextView;
 
         @Override
         protected void onCreate(@Nullable Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
-            String windowName = getIntent().getStringExtra(WINDOW_NAME);
+            String windowName = getIntent().getStringExtra(WINDOW_NAME_EXTRA);
 
             final Point size = new Point();
             getDisplay().getRealSize(size);
@@ -139,12 +193,14 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
             params.height = size.y / 3;
             params.gravity = TOP | LEFT;
             params.setTitle(windowName);
+            params.setSystemApplicationOverlay(
+                    getIntent().getBooleanExtra(SYSTEM_APPLICATION_OVERLAY_EXTRA, false));
 
             mTextView = new TextView(this);
             mTextView.setText(windowName + "   type=" + TYPE_APPLICATION_OVERLAY);
             mTextView.setBackgroundColor(Color.GREEN);
 
-            getSystemService(WindowManager.class).addView(mTextView, params);
+            getWindowManager().addView(mTextView, params);
         }
 
         @Override
@@ -153,6 +209,14 @@ public class HideOverlayWindowsTest extends ActivityManagerTestBase {
             getWindowManager().removeView(mTextView);
         }
     }
+
+    // These activities are running the same code, but in different processes to ensure that they
+    // each create their own WindowSession, using the correct permissions. If they are run in the
+    // same process WindowSession is cached and might end up not matching the permissions set up
+    // with adoptShellPermissions
+    public static class InternalSystemWindowActivity extends BaseSystemWindowActivity {}
+    public static class SystemApplicationOverlayActivity extends BaseSystemWindowActivity {}
+    public static class SystemWindowActivity extends BaseSystemWindowActivity {}
 
     private static class PongReceiver extends BroadcastReceiver {
 

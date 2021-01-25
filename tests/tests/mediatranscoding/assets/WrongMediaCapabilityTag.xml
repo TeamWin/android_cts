@@ -17,5 +17,4 @@
 <media-capability xmlns:android="http://schemas.android.com/apk/res/android">
     <format android:name="HEVC" supported="true"/>
     <format android:name="HDR10" supported="true"/>
-    <format android:name="SlowMotion" supported="true"/>
 </media-capabilities>

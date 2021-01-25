@@ -18,7 +18,6 @@ package android.telephony.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
-import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_TEMPORARILY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
@@ -42,6 +41,8 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.Looper;
 import android.os.ParcelUuid;
+import android.os.PersistableBundle;
+import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
@@ -296,7 +297,8 @@ public class SubscriptionManagerTest {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
                 return !caps.hasCapability(NET_CAPABILITY_NOT_CONGESTED);
             });
-            mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+            mSm.setSubscriptionOverrideCongested(
+                    mSubId, true, TelephonyManager.getAllNetworkTypes(), 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
 
@@ -312,7 +314,8 @@ public class SubscriptionManagerTest {
         // Now revoke our access
         setSubPlanOwner(mSubId, null);
         try {
-            mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+            mSm.setSubscriptionOverrideCongested(
+                    mSubId, true, TelephonyManager.getAllNetworkTypes(), 0);
             fail();
         } catch (SecurityException | IllegalStateException expected) {
         }
@@ -346,29 +349,30 @@ public class SubscriptionManagerTest {
         final Network net = findCellularNetwork();
         assertNotNull("Active cellular network required", net);
 
-        // Make ourselves the owner and define some plans
-        setSubPlanOwner(mSubId, mPackageName);
-        mSm.setSubscriptionPlans(mSubId,
-                Arrays.asList(buildValidSubscriptionPlan(System.currentTimeMillis())));
+        // TODO: Remove this check after b/176119724 is fixed.
+        if (!isUnmetered5GSupported()) return;
 
         // Cellular is metered by default
-        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(
+                NET_CAPABILITY_TEMPORARILY_NOT_METERED));
 
         // Override should make it go temporarily unmetered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
-            mSm.setSubscriptionOverrideUnmetered(mSubId, true, 0);
+            mSm.setSubscriptionOverrideUnmetered(
+                    mSubId, true, TelephonyManager.getAllNetworkTypes(), 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
 
         // Clearing override should make it go metered
         {
             final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
-                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+                return !caps.hasCapability(NET_CAPABILITY_TEMPORARILY_NOT_METERED);
             });
-            mSm.setSubscriptionOverrideUnmetered(mSubId, false, 0);
+            mSm.setSubscriptionOverrideUnmetered(
+                    mSubId, false, TelephonyManager.getAllNetworkTypes(), 0);
             assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
     }
@@ -381,6 +385,9 @@ public class SubscriptionManagerTest {
                 .getSystemService(ConnectivityManager.class);
         final Network net = findCellularNetwork();
         assertNotNull("Active cellular network required", net);
+
+        // TODO: Remove this check after b/176119724 is fixed.
+        if (!isUnmetered5GSupported()) return;
 
         // Make ourselves the owner and define some plans
         setSubPlanOwner(mSubId, mPackageName);
@@ -945,5 +952,25 @@ public class SubscriptionManagerTest {
     private static void setSubPlanOwner(int subId, String packageName) throws Exception {
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
                 "cmd netpolicy set sub-plan-owner " + subId + " " + packageName);
+    }
+
+    private boolean isUnmetered5GSupported() {
+        final CarrierConfigManager ccm = InstrumentationRegistry.getContext()
+                .getSystemService(CarrierConfigManager.class);
+        PersistableBundle carrierConfig = ccm.getConfigForSubId(mSubId);
+
+        final TelephonyManager tm = InstrumentationRegistry.getContext()
+                .getSystemService(TelephonyManager.class);
+        int dataNetworkType = tm.getDataNetworkType(mSubId);
+        long supportedRats = ShellIdentityUtils.invokeMethodWithShellPermissions(tm,
+                TelephonyManager::getSupportedRadioAccessFamily);
+
+        boolean validCarrier = carrierConfig.getBoolean(
+                CarrierConfigManager.KEY_NETWORK_TEMP_NOT_METERED_SUPPORTED_BOOL);
+        boolean validCapabilities = (supportedRats & TelephonyManager.NETWORK_TYPE_BITMASK_NR) != 0;
+        // TODO: need to check for TelephonyDisplayInfo override for NR NSA
+        boolean validNetworkType = dataNetworkType == TelephonyManager.NETWORK_TYPE_NR;
+
+        return validCarrier && validNetworkType && validCapabilities;
     }
 }

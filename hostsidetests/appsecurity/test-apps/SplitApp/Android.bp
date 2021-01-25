@@ -41,6 +41,7 @@ android_test_helper_app {
         "xhdpi-v4",
         "xxhdpi-v4",
         "v7",
+        "v23",
         "fr",
         "de",
     ],
@@ -120,6 +121,28 @@ android_test_helper_app {
     aaptflags: [
         "--version-code 100",
         "--version-name OneHundredRevisionTwelve",
+        "--replace-version",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+// Define a variant with different codes and resources for the inherit updated test of the base apk
+android_test_helper_app {
+    name: "CtsSplitAppRevisionA",
+    defaults: ["CtsSplitAppDefaults"],
+    srcs: ["src/**/*.java", "revision_a/src/**/*.java"],
+    resource_dirs: ["res", "revision_a/res"],
+    asset_dirs: ["revision_a/assets"],
+    manifest : "revision_a/AndroidManifest.xml",
+    package_splits: ["v7"],
+    certificate: ":cts-testkey1",
+    aaptflags: [
+        "--version-code 100",
+        "--revision-code 10",
+        "--version-name OneHundredRevisionTen",
         "--replace-version",
     ],
     test_suites: [

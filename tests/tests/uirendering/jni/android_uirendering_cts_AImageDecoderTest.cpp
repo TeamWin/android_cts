@@ -37,6 +37,9 @@ static void testNullDecoder(JNIEnv* env, jobject) {
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_advanceFrame(nullptr));
 
     ASSERT_EQ(ANDROID_IMAGE_DECODER_BAD_PARAMETER, AImageDecoder_rewind(nullptr));
+
+    AImageDecoder_setInternallyHandleDisposePrevious(nullptr, true);
+    AImageDecoder_setInternallyHandleDisposePrevious(nullptr, false);
 #pragma clang diagnostic pop
 }
 
@@ -269,6 +272,11 @@ static jint getRepeatCount(JNIEnv*, jobject, jlong decoder) {
     return AImageDecoder_getRepeatCount(reinterpret_cast<AImageDecoder*>(decoder));
 }
 
+static void setHandleDisposePrevious(JNIEnv*, jobject, jlong decoder, jboolean handle) {
+    AImageDecoder_setInternallyHandleDisposePrevious(reinterpret_cast<AImageDecoder*>(decoder),
+                                                     handle);
+}
+
 #define ASSET_MANAGER "Landroid/content/res/AssetManager;"
 #define STRING "Ljava/lang/String;"
 #define BITMAP "Landroid/graphics/Bitmap;"
@@ -301,6 +309,7 @@ static JNINativeMethod gMethods[] = {
     { "nGetDisposeOp", "(J)I", (void*) getDisposeOp },
     { "nGetBlendOp", "(J)I", (void*) getBlendOp },
     { "nGetRepeatCount", "(J)I", (void*) getRepeatCount },
+    { "nSetHandleDisposePrevious", "(JZ)V", (void*) setHandleDisposePrevious },
 };
 
 int register_android_uirendering_cts_AImageDecoderTest(JNIEnv* env) {

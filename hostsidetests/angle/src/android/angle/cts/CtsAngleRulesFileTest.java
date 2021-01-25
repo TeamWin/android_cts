@@ -97,6 +97,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
     @Test
     public void testEmptyRulesFile() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         pushRulesFile(RULES_FILE_EMPTY);
 
@@ -113,6 +114,7 @@ public class CtsAngleRulesFileTest extends BaseHostJUnit4Test {
     @Test
     public void testEnableAngleRulesFile() throws Exception {
         Assume.assumeTrue(isAngleLoadable(getDevice()));
+        Assume.assumeFalse(isNativeDriverAngle(getDevice()));
 
         pushRulesFile(RULES_FILE_ENABLE_ANGLE);
 

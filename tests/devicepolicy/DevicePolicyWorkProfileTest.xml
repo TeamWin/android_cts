@@ -33,5 +33,6 @@
         <option name="package" value="android.devicepolicy.cts" />
         <option name="include-annotation" value="com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile" />
 <!--        <option name="instrumentation-arg" key="skip-test-teardown" value="true" />-->
+        <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>

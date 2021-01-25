@@ -1149,7 +1149,7 @@ public class ServiceTest extends ActivityTestsBase {
 
         PendingIntent pi = PendingIntent.getForegroundService(mContext, 1,
                 foregroundServiceIntent(COMMAND_START_FOREGROUND),
-                PendingIntent.FLAG_CANCEL_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         TestSendCallback callback = new TestSendCallback();
 
         try {

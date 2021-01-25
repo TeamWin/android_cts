@@ -70,7 +70,6 @@ public class TestNotificationActivity extends Activity {
                         .setContentTitle("SystemUiCts")
                         .setContentText("SystemUiCts")
                         .build());
-        nm.cancel(notificationId);
         finish();
     }
 }

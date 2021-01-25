@@ -1321,6 +1321,12 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** @see ObjectTracker#manage(AutoCloseable) */
+    protected SupportsNonResizableMultiWindowSession
+        createManagedSupportsNonResizableMultiWindowSession() {
+        return mObjectTracker.manage(new SupportsNonResizableMultiWindowSession());
+    }
+
+    /** @see ObjectTracker#manage(AutoCloseable) */
     protected <T extends Activity> TestActivitySession<T> createManagedTestActivitySession() {
         return new TestActivitySession<T>();
     }
@@ -1619,6 +1625,15 @@ public abstract class ActivityManagerTestBase {
 
         void setAodEnabled(boolean enabled) {
             set(enabled ? 1 : 0);
+        }
+    }
+
+    protected class SupportsNonResizableMultiWindowSession extends SettingsSession<Integer> {
+        SupportsNonResizableMultiWindowSession() {
+            super(Settings.Global.getUriFor(
+                    Settings.Global.DEVELOPMENT_ENABLE_NON_RESIZABLE_MULTI_WINDOW),
+                    (cr, name) -> Settings.Global.getInt(cr, name, 0 /* def */),
+                    Settings.Global::putInt);
         }
     }
 

@@ -75,6 +75,8 @@ import android.telephony.PreciseCallState;
 import android.telephony.RadioAccessFamily;
 import android.telephony.ServiceState;
 import android.telephony.SignalStrength;
+import android.telephony.SignalStrengthUpdateRequest;
+import android.telephony.SignalThresholdInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -218,6 +220,8 @@ public class TelephonyManagerTest {
     private int mTestSub;
     private TelephonyManagerTest.CarrierConfigReceiver mReceiver;
     private int mRadioVersion;
+    private boolean mIsAllowedNetworkTypeChanged;
+    private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -266,6 +270,7 @@ public class TelephonyManagerTest {
         getContext().registerReceiver(mReceiver, filter);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+        saveAllowedNetworkTypesForAllReasons();
     }
 
     @After
@@ -277,6 +282,53 @@ public class TelephonyManagerTest {
         if (mReceiver != null) {
             getContext().unregisterReceiver(mReceiver);
             mReceiver = null;
+        }
+        if (mIsAllowedNetworkTypeChanged) {
+            recoverAllowedNetworkType();
+        }
+    }
+
+    private void saveAllowedNetworkTypesForAllReasons() {
+        mIsAllowedNetworkTypeChanged = false;
+        if (mAllowedNetworkTypesList == null) {
+            mAllowedNetworkTypesList = new HashMap<>();
+        }
+        long allowedNetworkTypesUser = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                }
+        );
+        long allowedNetworkTypesPower = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                }
+        );
+        long allowedNetworkTypesCarrier = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+                }
+        );
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                allowedNetworkTypesUser);
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                allowedNetworkTypesPower);
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                allowedNetworkTypesCarrier);
+    }
+
+    private void recoverAllowedNetworkType() {
+        if (mAllowedNetworkTypesList == null) {
+            return;
+        }
+        for (Integer key : mAllowedNetworkTypesList.keySet()) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            key,
+                            mAllowedNetworkTypesList.get(key)));
         }
     }
 
@@ -2216,6 +2268,13 @@ public class TelephonyManagerTest {
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(
+                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
@@ -2229,6 +2288,13 @@ public class TelephonyManagerTest {
 
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                     tm -> tm.setCallComposerStatus(TelephonyManager.CALL_COMPOSER_STATUS_ON));
+            status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    tm -> tm.getCallComposerStatus());
+            assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    tm -> tm.setCallComposerStatus(
+                            TelephonyManager.CALL_COMPOSER_STATUS_ON_NO_PICTURES));
             status = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                     tm -> tm.getCallComposerStatus());
             assertThat(status).isEqualTo(TelephonyManager.CALL_COMPOSER_STATUS_OFF);
@@ -2781,6 +2847,102 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testSetAllowedNetworkTypesForReason() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // test without permission: verify SecurityException
+        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        try {
+            mIsAllowedNetworkTypeChanged = true;
+            mTelephonyManager.setAllowedNetworkTypesForReason(
+                    TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER, allowedNetworkTypes);
+            fail("testSetPolicyDataEnabled: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                            allowedNetworkTypes));
+
+            long deviceAllowedNetworkTypes = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                    }
+            );
+            assertEquals(allowedNetworkTypes, deviceAllowedNetworkTypes);
+        } catch (SecurityException se) {
+            fail("testSetAllowedNetworkTypes: SecurityException not expected");
+        }
+    }
+
+    @Test
+    public void testSetAllowedNetworkTypesForReason_moreReason() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // test without permission: verify SecurityException
+        long allowedNetworkTypes1 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+        long allowedNetworkTypes2 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
+        long allowedNetworkTypes3 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+
+        try {
+            mIsAllowedNetworkTypeChanged = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                            allowedNetworkTypes1));
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                            allowedNetworkTypes2));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                            allowedNetworkTypes3));
+            long deviceAllowedNetworkTypes1 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                    }
+            );
+            long deviceAllowedNetworkTypes2 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                    }
+            );
+            long deviceAllowedNetworkTypes3 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+                    }
+            );
+            assertEquals(allowedNetworkTypes1, deviceAllowedNetworkTypes1);
+            assertEquals(allowedNetworkTypes2, deviceAllowedNetworkTypes2);
+            assertEquals(allowedNetworkTypes3, deviceAllowedNetworkTypes3);
+        } catch (SecurityException se) {
+            fail("testSetAllowedNetworkTypes: SecurityException not expected");
+        }
+    }
+
+    @Test
     public void testIsApplicationOnUicc() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
@@ -3212,7 +3374,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaRoamingMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3238,7 +3401,8 @@ public class TelephonyManagerTest {
 
     @Test
     public void testCdmaSubscriptionMode() {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
+                || mTelephonyManager.getPhoneType() != TelephonyManager.PHONE_TYPE_CDMA) {
             return;
         }
 
@@ -3259,7 +3423,7 @@ public class TelephonyManagerTest {
 
         // Reset state
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                tm -> tm.setCdmaRoamingMode(cdmaSubscriptionMode));
+                tm -> tm.setCdmaSubscriptionMode(cdmaSubscriptionMode));
     }
 
     @Test
@@ -3312,6 +3476,330 @@ public class TelephonyManagerTest {
         if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
             assertTrue(bandwidth != null);
         }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_nullRequest() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify NPE throws if set request with null object
+        try {
+            mTelephonyManager.setSignalStrengthUpdateRequest(null);
+            fail("NullPointerException expected when setSignalStrengthUpdateRequest with null");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_noPermission() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        final SignalStrengthUpdateRequest normalRequest =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+
+        // Verify SE throws for apps without carrier privilege or MODIFY_PHONE_STATE permission
+        try {
+            mTelephonyManager.setSignalStrengthUpdateRequest(normalRequest);
+            fail("SecurityException expected when setSignalStrengthUpdateRequest without "
+                    + "carrier privilege or MODIFY_PHONE_STATE permission");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_systemThresholdReportingRequestedWhileIdle() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify SE throws for app when set systemThresholdReportingRequestedWhileIdle to true
+        SignalStrengthUpdateRequest requestWithSystemThresholdReportingRequestedWhileIdle =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        //allowed for system caller only
+                        .setSystemThresholdReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(
+                            requestWithSystemThresholdReportingRequestedWhileIdle));
+            fail("IllegalArgumentException expected when set "
+                    + "systemThresholdReportingRequestedWhileIdle");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_systeresisDbSet() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify SE throws for app when set hysteresisDb in the SignalThresholdInfo
+        SignalStrengthUpdateRequest requestWithHysteresisDbSet =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .setHysteresisDb(10) //allowed for system caller only
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithHysteresisDbSet));
+            fail("IllegalArgumentException expected when set hysteresisDb in SignalThresholdInfo "
+                    + "to true");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_systeresisMsSet() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify SE throws for app when set hysteresisMs in the SignalThresholdInfo
+        SignalStrengthUpdateRequest requestWithHysteresisMsSet =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .setHysteresisMs(1000) //allowed for system caller only
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithHysteresisMsSet));
+            fail("IllegalArgumentException expected when set hysteresisMs in SignalThresholdInfo "
+                    + "to true");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_isEnabledSet() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify SE throws for app when set isEnabled in the SignalThresholdInfo
+        SignalStrengthUpdateRequest requestWithThresholdIsEnabledSet =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97})
+                                        .setIsEnabled(true) //allowed for system caller only
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithThresholdIsEnabledSet));
+            fail("IllegalArgumentException expected when set isEnabled in SignalThresholdInfo "
+                    + "with true");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_tooShortThresholds() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // verify SE throws if app set too short thresholds
+        SignalStrengthUpdateRequest requestWithTooShortThresholds =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholdsUnlimited(new int[]{})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithTooShortThresholds));
+            fail("IllegalArgumentException expected when set thresholds that is too short");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_tooLongThresholds() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // verify SE throws if app set too long thresholds
+        SignalStrengthUpdateRequest requestWithTooLongThresholds =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholdsUnlimited(
+                                                new int[]{-113, -103, -97, -61, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(requestWithTooLongThresholds));
+            fail("IllegalArgumentException expected when set thresholds that is too long");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    @Test
+    public void testSetSignalStrengthUpdateRequest_duplicatedRequest() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        final SignalStrengthUpdateRequest normalRequest =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+
+        // Verify IllegalStateException should throw when set the same request twice
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.setSignalStrengthUpdateRequest(normalRequest));
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.setSignalStrengthUpdateRequest(normalRequest));
+            fail("IllegalStateException expected when setSignalStrengthUpdateRequest twice with "
+                    + "same request object");
+        } catch (IllegalStateException expected) {
+        } finally {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                    (tm) -> tm.clearSignalStrengthUpdateRequest(normalRequest));
+        }
+    }
+
+    @Test
+    public void testClearSignalStrengthUpdateRequest_nullRequest() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        // Verify NPE should throw if clear request with null object
+        try {
+            mTelephonyManager.clearSignalStrengthUpdateRequest(null);
+            fail("NullPointerException expected when clearSignalStrengthUpdateRequest with null");
+        } catch (NullPointerException expected) {
+        }
+    }
+
+    @Test
+    public void testClearSignalStrengthUpdateRequest_noPermission() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        final SignalStrengthUpdateRequest normalRequest =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+
+        // Verify SE throws for apps without carrier privilege or MODIFY_PHONE_STATE permission
+        try {
+            mTelephonyManager.clearSignalStrengthUpdateRequest(normalRequest);
+            fail("SecurityException expected when clearSignalStrengthUpdateRequest without "
+                    + "carrier privilege or MODIFY_PHONE_STATE permission");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    @Test
+    public void testClearSignalStrengthUpdateRequest_clearWithNoSet() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
+            return;
+        }
+
+        SignalStrengthUpdateRequest requestNeverSetBefore = new SignalStrengthUpdateRequest
+                .Builder()
+                .setSignalThresholdInfos(List.of(new SignalThresholdInfo.Builder()
+                        .setRadioAccessNetworkType(AccessNetworkConstants.AccessNetworkType.GERAN)
+                        .setSignalMeasurementType(SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                        .setThresholds(new int[]{-113, -103, -97, -51})
+                        .build()))
+                .setReportingRequestedWhileIdle(true)
+                .build();
+
+        // Verify clearSignalStrengthUpdateRequest is no-op when clear request that was not set
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.clearSignalStrengthUpdateRequest(requestNeverSetBefore));
     }
 
     @Test

@@ -285,6 +285,51 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
 
     }
 
+    public void testCallFilteringCompleteSignalNotInContacts() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        try {
+            addAndVerifyNewIncomingCall(createTestNumber(), null);
+            MockConnection connection = verifyConnectionForIncomingCall();
+
+            Object[] callFilteringCompleteInvocations =
+                    connection.getInvokeCounter(MockConnection.ON_CALL_FILTERING_COMPLETED)
+                            .getArgs(0);
+            assertFalse((boolean) callFilteringCompleteInvocations[0]);
+            assertFalse((boolean) callFilteringCompleteInvocations[1]);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
+    }
+
+    public void testCallFilteringCompleteSignalInContacts() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        Uri testNumber = createTestNumber();
+        Uri contactUri = TestUtils.insertContact(mContext.getContentResolver(),
+                testNumber.getSchemeSpecificPart());
+        try {
+            addAndVerifyNewIncomingCall(testNumber, null);
+            MockConnection connection = verifyConnectionForIncomingCall();
+
+            Object[] callFilteringCompleteInvocations =
+                    connection.getInvokeCounter(MockConnection.ON_CALL_FILTERING_COMPLETED)
+                            .getArgs(0);
+            assertFalse((boolean) callFilteringCompleteInvocations[0]);
+            assertTrue((boolean) callFilteringCompleteInvocations[1]);
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+            TestUtils.deleteContact(mContext.getContentResolver(), contactUri);
+        }
+    }
     public void testCallDirectionOutgoing() {
         if (!mShouldTestTelecom) {
             return;

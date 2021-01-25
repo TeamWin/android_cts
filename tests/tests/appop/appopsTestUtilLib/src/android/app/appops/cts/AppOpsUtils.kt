@@ -178,13 +178,15 @@ fun getOpEntry(uid: Int, packageName: String, op: String): OpEntry? {
 }
 
 /**
- * Run a block with a compat change disabled
+ * Run a block with a compat change enabled
  */
-fun withDisabledCompatChange(changeId: Long, packageName: String, wrapped: () -> Unit) {
-    runCommand("am compat disable $changeId $packageName")
+fun withEnabledCompatChange(changeId: Long, packageName: String, wrapped: () -> Unit) {
+    runCommand("settings put global force_non_debuggable_final_build_for_compat 1")
+    runCommand("am compat enable $changeId $packageName")
     try {
         wrapped()
     } finally {
         runCommand("am compat reset $changeId $packageName")
+        runCommand("settings put global force_non_debuggable_final_build_for_compat 0")
     }
 }

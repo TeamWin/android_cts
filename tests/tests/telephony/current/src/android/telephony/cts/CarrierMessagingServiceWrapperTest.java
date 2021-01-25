@@ -80,7 +80,7 @@ public class CarrierMessagingServiceWrapperTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mServiceWrapper != null) mServiceWrapper.disposeConnection(mContext);
+        if (mServiceWrapper != null) mServiceWrapper.disconnect();
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
     }

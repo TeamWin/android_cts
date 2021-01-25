@@ -16,9 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import android.platform.test.annotations.FlakyTest;
-import android.platform.test.annotations.LargeTest;
-
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 
 import org.junit.Test;
@@ -28,7 +25,6 @@ import org.junit.Test;
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi25.
  */
 public class MixedManagedProfileOwnerTestApi25 extends DeviceAndProfileOwnerTestApi25 {
-
     private int mParentUserId = -1;
 
     @Override

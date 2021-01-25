@@ -19,6 +19,8 @@ package com.android.cts.certinstaller;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.testng.Assert.assertThrows;
+
 import static java.util.Collections.singleton;
 
 import android.app.admin.DevicePolicyManager;
@@ -123,6 +125,8 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     private DevicePolicyManager mDpm;
     private PrivateKey mTestPrivateKey;
     private Certificate mTestCertificate;
+    private boolean mHasTelephony = false;
+    private TelephonyManager mTelephonyManager;
 
     @Override
     public void setUp() throws Exception {
@@ -130,6 +134,12 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         mTestPrivateKey = rsaKeyFromString(TEST_KEY);
         mTestCertificate = certificateFromString(TEST_CERT);
         mDpm = getContext().getSystemService(DevicePolicyManager.class);
+        PackageManager pm = getContext().getPackageManager();
+        if (pm != null && pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            mHasTelephony = true;
+            mTelephonyManager = (TelephonyManager) getContext().getSystemService(
+                    Context.TELEPHONY_SERVICE);
+        }
     }
 
     @Override
@@ -211,21 +221,39 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     }
 
     public void testAccessToDeviceIdentifiers() {
-        String serialNumber = Build.getSerial();
-        assertThat(Build.getSerial()).doesNotMatch(Build.UNKNOWN);
+        final String adminPackageName = "com.android.cts.deviceandprofileowner";
+        if (mDpm.isDeviceOwnerApp(adminPackageName)) {
+            validateCanAccessDeviceIdentifiers();
+        } else {
+            validateNoAccessToIdentifier();
+        }
+    }
 
-        PackageManager pm = getContext().getPackageManager();
-        if ((pm == null) || (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY))) {
+    private void validateNoAccessToIdentifier() {
+        assertThrows(SecurityException.class, () -> Build.getSerial());
+
+        if (!mHasTelephony) {
             return;
         }
 
-        TelephonyManager telephonyService = (TelephonyManager) getContext().getSystemService(
-                Context.TELEPHONY_SERVICE);
         assertWithMessage("Telephony service must be available.")
-                .that(telephonyService).isNotNull();
+                .that(mTelephonyManager).isNotNull();
+
+        assertThrows(SecurityException.class, () -> mTelephonyManager.getImei());
+    }
+
+    public void validateCanAccessDeviceIdentifiers() {
+        assertThat(Build.getSerial()).doesNotMatch(Build.UNKNOWN);
+
+        if (!mHasTelephony) {
+            return;
+        }
+
+        assertWithMessage("Telephony service must be available.")
+                .that(mTelephonyManager).isNotNull();
 
         try {
-            telephonyService.getImei();
+            mTelephonyManager.getImei();
         } catch (SecurityException e) {
             fail("Should have permission to access IMEI: " + e);
         }

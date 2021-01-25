@@ -18,18 +18,24 @@ package android.provider.cts.contacts;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import android.Manifest;
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.OutcomeReceiver;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.provider.CallLog;
 import android.provider.cts.R;
 import android.test.InstrumentationTestCase;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
+
+import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -89,6 +95,52 @@ public class CallLogTest extends InstrumentationTestCase {
                 CONTENT_RESOLVER_TIMEOUT_MS,
                 "getLastOutgoingCall did not return " + TEST_NUMBER + " as expected"
         );
+    }
+
+    public void testLocationStorageAndRetrieval() {
+        Context context = getInstrumentation().getContext();
+        UserHandle currentUser = UserHandle.of(
+                ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
+                        () -> ActivityManager.getCurrentUser()));
+        CallLog.AddCallParams.AddCallParametersBuilder builder =
+                new CallLog.AddCallParams.AddCallParametersBuilder();
+        builder.setAddForAllUsers(false);
+        builder.setUserToBeInsertedTo(currentUser);
+        // Some random spot in the North Atlantic
+        double lat = 24.877323;
+        double lon = -68.952545;
+        builder.setLatitude(lat);
+        builder.setLongitude(lon);
+
+        Uri uri;
+        getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS,
+                        Manifest.permission.READ_VOICEMAIL);
+        try {
+            uri = CallLog.Calls.addCall(context, builder.build());
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+        assertNotNull(uri);
+
+        Cursor cursor = context.getContentResolver().query(
+                uri, new String[] {CallLog.Calls.LOCATION}, null, null);
+        assertEquals(1, cursor.getCount());
+        cursor.moveToFirst();
+        String locationUriString = cursor.getString(cursor.getColumnIndex(CallLog.Calls.LOCATION));
+        assertNotNull(locationUriString);
+
+        Uri locationUri = Uri.parse(locationUriString);
+        Cursor locationCursor = context.getContentResolver().query(locationUri,
+                new String[] {CallLog.Locations.LATITUDE, CallLog.Locations.LONGITUDE}, null, null);
+        assertEquals(1, locationCursor.getCount());
+        locationCursor.moveToFirst();
+        double storedLat = locationCursor.getDouble(
+                locationCursor.getColumnIndex(CallLog.Locations.LATITUDE));
+        double storedLon = locationCursor.getDouble(
+                locationCursor.getColumnIndex(CallLog.Locations.LONGITUDE));
+        assertEquals(lat, storedLat);
+        assertEquals(lon, storedLon);
     }
 
     public void testCallComposerImageStorage() throws Exception {

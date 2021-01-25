@@ -93,7 +93,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             ITestDevice device, List<String> clientCommands, List<String> comPorts)
             throws Exception {
         String serialNo = device.getProperty("ro.serialno");
-        String serialNoParam = CecMessage.formatParams(serialNo);
+        String serialNoParam = CecMessage.convertStringToHexParams(serialNo);
         /* formatParams prefixes with a ':' that we do not want in the vendorcommand
          * command line utility.
          */
@@ -118,7 +118,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
                 try {
                     device.executeShellCommand(sendVendorCommand.toString());
                     String message = checkExpectedOutput(toDevice, CecOperand.VENDOR_COMMAND);
-                    if (CecMessage.getParamsAsString(message).equalsIgnoreCase(serialNo)) {
+                    if (CecMessage.getAsciiString(message).equalsIgnoreCase(serialNo)) {
                         /* If no Exception was thrown, then we have received the message we were
                          * looking for.
                          */

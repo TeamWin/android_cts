@@ -16,6 +16,12 @@
 
 package com.android.eventlib;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Instant;
 
@@ -37,5 +43,34 @@ public abstract class Event implements Serializable {
     /** Get the time that this event was logged. */
     public Instant timestamp() {
         return mTimestamp;
+    }
+
+    /**
+     * Serialize the {@link Event} to a byte array.
+     *
+     * <p>The resulting array can be deserialized using {@link #fromBytes(byte[])}.
+     */
+    byte[] toBytes() throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream out = new ObjectOutputStream(bos)) {
+            out.writeObject(this);
+            out.flush();
+            return bos.toByteArray();
+        }
+    }
+
+    /**
+     * Deserialize an {@link Event} from a byte array created using {@link #toBytes()}.
+     */
+    static Event fromBytes(byte[] bytes) throws IOException {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+             ObjectInput in = new ObjectInputStream(bis)) {
+            try {
+                return (Event) in.readObject();
+            } catch (ClassNotFoundException e) {
+                throw new IllegalStateException(
+                        "Trying to read Event which is not on classpath", e);
+            }
+        }
     }
 }

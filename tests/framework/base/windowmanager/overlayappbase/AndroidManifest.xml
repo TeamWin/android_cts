@@ -30,7 +30,7 @@
             android:theme="@android:style/Theme.Translucent"
             android:exported="true" />
         <activity
-            android:name="android.server.wm.overlay.OpaqueActivity"
+            android:name="android.server.wm.overlay.ExitAnimationActivity"
             android:exported="true" />
         <activity
             android:name="android.server.wm.overlay.ToastActivity"

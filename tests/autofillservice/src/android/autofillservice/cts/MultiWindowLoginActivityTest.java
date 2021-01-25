@@ -67,6 +67,11 @@ public class MultiWindowLoginActivityTest
     }
 
     @Override
+    protected void cleanAllActivities() {
+        MultiWindowEmptyActivity.finishAndWaitDestroy();
+    }
+
+    @Override
     protected TestRule getMainTestRule() {
         return RuleChain.outerRule(new AdoptShellPermissionsRule()).around(getActivityRule());
     }

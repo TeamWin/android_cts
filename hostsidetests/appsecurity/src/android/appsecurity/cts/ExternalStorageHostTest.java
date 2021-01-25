@@ -24,9 +24,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
-import com.android.server.role.RoleManagerServiceDumpProto;
-import com.android.server.role.RoleProto;
-import com.android.server.role.RoleUserStateProto;
+import com.android.role.RoleProto;
+import com.android.role.RoleServiceDumpProto;
+import com.android.role.RoleUserStateProto;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -710,8 +710,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private List<RoleUserStateProto> getAllUsersRoleStates() throws Exception {
-        final RoleManagerServiceDumpProto dumpProto =
-                getDump(RoleManagerServiceDumpProto.parser(), "dumpsys role --proto");
+        final RoleServiceDumpProto dumpProto =
+                getDump(RoleServiceDumpProto.parser(), "dumpsys role --proto");
         final List<RoleUserStateProto> res = new ArrayList<>();
         for (RoleUserStateProto userState : dumpProto.getUserStatesList()) {
             for (int i : mUsers) {

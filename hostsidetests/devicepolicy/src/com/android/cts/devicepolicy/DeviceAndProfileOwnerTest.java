@@ -870,9 +870,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
-        boolean isManagedProfile = (mPrimaryUserId != mUserId);
-
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest", mUserId);
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerTest",
@@ -1243,9 +1240,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     @Ignore("Ignored while migrating to new infrastructure b/175377361")
     public void testLockTask_defaultDialer() throws Exception {
-        if (!mHasFeature || !mHasTelephony || !mHasConnectionService) {
-            return;
-        }
+        assumeHasTelephonyAndConnectionServiceFeatures();
+
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchDefaultDialer");
@@ -1256,9 +1252,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testLockTask_emergencyDialer() throws Exception {
-        if (!mHasFeature || !mHasTelephony) {
-            return;
-        }
+        assumeHasTelephonyFeature();
+
         try {
             executeDeviceTestMethod(".LockTaskHostDrivenTest",
                     "testLockTaskCanLaunchEmergencyDialer");
@@ -1614,10 +1609,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.REMOVE_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build());
     }
 
@@ -1634,13 +1631,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
                 .setInt(0)
-                .setStrings("RSA")
+                .setStrings("RSA", "notCredentialManagementApp")
                 .build(),
                 new DevicePolicyEventWrapper.Builder(EventId.GENERATE_KEY_PAIR_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
                 .setInt(0)
-                .setStrings("EC")
+                .setStrings("EC", "notCredentialManagementApp")
                 .build());
 
     }
@@ -1656,6 +1653,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEY_PAIR_CERTIFICATE_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
                 .setBoolean(false)
+                .setStrings("notCredentialManagementApp")
                 .build());
     }
 
@@ -1692,20 +1690,20 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
 
-        executeDeviceTestClass(".InputMethodsTest");
+        executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethodsThrowsIfWrongAdmin");
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".InputMethodsTest", "testPermittedInputMethods");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
+                .setStrings(NOT_CALLED_FROM_PARENT, new String[0])
                 .build(),
         new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings((String[]) null)
+                .setStrings(NOT_CALLED_FROM_PARENT, new String[0])
                 .build(),
         new DevicePolicyEventWrapper.Builder(EventId.SET_PERMITTED_INPUT_METHODS_VALUE)
                 .setAdminPackageName(DEVICE_ADMIN_PKG)
-                .setStrings("com.google.pkg.one", "com.google.pkg.two")
+                .setStrings(NOT_CALLED_FROM_PARENT, "com.google.pkg.one", "com.google.pkg.two")
                 .build());
     }
 
@@ -2099,6 +2097,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 .map(line -> line.substring(prefixLength))
                 .collect(Collectors.toList());
     }
+
+    @Test
+    public void testEnrollmentSpecificIdCorrectCalculation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        boolean isManagedProfile = (mPrimaryUserId != mUserId);
+
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".EnrollmentSpecificIdTest",
+                    "testCorrectCalculationOfEsid");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_ORGANIZATION_ID_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(isManagedProfile)
+                .build());
+    }
+
+    @Test
+    public void testEnrollmentSpecificIdEmptyAndMultipleSet() throws DeviceNotAvailableException {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testThrowsForEmptyOrganizationId", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testThrowsWhenTryingToReSetOrganizationId", mUserId);
+    }
+
 
     /**
      * Executes a test class on device. Prior to running, turn off background data usage

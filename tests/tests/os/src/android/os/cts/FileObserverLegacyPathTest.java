@@ -21,6 +21,7 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.ConditionVariable;
 import android.os.FileObserver;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
 import java.io.File;
@@ -55,12 +56,13 @@ public class FileObserverLegacyPathTest extends AndroidTestCase {
      * MODIFY events on that file, ensuring that, in the case of a FUSE mounted
      * file system, changes applied to the lower file system will be detected
      * by a monitored FUSE folder.
-     * Instead of checking if the set of generated events if exactly the same
+     * Instead of checking if the set of generated events is exactly the same
      * as the set of expected events, the test checks if the set of generated
      * events contains CREATE, OPEN and MODIFY. This because there may be other
      * services (e.g., file indexing) that may access the newly created file,
      * generating spurious events that this test doesn't care of and filters
      * them out. */
+    @AppModeFull(reason = "Instant apps cannot access external storage")
     public void testCreateFile() throws Exception {
         String imageName = "image" + System.currentTimeMillis() + ".jpg";
 
@@ -82,15 +84,16 @@ public class FileObserverLegacyPathTest extends AndroidTestCase {
         os.write("TEST".getBytes("UTF-8"));
         os.close();
 
-        /* Wait for for the inotify events to be catched. A timeout occurs
-         * after 2 seconds. */
+        /* Wait for for the inotify events to be caught. A timeout occurs after
+         * 2 seconds. */
         mCond.block(2000);
 
         int detectedEvents = fileObserver.getEvents().getOrDefault(imageName, 0);
 
         /* Verify if the received events correspond to the ones that were requested */
-        assertEquals("Uncatched some of the events", PathFileObserver.eventsToSet(eventsMask),
-                PathFileObserver.eventsToSet(detectedEvents & eventsMask));
+        assertEquals("Expected and received inotify events do not match",
+            PathFileObserver.eventsToSet(eventsMask),
+            PathFileObserver.eventsToSet(detectedEvents & eventsMask));
 
         fileObserver.stopWatching();
     }
@@ -125,7 +128,7 @@ public class FileObserverLegacyPathTest extends AndroidTestCase {
                     path, filteredEvent | mGeneratedEventsMap.getOrDefault(path, 0));
 
             /* Release the condition variable only if at least all the matching
-             * events have been catched for every monitored file. */
+             * events have been caught for every monitored file. */
             for (String file : mMonitoredEventsMap.keySet()) {
                 int monitoredEvents = mMonitoredEventsMap.getOrDefault(file, 0);
                 int generatedEvents = mGeneratedEventsMap.getOrDefault(file, 0);

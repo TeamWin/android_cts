@@ -1,0 +1,29 @@
+android_library {
+    name: "ActivityContext",
+    sdk_version: "current",
+    srcs: [
+        "src/main/java/**/*.java"
+    ],
+    static_libs: [
+        "EventLib",
+        "compatibility-device-util-axt",
+    ],
+    manifest: "src/main/AndroidManifest.xml",
+}
+
+android_test {
+    name: "ActivityContextTest",
+    srcs: [
+        "src/test/java/**/*.java"
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "ActivityContext",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+    ],
+    manifest: "src/test/AndroidManifest.xml",
+}
