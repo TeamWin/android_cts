@@ -16,7 +16,9 @@
 
 package android.security.cts;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
+import static org.hamcrest.Matchers.lessThan;
+
 import android.test.AndroidTestCase;
 import android.app.Activity;
 import android.content.Context;
@@ -35,8 +37,8 @@ public class CVE_2021_0339 {
 
     static final String TAG = CVE_2021_0339.class.getSimpleName();
     private static final String SECURITY_CTS_PACKAGE_NAME = "android.security.cts";
-    static final int MAX_TRANSITION_DURATION_MS = 3000;
-    static final int TIME_MEASUREMENT_DELAY_MS = 150;
+    static final int MAX_TRANSITION_DURATION_MS = 3000; // internal max
+    static final int TIME_MEASUREMENT_DELAY_MS = 5000; // tolerance for lag.
     public static boolean testCompleted;
 
     public FirstActivity fActivity;
@@ -69,11 +71,12 @@ public class CVE_2021_0339 {
         Log.d(TAG, "test completed");
 
         //A duration of a transition from "FirstActivity" to "Second Activity"
-        //is set in this test to 6000 ms
+        //is set in this test to 10 seconds
         // (res/anim/translate1.xml and res/anim/translate2.xml)
-        //The fix is supposed to limit the duration to 3000 ms
-        assertTrue(SecondActivity.duration < MAX_TRANSITION_DURATION_MS +
-          TIME_MEASUREMENT_DELAY_MS);
+        //The fix is supposed to limit the duration to 3000 ms.
+        // testing for > 8s
+        assertThat(SecondActivity.duration,
+            lessThan(MAX_TRANSITION_DURATION_MS + TIME_MEASUREMENT_DELAY_MS));
     }
 
     public static class FirstActivity extends Activity {
