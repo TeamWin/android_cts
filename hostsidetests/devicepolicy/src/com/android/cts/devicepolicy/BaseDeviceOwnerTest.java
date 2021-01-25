@@ -59,7 +59,7 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
                 // Don't fail as it could hide the real failure from the test method
                 CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);

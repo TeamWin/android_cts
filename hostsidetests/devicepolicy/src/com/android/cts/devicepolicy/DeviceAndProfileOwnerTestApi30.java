@@ -32,7 +32,7 @@ public abstract class DeviceAndProfileOwnerTestApi30 extends BaseDevicePolicyTes
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
 
             // Clear device lock in case test fails (testUnlockFbe in particular)
