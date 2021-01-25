@@ -28,6 +28,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import org.junit.Test;
@@ -37,9 +40,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 /**
  * Tests for the direction action related functions.
@@ -313,9 +313,8 @@ public class DirectActionsTest extends AbstractVoiceInteractionTestCase {
             if (postActionCommand != null) {
                 try {
                     postActionCommand.run();
-                } catch (TimeoutException e) {
-                    Log.e(TAG, "action '" + action + "' timed out" );
                 } catch (Exception e) {
+                    Log.e(TAG, "action '" + action + "' failed");
                     throw e;
                 }
             }
