@@ -84,6 +84,11 @@
             android:process=":mediaRecorderCameraActivityProcess">
         </activity>
 
+        <activity android:name="android.hardware.camera2.cts.CameraExtensionTestActivity"
+            android:label="CameraExtensionTestActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation|screenSize">
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
