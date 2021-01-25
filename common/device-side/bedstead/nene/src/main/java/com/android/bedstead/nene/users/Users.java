@@ -20,6 +20,7 @@ import static android.os.Build.VERSION.SDK_INT;
 
 import android.os.Build;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -33,17 +34,32 @@ public final class Users {
 
     private Map<Integer, User> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
-    private final AdbUserParser parser = AdbUserParser.get(SDK_INT);
+    private final AdbUserParser parser = AdbUserParser.get(this, SDK_INT);
 
-    /** Get all users on the device. */
+    /** Get all {@link User}s on the device. */
     public Collection<User> users() {
         fillCache();
 
         return mCachedUsers.values();
     }
 
-    /** Get all supported user types. */
+    /** Get a {@link UserReference} by {@code id}. */
+    public UserReference user(int id) {
+        return new UnresolvedUser(this, id);
+    }
+
+    @Nullable
+    User fetchUser(int id) {
+        // TODO(scottjonathan): fillCache probably does more than we need here -
+        //  can we make it more efficient?
+        fillCache();
+
+        return mCachedUsers.get(id);
+    }
+
+    /** Get all supported {@link UserType}s. */
     @RequiresApi(Build.VERSION_CODES.R)
+    @Nullable
     public Collection<UserType> supportedTypes() {
         if (SDK_INT < Build.VERSION_CODES.R) {
             return null;
@@ -55,8 +71,9 @@ public final class Users {
         return mCachedUserTypes.values();
     }
 
-    /** Get a {@link UserType} with the given {@code typeName}. */
+    /** Get a {@link UserType} with the given {@code typeName}, or {@code null} */
     @RequiresApi(Build.VERSION_CODES.R)
+    @Nullable
     public UserType supportedType(String typeName) {
         if (SDK_INT < Build.VERSION_CODES.R) {
             return null;
@@ -66,6 +83,13 @@ public final class Users {
             fillCache();
         }
         return mCachedUserTypes.get(typeName);
+    }
+
+    /**
+     * Create a new user.
+     */
+    public UserBuilder create() {
+        return new UserBuilder(this);
     }
 
     private void fillCache() {
