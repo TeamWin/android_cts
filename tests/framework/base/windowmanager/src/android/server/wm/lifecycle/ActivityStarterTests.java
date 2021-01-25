@@ -24,10 +24,12 @@ import static android.content.Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP;
 import static android.content.Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED;
 import static android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP;
 import static android.server.wm.ComponentNameUtils.getActivityName;
+import static android.server.wm.UiDeviceUtils.pressWakeupButton;
 import static android.server.wm.WindowManagerState.STATE_DESTROYED;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.ALIAS_TEST_ACTIVITY;
 import static android.server.wm.app.Components.NO_HISTORY_ACTIVITY;
+import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.view.Display.DEFAULT_DISPLAY;
@@ -180,6 +182,84 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
         // Wait for the activity resumed
         waitAndAssertActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED,
                 "Activity must be resumed");
+    }
+
+    /**
+     * This test case tests the behavior that a fullscreen activity was started on top of the
+     * no-history activity within different tasks during sleeping. The no-history activity must be
+     * finished.
+     */
+    @Test
+    public void testNoHistoryActivityWithDifferentTask() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Launch a no-history activity
+        getLaunchActivityBuilder().setTargetActivity(NO_HISTORY_ACTIVITY)
+                .setIntentExtra(extra -> extra.putBoolean(
+                        Components.NoHistoryActivity.EXTRA_SHOW_WHEN_LOCKED, true))
+                .setWaitForLaunched(false)
+                .setUseInstrumentation()
+                .execute();
+
+        // Wait for the activity resumed.
+        waitAndAssertActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED,
+                "Activity must be resumed");
+        final int taskId = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY).getTaskId();
+        lockScreenSession.sleepDevice();
+
+        // Launch a single instance activity
+        getLaunchActivityBuilder().setTargetActivity(SINGLE_INSTANCE_ACTIVITY)
+                .setIntentExtra(extra -> extra.putBoolean(
+                        SingleInstanceActivity.EXTRA_SHOW_WHEN_LOCKED, true))
+                .setWaitForLaunched(false)
+                .setUseInstrumentation()
+                .execute();
+
+        // Make sure the activity is finished.
+        final String waitFinishMsg = "Instance of no-history activity must not exist";
+        assertTrue(waitFinishMsg, mWmState.waitForWithAmState(
+                amState -> 0 == amState.getActivityCountInTask(taskId, NO_HISTORY_ACTIVITY),
+                waitFinishMsg));
+
+        // Turn the screen on after the test is completed to prevent keyDispatchingTimedOut during
+        // the lockScreenSession close.
+        pressWakeupButton();
+    }
+
+    /**
+     * This test case tests the behavior that a translucent activity was started on top of the
+     * no-history activity during sleeping. The no-history activity must not be finished.
+     */
+    @Test
+    public void testNoHistoryActivityWithTranslucentActivity() {
+        assumeTrue(supportsLockScreen());
+
+        final LockScreenSession lockScreenSession = createManagedLockScreenSession();
+        // Launch a no-history activity
+        getLaunchActivityBuilder().setTargetActivity(NO_HISTORY_ACTIVITY)
+                .setIntentExtra(extra -> extra.putBoolean(
+                        Components.NoHistoryActivity.EXTRA_SHOW_WHEN_LOCKED, true))
+                .setWaitForLaunched(false)
+                .setUseInstrumentation()
+                .execute();
+
+        // Wait for the activity resumed.
+        waitAndAssertActivityState(NO_HISTORY_ACTIVITY, STATE_RESUMED,
+                "Activity must be resumed");
+
+        final int taskId = mWmState.getTaskByActivity(NO_HISTORY_ACTIVITY).getTaskId();
+        lockScreenSession.sleepDevice();
+        launchActivityNoWait(SHOW_WHEN_LOCKED_TRANSLUCENT_ACTIVITY);
+
+        final String waitFinishMsg = "Instance of no-history activity must exist";
+        assertTrue(waitFinishMsg, mWmState.waitForWithAmState(
+                amState -> 1 == amState.getActivityCountInTask(taskId, NO_HISTORY_ACTIVITY),
+                waitFinishMsg));
+
+        // Turn the screen on after the test is completed to prevent keyDispatchingTimedOut during
+        // the lockScreenSession close.
+        pressWakeupButton();
     }
 
     /**
@@ -662,6 +742,14 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     // Test activity
     public static class SingleInstanceActivity extends Activity {
+        public static final String EXTRA_SHOW_WHEN_LOCKED = "showWhenLocked";
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            if (getIntent().getBooleanExtra(EXTRA_SHOW_WHEN_LOCKED, false)) {
+                setShowWhenLocked(true);
+            }
+        }
     }
 
     // Test activity
