@@ -13,7 +13,7 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="External storage host test for legacy and scoped storage">
+<configuration description="Scoped storage and legacy tests that are marked as core for MediaProvider module">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="framework" />
     <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
