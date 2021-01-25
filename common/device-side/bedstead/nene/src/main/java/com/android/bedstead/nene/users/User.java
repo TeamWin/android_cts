@@ -18,14 +18,18 @@ package com.android.bedstead.nene.users;
 
 import androidx.annotation.Nullable;
 import android.os.Build;
-import android.os.UserHandle;
 
 import androidx.annotation.RequiresApi;
 
-/** Representation of a user on an Android device. */
-public final class User {
+/**
+ * Representation of a user on an Android device.
+ *
+ * <p>{@link User} information represents the state of the device at construction time. To get an
+ * updated reflection of the user on the device, see {@link #resolve()}.
+ */
+public final class User extends UserReference {
     static final class MutableUser {
-        @Nullable Integer mId;
+        Integer mId;
         @Nullable Integer mSerialNo;
         @Nullable String mName;
         @Nullable UserType mType;
@@ -35,24 +39,9 @@ public final class User {
 
     private final MutableUser mMutableUser;
 
-    User(MutableUser mutableUser) {
+    User(Users users, MutableUser mutableUser) {
+        super(users, mutableUser.mId);
         mMutableUser = mutableUser;
-    }
-
-    /**
-     * Get a {@link UserHandle} for the {@link #id()}.
-     *
-     * <p>If the {@link #id()} has not been set then this will return {@code null}.
-     */
-    public UserHandle userHandle() {
-        if (mMutableUser.mId == null) {
-            return null;
-        }
-        return UserHandle.of(mMutableUser.mId);
-    }
-
-    public Integer id() {
-        return mMutableUser.mId;
     }
 
     public Integer serialNo() {

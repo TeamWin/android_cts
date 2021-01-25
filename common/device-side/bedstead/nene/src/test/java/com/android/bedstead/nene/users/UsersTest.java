@@ -22,12 +22,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 
 import android.os.Build;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,15 +36,19 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class UsersTest {
 
-    private static final String INVALID_TYPE = "invalidType";
     private static final String SYSTEM_USER_TYPE = "android.os.usertype.full.SYSTEM";
     private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
     private static final int MAX_SYSTEM_USERS_PER_PARENT = UserType.UNLIMITED;
     private static final String MANAGED_PROFILE_TYPE = "android.os.usertype.profile.MANAGED";
+    private static final String RESTRICTED_USER_TYPE = "android.os.usertype.full.RESTRICTED";
     private static final int MAX_MANAGED_PROFILES = UserType.UNLIMITED;
     private static final int MAX_MANAGED_PROFILES_PER_PARENT = 1;
-    private final Users mUsers = new Users();
     private static final long WAIT_FOR_REMOVE_USER_TIMEOUT_MS = 30000;
+    private static final int NON_EXISTING_USER_ID = 10000;
+    private static final int USER_ID = NON_EXISTING_USER_ID;
+    private static final String USER_NAME = "userName";
+
+    private final Users mUsers = new Users();
 
     // We don't want to test the exact list of any specific device, so we check that it returns
     // some known types which will exist on the emulators (used for presubmit tests).
@@ -120,12 +124,12 @@ public class UsersTest {
     }
 
     @Test
-    public void users_containsCreatedUser() {
+    public void users_containsCreatedUser() throws Exception {
         int userId = createUser();
 
         try {
             User foundUser = mUsers.users().stream().filter(
-                    u -> u.id().equals(userId)).findFirst().get();
+                    u -> u.id() == userId).findFirst().get();
 
             assertThat(foundUser).isNotNull();
         } finally {
@@ -134,14 +138,14 @@ public class UsersTest {
     }
 
     @Test
-    public void users_userAddedSinceLastCallToUsers_containsNewUser() {
+    public void users_userAddedSinceLastCallToUsers_containsNewUser() throws Exception {
         int userId = createUser();
         mUsers.users();
         int userId2 = createUser();
 
         try {
             User foundUser = mUsers.users().stream().filter(
-                    u -> u.id().equals(userId)).findFirst().get();
+                    u -> u.id() == userId).findFirst().get();
 
             assertThat(foundUser).isNotNull();
         } finally {
@@ -151,15 +155,88 @@ public class UsersTest {
     }
 
     @Test
-    public void users_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() {
+    public void users_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() throws Exception {
         int userId = createUser();
         mUsers.users();
         removeUser(userId);
 
-        assertThat(mUsers.users().stream().anyMatch(u -> u.id().equals(userId))).isFalse();
+        assertThat(mUsers.users().stream().anyMatch(u -> u.id() == userId)).isFalse();
+    }
+
+    @Test
+    public void user_userExists_returnsUserReference() throws Exception {
+        int userId = createUser();
+        try {
+            assertThat(mUsers.user(userId)).isNotNull();
+        } finally {
+            removeUser(userId);
+        }
+    }
+
+    @Test
+    public void user_userDoesNotExist_returnsUserReference() {
+        assertThat(mUsers.user(NON_EXISTING_USER_ID)).isNotNull();
+    }
+
+    @Test
+    public void user_constructedReferenceReferencesCorrectId() {
+        assertThat(mUsers.user(USER_ID).id()).isEqualTo(USER_ID);
+    }
+
+    @Test
+    public void create_userIsCreated()  {
+        UserReference userReference = mUsers.create()
+                .name(USER_NAME) // required
+                .create();
+
+        try {
+            assertThat(
+                    mUsers.users().stream().anyMatch((u -> u.id() == userReference.id()))).isTrue();
+        } finally {
+            userReference.remove();
+        }
+    }
+
+    @Test
+    public void create_createdUserHasCorrectName() {
+        UserReference userReference = mUsers.create()
+                .name(USER_NAME) // required
+                .create();
+
+        try {
+            assertThat(userReference.resolve().name()).isEqualTo(USER_NAME);
+        } finally {
+            userReference.remove();
+        }
+    }
+
+    @Test
+    public void create_createdUserHasCorrectTypeName() {
+        assumeTrue("types are supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
+
+        UserType type = mUsers.supportedType(RESTRICTED_USER_TYPE);
+        UserReference userReference = mUsers.create()
+                .name(USER_NAME) // required
+                .type(type)
+                .create();
+
+        try {
+            assertThat(userReference.resolve().type()).isEqualTo(type);
+        } finally {
+            userReference.remove();
+        }
+    }
+
+    @Test
+    public void create_doesNotSpecifyName_throwsIllegalStateException() {
+        UserBuilder userBuilder = mUsers.create();
+
+        assertThrows(IllegalStateException.class, userBuilder::create);
     }
 
     private int createUser() {
+        // We do ADB calls directly to ensure we are actually changing the system state and not just
+        //  internal nene state
         try {
             String createUserOutput = ShellCommandUtils.executeCommand("pm create-user testuser");
             return Integer.parseInt(createUserOutput.split("id ")[1].trim());
@@ -168,21 +245,14 @@ public class UsersTest {
         }
     }
 
-    private void removeUser(int userId) {
+    private void removeUser(int userId) throws InterruptedException {
+        // We do ADB calls directly to ensure we are actually changing the system state and not just
+        //  internal nene state
         try {
             ShellCommandUtils.executeCommand("pm remove-user " + userId);
-            PollingCheck.waitFor(WAIT_FOR_REMOVE_USER_TIMEOUT_MS,
-                    () -> {
-                        try {
-                            return !ShellCommandUtils.executeCommand("dumpsys user").contains(
-                                            "UserInfo{" + userId);
-                        } catch (AdbException e) {
-                            e.printStackTrace();
-                        }
-                        return false;
-                    });
+            ShellCommandUtils.executeCommandUntilOutputValid("dumpsys user", (output) -> !output.contains("UserInfo{" + userId + ":"));
         } catch (AdbException e) {
-            throw new AssertionError("Error creating user", e);
+            throw new AssertionError("Error removing user", e);
         }
     }
 }
