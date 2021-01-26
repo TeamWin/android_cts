@@ -88,6 +88,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     Context mContext;
     TelecomManager mTelecomManager;
     TelephonyManager mTelephonyManager;
+    UiModeManager mUiModeManager;
 
     TestUtils.InvokeCounter mOnBringToForegroundCounter;
     TestUtils.InvokeCounter mOnCallAudioStateChangedCounter;
@@ -170,8 +171,13 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             return;
         }
 
-        // Assume we start in normal mode at the start of all Telecom tests; a failure to leave car
-        // mode in any of the tests would cause subsequent test failures.
+        // Assume we start in normal mode at the start of all Telecom tests.
+        // A failure to leave car mode in any of the tests would cause subsequent test failures,
+        // but this failure should not affect other tests.
+        mUiModeManager = mContext.getSystemService(UiModeManager.class);
+        if (mUiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_CAR) {
+            mUiModeManager.disableCarMode(0);
+        }
         assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
@@ -1807,7 +1813,6 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
      * @param uiMode The expected ui mode.
      */
     public void assertUiMode(final int uiMode) {
-        final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         waitUntilConditionIsTrueOrTimeout(
                 new Condition() {
                     @Override
@@ -1817,7 +1822,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
                     @Override
                     public Object actual() {
-                        return uiModeManager.getCurrentModeType();
+                        return mUiModeManager.getCurrentModeType();
                     }
                 },
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
