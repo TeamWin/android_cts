@@ -2412,7 +2412,7 @@
                 android:name="test_required_features"
                 android:value="android.hardware.sensor.accelerometer:android.hardware.sensor.gyroscope:android.hardware.sensor.compass:android.hardware.camera" />
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity
             android:name=".sensors.RVCVRecordActivity"
