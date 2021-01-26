@@ -22,6 +22,7 @@ import static org.testng.Assert.assertThrows;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.AssetFileDescriptor;
 import android.media.ApplicationMediaCapabilities;
 import android.media.MediaFormat;
 import android.media.MediaTranscodeManager;
@@ -48,6 +49,7 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -404,7 +406,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         if (shouldSkip()) {
             return;
         }
-        transcodeFile(resourceToUri(mContext, R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"));
+        transcodeFile(resourceToUri(mContext, R.raw.Video_AVC_30Frames, "Video_AVC_30Frames.mp4"),
+                false /* testFileDescriptor */);
     }
 
     public void testHevcTranscoding1080PVideo30FramesWithoutAudio() throws Exception {
@@ -412,21 +415,22 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         transcodeFile(
-                resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"));
+                resourceToUri(mContext, R.raw.Video_HEVC_30Frames, "Video_HEVC_30Frames.mp4"),
+                false /* testFileDescriptor */);
     }
 
     // Enable this after fixing b/175641397
-    /* public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
+    public void testHevcTranscoding1080PVideo1FrameWithAudio() throws Exception {
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_1Frame_Audio,
-                "Video_HEVC_1Frame_Audio.mp4"));
-    } */
+                "Video_HEVC_1Frame_Audio.mp4"), false /* testFileDescriptor */);
+    }
 
     public void testHevcTranscoding1080PVideo37FramesWithAudio() throws Exception {
         if (shouldSkip()) {
             return;
         }
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_37Frames_Audio,
-                "Video_HEVC_37Frames_Audio.mp4"));
+                "Video_HEVC_37Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     public void testHevcTranscoding1080PVideo72FramesWithAudio() throws Exception {
@@ -434,7 +438,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_72Frames_Audio,
-                "Video_HEVC_72Frames_Audio.mp4"));
+                "Video_HEVC_72Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
     // This test will only run when the device support decoding and encoding 4K video.
@@ -451,10 +455,18 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         transcodeFile(resourceToUri(mContext, R.raw.Video_4K_HEVC_64Frames_Audio,
-                "Video_4K_HEVC_64Frames_Audio.mp4"));
+                "Video_4K_HEVC_64Frames_Audio.mp4"), false /* testFileDescriptor */);
     }
 
-    private void transcodeFile(Uri fileUri) throws Exception {
+    public void testHevcTranscodingWithFileDescriptor() throws Exception {
+        if (shouldSkip()) {
+            return;
+        }
+        transcodeFile(resourceToUri(mContext, R.raw.Video_HEVC_37Frames_Audio,
+                "Video_HEVC_37Frames_Audio.mp4"), true /* testFileDescriptor */);
+    }
+
+    private void transcodeFile(Uri fileUri, boolean testFileDescriptor) throws Exception {
         Semaphore transcodeCompleteSemaphore = new Semaphore(0);
 
         // Create a file Uri: file:///data/user/0/android.media.cts/cache/HevcTranscode.mp4
@@ -476,7 +488,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         int pid = android.os.Process.myPid();
         int uid = android.os.Process.myUid();
 
-        TranscodingRequest request =
+        TranscodingRequest.Builder builder =
                 new TranscodingRequest.Builder()
                         .setSourceUri(fileUri)
                         .setDestinationUri(destinationUri)
@@ -484,8 +496,18 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .setClientPid(pid)
                         .setClientUid(uid)
                         .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                        .setVideoTrackFormat(videoTrackFormat)
-                        .build();
+                        .setVideoTrackFormat(videoTrackFormat);
+
+        if (testFileDescriptor) {
+            // Open source Uri.
+            AssetFileDescriptor afd = mContentResolver.openAssetFileDescriptor(fileUri,
+                    "r");
+            builder.setSourceFileDescriptor(afd.getParcelFileDescriptor());
+            // Open destination Uri
+            afd = mContentResolver.openAssetFileDescriptor(destinationUri, "rw");
+            builder.setDestinationFileDescriptor(afd.getParcelFileDescriptor());
+        }
+        TranscodingRequest request = builder.build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
         assertEquals(pid, request.getClientPid());
         assertEquals(uid, request.getClientUid());
