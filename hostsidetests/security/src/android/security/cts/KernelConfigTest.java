@@ -244,9 +244,14 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("Kirin970", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("Kirin810", null);
         put("Kirin710", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6883Z/CZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6885Z/CZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("MT6889Z/CZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
-        put("MT6889Z/CIZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6889Z/TZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("mt6873", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6875", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6853V/ZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6853V/NZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("MT6853V/TZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("MT6853V/TNZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SDMMAGPIE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
