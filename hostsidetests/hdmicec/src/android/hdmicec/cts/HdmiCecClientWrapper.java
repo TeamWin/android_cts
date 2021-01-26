@@ -165,6 +165,9 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             selfDevice = LogicalAddress.TV;
         }
         commands.addAll(Arrays.asList(clientParams));
+        if (Arrays.asList(clientParams).contains("a")) {
+            selfDevice = LogicalAddress.AUDIO_SYSTEM;
+        }
 
         List<String> comPorts = getValidCecClientPorts();
 
