@@ -17,6 +17,8 @@
 package android.hdmicec.cts;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.ITestDevice;
@@ -62,6 +64,21 @@ public final class LogHelper {
         String testString = getLog(device, tag);
         List<String> expectedOutputs = new ArrayList<>(Arrays.asList(expectedOutput));
         assertThat(testString).isIn(expectedOutputs);
+    }
+
+    /** This method will return the DUT volume. */
+    public static int parseDutVolume(ITestDevice device, String tag) throws Exception {
+        String testString = getLog(device, tag);
+        assertWithMessage("No log from Audio Manager which reports the DUT volume percentage")
+                .that(testString)
+                .isNotEqualTo("");
+        try {
+            String volume = testString.split("at")[1].trim().replaceAll("%", "");
+            return Integer.parseInt(volume);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException(
+                    "Volume obtained from Audio Manager can" + "not be parsed");
+        }
     }
 
     public static void assertLogDoesNotContain(ITestDevice device, String tag,
