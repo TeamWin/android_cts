@@ -24,5 +24,7 @@
         <option name="package" value="android.net.cts" />
         <option name="runtime-hint" value="9m4s" />
         <option name="hidden-api-checks" value="false" />
+        <!-- testWifiScanTimestamp can take longer than the default 300s -->
+        <option name="test-timeout" value="3500000" />
     </test>
 </configuration>
