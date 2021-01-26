@@ -125,8 +125,8 @@ cc_test_library {
     ],
     // Using the up-to-date version of the interface
     shared_libs: [
-        "libbinder_ndk_test_interface-unstable-ndk",
-        "libbinder_ndk_compat_test_interface-unstable-ndk",
+        "libbinder_ndk_test_interface-V1-ndk",
+        "libbinder_ndk_compat_test_interface-V3-ndk",
         "libbinder_ndk_test_utilities",
     ],
 }
@@ -141,10 +141,10 @@ cc_test_library {
     // Using the frozen version 1 of the interface
     static_libs: [
         // this refers to the latest stable version which is 1
-        "libbinder_ndk_compat_test_interface_dup-ndk",
+        "libbinder_ndk_compat_test_interface_dup-V1-ndk",
     ],
     shared_libs: [
-        "libbinder_ndk_test_interface-unstable-ndk",
+        "libbinder_ndk_test_interface-V1-ndk",
         "libbinder_ndk_test_utilities",
     ],
 }
@@ -161,8 +161,8 @@ cc_test_library {
         "test_status.cpp",
     ],
     shared_libs: [
-        "libbinder_ndk_test_interface-unstable-ndk",
-        "libbinder_ndk_compat_test_interface-unstable-ndk",
+        "libbinder_ndk_test_interface-V1-ndk",
+        "libbinder_ndk_compat_test_interface-V3-ndk",
         "libbinder_ndk_test_utilities",
     ],
 }
