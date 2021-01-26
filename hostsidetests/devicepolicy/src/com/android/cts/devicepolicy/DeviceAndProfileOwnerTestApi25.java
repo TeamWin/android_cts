@@ -16,8 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import android.platform.test.annotations.FlakyTest;
-
 import org.junit.Test;
 
 /**
@@ -40,7 +38,7 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             getDevice().uninstallPackage(TEST_APP_PKG);
 
@@ -73,9 +71,8 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     @Test
     public void testResetPasswordDeprecated() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
     }
 

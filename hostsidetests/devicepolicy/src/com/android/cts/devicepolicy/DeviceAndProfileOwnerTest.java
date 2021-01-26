@@ -21,6 +21,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -194,7 +195,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             getDevice().uninstallPackage(PERMISSIONS_APP_PKG);
             getDevice().uninstallPackage(SIMPLE_PRE_M_APP_PKG);
@@ -1058,9 +1059,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetMeteredDataDisabledPackages() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
+        assumeHasWifiFeature();
+
         installAppAsUser(METERED_DATA_APP_APK, mUserId);
 
         try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
@@ -1327,19 +1327,18 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testTrustAgentInfo() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestClass(".TrustAgentInfoTest");
     }
 
     @FlakyTest(bugId = 141161038)
     @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        // Outside of the primary user, setting DISALLOW_REMOVE_USER would not work.
-        if (!mHasFeature || !canCreateAdditionalUsers(1) || mUserId != getPrimaryUser()) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+        assumeTrue("Outside of the primary user, setting DISALLOW_REMOVE_USER would not work",
+                mUserId == getPrimaryUser());
+
         final int userId = createUser();
         try {
             changeUserRestrictionOrFail(DISALLOW_REMOVE_USER, true, mUserId);
@@ -1378,9 +1377,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testRequiredStrongAuthTimeout() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestClass(".RequiredStrongAuthTimeoutTest");
     }
 
@@ -1414,18 +1412,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     /** Test for resetPassword for all devices. */
     @Test
     public void testResetPasswordDeprecated() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestMethod(".ResetPasswordTest", "testResetPasswordDeprecated");
     }
 
     @LockSettingsTest
     @Test
     public void testResetPasswordWithToken() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // If ResetPasswordWithTokenTest for managed profile is executed before device owner and
         // primary user profile owner tests, password reset token would have been disabled for
         // the primary user, so executing ResetPasswordWithTokenTest on user 0 would fail. We allow
@@ -1460,9 +1456,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testGetCurrentFailedPasswordAttempts() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         final String wrongPassword = TEST_PASSWORD + "5";
 
         changeUserCredential(TEST_PASSWORD, null /*oldCredential*/, mUserId);
@@ -1492,17 +1487,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordExpiration() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestClass(".PasswordExpirationTest");
     }
 
     @Test
     public void testGetPasswordExpiration() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         executeDeviceTestMethod(".GetPasswordExpirationTest",
                 "testGetPasswordExpiration");
         try {
@@ -1520,9 +1513,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordQualityWithoutSecureLockScreen() throws Exception {
-        if (!mHasFeature || mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UnavailableSecureLockScreenTest", mUserId);
     }
@@ -1575,9 +1566,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPrintingPolicy() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.software.print")) {
-            return;
-        }
+        assumeHasPrintFeature();
+
         installAppAsUser(PRINTING_APP_APK, mUserId);
         executeDeviceTestClass(".PrintingPolicyTest");
     }
@@ -2100,6 +2090,16 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testEnrollmentSpecificIdCorrectCalculation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".EnrollmentSpecificIdTest",
+                "testCorrectCalculationOfEsid", mUserId);
+    }
+
+    @Test
+    public void testEnrollmentSpecificIdCorrectCalculationLogged() throws Exception {
         if (!mHasFeature) {
             return;
         }

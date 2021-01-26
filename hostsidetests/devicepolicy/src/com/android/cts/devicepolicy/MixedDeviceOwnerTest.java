@@ -52,22 +52,20 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        if (mHasFeature) {
-            mUserId = mPrimaryUserId;
+        mUserId = mPrimaryUserId;
 
-            installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-            if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
-                    false)) {
-                removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
-                getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
-                fail("Failed to set device owner");
-            }
+        installAppAsUser(DEVICE_ADMIN_APK, mUserId);
+        if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
+                false)) {
+            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+            fail("Failed to set device owner");
         }
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             assertTrue("Failed to remove device owner",
                     removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId));
         }
@@ -76,9 +74,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockTask_unaffiliatedUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
 
         final int userId = createSecondaryUserAsProfileOwner();
         runDeviceTestsAsUser(
@@ -99,9 +95,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTask_affiliatedSecondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         final int userId = createSecondaryUserAsProfileOwner();
         switchToUser(userId);
         setUserAsAffiliatedUserToPrimary(userId);
@@ -144,9 +139,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
+        assumeHasWifiFeature();
+
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
@@ -294,9 +288,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature || !isDeviceAb()) {
-            return;
-        }
+        assumeIsDeviceAb();
+
         pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
@@ -376,9 +369,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingWithTwoUsers() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
 
         final int userId = createUser();
         try {

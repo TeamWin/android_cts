@@ -29,7 +29,7 @@ public class CustomManagedProfileTest extends BaseDevicePolicyTest {
         super.setUp();
 
         // We need multi user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
+        assumeHasManageUsersFeature();
     }
 
     @Test
@@ -41,11 +41,14 @@ public class CustomManagedProfileTest extends BaseDevicePolicyTest {
         // Must install the apk since the test runs in the ManagedProfile apk.
         installAppAsUser(MANAGED_PROFILE_APK, mPrimaryUserId);
         try {
-            if (mHasFeature) {
+            if (hasFeature()) {
                 // Since we assume, in ManagedProfileTest, provisioning has to be successful,
                 // DevicePolicyManager.isProvisioningAllowed must return true
                 assertIsProvisioningAllowed(true, primaryUserId);
             } else {
+                // TODO(b/178230958): STOPSHIP this path will never be executed because
+                // super.setUp() is skipping the test if it doesn't have the feature
+
                 // Test the case when feature flag is off
                 assertIsProvisioningAllowed(false, primaryUserId);
             }

@@ -5664,7 +5664,8 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="uap_test_no">No</string>
     <string name="uap_test_yes">Yes</string>
     <string name="uap_test_info">Info</string>
-    <string name="uap_test_question">Does this device allow for the connectiono of a USB reference microphone?</string>
+    <string name="uap_test_question">Does this device allow for the connection of a USB audio peripheral?\nNote: phones and tablets generally do, watches and automobiles generally do not.</string>
+    <string name="uap_refmic_question">Does this device allow for the connection of a USB reference microphone?</string>
     <string name="uap_mic_dlg_caption">USB Host Mode Audio Required</string>
     <string name="uap_mic_dlg_text">This test requires a USB audio peripheral to be connected to the device.
     If the device under test does not support USB Host Mode Audio (either because it does not have a

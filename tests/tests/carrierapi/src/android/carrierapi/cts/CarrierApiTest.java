@@ -45,10 +45,13 @@ import android.os.PersistableBundle;
 import android.platform.test.annotations.SystemUserOnly;
 import android.provider.Telephony;
 import android.provider.VoicemailContract;
+import android.telephony.AccessNetworkConstants;
 import android.telephony.AvailableNetworkInfo;
 import android.telephony.CarrierConfigManager;
 import android.telephony.IccOpenLogicalChannelResponse;
 import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrengthUpdateRequest;
+import android.telephony.SignalThresholdInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -1200,6 +1203,35 @@ public class CarrierApiTest extends AndroidTestCase {
 
         // TODO(b/137963715): add more specific assertions on response from TelMan#sendEnvelope
         assertNotNull("sendEnvelopeWithStatus is null for envelope=" + envelope, response);
+    }
+
+    /**
+     * This test checks that applications with carrier privilege can set/clear signal strength
+     * update request via
+     * {@link TelephonyManager#setSignalStrengthUpdateRequest(SignalStrengthUpdateRequest)} and
+     * {@link TelephonyManager#clearSignalStrengthUpdateRequest} without
+     * {@link android.Manifest.permission#MODIFY_PHONE_STATE MODIFY_PHONE_STATE}.
+     */
+    public void testSetClearSignalStrengthUpdateRequest() {
+        if (!hasCellular) return;
+
+        final SignalStrengthUpdateRequest request =
+                new SignalStrengthUpdateRequest.Builder()
+                        .setSignalThresholdInfos(List.of(
+                                new SignalThresholdInfo.Builder()
+                                        .setRadioAccessNetworkType(
+                                                AccessNetworkConstants.AccessNetworkType.GERAN)
+                                        .setSignalMeasurementType(
+                                                SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
+                                        .setThresholds(new int[]{-113, -103, -97, -51})
+                                        .build()))
+                        .setReportingRequestedWhileIdle(true)
+                        .build();
+        try {
+            mTelephonyManager.setSignalStrengthUpdateRequest(request);
+        } finally {
+            mTelephonyManager.clearSignalStrengthUpdateRequest(request);
+        }
     }
 
     private void verifyValidIccOpenLogicalChannelResponse(IccOpenLogicalChannelResponse response) {
