@@ -52,9 +52,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testManagedProfileSetup() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".ManagedProfileSetupTest",
                 mProfileUserId);
@@ -109,9 +106,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testAppLinks_verificationStatus() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Disable all pre-existing browsers in the managed profile so they don't interfere with
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
@@ -147,9 +141,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testAppLinks_enabledStatus() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Disable all pre-existing browsers in the managed profile so they don't interfere with
         // intents resolution.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
@@ -201,10 +192,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testSettingsIntents() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SettingsIntentsTest",
                 mProfileUserId);
     }
@@ -212,9 +199,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     /** Tests for the API helper class. */
     @Test
     public void testCurrentApiHelper() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CurrentApiHelperTest",
                 mProfileUserId);
     }
@@ -222,18 +206,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     /** Test: unsupported public APIs are disabled on a parent profile. */
     @Test
     public void testParentProfileApiDisabled() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testParentProfileApiDisabled", mProfileUserId);
     }
 
     @Test
     public void testCannotCallMethodsOnParentProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ParentProfileTest",
                 "testCannotWipeParentProfile", mProfileUserId);
 
@@ -250,9 +228,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     // of tests (same applies to ComponentDisablingActivity).
     @Test
     public void testNoDebuggingFeaturesRestriction() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // If adb is running as root, then the adb uid is 0 instead of SHELL_UID,
         // so the DISALLOW_DEBUGGING_FEATURES restriction does not work and this test
         // fails.
@@ -311,9 +286,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testOrganizationInfo() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
                 "testDefaultOrganizationColor", mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".OrganizationInfoTest",
@@ -331,18 +303,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testDevicePolicyManagerParentSupport() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, ".DevicePolicyManagerParentSupportTest", mProfileUserId);
     }
 
     @Test
     public void testBluetoothContactSharingDisabled() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ContactsTest",
                     "testSetBluetoothContactSharingDisabled_setterAndGetter", mProfileUserId);
@@ -360,9 +326,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCannotSetProfileOwnerAgain() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // verify that we can't set the same admin receiver as profile owner again
         assertFalse(setProfileOwner(
                 MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mProfileUserId,
@@ -377,10 +340,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @LargeTest
     @Test
     public void testCannotSetDeviceOwnerWhenProfilePresent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             installAppAsUser(DEVICE_OWNER_APK, mParentUserId);
             assertFalse(setDeviceOwner(DEVICE_OWNER_PKG + "/" + DEVICE_OWNER_ADMIN, mParentUserId,
@@ -412,9 +371,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testIsProvisioningAllowed() throws DeviceNotAvailableException {
-        if (!mHasFeature) {
-            return;
-        }
         // In Managed profile user when managed profile is provisioned
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PreManagedProfileTest",
                 "testIsProvisioningAllowedFalse", mProfileUserId);
@@ -542,9 +498,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @FlakyTest
     @Ignore
     public void testBasicCheck() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Install SimpleApp in work profile only and check activity in it can be launched.
         installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BasicTest", mProfileUserId);
@@ -566,19 +519,12 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DeviceIdentifiersTest",
                 "testProfileOwnerOnPersonalDeviceCannotGetDeviceIdentifiers", mProfileUserId);
     }
 
     @Test
     public void testSetProfileNameLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(
                     MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".DevicePolicyLoggingTest",
@@ -590,10 +536,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void userManagerIsManagedProfileReturnsCorrectValues() throws Exception {
-        if (!mHasFeature) {
-            return ;
-        }
-
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
                 "testIsManagedProfileReturnsTrue", mProfileUserId);
 
@@ -604,9 +546,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testCanGetWorkShortcutIconDrawableFromPersonalProfile()
             throws DeviceNotAvailableException {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
                 "addDynamicShortcuts", mProfileUserId);
         try {
@@ -624,9 +563,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testCanGetPersonalShortcutIconDrawableFromWorkProfile()
             throws DeviceNotAvailableException {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".LauncherAppsTest",
                 "addDynamicShortcuts", mPrimaryUserId);
         try {
@@ -646,10 +582,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCanGetProfiles() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         // getAllProfiles should contain both the primary and profile
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".UserManagerTest",
                 "testGetAllProfiles", mPrimaryUserId);
@@ -666,10 +598,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testCanCreateProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         // remove pre-created profile
         removeUser(mProfileUserId);
 
@@ -681,9 +609,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testResolverActivityLaunchedFromPersonalProfileWithSelectedWorkTab()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
@@ -704,9 +629,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testResolverActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
@@ -727,9 +649,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testChooserActivityLaunchedFromPersonalProfileWithSelectedWorkTab()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_1_APK, mProfileUserId);
@@ -750,9 +669,6 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
     @Test
     public void testChooserActivityLaunchedFromWorkProfileWithSelectedPersonalTab()
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SHARING_APP_1_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_2_APK, mPrimaryUserId);
         installAppAsUser(SHARING_APP_1_APK, mProfileUserId);

@@ -52,19 +52,12 @@ public abstract class DeviceAndProfileOwnerTestApi25 extends BaseDevicePolicyTes
 
     @Test
     public void testPermissionGrantPreMApp() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(SIMPLE_PRE_M_APP_APK, mUserId);
         executeDeviceTestMethod(".PermissionsTest", "testPermissionGrantState_preMApp_preQDeviceAdmin");
     }
 
     @Test
     public void testPasswordRequirementsApi() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         executeDeviceTestMethod(".PasswordRequirementsTest",
                 "testPasswordConstraintsDoesntThrowAndPreservesValuesPreR");
     }

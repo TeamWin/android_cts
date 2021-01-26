@@ -34,9 +34,6 @@ public class CustomManagedProfileTest extends BaseDevicePolicyTest {
 
     @Test
     public void testIsProvisioningAllowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         final int primaryUserId = getPrimaryUser();
         // Must install the apk since the test runs in the ManagedProfile apk.
         installAppAsUser(MANAGED_PROFILE_APK, mPrimaryUserId);

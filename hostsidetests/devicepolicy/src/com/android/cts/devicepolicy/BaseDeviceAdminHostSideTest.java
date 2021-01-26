@@ -87,9 +87,6 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testRunDeviceAdminTest() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runTests(getDeviceAdminApkPackage(), "DeviceAdminTest");
     }
 

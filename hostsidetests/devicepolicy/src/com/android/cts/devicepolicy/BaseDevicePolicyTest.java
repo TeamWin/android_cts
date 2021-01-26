@@ -164,7 +164,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private Set<String> mFixedPackages;
 
     /** Whether DPM is supported. */
-    protected boolean mHasFeature;
+    private boolean mHasFeature;
     protected int mDeviceOwnerUserId;
     protected int mPrimaryUserId;
 
