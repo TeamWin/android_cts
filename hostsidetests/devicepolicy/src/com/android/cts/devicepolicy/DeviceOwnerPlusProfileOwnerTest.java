@@ -20,7 +20,6 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -78,25 +77,24 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
         // We need managed user to be supported in order to create a profile of the user owner.
-        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        if (mHasFeature) {
-            // Set device owner.
-            installAppAsUser(COMP_DPC_APK, mPrimaryUserId);
-            if (!setDeviceOwner(COMP_DPC_ADMIN, mPrimaryUserId, /*expectFailure*/ false)) {
-                removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId);
-                fail("Failed to set device owner");
-            }
-            runDeviceTestsAsUser(
-                    COMP_DPC_PKG,
-                    MANAGEMENT_TEST,
-                    "testIsDeviceOwner",
-                    mPrimaryUserId);
+        assumeHasManageUsersFeature();
+
+        // Set device owner.
+        installAppAsUser(COMP_DPC_APK, mPrimaryUserId);
+        if (!setDeviceOwner(COMP_DPC_ADMIN, mPrimaryUserId, /*expectFailure*/ false)) {
+            removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId);
+            fail("Failed to set device owner");
         }
+        runDeviceTestsAsUser(
+                COMP_DPC_PKG,
+                MANAGEMENT_TEST,
+                "testIsDeviceOwner",
+                mPrimaryUserId);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             assertTrue("Failed to remove device owner.",
                     removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId));
         }
@@ -155,9 +153,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest
     @Test
     public void testBindDeviceAdminServiceAsUser_secondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         int secondaryUserId = setupManagedSecondaryUser();
 
         installAppAsUser(COMP_DPC_APK2, mPrimaryUserId);
@@ -174,9 +171,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141161038)
     @Test
     public void testCannotRemoveUserIfRestrictionSet() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         int secondaryUserId = setupManagedSecondaryUser();
         addDisallowRemoveUserRestriction();
         assertFalse(getDevice().removeUser(secondaryUserId));
@@ -203,9 +199,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testWipeData_secondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         int secondaryUserId = setupManagedSecondaryUser();
         addDisallowRemoveUserRestriction();
         // The PO of the managed user should be allowed to delete it, even though the disallow
@@ -216,9 +211,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testWipeData_secondaryUserLogged() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         int secondaryUserId = setupManagedSecondaryUser();
         addDisallowRemoveUserRestriction();
         assertMetricsLogged(getDevice(), () -> {
@@ -229,13 +223,8 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testNetworkAndSecurityLoggingAvailableIfAffiliated() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(2);
 
-        if (!canCreateAdditionalUsers(2)) {
-            return;
-        }
         // If secondary users are allowed, create an affiliated one, to check that this still
         // works if having both an affiliated user and an affiliated managed profile.
         final int secondaryUserId = setupManagedSecondaryUser();
@@ -279,13 +268,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest
     @Test
     public void testRequestBugreportAvailableIfAffiliated() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
-        if (!canCreateAdditionalUsers(2)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(2);
 
         final int secondaryUserId = setupManagedSecondaryUser();
 
@@ -408,7 +391,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     /** Returns the user id of the newly created secondary user */
     private int setupManagedSecondaryUser() throws Exception {
-        assertTrue(canCreateAdditionalUsers(1));
+        assertTrue("Cannot create 1 additional user", canCreateAdditionalUsers(1));
 
         runDeviceTestsAsUser(
                 COMP_DPC_PKG,

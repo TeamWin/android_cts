@@ -33,22 +33,22 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";
-    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private int mParentUserId = -1;
 
     @Override
     public void setUp() throws Exception {
+        // TODO(b/169341308): if this assumption is failed, super.setup() is not called and
+        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
+        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
+        // We need managed users to be supported in order to create a profile of the user owner.
+        assumeHasManageUsersFeature();
+
         super.setUp();
 
-        // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
-
-        if (mHasFeature) {
-            removeTestUsers();
-            mParentUserId = mPrimaryUserId;
-            createManagedProfile();
-        }
+        removeTestUsers();
+        mParentUserId = mPrimaryUserId;
+        createManagedProfile();
     }
 
     private void createManagedProfile() throws Exception {
@@ -63,7 +63,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             removeUser(mUserId);
         }
         super.tearDown();
@@ -185,9 +185,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @LockSettingsTest
     @Test
     public void testResetPasswordWithToken() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Execute the test method that's guaranteed to succeed. See also test in base class
         // which are tolerant to failure and executed by MixedDeviceOwnerTest and
         // MixedProfileOwnerTest
@@ -393,9 +392,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testWifiMacAddress() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
+        assumeHasWifiFeature();
 
         runDeviceTestsAsUser(
                 DEVICE_ADMIN_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mUserId);

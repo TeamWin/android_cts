@@ -44,27 +44,26 @@ public class LauncherAppsProfileTest extends BaseLauncherAppsTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
-        if (mHasFeature) {
-            removeTestUsers();
-            // Create a managed profile
-            mParentUserId = mPrimaryUserId;
-            mProfileUserId = createManagedProfile(mParentUserId);
-            installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
-            setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
-                    mProfileUserId);
-            mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
-            mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
-            startUserAndWait(mProfileUserId);
+        assumeHasManageUsersFeature();
 
-            // Install test APK on primary user and the managed profile.
-            installTestApps(USER_ALL);
-        }
+        removeTestUsers();
+        // Create a managed profile
+        mParentUserId = mPrimaryUserId;
+        mProfileUserId = createManagedProfile(mParentUserId);
+        installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
+        setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
+                mProfileUserId);
+        mProfileSerialNumber = Integer.toString(getUserSerialNumber(mProfileUserId));
+        mMainUserSerialNumber = Integer.toString(getUserSerialNumber(mParentUserId));
+        startUserAndWait(mProfileUserId);
+
+        // Install test APK on primary user and the managed profile.
+        installTestApps(USER_ALL);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
+        if (isTestEnabled()) {
             removeUser(mProfileUserId);
             uninstallTestApps();
             getDevice().uninstallPackage(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK);

@@ -31,19 +31,10 @@ public class DeviceAdminServiceProfileOwnerTest extends BaseDeviceAdminServiceTe
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        if (isTestEnabled()) {
-            mUserId = createUser();
-        }
-    }
 
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-    }
+        assumeSupportsMultiUser();
 
-    @Override
-    protected boolean isTestEnabled() throws Exception {
-        return hasFeature() && isMultiUserSupported();
+        mUserId = createUser();
     }
 
     @Override

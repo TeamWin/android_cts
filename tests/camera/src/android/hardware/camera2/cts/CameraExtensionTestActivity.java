@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright 2020 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.devicepolicy;
 
-public class DeviceAdminServiceDeviceOwnerTest extends BaseDeviceAdminServiceTest {
+package android.hardware.camera2.cts;
+
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.view.TextureView;
+
+public class CameraExtensionTestActivity extends Activity {
+    private TextureView mTextureView;
+
     @Override
-    protected int getUserId() {
-        return USER_OWNER;
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        mTextureView = new TextureView(this);
+        setContentView(mTextureView);
     }
 
-    @Override
-    protected void setAsOwnerOrFail(String component) throws Exception {
-        setDeviceOwnerOrFail(component, getUserId());
+    public TextureView getTextureView() {
+        return mTextureView;
     }
 }

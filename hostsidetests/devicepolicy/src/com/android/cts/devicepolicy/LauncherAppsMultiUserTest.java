@@ -29,29 +29,30 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
     private int mSecondaryUserId;
     private String mSecondaryUserSerialNumber;
 
-    private boolean mMultiUserSupported;
-
     @Override
     public void setUp() throws Exception {
-        super.setUp();
+        // TODO(b/169341308): if these assumption fail, super.setup() is not called and
+        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
+        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
+
         // We need multi user to be supported in order to create a secondary user
         // and api level 21 to support LauncherApps
-        mMultiUserSupported = getMaxNumberOfUsersSupported() > 1 && getDevice().getApiLevel() >= 21;
+        assumeSupportsMultiUser();
+        assumeApiLevel(21);
+        super.setUp();
 
-        if (mMultiUserSupported) {
-            removeTestUsers();
-            uninstallTestApps();
-            installTestApps(mPrimaryUserId);
-            // Create a secondary user.
-            mSecondaryUserId = createUser();
-            mSecondaryUserSerialNumber = Integer.toString(getUserSerialNumber(mSecondaryUserId));
-            startUser(mSecondaryUserId);
-        }
+        removeTestUsers();
+        uninstallTestApps();
+        installTestApps(mPrimaryUserId);
+        // Create a secondary user.
+        mSecondaryUserId = createUser();
+        mSecondaryUserSerialNumber = Integer.toString(getUserSerialNumber(mSecondaryUserId));
+        startUser(mSecondaryUserId);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mMultiUserSupported) {
+        if (isTestEnabled()) {
             removeUser(mSecondaryUserId);
             uninstallTestApps();
         }
@@ -60,9 +61,6 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
 
     @Test
     public void testGetActivitiesForNonProfileFails() throws Exception {
-        if (!mMultiUserSupported) {
-            return;
-        }
         installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,
                 LAUNCHER_TESTS_CLASS,
@@ -73,9 +71,6 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
 
     @Test
     public void testNoLauncherCallbackPackageAddedSecondaryUser() throws Exception {
-        if (!mMultiUserSupported) {
-            return;
-        }
         startCallbackService(mPrimaryUserId);
         installAppAsUser(SIMPLE_APP_APK, mPrimaryUserId);
         runDeviceTestsAsUser(LAUNCHER_TESTS_PKG,

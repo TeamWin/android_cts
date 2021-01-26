@@ -74,12 +74,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         super.setUp();
 
         // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
+        assumeHasManageUsersFeature();
 
-        if (mHasFeature) {
-            removeTestUsers();
-            createManagedProfile();
-        }
+        removeTestUsers();
+        createManagedProfile();
     }
 
     private void createManagedProfile() throws Exception {
@@ -184,9 +182,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
@@ -330,9 +327,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
+        assumeHasWifiFeature();
+
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
     }
 
@@ -731,7 +727,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // TV launcher uses intent filter priority to prevent 3p launchers replacing it
         // this causes the activity that toggles quiet mode to be suspended
         // and the profile would never start
-        if (hasDeviceFeature("android.software.leanback")) {
+        if (isTv()) {
             str = quietModeEnable ? String.format("am stop-user -f %d", mUserId)
                     : String.format("am start-user %d", mUserId);
         } else {

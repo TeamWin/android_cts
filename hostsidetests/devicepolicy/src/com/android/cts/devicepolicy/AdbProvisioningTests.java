@@ -20,11 +20,9 @@ import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMI
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_PKG;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
-import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import java.io.FileNotFoundException;
-
 import android.stats.devicepolicy.EventId;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 
 import org.junit.Test;
 
@@ -32,16 +30,13 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Override
     public void setUp() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         super.setUp();
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!mHasFeature) {
+        if (!isTestEnabled()) {
             return;
         }
         super.tearDown();

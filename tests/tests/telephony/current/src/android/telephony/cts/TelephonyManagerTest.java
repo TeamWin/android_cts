@@ -67,6 +67,7 @@ import android.telephony.CellIdentityNr;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
 import android.telephony.DataThrottlingRequest;
+import android.telephony.ImsiEncryptionInfo;
 import android.telephony.ModemActivityInfo;
 import android.telephony.NetworkRegistrationInfo;
 import android.telephony.PhoneStateListener;
@@ -100,8 +101,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -190,6 +197,62 @@ public class TelephonyManagerTest {
 
     private static final String TEST_FORWARD_NUMBER = "54321";
     private static final String TESTING_PLMN = "12345";
+
+    private static final String BAD_IMSI_CERT_URL = "https:badurl.badurl:8080";
+    private static final String IMSI_CERT_STRING_EPDG = "-----BEGIN CERTIFICATE-----"
+            + "\nMIIDkzCCAnugAwIBAgIEJ4MVZDANBgkqhkiG9w0BAQsFADB6MQswCQYDVQQGEwJV"
+            + "\nUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEiMCAGA1UEChMZVmVy"
+            + "\naXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5PMRgwFgYDVQQDEw9F"
+            + "\nQVAtSURFLlZaVy5DT00wHhcNMTcxMTEzMTkxMTA1WhcNMjcxMTExMTkxMTA1WjB6"
+            + "\nMQswCQYDVQQGEwJVUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEi"
+            + "\nMCAGA1UEChMZVmVyaXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5P"
+            + "\nMRgwFgYDVQQDEw9FQVAtSURFLlZaVy5DT00wggEiMA0GCSqGSIb3DQEBAQUAA4IB"
+            + "\nDwAwggEKAoIBAQCrQ28TvN0uUV/vK4YUS7+zcYMKAe5IYtDa3Wa0r64iyBSz6Eau"
+            + "\nT+YHNNzCV4xMqURM5mIY6796LnmWR5jViUgrHyw0d06mLE54uUET/drn2pwhaobK"
+            + "\nNVvbYzpm5W3dvext+klEgIhpRW4fR/uNUmD0O9n/5ofpg++wbvMNWEIjeTVUGPRT"
+            + "\nCeVblH3tK8bKdCKjp48HtuciY7gE8LMoHhMHA1cob9VktSYTy2ABa+rKAPAaqVz4"
+            + "\nL0Arlbi9INHSDNFlLvy1xE5dyYIqhRMicM2i4LCMwJnwf0tz8m7DmDxfdmC4HY2Q"
+            + "\nz4VpbQOu10oRhXXrhZFkZEmqp6RYQmDRDDDtAgMBAAGjITAfMB0GA1UdDgQWBBSg"
+            + "\nFA6liox07smzfITrvjSlgWkMMTANBgkqhkiG9w0BAQsFAAOCAQEAIoFKLgLfS9f1"
+            + "\n0UG85rb+noaeXY0YofSY0dxFIW3rA5zjRD0kus9iyw9CfADDD305hefJ4Kq/NLAF"
+            + "\n0odR4MOTan5KhXTlD9/8mZjSSeEktgCX3BbmMqKoKcaV6Oo9C0RfwGccDms6D+Dw"
+            + "\n3GkgsvKJEB8LjApzQSmDwCV9BVJsC60041cndqBxMr3RMxCkO6/sQRKyAuzx5f91"
+            + "\nWn5cpYxvl4//TatSc9oeU+ootlxfXszdRPM5xqCodm6gWmxRkK6DePlhpaZ1sKdw"
+            + "\nCQg/mA35Eh5ZgOpZT2YG+a8BbDRCF5gj/pu1tPt8VfApPHq6lAoitlrx1cEdJWx6"
+            + "\n5JXaFrs0UA=="
+            + "\n-----END CERTIFICATE-----";
+    private static final String IMSI_CERT_STRING_WLAN = "-----BEGIN CERTIFICATE-----"
+            + "\nMIIFbzCCBFegAwIBAgIUAz8I/cK3fILeJ9PSbi7MkN8yZBkwDQYJKoZIhvcNAQEL"
+            + "\nBQAwgY0xCzAJBgNVBAYTAk5MMRIwEAYDVQQHEwlBbXN0ZXJkYW0xJTAjBgNVBAoT"
+            + "\nHFZlcml6b24gRW50ZXJwcmlzZSBTb2x1dGlvbnMxEzARBgNVBAsTCkN5YmVydHJ1"
+            + "\nc3QxLjAsBgNVBAMTJVZlcml6b24gUHVibGljIFN1cmVTZXJ2ZXIgQ0EgRzE0LVNI"
+            + "\nQTIwHhcNMTcxMTE2MTU1NjMzWhcNMTkxMTE2MTU1NjMzWjB6MQswCQYDVQQGEwJV"
+            + "\nUzEOMAwGA1UECBMFVGV4YXMxDzANBgNVBAcTBklydmluZzEiMCAGA1UEChMZVmVy"
+            + "\naXpvbiBEYXRhIFNlcnZpY2VzIExMQzEMMAoGA1UECxMDTk5PMRgwFgYDVQQDEw9F"
+            + "\nQVAtSURFLlZaVy5DT00wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCr"
+            + "\nQ28TvN0uUV/vK4YUS7+zcYMKAe5IYtDa3Wa0r64iyBSz6EauT+YHNNzCV4xMqURM"
+            + "\n5mIY6796LnmWR5jViUgrHyw0d06mLE54uUET/drn2pwhaobKNVvbYzpm5W3dvext"
+            + "\n+klEgIhpRW4fR/uNUmD0O9n/5ofpg++wbvMNWEIjeTVUGPRTCeVblH3tK8bKdCKj"
+            + "\np48HtuciY7gE8LMoHhMHA1cob9VktSYTy2ABa+rKAPAaqVz4L0Arlbi9INHSDNFl"
+            + "\nLvy1xE5dyYIqhRMicM2i4LCMwJnwf0tz8m7DmDxfdmC4HY2Qz4VpbQOu10oRhXXr"
+            + "\nhZFkZEmqp6RYQmDRDDDtAgMBAAGjggHXMIIB0zAMBgNVHRMBAf8EAjAAMEwGA1Ud"
+            + "\nIARFMEMwQQYJKwYBBAGxPgEyMDQwMgYIKwYBBQUHAgEWJmh0dHBzOi8vc2VjdXJl"
+            + "\nLm9tbmlyb290LmNvbS9yZXBvc2l0b3J5MIGpBggrBgEFBQcBAQSBnDCBmTAtBggr"
+            + "\nBgEFBQcwAYYhaHR0cDovL3Zwc3NnMTQyLm9jc3Aub21uaXJvb3QuY29tMDMGCCsG"
+            + "\nAQUFBzAChidodHRwOi8vY2FjZXJ0Lm9tbmlyb290LmNvbS92cHNzZzE0Mi5jcnQw"
+            + "\nMwYIKwYBBQUHMAKGJ2h0dHA6Ly9jYWNlcnQub21uaXJvb3QuY29tL3Zwc3NnMTQy"
+            + "\nLmRlcjAaBgNVHREEEzARgg9FQVAtSURFLlZaVy5DT00wDgYDVR0PAQH/BAQDAgWg"
+            + "\nMB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAfBgNVHSMEGDAWgBTkLbuR"
+            + "\nAWUmH7R6P6MVJaTOjEQzOzA+BgNVHR8ENzA1MDOgMaAvhi1odHRwOi8vdnBzc2cx"
+            + "\nNDIuY3JsLm9tbmlyb290LmNvbS92cHNzZzE0Mi5jcmwwHQYDVR0OBBYEFKAUDqWK"
+            + "\njHTuybN8hOu+NKWBaQwxMA0GCSqGSIb3DQEBCwUAA4IBAQAbSrvVrdxRPLnVu6vc"
+            + "\n4BiFT2gWDhZ63EyV4f877sC1iMJRFlfwWQQfHVyhGTFa8JnhbEhhTxCP+L00Q8rX"
+            + "\nKbOw9ei5g2yp7OjStwhHz5T20UejjKkl7hKtMduZXxFToqhVwIpqG58Tzl/35FX4"
+            + "\nu+YDPgwTX5gbpbJxpbncn9voxWGWu3AbHVvzaskfBgZfWAuJnbgq0WTEt7bGOfiI"
+            + "\nelIIQe7XL6beFcdAM9C7DlgOLqpR/31LncrMC46cPA5HmfV4mnpeK/9uq0mMbUJK"
+            + "\nx2vNRWONSm2UGwdb00tLsTloxeqCOMpbkBiqi/RhOlIKIOWMPojukA5+xryh2FVs"
+            + "\n7bdw"
+            + "\n-----END CERTIFICATE-----";
 
     private static final int RADIO_HAL_VERSION_1_3 = makeRadioVersion(1, 3);
     private static final int RADIO_HAL_VERSION_1_5 = makeRadioVersion(1, 5);
@@ -2698,17 +2761,71 @@ public class TelephonyManagerTest {
             // expected
         }
         // test with permission
+        PublicKey epdgKey = null;
+        PublicKey wlanKey = null;
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG));
+            PersistableBundle carrierConfig = mCarrierConfigManager.getConfigForSubId(mTestSub);
+
+            assertNotNull("CarrierConfigManager#getConfigForSubId() returned null",
+                    carrierConfig);
+            assertFalse("CarrierConfigManager#getConfigForSubId() returned empty bundle",
+                    carrierConfig.isEmpty());
+
+            // purge the certs in carrierConfigs first
+            carrierConfig.putInt(
+                    CarrierConfigManager.IMSI_KEY_AVAILABILITY_INT, 3);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_KEY_DOWNLOAD_URL_STRING, BAD_IMSI_CERT_URL);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_CARRIER_PUBLIC_KEY_EPDG_STRING,
+                    IMSI_CERT_STRING_EPDG);
+            carrierConfig.putString(
+                    CarrierConfigManager.IMSI_CARRIER_PUBLIC_KEY_WLAN_STRING,
+                    IMSI_CERT_STRING_WLAN);
+            overrideCarrierConfig(carrierConfig);
+        } catch (Exception e) {
+            fail("Could not override carrier config. e=" + e.toString());
+        }
+
+        try {
+            // It appears that the two certs actually have the same public key. Ideally we would
+            // want these to be different for testing, but it's challenging to create a valid
+            // certificate string for testing and these are the only two examples available
+            InputStream inStream = new ByteArrayInputStream(IMSI_CERT_STRING_WLAN.getBytes());
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            X509Certificate cert = (X509Certificate) cf.generateCertificate(inStream);
+            wlanKey = cert.getPublicKey();
+
+            inStream = new ByteArrayInputStream(IMSI_CERT_STRING_EPDG.getBytes());
+            cert = (X509Certificate) cf.generateCertificate(inStream);
+            epdgKey = cert.getPublicKey();
+        } catch (CertificateException e) {
+            fail("Could not create certs. e=" + e.toString());
+        }
+
+        try {
+            ImsiEncryptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager,
+                    (tm) -> {
+                        return tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_EPDG);
+                    });
+            assertNotNull("Encryption info returned null", info);
+            assertEquals(epdgKey, info.getPublicKey());
+            assertEquals(TelephonyManager.KEY_TYPE_EPDG, info.getKeyType());
         } catch (SecurityException se) {
             fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
         } catch (IllegalArgumentException iae) {
             // IllegalArgumentException is okay, just not SecurityException
         }
         try {
-            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                    (tm) -> tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN));
+            ImsiEncryptionInfo info = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager,
+                    (tm) -> {
+                        return tm.getCarrierInfoForImsiEncryption(TelephonyManager.KEY_TYPE_WLAN);
+                    });
+            assertNotNull("Encryption info returned null", info);
+            assertEquals(wlanKey, info.getPublicKey());
+            assertEquals(TelephonyManager.KEY_TYPE_WLAN, info.getKeyType());
         } catch (SecurityException se) {
             fail("testGetCarrierInfoForImsiEncryption: SecurityException not expected");
         } catch (IllegalArgumentException iae) {
