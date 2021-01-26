@@ -76,6 +76,13 @@ public class ListeningPortsTest extends AndroidTestCase {
         // TODO: this is not standard notation for IPv6. Use [$addr]:$port instead as per RFC 3986.
         EXCEPTION_PATTERNS.add(":::5555");          // emulator port for adb
         EXCEPTION_PATTERNS.add(":::7275");          // used by supl
+        // b/150186547 ports
+        EXCEPTION_PATTERNS.add("192.168.17.10:48881");
+        EXCEPTION_PATTERNS.add("192.168.17.10:48896");
+        EXCEPTION_PATTERNS.add("192.168.17.10:48897");
+        EXCEPTION_PATTERNS.add("192.168.17.10:48898");
+        EXCEPTION_PATTERNS.add("192.168.17.10:48899");
+
     }
 
     @Override
