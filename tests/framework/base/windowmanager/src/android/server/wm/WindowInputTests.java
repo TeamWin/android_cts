@@ -286,7 +286,7 @@ public class WindowInputTests {
                 WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
                 params.flags |= FLAG_NOT_TOUCHABLE;
                 // Any opacity higher than this would make InputDispatcher block the touch
-                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch(mActivity);
+                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch();
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });
@@ -333,7 +333,7 @@ public class WindowInputTests {
                 WindowManager.LayoutParams params = getObscuringViewLayoutParams(windowName);
                 params.flags |= FLAG_NOT_TOUCHABLE;
                 // Any opacity higher than this would make InputDispatcher block the touch
-                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch(mActivity);
+                params.alpha = mInputManager.getMaximumObscuringOpacityForTouch();
                 intent.putExtra(EXTRA_LAYOUT_PARAMS, params);
                 mActivity.startForegroundService(intent);
             });

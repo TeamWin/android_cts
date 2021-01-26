@@ -235,12 +235,20 @@ public class WindowUntrustedTouchTest {
     }
 
     @Test
+    public void testMaximumObscuringOpacity() throws Throwable {
+        // Setting the previous value since we override this on setUp()
+        setMaximumObscuringOpacityForTouch(mPreviousTouchOpacity);
+
+        assertEquals(0.8f, mInputManager.getMaximumObscuringOpacityForTouch());
+    }
+
+    @Test
     public void testAfterSettingThreshold_returnsThresholdSet()
             throws Throwable {
         float threshold = .123f;
         setMaximumObscuringOpacityForTouch(threshold);
 
-        assertEquals(threshold, mInputManager.getMaximumObscuringOpacityForTouch(mContext));
+        assertEquals(threshold, mInputManager.getMaximumObscuringOpacityForTouch());
     }
 
     @Test
@@ -269,7 +277,7 @@ public class WindowUntrustedTouchTest {
     public void testAfterSettingThresholdGreaterThan1ViaSettings_previousThresholdIsUsed()
             throws Throwable {
         setMaximumObscuringOpacityForTouch(.8f);
-        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch(mContext));
+        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch());
         SystemUtil.runWithShellPermissionIdentity(() -> {
             Settings.Global.putFloat(mContentResolver, SETTING_MAXIMUM_OBSCURING_OPACITY, 1.5f);
         });
@@ -286,7 +294,7 @@ public class WindowUntrustedTouchTest {
     public void testAfterSettingThresholdLessThan0ViaSettings_previousThresholdIsUsed()
             throws Throwable {
         setMaximumObscuringOpacityForTouch(.8f);
-        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch(mContext));
+        assertEquals(.8f, mInputManager.getMaximumObscuringOpacityForTouch());
         SystemUtil.runWithShellPermissionIdentity(() -> {
             Settings.Global.putFloat(mContentResolver, SETTING_MAXIMUM_OBSCURING_OPACITY, -.5f);
         });
@@ -1054,8 +1062,8 @@ public class WindowUntrustedTouchTest {
 
     private float setMaximumObscuringOpacityForTouch(float opacity) throws Exception {
         return SystemUtil.callWithShellPermissionIdentity(() -> {
-            float previous = mInputManager.getMaximumObscuringOpacityForTouch(mContext);
-            mInputManager.setMaximumObscuringOpacityForTouch(mContext, opacity);
+            float previous = mInputManager.getMaximumObscuringOpacityForTouch();
+            mInputManager.setMaximumObscuringOpacityForTouch(opacity);
             return previous;
         });
     }
