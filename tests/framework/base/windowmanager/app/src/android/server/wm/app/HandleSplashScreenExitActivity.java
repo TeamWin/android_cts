@@ -16,28 +16,42 @@
 
 package android.server.wm.app;
 
+import static android.app.UiModeManager.MODE_NIGHT_AUTO;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
+import static android.server.wm.app.Components.TestStartingWindowKeys.GET_NIGHT_MODE_ACTIVITY_CHANGED;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
+import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_SET_NIGHT_MODE_ON_CREATE;
 
 import android.app.Activity;
+import android.app.UiModeManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
 import android.window.SplashScreen;
 
 public class HandleSplashScreenExitActivity extends Activity {
     private SplashScreen mSSM;
+    private UiModeManager mUiModeManager;
+    private boolean mReportSplashScreenNightMode;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mSSM = getSplashScreen();
         if (getIntent().getBooleanExtra(REQUEST_HANDLE_EXIT_ON_CREATE, false)) {
             mSSM.setOnExitAnimationListener(mSplashScreenExitHandler);
+        }
+        final String nightMode = getIntent().getStringExtra(REQUEST_SET_NIGHT_MODE_ON_CREATE);
+        if (nightMode != null) {
+            mUiModeManager = getSystemService(UiModeManager.class);
+            final int setNightMode = Integer.parseInt(nightMode);
+            mUiModeManager.setApplicationNightMode(setNightMode);
+            mReportSplashScreenNightMode = true;
         }
     }
 
@@ -63,6 +77,21 @@ public class HandleSplashScreenExitActivity extends Activity {
         }
         if (getIntent().getBooleanExtra(CANCEL_HANDLE_EXIT, false)) {
             mSSM.setOnExitAnimationListener(null);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (mReportSplashScreenNightMode) {
+            final int configNightMode = newConfig.uiMode & Configuration.UI_MODE_NIGHT_MASK;
+            final Context baseContext = getBaseContext();
+            TestJournalProvider.putExtras(baseContext, HANDLE_SPLASH_SCREEN_EXIT, bundle -> {
+                bundle.putInt(GET_NIGHT_MODE_ACTIVITY_CHANGED, configNightMode);
+            });
+            // reset after test done
+            mReportSplashScreenNightMode = false;
+            mUiModeManager.setApplicationNightMode(MODE_NIGHT_AUTO);
         }
     }
 }

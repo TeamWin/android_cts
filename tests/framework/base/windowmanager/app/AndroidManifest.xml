@@ -557,6 +557,7 @@
 
         <activity android:name=".HandleSplashScreenExitActivity"
                   android:theme="@style/ShowBrandingTheme"
+                  android:configChanges="uiMode"
                   android:exported="true"/>
         <activity android:name=".SplashScreenReplaceIconActivity"
                   android:exported="true"
