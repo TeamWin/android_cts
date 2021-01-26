@@ -18,7 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
 import android.view.InputDevice;
@@ -46,9 +46,6 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * CTS test case for generic.kl key layout mapping.
@@ -76,13 +73,12 @@ public class InputDeviceKeyLayoutMapTest {
     private static final int UI_SET_KEYBIT = 101;
     private static final int GOOGLE_VENDOR_ID = 0x18d1;
     private static final int GOOGLE_VIRTUAL_KEYBOARD_ID = 0x001f;
+    private static final int POLL_EVENT_TIMEOUT_SECONDS = 1;
+    private static final int RETRY_COUNT = 10;
 
     private Map<String, Integer> mKeyLayout;
-    private InputDeviceKeyLayoutMapTestActivity mActivity;
     private Instrumentation mInstrumentation;
     private UinputDevice mUinputDevice;
-    private final BlockingQueue<KeyEvent> mEvents = new LinkedBlockingQueue<>();
-    private InputListener mInputListener;
     private int mMetaState;
     private InputJsonParser mParser;
 
@@ -99,49 +95,44 @@ public class InputDeviceKeyLayoutMapTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(mActivity::hasWindowFocus);
-
+        PollingCheck.waitFor(mActivityRule.getActivity()::hasWindowFocus);
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         mKeyLayout = nativeLoadKeyLayout(mParser.readRegisterCommand(R.raw.Generic));
-        mUinputDevice = new UinputDevice(mInstrumentation, DEVICE_ID,
+        mUinputDevice = new UinputDevice(mInstrumentation, DEVICE_ID, GOOGLE_VENDOR_ID,
+                GOOGLE_VIRTUAL_KEYBOARD_ID, InputDevice.SOURCE_KEYBOARD,
                 createDeviceRegisterCommand());
-        mInputListener = new InputListener();
-        mActivityRule.getActivity().setInputCallback(mInputListener);
+
         mMetaState = KeyEvent.META_NUM_LOCK_ON;
     }
 
     @After
     public void tearDown() {
-        mUinputDevice.close();
-    }
-
-    private class InputListener implements InputCallback {
-        @Override
-        public void onKeyEvent(KeyEvent ev) {
-            try {
-                mEvents.put(new KeyEvent(ev));
-            } catch (InterruptedException ex) {
-                fail("interrupted while adding a KeyEvent to the queue");
-            }
+        if (mUinputDevice != null) {
+            mUinputDevice.close();
         }
     }
 
     /**
      * Get a KeyEvent from event queue or timeout.
+     * The test activity instance may change in the middle, calling getKeyEvent with the old
+     * activity instance will get timed out when test activity instance changed. Rather than
+     * doing a long wait for timeout with same activity instance, break the polling into a number
+     * of retries and each time of retry call the ActivityTestRule.getActivity for current activity
+     * instance to avoid the test failure because of polling the old activity instance get timed
+     * out consequently failed the test.
+     *
+     * @param retryCount The times to retry get KeyEvent from test activity.
      *
      * @return KeyEvent delivered to test activity, null if timeout.
      */
-    private KeyEvent getKeyEvent() {
-        try {
-            KeyEvent receivedKeyEvent = mEvents.poll(10, TimeUnit.SECONDS);
-            if (receivedKeyEvent == null) {
-                fail("Did not receive any key event");
+    private KeyEvent getKeyEvent(int retryCount) {
+        for (int i = 0; i < retryCount; i++) {
+            KeyEvent event = mActivityRule.getActivity().getKeyEvent(POLL_EVENT_TIMEOUT_SECONDS);
+            if (event != null) {
+                return event;
             }
-            return receivedKeyEvent;
-        } catch (InterruptedException e) {
-            throw new RuntimeException("unexpectedly interrupted while waiting for InputEvent", e);
         }
+        return null;
     }
 
     /**
@@ -159,9 +150,9 @@ public class InputDeviceKeyLayoutMapTest {
             return;
         }
 
-        KeyEvent receivedKeyEvent = getKeyEvent();
+        KeyEvent receivedKeyEvent = getKeyEvent(RETRY_COUNT);
         String log = "Expected " + expectedKeyEvent + " Received " + receivedKeyEvent;
-
+        assertNotNull(log, receivedKeyEvent);
         assertEquals(log, expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
         assertEquals(log, expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
         assertEquals(log, expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
@@ -308,13 +299,15 @@ public class InputDeviceKeyLayoutMapTest {
         int eveKeyCode = mKeyLayout.get(label);
         pressKey(eveKeyCode);
         // Get 2 key events for up and down.
-        KeyEvent downKeyEvent = getKeyEvent();
-        KeyEvent upKeyEvent = getKeyEvent();
+        KeyEvent keyDownEvent = getKeyEvent(RETRY_COUNT);
+        assertNotNull("Didn't get KeyDown event " + label, keyDownEvent);
+        KeyEvent keyUpEvent = getKeyEvent(RETRY_COUNT);
+        assertNotNull("Didn't get KeyUp event " + label, keyUpEvent);
 
-        if (upKeyEvent.getKeyCode() == KeyEvent.keyCodeFromString(label)
-                && upKeyEvent.getAction() == KeyEvent.ACTION_UP) {
+        if (keyUpEvent.getKeyCode() == KeyEvent.keyCodeFromString(label)
+                && keyUpEvent.getAction() == KeyEvent.ACTION_UP) {
             mMetaState &= ~metaState;
-            mMetaState |= (upKeyEvent.getMetaState() & metaState);
+            mMetaState |= (keyUpEvent.getMetaState() & metaState);
         }
     }
 

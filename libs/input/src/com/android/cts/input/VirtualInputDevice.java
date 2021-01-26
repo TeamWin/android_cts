@@ -21,11 +21,13 @@ import static android.os.FileUtils.closeQuietly;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.hardware.input.InputManager;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.util.JsonReader;
 import android.util.JsonToken;
 import android.util.Log;
+import android.view.InputDevice;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,10 +49,19 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
     private InputStream mInputStream;
     private OutputStream mOutputStream;
     private Instrumentation mInstrumentation;
-    private final Thread mThread;
+    private final Thread mResultThread;
+    private final HandlerThread mHandlerThread;
+    private final Handler mHandler;
+    private final InputManager mInputManager;
     private volatile CountDownLatch mDeviceAddedSignal; // to wait for onInputDeviceAdded signal
-
-    protected final int mId; // initialized from the json file
+    private volatile CountDownLatch mDeviceRemovedSignal; // to wait for onInputDeviceRemoved signal
+    // Input device ID assigned by input manager
+    private int mDeviceId = Integer.MIN_VALUE;
+    private final int mVendorId;
+    private final int mProductId;
+    private final int mSources;
+    // Virtual device ID from the json file
+    protected final int mId;
     protected JsonReader mReader;
     protected final Object mLock = new Object();
 
@@ -64,9 +75,24 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
      */
     abstract void readResults();
 
-    private final class ResultReader implements Runnable {
-        @Override
-        public void run() {
+    public VirtualInputDevice(Instrumentation instrumentation, int id, int vendorId, int productId,
+            int sources, String registerCommand) {
+        mInstrumentation = instrumentation;
+        mInputManager = mInstrumentation.getContext().getSystemService(InputManager.class);
+        setupPipes();
+
+        mId = id;
+        mVendorId = vendorId;
+        mProductId = productId;
+        mSources = sources;
+        mHandlerThread = new HandlerThread("InputDeviceHandlerThread");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper());
+
+        mDeviceAddedSignal = new CountDownLatch(1);
+        mDeviceRemovedSignal = new CountDownLatch(1);
+
+        mResultThread = new Thread(() -> {
             try {
                 while (mReader.peek() != JsonToken.END_DOCUMENT) {
                     readResults();
@@ -74,26 +100,12 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
             } catch (IOException ex) {
                 Log.w(TAG, "Exiting JSON Result reader. " + ex);
             }
-        }
-    }
-
-    public VirtualInputDevice(Instrumentation instrumentation, int deviceId,
-            String registerCommand) {
-        mInstrumentation = instrumentation;
-        setupPipes();
-
-        mInstrumentation.runOnMainSync(new Runnable(){
-            @Override
-            public void run() {
-                InputManager inputManager =
-                        mInstrumentation.getContext().getSystemService(InputManager.class);
-                inputManager.registerInputDeviceListener(VirtualInputDevice.this, null);
-            }
         });
-
-        mId = deviceId;
-        mThread = new Thread(new ResultReader());
-        mThread.start();
+        // Start result reader thread
+        mResultThread.start();
+        // Register input device listener
+        mInputManager.registerInputDeviceListener(VirtualInputDevice.this, mHandler);
+        // Register virtual input device
         registerInputDevice(registerCommand);
     }
 
@@ -127,7 +139,6 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
      * @param registerCommand The full json command that specifies how to register this device
      */
     private void registerInputDevice(String registerCommand) {
-        mDeviceAddedSignal = new CountDownLatch(1);
         Log.i(TAG, "registerInputDevice: " + registerCommand);
         writeCommands(registerCommand.getBytes());
         try {
@@ -140,10 +151,6 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
             throw new RuntimeException(
                     "Unexpectedly interrupted while waiting for device added notification.");
         }
-        // Even though the device has been added, it still may not be ready to process the events
-        // right away. This seems to be a kernel bug.
-        // Add a small delay here to ensure device is "ready".
-        SystemClock.sleep(1000);
     }
 
     /**
@@ -170,7 +177,21 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
     public void close() {
         closeQuietly(mInputStream);
         closeQuietly(mOutputStream);
-        // mThread should exit when stream is closed.
+        // mResultThread should exit when stream is closed.
+        try {
+            // Wait for input device removed callback.
+            mDeviceRemovedSignal.await(20L, TimeUnit.SECONDS);
+            if (mDeviceRemovedSignal.getCount() != 0) {
+                throw new RuntimeException("Did not receive device removed notification in time");
+            }
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(
+                    "Unexpectedly interrupted while waiting for device removed notification.");
+        }
+        // Unregister input device listener
+        mInstrumentation.runOnMainSync(() -> {
+            mInputManager.unregisterInputDeviceListener(VirtualInputDevice.this);
+        });
     }
 
     private void setupPipes() {
@@ -196,17 +217,36 @@ public abstract class VirtualInputDevice implements InputManager.InputDeviceList
         }
     }
 
+    private void updateInputDevice(int deviceId) {
+        InputDevice device = mInputManager.getInputDevice(deviceId);
+        if (device == null) {
+            return;
+        }
+        // Check if the device is what we expected
+        if (device.getVendorId() == mVendorId && device.getProductId() == mProductId
+                && (device.getSources() & mSources) == mSources) {
+            mDeviceId = device.getId();
+            mDeviceAddedSignal.countDown();
+        }
+    }
+
     // InputManager.InputDeviceListener functions
     @Override
     public void onInputDeviceAdded(int deviceId) {
-        mDeviceAddedSignal.countDown();
+        // Check the new added input device
+        updateInputDevice(deviceId);
     }
 
     @Override
     public void onInputDeviceChanged(int deviceId) {
+        // InputDevice may be updated with new input sources added
+        updateInputDevice(deviceId);
     }
 
     @Override
     public void onInputDeviceRemoved(int deviceId) {
+        if (deviceId == mDeviceId) {
+            mDeviceRemovedSignal.countDown();
+        }
     }
 }

@@ -376,9 +376,11 @@ public class InputDeviceSensorManagerTest {
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         mDeviceId = mParser.readDeviceId(resourceId);
         String registerCommand = mParser.readRegisterCommand(resourceId);
-        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId, registerCommand);
-        mSensorManager = getSensorManager(mParser.readVendorId(resourceId),
-                mParser.readProductId(resourceId));
+        final int vendorId = mParser.readVendorId(resourceId);
+        final int productId = mParser.readProductId(resourceId);
+        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId,
+            vendorId, productId, InputDevice.SOURCE_KEYBOARD, registerCommand);
+        mSensorManager = getSensorManager(vendorId, productId);
         assertNotNull(mSensorManager);
 
         mSensorThread = new HandlerThread("SensorThread");
