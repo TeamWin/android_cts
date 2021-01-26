@@ -23,6 +23,7 @@ import static com.android.compatibility.common.util.BlockedNumberUtil.insertBloc
 import android.app.UiModeManager;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
@@ -375,6 +376,8 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             cleanupCalls();
             // Set device back to normal
             manager.disableCarMode(0);
+            // Make sure the UI mode has been set back
+            assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
         }
     }
 
