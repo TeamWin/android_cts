@@ -90,9 +90,12 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("scene2_a");
             add("scene2_b");
             add("scene2_c");
+            add("scene2_d");
+            add("scene2_e");
             add("scene3");
             add("scene4");
             add("scene5");
+            add("scene_change");
             add("sensor_fusion");
         } };
     // This must match scenes of HIDDEN_PHYSICAL_CAMERA_TESTS in run_all_tests.py
