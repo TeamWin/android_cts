@@ -53,7 +53,7 @@
 
     <!-- Icon hiding -->
     <option name="compatibility:include-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.LimitAppIconHidingTest"/>
-    <option name="compatibility:include-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.DeviceOwnerTest"/>
+    <option name="compatibility:include-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.DeviceOwnerTest#testNoHiddenActivityFoundTest"/>
     <option name="compatibility:include-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.LauncherAppsProfileTest"/>
 
     <!-- App ops -->
@@ -62,7 +62,7 @@
     <option name="compatibility:include-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts.AccessibilityLoggingTest"/>
     <option name="compatibility:include-filter" value="CtsPackageInstallTestCases android.packageinstaller.install.cts.SessionTest"/>
     <option name="compatibility:include-filter" value="CtsPackageInstallTestCases android.packageinstaller.install.cts.ExternalSourcesTestAppOpAllowed"/>
-    <option name="compatibility:include-filter" value="CtsPackageUninstallTestCases"/>
+    <option name="compatibility:include-filter" value="CtsPackageUninstallTestCases android.packageinstaller.uninstall.cts.UninstallTest"/>
 
     <!-- Tests that we've added for b/72485440 and in ag/3789406 -->
     <option name="compatibility:include-filter" value="CtsContentTestCases android.content.cts.ContextTest"/>
@@ -70,7 +70,18 @@
     <option name="compatibility:include-filter" value="CtsContentTestCases android.content.cts.ContextWrapperTest"/>
 
     <!-- Tests that we've added for b/73451844 -->
-    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testCheckPermissionGranted"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testCheckPermissionNotGranted"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_OtherPackages"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledApplications"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_ApexSupported_MatchesApex"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_ApexSupported_DoesNotMatchApex"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_ApexNotSupported_MatchesApex"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_ApexNotSupported_DoesNotMatchApex"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_WithFactoryFlag_IsSubset"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_WithFactoryFlag_ImpliesSystem"/>
+    <option name="compatibility:include-filter" value="CtsContentTestCases android.content.pm.cts.PackageManagerTest#testGetInstalledPackages_WithFactoryFlag_ContainsNoDuplicates"/>
 
     <!-- Network watchlist tests -->
     <option name="compatibility:include-filter" value="CtsNetTestCases android.net.cts.NetworkWatchlistTest"/>
