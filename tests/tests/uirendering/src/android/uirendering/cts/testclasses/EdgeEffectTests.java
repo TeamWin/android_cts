@@ -31,6 +31,7 @@ import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.BitmapAsserter;
@@ -195,6 +196,25 @@ public class EdgeEffectTests {
         assertTrue(edgeEffect.getMaxHeight() <= 200 * 2 + 1);
         edgeEffect.setSize(200, 0);
         assertEquals(0, edgeEffect.getMaxHeight());
+    }
+
+    @Test
+    public void testEdgeEffectTypeAccessors() {
+        EdgeEffect effect = new EdgeEffect(getContext());
+
+        // It defaults to glow without any attribute set
+        assertEquals(EdgeEffect.TYPE_GLOW, effect.getType());
+        effect.setType(EdgeEffect.TYPE_STRETCH);
+        assertEquals(EdgeEffect.TYPE_STRETCH, effect.getType());
+    }
+
+    @Test
+    public void testedgeEffectTypeAttribute() {
+        final Context targetContext = InstrumentationRegistry.getTargetContext();
+        final Context themeContext =
+                new ContextThemeWrapper(targetContext, R.style.StretchEdgeEffect);
+        EdgeEffect withWarpEffect = new EdgeEffect(themeContext);
+        assertEquals(EdgeEffect.TYPE_STRETCH, withWarpEffect.getType());
     }
 
     private interface AlphaVerifier {

@@ -30,4 +30,7 @@ limitations under the License.
         <item name="android:forceDarkAllowed">true</item>
         <item name="android:isLightTheme">true</item>
     </style>
+    <style name="StretchEdgeEffect" parent="@android:style/Theme.Material.Light">
+        <item name="android:edgeEffectType">stretch</item>
+    </style>
 </resources>
