@@ -50,6 +50,10 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
             fail("Failed to set device owner for user " + mDeviceOwnerUserId);
         }
 
+        if (isHeadlessSystemUserMode()) {
+            affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, mPrimaryUserId);
+        }
+
         // Enable the notification listener
         getDevice().executeShellCommand("cmd notification allow_listener com.android.cts."
                 + "deviceowner/com.android.cts.deviceowner.NotificationListener");
@@ -64,6 +68,14 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
         getDevice().uninstallPackage(DEVICE_OWNER_PKG);
 
         super.tearDown();
+    }
+
+    void affiliateUsers(String deviceAdminPkg, int userId1, int userId2) throws Exception {
+        CLog.d("Affiliating users %d and %d on admin package %s", userId1, userId2, deviceAdminPkg);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId1);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId2);
     }
 
     protected final void executeDeviceOwnerTest(String testClassName) throws Exception {
