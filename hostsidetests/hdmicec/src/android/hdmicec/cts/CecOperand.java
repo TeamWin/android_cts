@@ -21,6 +21,7 @@ import java.util.Map;
 
 public enum CecOperand {
     FEATURE_ABORT(0x00),
+    IMAGE_VIEW_ON(0x04),
     TEXT_VIEW_ON(0x0d),
     SET_MENU_LANGUAGE(0x32),
     STANDBY(0x36),
