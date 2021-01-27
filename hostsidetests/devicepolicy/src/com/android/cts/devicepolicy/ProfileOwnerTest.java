@@ -79,11 +79,9 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            assertTrue("Failed to remove profile owner.",
-                    removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
-            getDevice().uninstallPackage(PROFILE_OWNER_PKG);
-        }
+        assertTrue("Failed to remove profile owner.",
+                removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+        getDevice().uninstallPackage(PROFILE_OWNER_PKG);
 
         super.tearDown();
     }

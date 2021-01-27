@@ -46,10 +46,8 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-            getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
-        }
+        getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
 
         super.tearDown();
     }

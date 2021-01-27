@@ -41,7 +41,6 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (!isTestEnabled()) return;
 
         removeTestUsers();
         getDevice().uninstallPackage(SEPARATE_PROFILE_PKG);

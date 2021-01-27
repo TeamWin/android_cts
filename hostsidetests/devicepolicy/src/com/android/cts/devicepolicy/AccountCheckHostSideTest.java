@@ -50,20 +50,19 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
-                runCleanupTestOnlyOwnerAllowingFailure();
-                runCleanupNonTestOnlyOwnerAllowingFailure();
+        if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
+            runCleanupTestOnlyOwnerAllowingFailure();
+            runCleanupNonTestOnlyOwnerAllowingFailure();
 
-                // This shouldn't be needed since we're uninstalling the authenticator,
-                // but sometimes the account manager fails to clean up?
-                removeAllAccountsAllowingFailure();
-            }
-
-            getDevice().uninstallPackage(PACKAGE_AUTH);
-            getDevice().uninstallPackage(PACKAGE_TEST_ONLY);
-            getDevice().uninstallPackage(PACKAGE_NON_TEST_ONLY);
+            // This shouldn't be needed since we're uninstalling the authenticator,
+            // but sometimes the account manager fails to clean up?
+            removeAllAccountsAllowingFailure();
         }
+
+        getDevice().uninstallPackage(PACKAGE_AUTH);
+        getDevice().uninstallPackage(PACKAGE_TEST_ONLY);
+        getDevice().uninstallPackage(PACKAGE_NON_TEST_ONLY);
+
         super.tearDown();
     }
 
