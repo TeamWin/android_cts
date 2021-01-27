@@ -17,6 +17,7 @@
 package android.app.stubs;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 
 /**
@@ -24,11 +25,17 @@ import android.os.Bundle;
  * within the bubble.
  */
 public class BubbledActivity extends Activity {
-    final String TAG = BubbledActivity.class.getSimpleName();
+
+    boolean mIsBubbled = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        mIsBubbled = getIntent().getBooleanExtra(Intent.EXTRA_IS_BUBBLED, false);
+    }
+
+    public boolean isBubbled() {
+        return mIsBubbled;
     }
 }
