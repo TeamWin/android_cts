@@ -19,23 +19,33 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 
 import android.annotation.Nullable;
+import android.app.ActivityManager;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Parcelable;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.util.ArrayMap;
 import android.util.DebugUtils;
 import android.util.Log;
 import android.util.Slog;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import com.android.internal.annotations.GuardedBy;
 
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -79,13 +89,19 @@ public final class DevicePolicyManagerWrapper {
     private static final String TYPE_PARCELABLE = "parcelable";
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
+    private static final String TYPE_ARRAY_LIST_PARCELABLE = "array_list_parcelable";
+    private static final String TYPE_ARRAY_SET_STRING = "array_set_string";
 
     public static final int RESULT_OK = 42;
     public static final int RESULT_EXCEPTION = 666;
 
-    private static final int TIMEOUT_MS = 15_000;
+    // Must be high enough to outlast long tests like NetworkLoggingTest, which waits up to
+    // 6 minutes for network monitoring events.
+    private static final long TIMEOUT_MS = TimeUnit.MINUTES.toMillis(10);
 
     private static final HashMap<Context, DevicePolicyManager> sSpies = new HashMap<>();
+
+    private static final int MY_USER_ID = UserHandle.myUserId();
 
     /***
      * Gets the {@link DevicePolicyManager} for the given context.
@@ -96,15 +112,14 @@ public final class DevicePolicyManagerWrapper {
         int userId = context.getUserId();
         DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
 
-        if (!UserManager.isHeadlessSystemUserMode()) {
-            if (VERBOSE) Log.v(TAG, "get(): returning 'pure' DevicePolicyManager: " + dpm);
+        if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "get(): returning 'pure' DevicePolicyManager for user " + userId);
             return dpm;
         }
 
         DevicePolicyManager spy = sSpies.get(context);
         if (spy != null) {
-            Log.d(TAG, "get(): returning cached spy for context " + context + " and user "
-                    + userId);
+            Log.d(TAG, "get(): returning cached spy for user " + userId);
             return spy;
         }
 
@@ -126,8 +141,9 @@ public final class DevicePolicyManagerWrapper {
             final AtomicReference<Result> resultRef = new AtomicReference<>();
             BroadcastReceiver myReceiver = new BroadcastReceiver() {
                 public void onReceive(Context context, Intent intent) {
+                    String action = intent.getAction();
                     if (VERBOSE) {
-                        Log.v(TAG, "spy received intent " + intent.getAction() + " for user "
+                        Log.v(TAG, "spy received intent " + action + " for user "
                                 + context.getUserId());
                     }
                     Result result = new Result(this);
@@ -145,11 +161,12 @@ public final class DevicePolicyManagerWrapper {
                     UserHandle.SYSTEM, /* permission= */ null, myReceiver, /* scheduler= */ null,
                     /* initialCode= */ 0, /* initialData= */ null, /* initialExtras= */ null));
 
-            if (VERBOSE) Log.d(TAG, "Waiting for response");
+            if (VERBOSE) Log.d(TAG, "Waiting up to " + TIMEOUT_MS + "ms for response");
             if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 fail("Ordered broadcast for " + methodName + "() not received in " + TIMEOUT_MS
                         + "ms");
             }
+            if (VERBOSE) Log.d(TAG, "Got response");
 
             Result result = resultRef.get();
             Log.d(TAG, "Received result on user " + userId + ": " + result);
@@ -193,6 +210,11 @@ public final class DevicePolicyManagerWrapper {
         // Used by HeadlessSystemUserTest
         doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());
         doAnswer(answer).when(spy).getProfileOwnerAsUser(any());
+
+        // Used by NetworkLoggingTest
+        doAnswer(answer).when(spy).retrieveNetworkLogs(any(), anyLong());
+        doAnswer(answer).when(spy).setNetworkLoggingEnabled(any(), anyBoolean());
+        doAnswer(answer).when(spy).isNetworkLoggingEnabled(any());
 
         // TODO(b/176993670): add more methods below as tests are converted
 
@@ -241,6 +263,58 @@ public final class DevicePolicyManagerWrapper {
         return;
     }
 
+    /**
+     * Called by the DO {@link BasicAdminReceiver} to broadcasts an intent to the test case app.
+     */
+    static void sendBroadcastToTestCaseReceiver(Context context, Intent intent) {
+        if (isHeadlessSystemUser()) {
+            BridgeReceiver.sendBroadcast(context, intent);
+            return;
+        }
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+    }
+
+    /**
+     * Called by test case to register a {@link BrodcastReceiver} to receive intents sent by the
+     * DO {@link BasicAdminReceiver}.
+     */
+    static void registerTestCaseReceiver(Context context, BroadcastReceiver receiver,
+            IntentFilter filter) {
+        if (isCurrentUserOnHeadlessSystemUser()) {
+            BridgeReceiver.registerReceiver(context, receiver, filter);
+            return;
+        }
+        LocalBroadcastManager.getInstance(context).registerReceiver(receiver, filter);
+    }
+
+    /**
+     * Called by test case to unregister a {@link BrodcastReceiver} that receive intents sent by the
+     * DO {@link BasicAdminReceiver}.
+     */
+    static void unregisterTestCaseReceiver(Context context, BroadcastReceiver receiver) {
+        if (isCurrentUserOnHeadlessSystemUser()) {
+            BridgeReceiver.unregisterReceiver(context, receiver);
+            return;
+        }
+        LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver);
+    }
+
+    private static boolean isHeadlessSystemUser() {
+        return UserManager.isHeadlessSystemUserMode() && MY_USER_ID == UserHandle.USER_SYSTEM;
+    }
+
+    private static boolean isCurrentUserOnHeadlessSystemUser() {
+        return UserManager.isHeadlessSystemUserMode()
+                && MY_USER_ID == ActivityManager.getCurrentUser();
+    }
+
+    private static void assertCurrentUserOnHeadlessSystemMode() {
+        if (isCurrentUserOnHeadlessSystemUser()) return;
+
+        throw new IllegalStateException("Should only be called by current user ("
+                + ActivityManager.getCurrentUser() + ") on headless system user device, but was "
+                        + "called by process from user " + MY_USER_ID);
+    }
 
     static void addArg(Intent intent, Object[] args, int index) {
         Object value = args[index];
@@ -285,29 +359,48 @@ public final class DevicePolicyManagerWrapper {
             intent.putExtra(extraValueName, (Parcelable) value);
             return;
         }
+
+        if ((value instanceof ArrayList<?>)) {
+            ArrayList<?> arrayList = (ArrayList<?>) value;
+
+            String type = null;
+            if (arrayList.isEmpty()) {
+                Log.w(TAG, "Empty list at index " + index + "; assuming it's ArrayList<String>");
+                type = TYPE_ARRAY_LIST_STRING;
+            } else {
+                Object firstItem = arrayList.get(0);
+                if (firstItem instanceof String) {
+                    type = TYPE_ARRAY_LIST_STRING;
+                } else if (firstItem instanceof Parcelable) {
+                    type = TYPE_ARRAY_LIST_PARCELABLE;
+                } else {
+                    throw new IllegalArgumentException("Unsupported ArrayList type at index "
+                            + index + ": " + firstItem);
+                }
+            }
+
+            logMarshalling("Adding " + type, index, extraTypeName, type, extraValueName, value);
+            intent.putExtra(extraTypeName, type);
+            switch (type) {
+                case TYPE_ARRAY_LIST_STRING:
+                    intent.putStringArrayListExtra(extraValueName, (ArrayList<String>) arrayList);
+                    break;
+                case TYPE_ARRAY_LIST_PARCELABLE:
+                    intent.putParcelableArrayListExtra(extraValueName,
+                            (ArrayList<Parcelable>) arrayList);
+                    break;
+                default:
+                    // should never happen because type is checked above
+                    throw new AssertionError("invalid type conversion: " + type);
+            }
+            return;
+        }
+
         if ((value instanceof Serializable)) {
             logMarshalling("Adding Serializable", index, extraTypeName, TYPE_SERIALIZABLE,
                     extraValueName, value);
             intent.putExtra(extraTypeName, TYPE_SERIALIZABLE);
             intent.putExtra(extraValueName, (Serializable) value);
-            return;
-        }
-        if ((value instanceof ArrayList<?>)) {
-            ArrayList<?> arrayList = (ArrayList<?>) value;
-            String type = null;
-            if (arrayList.isEmpty()) {
-                Log.w(TAG, "Empty list at index " + index + "; assuming it's ArrayList<String>");
-            } else {
-                Object firstItem = arrayList.get(0);
-                if (!(firstItem instanceof String)) {
-                    throw new IllegalArgumentException("Unsupported ArrayList type at index "
-                            + index + ": " + firstItem);
-                }
-                logMarshalling("Adding ArrayList<String>", index, extraTypeName,
-                        TYPE_ARRAY_LIST_STRING, extraValueName, value);
-                intent.putExtra(extraTypeName, TYPE_ARRAY_LIST_STRING);
-                intent.putExtra(extraValueName, (ArrayList<String>) arrayList);
-            }
             return;
         }
 
@@ -326,13 +419,14 @@ public final class DevicePolicyManagerWrapper {
         }
         Object value = null;
         switch (type) {
+            case TYPE_ARRAY_LIST_STRING:
+            case TYPE_ARRAY_LIST_PARCELABLE:
             case TYPE_BOOLEAN:
             case TYPE_INT:
             case TYPE_LONG:
             case TYPE_STRING:
             case TYPE_PARCELABLE:
             case TYPE_SERIALIZABLE:
-            case TYPE_ARRAY_LIST_STRING:
                 value = extras.get(extraValueName);
                 logMarshalling("Got generic", index, extraTypeName, type, extraValueName,
                         value);
@@ -439,6 +533,110 @@ public final class DevicePolicyManagerWrapper {
         public String toString() {
             return "Result[code=" + resultCodeToString(code) + ", error=" + error
                     + ", extras=" + extras + ", value=" + value + "]";
+        }
+    }
+
+    /**
+     * {@link BroacastReceiver} running on current user used to relay {@link Intent intents}
+     * received by the device owner {@link BasicAdminReceiver} on system user.
+     */
+    public static final class BridgeReceiver extends BroadcastReceiver {
+
+        private static final String TAG = BridgeReceiver.class.getSimpleName();
+        private static final String EXTRA = "relayed_intent";
+
+        private static final Object LOCK = new Object();
+        private static HandlerThread sHandlerThread;
+        private static Handler sHandler;
+
+        /**
+         * Map of receivers per intent action.
+         */
+        @GuardedBy("LOCK")
+        private static final ArrayMap<String, ArrayList<BroadcastReceiver>> sRealReceivers =
+                new ArrayMap<>();
+
+        /**
+         * Called by {@code ActivityManager} to deliver an intent.
+         */
+        public BridgeReceiver() {
+            assertCurrentUserOnHeadlessSystemMode();
+            if (sHandlerThread == null) {
+                sHandlerThread = new HandlerThread("BridgeReceiverThread");
+                Log.i(TAG, "Starting thread " + sHandlerThread + " on user " + MY_USER_ID);
+                sHandlerThread.start();
+                sHandler = new Handler(sHandlerThread.getLooper());
+            }
+        }
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "BridgeReceiver received intent on user " + context.getUserId() + ": "
+                    + intent);
+            Intent realIntent = intent.getParcelableExtra(EXTRA);
+            if (realIntent == null) {
+                Log.e(TAG, "No " + EXTRA + " on intent " + intent);
+                return;
+            }
+            String action = realIntent.getAction();
+            ArrayList<BroadcastReceiver> receivers;
+            synchronized (LOCK) {
+                receivers = sRealReceivers.get(action);
+            }
+            if (receivers == null || receivers.isEmpty()) {
+                Log.e(TAG, "onReceive(): no receiver for " + action + ": " + sRealReceivers);
+                return;
+            }
+            Log.d(TAG, "Will dispatch intent to " + receivers.size() + " on handler thread");
+            receivers.forEach((r) -> sHandler.post(() ->
+                    handleDispatchIntent(r, context, realIntent)));
+        }
+
+        private void handleDispatchIntent(BroadcastReceiver receiver, Context context,
+                Intent intent) {
+            Log.d(TAG, "Dispatching " + intent + " to " + receiver + " on thread "
+                    + Thread.currentThread());
+            receiver.onReceive(context, intent);
+        }
+
+        private static void registerReceiver(Context context, BroadcastReceiver receiver,
+                IntentFilter filter) {
+            if (VERBOSE) Log.v(TAG, "registerReceiver(): " + receiver);
+            synchronized (LOCK) {
+                filter.actionsIterator().forEachRemaining((action) -> {
+                    Log.d(TAG, "Registering " + receiver + " for " + action);
+                    ArrayList<BroadcastReceiver> receivers = sRealReceivers.get(action);
+                    if (receivers == null) {
+                        receivers = new ArrayList<>();
+                        if (VERBOSE) Log.v(TAG, "Creating list of receivers for " + action);
+                        sRealReceivers.put(action, receivers);
+                    }
+                    receivers.add(receiver);
+                });
+            }
+        }
+
+        private static void unregisterReceiver(Context context, BroadcastReceiver receiver) {
+            if (VERBOSE) Log.v(TAG, "unregisterReceiver(): " + receiver);
+
+            synchronized (LOCK) {
+                for (int i = 0; i < sRealReceivers.size(); i++) {
+                    String action = sRealReceivers.keyAt(i);
+                    ArrayList<BroadcastReceiver> receivers = sRealReceivers.valueAt(i);
+                    boolean removed = receivers.remove(receiver);
+                    if (removed) {
+                        Log.d(TAG, "Removed " + receiver + " for action " + action);
+                    }
+                }
+            }
+        }
+
+        private static void sendBroadcast(Context context, Intent intent) {
+            int currentUserId = ActivityManager.getCurrentUser();
+            Intent bridgeIntent = new Intent(context, BridgeReceiver.class).putExtra(EXTRA, intent);
+            Log.d(TAG, "Relaying " + intent + " from user " + MY_USER_ID + " to user "
+                    + currentUserId + " using " + bridgeIntent);
+            context.sendBroadcastAsUser(bridgeIntent, UserHandle.of(currentUserId));
         }
     }
 }
