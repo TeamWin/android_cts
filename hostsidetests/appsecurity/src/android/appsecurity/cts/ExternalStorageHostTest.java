@@ -627,13 +627,22 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         int user = getDevice().getCurrentUser();
         updatePermissions(MEDIA.pkg, user, new String[] {
                 PERM_READ_EXTERNAL_STORAGE,
-        }, false);
+        }, true);
         updatePermissions(MEDIA.pkg, user, new String[] {
                 PERM_WRITE_EXTERNAL_STORAGE,
         }, false);
 
+
+        setFilePathSupportForMediaUris(true);
         runDeviceTests(MEDIA.pkg, MEDIA.clazz, "testMediaEscalation_RequestWriteFilePathSupport",
                 user);
+        setFilePathSupportForMediaUris(false);
+    }
+
+    private void setFilePathSupportForMediaUris(boolean val) throws Exception {
+        getDevice().enableAdbRoot();
+        getDevice().executeShellCommand("setprop sys.filepathsupport.mediauri " + val);
+        getDevice().disableAdbRoot();
     }
 
     @Test

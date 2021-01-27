@@ -18,6 +18,8 @@ package com.android.cts.mediastorageapp;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,12 +54,16 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingParams;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
 
+import com.google.common.io.ByteStreams;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -400,16 +406,11 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaEscalation_RequestWriteFilePathSupport() throws Exception {
-        doMediaEscalation_RequestWrite_withFilePathSupport(
-                MediaStorageTest::createAudio);
-        doMediaEscalation_RequestWrite_withFilePathSupport(
-                MediaStorageTest::createVideo);
-        doMediaEscalation_RequestWrite_withFilePathSupport(
-                MediaStorageTest::createImage);
-        doMediaEscalation_RequestWrite_withFilePathSupport(
-                MediaStorageTest::createPlaylist);
-        doMediaEscalation_RequestWrite_withFilePathSupport(
-                MediaStorageTest::createSubtitle);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createImage);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createPlaylist);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createSubtitle);
     }
 
     private void doMediaEscalation_RequestWrite_withFilePathSupport(
@@ -418,12 +419,12 @@ public class MediaStorageTest {
         assertNotNull(red);
         String path = queryForSingleColumn(red, MediaColumns.DATA);
         File file = new File(path);
-        assertTrue(file.exists());
-        assertTrue(file.canRead());
-        assertTrue(file.canWrite());
+        assertThat(file.exists()).isTrue();
+        assertThat(file.canRead()).isTrue();
+        assertThat(file.canWrite()).isTrue();
 
         clearMediaOwner(red, mUserId);
-        assertFalse(file.canWrite());
+        assertThat(file.canWrite()).isFalse();
 
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
             fail("Expected write access to be blocked");
@@ -435,13 +436,27 @@ public class MediaStorageTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
         }
 
-        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
-        final UiDevice device = UiDevice.getInstance(inst);
-        device.executeShellCommand("setprop sys.filepathsupport.mediauri true");
-        assertTrue(file.canRead());
-        assertTrue(file.canWrite());
-        // TODO(b/173648980): Write to file and read back to verify.
-        device.executeShellCommand("setprop sys.filepathsupport.mediauri false");
+        // Check File API support
+        assertAccessFileAPISupport(file);
+        assertReadWriteFileAPISupport(file);
+    }
+
+    private void assertAccessFileAPISupport(File file) throws Exception {
+        assertThat(file.canRead()).isTrue();
+        assertThat(file.canWrite()).isTrue();
+    }
+
+    private void assertReadWriteFileAPISupport(File file) throws Exception {
+        final String str = "Just some random text";
+        final byte[] bytes = str.getBytes();
+        // Write to file
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(bytes);
+        }
+        // Read the same data from file
+        try (FileInputStream fis = new FileInputStream(file)) {
+            assertThat(ByteStreams.toByteArray(fis)).isEqualTo(bytes);
+        }
     }
 
     @Test
