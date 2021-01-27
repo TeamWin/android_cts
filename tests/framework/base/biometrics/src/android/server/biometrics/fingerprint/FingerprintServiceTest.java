@@ -41,6 +41,7 @@ import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.UiDeviceUtils;
 import android.server.wm.WindowManagerState;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -123,9 +124,16 @@ public class FingerprintServiceTest extends BiometricTestBase {
         final SensorStates sensorStates = getCurrentState();
         for (int i = 0; i < sensorStates.sensorStates.size(); i++) {
             final SensorState sensorState = sensorStates.sensorStates.valueAt(i);
+            final int sensorId = sensorStates.sensorStates.keyAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
+                final int userId = sensorState.getUserStates().keyAt(j);
                 final UserState userState = sensorState.getUserStates().valueAt(j);
-                assertEquals(0, userState.numEnrolled);
+                if (userState.numEnrolled != 0) {
+                    Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
+                    BiometricTestSession session = mFingerprintManager.createTestSession(sensorId);
+                    session.cleanupInternalState(userId);
+                    session.close();
+                }
             }
         }
 
