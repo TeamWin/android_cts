@@ -54,6 +54,7 @@ android_test {
         "src/**/*.java",
         "src/android/security/cts/activity/ISecureRandomService.aidl",
         "aidl/android/security/cts/IIsolatedService.aidl",
+        "aidl/android/security/cts/CVE_2021_0327/IBadProvider.aidl",
     ],
     //sdk_version: "current",
     platform_apis: true,
