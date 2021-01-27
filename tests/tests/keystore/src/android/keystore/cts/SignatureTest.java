@@ -562,61 +562,6 @@ public class SignatureTest extends AndroidTestCase {
         }
     }
 
-    public void testEntropyConsumption() throws Exception {
-        // Assert that signature generation consumes the correct amount of entropy from the provided
-        // SecureRandom. There is no need to check that Signature.verify does not consume entropy
-        // because Signature.initVerify does not take a SecureRandom.
-
-        Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
-        assertNotNull(provider);
-
-        CountingSecureRandom rng = new CountingSecureRandom();
-        for (String sigAlgorithm : EXPECTED_SIGNATURE_ALGORITHMS) {
-            for (ImportedKey key : importKatKeyPairsForSigning(getContext(), sigAlgorithm)) {
-                if (!TestUtils.isKeyLongEnoughForSignatureAlgorithm(
-                        sigAlgorithm, key.getOriginalSigningKey())) {
-                    continue;
-                }
-                try {
-                    KeyPair keyPair = key.getKeystoreBackedKeyPair();
-                    PrivateKey privateKey = keyPair.getPrivate();
-                    Signature signature = Signature.getInstance(sigAlgorithm, provider);
-
-                    // Signature.initSign should not consume entropy.
-                    rng.resetCounters();
-                    signature.initSign(privateKey, rng);
-                    assertEquals(0, rng.getOutputSizeBytes());
-
-                    // Signature.update should not consume entropy.
-                    byte[] message = "This is a test message".getBytes("UTF-8");
-                    rng.resetCounters();
-                    signature.update(message);
-                    assertEquals(0, rng.getOutputSizeBytes());
-
-                    // Signature.sign may consume entropy.
-                    rng.resetCounters();
-                    signature.sign();
-                    int expectedEntropyBytesConsumed;
-                    String algorithmUpperCase = sigAlgorithm.toUpperCase(Locale.US);
-                    if (algorithmUpperCase.endsWith("WITHECDSA")) {
-                        expectedEntropyBytesConsumed =
-                                (TestUtils.getKeySizeBits(privateKey) + 7) / 8;
-                    } else if (algorithmUpperCase.endsWith("WITHRSA")) {
-                        expectedEntropyBytesConsumed = 0;
-                    } else if (algorithmUpperCase.endsWith("WITHRSA/PSS")) {
-                        expectedEntropyBytesConsumed = 20; // salt length
-                    } else {
-                        throw new RuntimeException("Unsupported algorithm: " + sigAlgorithm);
-                    }
-                    assertEquals(expectedEntropyBytesConsumed, rng.getOutputSizeBytes());
-                } catch (Throwable e) {
-                    throw new RuntimeException(
-                            "Failed for " + sigAlgorithm + " with key " + key.getAlias(), e);
-                }
-            }
-        }
-    }
-
     public void testSmallMsgKat() throws Exception {
         byte[] message = SHORT_MSG_KAT_MESSAGE;
 
@@ -747,8 +692,9 @@ public class SignatureTest extends AndroidTestCase {
                     signature.initVerify(keyPair.getPublic());
                     try {
                         signature.update(message);
-                        signature.verify(sigBytes);
-                        fail();
+                        if (signature.verify(sigBytes)) {
+                            fail();
+                        }
                     } catch (SignatureException expected) {}
                     continue;
                 }
