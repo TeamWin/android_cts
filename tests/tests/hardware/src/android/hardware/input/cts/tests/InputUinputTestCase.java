@@ -30,13 +30,17 @@ public class InputUinputTestCase extends InputTestCase {
     }
 
     @Override
-    protected void setUpDevice(int deviceId, String registerCommand) {
-        mUinputDevice = new UinputDevice(mInstrumentation, deviceId, registerCommand);
+    protected void setUpDevice(int id, int vendorId, int productId, int sources,
+            String registerCommand) {
+        mUinputDevice = new UinputDevice(mInstrumentation, id, vendorId, productId, sources,
+                registerCommand);
     }
 
     @Override
     protected void tearDownDevice() {
-        mUinputDevice.close();
+        if (mUinputDevice != null) {
+            mUinputDevice.close();
+        }
     }
 
     @Override

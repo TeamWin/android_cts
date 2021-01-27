@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.LargeTest;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
@@ -28,6 +29,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -46,6 +48,7 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
             TEST_PACKAGE_NAME + ".PreferredActivityDeviceTests";
     private static final String TEST_APK_NAME = "CtsPackageManagerPreferredActivityApp.apk";
     private CompatibilityBuildHelper mBuildHelper;
+    private static final int PREFERRED_ACTIVITY_WRITE_SLEEP_MS = 10000;
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -65,7 +68,7 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
         assertFalse(getDevice().isPackageInstalled(TEST_PACKAGE_NAME));
     }
 
-    @FlakyTest(bugId = 174668020)
+    @LargeTest
     @Test
     @AppModeFull
     public void testAddPreferredActivity() throws Exception {
@@ -77,13 +80,15 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
         assertTrue(runDeviceTestsWithArgs(
                 TEST_PACKAGE_NAME, TEST_CLASS_NAME, "testHasPreferredActivities",
                 Collections.singletonMap("numPreferredActivities", "1")));
+        // Wait a bit before reboot, allowing the preferred activity info to be written to disk.
+        RunUtil.getDefault().sleep(PREFERRED_ACTIVITY_WRITE_SLEEP_MS);
         getDevice().reboot();
         assertTrue(runDeviceTestsWithArgs(
                 TEST_PACKAGE_NAME, TEST_CLASS_NAME, "testHasPreferredActivities",
                 Collections.singletonMap("numPreferredActivities", "1")));
     }
 
-    @FlakyTest(bugId = 174668020)
+    @LargeTest
     @Test
     @AppModeFull
     public void testAddDuplicatedPreferredActivity() throws Exception {
@@ -98,6 +103,8 @@ public class PreferredActivityTests extends BaseHostJUnit4Test implements IBuild
         assertTrue(runDeviceTestsWithArgs(
                 TEST_PACKAGE_NAME, TEST_CLASS_NAME, "testHasPreferredActivities",
                 Collections.singletonMap("numPreferredActivities", "2")));
+        // Wait a bit before reboot, allowing the preferred activity info to be written to disk.
+        RunUtil.getDefault().sleep(PREFERRED_ACTIVITY_WRITE_SLEEP_MS);
         getDevice().reboot();
         // Test that duplicated entries are removed after reboot
         assertTrue(runDeviceTestsWithArgs(

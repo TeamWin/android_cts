@@ -18,8 +18,8 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.hardware.input.InputManager;
@@ -32,6 +32,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.cts.input.UinputDevice;
 
 import org.json.JSONArray;
@@ -44,9 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 /**
  * CTS test cases for multi device key events verification.
@@ -74,14 +72,13 @@ public class InputDeviceMultiDeviceKeyEventTest {
     private static final int GOOGLE_VENDOR_ID = 0x18d1;
     private static final int GOOGLE_VIRTUAL_KEYBOARD_ID = 0x001f;
     private static final int NUM_DEVICES = 2;
+    private static final int POLL_EVENT_TIMEOUT_SECONDS = 1;
+    private static final int RETRY_COUNT = 10;
 
-    private InputDeviceKeyLayoutMapTestActivity mActivity;
     private Instrumentation mInstrumentation;
     private InputManager mInputManager;
     private UinputDevice[] mUinputDevices = new UinputDevice[NUM_DEVICES];
     private int[] mInputManagerDeviceIds = new int[NUM_DEVICES];
-    private final BlockingQueue<KeyEvent> mEvents = new LinkedBlockingQueue<>();
-    private InputListener mInputListener;
     private final int[] mEvKeys = {
             EV_KEY_CODE_1,
             EV_KEY_CODE_2
@@ -94,13 +91,14 @@ public class InputDeviceMultiDeviceKeyEventTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        PollingCheck.waitFor(mActivityRule.getActivity()::hasWindowFocus);
         for (int i = 0; i < NUM_DEVICES; i++) {
             final int jsonDeviceId = i + 1;
             mUinputDevices[i] = new UinputDevice(mInstrumentation, jsonDeviceId,
+                GOOGLE_VENDOR_ID, GOOGLE_VIRTUAL_KEYBOARD_ID + jsonDeviceId,
+                InputDevice.SOURCE_KEYBOARD,
                 createDeviceRegisterCommand(jsonDeviceId, mEvKeys));
         }
-        mInputListener = new InputListener();
-        mActivityRule.getActivity().setInputCallback(mInputListener);
 
         mInputManager = mInstrumentation.getContext().getSystemService(InputManager.class);
         final int[] inputDeviceIds = mInputManager.getInputDeviceIds();
@@ -117,17 +115,8 @@ public class InputDeviceMultiDeviceKeyEventTest {
     @After
     public void tearDown() {
         for (int i = 0; i < NUM_DEVICES; i++) {
-            mUinputDevices[i].close();
-        }
-    }
-
-    private class InputListener implements InputCallback {
-        @Override
-        public void onKeyEvent(KeyEvent ev) {
-            try {
-                mEvents.put(new KeyEvent(ev));
-            } catch (InterruptedException ex) {
-                fail("interrupted while adding a KeyEvent to the queue");
+            if (mUinputDevices[i] != null) {
+                mUinputDevices[i].close();
             }
         }
     }
@@ -176,28 +165,29 @@ public class InputDeviceMultiDeviceKeyEventTest {
 
     /**
      * Get a KeyEvent from event queue or timeout.
+     * The test activity instance may change in the middle, calling getKeyEvent with the old
+     * activity instance will get timed out when test activity instance changed. Rather than
+     * doing a long wait for timeout with same activity instance, break the polling into a number
+     * of retries and each time of retry call the ActivityTestRule.getActivity for current activity
+     * instance to avoid the test failure because of polling the old activity instance get timed
+     * out consequently failed the test.
+     *
+     * @param retryCount The times to retry get KeyEvent from test activity.
      *
      * @return KeyEvent delivered to test activity, null if timeout.
      */
-    private KeyEvent getKeyEvent() {
-        try {
-            KeyEvent receivedKeyEvent = mEvents.poll(5, TimeUnit.SECONDS);
-            if (receivedKeyEvent == null) {
-                fail("Did not receive any key event");
+    private KeyEvent getKeyEvent(int retryCount) {
+        for (int i = 0; i < retryCount; i++) {
+            KeyEvent event = mActivityRule.getActivity().getKeyEvent(POLL_EVENT_TIMEOUT_SECONDS);
+            if (event != null) {
+                return event;
             }
-            return receivedKeyEvent;
-        } catch (InterruptedException e) {
-            throw new RuntimeException("unexpectedly interrupted while waiting for InputEvent", e);
         }
+        return null;
     }
 
     private void assertNoKeyEvent() {
-        try {
-            KeyEvent receivedKeyEvent = mEvents.poll(5, TimeUnit.SECONDS);
-            assertNull(receivedKeyEvent);
-        } catch (InterruptedException e) {
-            throw new RuntimeException("unexpectedly interrupted while waiting for InputEvent", e);
-        }
+        assertNull(getKeyEvent(1 /* retryCount */));
     }
 
     /**
@@ -213,8 +203,9 @@ public class InputDeviceMultiDeviceKeyEventTest {
     private void assertReceivedKeyEvent(@NonNull KeyEvent expectedKeyEvent) {
         assertNotEquals(expectedKeyEvent.getKeyCode(), KeyEvent.KEYCODE_UNKNOWN);
 
-        KeyEvent receivedKeyEvent = getKeyEvent();
+        KeyEvent receivedKeyEvent = getKeyEvent(RETRY_COUNT);
         String log = "Expected " + expectedKeyEvent + " Received " + receivedKeyEvent;
+        assertNotNull(log, receivedKeyEvent);
         assertEquals("DeviceId: " + log, expectedKeyEvent.getDeviceId(),
                 receivedKeyEvent.getDeviceId());
         assertEquals("Action: " + log, expectedKeyEvent.getAction(),

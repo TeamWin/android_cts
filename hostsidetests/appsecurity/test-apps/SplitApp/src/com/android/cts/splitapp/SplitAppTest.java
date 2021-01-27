@@ -34,6 +34,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
@@ -93,6 +94,11 @@ public class SplitAppTest {
     private static final String BASE_THEME_ACTIVITY = ".ThemeActivity";
     private static final String WARM_THEME_ACTIVITY = ".WarmThemeActivity";
     private static final String ROSE_THEME_ACTIVITY = ".RoseThemeActivity";
+
+    private static final ComponentName FEATURE_WARM_EMPTY_PROVIDER_NAME =
+            ComponentName.createRelative(PKG, ".feature.warm.EmptyProvider");
+    private static final ComponentName FEATURE_WARM_EMPTY_SERVICE_NAME =
+            ComponentName.createRelative(PKG, ".feature.warm.EmptyService");
 
     @Rule
     public ActivityTestRule<Activity> mActivityRule =
@@ -734,6 +740,45 @@ public class SplitAppTest {
     }
 
     @Test
+    public void testComponentWithSplitName_singleBase() {
+        final PackageManager pm = getContext().getPackageManager();
+        final Intent intent = new Intent("com.android.cts.splitapp.intent.SPLIT_NAME_TEST");
+        intent.setPackage(PKG);
+
+        // Service with split name `feature_warm` cannot be found
+        List<ResolveInfo> resolveInfoList = pm.queryIntentServices(intent, 0);
+        assertThat(resolveInfoList.stream().noneMatch(resolveInfo -> getComponentName(resolveInfo)
+                .equals(FEATURE_WARM_EMPTY_SERVICE_NAME))).isTrue();
+
+        // Provider with split name `feature_warm` cannot be found
+        resolveInfoList = pm.queryIntentContentProviders(intent, 0);
+        assertThat(resolveInfoList.stream().noneMatch(resolveInfo -> getComponentName(resolveInfo)
+                .equals(FEATURE_WARM_EMPTY_PROVIDER_NAME))).isTrue();
+    }
+
+    @Test
+    public void testComponentWithSplitName_featureWarmInstalled() throws Exception {
+        final PackageManager pm = getContext().getPackageManager();
+        final Intent intent = new Intent("com.android.cts.splitapp.intent.SPLIT_NAME_TEST");
+        intent.setPackage(PKG);
+
+        // Service with split name `feature_warm` could be found
+        List<ResolveInfo> resolveInfoList = pm.queryIntentServices(intent, 0);
+        assertThat(resolveInfoList.stream().anyMatch(resolveInfo -> getComponentName(resolveInfo)
+                .equals(FEATURE_WARM_EMPTY_SERVICE_NAME))).isTrue();
+
+        // Provider with split name `feature_warm` could be found
+        resolveInfoList = pm.queryIntentContentProviders(intent, 0);
+        assertThat(resolveInfoList.stream().anyMatch(resolveInfo -> getComponentName(resolveInfo)
+                .equals(FEATURE_WARM_EMPTY_PROVIDER_NAME))).isTrue();
+
+        // And assert that we spun up the provider in this process
+        final Class<?> provider = Class.forName(FEATURE_WARM_EMPTY_PROVIDER_NAME.getClassName());
+        final Field field = provider.getDeclaredField("sCreated");
+        assertThat((boolean) field.get(null)).isTrue();
+    }
+
+    @Test
     public void launchBaseActivity_withThemeBase_baseApplied() {
         assertActivityLaunchedAndThemeApplied(BASE_THEME_ACTIVITY, R.style.Theme_Base,
                 ThemeColors.BASE);
@@ -905,5 +950,15 @@ public class SplitAppTest {
         intent.setComponent(ComponentName.createRelative(PKG, activityName));
         intent.putExtra(ThemeActivity.EXTRAS_THEME_RES_ID, themeResId);
         return intent;
+    }
+
+    private static ComponentName getComponentName(ResolveInfo resolveInfo) {
+        final ComponentInfo componentInfo = resolveInfo.activityInfo != null
+                ? resolveInfo.activityInfo : resolveInfo.serviceInfo != null
+                ? resolveInfo.serviceInfo : resolveInfo.providerInfo;
+        if (componentInfo == null) {
+            throw new AssertionError("Missing ComponentInfo in the ResolveInfo!");
+        }
+        return new ComponentName(componentInfo.packageName, componentInfo.name);
     }
 }

@@ -24,6 +24,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -755,6 +757,79 @@ public class SipDelegateManagerTest {
         assertEquals(m.getStartLine(), unparcel.getStartLine());
         assertEquals(m.getHeaderSection(), unparcel.getHeaderSection());
         assertTrue(Arrays.equals(m.getContent(), unparcel.getContent()));
+    }
+
+    @Test
+    public void testEncodeSipMessage() {
+        String startLine =
+                "INVITE sip:12345678@[2607:fc20:3806:2a44:0:6:42ae:5b01]:49155 SIP/2.0\r\n";
+        String header = "Via: SIP/2.0/TCP [FD00:976A:C202:1808::1]:65529;"
+                + "branch=z9hG4bKg3Zqkv7iivdfzmfqu68sro3cuht97q846\r\n"
+                + "To: <sip:12345678;phone-context=xxx.com@xxx.com;"
+                + "user=phone>\r\n"
+                + "From: <sip:12345679@xxx.com>;"
+                + "tag=h7g4Esbg_mavodi-e-10b-123-6-ffffffff-_000050B04074-79e-fc9b8700-29df65"
+                + "-5f3e5811-27196\r\n"
+                + "Call-ID: 000050B04074-79e-fc9b8700-29df64-5f3e5811-26fa8\r\n";
+        byte[] content1 = ("v=0\r\n"
+                + "o=- 10 1000 IN IP6 FD00:976A:C202:1808::1\r\n"
+                + "s=VOIP\r\n"
+                + "c=IN IP6 fd00:976a:c002:1940::4\r\n").getBytes(UTF_8);
+        byte[] content2 = new byte[0];
+
+        SipMessage m = new SipMessage(startLine, header, content1);
+        byte[] encodedMsg = m.getEncodedMessage();
+        String decodedStr = new String(encodedMsg, UTF_8);
+        SipMessage decodedMsg = generateSipMessage(decodedStr);
+        assertEquals(decodedMsg.getStartLine(), m.getStartLine());
+        assertEquals(decodedMsg.getHeaderSection(), m.getHeaderSection());
+        assertTrue(Arrays.equals(decodedMsg.getContent(), m.getContent()));
+
+        // Test empty content
+        m = new SipMessage(startLine, header, content2);
+        encodedMsg = m.getEncodedMessage();
+        decodedStr = new String(encodedMsg, UTF_8);
+        decodedMsg = generateSipMessage(decodedStr);
+        assertEquals(decodedMsg.getStartLine(), m.getStartLine());
+        assertEquals(decodedMsg.getHeaderSection(), m.getHeaderSection());
+        assertTrue(Arrays.equals(decodedMsg.getContent(), m.getContent()));
+    }
+
+    private SipMessage generateSipMessage(String str) {
+        String crlf = "\r\n";
+        String[] components = str.split(crlf);
+        String startLine = "";
+        String header = "";
+        String content = "";
+        StringBuilder sb = new StringBuilder();
+        int idx = 1;
+        if (components.length > 0) {
+            startLine = components[0] + crlf;
+        }
+        // generate sip header
+        idx = composeSipSection(idx, components, sb);
+        header = sb.toString();
+
+        idx++;
+        sb.setLength(0);
+        // generate sip body
+        idx = composeSipSection(idx, components, sb);
+        content = sb.toString();
+
+        return new SipMessage(startLine, header, content.getBytes(UTF_8));
+    }
+
+    private int composeSipSection(int index, String[] components, StringBuilder sb) {
+        String crlf = "\r\n";
+        while (index < components.length) {
+            if (components[index].length() > 0) {
+                sb.append(components[index]).append(crlf);
+                index++;
+            } else {
+                break;
+            }
+        }
+        return index;
     }
 
     private void createSipDelegateConnectionNoDelegateExpected(SipDelegateManager manager,

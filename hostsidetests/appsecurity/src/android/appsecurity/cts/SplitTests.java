@@ -84,6 +84,10 @@ public class SplitTests extends BaseAppSecurityTest {
     private static final String APK_REVISION_A = "CtsSplitAppRevisionA.apk";
     private static final String APK_FEATURE_WARM_REVISION_A = "CtsSplitAppFeatureWarmRevisionA.apk";
 
+    // Apk includes a provider and service declared in other split apk. And only could be tested in
+    // instant app mode.
+    static final String APK_INSTANT = "CtsSplitInstantApp.apk";
+
     static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
 
     static {
@@ -634,6 +638,15 @@ public class SplitTests extends BaseAppSecurityTest {
         runDeviceTests(PKG, CLASS, "testCodeCacheWrite");
         new InstallMultiple(instant).addArg("-r").addFile(APK_DIFF_VERSION).run();
         runDeviceTests(PKG, CLASS, "testCodeCacheRead");
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testComponentWithSplitName_instant() throws Exception {
+        new InstallMultiple(true).addFile(APK_INSTANT).run();
+        runDeviceTests(PKG, CLASS, "testComponentWithSplitName_singleBase");
+        new InstallMultiple(true).inheritFrom(PKG).addFile(APK_FEATURE_WARM).run();
+        runDeviceTests(PKG, CLASS, "testComponentWithSplitName_featureWarmInstalled");
     }
 
     @Test

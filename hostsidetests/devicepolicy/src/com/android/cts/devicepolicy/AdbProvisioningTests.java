@@ -45,9 +45,6 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Test
     public void testAdbDeviceOwnerLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             setDeviceOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
                     /* expectFailure */ false);
@@ -60,9 +57,6 @@ public class AdbProvisioningTests extends BaseDevicePolicyTest {
 
     @Test
     public void testAdbProfileOwnerLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             setProfileOwner(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mPrimaryUserId,
                     /* expectFailure */ false);

@@ -16,14 +16,20 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.fail;
+
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
+
 public class InputDeviceKeyLayoutMapTestActivity extends Activity {
     private static final String TAG = "InputDeviceKeyLayoutMapTestActivity";
 
-    private InputCallback mInputCallback;
+    private final BlockingQueue<KeyEvent> mEvents = new LinkedBlockingQueue<>();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -32,13 +38,25 @@ public class InputDeviceKeyLayoutMapTestActivity extends Activity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent ev) {
-        if (mInputCallback != null) {
-            mInputCallback.onKeyEvent(ev);
+        try {
+            mEvents.put(new KeyEvent(ev));
+        } catch (InterruptedException ex) {
+            fail("interrupted while adding a KeyEvent to the queue");
         }
         return true;
     }
 
-    public void setInputCallback(InputCallback callback) {
-        mInputCallback = callback;
+    /**
+     * Get a KeyEvent from event queue or timeout.
+     * @param timeoutSeconds Timeout in unit of second
+     * @return KeyEvent delivered to test activity, null if timeout.
+     */
+    public KeyEvent getKeyEvent(int timeoutSeconds) {
+        try {
+            return mEvents.poll(timeoutSeconds, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("unexpectedly interrupted while waiting for InputEvent", e);
+        }
     }
+
 }

@@ -105,10 +105,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         setUpDelegatedCertInstallerAndRunTests(() ->
                 runDeviceTestsAsUser("com.android.cts.certinstaller",
                         ".DelegatedDeviceIdAttestationTest",
@@ -151,17 +147,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testAdminConfiguredNetworks() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mPrimaryUserId);
     }
 
     @Test
     public void testSetTime() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_VALUE)
@@ -173,9 +163,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSetTimeZone() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_ZONE_VALUE)
@@ -216,9 +203,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
 
@@ -231,10 +215,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceFeatureUtils",
                     "testHasFactoryResetProtectionPolicy", mUserId);
@@ -256,9 +236,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testCommonCriteriaMode() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
     }
 
@@ -266,18 +243,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     @Ignore("b/145932189")
     public void testSystemUpdatePolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
     }
 
     @Test
     public void testInstallUpdate() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         pushUpdateFileToDevice("notZip.zi");
         pushUpdateFileToDevice("empty.zip");
         pushUpdateFileToDevice("wrongPayload.zip");
@@ -306,9 +276,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest(bugId = 137093665)
     @Test
     public void testSecurityLoggingWithSingleUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Backup stay awake setting because testGenerateLogs() will turn it off.
         final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
         try {
@@ -351,9 +318,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingEnabledLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
@@ -388,9 +352,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLocationPermissionGrantNotifies() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppPermissionAppAsUser();
         configureNotificationListener();
         executeDeviceTestMethod(".PermissionsTest",

@@ -77,15 +77,19 @@ public class InputHidTestCase extends InputTestCase {
     }
 
     @Override
-    protected void setUpDevice(int deviceId, String registerCommand) {
-        mDeviceId = deviceId;
-        mHidDevice = new HidDevice(mInstrumentation, deviceId, registerCommand);
+    protected void setUpDevice(int id, int vendorId, int productId, int sources,
+            String registerCommand) {
+        mDeviceId = id;
+        mHidDevice = new HidDevice(mInstrumentation, id, vendorId, productId, sources,
+                registerCommand);
         assertNotNull(mHidDevice);
     }
 
     @Override
     protected void tearDownDevice() {
-        mHidDevice.close();
+        if (mHidDevice != null) {
+            mHidDevice.close();
+        }
     }
 
     @Override

@@ -97,9 +97,6 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_notForegroundLauncher() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 TEST_PACKAGE,
                 TEST_CLASS,
@@ -111,9 +108,6 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     @LargeTest
     @Test
     public void testQuietMode_notDefaultLauncher() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(
                 TEST_PACKAGE,
                 TEST_CLASS,
@@ -137,9 +131,6 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
 
     private void checkBroadcastManagedProfileAvailable(boolean withCrossProfileAppOps)
             throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installCrossProfileApps();
         if (withCrossProfileAppOps) {
             enableCrossProfileAppsOp();
