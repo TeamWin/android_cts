@@ -26,6 +26,7 @@ import android.cts.statsdatom.lib.ReportUtils;
 import android.os.WakeLockLevelEnum;
 import android.server.ErrorSource;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.internal.os.StatsdConfigProto.FieldValueMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
 import com.android.os.AtomsProto;
@@ -58,6 +59,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
+import com.android.tradefed.util.Pair;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -132,29 +134,54 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getState()).isEqualTo(AppBreadcrumbReported.State.START);
     }
 
+    private boolean shouldTestLmkdStats() throws Exception {
+        boolean hasKernel = DeviceUtils.isKernelGreaterEqual(getDevice(), Pair.create(4, 19));
+        boolean hasFirstApiLevel = PropertyUtil.getFirstApiLevel(getDevice()) > 30;
+        return (hasKernel && hasFirstApiLevel)
+                || "true".equals(DeviceUtils.getProperty(getDevice(), "ro.lmk.log_stats"));
+    }
+
     public void testLmkKillOccurred() throws Exception {
-        if (!"true".equals(DeviceUtils.getProperty(getDevice(), "ro.lmk.log_stats"))) {
+        if (!shouldTestLmkdStats()) {
+            LogUtil.CLog.d("Skipping lmkd stats test.");
             return;
         }
 
-        final int atomTag = Atom.LMK_KILL_OCCURRED_FIELD_NUMBER;
-        final String actionLmk = "action.lmk";
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                atomTag,  /*uidInAttributionChain=*/false);
-
-        DeviceUtils.executeBackgroundService(getDevice(), actionLmk);
-        Thread.sleep(15_000);
-
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+                Atom.LMK_KILL_OCCURRED_FIELD_NUMBER,  /*uidInAttributionChain=*/false);
         int appUid = DeviceUtils.getStatsdTestAppUid(getDevice());
 
-        assertThat(data).hasSize(1);
-        assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
-        LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-        assertThat(atom.getUid()).isEqualTo(appUid);
-        assertThat(atom.getProcessName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        assertThat(atom.getOomAdjScore()).isAtLeast(500);
+        // Start the victim process (service running in process :lmk_victim)
+        // We rely on a victim process (instead of expecting the allocating process to die)
+        // because it can be flaky and dependent on lmkd configuration
+        // (e.g. the OOM reaper can get to it first, depending on the allocation timings)
+        DeviceUtils.executeServiceAction(getDevice(), "LmkVictimBackgroundService",
+                "action.end_immediately");
+        // Start fg activity and allocate
+        try (AutoCloseable a = DeviceUtils.withActivity(
+                getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "StatsdCtsForegroundActivity", "action", "action.lmk")) {
+            // Sorted list of events in order in which they occurred.
+            List<EventMetricData> data = null;
+            for (int i = 0; i < 60; ++i) {
+                Thread.sleep(1_000);
+                data = ReportUtils.getEventMetricDataList(getDevice());
+                if (!data.isEmpty()) {
+                  break;
+                }
+            }
+
+            assertThat(data).isNotEmpty();
+            // Even though both processes might have died, the non-fg one (victim)
+            // must have been first.
+            assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
+            LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
+            assertThat(atom.getUid()).isEqualTo(appUid);
+            assertThat(atom.getProcessName())
+                    .isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG + ":lmk_victim");
+            assertThat(atom.getOomAdjScore()).isAtLeast(500);
+            assertThat(atom.getRssInBytes() + atom.getSwapInBytes()).isGreaterThan(0);
+      }
     }
 
     public void testAppCrashOccurred() throws Exception {
