@@ -856,7 +856,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                     assertThat("Software KM is version 3", attestation.getKeymasterVersion(),
                             is(3));
                     assertThat(softwareEnforced.getOsVersion(), is(systemOsVersion));
-                    checkSystemPatchLevel(teeEnforced.getOsPatchLevel(), systemPatchLevel);
+                    checkSystemPatchLevel(softwareEnforced.getOsPatchLevel(), systemPatchLevel);
                 }
 
                 assertNull("Software attestation cannot provide root of trust",
