@@ -20,8 +20,12 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
     private int mCurrentUserId;
 
     @Override
-    public void setUp() throws Exception {
+    protected void assumeTestEnabled() throws Exception {
         assumeHasSecureLockScreenFeature();
+    }
+
+    @Override
+    public void setUp() throws Exception {
         super.setUp();
 
         if (!getDevice().executeShellCommand("cmd lock_settings verify")
@@ -35,8 +39,6 @@ public class PasswordComplexityTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (!isTestEnabled()) return;
-
         getDevice().uninstallPackage(PKG);
 
         super.tearDown();

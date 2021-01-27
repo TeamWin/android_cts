@@ -65,10 +65,9 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            assertTrue("Failed to remove device owner",
+        assertTrue("Failed to remove device owner",
                     removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId));
-        }
+
         super.tearDown();
     }
 

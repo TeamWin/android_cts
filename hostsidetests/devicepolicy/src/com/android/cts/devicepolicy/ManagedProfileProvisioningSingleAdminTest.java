@@ -15,7 +15,11 @@
  */
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.FlakyTest;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
 import org.junit.Test;
 
@@ -24,6 +28,8 @@ import org.junit.Test;
  * BIND_DEVICE_ADMIN permissions, which was a requirement for the app sending the
  * ACTION_PROVISION_MANAGED_PROFILE intent before Android M.
  */
+// We need multi user to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyTest {
 
     private static final String SINGLE_ADMIN_PKG = "com.android.cts.devicepolicy.singleadmin";
@@ -35,8 +41,6 @@ public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyT
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need multi user to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
 
         removeTestUsers();
         installAppAsUser(SINGLE_ADMIN_APP_APK, mPrimaryUserId);
@@ -45,12 +49,11 @@ public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyT
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            if (mProfileUserId != 0) {
-                removeUser(mProfileUserId);
-            }
-            getDevice().uninstallPackage(SINGLE_ADMIN_PKG);
+        if (mProfileUserId != 0) {
+            removeUser(mProfileUserId);
         }
+        getDevice().uninstallPackage(SINGLE_ADMIN_PKG);
+
         super.tearDown();
     }
 
