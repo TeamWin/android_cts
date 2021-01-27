@@ -195,31 +195,30 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
-            getDevice().uninstallPackage(PERMISSIONS_APP_PKG);
-            getDevice().uninstallPackage(SIMPLE_PRE_M_APP_PKG);
-            getDevice().uninstallPackage(APP_RESTRICTIONS_TARGET_APP_PKG);
-            getDevice().uninstallPackage(CERT_INSTALLER_PKG);
-            getDevice().uninstallPackage(DELEGATE_APP_PKG);
-            getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
-            getDevice().uninstallPackage(VPN_APP_PKG);
-            getDevice().uninstallPackage(VPN_APP_API23_APK);
-            getDevice().uninstallPackage(VPN_APP_API24_APK);
-            getDevice().uninstallPackage(VPN_APP_NOT_ALWAYS_ON_APK);
-            getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
-            getDevice().uninstallPackage(INTENT_SENDER_PKG);
-            getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
-            getDevice().uninstallPackage(AUTOFILL_APP_PKG);
-            getDevice().uninstallPackage(CONTENT_CAPTURE_SERVICE_PKG);
-            getDevice().uninstallPackage(CONTENT_CAPTURE_APP_PKG);
-            getDevice().uninstallPackage(PRINTING_APP_PKG);
-            getDevice().uninstallPackage(METERED_DATA_APP_PKG);
-            getDevice().uninstallPackage(TEST_APP_PKG);
+        getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+        getDevice().uninstallPackage(PERMISSIONS_APP_PKG);
+        getDevice().uninstallPackage(SIMPLE_PRE_M_APP_PKG);
+        getDevice().uninstallPackage(APP_RESTRICTIONS_TARGET_APP_PKG);
+        getDevice().uninstallPackage(CERT_INSTALLER_PKG);
+        getDevice().uninstallPackage(DELEGATE_APP_PKG);
+        getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
+        getDevice().uninstallPackage(VPN_APP_PKG);
+        getDevice().uninstallPackage(VPN_APP_API23_APK);
+        getDevice().uninstallPackage(VPN_APP_API24_APK);
+        getDevice().uninstallPackage(VPN_APP_NOT_ALWAYS_ON_APK);
+        getDevice().uninstallPackage(INTENT_RECEIVER_PKG);
+        getDevice().uninstallPackage(INTENT_SENDER_PKG);
+        getDevice().uninstallPackage(CUSTOMIZATION_APP_PKG);
+        getDevice().uninstallPackage(AUTOFILL_APP_PKG);
+        getDevice().uninstallPackage(CONTENT_CAPTURE_SERVICE_PKG);
+        getDevice().uninstallPackage(CONTENT_CAPTURE_APP_PKG);
+        getDevice().uninstallPackage(PRINTING_APP_PKG);
+        getDevice().uninstallPackage(METERED_DATA_APP_PKG);
+        getDevice().uninstallPackage(TEST_APP_PKG);
 
-            // Press the HOME key to close any alart dialog that may be shown.
-            getDevice().executeShellCommand("input keyevent 3");
-        }
+        // Press the HOME key to close any alart dialog that may be shown.
+        getDevice().executeShellCommand("input keyevent 3");
+
         super.tearDown();
     }
 

@@ -16,9 +16,12 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -29,6 +32,8 @@ import org.junit.Test;
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
+// We need managed users to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
@@ -38,12 +43,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void setUp() throws Exception {
-        // TODO(b/169341308): if this assumption is failed, super.setup() is not called and
-        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
-        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
-        // We need managed users to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
-
         super.setUp();
 
         removeTestUsers();
@@ -63,9 +62,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeUser(mUserId);
-        }
+        removeUser(mUserId);
+
         super.tearDown();
     }
 

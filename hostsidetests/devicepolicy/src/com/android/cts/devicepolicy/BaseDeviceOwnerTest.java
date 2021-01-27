@@ -40,8 +40,6 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeHasFeature();
-
         installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
                 /*expectFailure*/ false);
@@ -59,13 +57,11 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
-                // Don't fail as it could hide the real failure from the test method
-                CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);
-            }
-            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
+            // Don't fail as it could hide the real failure from the test method
+            CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);
         }
+        getDevice().uninstallPackage(DEVICE_OWNER_PKG);
 
         super.tearDown();
     }

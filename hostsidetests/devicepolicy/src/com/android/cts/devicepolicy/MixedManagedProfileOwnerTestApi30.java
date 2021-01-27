@@ -16,21 +16,24 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+
 import org.junit.Test;
 
 /**
  * Set of tests for managed profile owner use cases that may also apply to device owner.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTestApi30.
  */
+// We need managed users to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class MixedManagedProfileOwnerTestApi30 extends DeviceAndProfileOwnerTestApi30 {
     private int mParentUserId = -1;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-
-        // We need managed users to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
 
         removeTestUsers();
         mParentUserId = mPrimaryUserId;
@@ -49,9 +52,8 @@ public class MixedManagedProfileOwnerTestApi30 extends DeviceAndProfileOwnerTest
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeUser(mUserId);
-        }
+        removeUser(mUserId);
+
         super.tearDown();
     }
 

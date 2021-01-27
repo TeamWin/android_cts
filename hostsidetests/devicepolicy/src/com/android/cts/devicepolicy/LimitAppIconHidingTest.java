@@ -36,11 +36,12 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
     private int mCurrentUserId;
 
     @Override
-    public void setUp() throws Exception {
-        // TODO(b/169341308): if this assumption is failed, super.setup() is not called and
-        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
-        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
+    protected void assumeTestEnabled() throws Exception {
         assumeApiLevel(21);
+    }
+
+    @Override
+    public void setUp() throws Exception {
         super.setUp();
 
         mCurrentUserId = getDevice().getCurrentUser();
@@ -51,9 +52,8 @@ public class LimitAppIconHidingTest extends BaseLauncherAppsTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            uninstallTestApps();
-        }
+        uninstallTestApps();
+
         super.tearDown();
     }
 

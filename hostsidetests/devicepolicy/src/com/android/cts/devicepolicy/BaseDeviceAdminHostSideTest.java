@@ -63,10 +63,8 @@ public abstract class BaseDeviceAdminHostSideTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            assertTrue("Failed to remove admin", removeAdmin(getAdminReceiverComponent(), mUserId));
-            getDevice().uninstallPackage(getDeviceAdminApkPackage());
-        }
+        assertTrue("Failed to remove admin", removeAdmin(getAdminReceiverComponent(), mUserId));
+        getDevice().uninstallPackage(getDeviceAdminApkPackage());
 
         super.tearDown();
     }
