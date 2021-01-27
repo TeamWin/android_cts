@@ -29,7 +29,9 @@ import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderEffect;
@@ -41,6 +43,7 @@ import android.uirendering.cts.bitmapverifiers.BlurPixelVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
 import android.uirendering.cts.bitmapverifiers.RegionVerifier;
+import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -756,6 +759,42 @@ public class RenderNodeTests extends ActivityTestBase {
                                 )
             );
     }
+
+    @Test
+    public void testShaderRenderEffect() {
+        LinearGradient gradient = new LinearGradient(
+                0f, 0f,
+                0f, TEST_HEIGHT,
+                new int[] { Color.RED, Color.BLUE },
+                null,
+                Shader.TileMode.CLAMP
+        );
+
+        RenderEffect shaderEffect = RenderEffect.createShaderEffect(gradient);
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setRenderEffect(shaderEffect);
+        renderNode.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        {
+            Canvas recordingCanvas = renderNode.beginRecording();
+            recordingCanvas.drawRect(0, 0, TEST_WIDTH, TEST_HEIGHT, new Paint());
+            renderNode.endRecording();
+        }
+
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(
+                    new SamplePointVerifier(
+                            new Point[] {
+                                    new Point(0, 0),
+                                    new Point(0, TEST_HEIGHT - 1)
+                            },
+                            new int[] { Color.RED, Color.BLUE }
+                    )
+            );
+    }
+
 
     @Test
     public void testBlurShaderLargeRadiiEdgeReplication() {
