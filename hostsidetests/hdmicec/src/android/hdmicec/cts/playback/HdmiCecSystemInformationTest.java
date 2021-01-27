@@ -33,6 +33,8 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.TimeUnit;
+
 /** HDMI CEC system information tests (Section 11.2.6) */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
@@ -97,6 +99,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
         try {
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
                     CecOperand.SET_MENU_LANGUAGE, CecMessage.convertStringToHexParams(language));
+            TimeUnit.SECONDS.sleep(5);
             assertThat(extractLanguage(getSystemLocale())).isEqualTo(newLanguage);
         } finally {
             setSystemLocale(locale);
