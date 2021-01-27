@@ -439,6 +439,7 @@ public class MediaStorageTest {
         // Check File API support
         assertAccessFileAPISupport(file);
         assertReadWriteFileAPISupport(file);
+        assertDeleteFileAPISupport(file);
     }
 
     private void assertAccessFileAPISupport(File file) throws Exception {
@@ -457,6 +458,10 @@ public class MediaStorageTest {
         try (FileInputStream fis = new FileInputStream(file)) {
             assertThat(ByteStreams.toByteArray(fis)).isEqualTo(bytes);
         }
+    }
+
+    private void assertDeleteFileAPISupport(File file) throws Exception {
+        assertThat(file.delete()).isTrue();
     }
 
     @Test
