@@ -369,6 +369,15 @@ public class ScopedStorageTest {
     }
 
     @Test
+    public void testManageExternalStorageCannotRenameAndroid() throws Exception {
+        pollForManageExternalStorageAllowed();
+
+        final File androidDir = getAndroidDir();
+        final File fooDir = new File(getAndroidDir().getAbsolutePath() + "foo");
+        assertThat(androidDir.renameTo(fooDir)).isFalse();
+    }
+
+    @Test
     public void testManageExternalStorageReaddir() throws Exception {
         pollForManageExternalStorageAllowed();
 
