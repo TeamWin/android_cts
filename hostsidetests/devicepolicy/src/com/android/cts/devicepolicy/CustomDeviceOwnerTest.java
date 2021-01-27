@@ -56,9 +56,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testOwnerChangedBroadcast() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
@@ -105,9 +102,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest
     @Test
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mPrimaryUserId);
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
@@ -125,9 +119,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testIsProvisioningAllowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Must install the apk since the test runs in the DO apk.
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {

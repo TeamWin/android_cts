@@ -90,7 +90,9 @@ public class InputDeviceVibratorTest {
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
         mDeviceId = mParser.readDeviceId(resourceId);
         String registerCommand = mParser.readRegisterCommand(resourceId);
-        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId, registerCommand);
+        mUinputDevice = new UinputDevice(mInstrumentation, mDeviceId,
+                mParser.readVendorId(resourceId), mParser.readProductId(resourceId),
+                InputDevice.SOURCE_KEYBOARD, registerCommand);
         mVibrator = getVibrator(mParser.readVendorId(resourceId),
                 mParser.readProductId(resourceId));
         assertTrue(mVibrator != null);

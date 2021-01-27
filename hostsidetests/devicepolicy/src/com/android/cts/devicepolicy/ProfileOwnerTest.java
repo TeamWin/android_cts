@@ -51,25 +51,16 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testManagement() throws Exception {
-        if (!isTestEnabled()) {
-            return;
-        }
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
     public void testAdminActionBookkeeping() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
     public void testAppUsageObserver() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         executeProfileOwnerTest("AppUsageObserverTest");
     }
 
@@ -83,10 +74,6 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDevicePolicySafetyCheckerIntegration() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         executeProfileOwnerTest("DevicePolicySafetyCheckerIntegrationTest");
     }
 
@@ -102,9 +89,6 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeProfileOwnerTest(String testClassName) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         String testClass = PROFILE_OWNER_PKG + "." + testClassName;
         runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass, mPrimaryUserId);
     }

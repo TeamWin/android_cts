@@ -173,6 +173,21 @@ public class InputJsonParser {
     }
 
     /**
+     * Extract the input sources from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device sources
+     */
+    public int readSources(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return sourceFromString(json.optString("source"));
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read resource from resource " + resourceId);
+        }
+    }
+
+    /**
      * Extract the Product id from the raw resource file.
      *
      * @param resourceId resource file that contains the register command.
@@ -580,6 +595,9 @@ public class InputJsonParser {
         for (final String sourceEntry : sourceEntries) {
             final String trimmedSourceEntry = sourceEntry.trim();
             switch (trimmedSourceEntry.toUpperCase()) {
+                case "MOUSE":
+                    source |= InputDevice.SOURCE_MOUSE;
+                    break;
                 case "MOUSE_RELATIVE":
                     source |= InputDevice.SOURCE_MOUSE_RELATIVE;
                     break;
@@ -597,6 +615,9 @@ public class InputJsonParser {
                     break;
                 case "TOUCHPAD":
                     source |= InputDevice.SOURCE_TOUCHPAD;
+                    break;
+                case "SENSOR":
+                    source |= (InputDevice.SOURCE_JOYSTICK | 0x02000000);
                     break;
                 default:
                     throw new RuntimeException("Unknown source chunk: " + trimmedSourceEntry

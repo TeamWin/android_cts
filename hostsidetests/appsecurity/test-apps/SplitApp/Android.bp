@@ -150,3 +150,21 @@ android_test_helper_app {
         "general-tests",
     ],
 }
+
+// Define a variant which includes a provider and service declared in other split apk. And they only
+// could be tested in the instant app.
+android_test_helper_app {
+    name: "CtsSplitInstantApp",
+    defaults: ["CtsSplitAppDefaults"],
+    manifest : "instantapp/AndroidManifest.xml",
+    certificate: ":cts-testkey1",
+    aaptflags: [
+        "--version-code 100",
+        "--version-name OneHundred",
+        "--replace-version",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}

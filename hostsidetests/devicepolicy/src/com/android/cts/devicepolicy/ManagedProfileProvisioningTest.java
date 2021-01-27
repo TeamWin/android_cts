@@ -53,10 +53,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141747631)
     @Test
     public void testManagedProfileProvisioning() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         provisionManagedProfile();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
@@ -66,10 +62,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 127275983)
     @Test
     public void testEXTRA_PROVISIONING_ADMIN_EXTRAS_BUNDLE() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         provisionManagedProfile();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
@@ -79,10 +71,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141747631)
     @Test
     public void testVerifySuccessfulIntentWasReceived() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         provisionManagedProfile();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
@@ -92,10 +80,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141747631)
     @Test
     public void testAccountMigration() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         provisionManagedProfile();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
@@ -108,10 +92,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141747631)
     @Test
     public void testAccountCopy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         provisionManagedProfile_accountCopy();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ProvisioningTest",
@@ -124,10 +104,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141747631)
     @Test
     public void testWebview() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         // We start an activity containing WebView in another process and run provisioning to
         // test that the process is not killed.
         startActivityAsUser(mParentUserId, MANAGED_PROFILE_PKG, ".WebViewActivity");

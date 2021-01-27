@@ -27,6 +27,7 @@ android_test {
         "compatibility-common-util-devicesidelib",
         "guava",
         "platform-test-annotations",
+        "hamcrest-library",
     ],
     libs: [
         "android.test.runner",

@@ -123,9 +123,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
     }
 
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
-        final UiSelector docList = new UiSelector().resourceId(
-                getDocumentsUiPackageId() + ":id/container_directory").childSelector(
-                new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/dir_list"));
+        final UiSelector docList = new UiSelector().resourceId(getDocumentsUiPackageId() + ":id/dir_list");
 
         // Wait for the first list item to appear
         assertTrue("First list item",
@@ -140,9 +138,18 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
             //do nothing, already be in list mode.
         }
 
-        // Now scroll around to find our item
-        new UiScrollable(docList).scrollIntoView(new UiSelector().text(label));
-        return new UiObject(docList.childSelector(new UiSelector().text(label)));
+        // Repeat swipe gesture to find our item
+        // (UiScrollable#scrollIntoView does not seem to work well with SwipeRefreshLayout)
+        UiObject targetObject = new UiObject(docList.childSelector(new UiSelector().text(label)));
+        int stepLimit = 10;
+        while (!targetObject.exists() && stepLimit-- > 0) {
+            mDevice.swipe(/* startX= */ mDevice.getDisplayWidth() / 2,
+                    /* startY= */ mDevice.getDisplayHeight() / 2,
+                    /* endX= */ mDevice.getDisplayWidth() / 2,
+                    /* endY= */ 0,
+                    /* steps= */ 40);
+        }
+        return targetObject;
     }
 
     private UiObject findSaveButton() throws UiObjectNotFoundException {

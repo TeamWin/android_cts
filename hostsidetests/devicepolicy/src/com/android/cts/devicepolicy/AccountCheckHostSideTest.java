@@ -155,9 +155,6 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     @Test
     @LargeTest
     public void testAccountCheck() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(APK_AUTH, mPrimaryUserId);
         installAppAsUser(APK_NON_TEST_ONLY, mPrimaryUserId);
         installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
@@ -248,9 +245,6 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testInheritTestOnly() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
 
         // Set as DO.
