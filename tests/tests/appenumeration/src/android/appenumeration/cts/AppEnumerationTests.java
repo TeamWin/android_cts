@@ -18,6 +18,7 @@ package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
+import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
@@ -73,6 +74,7 @@ import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+import static android.os.Process.INVALID_UID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
@@ -119,6 +121,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests {
@@ -403,6 +406,15 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_NOTHING, QUERIES_NOTHING_Q);
     }
 
+    @Test
+    public void queriesNothing_cannotSeeSharedUserMembers() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SHARED_USER);
+    }
+
+    @Test
+    public void queriesNothingHasPermission_canSeeSharedUserMembers() throws Exception {
+        assertVisible(QUERIES_NOTHING_PERM, TARGET_SHARED_USER);
+    }
 
     @Test
     public void sharedUserMember_canSeeOtherMember() throws Exception {
@@ -454,13 +466,18 @@ public class AppEnumerationTests {
     private void assertVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
+        final int targetUid = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageUid(targetPackageName, /* flags */ 0);
+        Assert.assertTrue(isAppInPackageNamesArray(targetPackageName,
+                getPackagesForUid(sourcePackageName, targetUid)));
         Assert.assertNotNull(sourcePackageName + " should be able to see " + targetPackageName,
                 getPackageInfo(sourcePackageName, targetPackageName));
     }
 
     @Test
     public void broadcastAdded_notVisibleDoesNotReceive() throws Exception {
-        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS, null,
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_ADDED);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
@@ -473,7 +490,8 @@ public class AppEnumerationTests {
 
     @Test
     public void broadcastAdded_visibleReceives() throws Exception {
-        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS, null,
+        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_ADDED);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
@@ -486,7 +504,8 @@ public class AppEnumerationTests {
 
     @Test
     public void broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
-        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS, null,
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_REMOVED);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
@@ -499,7 +518,8 @@ public class AppEnumerationTests {
 
     @Test
     public void broadcastRemoved_visibleReceives() throws Exception {
-        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS, null,
+        final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_REMOVED);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
@@ -538,6 +558,10 @@ public class AppEnumerationTests {
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
+        final int targetUid = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager().getPackageUid(targetPackageName, /* flags */ 0);
+        Assert.assertFalse(isAppInPackageNamesArray(targetPackageName,
+                getPackagesForUid(sourcePackageName, targetUid)));
         try {
             getPackageInfo(sourcePackageName, targetPackageName);
             fail(sourcePackageName + " should not be able to see " + targetPackageName);
@@ -555,6 +579,11 @@ public class AppEnumerationTests {
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
         assertFalse(bindService(sourcePackageName, targetPackageName));
+    }
+
+    private boolean isAppInPackageNamesArray(String packageName, String[] packageNames) {
+        return packageNames != null && Stream.of(packageNames).anyMatch(
+                name -> name.equals(packageName));
     }
 
     interface ThrowingBiFunction<T, U, R> {
@@ -595,6 +624,13 @@ public class AppEnumerationTests {
         Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 null /*queryIntent*/, ACTION_GET_PACKAGE_INFO);
         return response.getParcelable(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] getPackagesForUid(String sourcePackageName, int targetUid)
+            throws Exception {
+        Bundle response = sendCommandBlocking(sourcePackageName, targetUid, /* intentExtra */ null,
+                ACTION_GET_PACKAGES_FOR_UID);
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)
@@ -676,9 +712,8 @@ public class AppEnumerationTests {
         Bundle await() throws Exception;
     }
 
-    private Result sendCommand(String sourcePackageName,
-            @Nullable String targetPackageName,
-            @Nullable Parcelable intentExtra, String action) {
+    private Result sendCommand(String sourcePackageName, @Nullable String targetPackageName,
+            int targetUid, @Nullable Parcelable intentExtra, String action) {
         final Intent intent = new Intent(action)
                 .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
@@ -687,6 +722,9 @@ public class AppEnumerationTests {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         if (targetPackageName != null) {
             intent.putExtra(Intent.EXTRA_PACKAGE_NAME, targetPackageName);
+        }
+        if (targetUid > INVALID_UID) {
+            intent.putExtra(Intent.EXTRA_UID, targetUid);
         }
         if (intentExtra != null) {
             if (intentExtra instanceof Intent) {
@@ -722,8 +760,16 @@ public class AppEnumerationTests {
     private Bundle sendCommandBlocking(String sourcePackageName, @Nullable String targetPackageName,
             @Nullable Parcelable intentExtra, String action)
             throws Exception {
-        Result result = sendCommand(sourcePackageName, targetPackageName, intentExtra, action);
+        final Result result = sendCommand(sourcePackageName, targetPackageName,
+                /* targetUid */ INVALID_UID, intentExtra, action);
         return result.await();
     }
 
+    private Bundle sendCommandBlocking(String sourcePackageName, int targetUid,
+            @Nullable Parcelable intentExtra, String action)
+            throws Exception {
+        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
+                targetUid, intentExtra, action);
+        return result.await();
+    }
 }
