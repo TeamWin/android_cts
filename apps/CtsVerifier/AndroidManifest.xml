@@ -2490,7 +2490,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".camera.intents.CameraIntentsActivity"
@@ -2505,7 +2505,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <service android:name=".camera.intents.CameraContentJobService"
@@ -2524,7 +2524,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity
@@ -2541,7 +2541,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
         <activity
             android:name=".camera.fov.DetermineFovActivity"
@@ -2576,7 +2576,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".camera.its.ItsTestActivity"
@@ -2594,7 +2594,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".camera.flashlight.CameraFlashlightActivity"
@@ -2624,7 +2624,7 @@
             <meta-data android:name="test_excluded_features"
                        android:value="android.hardware.type.automotive"/>
             <meta-data android:name="display_mode"
-                       android:value="multi_display_mode" />
+                       android:value="single_display_mode" />
         </activity>
 
         <activity android:name=".camera.bokeh.CameraBokehActivity"
