@@ -23,10 +23,8 @@ import static org.hamcrest.Matchers.lessThan;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.ContextWrapper;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Picture;
@@ -1798,26 +1796,22 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final ImageLoaded imageLoaded = new ImageLoaded();
         mOnUiThread.getSettings().setJavaScriptEnabled(true);
         mOnUiThread.addJavascriptInterface(imageLoaded, "imageLoaded");
-        AssetManager assets = getActivity().getAssets();
-        Bitmap bitmap = BitmapFactory.decodeStream(assets.open(TestHtmlConstants.LARGE_IMG_URL));
-        int imgWidth = bitmap.getWidth();
-        int imgHeight = bitmap.getHeight();
 
         startWebServer(false);
         final String imgUrl = mWebServer.getAssetUrl(TestHtmlConstants.LARGE_IMG_URL);
         mOnUiThread.loadDataAndWaitForCompletion(
-                "<html><head><title>Title</title><style type=\"text/css\">"
+                "<html><head><title>Title</title><style type='text/css'>"
                 + "%23imgElement { -webkit-transform: translate3d(0,0,1); }"
                 + "%23imgElement.finish { -webkit-transform: translate3d(0,0,0);"
                 + " -webkit-transition-duration: 1ms; }</style>"
-                + "<script type=\"text/javascript\">function imgLoad() {"
+                + "<script type='text/javascript'>function imgLoad() {"
                 + "imgElement = document.getElementById('imgElement');"
                 + "imgElement.addEventListener('webkitTransitionEnd',"
                 + "function(e) { imageLoaded.loaded(); });"
                 + "imgElement.className = 'finish';}</script>"
-                + "</head><body><img id=\"imgElement\" src=\"" + imgUrl
-                + "\" width=\"" + imgWidth + "\" height=\"" + imgHeight
-                + "\" onLoad=\"imgLoad()\"/></body></html>", "text/html", null);
+                + "</head><body><img id='imgElement' src='" + imgUrl
+                + "' width='100%' height='100%' onLoad='imgLoad()'/>"
+                + "</body></html>", "text/html", null);
         WebkitUtils.waitForFuture(imageLoaded.future());
         getInstrumentation().waitForIdleSync();
 
@@ -1828,12 +1822,13 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // touch the image
         handler.reset();
         int[] location = mOnUiThread.getLocationOnScreen();
+        int middleX = location[0] + mOnUiThread.getWebView().getWidth() / 2;
+        int middleY = location[1] + mOnUiThread.getWebView().getHeight() / 2;
 
         long time = SystemClock.uptimeMillis();
         getInstrumentation().sendPointerSync(
                 MotionEvent.obtain(time, time, MotionEvent.ACTION_DOWN,
-                        location[0] + imgWidth / 2,
-                        location[1] + imgHeight / 2, 0));
+                        middleX, middleY, 0));
         getInstrumentation().waitForIdleSync();
         mOnUiThread.requestImageRef(msg);
         new PollingCheck() {
