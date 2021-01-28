@@ -26,7 +26,7 @@
         <option name="force-queryable" value="false" />
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsAppEnumerationTestCases.apk" />
-        <option name="test-file-name" value="CtsAppEnumerationForceQueryable.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationForceQueryableNormalInstall.apk" />
         <option name="test-file-name" value="CtsAppEnumerationFilters.apk" />
         <option name="test-file-name" value="CtsAppEnumerationNoApi.apk" />
         <option name="test-file-name" value="CtsAppEnumerationContactsActivityTarget.apk" />
@@ -59,6 +59,12 @@
         <option name="test-file-name" value="CtsAppEnumerationWildcardShareActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardWebActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardBrowserActivitySource.apk" />
+    </target_preparer>
+
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="force-queryable" value="true" />
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsAppEnumerationForceQueryable.apk" />
     </target_preparer>
 
     <!-- Create place to store apks -->
