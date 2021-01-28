@@ -16,13 +16,17 @@
 
 package android.telephony.cts;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.OutcomeReceiver;
+import android.os.ParcelFileDescriptor;
 import android.os.ParcelUuid;
 import android.os.UserHandle;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Pair;
 
@@ -40,6 +44,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -52,16 +57,25 @@ public class CallComposerTest {
 
     private String mPreviousDefaultDialer;
     private Context mContext;
+    private boolean mPreviousTestMode;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         overrideDefaultDialer();
+        mPreviousTestMode = Boolean.parseBoolean(
+                TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                        "cmd phone callcomposer test-mode query"));
+        TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd phone callcomposer test-mode enable");
     }
 
     @After
     public void tearDown() throws Exception {
         restoreDefaultDialer();
+        TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd phone callcomposer test-mode "
+                        + (mPreviousTestMode ? "enable" : "disable"));
         Files.deleteIfExists(mContext.getFilesDir().toPath().resolve(TEST_FILE_NAME));
     }
 
@@ -71,7 +85,8 @@ public class CallComposerTest {
         byte[] imageData = getSamplePictureAsBytes();
         Files.write(testFile, imageData);
 
-        pictureUploadHelper(testFile, null, -1);
+        UUID handle = pictureUploadHelper(testFile, null, -1);
+        checkStoredData(handle, imageData);
     }
 
     @Test
@@ -79,7 +94,8 @@ public class CallComposerTest {
         byte[] imageData = getSamplePictureAsBytes();
         ByteArrayInputStream inputStream = new ByteArrayInputStream(imageData);
 
-        pictureUploadHelper(null, inputStream, -1);
+        UUID handle = pictureUploadHelper(null, inputStream, -1);
+        checkStoredData(handle, imageData);
     }
 
     @Test
@@ -107,7 +123,7 @@ public class CallComposerTest {
                 TelephonyManager.CallComposerException.ERROR_FILE_TOO_LARGE);
     }
 
-    private void pictureUploadHelper(Path inputFile, InputStream inputStream,
+    private UUID pictureUploadHelper(Path inputFile, InputStream inputStream,
             int expectedErrorCode) throws Exception {
         TelephonyManager tm = mContext.getSystemService(TelephonyManager.class);
         CompletableFuture<Pair<ParcelUuid, TelephonyManager.CallComposerException>> resultFuture =
@@ -138,7 +154,7 @@ public class CallComposerTest {
             result = resultFuture.get(TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             fail("Timed out waiting for response from TelephonyManager");
-            return;
+            return null;
         }
 
         if (result.second != null && expectedErrorCode < 0) {
@@ -160,11 +176,10 @@ public class CallComposerTest {
                 fail("Expected " + expectedError + ", got " + observedError);
             }
             // If we expected an error, the test ends here
-            return;
+            return null;
         }
 
         assertNotNull(result.first);
-        // TODO: test the actual upload and/or storage to the call log.
 
         // Make sure that any file descriptors opened to the test file have been closed.
         if (inputFile != null) {
@@ -175,6 +190,23 @@ public class CallComposerTest {
                 fail("Couldn't open+close the file after upload -- leaked fd? " + e);
             }
         }
+        return result.first.getUuid();
+    }
+
+    private void checkStoredData(UUID handle, byte[] expectedData) throws Exception {
+        String storageUri =
+                TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                        "cmd phone callcomposer simulate-outgoing-call "
+                                + SubscriptionManager.getDefaultSubscriptionId() + " "
+                                + handle.toString());
+        ParcelFileDescriptor pfd =
+                mContext.getContentResolver().openFile(Uri.parse(storageUri), "r", null);
+
+        byte[] readBytes;
+        try (InputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+            readBytes = readBytes(is);
+        }
+        assertArrayEquals(expectedData, readBytes);
     }
 
     private byte[] getSamplePictureAsBytes() throws Exception {
