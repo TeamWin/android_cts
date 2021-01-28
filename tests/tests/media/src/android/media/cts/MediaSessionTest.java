@@ -308,7 +308,8 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     /**
-     * Test whether media button receiver can be a explicit broadcast receiver.
+     * Test whether media button receiver can be a explicit broadcast receiver via
+     * MediaSession.setMediaButtonReceiver(PendingIntent).
      */
     public void testSetMediaButtonReceiver_broadcastReceiver() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
@@ -318,8 +319,8 @@ public class MediaSessionTest extends AndroidTestCase {
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
 
-        // Sets the media button receiver. Framework would try to keep the pending intent in the
-        // persistent store.
+        // Sets the media button receiver. Framework will keep the broadcast receiver component name
+        // from the pending intent in persistent storage.
         mSession.setMediaButtonReceiver(pi);
 
         // Call explicit release, so change in the media key event session can be notified with the
@@ -418,6 +419,48 @@ public class MediaSessionTest extends AndroidTestCase {
         // Also try to dispatch media key event. System would try to send key event via pending
         // intent, but it would no-op because there's no receiver.
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+    }
+
+    /**
+     * Test whether media button receiver can be a explicit broadcast receiver via
+     * MediaSession.setMediaButtonBroadcastReceiver(ComponentName)
+     */
+    public void testSetMediaButtonBroadcastReceiver_broadcastReceiver() throws Exception {
+        // Play a sound so this session can get the priority.
+        Utils.assertMediaPlaybackStarted(getContext());
+
+        // Sets the broadcast receiver's component name. Framework will keep the component name in
+        // persistent storage.
+        mSession.setMediaButtonBroadcastReceiver(new ComponentName(mContext,
+                MediaButtonBroadcastReceiver.class));
+
+        // Call explicit release, so change in the media key event session can be notified using the
+        // component name.
+        mSession.release();
+
+        int keyCode = KeyEvent.KEYCODE_MEDIA_PLAY;
+        try {
+            CountDownLatch latch = new CountDownLatch(2);
+            MediaButtonBroadcastReceiver.setCallback((keyEvent) -> {
+                assertEquals(keyCode, keyEvent.getKeyCode());
+                switch ((int) latch.getCount()) {
+                    case 2:
+                        assertEquals(KeyEvent.ACTION_DOWN, keyEvent.getAction());
+                        break;
+                    case 1:
+                        assertEquals(KeyEvent.ACTION_UP, keyEvent.getAction());
+                        break;
+                }
+                latch.countDown();
+            });
+            // Also try to dispatch media key event.
+            // System would try to dispatch event.
+            simulateMediaKeyInput(keyCode);
+
+            assertTrue(latch.await(TIME_OUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            MediaButtonBroadcastReceiver.setCallback(null);
+        }
     }
 
     /**
