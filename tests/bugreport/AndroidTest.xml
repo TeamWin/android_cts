@@ -26,6 +26,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.bugreport.cts" />
-        <option name="runtime-hint" value="3m40s" />
+        <option name="runtime-hint" value="18m40s" />
     </test>
 </configuration>
