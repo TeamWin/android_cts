@@ -17,6 +17,8 @@
 package android.server.wm;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
+import static android.view.KeyEvent.ACTION_DOWN;
+import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
 import static android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 import static android.view.View.SYSTEM_UI_FLAG_IMMERSIVE;
@@ -25,6 +27,7 @@ import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
 import static android.view.WindowInsets.Type.statusBars;
 import static android.view.WindowInsets.Type.systemBars;
+import static android.view.WindowInsets.Type.systemGestures;
 import static android.view.WindowInsetsController.BEHAVIOR_DEFAULT;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
@@ -43,6 +46,7 @@ import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -78,6 +82,8 @@ import org.junit.rules.ErrorCollector;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test whether WindowInsetsController controls window insets as expected.
@@ -257,6 +263,56 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         // Swiping from top of display can show transient bars, but apps cannot detect that.
         dragFromTopToCenter(rootView);
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
+    }
+
+    @Test
+    public void testSetSystemBarsBehavior_systemGesture_default() throws InterruptedException {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        // Assume the current navigation mode has the back gesture.
+        assumeTrue(rootView.getRootWindowInsets().getInsets(systemGestures()).left > 0);
+        assumeTrue(canTriggerBackGesture(rootView));
+
+        rootView.getWindowInsetsController().setSystemBarsBehavior(BEHAVIOR_DEFAULT);
+        hideInsets(rootView, systemBars());
+
+        // Test if the back gesture can be triggered while system bars are hidden with the behavior.
+        assertTrue(canTriggerBackGesture(rootView));
+    }
+
+    @Test
+    public void testSetSystemBarsBehavior_systemGesture_showTransientBarsBySwipe()
+            throws InterruptedException {
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+
+        // Assume the current navigation mode has the back gesture.
+        assumeTrue(rootView.getRootWindowInsets().getInsets(systemGestures()).left > 0);
+        assumeTrue(canTriggerBackGesture(rootView));
+
+        rootView.getWindowInsetsController().setSystemBarsBehavior(
+                BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+        hideInsets(rootView, systemBars());
+
+        // Test if the back gesture can be triggered while system bars are hidden with the behavior.
+        assertFalse(canTriggerBackGesture(rootView));
+    }
+
+    private boolean canTriggerBackGesture(View rootView) throws InterruptedException {
+        final boolean[] hasBack = { false };
+        final CountDownLatch latch = new CountDownLatch(1);
+        rootView.findFocus().setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KEYCODE_BACK && event.getAction() == ACTION_DOWN) {
+                hasBack[0] = true;
+                latch.countDown();
+                return true;
+            }
+            return false;
+        });
+        dragFromLeftToCenter(rootView);
+        latch.await(1, TimeUnit.SECONDS);
+        return hasBack[0];
     }
 
     @Test
@@ -605,6 +661,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     private void dragFromTopToCenter(View view) {
         dragOnDisplay(view.getWidth() / 2f, 0 /* downY */,
+                view.getWidth() / 2f, view.getHeight() / 2f);
+    }
+
+    private void dragFromLeftToCenter(View view) {
+        dragOnDisplay(0 /* downX */, view.getHeight() / 2f,
                 view.getWidth() / 2f, view.getHeight() / 2f);
     }
 
