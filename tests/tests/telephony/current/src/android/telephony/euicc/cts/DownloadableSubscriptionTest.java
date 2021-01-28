@@ -57,11 +57,6 @@ public class DownloadableSubscriptionTest {
         assertEquals(confirmationCode, downloadableSubscription.getConfirmationCode());
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testDownloadableSubscriptionBuilder_throwException_emptyActivationCode() {
-        new DownloadableSubscription.Builder().build();
-    }
-
     @Test
     public void testGetEncodedActivationCode() {
         assertNotNull(mDownloadableSubscription);
