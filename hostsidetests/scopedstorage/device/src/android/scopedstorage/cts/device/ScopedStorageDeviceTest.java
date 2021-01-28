@@ -74,7 +74,6 @@ import static android.scopedstorage.cts.lib.TestUtils.installAppWithStoragePermi
 import static android.scopedstorage.cts.lib.TestUtils.isAppInstalled;
 import static android.scopedstorage.cts.lib.TestUtils.listAs;
 import static android.scopedstorage.cts.lib.TestUtils.openWithMediaProvider;
-import static android.scopedstorage.cts.lib.TestUtils.pollForExternalStorageState;
 import static android.scopedstorage.cts.lib.TestUtils.queryFile;
 import static android.scopedstorage.cts.lib.TestUtils.queryFileExcludingPending;
 import static android.scopedstorage.cts.lib.TestUtils.queryImageFile;
@@ -83,7 +82,6 @@ import static android.scopedstorage.cts.lib.TestUtils.readExifMetadataFromTestAp
 import static android.scopedstorage.cts.lib.TestUtils.revokePermission;
 import static android.scopedstorage.cts.lib.TestUtils.setAppOpsModeForUid;
 import static android.scopedstorage.cts.lib.TestUtils.setAttrAs;
-import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallApp;
 import static android.scopedstorage.cts.lib.TestUtils.uninstallAppNoThrow;
 import static android.scopedstorage.cts.lib.TestUtils.updateDisplayNameWithMediaProvider;
@@ -124,14 +122,12 @@ import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.provider.MediaStore;
-import android.scopedstorage.cts.lib.TestUtils;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.StructStat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.test.runner.AndroidJUnit4;
 
 import com.android.cts.install.lib.TestApp;
 
@@ -142,6 +138,9 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -158,8 +157,8 @@ import java.util.List;
 /**
  * Device-side test suite to verify scoped storage business logic.
  */
-@RunWith(AndroidJUnit4.class)
-public class ScopedStorageDeviceTest {
+@RunWith(Parameterized.class)
+public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     public static final String STR_DATA1 = "Just some random text";
 
     public static final byte[] BYTES_DATA1 = STR_DATA1.getBytes();
@@ -214,20 +213,12 @@ public class ScopedStorageDeviceTest {
     private static final String OPSTR_MANAGE_EXTERNAL_STORAGE =
             permissionToOp(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
-    @BeforeClass
-    public static void verifyTestsWillRunOnPrimaryVolume() throws Exception {
-        TestUtils.resetDefaultExternalStorageVolume();
-        TestUtils.assertDefaultVolumeIsPrimary();
-    }
+    @Parameter(0)
+    public String mVolumeName;
 
-    @BeforeClass
-    public static void createPublicVolume() throws Exception {
-        // Create a public volume. It's not used in this test right now, but it makes for a less
-        // flaky test to create here. ScopedStoragePublicVolumeDeviceTest will be folded into
-        // this test later, as a prametererized option, as tracked in b/159593019.
-        if (TestUtils.getCurrentPublicVolumeName() == null) {
-            TestUtils.createNewPublicVolume();
-        }
+    @Parameters
+    public static Iterable<? extends Object> data() {
+        return ScopedStorageDeviceTest.getTestParameters();
     }
 
     @BeforeClass
@@ -250,14 +241,6 @@ public class ScopedStorageDeviceTest {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)).isTrue();
     }
 
-    @BeforeClass
-    public static void setupStorage() throws Exception {
-        if (!getContext().getPackageManager().isInstantApp()) {
-            pollForExternalStorageState();
-            getExternalFilesDir().mkdirs();
-        }
-    }
-
     @After
     public void tearDown() throws Exception {
         executeShellCommand("rm -r /sdcard/Android/data/com.android.shell");
@@ -265,7 +248,8 @@ public class ScopedStorageDeviceTest {
 
     @Before
     public void setupExternalStorage() {
-        setupDefaultDirectories();
+        super.setupExternalStorage(mVolumeName);
+        Log.i(TAG, "Using volume : " + mVolumeName);
     }
 
     /**
