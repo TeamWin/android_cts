@@ -18,9 +18,9 @@ package android.recognitionservice.service;
 
 import android.app.AppOpsManager;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.media.MediaRecorder;
-import android.os.Binder;
+import android.os.Bundle;
+import android.os.RemoteException;
 import android.speech.RecognitionService;
 import android.speech.RecognizerIntent;
 import android.util.Log;
@@ -51,6 +51,14 @@ public class CtsVoiceRecognitionService extends RecognitionService {
     @Override
     protected void onStartListening(Intent recognizerIntent, Callback listener) {
         Log.d(TAG, "onStartListening");
+        if (listener != null) {
+            // We only want to make sure onStartListening() is called successfully, so it returns
+            // empty bundle here.
+            try {
+                listener.results(Bundle.EMPTY);
+            } catch (RemoteException e) {
+            }
+        }
         mediaRecorderReady();
         blameCameraPermission(recognizerIntent, listener.getCallingUid());
         try {
