@@ -10,7 +10,7 @@ yuji@google.com
 nickrose@google.com
 
 # File Specific Approvers
-per-file Backup* = aabhinav@google.com, jstemmer@google.com, nathch@google.com, niagra@google.com, niamhfw@google.com, philippov@google.com, rthakohov@google.com, tobiast@google.com
+per-file Backup* = file:platform/frameworks/base:/services/backup/OWNERS
 per-file cts-meerkat.xml = alanstokes@google.com, brufino@google.com, lus@google.com, rickywai@google.com
 per-file cts-on-csi*.xml = ycchen@google.com, hsinyichen@google.com, tyanh@google.com
 per-file csi-*.xml = ycchen@google.com, hsinyichen@google.com, tyanh@google.com
