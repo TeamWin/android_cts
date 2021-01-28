@@ -206,6 +206,7 @@ public class InstallUpdateTest extends BaseDeviceAdminTest {
                 && SystemClock.elapsedRealtime() <= startTime + BATTERY_STATE_CHANGE_TIMEOUT_MS) {
             Thread.sleep(BATTERY_STATE_CHANGE_SLEEP_PER_CHECK_MS);
         }
+        assertTrue("Battery state update timeout", isBatteryState(plugged, level));
     }
 
     private boolean isBatteryState(boolean plugged, int level) {
