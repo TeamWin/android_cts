@@ -120,6 +120,7 @@ public class AtomTestCase extends BaseTestCase {
     public static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
     public static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     public static final String FEATURE_WATCH = "android.hardware.type.watch";
+    public static final String FEATURE_TWM = "com.google.clockwork.hardware.traditional_watch_mode";
     public static final String FEATURE_WIFI = "android.hardware.wifi";
     public static final String FEATURE_INCREMENTAL_DELIVERY =
             "android.software.incremental_delivery";

@@ -309,6 +309,7 @@ public class HostAtomTests extends AtomTestCase {
     }
 
     public void testBatterySaverModeStateChangedAtom() throws Exception {
+        if (!hasFeature(FEATURE_TWM, false)) return;
         if (!hasFeature(FEATURE_AUTOMOTIVE, false)) return;
         // Setup, turn off battery saver.
         turnBatterySaverOff();
