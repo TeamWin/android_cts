@@ -100,6 +100,8 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("getAccountTypesWithManagementDisabled")
             .add("setAccountManagementDisabled")
             .add("setDefaultSmsApplication")
+            .add("getPermittedInputMethods")
+            .add("setPermittedInputMethods")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
