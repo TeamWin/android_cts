@@ -296,6 +296,9 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mConnection.setConnectionProperties(Connection.PROPERTY_REMOTELY_HOSTED);
         // Not propagated
         assertCallProperties(mCall, 0);
+
+        mConnection.setConnectionProperties(Connection.PROPERTY_CROSS_SIM);
+        assertCallProperties(mCall, Call.Details.PROPERTY_CROSS_SIM);
     }
 
     /**
