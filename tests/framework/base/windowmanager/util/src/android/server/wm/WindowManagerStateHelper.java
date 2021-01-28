@@ -702,12 +702,17 @@ public class WindowManagerStateHelper extends WindowManagerState {
                 getKeyguardControllerState().aodShowing);
     }
 
-    public void assertNoneEmptyTasks() {
+    public void assertIllegalTaskState() {
         computeState();
         final List<ActivityTask> tasks = getRootTasks();
         for (ActivityTask task : tasks) {
             task.forAllTasks((t) -> assertWithMessage("Empty task was found, id = " + t.mTaskId)
                     .that(t.mTasks.size() + t.mActivities.size()).isGreaterThan(0));
+            if (task.isLeafTask()) {
+                continue;
+            }
+            assertWithMessage("Non-leaf task cannot have affinity set, id = " + task.mTaskId)
+                    .that(task.mAffinity).isEmpty();
         }
     }
 
