@@ -105,6 +105,16 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testManageExternalStorageCannotRenameAndroid() throws Exception {
+        allowAppOps("android:manage_external_storage");
+        try {
+            runDeviceTest("testManageExternalStorageCannotRenameAndroid");
+        } finally {
+            denyAppOps("android:manage_external_storage");
+        }
+    }
+
+    @Test
     public void testManageExternalStorageCantReadWriteOtherAppExternalDir() throws Exception {
         allowAppOps("android:manage_external_storage");
         try {
