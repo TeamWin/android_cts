@@ -1274,6 +1274,7 @@ public class WindowManagerState {
         private int mSurfaceWidth;
         private int mSurfaceHeight;
         boolean mCreatedByOrganizer;
+        String mAffinity;
 
         ActivityTask(TaskProto proto) {
             super(proto.windowContainer);
@@ -1293,6 +1294,7 @@ public class WindowManagerState {
             mSurfaceWidth = proto.surfaceWidth;
             mSurfaceHeight = proto.surfaceHeight;
             mCreatedByOrganizer = proto.createdByOrganizer;
+            mAffinity = proto.affinity;
 
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
