@@ -18,6 +18,8 @@ package android.media.cts;
 import android.content.pm.PackageManager;
 import android.media.MediaDrm;
 import android.net.Uri;
+import android.platform.test.annotations.FlakyTest;
+import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
@@ -126,6 +128,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         return buffer.array();
     }
 
+    @Presubmit
     public void testIsCryptoSchemeSupported() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -135,16 +138,19 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertTrue(isCryptoSchemeSupportedNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
+    @Presubmit
     public void testIsCryptoSchemeNotSupported() throws Exception {
         assertFalse(isCryptoSchemeSupportedNative(uuidByteArray(BAD_SCHEME_UUID)));
     }
 
+    @Presubmit
     public void testPssh() throws Exception {
         // The test uses a canned PSSH that contains the common box UUID.
         assertTrue(testPsshNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID),
                 Uri.parse(Utils.getMediaPath() + CENC_CLEARKEY_VIDEO_PATH).toString()));
     }
 
+    @Presubmit
     public void testQueryKeyStatus() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -153,6 +159,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertTrue(testQueryKeyStatusNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
+    @Presubmit
     public void testFindSessionId() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -161,6 +168,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertTrue(testFindSessionIdNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
+    @Presubmit
     public void testGetPropertyString() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -175,6 +183,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertEquals("ClearKey CDM", value.toString());
     }
 
+    @Presubmit
     public void testPropertyByteArray() throws Exception {
         if (watchHasNoClearkeySupport()) {
             return;
@@ -183,6 +192,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertTrue(testPropertyByteArrayNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
+    @Presubmit
     public void testUnknownPropertyString() throws Exception {
         StringBuffer value = new StringBuffer();
 
@@ -296,6 +306,8 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
     }
 
+    @FlakyTest(bugId = 173646795)
+    @Presubmit
     public void testClearKeyPlaybackCenc2() throws Exception {
         testClearKeyPlayback(
             CLEARKEY_SCHEME_UUID,
