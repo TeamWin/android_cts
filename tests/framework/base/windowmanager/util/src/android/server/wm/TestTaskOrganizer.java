@@ -33,6 +33,7 @@ import android.os.IBinder;
 import android.os.SystemClock;
 import android.util.ArraySet;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceControl;
 import android.view.WindowManager;
 import android.window.TaskAppearedInfo;
@@ -310,9 +311,8 @@ class TestTaskOrganizer extends TaskOrganizer {
         synchronized (this) {
             SurfaceControl.Transaction t = new SurfaceControl.Transaction();
             t.setVisibility(leash, true /* visible */);
+            NestedShellPermission.run(() -> addTask(taskInfo, leash, t));
             t.apply();
-
-            NestedShellPermission.run(() -> addTask(taskInfo));
         }
     }
 
@@ -331,6 +331,11 @@ class TestTaskOrganizer extends TaskOrganizer {
     }
 
     private void addTask(ActivityManager.RunningTaskInfo taskInfo) {
+        addTask(taskInfo, null /* SurfaceControl */, null /* Transaction */);
+    }
+
+    private void addTask(ActivityManager.RunningTaskInfo taskInfo, SurfaceControl leash,
+            SurfaceControl.Transaction t) {
         mKnownTasks.put(taskInfo.taskId, taskInfo);
         notifyAll();
         if (taskInfo.hasParentTask()){
@@ -348,6 +353,9 @@ class TestTaskOrganizer extends TaskOrganizer {
                 && mPrimaryCookie != null
                 && taskInfo.containsLaunchCookie(mPrimaryCookie)) {
             mRootPrimary = taskInfo;
+            if (t != null && leash != null) {
+                t.setGeometry(leash, null, mPrimaryBounds, Surface.ROTATION_0);
+            }
             return;
         }
 
@@ -355,6 +363,9 @@ class TestTaskOrganizer extends TaskOrganizer {
                 && mSecondaryCookie != null
                 && taskInfo.containsLaunchCookie(mSecondaryCookie)) {
             mRootSecondary = taskInfo;
+            if (t != null && leash != null) {
+                t.setGeometry(leash, null, mSecondaryBounds, Surface.ROTATION_0);
+            }
         }
     }
 
