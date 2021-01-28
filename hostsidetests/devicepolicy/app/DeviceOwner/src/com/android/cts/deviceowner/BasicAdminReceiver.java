@@ -20,10 +20,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
+import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 public class BasicAdminReceiver extends DeviceAdminReceiver {
+
+    private static final String TAG = BasicAdminReceiver.class.getSimpleName();
 
     final static String ACTION_USER_ADDED = "com.android.cts.deviceowner.action.USER_ADDED";
     final static String ACTION_USER_REMOVED = "com.android.cts.deviceowner.action.USER_REMOVED";
@@ -42,7 +45,10 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (intent.getAction().equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
+        String action = intent.getAction();
+        Log.d(TAG, "onReceive(userId=" + context.getUserId() + "): " + action);
+
+        if (action.equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
             DevicePolicyManagerWrapper.onReceive(this, context, intent);
             return;
         }
@@ -82,11 +88,13 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
     @Override
     public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
             int networkLogsCount) {
+        Log.d(TAG, "onNetworkLogsAvailable(): token=" + batchToken + ", count=" + networkLogsCount);
         super.onNetworkLogsAvailable(context, intent, batchToken, networkLogsCount);
         // send the broadcast, the rest of the test happens in NetworkLoggingTest
         Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
         batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(batchIntent);
+
+        DevicePolicyManagerWrapper.sendBroadcastToTestCaseReceiver(context, batchIntent);
     }
 
     private void sendUserBroadcast(Context context, String action,

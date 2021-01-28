@@ -95,6 +95,14 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                         HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
                         dutLogicalAddress.getDeviceTypeString());
         }
+
+        /** This rule will skip the test if the DUT belongs to the HDMI device type deviceType. */
+        public static TestRule skipDeviceType(BaseHostJUnit4Test testPointer, int deviceType) {
+            return RequiredPropertyRule.asCsvDoesNotContainsValue(
+                    testPointer,
+                    HdmiCecConstants.HDMI_DEVICE_TYPE_PROPERTY,
+                    Integer.toString(deviceType));
+        }
     }
 
     @Option(name = HdmiCecConstants.PHYSICAL_ADDRESS_NAME,
@@ -140,5 +148,40 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             }
         }
         throw new Exception("Could not parse logical address from dumpsys.");
+    }
+
+    /**
+     * Parses the dumpsys hdmi_control to get the logical address of the current device registered
+     * as active source.
+     */
+    public LogicalAddress getDumpsysActiveSourceLogicalAddress() throws Exception {
+        String line;
+        String pattern =
+                "(.*?)"
+                        + "(mActiveSource: )"
+                        + "(\\(0x)"
+                        + "(?<logicalAddress>\\d+)"
+                        + "(, )"
+                        + "(0x)"
+                        + "(?<physicalAddress>\\d+)"
+                        + "(\\))"
+                        + "(.*?)";
+        Pattern p = Pattern.compile(pattern);
+        Matcher m;
+        ITestDevice device = getDevice();
+        String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
+        BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
+        while ((line = reader.readLine()) != null) {
+            m = p.matcher(line);
+            if (m.matches()) {
+                try {
+                    int address = Integer.decode(m.group("logicalAddress"));
+                    return LogicalAddress.getLogicalAddress(address);
+                } catch (NumberFormatException ne) {
+                    throw new Exception("Could not correctly parse the logical address");
+                }
+            }
+        }
+        throw new Exception("Could not parse active source from dumpsys.");
     }
 }

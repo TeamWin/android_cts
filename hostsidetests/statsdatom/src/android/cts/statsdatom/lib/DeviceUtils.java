@@ -35,6 +35,7 @@ import com.android.tradefed.result.CollectingTestListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
+import com.android.tradefed.util.Pair;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
@@ -52,9 +53,6 @@ import javax.annotation.Nullable;
 public final class DeviceUtils {
     public static final String STATSD_ATOM_TEST_APK = "CtsStatsdAtomApp.apk";
     public static final String STATSD_ATOM_TEST_PKG = "com.android.server.cts.device.statsdatom";
-
-    private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT =
-            "com.android.server.cts.device.statsdatom/.StatsdCtsBackgroundService";
 
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
@@ -379,10 +377,19 @@ public final class DeviceUtils {
      */
     public static void executeBackgroundService(ITestDevice device, String actionValue)
             throws Exception {
+        executeServiceAction(device, "StatsdCtsBackgroundService", actionValue);
+    }
+
+    /**
+     * Runs the specified statsd package service to perform the given action.
+     * @param actionValue the action code constants indicating the desired action to perform.
+     */
+    public static void executeServiceAction(ITestDevice device, String service, String actionValue)
+            throws Exception {
         allowBackgroundServices(device);
         device.executeShellCommand(String.format(
-                "am startservice -n '%s' -e %s %s",
-                DEVICE_SIDE_BG_SERVICE_COMPONENT,
+                "am startservice -n '%s/.%s' -e %s %s",
+                STATSD_ATOM_TEST_PKG, service,
                 KEY_ACTION, actionValue));
     }
 
@@ -392,6 +399,26 @@ public final class DeviceUtils {
     private static void allowBackgroundServices(ITestDevice device) throws Exception {
         device.executeShellCommand(String.format(
                 "cmd deviceidle tempwhitelist %s", STATSD_ATOM_TEST_PKG));
+    }
+
+    /**
+     * Returns the kernel major version as a pair of ints.
+     */
+    public static Pair<Integer, Integer> getKernelVersion(ITestDevice device)
+            throws Exception {
+        String[] version = device.executeShellCommand("uname -r").split("\\.");
+        if (version.length < 2) {
+              throw new RuntimeException("Could not parse kernel version");
+        }
+        return Pair.create(Integer.parseInt(version[0]), Integer.parseInt(version[1]));
+    }
+
+    /** Returns if the device kernel version >= input kernel version. */
+    public static boolean isKernelGreaterEqual(ITestDevice device, Pair<Integer, Integer> version)
+            throws Exception {
+        Pair<Integer, Integer> kernelVersion = getKernelVersion(device);
+        return kernelVersion.first > version.first
+                || (kernelVersion.first == version.first && kernelVersion.second >= version.second);
     }
 
     private DeviceUtils() {}

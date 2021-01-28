@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertEquals;
@@ -27,6 +28,7 @@ import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper.Builder;
 
@@ -42,6 +44,8 @@ import java.util.List;
  * As combining a profile owner with a device owner is not supported, this class contains
  * negative test cases to ensure this combination cannot be set up.
  */
+// We need managed user to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String BIND_DEVICE_ADMIN_SERVICE_GOOD_SETUP_TEST =
             "com.android.cts.comp.BindDeviceAdminServiceGoodSetupTest";
@@ -76,8 +80,6 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        // We need managed user to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
 
         // Set device owner.
         installAppAsUser(COMP_DPC_APK, mPrimaryUserId);
@@ -94,10 +96,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            assertTrue("Failed to remove device owner.",
-                    removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId));
-        }
+        assertTrue("Failed to remove device owner.", removeAdmin(COMP_DPC_ADMIN, mPrimaryUserId));
 
         super.tearDown();
     }

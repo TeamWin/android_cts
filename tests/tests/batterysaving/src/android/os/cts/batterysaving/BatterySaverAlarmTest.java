@@ -52,6 +52,7 @@ import com.android.compatibility.common.util.ThreadUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -184,6 +185,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
     @LargeTest
     @Test
+    @Ignore("Broken until b/171306433 is completed")
     public void testAllowWhileIdleThrottled() throws Exception {
         final String targetPackage = APP_25_PACKAGE;
 

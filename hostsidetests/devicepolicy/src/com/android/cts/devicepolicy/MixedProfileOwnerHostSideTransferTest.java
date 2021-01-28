@@ -15,6 +15,10 @@
  */
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+
 /**
  * Tests the DPC transfer functionality for profile owner. Testing is done by having two test DPCs,
  * CtsTransferOwnerOutgoingApp and CtsTransferOwnerIncomingApp. The former is the current DPC
@@ -22,14 +26,14 @@ package com.android.cts.devicepolicy;
  * process, first we setup some policies in the client side in CtsTransferOwnerOutgoingApp and then
  * we verify the policies are still there in CtsTransferOwnerIncomingApp.
  */
+// We need managed users to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class MixedProfileOwnerHostSideTransferTest extends
         DeviceAndProfileOwnerHostSideTransferTest {
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        // We need managed users to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
 
         int profileOwnerUserId = setupManagedProfile(TRANSFER_OWNER_OUTGOING_APK,
                 TRANSFER_OWNER_OUTGOING_TEST_RECEIVER);

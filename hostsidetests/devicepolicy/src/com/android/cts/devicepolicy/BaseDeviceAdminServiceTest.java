@@ -49,12 +49,11 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeAdmin(OWNER_COMPONENT, getUserId());
-            removeAdmin(OWNER_COMPONENT_B, getUserId());
-            getDevice().uninstallPackage(OWNER_PKG);
-            getDevice().uninstallPackage(OWNER_PKG_B);
-        }
+        removeAdmin(OWNER_COMPONENT, getUserId());
+        removeAdmin(OWNER_COMPONENT_B, getUserId());
+        getDevice().uninstallPackage(OWNER_PKG);
+        getDevice().uninstallPackage(OWNER_PKG_B);
+
         super.tearDown();
     }
 

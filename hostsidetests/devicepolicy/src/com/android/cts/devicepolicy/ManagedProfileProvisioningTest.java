@@ -15,10 +15,16 @@
  */
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.FlakyTest;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
 import org.junit.Test;
 
+// We need multi user to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
     private static final String MANAGED_PROFILE_APK = "CtsManagedProfileApp.apk";
@@ -30,9 +36,6 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need multi user to be supported in order to create a profile of the user owner.
-        assumeHasManageUsersFeature();
-
         removeTestUsers();
         mParentUserId = mPrimaryUserId;
         installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
@@ -41,13 +44,12 @@ public class ManagedProfileProvisioningTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            if (mProfileUserId != 0) {
-                removeUser(mProfileUserId);
-            }
-            // Remove the test app account: also done by uninstallPackage
-            getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
+        if (mProfileUserId != 0) {
+            removeUser(mProfileUserId);
         }
+        // Remove the test app account: also done by uninstallPackage
+        getDevice().uninstallPackage(MANAGED_PROFILE_PKG);
+
         super.tearDown();
     }
     @FlakyTest(bugId = 141747631)

@@ -54,8 +54,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (!isTestEnabled()) return;
-
         if (mRemoveOwnerInTearDown) {
             assertTrue("Failed to clear owner",
                     removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,

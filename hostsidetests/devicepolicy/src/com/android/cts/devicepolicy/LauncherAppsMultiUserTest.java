@@ -30,15 +30,15 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
     private String mSecondaryUserSerialNumber;
 
     @Override
-    public void setUp() throws Exception {
-        // TODO(b/169341308): if these assumption fail, super.setup() is not called and
-        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
-        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
-
+    protected void assumeTestEnabled() throws Exception {
         // We need multi user to be supported in order to create a secondary user
         // and api level 21 to support LauncherApps
         assumeSupportsMultiUser();
         assumeApiLevel(21);
+    }
+
+    @Override
+    public void setUp() throws Exception {
         super.setUp();
 
         removeTestUsers();
@@ -52,10 +52,9 @@ public class LauncherAppsMultiUserTest extends BaseLauncherAppsTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeUser(mSecondaryUserId);
-            uninstallTestApps();
-        }
+        removeUser(mSecondaryUserId);
+        uninstallTestApps();
+
         super.tearDown();
     }
 

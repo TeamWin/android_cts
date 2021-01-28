@@ -27,20 +27,14 @@ import org.junit.Test;
 public class EphemeralUserTest extends BaseDevicePolicyTest {
 
     @Override
-    public void setUp() throws Exception {
-        // TODO(b/169341308): if this assumption is failed, super.setup() is not called and
-        // isTestEnabled() will return false on tearDown(). So, if isTestEnabled() is removed /
-        // replaced by RequiredFeatureRule, we'll need to change the tearDown() logic.
+    protected void assumeTestEnabled() throws Exception {
         assumeCanCreateAdditionalUsers(1);
-
-        super.setUp();
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!isTestEnabled()) return;
-
         removeTestUsers();
+
         super.tearDown();
     }
 
