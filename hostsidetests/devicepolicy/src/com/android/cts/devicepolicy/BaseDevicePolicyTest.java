@@ -565,13 +565,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Reboots the device and block until the boot complete flag is set. */
     protected void rebootAndWaitUntilReady() throws Exception {
         getDevice().rebootUntilOnline();
-        // TODO(b/177668649) remove excessive diagnostic logging.
-        CLog.d("Device online, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
-        CLog.d("Boot complete, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
-        // TODO(b/178092640) remove when waitForBootComplete guarantees this property.
-        waitForOutput("Timeout waiting for boot complete property", "getprop dev.bootcomplete",
-                s -> s.trim().equals("1"), 120 /* seconds */);
     }
 
     /** Returns a boolean value of the system property with the specified key. */
