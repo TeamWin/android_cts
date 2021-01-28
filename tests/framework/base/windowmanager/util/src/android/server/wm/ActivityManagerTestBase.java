@@ -896,46 +896,6 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Moves the device into split-screen with the specified task into the primary stack.
-     * @param taskId             The id of the task to move into the primary stack.
-     * @param showSideActivity   Whether to show the home activity or a placeholder activity in
-     *                           secondary split-screen.
-     *                           If {@code true} it will also wait for activity in the primary
-     *                           split-screen stack to be resumed.
-     */
-    public void moveTaskToPrimaryLegacySplitScreen(int taskId, boolean showSideActivity) {
-        runWithShellPermission(() -> {
-            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, true /* onTop */);
-
-            // Wait for split screen ready
-            mWmState.waitForWithAmState(state -> {
-                final WindowManagerState.ActivityTask task =
-                        state.getStandardStackByWindowingMode(
-                                WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
-                return task != null && task.getResumedActivity() != null;
-            }, "home activity in the secondary split-screen task must be resumed");
-
-            if (showSideActivity) {
-                // Launch Placeholder Side Activity
-                final ComponentName sideActivityName =
-                        new ComponentName(mContext, SideActivity.class);
-                mContext.startActivity(new Intent().setComponent(sideActivityName)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                mWmState.waitForActivityState(sideActivityName, STATE_RESUMED);
-
-                // Wait for the state of the activity on primary split screen to resumed, so the
-                // LifecycleLog won't affect the following tests.
-                mWmState.waitForWithAmState(state -> {
-                    final WindowManagerState.ActivityTask stack =
-                            state.getStandardStackByWindowingMode(
-                                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-                    return stack != null && stack.getResumedActivity() != null;
-                }, "activity in the primary split-screen stack must be resumed");
-            }
-        });
-    }
-
-    /**
      * Launches {@param primaryActivity} into split-screen primary windowing mode
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
      */
@@ -966,32 +926,6 @@ public abstract class ActivityManagerTestBase {
                 secondaryActivity.getTargetActivity());
         log("launchActivitiesInSplitScreen(), primaryTaskId=" + primaryTaskId +
                 ", secondaryTaskId=" + secondaryTaskId);
-    }
-
-    /**
-     * Launches {@param primaryActivity} into split-screen primary windowing mode
-     * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
-     */
-    protected void launchActivitiesInLegacySplitScreen(LaunchActivityBuilder primaryActivity,
-            LaunchActivityBuilder secondaryActivity) {
-        // Launch split-screen primary.
-        primaryActivity
-                .setUseInstrumentation()
-                .setWaitForLaunched(true)
-                .execute();
-
-        final int taskId = mWmState.getTaskByActivity(
-                primaryActivity.mTargetActivity).mTaskId;
-        moveTaskToPrimaryLegacySplitScreen(taskId, false /* showSideActivity */);
-
-        // Launch split-screen secondary
-        // Recents become focused, so we can just launch new task in focused stack
-        secondaryActivity
-                .setUseInstrumentation()
-                .setWaitForLaunched(true)
-                .setNewTask(true)
-                .setMultipleTask(true)
-                .execute();
     }
 
     protected boolean setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
