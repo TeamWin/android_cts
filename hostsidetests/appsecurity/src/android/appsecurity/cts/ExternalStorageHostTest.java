@@ -24,9 +24,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
-import com.android.server.role.RoleManagerServiceDumpProto;
-import com.android.server.role.RoleProto;
-import com.android.server.role.RoleUserStateProto;
+import com.android.role.RoleProto;
+import com.android.role.RoleServiceDumpProto;
+import com.android.role.RoleUserStateProto;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -619,6 +619,33 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testMediaEscalation_RequestWriteFilePathSupport() throws Exception {
+        // Not adding tests for MEDIA_28 and MEDIA_29 as they need W_E_S for write access via file
+        // path for shared files, and will always have access as they have W_E_S.
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+        }, true);
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
+
+
+        setFilePathSupportForMediaUris(true);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz, "testMediaEscalation_RequestWriteFilePathSupport",
+                user);
+        setFilePathSupportForMediaUris(false);
+    }
+
+    private void setFilePathSupportForMediaUris(boolean val) throws Exception {
+        getDevice().enableAdbRoot();
+        getDevice().executeShellCommand("setprop sys.filepathsupport.mediauri " + val);
+        getDevice().disableAdbRoot();
+    }
+
+    @Test
     public void testMediaEscalation() throws Exception {
         doMediaEscalation(MEDIA);
     }
@@ -710,8 +737,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private List<RoleUserStateProto> getAllUsersRoleStates() throws Exception {
-        final RoleManagerServiceDumpProto dumpProto =
-                getDump(RoleManagerServiceDumpProto.parser(), "dumpsys role --proto");
+        final RoleServiceDumpProto dumpProto =
+                getDump(RoleServiceDumpProto.parser(), "dumpsys role --proto");
         final List<RoleUserStateProto> res = new ArrayList<>();
         for (RoleUserStateProto userState : dumpProto.getUserStatesList()) {
             for (int i : mUsers) {

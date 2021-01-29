@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.DeviceAndProfileOwnerTest.DEVICE_ADMIN_COMPONENT_FLATTENED;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
@@ -28,6 +29,7 @@ import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 import android.stats.devicepolicy.EventId;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
@@ -37,6 +39,8 @@ import org.junit.Test;
 /**
  * Tests for organization-owned Profile Owner.
  */
+// We need managed users to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DEVICE_ADMIN_PKG = DeviceAndProfileOwnerTest.DEVICE_ADMIN_PKG;
     private static final String DEVICE_ADMIN_APK = DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
@@ -73,13 +77,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
-
-        if (mHasFeature) {
-            removeTestUsers();
-            createManagedProfile();
-        }
+        removeTestUsers();
+        createManagedProfile();
     }
 
     private void createManagedProfile() throws Exception {
@@ -107,18 +106,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCannotRemoveManagedProfile() throws DeviceNotAvailableException {
-        if (!mHasFeature) {
-            return;
-        }
-
         assertThat(getDevice().removeUser(mUserId)).isFalse();
     }
 
     @Test
     public void testCanRelinquishControlOverDevice() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", "testSetAndGetLockInfo",
                 mUserId);
 
@@ -139,36 +131,23 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
     }
 
     @Test
     public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Profile Owner should have access to all device identifiers.
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdentifiersTest",
                 "testProfileOwnerCanGetDeviceIdentifiersWithPermission", mUserId);
     }
 
     @Test
     public void testDevicePolicyManagerParentSupport() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".OrgOwnedProfileOwnerParentTest", mUserId);
     }
 
     @Test
     public void testUserRestrictionSetOnParentLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
                     "testUserRestrictionLogged", mUserId);
@@ -184,9 +163,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testUserRestrictionsSetOnParentAreNotPersisted() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testAddUserRestrictionDisallowConfigDateTime_onParent", mUserId);
@@ -202,30 +180,18 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPerProfileUserRestrictionOnParent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testPerProfileUserRestriction_onParent", mUserId);
     }
 
     @Test
     public void testPerDeviceUserRestrictionOnParent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
                 "testPerDeviceUserRestriction_onParent", mUserId);
     }
 
     @Test
     public void testCameraDisabledOnParentIsEnforced() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         try {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UserRestrictionsParentTest",
@@ -242,9 +208,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCameraDisabledOnParentLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
                     runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingParentTest",
                             "testCameraDisabledLogged", mUserId);
@@ -263,9 +226,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 137093665)
     @Test
     public void testSecurityLogging() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Backup stay awake setting because testGenerateLogs() will turn it off.
         final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
         try {
@@ -309,9 +269,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetTime() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest", "testSetTime", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest",
                 "testSetTime_failWhenAutoTimeEnabled", mUserId);
@@ -319,9 +276,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetTimeZone() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest", "testSetTimeZone", mUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".TimeManagementTest",
                 "testSetTimeZone_failIfAutoTimeZoneEnabled", mUserId);
@@ -330,18 +284,13 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
+        assumeHasWifiFeature();
+
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
     }
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".FactoryResetProtectionPolicyTest", mUserId);
     }
 
@@ -349,18 +298,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     @Ignore("b/145932189")
     public void testSystemUpdatePolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
     }
 
     @Test
     public void testInstallUpdate() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         pushUpdateFileToDevice("notZip.zi");
         pushUpdateFileToDevice("empty.zip");
         pushUpdateFileToDevice("wrongPayload.zip");
@@ -371,10 +313,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testIsDeviceOrganizationOwnedWithManagedProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceOwnershipTest",
                 "testCallingIsOrganizationOwnedWithManagedProfileExpectingTrue",
                 mUserId);
@@ -387,34 +325,21 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCommonCriteriaMode() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
     }
 
     @Test
     public void testAdminConfiguredNetworks() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mUserId);
     }
 
     @Test
     public void testApplicationHiddenParent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationHiddenParentTest", mUserId);
     }
 
     @Test
     public void testSetKeyguardDisabledFeatures() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
                 "testSetKeyguardDisabledFeatures_onParent", mUserId);
     }
@@ -433,10 +358,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionNormalApp() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         // Initially the app should be launchable.
         assertCanStartPersonalApp(DEVICE_ADMIN_PKG, true);
@@ -450,10 +371,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionInstalledApp() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         setPersonalAppsSuspended(true);
 
         installAppAsUser(TEST_IME_APK, mPrimaryUserId);
@@ -499,10 +416,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPersonalAppsSuspensionIme() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         installAppAsUser(TEST_IME_APK, mPrimaryUserId);
         setupIme(TEST_IME_COMPONENT, mPrimaryUserId);
         setPersonalAppsSuspended(true);
@@ -513,10 +426,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCanRestrictAccountManagementOnParentProfile() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AccountManagementParentTest",
                 "testSetAccountManagementDisabledOnParent", mUserId);
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
@@ -531,18 +440,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPermittedInputMethods() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".InputMethodsTest", mUserId);
     }
 
     @Test
     public void testPermittedInputMethodsLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () ->
                         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".InputMethodsTest",
                                 "testPermittedInputMethodsOnParent", mUserId),
@@ -574,9 +476,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testScreenCaptureDisabled() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         setPoAsUser(mPrimaryUserId);
 
@@ -638,9 +537,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetPersonalAppsSuspendedLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
                     runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DevicePolicyLoggingTest",
                             "testSetPersonalAppsSuspendedLogged", mUserId);
@@ -656,9 +552,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSetManagedProfileMaximumTimeOffLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
                     runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                             "testSetManagedProfileMaximumTimeOff", mUserId);
@@ -676,9 +569,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testWorkProfileMaximumTimeOff() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 "testSetManagedProfileMaximumTimeOff1Sec", mUserId);
@@ -703,9 +593,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
@@ -717,9 +604,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Test that Device ID attestation works for org-owned profile owner.
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
                 "testSucceedsWithProfileOwnerIdsGrant", mUserId);
@@ -731,7 +615,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         // TV launcher uses intent filter priority to prevent 3p launchers replacing it
         // this causes the activity that toggles quiet mode to be suspended
         // and the profile would never start
-        if (hasDeviceFeature("android.software.leanback")) {
+        if (isTv()) {
             str = quietModeEnable ? String.format("am stop-user -f %d", mUserId)
                     : String.format("am start-user %d", mUserId);
         } else {

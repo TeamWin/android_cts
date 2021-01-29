@@ -41,7 +41,6 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     private static final String ENSURE_NO_GLOBAL_RESTRICTIONS_TEST =
             "testProfileGlobalRestrictionsNotEnforced";
 
-    private boolean mRunTearDown;
     private boolean mRemoveOwnerInTearDown;
     private int mDeviceOwnerUserId;
 
@@ -49,15 +48,12 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        mRunTearDown = true;
         mRemoveOwnerInTearDown = false;
         mDeviceOwnerUserId = mPrimaryUserId;
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!mRunTearDown) return;
-
         if (mRemoveOwnerInTearDown) {
             assertTrue("Failed to clear owner",
                     removeAdmin(DEVICE_ADMIN_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,

@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -35,7 +37,9 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.google.common.io.ByteStreams;
 
 import org.junit.After;
+import org.junit.AssumptionViolatedException;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.runner.RunWith;
 
 import java.io.File;
@@ -67,11 +71,17 @@ import javax.annotation.Nullable;
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     private static final String FEATURE_BACKUP = "android.software.backup";
-    private static final String FEATURE_DEVICE_ADMIN  = "android.software.device_admin";
+    private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
+    private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
-    private static final String FEATURE_MANAGED_USERS = "android.software.managed_users";
+    private static final String FEATURE_FBE = "android.software.file_based_encryption";
+    private static final String FEATURE_LEANBACK = "android.software.leanback";
+    private static final String FEATURE_NFC = "android.hardware.nfc";
+    private static final String FEATURE_NFC_BEAM = "android.software.nfc.beam";
 
+    private static final String FEATURE_PRINT = "android.software.print";
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
+    private static final String FEATURE_SECURE_LOCK_SCREEN = "android.software.secure_lock_screen";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     //The maximum time to wait for user to be unlocked.
@@ -155,8 +165,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Packages installed as part of the tests */
     private Set<String> mFixedPackages;
 
-    /** Whether DPM is supported. */
-    protected boolean mHasFeature;
     protected int mDeviceOwnerUserId;
     protected int mPrimaryUserId;
 
@@ -166,34 +174,29 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Whether multi-user is supported. */
     private boolean mSupportsMultiUser;
 
-    /** Whether file-based encryption (FBE) is supported. */
-    protected boolean mSupportsFbe;
-
-    /** Whether the device has a lock screen.*/
-    protected boolean mHasSecureLockScreen;
-
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
     private static final String VERIFY_CREDENTIAL_CONFIRMATION = "Lock credential verified";
 
+    @Rule
+    public final DeviceAdminFeaturesCheckerRule mFeaturesCheckerRule =
+            new DeviceAdminFeaturesCheckerRule(this);
+
     @Before
     public void setUp() throws Exception {
         assertNotNull(getBuild());  // ensure build has been set before test is run.
-        ensurePackageManagerReady();
-        mHasFeature = getDevice().getApiLevel() >= 21; /* Build.VERSION_CODES.L */
+
         if (!mSkipDeviceAdminFeatureCheck) {
-            mHasFeature = mHasFeature && hasDeviceFeature(FEATURE_DEVICE_ADMIN);
+            // TODO(b/177965931): STOPSHIP must integrate mSkipDeviceAdminFeatureCheck into
+            // DeviceAdminFeaturesCheckerRul
         }
-        assumeHasFeature();
 
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
-        mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
-        mHasSecureLockScreen = hasDeviceFeature("android.software.secure_lock_screen");
-        if (mHasSecureLockScreen) {
+        if (hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN)) {
             ensurePrimaryUserHasNoPassword();
         }
 
@@ -223,7 +226,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             mFixedUsers.add(USER_SYSTEM);
         }
 
-        if (mHasFeature) {
+        if (mFeaturesCheckerRule.hasRequiredFeatures()) {
             // Switching to primary is only needed when we're testing device admin features.
             switchUser(mPrimaryUserId);
         } else {
@@ -278,8 +281,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     @After
     public void tearDown() throws Exception {
-        if (!mHasFeature) return;
-
         // reset the package verifier setting to its original value
         getDevice().executeShellCommand("settings put global verifier_verify_adb_installs "
                 + mPackageVerifier);
@@ -561,13 +562,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     /** Reboots the device and block until the boot complete flag is set. */
     protected void rebootAndWaitUntilReady() throws Exception {
         getDevice().rebootUntilOnline();
-        // TODO(b/177668649) remove excessive diagnostic logging.
-        CLog.d("Device online, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
-        CLog.d("Boot complete, dev.bootcomplete = " + getDevice().getProperty("dev.bootcomplete"));
-        // TODO(b/178092640) remove when waitForBootComplete guarantees this property.
-        waitForOutput("Timeout waiting for boot complete property", "getprop dev.bootcomplete",
-                s -> s.trim().equals("1"), 120 /* seconds */);
     }
 
     /** Returns a boolean value of the system property with the specified key. */
@@ -668,32 +663,22 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("device doesn't have " + feature, hasDeviceFeature(feature));
     }
 
-    protected final boolean hasFeature() throws DeviceNotAvailableException {
-        return hasDeviceFeature(FEATURE_DEVICE_ADMIN);
-    }
-
-    protected final void assumeHasFeature() throws DeviceNotAvailableException {
-        assumeHasDeviceFeature(FEATURE_DEVICE_ADMIN);
-    }
-
-    protected final void assumeHasManageUsersFeature() throws DeviceNotAvailableException {
-        assumeHasFeature();
-        assumeHasDeviceFeature(FEATURE_MANAGED_USERS);
+    /**
+     * Used by test cases to add additional checks priort to {@link #setUp()}, so that when it
+     * throws an {@link AssumptionViolatedException} exception nothing is run
+     * (even {@link #tearDown()}).
+     */
+    protected void assumeTestEnabled() throws Exception {
     }
 
     protected final void assumeCanCreateOneManagedUser() throws DeviceNotAvailableException {
         assumeSupportsMultiUser();
-        assumeHasManageUsersFeature();
+        assumeHasDeviceFeature(FEATURE_MANAGED_USERS);
         assumeCanCreateAdditionalUsers(1);
     }
 
-    protected final boolean isMultiUserSupported() {
-        return mSupportsMultiUser;
-    }
-
     protected final void assumeSupportsMultiUser() throws DeviceNotAvailableException {
-        assumeHasFeature();
-        assumeTrue("device doesn't support multiple users", isMultiUserSupported());
+        assumeTrue("device doesn't support multiple users", mSupportsMultiUser);
     }
 
     protected final void assumeHasBackupFeature() throws DeviceNotAvailableException {
@@ -701,19 +686,48 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     protected final void assumeHasWifiFeature() throws DeviceNotAvailableException {
-        assumeHasFeature();
         assumeHasDeviceFeature(FEATURE_WIFI);
     }
 
     protected final void assumeHasTelephonyFeature() throws DeviceNotAvailableException {
-        assumeHasFeature();
         assumeHasDeviceFeature(FEATURE_TELEPHONY);
+    }
+
+    protected final void assumeHasNfcFeatures() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_NFC);
+        assumeHasDeviceFeature(FEATURE_NFC_BEAM);
     }
 
     protected final void assumeHasTelephonyAndConnectionServiceFeatures()
             throws DeviceNotAvailableException {
         assumeHasTelephonyFeature();
         assumeHasDeviceFeature(FEATURE_CONNECTION_SERVICE);
+    }
+
+    protected final void assumeHasSecureLockScreenFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
+    }
+
+    protected final void assumeHasFileBasedEncryptionAndSecureLockScreenFeatures()
+            throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_FBE);
+        assumeHasSecureLockScreenFeature();
+    }
+
+    protected final void assumeHasPrintFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_PRINT);
+    }
+
+    protected final void assumeHasCameraFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_CAMERA);
+    }
+
+    protected final void assumeHasBluetoothFeature() throws DeviceNotAvailableException {
+        assumeHasDeviceFeature(FEATURE_BLUETOOTH);
+    }
+
+    protected final void assumeApiLevel(int min) throws DeviceNotAvailableException {
+        assumeTrue("API level must be >=" + min, getDevice().getApiLevel() >= min);
     }
 
     private int getUserIdFromCreateUserCommandOutput(String commandOutput) {
@@ -1116,9 +1130,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         throw new Exception("Default launcher not found");
     }
 
-    boolean isDeviceAb() throws DeviceNotAvailableException {
+    void assumeIsDeviceAb() throws DeviceNotAvailableException {
         final String result = getDevice().executeShellCommand("getprop ro.build.ab_update").trim();
-        return "true".equalsIgnoreCase(result);
+        assumeTrue("not device AB", "true".equalsIgnoreCase(result));
     }
 
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
@@ -1126,6 +1140,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         final String result = getDevice()
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
+    }
+
+    boolean isTv() throws DeviceNotAvailableException {
+        return hasDeviceFeature(FEATURE_LEANBACK);
     }
 
     void pushUpdateFileToDevice(String fileName)

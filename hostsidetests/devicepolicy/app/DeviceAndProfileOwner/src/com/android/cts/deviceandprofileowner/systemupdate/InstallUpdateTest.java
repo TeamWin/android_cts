@@ -32,6 +32,8 @@ import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest;
 import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import com.android.compatibility.common.util.PollingCheck;
 
 /**
  * Test {@link android.app.admin.DevicePolicyManager#installSystemUpdate}
@@ -147,8 +149,20 @@ public class InstallUpdateTest extends BaseDeviceAdminTest {
         }
     }
 
-    private void assertUpdateError(String fileName, int expectedErrorCode)
-            throws InterruptedException {
+    private void assertUpdateError(String fileName, int expectedErrorCode) {
+        AtomicInteger errorCode = new AtomicInteger();
+        // Poll until the error code matches our expectation to deal with delays in propagation
+        PollingCheck.waitFor(() -> {
+            try {
+                errorCode.set(getUpdateError(fileName));
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+            return errorCode.get() == expectedErrorCode; });
+        assertEquals(expectedErrorCode, errorCode.get());
+    }
+
+    private int getUpdateError(String fileName) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         Uri uri = Uri.fromFile(new File(TEST_SYSTEM_UPDATES_DIR, fileName));
         mDevicePolicyManager.installSystemUpdate(ADMIN_RECEIVER_COMPONENT, uri,
@@ -160,7 +174,7 @@ public class InstallUpdateTest extends BaseDeviceAdminTest {
                     }
                 });
         assertTrue(latch.await(TIMEOUT, TimeUnit.MINUTES));
-        assertEquals(expectedErrorCode, callbackErrorCode);
+        return callbackErrorCode;
     }
 
     private void setNonChargingBatteryThreshold(int threshold) {

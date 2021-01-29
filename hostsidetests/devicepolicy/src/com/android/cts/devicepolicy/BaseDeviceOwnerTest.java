@@ -40,8 +40,6 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeHasFeature();
-
         installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
                 /*expectFailure*/ false);
@@ -52,6 +50,10 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
             fail("Failed to set device owner for user " + mDeviceOwnerUserId);
         }
 
+        if (isHeadlessSystemUserMode()) {
+            affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, mPrimaryUserId);
+        }
+
         // Enable the notification listener
         getDevice().executeShellCommand("cmd notification allow_listener com.android.cts."
                 + "deviceowner/com.android.cts.deviceowner.NotificationListener");
@@ -59,15 +61,21 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
-                // Don't fail as it could hide the real failure from the test method
-                CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);
-            }
-            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
+            // Don't fail as it could hide the real failure from the test method
+            CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);
         }
+        getDevice().uninstallPackage(DEVICE_OWNER_PKG);
 
         super.tearDown();
+    }
+
+    void affiliateUsers(String deviceAdminPkg, int userId1, int userId2) throws Exception {
+        CLog.d("Affiliating users %d and %d on admin package %s", userId1, userId2, deviceAdminPkg);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId1);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId2);
     }
 
     protected final void executeDeviceOwnerTest(String testClassName) throws Exception {

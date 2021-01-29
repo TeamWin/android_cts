@@ -39,9 +39,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testLockNowWithKeyEviction() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasFileBasedEncryptionAndSecureLockScreenFeatures();
+
         changeUserCredential(TEST_PASSWORD, null, mProfileUserId);
         lockProfile();
     }
@@ -49,9 +48,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasFileBasedEncryptionAndSecureLockScreenFeatures();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                 "testSetupWorkProfile", mProfileUserId);
@@ -65,9 +62,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testClearPasswordWithTokenBeforeUnlock() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasFileBasedEncryptionAndSecureLockScreenFeatures();
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                 "testSetupWorkProfile", mProfileUserId);
@@ -88,9 +83,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @FlakyTest
     @Test
     public void testResetPasswordTokenUsableAfterClearingLock() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasFileBasedEncryptionAndSecureLockScreenFeatures();
+
         final String devicePassword = TEST_PASSWORD;
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
@@ -117,9 +111,7 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @LockSettingsTest
     @Test
     public void testIsUsingUnifiedPassword() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
 
         // Freshly created profile has no separate challenge.
         verifyUnifiedPassword(true);
@@ -135,9 +127,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @LockSettingsTest
     @Test
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
-        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         try {
             // Add a device password after the work profile has been created.
             changeUserCredential(TEST_PASSWORD, /* oldCredential= */ null, mPrimaryUserId);
@@ -160,9 +151,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @LockSettingsTest
     @Test
     public void testRebootDevice_unifiedPassword() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Waiting before rebooting prevents flakiness.
         waitForBroadcastIdle();
         changeUserCredential(TEST_PASSWORD, /* oldCredential= */ null, mPrimaryUserId);
@@ -184,9 +174,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
     @LockSettingsTest
     @Test
     public void testRebootDevice_separatePasswords() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Waiting before rebooting prevents flakiness.
         waitForBroadcastIdle();
         final String profilePassword = "profile";
@@ -213,9 +202,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @Test
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         assertMetricsLogged(getDevice(), () -> {
             changeUserCredential(
                     TEST_PASSWORD /* newCredential */, null /* oldCredential */, mProfileUserId);
@@ -226,9 +214,8 @@ public class ManagedProfilePasswordTest extends BaseManagedProfileTest {
 
     @Test
     public void testActivePasswordSufficientForDeviceRequirement() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ActivePasswordSufficientForDeviceTest",
                 mProfileUserId);
     }

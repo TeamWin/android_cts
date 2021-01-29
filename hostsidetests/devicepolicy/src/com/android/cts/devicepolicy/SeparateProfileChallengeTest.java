@@ -31,19 +31,16 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     private static final String SEPARATE_PROFILE_TEST_CLASS =
         ".SeparateProfileChallengePermissionsTest";
     private String mPreviousHiddenApiPolicy = "0";
-    private boolean mRunTearDown;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
-        mRunTearDown = true;
         setHiddenApiPolicyOn();
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!mRunTearDown) return;
 
         removeTestUsers();
         getDevice().uninstallPackage(SEPARATE_PROFILE_PKG);

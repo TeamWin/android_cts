@@ -67,6 +67,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
      */
     private static final Set<String> BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST =
         ImmutableSet.of(
+            "Landroid/annotation/AnyThread;",
+            "Landroid/annotation/AppIdInt;",
+            "Landroid/annotation/CallSuper;",
             "Landroid/annotation/CallbackExecutor;",
             "Landroid/annotation/CheckResult;",
             "Landroid/annotation/CurrentTimeMillisLong;",
@@ -74,6 +77,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/annotation/IntDef;",
             "Landroid/annotation/IntRange;",
             "Landroid/annotation/LongDef;",
+            "Landroid/annotation/MainThread;",
             "Landroid/annotation/NonNull;",
             "Landroid/annotation/Nullable;",
             "Landroid/annotation/RequiresPermission;",
@@ -88,6 +92,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/annotation/SystemApi$Container;",
             "Landroid/annotation/SystemService;",
             "Landroid/annotation/TestApi;",
+            "Landroid/annotation/UserIdInt;",
             "Landroid/annotation/WorkerThread;",
             "Landroid/gsi/AvbPublicKey;",
             "Landroid/gsi/AvbPublicKey$1;",

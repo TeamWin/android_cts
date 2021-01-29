@@ -19,7 +19,9 @@ package android.hardware.input.cts.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.hardware.Battery;
 import android.hardware.input.InputManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
@@ -27,6 +29,7 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.view.InputDevice;
 
+import com.android.cts.input.HidBatteryTestData;
 import com.android.cts.input.HidDevice;
 import com.android.cts.input.HidResultData;
 import com.android.cts.input.HidTestData;
@@ -53,7 +56,8 @@ public class InputHidTestCase extends InputTestCase {
     }
 
     /**
-     * Get a vibrator from input device with specified Vendor Id and Product Id.
+     * Get a vibrator from input device with specified Vendor Id and Product Id
+     * from device registration command.
      * @return Vibrator object in specified InputDevice
      */
     private Vibrator getVibrator() {
@@ -68,24 +72,51 @@ public class InputHidTestCase extends InputTestCase {
             Vibrator vibrator = inputDevice.getVibrator();
             if (vibrator.hasVibrator() && inputDevice.getVendorId() == vid
                     && inputDevice.getProductId() == pid) {
-                Log.v(TAG, "Input device: " + inputDeviceId + " VendorId: "
-                        + inputDevice.getVendorId() + " ProductId: " + inputDevice.getProductId());
                 return vibrator;
             }
         }
+        fail("getVibrator() returns null");
+        return null;
+    }
+
+    /**
+     * Get a battery from input device with specified Vendor Id and Product Id
+     * from device registration command.
+     * @return Battery object in specified InputDevice
+     */
+    private Battery getBattery() {
+        final InputManager inputManager =
+                mInstrumentation.getTargetContext().getSystemService(InputManager.class);
+        final int[] inputDeviceIds = inputManager.getInputDeviceIds();
+        final int vid = mParser.readVendorId(mRegisterResourceId);
+        final int pid = mParser.readProductId(mRegisterResourceId);
+
+        for (int inputDeviceId : inputDeviceIds) {
+            final InputDevice inputDevice = inputManager.getInputDevice(inputDeviceId);
+            Battery battery = inputDevice.getBattery();
+            if (battery.hasBattery() && inputDevice.getVendorId() == vid
+                    && inputDevice.getProductId() == pid) {
+                return battery;
+            }
+        }
+        fail("getBattery() returns null");
         return null;
     }
 
     @Override
-    protected void setUpDevice(int deviceId, String registerCommand) {
-        mDeviceId = deviceId;
-        mHidDevice = new HidDevice(mInstrumentation, deviceId, registerCommand);
+    protected void setUpDevice(int id, int vendorId, int productId, int sources,
+            String registerCommand) {
+        mDeviceId = id;
+        mHidDevice = new HidDevice(mInstrumentation, id, vendorId, productId, sources,
+                registerCommand);
         assertNotNull(mHidDevice);
     }
 
     @Override
     protected void tearDownDevice() {
-        mHidDevice.close();
+        if (mHidDevice != null) {
+            mHidDevice.close();
+        }
     }
 
     @Override
@@ -248,4 +279,26 @@ public class InputHidTestCase extends InputTestCase {
             assertEquals(vibrationCount, totalVibrations);
         }
     }
+
+    public void testInputBatteryEvents(int resourceId) {
+        final Battery battery = getBattery();
+        assertNotNull(battery);
+
+        final List<HidBatteryTestData> tests = mParser.getHidBatteryTestData(resourceId);
+        for (HidBatteryTestData testData : tests) {
+
+            // Send all of the HID reports
+            for (int i = 0; i < testData.reports.size(); i++) {
+                final String report = testData.reports.get(i);
+                mHidDevice.sendHidReport(report);
+            }
+            // Delay before sysfs node was updated.
+            SystemClock.sleep(100);
+            float capacity = battery.getCapacity();
+            int status = battery.getStatus();
+            assertEquals("Test: " + testData.name, testData.capacity, capacity, 0.01f);
+            assertEquals("Test: " + testData.name, testData.status, status);
+        }
+    }
+
 }

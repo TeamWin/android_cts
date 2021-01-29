@@ -1,0 +1,31 @@
+cc_test {
+    name: "CtsNativeVerifiedBootTestCases",
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    srcs: [
+        "VerifiedBootTest.cpp",
+    ],
+    static_libs: [
+        "libavb_user",
+        "libavb",
+        "libfs_mgr",
+    ],
+    shared_libs: [
+        "libbase",
+        "libcutils",
+    ],
+    multilib: {
+        lib32: {
+            suffix: "32",
+        },
+        lib64: {
+            suffix: "64",
+        },
+    },
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}

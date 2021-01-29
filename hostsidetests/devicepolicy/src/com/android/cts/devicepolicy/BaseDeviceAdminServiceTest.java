@@ -47,29 +47,17 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
     private static final int TIMEOUT_SECONDS = 3 * 60;
 
-    private boolean mMultiUserSupported;
-
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
-        mMultiUserSupported = getMaxNumberOfUsersSupported() > 1 && getDevice().getApiLevel() >= 21;
-    }
-
     @Override
     public void tearDown() throws Exception {
-        if (isTestEnabled()) {
-            removeAdmin(OWNER_COMPONENT, getUserId());
-            removeAdmin(OWNER_COMPONENT_B, getUserId());
-            getDevice().uninstallPackage(OWNER_PKG);
-            getDevice().uninstallPackage(OWNER_PKG_B);
-        }
+        removeAdmin(OWNER_COMPONENT, getUserId());
+        removeAdmin(OWNER_COMPONENT_B, getUserId());
+        getDevice().uninstallPackage(OWNER_PKG);
+        getDevice().uninstallPackage(OWNER_PKG_B);
+
         super.tearDown();
     }
 
     protected abstract int getUserId();
-
-    protected abstract boolean isTestEnabled() throws Exception;
 
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         runDeviceTestsAsUser(OWNER_PKG, className, testName, getUserId());
@@ -105,10 +93,6 @@ public abstract class BaseDeviceAdminServiceTest extends BaseDevicePolicyTest {
 
     @Test
     public void testAll() throws Throwable {
-        if (!isTestEnabled()) {
-            return;
-        }
-
         // Install
         CLog.i("Installing apk1...");
         installAppAsUser(OWNER_APK_1, getUserId());

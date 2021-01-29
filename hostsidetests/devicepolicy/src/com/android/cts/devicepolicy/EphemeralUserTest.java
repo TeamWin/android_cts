@@ -26,21 +26,15 @@ import org.junit.Test;
  */
 public class EphemeralUserTest extends BaseDevicePolicyTest {
 
-    private boolean mRunTearDown;
-
     @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
+    protected void assumeTestEnabled() throws Exception {
         assumeCanCreateAdditionalUsers(1);
-        mRunTearDown = true;
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (!mRunTearDown) return;
-
         removeTestUsers();
+
         super.tearDown();
     }
 

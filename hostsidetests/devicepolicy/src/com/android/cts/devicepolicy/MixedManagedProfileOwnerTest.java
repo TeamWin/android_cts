@@ -16,9 +16,12 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -29,11 +32,12 @@ import org.junit.Test;
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
+// We need managed users to be supported in order to create a profile of the user owner.
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";
-    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private int mParentUserId = -1;
 
@@ -41,14 +45,9 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        // We need managed users to be supported in order to create a profile of the user owner.
-        mHasFeature &= hasDeviceFeature("android.software.managed_users");
-
-        if (mHasFeature) {
-            removeTestUsers();
-            mParentUserId = mPrimaryUserId;
-            createManagedProfile();
-        }
+        removeTestUsers();
+        mParentUserId = mPrimaryUserId;
+        createManagedProfile();
     }
 
     private void createManagedProfile() throws Exception {
@@ -63,9 +62,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            removeUser(mUserId);
-        }
+        removeUser(mUserId);
+
         super.tearDown();
     }
 
@@ -78,9 +76,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @LargeTest
     @Test
     public void testScreenCaptureDisabled_allowedPrimaryUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // disable screen capture in profile
         setScreenCaptureDisabled(mUserId, true);
 
@@ -93,9 +88,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest
     @Test
     public void testScreenCaptureDisabled_assist_allowedPrimaryUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // disable screen capture in profile
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", "testSetScreenCaptureDisabled_true");
         try {
@@ -185,9 +177,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @LockSettingsTest
     @Test
     public void testResetPasswordWithToken() throws Exception {
-        if (!mHasFeature || !mHasSecureLockScreen) {
-            return;
-        }
+        assumeHasSecureLockScreenFeature();
+
         // Execute the test method that's guaranteed to succeed. See also test in base class
         // which are tolerant to failure and executed by MixedDeviceOwnerTest and
         // MixedProfileOwnerTest
@@ -222,9 +213,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testCannotClearProfileOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS, mUserId);
     }
 
@@ -237,9 +225,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         setUpDelegatedCertInstallerAndRunTests(() -> {
             runDeviceTestsAsUser("com.android.cts.certinstaller",
                     ".DelegatedDeviceIdAttestationTest",
@@ -250,9 +235,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Test that Device ID attestation for the profile owner does not work without grant.
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceIdAttestationTest",
                 "testFailsWithoutProfileOwnerIdsGrant", mUserId);
@@ -263,9 +245,6 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     @Override
     public void testSetKeyguardDisabledFeatures() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".KeyguardDisabledFeaturesTest",
                 "testSetKeyguardDisabledFeatures_onParentSilentIgnoreWhenCallerIsNotOrgOwnedPO",
                 mUserId);
@@ -393,9 +372,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testWifiMacAddress() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature(FEATURE_WIFI)) {
-            return;
-        }
+        assumeHasWifiFeature();
 
         runDeviceTestsAsUser(
                 DEVICE_ADMIN_PKG, ".WifiTest", "testCannotGetWifiMacAddress", mUserId);

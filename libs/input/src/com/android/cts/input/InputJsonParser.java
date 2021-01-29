@@ -173,6 +173,21 @@ public class InputJsonParser {
     }
 
     /**
+     * Extract the input sources from the raw resource file.
+     *
+     * @param resourceId resource file that contains the register command.
+     * @return device sources
+     */
+    public int readSources(int resourceId) {
+        try {
+            JSONObject json = new JSONObject(readRawResource(resourceId));
+            return sourceFromString(json.optString("source"));
+        } catch (JSONException e) {
+            throw new RuntimeException("Could not read resource from resource " + resourceId);
+        }
+    }
+
+    /**
      * Extract the Product id from the raw resource file.
      *
      * @param resourceId resource file that contains the register command.
@@ -296,6 +311,35 @@ public class InputJsonParser {
                 tests.add(testData);
             } catch (JSONException e) {
                 throw new RuntimeException("Could not process entry " + testCaseNumber);
+            }
+        }
+        return tests;
+    }
+
+    /**
+     * Read json resource, and return a {@code List} of HidBatteryTestData, which contains
+     * the name of each test, along with the HID reports and the expected batttery status.
+     */
+    public List<HidBatteryTestData> getHidBatteryTestData(int resourceId) {
+        JSONArray json = getJsonArrayFromResource(resourceId);
+        List<HidBatteryTestData> tests = new ArrayList<HidBatteryTestData>();
+        for (int testCaseNumber = 0; testCaseNumber < json.length(); testCaseNumber++) {
+            HidBatteryTestData testData = new HidBatteryTestData();
+            try {
+                JSONObject testcaseEntry = json.getJSONObject(testCaseNumber);
+                testData.name = testcaseEntry.getString("name");
+                JSONArray reports = testcaseEntry.getJSONArray("reports");
+
+                for (int i = 0; i < reports.length(); i++) {
+                    String report = reports.getString(i);
+                    testData.reports.add(report);
+                }
+
+                testData.capacity = Float.valueOf(testcaseEntry.getString("capacity"));
+                testData.status = testcaseEntry.getInt("status");
+                tests.add(testData);
+            } catch (JSONException e) {
+                throw new RuntimeException("Could not process entry " + testCaseNumber + " " + e);
             }
         }
         return tests;
@@ -580,6 +624,9 @@ public class InputJsonParser {
         for (final String sourceEntry : sourceEntries) {
             final String trimmedSourceEntry = sourceEntry.trim();
             switch (trimmedSourceEntry.toUpperCase()) {
+                case "MOUSE":
+                    source |= InputDevice.SOURCE_MOUSE;
+                    break;
                 case "MOUSE_RELATIVE":
                     source |= InputDevice.SOURCE_MOUSE_RELATIVE;
                     break;
@@ -597,6 +644,9 @@ public class InputJsonParser {
                     break;
                 case "TOUCHPAD":
                     source |= InputDevice.SOURCE_TOUCHPAD;
+                    break;
+                case "SENSOR":
+                    source |= InputDevice.SOURCE_SENSOR;
                     break;
                 default:
                     throw new RuntimeException("Unknown source chunk: " + trimmedSourceEntry

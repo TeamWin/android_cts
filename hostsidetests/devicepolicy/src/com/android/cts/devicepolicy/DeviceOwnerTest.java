@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +29,9 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.LocationModeSetter;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
+import com.android.tradefed.log.LogUtil.CLog;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -88,8 +91,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     private static final String GLOBAL_SETTING_DATA_ROAMING = "data_roaming";
     private static final String GLOBAL_SETTING_USB_MASS_STORAGE_ENABLED =
             "usb_mass_storage_enabled";
-
-    private boolean mDeviceOwnerSet;
 
     @Test
     public void testDeviceOwnerSetup() throws Exception {
@@ -514,9 +515,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * Can provision Managed Profile when DO is set by default if they are the same admin.
      */
     @Test
+    @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
     public void testIsManagedProfileProvisioningAllowed_deviceOwnerIsSet() throws Exception {
-        assumeHasManageUsersFeature();
-
         executeDeviceTestMethod(".PreDeviceOwnerTest",
                 "testIsProvisioningNotAllowedForManagedProfileAction");
     }
@@ -567,8 +567,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testAllowProvisioningProperty() throws Exception {
         boolean isProvisioningAllowedForNormalUsers =
                 getBooleanSystemProperty("ro.config.allowuserprovisioning", true);
-        boolean isTv = hasDeviceFeature("android.software.leanback");
-        assertTrue(isProvisioningAllowedForNormalUsers || isTv);
+        assertTrue(isProvisioningAllowedForNormalUsers || isTv());
     }
 
     @Test
@@ -848,10 +847,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         wakeupAndDismissKeyguard();
 
         // Setting the same affiliation ids on both users
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", mPrimaryUserId);
-        runDeviceTestsAsUser(
-                DEVICE_OWNER_PKG, ".AffiliationTest", "testSetAffiliationId1", userId);
+        CLog.d("createAffiliatedSecondaryUser(): deviceOwnerId=" + mDeviceOwnerUserId
+                + ", primaryUserId=" + mPrimaryUserId + ", newUserId=" + userId);
+        affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, userId);
+
         return userId;
     }
 

@@ -1447,9 +1447,11 @@ public class LocationManagerFineTest {
             mManager.registerGnssMeasurementsCallback(Runnable::run, capture);
 
             // test deprecated status messages
-            Integer status = capture.getNextStatus(TIMEOUT_MS);
-            assertThat(status).isNotNull();
-            assertThat(status).isEqualTo(GnssMeasurementsEvent.Callback.STATUS_READY);
+            if (mManager.hasProvider(GPS_PROVIDER)) {
+                Integer status = capture.getNextStatus(TIMEOUT_MS);
+                assertThat(status).isNotNull();
+                assertThat(status).isEqualTo(GnssMeasurementsEvent.Callback.STATUS_READY);
+            }
         }
     }
 
@@ -1466,9 +1468,11 @@ public class LocationManagerFineTest {
             mManager.registerGnssNavigationMessageCallback(Runnable::run, capture);
 
             // test deprecated status messages
-            Integer status = capture.getNextStatus(TIMEOUT_MS);
-            assertThat(status).isNotNull();
-            assertThat(status).isEqualTo(GnssNavigationMessage.Callback.STATUS_READY);
+            if (mManager.hasProvider(GPS_PROVIDER)) {
+                Integer status = capture.getNextStatus(TIMEOUT_MS);
+                assertThat(status).isNotNull();
+                assertThat(status).isEqualTo(GnssNavigationMessage.Callback.STATUS_READY);
+            }
         }
     }
 }

@@ -52,33 +52,28 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void setUp() throws Exception {
         super.setUp();
 
-        if (mHasFeature) {
-            mUserId = mPrimaryUserId;
+        mUserId = mPrimaryUserId;
 
-            installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-            if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
-                    false)) {
-                removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
-                getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
-                fail("Failed to set device owner");
-            }
+        installAppAsUser(DEVICE_ADMIN_APK, mUserId);
+        if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
+                false)) {
+            removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
+            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+            fail("Failed to set device owner");
         }
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            assertTrue("Failed to remove device owner",
+        assertTrue("Failed to remove device owner",
                     removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId));
-        }
+
         super.tearDown();
     }
 
     @Test
     public void testLockTask_unaffiliatedUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
 
         final int userId = createSecondaryUserAsProfileOwner();
         runDeviceTestsAsUser(
@@ -99,9 +94,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Ignore("Ignored while migrating to new infrastructure b/175377361")
     @Test
     public void testLockTask_affiliatedSecondaryUser() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
+
         final int userId = createSecondaryUserAsProfileOwner();
         switchToUser(userId);
         setUserAsAffiliatedUserToPrimary(userId);
@@ -110,10 +104,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         setUpDelegatedCertInstallerAndRunTests(() ->
                 runDeviceTestsAsUser("com.android.cts.certinstaller",
                         ".DelegatedDeviceIdAttestationTest",
@@ -144,9 +134,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest(bugId = 137088260)
     @Test
     public void testWifi() throws Exception {
-        if (!mHasFeature || !hasDeviceFeature("android.hardware.wifi")) {
-            return;
-        }
+        assumeHasWifiFeature();
+
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".WifiTest", "testGetWifiMacAddress", mUserId);
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
@@ -157,17 +146,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testAdminConfiguredNetworks() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".AdminConfiguredNetworksTest", mPrimaryUserId);
     }
 
     @Test
     public void testSetTime() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".TimeManagementTest", "testSetTime");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_VALUE)
@@ -179,9 +162,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSetTimeZone() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".TimeManagementTest", "testSetTimeZone");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_TIME_ZONE_VALUE)
@@ -222,9 +202,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
 
@@ -237,10 +214,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testFactoryResetProtectionPolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DeviceFeatureUtils",
                     "testHasFactoryResetProtectionPolicy", mUserId);
@@ -262,9 +235,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testCommonCriteriaMode() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".CommonCriteriaModeTest", mUserId);
     }
 
@@ -272,18 +242,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     @Ignore("b/145932189")
     public void testSystemUpdatePolicy() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.SystemUpdatePolicyTest", mUserId);
     }
 
     @Test
     public void testInstallUpdate() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         pushUpdateFileToDevice("notZip.zi");
         pushUpdateFileToDevice("empty.zip");
         pushUpdateFileToDevice("wrongPayload.zip");
@@ -294,9 +257,8 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testInstallUpdateLogged() throws Exception {
-        if (!mHasFeature || !isDeviceAb()) {
-            return;
-        }
+        assumeIsDeviceAb();
+
         pushUpdateFileToDevice("wrongHash.zip");
         assertMetricsLogged(getDevice(), () -> {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".systemupdate.InstallUpdateTest",
@@ -313,9 +275,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @FlakyTest(bugId = 137093665)
     @Test
     public void testSecurityLoggingWithSingleUser() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Backup stay awake setting because testGenerateLogs() will turn it off.
         final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
         try {
@@ -358,9 +317,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingEnabledLogged() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
             executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
@@ -376,9 +332,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSecurityLoggingWithTwoUsers() throws Exception {
-        if (!mHasFeature || !canCreateAdditionalUsers(1)) {
-            return;
-        }
+        assumeCanCreateAdditionalUsers(1);
 
         final int userId = createUser();
         try {
@@ -397,9 +351,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLocationPermissionGrantNotifies() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppPermissionAppAsUser();
         configureNotificationListener();
         executeDeviceTestMethod(".PermissionsTest",

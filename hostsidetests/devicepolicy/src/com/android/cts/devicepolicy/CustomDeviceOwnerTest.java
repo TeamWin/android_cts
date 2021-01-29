@@ -46,19 +46,14 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-            getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
-        }
+        getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        getDevice().uninstallPackage(ACCOUNT_MANAGEMENT_PKG);
 
         super.tearDown();
     }
 
     @Test
     public void testOwnerChangedBroadcast() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
@@ -88,9 +83,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testCannotSetDeviceOwnerWhenSecondaryUserPresent() throws Exception {
-        if (!mHasFeature || getMaxNumberOfUsersSupported() < 2) {
-            return;
-        }
+        assumeSupportsMultiUser();
         int userId = -1;
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
@@ -107,9 +100,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest
     @Test
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mPrimaryUserId);
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {
@@ -127,9 +117,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testIsProvisioningAllowed() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         // Must install the apk since the test runs in the DO apk.
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
         try {

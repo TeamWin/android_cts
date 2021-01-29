@@ -20,25 +20,23 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.app.UiAutomation;
 import android.media.AudioAttributes;
-import android.os.cts.SimpleTestActivity;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.os.Vibrator.OnVibratorStateChangedListener;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
-import java.util.concurrent.Executors;
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,6 +45,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.concurrent.Executors;
+
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 public class VibratorTest {
@@ -54,30 +54,38 @@ public class VibratorTest {
     public ActivityTestRule<SimpleTestActivity> mActivityRule = new ActivityTestRule<>(
             SimpleTestActivity.class);
 
+    @Rule
+    public final AdoptShellPermissionsRule mAdoptShellPermissionsRule =
+            new AdoptShellPermissionsRule(
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    android.Manifest.permission.ACCESS_VIBRATOR_STATE);
+
     private static final AudioAttributes AUDIO_ATTRIBUTES =
             new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build();
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build();
     private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
+    private static final long VIBRATION_TIMEOUT_MILLIS = 200;
 
     private Vibrator mVibrator;
-    @Mock
-    private OnVibratorStateChangedListener mListener1;
-    @Mock
-    private OnVibratorStateChangedListener mListener2;
+    @Mock private OnVibratorStateChangedListener mListener1;
+    @Mock private OnVibratorStateChangedListener mListener2;
 
     @Before
     public void setUp() {
         MockitoAnnotations.initMocks(this);
-        mVibrator = InstrumentationRegistry.getContext().getSystemService(Vibrator.class);
+        mVibrator = InstrumentationRegistry.getInstrumentation().getContext().getSystemService(
+                Vibrator.class);
     }
 
     @Test
     public void testVibratorCancel() {
         mVibrator.vibrate(1000);
-        sleep(500);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
         mVibrator.cancel();
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
     }
 
     @Test
@@ -93,45 +101,48 @@ public class VibratorTest {
 
     @Test
     public void testVibrateMultiThread() {
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    mVibrator.vibrate(100);
-                } catch (Exception e) {
-                    fail("MultiThread fail1");
-                }
+        new Thread(() -> {
+            try {
+                mVibrator.vibrate(500);
+            } catch (Exception e) {
+                fail("MultiThread fail1");
             }
         }).start();
-        new Thread(new Runnable() {
-            public void run() {
-                try {
-                    // This test only get two threads to run vibrator at the same time
-                    // for a functional test,
-                    // but it can not verify if the second thread get the precedence.
-                    mVibrator.vibrate(1000);
-                } catch (Exception e) {
-                    fail("MultiThread fail2");
-                }
+        new Thread(() -> {
+            try {
+                // This test only get two threads to run vibrator at the same time for a functional
+                // test, but it can not verify if the second thread get the precedence.
+                mVibrator.vibrate(1000);
+            } catch (Exception e) {
+                fail("MultiThread fail2");
             }
         }).start();
-        sleep(1500);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
+        SystemClock.sleep(1500);
+        assertTrue(isNotVibrating());
     }
 
     @Test
     public void testVibrateOneShot() {
         VibrationEffect oneShot =
-                VibrationEffect.createOneShot(100, VibrationEffect.DEFAULT_AMPLITUDE);
+                VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE);
         mVibrator.vibrate(oneShot);
-        sleep(100);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
+        SystemClock.sleep(350);
+        assertTrue(isNotVibrating());
 
         oneShot = VibrationEffect.createOneShot(500, 255 /* Max amplitude */);
         mVibrator.vibrate(oneShot);
-        sleep(100);
-        mVibrator.cancel();
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
 
-        oneShot = VibrationEffect.createOneShot(100, 1 /* Min amplitude */);
+        mVibrator.cancel();
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+
+        oneShot = VibrationEffect.createOneShot(300, 1 /* Min amplitude */);
         mVibrator.vibrate(oneShot, AUDIO_ATTRIBUTES);
-        sleep(100);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
     }
 
     @Test
@@ -140,12 +151,27 @@ public class VibratorTest {
         final int[] amplitudes = new int[] {64, 128, 255, 128, 64};
         VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, -1);
         mVibrator.vibrate(waveform);
-        sleep(1500);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
+        SystemClock.sleep(1500);
+        assertTrue(isNotVibrating());
 
         waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
         mVibrator.vibrate(waveform, AUDIO_ATTRIBUTES);
-        sleep(2000);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
+        SystemClock.sleep(2000);
+        assertTrue(isVibrating());
+
         mVibrator.cancel();
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+    }
+
+    @Test
+    public void testHasVibrator() {
+        // Just make sure it doesn't crash when this is called; we don't really have a way to test
+        // if the device has vibrator or not.
+        mVibrator.hasVibrator();
     }
 
     @Test
@@ -202,42 +228,30 @@ public class VibratorTest {
         assertTrue(mVibrator.areAllPrimitivesSupported());
     }
 
-    /**
-     * For devices with vibrator we assert the IsVibrating state, for devices without vibrator just
-     * ensure it won't crash with IsVibrating call.
-     */
-    private void assertIsVibrating(boolean expected) {
-        final boolean isVibrating = mVibrator.isVibrating();
-        if (mVibrator.hasVibrator()) {
-            assertEquals(isVibrating, expected);
-        }
-    }
-
     @Test
     public void testVibratorIsVibrating() {
-        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
-        assertIsVibrating(false);
+        assertTrue(isNotVibrating());
+
         mVibrator.vibrate(1000);
-        assertIsVibrating(true);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
         mVibrator.cancel();
-        assertIsVibrating(false);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
     }
 
     @Test
     public void testVibratorVibratesNoLongerThanDuration() {
-        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
-        assertIsVibrating(false);
-        mVibrator.vibrate(100);
-        SystemClock.sleep(150);
-        assertIsVibrating(false);
+        assertTrue(isNotVibrating());
+
+        mVibrator.vibrate(300);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
+        SystemClock.sleep(350);
+        assertTrue(isNotVibrating());
     }
 
     @Test
-    public void testVibratorStateCallback() throws Exception {
-        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ui.adoptShellPermissionIdentity("android.permission.ACCESS_VIBRATOR_STATE");
+    public void testVibratorStateCallback() {
         // Add listener1 on executor
         mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), mListener1);
         // Add listener2 on main thread.
@@ -248,7 +262,7 @@ public class VibratorTest {
                 .times(1)).onVibratorStateChanged(false);
 
         mVibrator.vibrate(1000);
-        assertIsVibrating(true);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
 
         verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
                 .times(1)).onVibratorStateChanged(true);
@@ -260,8 +274,9 @@ public class VibratorTest {
         verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
                 .times(1)).onVibratorStateChanged(false);
 
+        assertTrue(isVibrating());
         mVibrator.cancel();
-        assertIsVibrating(false);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
 
         // Remove listener1 & listener2
         mVibrator.removeVibratorStateListener(mListener1);
@@ -270,16 +285,19 @@ public class VibratorTest {
         reset(mListener2);
 
         mVibrator.vibrate(1000);
-        assertIsVibrating(true);
+        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+
         verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
                 .onVibratorStateChanged(anyBoolean());
         verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
                 .onVibratorStateChanged(anyBoolean());
     }
 
-    private static void sleep(long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException ignored) { }
+    private boolean isVibrating() {
+        return !mVibrator.hasVibrator() || mVibrator.isVibrating();
+    }
+
+    private boolean isNotVibrating() {
+        return !mVibrator.hasVibrator() || !mVibrator.isVibrating();
     }
 }

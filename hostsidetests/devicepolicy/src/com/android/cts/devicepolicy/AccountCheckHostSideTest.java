@@ -23,10 +23,10 @@ import android.platform.test.annotations.LargeTest;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Test;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.junit.Test;
 
 public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     private static final String APK_NON_TEST_ONLY = "CtsAccountCheckNonTestOnlyOwnerApp.apk";
@@ -50,20 +50,19 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
-                runCleanupTestOnlyOwnerAllowingFailure();
-                runCleanupNonTestOnlyOwnerAllowingFailure();
+        if (getDevice().getInstalledPackageNames().contains(PACKAGE_AUTH)) {
+            runCleanupTestOnlyOwnerAllowingFailure();
+            runCleanupNonTestOnlyOwnerAllowingFailure();
 
-                // This shouldn't be needed since we're uninstalling the authenticator,
-                // but sometimes the account manager fails to clean up?
-                removeAllAccountsAllowingFailure();
-            }
-
-            getDevice().uninstallPackage(PACKAGE_AUTH);
-            getDevice().uninstallPackage(PACKAGE_TEST_ONLY);
-            getDevice().uninstallPackage(PACKAGE_NON_TEST_ONLY);
+            // This shouldn't be needed since we're uninstalling the authenticator,
+            // but sometimes the account manager fails to clean up?
+            removeAllAccountsAllowingFailure();
         }
+
+        getDevice().uninstallPackage(PACKAGE_AUTH);
+        getDevice().uninstallPackage(PACKAGE_TEST_ONLY);
+        getDevice().uninstallPackage(PACKAGE_NON_TEST_ONLY);
+
         super.tearDown();
     }
 
@@ -155,9 +154,6 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
     @Test
     @LargeTest
     public void testAccountCheck() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(APK_AUTH, mPrimaryUserId);
         installAppAsUser(APK_NON_TEST_ONLY, mPrimaryUserId);
         installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
@@ -248,9 +244,6 @@ public class AccountCheckHostSideTest extends BaseDevicePolicyTest {
      */
     @Test
     public void testInheritTestOnly() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         installAppAsUser(APK_TEST_ONLY, mPrimaryUserId);
 
         // Set as DO.

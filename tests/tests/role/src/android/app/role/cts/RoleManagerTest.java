@@ -931,15 +931,31 @@ public class RoleManagerTest {
     }
 
     @Test
-    public void smsRoleHolderAvailableWithoutObserveRoleHolders() throws Exception {
+    public void packageManagerGetDefaultBrowserBackedByRole() throws Exception {
+        addRoleHolder(RoleManager.ROLE_BROWSER, APP_PACKAGE_NAME);
+
+        assertThat(sPackageManager.getDefaultBrowserPackageNameAsUser(UserHandle.myUserId()))
+                .isEqualTo(APP_PACKAGE_NAME);
+    }
+
+    @Test
+    public void packageManagerSetDefaultBrowserBackedByRole() throws Exception {
+        callWithShellPermissionIdentity(() -> sPackageManager.setDefaultBrowserPackageNameAsUser(
+                APP_PACKAGE_NAME, UserHandle.myUserId()));
+
+        assertIsRoleHolder(RoleManager.ROLE_BROWSER, APP_PACKAGE_NAME, true);
+    }
+
+    @Test
+    public void telephonySmsGetDefaultSmsPackageBackedByRole() throws Exception {
         assumeTrue(sRoleManager.isRoleAvailable(RoleManager.ROLE_SMS));
 
         addRoleHolder(RoleManager.ROLE_SMS, APP_PACKAGE_NAME);
 
-        assertThat(sRoleManager.getSmsRoleHolder(Process.myUserHandle().getIdentifier()))
-                .isEqualTo(APP_PACKAGE_NAME);
+        assertThat(Telephony.Sms.getDefaultSmsPackage(sContext)).isEqualTo(APP_PACKAGE_NAME);
     }
 
+    @NonNull
     private List<String> getRoleHolders(@NonNull String roleName) throws Exception {
         return callWithShellPermissionIdentity(() -> sRoleManager.getRoleHolders(roleName));
     }

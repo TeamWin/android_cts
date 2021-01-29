@@ -2949,6 +2949,41 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Test that {@link WifiManager#is60GHzBandSupported()} returns successfully in
+     * both Wifi enabled/disabled states.
+     * Note that the response depends on device support and hence both true/false
+     * are valid responses.
+     */
+    public void testIs60GhzBandSupported() throws Exception {
+        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        // Check for 60GHz support with wifi enabled
+        setWifiEnabled(true);
+        PollingCheck.check(
+                "Wifi not enabled!",
+                20000,
+                () -> mWifiManager.isWifiEnabled());
+        boolean isSupportedEnabled = mWifiManager.is60GHzBandSupported();
+
+        // Check for 60GHz support with wifi disabled
+        setWifiEnabled(false);
+        PollingCheck.check(
+                "Wifi not disabled!",
+                20000,
+                () -> !mWifiManager.isWifiEnabled());
+        boolean isSupportedDisabled = mWifiManager.is60GHzBandSupported();
+
+        // If Support is true when WiFi is disable, then it has to be true when it is enabled.
+        // Note, the reverse is a valid case.
+        if (isSupportedDisabled) {
+            assertTrue(isSupportedEnabled);
+        }
+    }
+
+    /**
      * Test that {@link WifiManager#isWifiStandardSupported()} returns successfully in
      * both Wifi enabled/disabled states. The test is to be performed on
      * {@link WifiAnnotations}'s {@code WIFI_STANDARD_}

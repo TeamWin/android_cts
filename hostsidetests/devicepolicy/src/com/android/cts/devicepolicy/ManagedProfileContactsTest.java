@@ -135,10 +135,6 @@ public class ManagedProfileContactsTest extends BaseManagedProfileTest {
     }
 
     private void runManagedContactsTest(Callable<Void> callable) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         try {
             // Allow cross profile contacts search.
             // TODO test both on and off.

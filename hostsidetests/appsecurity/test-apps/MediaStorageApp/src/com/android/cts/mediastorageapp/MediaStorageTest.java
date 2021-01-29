@@ -18,6 +18,8 @@ package com.android.cts.mediastorageapp;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -52,12 +54,16 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingParams;
 import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
 
+import com.google.common.io.ByteStreams;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -396,6 +402,66 @@ public class MediaStorageTest {
         doEscalation(exception);
 
         assertEquals(1, mContentResolver.delete(red, null, null));
+    }
+
+    @Test
+    public void testMediaEscalation_RequestWriteFilePathSupport() throws Exception {
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createAudio);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createVideo);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createImage);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createPlaylist);
+        doMediaEscalation_RequestWrite_withFilePathSupport(MediaStorageTest::createSubtitle);
+    }
+
+    private void doMediaEscalation_RequestWrite_withFilePathSupport(
+            Callable<Uri> create) throws Exception {
+        final Uri red = create.call();
+        assertNotNull(red);
+        String path = queryForSingleColumn(red, MediaColumns.DATA);
+        File file = new File(path);
+        assertThat(file.exists()).isTrue();
+        assertThat(file.canRead()).isTrue();
+        assertThat(file.canWrite()).isTrue();
+
+        clearMediaOwner(red, mUserId);
+        assertThat(file.canWrite()).isFalse();
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            fail("Expected write access to be blocked");
+        } catch (SecurityException expected) {
+        }
+
+        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)));
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+        }
+
+        // Check File API support
+        assertAccessFileAPISupport(file);
+        assertReadWriteFileAPISupport(file);
+        assertDeleteFileAPISupport(file);
+    }
+
+    private void assertAccessFileAPISupport(File file) throws Exception {
+        assertThat(file.canRead()).isTrue();
+        assertThat(file.canWrite()).isTrue();
+    }
+
+    private void assertReadWriteFileAPISupport(File file) throws Exception {
+        final String str = "Just some random text";
+        final byte[] bytes = str.getBytes();
+        // Write to file
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(bytes);
+        }
+        // Read the same data from file
+        try (FileInputStream fis = new FileInputStream(file)) {
+            assertThat(ByteStreams.toByteArray(fis)).isEqualTo(bytes);
+        }
+    }
+
+    private void assertDeleteFileAPISupport(File file) throws Exception {
+        assertThat(file.delete()).isTrue();
     }
 
     @Test

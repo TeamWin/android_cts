@@ -32,14 +32,13 @@ public abstract class DeviceAndProfileOwnerTestApi30 extends BaseDevicePolicyTes
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
+        getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
 
-            // Clear device lock in case test fails (testUnlockFbe in particular)
-            getDevice().executeShellCommand("cmd lock_settings clear --old 12345");
-            // Press the HOME key to close any alart dialog that may be shown.
-            getDevice().executeShellCommand("input keyevent 3");
-        }
+        // Clear device lock in case test fails (testUnlockFbe in particular)
+        getDevice().executeShellCommand("cmd lock_settings clear --old 12345");
+        // Press the HOME key to close any alart dialog that may be shown.
+        getDevice().executeShellCommand("input keyevent 3");
+
         super.tearDown();
     }
 

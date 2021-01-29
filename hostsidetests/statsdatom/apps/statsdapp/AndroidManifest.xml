@@ -45,6 +45,9 @@
 
         <service android:name=".StatsdCtsBackgroundService"
              android:exported="true"/>
+        <service android:name=".LmkVictimBackgroundService"
+             android:process=":lmk_victim"
+             android:exported="true"/>
         <activity android:name=".StatsdCtsForegroundActivity"
              android:exported="true"/>
         <service android:name=".StatsdCtsForegroundService"

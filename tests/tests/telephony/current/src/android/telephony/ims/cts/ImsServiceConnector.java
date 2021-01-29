@@ -67,6 +67,7 @@ class ImsServiceConnector {
             "src set-device-enabled ";
     private static final String COMMAND_GET_DEVICE_SINGLE_REGISTRATION_ENABLED =
             "src get-device-enabled";
+    private static final String COMMAND_REMOVE_EAB_CONTACT = "uce remove-eab-contact ";
 
     private class TestCarrierServiceConnection implements ServiceConnection {
 
@@ -570,6 +571,13 @@ class ImsServiceConnector {
     boolean getDeviceSingleRegistrationEnabled() throws Exception {
         return Boolean.parseBoolean(TelephonyUtils.executeShellCommand(mInstrumentation,
                 COMMAND_BASE + COMMAND_GET_DEVICE_SINGLE_REGISTRATION_ENABLED));
+    }
+
+    void removeEabContacts(int slotId, String phoneNum) throws Exception {
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(COMMAND_BASE).append(COMMAND_REMOVE_EAB_CONTACT)
+                .append(COMMAND_SLOT_IDENTIFIER).append(slotId).append(" ").append(phoneNum);
+        TelephonyUtils.executeShellCommand(mInstrumentation, cmdBuilder.toString());
     }
 
     TestImsService getCarrierService() {

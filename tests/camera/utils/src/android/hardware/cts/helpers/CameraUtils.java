@@ -17,12 +17,16 @@
 package android.hardware.cts.helpers;
 
 import android.content.Context;
+import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.os.Bundle;
+import android.os.SystemClock;
+import android.util.Log;
+import android.view.TextureView;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -39,6 +43,9 @@ public class CameraUtils {
     private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
     private static final Bundle mBundle = InstrumentationRegistry.getArguments();
     public static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
+
+    private static final String TAG = "CameraUtils";
+    private static final long SHORT_SLEEP_WAIT_TIME_MS = 100;
 
     /**
      * Returns {@code true} if this device only supports {@code LEGACY} mode operation in the
@@ -233,4 +240,29 @@ public class CameraUtils {
         }
         return cameraIds;
     }
+
+    /**
+     * Wait until the SurfaceTexture available from the TextureView, then return it.
+     * Return null if the wait times out.
+     *
+     * @param timeOutMs The timeout value for the wait
+     * @return The available SurfaceTexture, return null if the wait times out.
+    */
+    public static SurfaceTexture getAvailableSurfaceTexture(long timeOutMs, TextureView view) {
+        long waitTime = timeOutMs;
+
+        while (!view.isAvailable() && waitTime > 0) {
+            long startTimeMs = SystemClock.elapsedRealtime();
+            SystemClock.sleep(SHORT_SLEEP_WAIT_TIME_MS);
+            waitTime -= (SystemClock.elapsedRealtime() - startTimeMs);
+        }
+
+        if (view.isAvailable()) {
+            return view.getSurfaceTexture();
+        } else {
+            Log.w(TAG, "Wait for SurfaceTexture available timed out after " + timeOutMs + "ms");
+            return null;
+        }
+    }
+
 }

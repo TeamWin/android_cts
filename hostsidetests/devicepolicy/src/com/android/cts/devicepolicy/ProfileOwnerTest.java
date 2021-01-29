@@ -26,7 +26,6 @@ import org.junit.Test;
 public class ProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PROFILE_OWNER_PKG = "com.android.cts.profileowner";
     private static final String PROFILE_OWNER_APK = "CtsProfileOwnerApp.apk";
-    private static final String FEATURE_BACKUP = "android.software.backup";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             PROFILE_OWNER_PKG + ".BaseProfileOwnerTest$BasicAdminReceiver";
@@ -40,76 +39,54 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         mUserId = getPrimaryUser();
 
 
-        if (mHasFeature) {
-            installAppAsUser(PROFILE_OWNER_APK, mUserId);
-            if (!setProfileOwner(
-                    PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
-                    /* expectFailure */ false)) {
-                removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
-                getDevice().uninstallPackage(PROFILE_OWNER_PKG);
-                fail("Failed to set profile owner");
-            }
+        installAppAsUser(PROFILE_OWNER_APK, mUserId);
+        if (!setProfileOwner(
+                PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId,
+                /* expectFailure */ false)) {
+            removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId);
+            getDevice().uninstallPackage(PROFILE_OWNER_PKG);
+            fail("Failed to set profile owner");
         }
     }
 
     @Test
     public void testManagement() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
     public void testAdminActionBookkeeping() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
     public void testAppUsageObserver() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         executeProfileOwnerTest("AppUsageObserverTest");
     }
 
     @Test
     public void testBackupServiceEnabling() throws Exception {
-        final boolean hasBackupService = getDevice().hasFeature(FEATURE_BACKUP);
         // The backup service cannot be enabled if the backup feature is not supported.
-        if (!mHasFeature || !hasBackupService) {
-            return;
-        }
+        assumeHasBackupFeature();
+
         executeProfileOwnerTest("BackupServicePoliciesTest");
     }
 
     @Test
     public void testDevicePolicySafetyCheckerIntegration() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-
         executeProfileOwnerTest("DevicePolicySafetyCheckerIntegrationTest");
     }
 
     @Override
     public void tearDown() throws Exception {
-        if (mHasFeature) {
-            assertTrue("Failed to remove profile owner.",
-                    removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
-            getDevice().uninstallPackage(PROFILE_OWNER_PKG);
-        }
+        assertTrue("Failed to remove profile owner.",
+                removeAdmin(PROFILE_OWNER_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS, mUserId));
+        getDevice().uninstallPackage(PROFILE_OWNER_PKG);
 
         super.tearDown();
     }
 
     private void executeProfileOwnerTest(String testClassName) throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
         String testClass = PROFILE_OWNER_PKG + "." + testClassName;
         runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass, mPrimaryUserId);
     }
