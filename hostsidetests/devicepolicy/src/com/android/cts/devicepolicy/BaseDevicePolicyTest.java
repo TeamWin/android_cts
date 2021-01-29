@@ -344,7 +344,11 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         executeShellCommand("am force-stop --user " + userId + " " + packageName);
     }
 
-    protected void executeShellCommand(final String command) throws Exception {
+    protected void executeShellCommand(String commandTemplate, Object...args) throws Exception {
+        executeShellCommand(String.format(commandTemplate, args));
+    }
+
+    protected void executeShellCommand(String command) throws Exception {
         CLog.d("Starting command " + command);
         String commandOutput = getDevice().executeShellCommand(command);
         CLog.d("Output for command " + command + ": " + commandOutput);
