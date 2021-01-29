@@ -32,7 +32,9 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
 import android.text.TextUtils;
 
@@ -43,6 +45,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -68,98 +71,32 @@ import java.util.stream.Stream;
 @AppModeFull
 @LargeTest
 public class PackageManagerShellCommandIncrementalTest {
+    private static final String CTS_PACKAGE_NAME = "android.content.cts";
     private static final String TEST_APP_PACKAGE = "com.example.helloworld";
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
     private static final String TEST_APK_SHELL = "HelloWorldShell.apk";
-    private static final String TEST_APK_SPLIT = "HelloWorld5_hdpi-v4.apk";
+    private static final String TEST_APK_SPLIT0 = "HelloWorld5_mdpi-v4.apk";
+    private static final String TEST_APK_SPLIT1 = "HelloWorld5_hdpi-v4.apk";
+    private static final String TEST_APK_SPLIT2 = "HelloWorld5_xhdpi-v4.apk";
+
+    private static final long EXPECTED_READ_TIME = 1000L;
 
     private static UiAutomation getUiAutomation() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
-    private static String executeShellCommand(String command) throws IOException {
-        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
-        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
-            return readFullStream(inputStream);
-        }
-    }
-
-    private static String executeShellCommand(String command, File[] inputs)
-            throws IOException {
-        return executeShellCommand(command, inputs, Stream.of(inputs).mapToLong(
-                File::length).toArray());
-    }
-
-    private static String executeShellCommand(String command, File[] inputs, long[] expected)
-            throws IOException {
-        assertEquals(inputs.length, expected.length);
-        final ParcelFileDescriptor[] pfds =
-                InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                        .executeShellCommandRw(command);
-        ParcelFileDescriptor stdout = pfds[0];
-        ParcelFileDescriptor stdin = pfds[1];
-        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
-                stdin)) {
-            for (int i = 0; i < inputs.length; i++) {
-                try (FileInputStream inputStream = new FileInputStream(inputs[i])) {
-                    writeFullStream(inputStream, outputStream, expected[i]);
-                }
-            }
-        }
-        try (InputStream inputStream = new ParcelFileDescriptor.AutoCloseInputStream(stdout)) {
-            return readFullStream(inputStream);
-        }
-    }
-
-    private static String readFullStream(InputStream inputStream, long expected)
-            throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        writeFullStream(inputStream, result, expected);
-        return result.toString("UTF-8");
-    }
-
-    private static String readFullStream(InputStream inputStream) throws IOException {
-        return readFullStream(inputStream, -1);
-    }
-
-    private static void writeFullStream(InputStream inputStream, OutputStream outputStream,
-            long expected)
-            throws IOException {
-        byte[] buffer = new byte[1024];
-        long total = 0;
-        int length;
-        while ((length = inputStream.read(buffer)) != -1 && (expected < 0 || total < expected)) {
-            outputStream.write(buffer, 0, length);
-            total += length;
-        }
-        if (expected > 0) {
-            assertEquals(expected, total);
-        }
-    }
-
-    private static String waitForSubstring(InputStream inputStream, String expected)
-            throws IOException {
-        try (Reader reader = new InputStreamReader(inputStream);
-             BufferedReader lines = new BufferedReader(reader)) {
-            return lines.lines().filter(line -> line.contains(expected)).findFirst().orElse("");
-        }
-    }
-
     @Before
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+        cleanup();
     }
 
     @After
     public void onAfter() throws Exception {
-        uninstallPackageSilently(TEST_APP_PACKAGE);
-        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
-        assertEquals(null, getSplits(TEST_APP_PACKAGE));
+        cleanup();
     }
 
     private void checkIncrementalDeliveryFeature() throws Exception {
@@ -176,6 +113,24 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
 
+
+    @Test
+    public void testSplitInstallWithIdSig() throws Exception {
+        // First fully install the apk.
+        {
+            final Result stateListenerResult = startListeningForBroadcast();
+            installPackage(TEST_APK);
+            assertTrue(stateListenerResult.await());
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        }
+
+        installSplit(TEST_APK_SPLIT0);
+        assertEquals("base, config.mdpi", getSplits(TEST_APP_PACKAGE));
+
+        installSplit(TEST_APK_SPLIT1);
+        assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+    }
+
     @Test
     public void testSystemInstallWithIdSig() throws Exception {
         final String baseName = TEST_APK_SHELL;
@@ -189,7 +144,7 @@ public class PackageManagerShellCommandIncrementalTest {
     @Test
     public void testInstallWithIdSigAndSplit() throws Exception {
         File apkfile = new File(createApkPath(TEST_APK));
-        File splitfile = new File(createApkPath(TEST_APK_SPLIT));
+        File splitfile = new File(createApkPath(TEST_APK_SPLIT0));
         File[] files = new File[]{apkfile, splitfile};
         String param = Arrays.stream(files).map(
                 file -> file.getName() + ":" + file.length()).collect(Collectors.joining(" "));
@@ -200,7 +155,7 @@ public class PackageManagerShellCommandIncrementalTest {
                 files));
         assertTrue(stateListenerResult.await());
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
-        assertEquals("base, config.hdpi", getSplits(TEST_APP_PACKAGE));
+        assertEquals("base, config.mdpi", getSplits(TEST_APP_PACKAGE));
     }
 
     @Test
@@ -215,6 +170,7 @@ public class PackageManagerShellCommandIncrementalTest {
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
+    @LargeTest
     @Test
     public void testInstallWithIdSigStreamIncompleteData() throws Exception {
         File file = new File(createApkPath(TEST_APK));
@@ -231,9 +187,105 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     @Test
+    public void testInstallWithIdSigPerUidTimeouts() throws Exception {
+        executeShellCommand("atrace --async_start -b 1024 -c adb");
+        try {
+            setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
+            setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
+
+            final Result stateListenerResult = startListeningForBroadcast();
+            installPackage(TEST_APK);
+            assertTrue(stateListenerResult.await());
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+        } finally {
+            executeShellCommand("atrace --async_stop");
+        }
+    }
+
+    @LargeTest
+    @Test
+    @Ignore("Disabled, crashes in presubmit lab")
+    public void testInstallWithIdSigStreamPerUidTimeoutsIncompleteData() throws Exception {
+        executeShellCommand("atrace --async_start -b 1024 -c adb");
+        try {
+            setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
+            setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
+
+            // First fully install the apk and a split0.
+            {
+                final Result stateListenerResult = startListeningForBroadcast();
+                installPackage(TEST_APK);
+                assertTrue(stateListenerResult.await());
+                assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+                installSplit(TEST_APK_SPLIT0);
+                assertEquals("base, config.mdpi", getSplits(TEST_APP_PACKAGE));
+                installSplit(TEST_APK_SPLIT1);
+                assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+            }
+
+            // Try to read a split and see if we are throttled.
+            final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), "split_config.mdpi.apk");
+            final long readTime0 = readAndReportTime(apkToRead, 1000);
+
+            // Install another split, interrupt in the middle, and measure read time.
+            File splitfile = new File(createApkPath(TEST_APK_SPLIT2));
+            long splitLength = splitfile.length();
+            // Don't fully stream the split.
+            long newSplitLength =
+                    splitLength - (splitLength % 1024 == 0 ? 1024 : splitLength % 1024);
+            final Result stateListenerResult = startListeningForBroadcast();
+
+            try (InputStream inputStream = executeShellCommandRw(
+                    "pm install-incremental -t -g -p " + TEST_APP_PACKAGE + " -S " + newSplitLength,
+                    new File[]{splitfile}, new long[]{splitLength})) {
+
+                // While 'installing', let's try and read the base apk.
+                final long readTime1 = readAndReportTime(apkToRead, 1000);
+                assertTrue("Must take longer than " + EXPECTED_READ_TIME + "ms: time0=" + readTime0
+                                + "ms, time1=" + readTime1 + "ms",
+                        readTime0 >= EXPECTED_READ_TIME || readTime1 >= EXPECTED_READ_TIME);
+
+                // apk
+                assertTrue(readFullStream(inputStream).contains("Failure"));
+            }
+
+            assertFalse(stateListenerResult.await());
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+        } finally {
+            executeShellCommand("atrace --async_stop");
+        }
+    }
+
+    @Test
+    public void testInstallWithIdSigPerUidTimeoutsIgnored() throws Exception {
+        // Timeouts would be ignored as there are no readlogs collected.
+        setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
+        setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
+
+        // First fully install the apk and a split0.
+        {
+            final Result stateListenerResult = startListeningForBroadcast();
+            installPackage(TEST_APK);
+            assertTrue(stateListenerResult.await());
+            assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            installSplit(TEST_APK_SPLIT0);
+            assertEquals("base, config.mdpi", getSplits(TEST_APP_PACKAGE));
+            installSplit(TEST_APK_SPLIT1);
+            assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
+        }
+
+        // Try to read a split and see if we are throttled.
+        final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), "split_config.mdpi.apk");
+        final long readTime = readAndReportTime(apkToRead, 1000);
+        assertTrue("Must take less than " + EXPECTED_READ_TIME + "ms vs " + readTime + "ms",
+                readTime < EXPECTED_READ_TIME);
+    }
+
+    @Test
     public void testInstallWithIdSigStreamIncompleteDataForSplit() throws Exception {
         File apkfile = new File(createApkPath(TEST_APK));
-        File splitfile = new File(createApkPath(TEST_APK_SPLIT));
+        File splitfile = new File(createApkPath(TEST_APK_SPLIT0));
         long splitLength = splitfile.length();
         // Don't fully stream the split.
         long newSplitLength = splitLength - (splitLength % 1024 == 0 ? 1024 : splitLength % 1024);
@@ -327,8 +379,19 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     private String getSplits(String packageName) throws IOException {
+        final String result = parsePackageDump(packageName, "    splits=[");
+        if (TextUtils.isEmpty(result)) {
+            return null;
+        }
+        return result.substring(0, result.length() - 1);
+    }
+
+    private String getCodePath(String packageName) throws IOException {
+        return parsePackageDump(packageName, "    codePath=");
+    }
+
+    private String parsePackageDump(String packageName, String prefix) throws IOException {
         final String commandResult = executeShellCommand("pm dump " + packageName);
-        final String prefix = "    splits=[";
         final int prefixLength = prefix.length();
         Optional<String> maybeSplits = Arrays.stream(commandResult.split("\\r?\\n"))
                 .filter(line -> line.startsWith(prefix)).findFirst();
@@ -336,7 +399,7 @@ public class PackageManagerShellCommandIncrementalTest {
             return null;
         }
         String splits = maybeSplits.get();
-        return splits.substring(prefixLength, splits.length() - 1);
+        return splits.substring(prefixLength);
     }
 
     private static String createApkPath(String baseName) {
@@ -347,6 +410,36 @@ public class PackageManagerShellCommandIncrementalTest {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
                 executeShellCommand("pm install-incremental -t -g " + file.getPath()));
+    }
+
+    private void installSplit(String splitName) throws Exception {
+        final File splitfile = new File(createApkPath(splitName));
+        final Result stateListenerResult = startListeningForBroadcast();
+
+        try (InputStream inputStream = executeShellCommandStream(
+                "pm install-incremental -t -g -p " + TEST_APP_PACKAGE + " "
+                        + splitfile.getPath())) {
+            assertEquals("Success\n", readFullStream(inputStream));
+        }
+        assertTrue(stateListenerResult.await());
+    }
+
+    private long readAndReportTime(File file, long borderTime) throws Exception {
+        assertTrue(file.toString(), file.exists());
+
+        final long startTime = SystemClock.uptimeMillis();
+        long readTime = 0;
+        try (InputStream baseApkStream = new FileInputStream(file)) {
+            final byte[] buffer = new byte[4096];
+            int length;
+            while ((length = baseApkStream.read(buffer)) != -1) {
+                readTime = SystemClock.uptimeMillis() - startTime;
+                if (readTime >= borderTime) {
+                    break;
+                }
+            }
+        }
+        return readTime;
     }
 
     private String uninstallPackageSilently(String packageName) throws IOException {
@@ -386,6 +479,100 @@ public class PackageManagerShellCommandIncrementalTest {
         return () -> fullyLoadedSemaphore.tryAcquire(10, TimeUnit.SECONDS);
     }
 
+    private static String executeShellCommand(String command) throws IOException {
+        try (InputStream inputStream = executeShellCommandStream(command)) {
+            return readFullStream(inputStream);
+        }
+    }
+
+    private static InputStream executeShellCommandStream(String command) throws IOException {
+        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(command);
+        return new ParcelFileDescriptor.AutoCloseInputStream(stdout);
+    }
+
+    private static String executeShellCommand(String command, File[] inputs)
+            throws IOException {
+        return executeShellCommand(command, inputs, Stream.of(inputs).mapToLong(
+                File::length).toArray());
+    }
+
+    private static String executeShellCommand(String command, File[] inputs, long[] expected)
+            throws IOException {
+        try (InputStream inputStream = executeShellCommandRw(command, inputs, expected)) {
+            return readFullStream(inputStream);
+        }
+    }
+
+    private static InputStream executeShellCommandRw(String command, File[] inputs, long[] expected)
+            throws IOException {
+        assertEquals(inputs.length, expected.length);
+        final ParcelFileDescriptor[] pfds =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                        .executeShellCommandRw(command);
+        ParcelFileDescriptor stdout = pfds[0];
+        ParcelFileDescriptor stdin = pfds[1];
+        try (FileOutputStream outputStream = new ParcelFileDescriptor.AutoCloseOutputStream(
+                stdin)) {
+            for (int i = 0; i < inputs.length; i++) {
+                try (FileInputStream inputStream = new FileInputStream(inputs[i])) {
+                    writeFullStream(inputStream, outputStream, expected[i]);
+                }
+            }
+        }
+        return new ParcelFileDescriptor.AutoCloseInputStream(stdout);
+    }
+
+    private static String readFullStream(InputStream inputStream, long expected)
+            throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        writeFullStream(inputStream, result, expected);
+        return result.toString("UTF-8");
+    }
+
+    private static String readFullStream(InputStream inputStream) throws IOException {
+        return readFullStream(inputStream, -1);
+    }
+
+    private static void writeFullStream(InputStream inputStream, OutputStream outputStream,
+            long expected)
+            throws IOException {
+        final byte[] buffer = new byte[1024];
+        long total = 0;
+        int length;
+        while ((length = inputStream.read(buffer)) != -1 && (expected < 0 || total < expected)) {
+            outputStream.write(buffer, 0, length);
+            total += length;
+        }
+        if (expected > 0) {
+            assertEquals(expected, total);
+        }
+    }
+
+    private static String waitForSubstring(InputStream inputStream, String expected)
+            throws IOException {
+        try (Reader reader = new InputStreamReader(inputStream);
+             BufferedReader lines = new BufferedReader(reader)) {
+            return lines.lines().filter(line -> line.contains(expected)).findFirst().orElse("");
+        }
+    }
+
+    private void cleanup() throws Exception {
+        uninstallPackageSilently(TEST_APP_PACKAGE);
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+        assertEquals(null, getSplits(TEST_APP_PACKAGE));
+        setDeviceProperty("incfs_default_timeouts", null);
+        setDeviceProperty("known_digesters_list", null);
+    }
+
+    private void setDeviceProperty(String name, String value) {
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PACKAGE_MANAGER_SERVICE, name, value,
+                    false);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
 
 }
 
