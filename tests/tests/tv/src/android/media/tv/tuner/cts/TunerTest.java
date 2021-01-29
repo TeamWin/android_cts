@@ -415,7 +415,7 @@ public class TunerTest {
                 .setSettings(settings)
                 .build();
         f.configure(config);
-        f.configureMonitorEvent(
+        f.setMonitorEventMask(
                 Filter.MONITOR_EVENT_SCRAMBLING_STATUS | Filter.MONITOR_EVENT_IP_CID_CHANGE);
 
         // Tune a frontend before start the filter

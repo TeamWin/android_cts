@@ -28,7 +28,6 @@ import android.telephony.ims.RcsContactUceCapability.PresenceBuilder;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,8 +39,7 @@ public class RcsContactUceCapabilityTest {
     private static final Uri TEST_CONTACT = Uri.fromParts("sip", "me.test", null);
 
     @Test
-    @Ignore("RCS APIs not public yet")
-    public void createParcelUnparcel() {
+    public void testParcelUnparcel() {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
@@ -59,9 +57,9 @@ public class RcsContactUceCapabilityTest {
         RcsContactPresenceTuple.Builder tupleBuilder = new RcsContactPresenceTuple.Builder(
                 RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN,
                 RcsContactPresenceTuple.SERVICE_ID_MMTEL, serviceVersion);
-        tupleBuilder.addContactUri(TEST_CONTACT)
-                .addDescription(serviceDescription)
-                .addServiceCapabilities(servCapsBuilder.build());
+        tupleBuilder.setContactUri(TEST_CONTACT)
+                .setServiceDescription(serviceDescription)
+                .setServiceCapabilities(servCapsBuilder.build());
 
         PresenceBuilder presenceBuilder = new PresenceBuilder(TEST_CONTACT,
                 RcsContactUceCapability.SOURCE_TYPE_CACHED,
@@ -84,7 +82,7 @@ public class RcsContactUceCapabilityTest {
         String unparceledDuplexMode = ServiceCapabilities.DUPLEX_MODE_RECEIVE_ONLY;
 
         RcsContactPresenceTuple unparceledTuple =
-                unparceledCapability.getPresenceTuple(RcsContactPresenceTuple.SERVICE_ID_MMTEL);
+                unparceledCapability.getCapabilityTuple(RcsContactPresenceTuple.SERVICE_ID_MMTEL);
 
         if (unparceledTuple != null) {
             unparceledTupleStatus = unparceledTuple.getStatus();

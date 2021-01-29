@@ -18,12 +18,12 @@ android_test {
 
     static_libs: [
         "cts-wm-app-base",
-         // Used by InputMethodTestActivity for ImeAwareEditText.
-        "compatibility-device-util-axt",
     ],
 
     srcs: [
         "src/**/*.java",
+        // Used by InputMethodTestActivity for ImeAwareEditText.
+        ":compatibility-device-util-nodeps",
         ":CtsVerifierMockVrListenerServiceFiles",
     ],
 

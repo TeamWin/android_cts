@@ -218,6 +218,10 @@ public class BuildTest extends TestCase {
         Pattern.compile("^([0-9A-Za-z.,_-]+)$");
     private static final Pattern PRODUCT_PATTERN =
         Pattern.compile("^([0-9A-Za-z._-]+)$");
+    private static final Pattern SOC_MANUFACTURER_PATTERN =
+        Pattern.compile("^([0-9A-Za-z ]+)$");
+    private static final Pattern SOC_MODEL_PATTERN =
+        Pattern.compile("^([0-9A-Za-z ._/+-]+)$");
     private static final Pattern SERIAL_NUMBER_PATTERN =
         Pattern.compile("^([0-9A-Za-z]{6,20})$");
     private static final Pattern SKU_PATTERN =
@@ -248,6 +252,12 @@ public class BuildTest extends TestCase {
         assertNotEmpty(Build.MANUFACTURER);
 
         assertNotEmpty(Build.MODEL);
+
+        assertEquals(Build.SOC_MANUFACTURER, Build.SOC_MANUFACTURER.trim());
+        assertTrue(SOC_MANUFACTURER_PATTERN.matcher(Build.SOC_MANUFACTURER).matches());
+
+        assertEquals(Build.SOC_MODEL, Build.SOC_MODEL.trim());
+        assertTrue(SOC_MODEL_PATTERN.matcher(Build.SOC_MODEL).matches());
 
         assertTrue(PRODUCT_PATTERN.matcher(Build.PRODUCT).matches());
 

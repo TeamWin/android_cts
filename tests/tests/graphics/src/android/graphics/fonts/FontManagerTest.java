@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 import android.text.FontConfig;
+import android.text.TextUtils;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -28,6 +29,11 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -111,5 +117,42 @@ public class FontManagerTest {
             // The alias must be in the existing fallback names
             assertThat(alias.getOriginal()).isIn(fallbackNames);
         }
+    }
+
+    private List<String> readAll(InputStream is) throws IOException {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        ArrayList<String> out = new ArrayList<>();
+        String line = "";
+        while ((line = reader.readLine()) != null) {
+            String trimmed = line.trim();
+            if (!TextUtils.isEmpty(trimmed)) {
+                out.add(trimmed);
+            }
+        }
+        return out;
+    }
+
+    private void assertSecurityException(String command) throws Exception {
+        Process proc = Runtime.getRuntime().exec(new String[] { "cmd", "font", command });
+
+        // The shell command must not success.
+        assertThat(proc.waitFor()).isNotEqualTo(0);
+
+        // In case of calling from unauthorized UID, must not output anything.
+        assertThat(readAll(proc.getInputStream())).isEmpty();
+
+        // Any shell command is not allowed. Output error message and exit immediately.
+        List<String> errors = readAll(proc.getErrorStream());
+        assertThat(errors).isNotEmpty();
+        assertThat(errors.get(0)).isEqualTo("Only shell or root user can execute font command.");
+    }
+
+    @Test
+    public void fontManager_shellCommandPermissionTest() throws Exception {
+        assertSecurityException("");
+        assertSecurityException("update");
+        assertSecurityException("clear");
+        assertSecurityException("status");
+        assertSecurityException("random_string");
     }
 }
