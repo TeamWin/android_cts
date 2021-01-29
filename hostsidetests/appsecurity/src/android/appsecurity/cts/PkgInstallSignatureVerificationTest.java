@@ -750,6 +750,26 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
     }
 
+    public void testInstallV3CommonSignerInLineageWithPermCap() throws Exception {
+        // If an APK requesting a signature permission has a common signer in the lineage with the
+        // APK declaring the permission, and that signer is granted the permission capability in
+        // the declaring APK, then the permission should be granted to the requesting app even
+        // if their signers have diverged.
+        assertInstallFromBuildSucceeds(
+                "v3-ec-p256-with-por_1_2_3-1-no-caps-2-default-declperm.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2_4-companion-usesperm.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+    }
+
+    public void testInstallV3CommonSignerInLineageNoCaps() throws Exception {
+        // If an APK requesting a signature permission has a common signer in the lineage with the
+        // APK declaring the permission, but the signer in the lineage has not been granted the
+        // permission capability the permission should not be granted to the requesting app.
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2_3-no-caps-declperm.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2_4-companion-usesperm.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
+    }
+
     public void testInstallV3SigPermDoubleDefNewerSucceeds() throws Exception {
         // make sure that if an app defines a signature permission already defined by another app,
         // it successfully installs if the other app's signing cert is in its past signing certs and
