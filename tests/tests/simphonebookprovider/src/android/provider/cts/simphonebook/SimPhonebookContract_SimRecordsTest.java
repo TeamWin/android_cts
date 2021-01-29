@@ -24,7 +24,6 @@ import static com.android.internal.telephony.testing.CursorSubject.assertThat;
 import static com.android.internal.telephony.testing.TelephonyAssertions.assertThrows;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -65,11 +64,6 @@ import java.util.Objects;
 /** Tests of {@link SimRecords}. */
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_SimRecordsTest {
-    // BMP = "basic multilingual plane"
-    private static final String BMP_NON_CHARACTER = new String(Character.toChars(0xFDD0));
-    // SMP = "supplementary multilingual plane"
-    private static final String SMP_NON_CHARACTER = new String(Character.toChars(0x1FFFE));
-
     /**
      * The pin2 to use for modifying FDN data.
      *
@@ -486,6 +480,31 @@ public class SimPhonebookContract_SimRecordsTest {
         }
     }
 
+
+    @Test
+    public void insertAdn_nameWithNonGsmAlphabetCharacters_addsRecord() {
+        String name1 = "日本";
+
+        ContentValues values = new ContentValues();
+        values.put(SimRecords.PHONE_NUMBER, "18005550101");
+
+        values.put(SimRecords.NAME, name1);
+        mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN), values);
+
+        String name2 = "abc日本";
+        values.put(SimRecords.NAME, name2);
+        mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN), values);
+
+        String name3 = "日a本bc";
+        values.put(SimRecords.NAME, name3);
+        mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN), values);
+        String[] projection = {SimRecords.NAME};
+        try (Cursor cursor = query(
+                SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN), projection)) {
+            assertThat(cursor).hasData(new Object[][]{{name1}, {name2}, {name3}});
+        }
+    }
+
     @Test
     public void insertAdn_nameOnly_throwsCorrectException() {
         ContentValues values = new ContentValues();
@@ -572,65 +591,6 @@ public class SimPhonebookContract_SimRecordsTest {
                 SimRecords.PHONE_NUMBER
         })) {
             assertThat(cursor).hasSingleRow("Name", "5550101");
-        }
-    }
-
-    /**
-     * Verifies that the correct exception is thrown when inserting names containing unsupported
-     * characters.
-     *
-     * <p>Note that the AOSP implementation is currently much more limited and doesn't support any
-     * non-latin characters right now. But asserting that non-characters are unsupported should
-     * always work and validates that an exception is thrown which should imply that other
-     * unsupported characters are also handled correctly.
-     */
-    @Test
-    public void insertAdn_nameContainingUnsupportedCharacters_throwsCorrectException() {
-        ContentValues values = new ContentValues();
-        values.put(SimRecords.NAME, "char=" + BMP_NON_CHARACTER + ";");
-        values.put(SimRecords.PHONE_NUMBER, "5550101");
-
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN),
-                        values));
-        assertThat(e).hasMessageThat().isEqualTo(
-                SimRecords.NAME + " contains unsupported characters.");
-
-        values.put(SimRecords.NAME, "char=" + SMP_NON_CHARACTER + ";");
-        e = assertThrows(IllegalArgumentException.class,
-                () -> mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN),
-                        values));
-        assertThat(e).hasMessageThat().isEqualTo(
-                SimRecords.NAME + " contains unsupported characters.");
-    }
-
-    @Test
-    public void update_nameContainingUnsupportedCharacters_throwsCorrectException() {
-        ContentValues values = new ContentValues();
-        values.put(SimRecords.NAME, "Initial");
-        values.put(SimRecords.PHONE_NUMBER, "5550101");
-        Uri itemUri = mResolver.insert(SimRecords.getContentUri(mDefaultSubscriptionId, EF_ADN),
-                values);
-
-        values.put(SimRecords.NAME, "char=" + BMP_NON_CHARACTER + ";");
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
-                mResolver.update(itemUri, values, null));
-
-        assertThat(e).hasMessageThat().isEqualTo(
-                SimRecords.NAME + " contains unsupported characters.");
-
-        values.put(SimRecords.NAME, "char=" + SMP_NON_CHARACTER + ";");
-        e = assertThrows(IllegalArgumentException.class, () ->
-                mResolver.update(itemUri, values, null));
-
-        assertThat(e).hasMessageThat().isEqualTo(
-                SimRecords.NAME + " contains unsupported characters.");
-
-        try (Cursor cursor = query(itemUri, new String[]{
-                SimRecords.NAME,
-                SimRecords.PHONE_NUMBER
-        })) {
-            assertThat(cursor).hasSingleRow("Initial", "5550101");
         }
     }
 
@@ -740,80 +700,6 @@ public class SimPhonebookContract_SimRecordsTest {
                 new String[]{SimRecords.NAME, SimRecords.PHONE_NUMBER})) {
             assertThat(itemCursor).hasSingleRow("Final Name", "5555");
         }
-    }
-
-    @Test
-    public void validateName_emptyName() {
-        assertThat(SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, null).isValid()).isTrue();
-        assertThat(SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, "").isValid()).isTrue();
-    }
-
-    @Test
-    public void validateName_lengthLimit() {
-        int maxLength;
-        String name;
-        // Get the limit and create data from it.
-        try (Cursor cursor = query(
-                ElementaryFiles.getItemUri(mDefaultSubscriptionId, ElementaryFiles.EF_ADN),
-                new String[]{
-                        ElementaryFiles.NAME_MAX_LENGTH
-                })) {
-            cursor.moveToFirst();
-            maxLength = cursor.getInt(0);
-            char[] chars = new char[maxLength];
-            Arrays.fill(chars, 'a');
-            name = new String(chars);
-        }
-
-        // The name is at the limit
-        SimRecords.NameValidationResult validationResult = SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, name);
-
-        assertWithMessage("isValid").that(validationResult.isValid()).isTrue();
-        assertThat(validationResult.getName()).isEqualTo(name);
-        assertThat(validationResult.getSanitizedName()).isEqualTo(name);
-        assertThat(validationResult.getEncodedLength()).isEqualTo(maxLength);
-        assertThat(validationResult.getMaxEncodedLength()).isEqualTo(maxLength);
-
-        name = name + "b";
-        validationResult = SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, name);
-        assertWithMessage("isValid").that(validationResult.isValid()).isFalse();
-        assertThat(validationResult.getName()).isEqualTo(name);
-        assertThat(validationResult.getSanitizedName()).isEqualTo(name);
-        assertThat(validationResult.getEncodedLength()).isEqualTo(name.length());
-        assertThat(validationResult.getMaxEncodedLength()).isEqualTo(maxLength);
-    }
-
-    @Test
-    public void validateName_supportedCharacters() {
-        // All supported characters:
-        String supportedName = "First Last";
-
-        SimRecords.NameValidationResult validationResult = SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, supportedName);
-
-        assertWithMessage("isValid").that(validationResult.isValid()).isTrue();
-        assertThat(validationResult.getName()).isEqualTo(supportedName);
-        assertThat(validationResult.getSanitizedName()).isEqualTo(supportedName);
-
-        String nameWithBmpNonChar = "char=" + BMP_NON_CHARACTER + ";";
-
-        validationResult = SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, nameWithBmpNonChar);
-        assertWithMessage("isValid").that(validationResult.isValid()).isFalse();
-        assertThat(validationResult.getName()).isEqualTo(nameWithBmpNonChar);
-        assertThat(validationResult.getSanitizedName()).isEqualTo("char= ;");
-
-        String nameWithSmpNonCharacter = "char=" + SMP_NON_CHARACTER + ";";
-        validationResult = SimRecords.validateName(mResolver,
-                mDefaultSubscriptionId, EF_ADN, nameWithSmpNonCharacter);
-        assertWithMessage("isValid").that(validationResult.isValid()).isFalse();
-        assertThat(validationResult.getName()).isEqualTo(nameWithSmpNonCharacter);
-        // Note: there are 2 spaces because SMP characters require 2 java characters to represent.
-        assertThat(validationResult.getSanitizedName()).isEqualTo("char=  ;");
     }
 
     @NonNull
