@@ -16,11 +16,13 @@
 
 package android.telephony.ims.cts;
 
+import android.net.Uri;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.cts.TestImsService.DeviceCapPublishListener;
 import android.telephony.ims.stub.RcsCapabilityExchangeImplBase;
 import android.util.Log;
 
+import java.util.List;
 import java.util.concurrent.Executor;
 
 /**
@@ -36,10 +38,18 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
                 throws ImsException;
     }
 
+    @FunctionalInterface
+    public interface SubscribeOperation {
+        void execute(List<Uri> uris, SubscribeResponseCallback cb) throws ImsException;
+    }
+
     private DeviceCapPublishListener mPublishListener;
 
     // The operation of publishing capabilities
     private PublishOperation mPublishOperation;
+
+    // The operation of requesting capabilities.
+    private SubscribeOperation mSubscribeOperation;
 
     /**
      * Create a new RcsCapabilityExchangeImplBase instance.
@@ -54,12 +64,25 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
         mPublishOperation = operation;
     }
 
+    public void setSubscribeOperation(SubscribeOperation operator) {
+        mSubscribeOperation = operator;
+    }
+
     @Override
     public void publishCapabilities(String pidfXml, PublishResponseCallback cb) {
         try {
             mPublishOperation.execute(mPublishListener, pidfXml, cb);
         } catch (ImsException e) {
             Log.w(LOG_TAG, "publishCapabilities exception: " + e);
+        }
+    }
+
+    @Override
+    public void subscribeForCapabilities(List<Uri> uris, SubscribeResponseCallback cb) {
+        try {
+            mSubscribeOperation.execute(uris, cb);
+        } catch (ImsException e) {
+            Log.w(LOG_TAG, "subscribeForCapabilities exception: " + e);
         }
     }
 }
