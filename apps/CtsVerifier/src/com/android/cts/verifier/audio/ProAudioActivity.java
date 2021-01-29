@@ -164,12 +164,17 @@ public class ProAudioActivity
     }
 
     private boolean calculatePass() {
-        boolean hasPassed = !mClaimsProAudio ||
+        boolean flagsCorrect = !mClaimsProAudio ||
                 (mClaimsLowLatencyAudio && mClaimsMIDI &&
-                mClaimsUSBHostMode && mClaimsUSBPeripheralMode &&
-                (!mClaimsHDMI || isHDMIValid()) &&
-                mOutputDevInfo != null && mInputDevInfo != null &&
-                mConfidence >= CONFIDENCE_THRESHOLD && mLatencyMillis <= PROAUDIO_LATENCY_MS_LIMIT);
+                 mClaimsUSBHostMode && mClaimsUSBPeripheralMode);
+        boolean hdmiValid = !mClaimsHDMI || isHDMIValid();
+        boolean deviceValid = mOutputDevInfo != null && mInputDevInfo != null;
+
+        boolean hasPassed = flagsCorrect &&
+                hdmiValid &&
+                deviceValid &&
+                mMeanConfidence >= CONFIDENCE_THRESHOLD &&
+                mMeanLatencyMillis <= PROAUDIO_LATENCY_MS_LIMIT;
 
         getPassButton().setEnabled(hasPassed);
         return hasPassed;
@@ -181,9 +186,9 @@ public class ProAudioActivity
         Resources strings = getResources();
         if (hasPassed) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_pass));
-        } else if (mClaimsProAudio && mLatencyMillis > PROAUDIO_LATENCY_MS_LIMIT) {
+        } else if (mClaimsProAudio && mMeanLatencyMillis > PROAUDIO_LATENCY_MS_LIMIT) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_latencytoohigh));
-        } else if (mClaimsProAudio && mConfidence < CONFIDENCE_THRESHOLD) {
+        } else if (mClaimsProAudio && mMeanConfidence < CONFIDENCE_THRESHOLD) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_confidencetoolow));
         } else if (!mClaimsMIDI) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_midinotreported));
