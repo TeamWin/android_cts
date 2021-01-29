@@ -404,6 +404,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
         PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(types));
 
+        getInstrumentation().waitForIdleSync();
+
         // Swiping from top of display can show bars.
         dragFromTopToCenter(rootView);
         PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
