@@ -20,6 +20,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "devicepolicy-deviceside-common",
     ],
     libs: [
         "android.test.runner",
@@ -44,6 +45,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "devicepolicy-deviceside-common",
     ],
     libs: [
         "android.test.runner",
@@ -70,6 +72,7 @@ android_test_helper_app {
     static_libs: [
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "devicepolicy-deviceside-common",
     ],
     libs: [
         "android.test.runner",
