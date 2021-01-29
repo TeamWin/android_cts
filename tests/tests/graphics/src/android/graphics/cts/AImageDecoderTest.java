@@ -37,6 +37,7 @@ import android.net.Uri;
 import android.os.ParcelFileDescriptor;
 import android.system.ErrnoException;
 import android.system.Os;
+import android.util.DisplayMetrics;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -296,6 +297,20 @@ public class AImageDecoderTest {
         }
     }
 
+    private static Bitmap decode(int resId, boolean unpremul) {
+        // This test relies on ImageDecoder *not* scaling to account for density.
+        // Temporarily change the DisplayMetrics to prevent that scaling.
+        Resources res = getResources();
+        final int originalDensity = res.getDisplayMetrics().densityDpi;
+        try {
+            res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_DEFAULT;
+            ImageDecoder.Source src = ImageDecoder.createSource(res, resId);
+            return decode(src, unpremul);
+        } finally {
+            res.getDisplayMetrics().densityDpi = originalDensity;
+        }
+    }
+
     @Test
     @Parameters(method = "getAssetRecordsUnpremul")
     public void testDecode(ImageDecoderTest.AssetRecord record, boolean unpremul) {
@@ -314,9 +329,7 @@ public class AImageDecoderTest {
     @Parameters(method = "getRecordsUnpremul")
     public void testDecodeResources(ImageDecoderTest.Record record, boolean unpremul)
             throws IOException {
-        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
-                record.resId);
-        Bitmap bm = decode(src, unpremul);
+        Bitmap bm = decode(record.resId, unpremul);
         try (ParcelFileDescriptor pfd = open(record.resId)) {
             long aimagedecoder = nCreateFromFd(pfd.getFd());
 
@@ -349,6 +362,20 @@ public class AImageDecoderTest {
         }
     }
 
+    private static Bitmap decode(int resId, Bitmap.Config config) {
+        // This test relies on ImageDecoder *not* scaling to account for density.
+        // Temporarily change the DisplayMetrics to prevent that scaling.
+        Resources res = getResources();
+        final int originalDensity = res.getDisplayMetrics().densityDpi;
+        try {
+            res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_DEFAULT;
+            ImageDecoder.Source src = ImageDecoder.createSource(res, resId);
+            return decode(src, config);
+        } finally {
+            res.getDisplayMetrics().densityDpi = originalDensity;
+        }
+    }
+
     @Test
     @Parameters(method = "getAssetRecords")
     public void testDecode565(ImageDecoderTest.AssetRecord record) {
@@ -371,9 +398,7 @@ public class AImageDecoderTest {
     @Parameters(method = "getRecords")
     public void testDecode565Resources(ImageDecoderTest.Record record)
             throws IOException {
-        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
-                record.resId);
-        Bitmap bm = decode(src, Bitmap.Config.RGB_565);
+        Bitmap bm = decode(record.resId, Bitmap.Config.RGB_565);
 
         if (bm.getConfig() != Bitmap.Config.RGB_565) {
             bm = null;
@@ -410,9 +435,7 @@ public class AImageDecoderTest {
     public void testDecodeA8Resources()
             throws IOException {
         final int resId = R.drawable.grayscale_jpg;
-        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
-                resId);
-        Bitmap bm = decode(src, Bitmap.Config.ALPHA_8);
+        Bitmap bm = decode(resId, Bitmap.Config.ALPHA_8);
 
         assertNotNull(bm);
         assertNull(bm.getColorSpace());
@@ -751,6 +774,20 @@ public class AImageDecoderTest {
         }
     }
 
+    private static Bitmap decodeCropped(String name, Cropper cropper, int resId) {
+        // This test relies on ImageDecoder *not* scaling to account for density.
+        // Temporarily change the DisplayMetrics to prevent that scaling.
+        Resources res = getResources();
+        final int originalDensity = res.getDisplayMetrics().densityDpi;
+        try {
+            res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_DEFAULT;
+            ImageDecoder.Source src = ImageDecoder.createSource(res, resId);
+            return decodeCropped(name, cropper, src);
+        } finally {
+            res.getDisplayMetrics().densityDpi = originalDensity;
+        }
+    }
+
     @Test
     @Parameters(method = "getAssetRecords")
     public void testCrop(ImageDecoderTest.AssetRecord record) {
@@ -771,11 +808,9 @@ public class AImageDecoderTest {
     @Parameters(method = "getRecords")
     public void testCropResource(ImageDecoderTest.Record record)
             throws IOException {
-        ImageDecoder.Source src = ImageDecoder.createSource(getResources(),
-                record.resId);
         String name = Utils.getAsResourceUri(record.resId).toString();
         Cropper cropper = new Cropper(false /* scale */);
-        Bitmap bm = decodeCropped(name, cropper, src);
+        Bitmap bm = decodeCropped(name, cropper, record.resId);
         assertNotNull(bm);
 
         try (ParcelFileDescriptor pfd = open(record.resId)) {
