@@ -64,6 +64,7 @@ class TestTaskOrganizer extends TaskOrganizer {
     private final ArraySet<Integer> mSecondaryChildrenTaskIds = new ArraySet<>();
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSecondaryBounds = new Rect();
+    private final Context mDisplayContext;
 
     private static final int[] CONTROLLED_ACTIVITY_TYPES = {
             ACTIVITY_TYPE_STANDARD,
@@ -79,7 +80,12 @@ class TestTaskOrganizer extends TaskOrganizer {
 
     TestTaskOrganizer(Context displayContext) {
         super();
-        Rect bounds = displayContext.getSystemService(WindowManager.class)
+        mDisplayContext = displayContext;
+    }
+
+    @Override
+    public List<TaskAppearedInfo> registerOrganizer() {
+        Rect bounds = mDisplayContext.getSystemService(WindowManager.class)
                 .getCurrentWindowMetrics()
                 .getBounds();
         final boolean isLandscape = bounds.width() > bounds.height();
@@ -88,10 +94,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         } else {
             bounds.splitHorizontally(mPrimaryBounds, mSecondaryBounds);
         }
-    }
 
-    @Override
-    public List<TaskAppearedInfo> registerOrganizer() {
         synchronized (this) {
             final List<TaskAppearedInfo> taskInfos = super.registerOrganizer();
             for (int i = 0; i < taskInfos.size(); i++) {
