@@ -352,7 +352,10 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * when Battery Saver is on.
      */
     public void testExpeditedJobExecutes_BatterySaverOn() throws Exception {
-        BatteryUtils.assumeBatterySaverFeature();
+        if (!BatteryUtils.isBatterySaverSupported()) {
+            Log.d(TAG, "Skipping test that requires battery saver support");
+            return;
+        }
         if (!checkDeviceSupportsMobileData()) {
             Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
             return;
@@ -402,7 +405,10 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * when multiple firewalls are active.
      */
     public void testExpeditedJobBypassesSimultaneousFirewalls() throws Exception {
-        BatteryUtils.assumeBatterySaverFeature();
+        if (!BatteryUtils.isBatterySaverSupported()) {
+            Log.d(TAG, "Skipping test that requires battery saver support");
+            return;
+        }
         if (!checkDeviceSupportsMobileData()) {
             Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
             return;
