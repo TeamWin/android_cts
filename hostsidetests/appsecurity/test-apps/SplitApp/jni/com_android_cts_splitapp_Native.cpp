@@ -35,11 +35,23 @@ static jstring arch(JNIEnv *env, jobject thiz) {
     return env->NewStringUTF(__ANDROID_ARCH__);
 }
 
+static jint sub(JNIEnv* env, jobject thiz, jint a, jint b) {
+#ifdef __REVISION_HAVE_SUB__
+    int result = a - b;
+    LOGI("%d - %d = %d", a, b, result);
+    return result;
+#else  // __REVISION_HAVE_SUB__
+    LOGI("Implement sub badly, just return 0");
+    return 0;
+#endif // __REVISION_HAVE_SUB__
+}
+
 static const char *classPathName = "com/android/cts/splitapp/Native";
 
 static JNINativeMethod methods[] = {
-    {"add", "(II)I", (void*)add },
-    {"arch", "()Ljava/lang/String;", (void*)arch },
+        {"add", "(II)I", (void*)add},
+        {"arch", "()Ljava/lang/String;", (void*)arch},
+        {"sub", "(II)I", (void*)sub},
 };
 
 static int registerNativeMethods(JNIEnv* env, const char* className, JNINativeMethod* gMethods, int numMethods) {
@@ -77,7 +89,11 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     jint result = -1;
     JNIEnv* env = NULL;
 
+#ifdef __REVISION_HAVE_SUB__
+    LOGI("JNI_OnLoad revision");
+#else  // __REVISION_HAVE_SUB__
     LOGI("JNI_OnLoad");
+#endif // __REVISION_HAVE_SUB__
 
     if (vm->GetEnv(&uenv.venv, JNI_VERSION_1_4) != JNI_OK) {
         LOGE("ERROR: GetEnv failed");

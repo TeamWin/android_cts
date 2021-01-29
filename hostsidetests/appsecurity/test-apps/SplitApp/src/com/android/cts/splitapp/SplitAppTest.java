@@ -24,6 +24,7 @@ import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assert.assertNotSame;
 import static org.xmlpull.v1.XmlPullParser.END_DOCUMENT;
 import static org.xmlpull.v1.XmlPullParser.START_TAG;
 
@@ -266,6 +267,16 @@ public class SplitAppTest {
 
         // Make sure we can do the maths
         assertEquals(11642, Native.add(4933, 6709));
+    }
+
+    @Test
+    public void testNativeRevision_sub_shouldImplementBadly() throws Exception {
+        assertNotSame(1, Native.sub(0, -1));
+    }
+
+    @Test
+    public void testNativeRevision_sub_shouldImplementWell() throws Exception {
+        assertEquals(1, Native.sub(0, -1));
     }
 
     @Test
