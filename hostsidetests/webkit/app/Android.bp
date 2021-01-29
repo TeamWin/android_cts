@@ -24,6 +24,7 @@ android_test_helper_app {
         "ctsdeviceutillegacy-axt",
         "ctstestserver",
         "ctstestrunner-axt",
+        "androidx.test.core",
     ],
     libs: [
         "android.test.runner",
