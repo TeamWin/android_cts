@@ -821,32 +821,6 @@ public abstract class ActivityManagerTestBase {
         });
     }
 
-    /**
-     * Launches {@param activityName} into split-screen primary windowing mode and also makes
-     * the recents activity visible to the side of it.
-     * NOTE: Recents view may be combined with home screen on some devices, so using this to wait
-     * for Recents only makes sense when {@link WindowManagerState#isHomeRecentsComponent()} is
-     * {@code false}.
-     */
-    protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
-        runWithShellPermission(() -> {
-            launchActivity(activityName);
-            final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-            if (mUseTaskOrganizer) {
-                mTaskOrganizer.putTaskInSplitPrimary(taskId);
-            } else {
-                mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, true /* onTop */);
-            }
-
-            mWmState.waitForValidState(
-                    new WaitForValidActivityState.Builder(activityName)
-                            .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
-                            .setActivityType(ACTIVITY_TYPE_STANDARD)
-                            .build());
-            mWmState.waitForRecentsActivityVisible();
-        });
-    }
-
     public void moveTaskToPrimarySplitScreen(int taskId) {
         moveTaskToPrimarySplitScreen(taskId, false /* showSideActivity */);
     }

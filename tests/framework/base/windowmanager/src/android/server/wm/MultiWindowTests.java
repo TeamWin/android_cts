@@ -442,19 +442,6 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         }
     }
 
-    @Test
-    public void testStackListOrderLaunchDockedActivity() {
-        assumeTrue(!mIsHomeRecentsComponent);
-
-        launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
-
-        final int homeStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_HOME);
-        final int recentsStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_RECENTS);
-        assertThat("Recents stack should be on top of home stack",
-                recentsStackIndex, lessThan(homeStackIndex));
-    }
-
-
     /**
      * Asserts that the activity is visible when the top opaque activity finishes and with another
      * translucent activity on top while in split-screen-secondary task.
