@@ -16,8 +16,12 @@
 java_library {
     name: "devicepolicy-deviceside-common",
     srcs: ["src/**/*.java"],
-    sdk_version: "test_current",
-    libs: ["junit"],
+    platform_apis: true,
+    libs: [
+            "android.test.runner",
+            "junit",
+            "android.test.base",
+            ],
     static_libs: [
             "androidx.legacy_legacy-support-v4",
             "compatibility-device-util-axt",

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.devicepolicy;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -41,7 +41,6 @@ import android.os.UserManager;
 import android.util.ArrayMap;
 import android.util.DebugUtils;
 import android.util.Log;
-import android.util.Slog;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -72,7 +71,7 @@ public final class DevicePolicyManagerWrapper {
     private static final String TAG = DevicePolicyManagerWrapper.class.getSimpleName();
     private static final boolean VERBOSE = false;
 
-    static final String ACTION_WRAPPED_DPM_CALL =
+    public static final String ACTION_WRAPPED_DPM_CALL =
             "com.android.cts.deviceowner.action.WRAPPED_DPM_CALL";
 
     private static final String EXTRA_METHOD = "methodName";
@@ -108,9 +107,12 @@ public final class DevicePolicyManagerWrapper {
      *
      * <p>Tests should use this method to get a {@link DevicePolicyManager} instance.
      */
-    public static DevicePolicyManager get(Context context) {
+    public static DevicePolicyManager get(Context context,
+            Class<? extends DeviceAdminReceiver> receiverClass) {
         int userId = context.getUserId();
         DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
+        String receiverClassName = receiverClass.getName();
+        Log.d(TAG, "get():  receiverClassName: " + receiverClassName);
 
         if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {
             Log.i(TAG, "get(): returning 'pure' DevicePolicyManager for user " + userId);
@@ -126,11 +128,12 @@ public final class DevicePolicyManagerWrapper {
         spy = Mockito.spy(dpm);
 
         Answer<?> answer = (inv) -> {
-            Slog.d(TAG, "spying " + inv);
+            Log.d(TAG, "spying " + inv);
             Object[] args = inv.getArguments();
+            Log.d(TAG, "spying " + inv + " method: " + inv.getMethod());
             String methodName = inv.getMethod().getName();
             Intent intent = new Intent(ACTION_WRAPPED_DPM_CALL)
-                    .setClassName(context, BasicAdminReceiver.class.getName())
+                    .setClassName(context, receiverClassName)
                     .putExtra(EXTRA_METHOD, methodName)
                     .putExtra(EXTRA_NUMBER_ARGS, args.length);
             for (int i = 0; i < args.length; i++) {
@@ -228,7 +231,7 @@ public final class DevicePolicyManagerWrapper {
     /**
      * Handles the wrapped DPM call received by the {@link DeviceAdminReceiver}.
      */
-    static void onReceive(DeviceAdminReceiver receiver, Context context, Intent intent) {
+    public static void onReceive(DeviceAdminReceiver receiver, Context context, Intent intent) {
         try {
             String methodName = intent.getStringExtra(EXTRA_METHOD);
             int numberArgs = intent.getIntExtra(EXTRA_NUMBER_ARGS, 0);
@@ -266,7 +269,7 @@ public final class DevicePolicyManagerWrapper {
     /**
      * Called by the DO {@link BasicAdminReceiver} to broadcasts an intent to the test case app.
      */
-    static void sendBroadcastToTestCaseReceiver(Context context, Intent intent) {
+    public static void sendBroadcastToTestCaseReceiver(Context context, Intent intent) {
         if (isHeadlessSystemUser()) {
             BridgeReceiver.sendBroadcast(context, intent);
             return;
@@ -278,7 +281,7 @@ public final class DevicePolicyManagerWrapper {
      * Called by test case to register a {@link BrodcastReceiver} to receive intents sent by the
      * DO {@link BasicAdminReceiver}.
      */
-    static void registerTestCaseReceiver(Context context, BroadcastReceiver receiver,
+    public static void registerTestCaseReceiver(Context context, BroadcastReceiver receiver,
             IntentFilter filter) {
         if (isCurrentUserOnHeadlessSystemUser()) {
             BridgeReceiver.registerReceiver(context, receiver, filter);
@@ -291,7 +294,7 @@ public final class DevicePolicyManagerWrapper {
      * Called by test case to unregister a {@link BrodcastReceiver} that receive intents sent by the
      * DO {@link BasicAdminReceiver}.
      */
-    static void unregisterTestCaseReceiver(Context context, BroadcastReceiver receiver) {
+    public static void unregisterTestCaseReceiver(Context context, BroadcastReceiver receiver) {
         if (isCurrentUserOnHeadlessSystemUser()) {
             BridgeReceiver.unregisterReceiver(context, receiver);
             return;
