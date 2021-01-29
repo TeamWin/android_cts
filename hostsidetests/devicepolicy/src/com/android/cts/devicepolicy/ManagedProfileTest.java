@@ -371,14 +371,13 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @Test
     public void testIsProvisioningAllowed() throws DeviceNotAvailableException {
-        // In Managed profile user when managed profile is provisioned
+        // Not allowed to add a managed profile from another managed profile.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PreManagedProfileTest",
                 "testIsProvisioningAllowedFalse", mProfileUserId);
 
-        // In parent user when managed profile is provisioned
-        // It's allowed to provision again by removing the previous profile
+        // Not allowed to add a managed profile to the parent user if one already exists.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PreManagedProfileTest",
-                "testIsProvisioningAllowedTrue", mParentUserId);
+                "testIsProvisioningAllowedFalse", mParentUserId);
     }
 
     @Test
