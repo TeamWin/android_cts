@@ -89,6 +89,7 @@ public class SplitTests extends BaseAppSecurityTest {
     static final String APK_INSTANT = "CtsSplitInstantApp.apk";
 
     static final HashMap<String, String> ABI_TO_APK = new HashMap<>();
+    static final HashMap<String, String> ABI_TO_REVISION_APK = new HashMap<>();
 
     static {
         ABI_TO_APK.put("x86", APK_x86);
@@ -98,6 +99,14 @@ public class SplitTests extends BaseAppSecurityTest {
         ABI_TO_APK.put("arm64-v8a", APK_arm64_v8a);
         ABI_TO_APK.put("mips64", APK_mips64);
         ABI_TO_APK.put("mips", APK_mips);
+
+        ABI_TO_REVISION_APK.put("x86", "CtsSplitApp_revision12_x86.apk");
+        ABI_TO_REVISION_APK.put("x86_64", "CtsSplitApp_revision12_x86_64.apk");
+        ABI_TO_REVISION_APK.put("armeabi-v7a", "CtsSplitApp_revision12_armeabi-v7a.apk");
+        ABI_TO_REVISION_APK.put("armeabi", "CtsSplitApp_revision12_armeabi.apk");
+        ABI_TO_REVISION_APK.put("arm64-v8a", "CtsSplitApp_revision12_arm64-v8a.apk");
+        ABI_TO_REVISION_APK.put("mips64", "CtsSplitApp_revision12_mips64.apk");
+        ABI_TO_REVISION_APK.put("mips", "CtsSplitApp_revision12_mips.apk");
     }
 
     @Before
@@ -223,20 +232,33 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testNativeSingle_full() throws Exception {
-        testNativeSingle(false);
+        testNativeSingle(false, false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testNativeSingle_instant() throws Exception {
-        testNativeSingle(true);
+        testNativeSingle(true, false);
     }
-    private void testNativeSingle(boolean instant) throws Exception {
+
+    private InstallMultiple getInstallMultiple(boolean instant, boolean useNaturalAbi) {
+        final InstallMultiple installMultiple = new InstallMultiple(instant);
+        if (useNaturalAbi) {
+            return installMultiple.useNaturalAbi();
+        }
+        return installMultiple;
+    }
+
+    private void testNativeSingle(boolean instant, boolean useNaturalAbi) throws Exception {
         final String abi = getAbi().getName();
         final String apk = ABI_TO_APK.get(abi);
+        final String revisionApk = ABI_TO_REVISION_APK.get(abi);
         assertNotNull("Failed to find APK for ABI " + abi, apk);
 
-        new InstallMultiple(instant).addFile(APK).addFile(apk).run();
+        getInstallMultiple(instant, useNaturalAbi).addFile(APK).addFile(apk).run();
         runDeviceTests(PKG, CLASS, "testNative");
+        runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementBadly");
+        getInstallMultiple(instant, useNaturalAbi).inheritFrom(PKG).addFile(revisionApk).run();
+        runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementWell");
     }
 
     /**
@@ -248,20 +270,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testNativeSingleNatural_full() throws Exception {
-        testNativeSingleNatural(false);
+        testNativeSingle(false, true);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testNativeSingleNatural_instant() throws Exception {
-        testNativeSingleNatural(true);
-    }
-    private void testNativeSingleNatural(boolean instant) throws Exception {
-        final String abi = getAbi().getName();
-        final String apk = ABI_TO_APK.get(abi);
-        assertNotNull("Failed to find APK for ABI " + abi, apk);
-
-        new InstallMultiple(instant).useNaturalAbi().addFile(APK).addFile(apk).run();
-        runDeviceTests(PKG, CLASS, "testNative");
+        testNativeSingle(true, true);
     }
 
     /**
@@ -271,20 +285,29 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testNativeAll_full() throws Exception {
-        testNativeAll(false);
+        testNativeAll(false, false);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testNativeAll_instant() throws Exception {
-        testNativeAll(true);
+        testNativeAll(true, false);
     }
-    private void testNativeAll(boolean instant) throws Exception {
-        final InstallMultiple inst = new InstallMultiple(instant).addFile(APK);
+    private void testNativeAll(boolean instant, boolean useNaturalAbi) throws Exception {
+        final InstallMultiple inst = getInstallMultiple(instant, useNaturalAbi).addFile(APK);
         for (String apk : ABI_TO_APK.values()) {
             inst.addFile(apk);
         }
         inst.run();
         runDeviceTests(PKG, CLASS, "testNative");
+        runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementBadly");
+
+        final InstallMultiple instInheritFrom =
+                getInstallMultiple(instant, useNaturalAbi).inheritFrom(PKG);
+        for (String apk : ABI_TO_REVISION_APK.values()) {
+            instInheritFrom.addFile(apk);
+        }
+        instInheritFrom.run();
+        runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementWell");
     }
 
     /**
@@ -296,20 +319,12 @@ public class SplitTests extends BaseAppSecurityTest {
     @Test
     @AppModeFull(reason = "'full' portion of the hostside test")
     public void testNativeAllNatural_full() throws Exception {
-        testNativeAllNatural(false);
+        testNativeAll(false, true);
     }
     @Test
     @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testNativeAllNatural_instant() throws Exception {
-        testNativeAllNatural(true);
-    }
-    private void testNativeAllNatural(boolean instant) throws Exception {
-        final InstallMultiple inst = new InstallMultiple(instant).useNaturalAbi().addFile(APK);
-        for (String apk : ABI_TO_APK.values()) {
-            inst.addFile(apk);
-        }
-        inst.run();
-        runDeviceTests(PKG, CLASS, "testNative");
+        testNativeAll(true, true);
     }
 
     @Test
