@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ClipData;
@@ -31,6 +32,7 @@ import android.content.ClipboardManager.OnPrimaryClipChangedListener;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -49,13 +51,13 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 //@AppModeFull // TODO(Instant) Should clip board data be visible?
 public class ClipboardManagerTest {
-    private Context mContext;
+    private final Context mContext = InstrumentationRegistry.getTargetContext();
     private ClipboardManager mClipboardManager;
     private UiDevice mUiDevice;
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
+        assumeTrue("Skipping Test: Wear-Os does not support ClipboardService", hasAutoFillFeature());
         mClipboardManager = mContext.getSystemService(ClipboardManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
@@ -364,5 +366,10 @@ public class ClipboardManagerTest {
         } else {
             assertNull(item.getUri());
         }
+    }
+
+    private boolean hasAutoFillFeature() {
+        return mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_AUTOFILL);
     }
 }
