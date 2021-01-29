@@ -36,9 +36,6 @@ import java.util.stream.IntStream;
 public class CameraUtils {
     private static final float FOCAL_LENGTH_TOLERANCE = .01f;
 
-    private static final String CAMERA_ID_INSTR_ARG_KEY = "camera-id";
-    private static final Bundle mBundle = InstrumentationRegistry.getArguments();
-    public static final String mOverrideCameraId = mBundle.getString(CAMERA_ID_INSTR_ARG_KEY);
 
     /**
      * Returns {@code true} if this device only supports {@code LEGACY} mode operation in the
@@ -168,7 +165,7 @@ public class CameraUtils {
             }
         }
 
-        String [] cameraIdList = manager.getCameraIdListNoLazy();
+        String [] cameraIdList = manager.getCameraIdList();
         CameraCharacteristics characteristics =
                 manager.getCameraCharacteristics(cameraIdList[cameraId]);
 
@@ -218,13 +215,19 @@ public class CameraUtils {
         }
     }
 
+    public static String getOverrideCameraId() {
+        Bundle bundle = InstrumentationRegistry.getArguments();
+        return bundle.getString("camera-id");
+    }
+
     public static int[] deriveCameraIdsUnderTest() throws Exception {
+        String overrideId = getOverrideCameraId();
         int numberOfCameras = Camera.getNumberOfCameras();
         int[] cameraIds;
-        if (mOverrideCameraId == null) {
+        if (overrideId == null) {
             cameraIds = IntStream.range(0, numberOfCameras).toArray();
         } else {
-            int overrideCameraId = Integer.parseInt(mOverrideCameraId);
+            int overrideCameraId = Integer.parseInt(overrideId);
             if (overrideCameraId >= 0 && overrideCameraId < numberOfCameras) {
                 cameraIds = new int[]{overrideCameraId};
             } else {
