@@ -1939,7 +1939,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testMultipleCameras() throws Exception {
-        if (CameraUtils.mOverrideCameraId != null) {
+        if (CameraUtils.getOverrideCameraId() != null) {
             // A single camera is being tested. Skip.
             return;
         }
@@ -2564,7 +2564,7 @@ public class CameraTest extends Assert {
     @UiThreadTest
     @Test
     public void testMultiCameraRelease() throws Exception {
-        if (CameraUtils.mOverrideCameraId != null) {
+        if (CameraUtils.getOverrideCameraId() != null) {
             // A single camera is being tested. Skip.
             return;
         }
