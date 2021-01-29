@@ -51,6 +51,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.google.common.collect.ImmutableList;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -84,8 +85,7 @@ public class SimPhonebookContract_SimRecordsTest {
     public final TestRule mRule = RuleChain
             .outerRule(new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY))
             .around(new SimPhonebookRequirementsRule())
-            .around(mAdnCleanupRule)
-            .around(mFdnCleanupRule);
+            .around(mAdnCleanupRule);
     /**
      * The number of records in the SDN file for the SIM card.
      *
@@ -170,6 +170,7 @@ public class SimPhonebookContract_SimRecordsTest {
         }
     }
 
+    @Ignore
     @Test
     public void querySdn_returnsCursorWithSdnRecords() {
         // Create an ADN contact to validate that this query at least returns something different
@@ -208,6 +209,7 @@ public class SimPhonebookContract_SimRecordsTest {
         }
     }
 
+    @Ignore
     @Test
     public void queryFdn_nonEmpty_returnsFdnRecordsFromSim() throws Exception {
         insertFdn(mDefaultSubscriptionId, "Name1", "5550101");
