@@ -229,7 +229,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         }
 
         // Launch two activities in docked stack.
-        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
+        launchActivityInPrimarySplit(LAUNCHING_ACTIVITY);
         getLaunchActivityBuilder()
                 .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
                 .setWaitForLaunched(true)
