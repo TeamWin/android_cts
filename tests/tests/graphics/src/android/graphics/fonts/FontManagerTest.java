@@ -18,7 +18,10 @@ package android.graphics.fonts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.fail;
+
 import android.content.Context;
+import android.os.ParcelFileDescriptor;
 import android.text.FontConfig;
 import android.text.TextUtils;
 
@@ -30,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -155,4 +159,74 @@ public class FontManagerTest {
         assertSecurityException("status");
         assertSecurityException("random_string");
     }
+
+    @Test
+    public void fontManager_nullPfd() throws Exception {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        try {
+            fm.updateFontFile(null, new byte[256], 0);
+            fail("NullPointerException is expected.");
+        } catch (NullPointerException e) {
+            // pass
+        }
+    }
+
+    @Test
+    public void fontManager_nullSignature() throws Exception {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        // Roboto-Regular.ttf is always available.
+        File robotoFile = new File("/system/fonts/Roboto-Regular.ttf");
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(robotoFile,
+                ParcelFileDescriptor.MODE_READ_ONLY);
+
+        try {
+            fm.updateFontFile(pfd, null, 0);
+            fail("NullPointerException is expected.");
+        } catch (NullPointerException e) {
+            // pass
+        }
+    }
+
+    @Test
+    public void fontManager_negativeBaseVersion() throws Exception {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        // Roboto-Regular.ttf is always available.
+        File robotoFile = new File("/system/fonts/Roboto-Regular.ttf");
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(robotoFile,
+                ParcelFileDescriptor.MODE_READ_ONLY);
+
+        try {
+            fm.updateFontFile(pfd, new byte[256], -1);
+            fail("IllegalArgumentException is expected.");
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
+    }
+
+    @Test
+    public void fontManager_permissionEnforce() throws Exception {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        // Roboto-Regular.ttf is always available.
+        File robotoFile = new File("/system/fonts/Roboto-Regular.ttf");
+        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(robotoFile,
+                ParcelFileDescriptor.MODE_READ_ONLY);
+        byte[] randomSignature = new byte[256];
+
+        try {
+            fm.updateFontFile(pfd, randomSignature, 0);
+            fail("SecurityException is expected.");
+        } catch (SecurityException e) {
+            // pass
+        }
+    }
+
+    // TODO: Add more tests once we sign test fonts.
 }
