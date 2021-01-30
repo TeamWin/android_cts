@@ -160,6 +160,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         final Method getClientUidMethod = confClass.getDeclaredMethod("getClientUid");
         final Method getClientPidMethod = confClass.getDeclaredMethod("getClientPid");
         final Method getPlayerTypeMethod = confClass.getDeclaredMethod("getPlayerType");
+        final Method getSessionIdMethod = confClass.getDeclaredMethod("getSessionId");
         try {
             Integer uid = (Integer) getClientUidMethod.invoke(config, (Object[]) null);
             assertEquals("uid isn't protected", -1 /*expected*/, uid.intValue());
@@ -167,6 +168,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             assertEquals("pid isn't protected", -1 /*expected*/, pid.intValue());
             Integer type = (Integer) getPlayerTypeMethod.invoke(config, (Object[]) null);
             assertEquals("player type isn't protected", -1 /*expected*/, type.intValue());
+            Integer sessionId = (Integer) getSessionIdMethod.invoke(config, (Object[]) null);
+            assertEquals("session ID isn't protected", 0 /*expected*/, sessionId.intValue());
         } catch (Exception e) {
             fail("Exception thrown during reflection on config privileged fields"+ e);
         }
