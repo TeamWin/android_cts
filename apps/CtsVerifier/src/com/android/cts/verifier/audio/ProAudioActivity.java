@@ -31,7 +31,6 @@ import android.util.Log;
 
 import android.view.View;
 
-import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.TextView;
 
@@ -39,12 +38,14 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import com.android.cts.verifier.PassFailButtons;
+
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
 public class ProAudioActivity
-        extends AudioLoopbackBaseActivity
+        extends PassFailButtons.Activity
         implements View.OnClickListener {
-    private static final String TAG = ProAudioActivity.class.getName();
+    private static final String TAG = ProAudioActivity.class.getSimpleName();
     private static final boolean DEBUG = false;
 
     // Flags
@@ -61,8 +62,6 @@ public class ProAudioActivity
     TextView mHDMISupportLbl;
 
     CheckBox mClaimsHDMICheckBox;
-
-    Button mRoundTripTestButton;
 
     TextView mTestStatusLbl;
 
@@ -149,6 +148,8 @@ public class ProAudioActivity
     }
 
     protected void handleDeviceConnection(AudioDeviceInfo devInfo) {
+        mHDMIDeviceInfo = null;
+
         if (devInfo.isSink() && devInfo.getType() == AudioDeviceInfo.TYPE_HDMI) {
             mHDMIDeviceInfo = devInfo;
         }
@@ -164,17 +165,14 @@ public class ProAudioActivity
     }
 
     private boolean calculatePass() {
-        boolean flagsCorrect = !mClaimsProAudio ||
-                (mClaimsLowLatencyAudio && mClaimsMIDI &&
-                 mClaimsUSBHostMode && mClaimsUSBPeripheralMode);
-        boolean hdmiValid = !mClaimsHDMI || isHDMIValid();
-        boolean deviceValid = mOutputDevInfo != null && mInputDevInfo != null;
+        boolean usbOK = mClaimsUSBHostMode && mClaimsUSBPeripheralMode;
+        boolean hdmiOK = !mClaimsHDMI || isHDMIValid();
 
-        boolean hasPassed = flagsCorrect &&
-                hdmiValid &&
-                deviceValid &&
-                mMeanConfidence >= CONFIDENCE_THRESHOLD &&
-                mMeanLatencyMillis <= PROAUDIO_LATENCY_MS_LIMIT;
+        boolean hasPassed = !mClaimsProAudio ||
+                (mClaimsLowLatencyAudio &&
+                mClaimsMIDI &&
+                usbOK &&
+                hdmiOK);
 
         getPassButton().setEnabled(hasPassed);
         return hasPassed;
@@ -186,10 +184,6 @@ public class ProAudioActivity
         Resources strings = getResources();
         if (hasPassed) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_pass));
-        } else if (mClaimsProAudio && mMeanLatencyMillis > PROAUDIO_LATENCY_MS_LIMIT) {
-            mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_latencytoohigh));
-        } else if (mClaimsProAudio && mMeanConfidence < CONFIDENCE_THRESHOLD) {
-            mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_confidencetoolow));
         } else if (!mClaimsMIDI) {
             mTestStatusLbl.setText(strings.getString(R.string.audio_proaudio_midinotreported));
         } else if (!mClaimsUSBHostMode) {
@@ -234,9 +228,6 @@ public class ProAudioActivity
         ((TextView)findViewById(
                 R.id.proAudioMidiHasUSBPeripheralLbl)).setText("" + mClaimsUSBPeripheralMode);
 
-        mRoundTripTestButton = (Button)findViewById(R.id.proAudio_runRoundtripBtn);
-        mRoundTripTestButton.setOnClickListener(this);
-
         // HDMI
         mHDMISupportLbl = (TextView)findViewById(R.id.proAudioHDMISupportLbl);
         mClaimsHDMICheckBox = (CheckBox)findViewById(R.id.proAudioHasHDMICheckBox);
@@ -247,28 +238,10 @@ public class ProAudioActivity
         calculatePass();
     }
 
-    protected void startAudioTest() {
-        mRoundTripTestButton.setEnabled(false);
-        super.startAudioTest(mMessageHandler);
-    }
-
-    protected void handleTestCompletion() {
-        super.handleTestCompletion();
-
-        calculatePass();
-
-        recordTestResults();
-
-        showWait(false);
-        mRoundTripTestButton.setEnabled(true);
-    }
-
     /**
      * Store test results in log
      */
     protected void recordTestResults() {
-        super.recordTestResults();
-
         ReportLog reportLog = getReportLog();
         reportLog.addValue(
                 "Claims Pro Audio",
@@ -307,13 +280,9 @@ public class ProAudioActivity
                 ResultUnit.NONE);
     }
 
-        @Override
+    @Override
     public void onClick(View view) {
         switch (view.getId()) {
-        case R.id.proAudio_runRoundtripBtn:
-            startAudioTest();
-            break;
-
         case R.id.proAudioHasHDMICheckBox:
             if (mClaimsHDMICheckBox.isChecked()) {
                 AlertDialog.Builder builder =
@@ -333,6 +302,7 @@ public class ProAudioActivity
                 mClaimsHDMI = false;
                 mHDMISupportLbl.setText(getResources().getString(R.string.audio_proaudio_NA));
             }
+            calculatePass();
             break;
         }
     }
