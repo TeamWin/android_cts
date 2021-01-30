@@ -5418,6 +5418,12 @@
     <permission android:name="android.permission.INPUT_CONSUMER"
                 android:protectionLevel="signature" />
 
+    <!-- Allows an app to use exact alarm scheduling APIs to perform timing
+     sensitive background work.
+    -->
+    <permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+                android:protectionLevel="normal|appop"/>
+
     <!-- @hide Allows an application to control the system's device state managed by the
          {@link android.service.devicestate.DeviceStateManagerService}. For example, on foldable
          devices this would grant access to toggle between the folded and unfolded states. -->
