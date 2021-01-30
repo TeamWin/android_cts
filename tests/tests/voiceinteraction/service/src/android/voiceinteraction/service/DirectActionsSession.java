@@ -51,14 +51,16 @@ public class DirectActionsSession extends VoiceInteractionSession {
     // GuardedBy("mLock")
     private boolean mActionsInvalidated;
 
-    private static final int OPERATION_TIMEOUT_MS = 5000;
-
     public DirectActionsSession(@NonNull Context context) {
         super(context);
     }
 
     @Override
     public void onShow(Bundle args, int showFlags) {
+        if (args == null) {
+            Log.e("TODO", "onshow() received null args");
+            return;
+        }
         final RemoteCallback callback = args.getParcelable(Utils.DIRECT_ACTIONS_KEY_CALLBACK);
 
         final RemoteCallback control = new RemoteCallback((cmdArgs) -> {

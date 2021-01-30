@@ -82,14 +82,17 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void handleTestCompletion() {
         super.handleTestCompletion();
 
-        boolean resultValid = mConfidence >= CONFIDENCE_THRESHOLD
-                && mLatencyMillis > 1.0;
+        Log.i(TAG, "handleTestCompletion() ...");
+        boolean resultValid = mMeanConfidence >= CONFIDENCE_THRESHOLD
+                && mMeanLatencyMillis > 1.0;
         getPassButton().setEnabled(resultValid);
 
         recordTestResults();
 
         showWait(false);
         mTestButton.setEnabled(true);
+
+        Log.i(TAG, "... done");
     }
 
     /**

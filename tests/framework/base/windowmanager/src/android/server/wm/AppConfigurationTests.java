@@ -861,25 +861,28 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Launch to docked stack and record size.
         separateTestJournal();
-        launchActivityInSplitScreenWithRecents(activityName);
-        final SizeInfo initialDockedSizes = getActivityDisplaySize(activityName);
+        launchActivityInPrimarySplit(activityName);
         mWmState.computeState(
                 new WaitForValidActivityState.Builder(activityName).build());
+        final SizeInfo initialDockedSizes = getActivityDisplaySize(activityName);
 
         // Move to fullscreen stack.
         separateTestJournal();
-        setActivityTaskWindowingMode(
-                activityName, WINDOWING_MODE_FULLSCREEN);
+        mTaskOrganizer.dismissedSplitScreen();
         // Home task could be on top since it was the top-most task while in split-screen mode
         // (dock task was minimized), start the activity again to ensure the activity is at
         // foreground.
         launchActivity(activityName, WINDOWING_MODE_FULLSCREEN);
+        mWmState.computeState(
+                new WaitForValidActivityState.Builder(activityName).build());
         final SizeInfo fullscreenSizes = getActivityDisplaySize(activityName);
         assertSizesAreSane(fullscreenSizes, initialDockedSizes);
 
         // Move activity back to docked stack.
         separateTestJournal();
-        moveTaskToPrimarySplitScreen(mWmState.getTaskByActivity(activityName).mTaskId);
+        mTaskOrganizer.putTaskInSplitPrimary(mWmState.getTaskByActivity(activityName).mTaskId);
+        mWmState.computeState(
+                new WaitForValidActivityState.Builder(activityName).build());
         final SizeInfo finalDockedSizes = getActivityDisplaySize(activityName);
 
         // After activity configuration was changed twice it must report same size as original one.

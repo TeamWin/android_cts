@@ -465,9 +465,8 @@ public class BiometricServiceTest extends BiometricTestBase {
     public void testBiometricOrCredential_credentialButtonInvoked_biometricEnrolled()
             throws Exception {
         // Test behavior for each sensor when biometrics are enrolled
-        try (LockScreenSession lockscreenSession = new LockScreenSession()) {
-            lockscreenSession.setLockCredential();
-
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
             for (SensorProperties prop : mSensorProperties) {
                 try (BiometricTestSession session =
                              mBiometricManager.createTestSession(prop.getSensorId());
@@ -485,9 +484,8 @@ public class BiometricServiceTest extends BiometricTestBase {
     public void testBiometricOrCredential_credentialButtonInvoked_biometricNotEnrolled()
             throws Exception {
         // Test behavior for each sensor when biometrics are not enrolled
-        try (LockScreenSession lockscreenSession = new LockScreenSession()) {
-            lockscreenSession.setLockCredential();
-
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
             for (SensorProperties prop : mSensorProperties) {
                 try (BiometricTestSession session =
                              mBiometricManager.createTestSession(prop.getSensorId());
@@ -499,19 +497,18 @@ public class BiometricServiceTest extends BiometricTestBase {
                 }
             }
         }
-
     }
 
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_noBiometricSensor()
             throws Exception {
         assumeTrue(mSensorProperties.isEmpty());
-        try (LockScreenSession lockscreenSession = new LockScreenSession();
-             ActivitySession activitySession =
-                     new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)){
-            lockscreenSession.setLockCredential();
-            testBiometricOrCredential_credentialButtonInvoked_forConfiguration(null,
-                    0 /* sensorId */, false /* shouldEnrollBiometric */, activitySession);
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            try (ActivitySession activitySession =
+                         new ActivitySession(this, CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY)){
+                testBiometricOrCredential_credentialButtonInvoked_forConfiguration(null,
+                        0 /* sensorId */, false /* shouldEnrollBiometric */, activitySession);
+            }
         }
     }
 
