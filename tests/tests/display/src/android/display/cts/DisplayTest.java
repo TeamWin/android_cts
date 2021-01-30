@@ -19,6 +19,7 @@ package android.display.cts;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 import android.Manifest;
 import android.app.Activity;
@@ -65,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -111,6 +113,12 @@ public class DisplayTest {
                     false /* initialTouchMode */,
                     false /* launchActivity */);
 
+    @Rule
+    public ActivityTestRule<RetainedDisplayTestActivity> mRetainedDisplayTestActivity =
+            new ActivityTestRule<>(
+                    RetainedDisplayTestActivity.class,
+                    false /* initialTouchMode */,
+                    false /* launchActivity */);
     @Before
     public void setUp() throws Exception {
         mScreenOnActivity = launchScreenOnActivity();
@@ -346,7 +354,7 @@ public class DisplayTest {
         try {
             mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
             assertTrue(mDisplayManager.shouldAlwaysRespectAppRequestedMode());
-            final Activity activity = launchActivity(mDisplayTestActivity);
+            final DisplayTestActivity activity = launchActivity(mRetainedDisplayTestActivity);
             for (Display.Mode mode : modesList) {
                 testSwitchToModeId(activity, mode);
             }
@@ -355,7 +363,34 @@ public class DisplayTest {
         }
     }
 
-    private void testSwitchToModeId(Activity activity, Display.Mode mode) throws Exception {
+    /**
+     * Test that a mode switch to another display mode works when the requesting Activity
+     * is destroyed and re-created as part of the configuration change from the display mode.
+     */
+    @Test
+    public void testModeSwitchOnPrimaryDisplayWithRestart() throws Exception {
+        final Display.Mode oldMode = mDefaultDisplay.getMode();
+        final Optional<Display.Mode> newMode = Arrays.stream(mDefaultDisplay.getSupportedModes())
+                .filter(x -> !getPhysicalSize(x).equals(getPhysicalSize(oldMode)))
+                .findFirst();
+        assumeTrue("Modes with different sizes are not available", newMode.isPresent());
+
+        try {
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
+            assertTrue(mDisplayManager.shouldAlwaysRespectAppRequestedMode());
+            final DisplayTestActivity activity = launchActivity(mDisplayTestActivity);
+            testSwitchToModeId(launchActivity(mDisplayTestActivity), newMode.get());
+        } finally {
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+        }
+    }
+
+    private static Point getPhysicalSize(Display.Mode mode) {
+        return new Point(mode.getPhysicalWidth(), mode.getPhysicalHeight());
+    }
+
+    private void testSwitchToModeId(DisplayTestActivity activity, Display.Mode mode)
+            throws Exception {
         Log.i(TAG, "Switching to mode " + mode);
 
         final CountDownLatch changeSignal = new CountDownLatch(1);
@@ -378,6 +413,7 @@ public class DisplayTest {
                     // unrelated.
                     return;
                 }
+                Log.i(TAG, "Switched mode from id=" + mLastModeId + " to id=" + newModeId);
                 changeCounter.incrementAndGet();
                 changeSignal.countDown();
 
@@ -393,9 +429,7 @@ public class DisplayTest {
 
         final CountDownLatch presentationSignal = new CountDownLatch(1);
         handler.post(() -> {
-            WindowManager.LayoutParams params = activity.getWindow().getAttributes();
-            params.preferredDisplayModeId = mode.getModeId();
-            activity.getWindow().setAttributes(params);
+            activity.setPreferredDisplayMode(mode);
             presentationSignal.countDown();
         });
 

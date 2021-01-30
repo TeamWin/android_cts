@@ -42,7 +42,6 @@ import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
 
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
@@ -50,6 +49,8 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivityCallback;
+import android.window.WindowContainerToken;
+import android.window.WindowContainerTransaction;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -215,7 +216,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
             waitForIdle();
             mWmState.computeState();
             mWmState.assertDoesNotContainStack("Must have exited split-screen",
-                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+                    WINDOWING_MODE_MULTI_WINDOW, ACTIVITY_TYPE_STANDARD);
         }
     }
 
@@ -418,23 +419,33 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testDisallowEnterSplitscreenWhenInLockedTask() {
+    public void testDisallowUpdateWindowingModeWhenInLockedTask() {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        WindowManagerState.ActivityTask task =
+        final WindowManagerState.ActivityTask task =
                 mWmState.getStandardRootTaskByWindowingMode(
                         WINDOWING_MODE_FULLSCREEN).getTopTask();
 
-        // Lock the task and ensure that we can't enter split screen
         try {
-            runWithShellPermission(() -> {
-                mAtm.startSystemLockTaskMode(task.mTaskId);
-            });
-            waitForOrFail("Task in lock mode", () -> {
-                return mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE;
-            });
+            // Lock the task
+            runWithShellPermission(() -> mAtm.startSystemLockTaskMode(task.mTaskId));
+            waitForOrFail("Fail to enter locked task mode", () ->
+                    mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE);
 
-            assertFalse(setActivityTaskWindowingMode(TEST_ACTIVITY,
-                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+            // Verify specifying non-fullscreen windowing mode will fail.
+            boolean exceptionThrown = false;
+            try {
+                runWithShellPermission(() -> {
+                    final WindowContainerTransaction wct = new WindowContainerTransaction()
+                            .setWindowingMode(
+                                    mTaskOrganizer.getTaskInfo(task.mTaskId).getToken(),
+                                    WINDOWING_MODE_MULTI_WINDOW);
+                    mTaskOrganizer.applyTransaction(wct);
+                });
+            } catch (UnsupportedOperationException e) {
+                exceptionThrown = true;
+            }
+            assertTrue("Not allowed to specify windowing mode while in locked task mode.",
+                    exceptionThrown);
         } finally {
             runWithShellPermission(() -> {
                 mAtm.stopSystemLockTaskMode();
@@ -443,17 +454,50 @@ public class MultiWindowTests extends ActivityManagerTestBase {
     }
 
     @Test
-    public void testStackListOrderLaunchDockedActivity() {
-        assumeTrue(!mIsHomeRecentsComponent);
+    public void testDisallowHierarchyOperationWhenInLockedTask() {
+        launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_MULTI_WINDOW);
+        final WindowManagerState.ActivityTask task = mWmState
+                .getStandardRootTaskByWindowingMode(WINDOWING_MODE_FULLSCREEN).getTopTask();
+        final WindowManagerState.ActivityTask root = mWmState
+                .getStandardRootTaskByWindowingMode(WINDOWING_MODE_MULTI_WINDOW).getTopTask();
 
-        launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
+        try {
+            // Lock the task
+            runWithShellPermission(() -> {
+                mAtm.startSystemLockTaskMode(task.mTaskId);
+            });
+            waitForOrFail("Fail to enter locked task mode", () ->
+                    mAm.getLockTaskModeState() != LOCK_TASK_MODE_NONE);
 
-        final int homeStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_HOME);
-        final int recentsStackIndex = mWmState.getStackIndexByActivityType(ACTIVITY_TYPE_RECENTS);
-        assertThat("Recents stack should be on top of home stack",
-                recentsStackIndex, lessThan(homeStackIndex));
+            boolean gotAssertionError = false;
+            try {
+                runWithShellPermission(() -> {
+                    // Fetch tokens of testing task and multi-window root.
+                    final WindowContainerToken multiWindowRoot =
+                            mTaskOrganizer.getTaskInfo(root.mTaskId).getToken();
+                    final WindowContainerToken testChild =
+                            mTaskOrganizer.getTaskInfo(task.mTaskId).getToken();
+
+                    // Verify performing reparent operation is no operation.
+                    final WindowContainerTransaction wct = new WindowContainerTransaction()
+                            .reparent(testChild, multiWindowRoot, true /* onTop */);
+                    mTaskOrganizer.applyTransaction(wct);
+                    waitForOrFail("Fail to reparent", () ->
+                            mTaskOrganizer.getTaskInfo(task.mTaskId).getParentTaskId()
+                                    == root.mTaskId);
+                });
+            } catch (AssertionError e) {
+                gotAssertionError = true;
+            }
+            assertTrue("Not allowed to perform hierarchy operation while in locked task mode.",
+                    gotAssertionError);
+        } finally {
+            runWithShellPermission(() -> {
+                mAtm.stopSystemLockTaskMode();
+            });
+        }
     }
-
 
     /**
      * Asserts that the activity is visible when the top opaque activity finishes and with another

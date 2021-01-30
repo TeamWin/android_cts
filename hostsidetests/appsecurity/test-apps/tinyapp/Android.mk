@@ -122,7 +122,7 @@ LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/por_Z_1_2-default-caps
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the first companion package signed using the V3 signature scheme
-# # with a rotated key and part of a sharedUid but without the signing lineage.
+# with a rotated key and part of a sharedUid but without the signing lineage.
 # This app is intended to test lineage scenarios where an app is only signed
 # with the latest key in the lineage.
 include $(LOCAL_PATH)/base.mk
@@ -137,6 +137,42 @@ include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-1-sharedUid-companion2
 LOCAL_MANIFEST_FILE := AndroidManifest-companion2-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the test package that declares a signature permission.
+# The lineage used to sign this test package does not trust the first signing
+# key but grants default capabilities to the second signing key.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_3-1-no-caps-2-default-declperm
+LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
+LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
+LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por-1_2_3-1-no-caps-2-default
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the test package that declares a signature permission.
+# The lineage used to sign this test package does not trust either of the signing
+# keys so an app with only common signers in the lineage should not be granted the
+# permission.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_3-no-caps-declperm
+LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
+LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
+LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por-1_2_3-no-caps
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the companion package that requests the signature permission
+# declared by the test package above. This package is signed with a signing key that
+# diverges from the package above and is intended to verify that a common signing
+# key in the lineage that is still granted the permission capability is sufficient
+# to be granted a signature permission.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_4-companion-usesperm
+LOCAL_MANIFEST_FILE := AndroidManifest-companion-usesperm.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_4
+LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
+LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por-1_2_4-default-caps
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=

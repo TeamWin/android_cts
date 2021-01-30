@@ -31,3 +31,18 @@ LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 LOCAL_AAPT_FLAGS := --version-code 100 --replace-version
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+include $(CLEAR_VARS)
+
+LOCAL_PACKAGE_NAME := CtsSplitApp_revision12_mips64
+LOCAL_SDK_VERSION := current
+
+LOCAL_JAVA_RESOURCE_DIRS := raw_revision
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts general-tests
+
+LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
+LOCAL_AAPT_FLAGS := --version-code 100 --replace-version --revision-code 12
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
