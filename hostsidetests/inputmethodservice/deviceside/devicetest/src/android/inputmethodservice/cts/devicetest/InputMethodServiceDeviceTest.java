@@ -71,7 +71,7 @@ import java.util.stream.Collector;
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceDeviceTest {
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(7);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
 
     /** Test to check CtsInputMethod1 receives onCreate and onStartInput. */
     @Test
