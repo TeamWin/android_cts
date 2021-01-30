@@ -33,14 +33,29 @@ public class CVE_2020_0461 extends SecurityTestCase {
      * b/162741784
      */
     @Test
-    @SecurityTest(minPatchLevel = "2020-12")
+    @SecurityTest(minPatchLevel = "2020-11")
     public void testPocCVE_2020_0461() throws Exception {
+        //conditions
+        String cpu = AdbUtils.runCommandLine("getprop ro.product.cpu.abi", getDevice());
+        assumeThat(cpu, equalTo("arm64-v8a"));
+        assumeTrue(containsDriver(getDevice(), "/proc/config.gz"));
         assumeTrue(containsDriver(getDevice(),
-                "/sys/devices/system/cpu/vulnerabilities/meltdown"));
+            "/sys/devices/system/cpu/vulnerabilities/meltdown"));
         String meltdown = AdbUtils.runCommandLine(
-                "cat /sys/devices/system/cpu/vulnerabilities/meltdown", getDevice());
-        assertFalse(meltdown.startsWith("Vulnerable"));
-        assertTrue(meltdown.startsWith("Not affected") ||
-                meltdown.startsWith("Mitigation"));
+            "cat /sys/devices/system/cpu/vulnerabilities/meltdown", getDevice());
+        assumeThat(meltdown, equalTo("Vulnerable"));
+
+        //test
+        AdbUtils.runCommandLine("cp /proc/config.gz /data/local/tmp", getDevice());
+        AdbUtils.runCommandLine("gunzip /data/local/tmp/config.gz", getDevice());
+        String output = AdbUtils.runCommandLine(
+            "grep CONFIG_UNMAP_KERNEL_AT_EL0 /data/local/tmp/config", getDevice());
+        AdbUtils.runCommandLine("rm /data/local/tmp/config", getDevice());
+
+        // This is a bad output
+        // "" - empty output
+        // "CONFIG_UNMAP_KERNEL_AT_EL0 is not set"
+        assertFalse(output.isEmpty());
+        assertNotMatches("is not set", output);
     }
 }
