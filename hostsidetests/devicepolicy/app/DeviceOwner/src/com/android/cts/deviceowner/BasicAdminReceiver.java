@@ -24,6 +24,8 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.android.cts.devicepolicy.DevicePolicyManagerWrapper;
+
 public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     private static final String TAG = BasicAdminReceiver.class.getSimpleName();

@@ -32,6 +32,8 @@ import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.cts.devicepolicy.DevicePolicyManagerWrapper;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
