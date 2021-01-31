@@ -459,6 +459,10 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
             runDeviceTests(PKG, TEST_CLASS, "testNative_getNumberBViaProxy_shouldBeEleven");
         } else {
             runDeviceTests(PKG, TEST_CLASS, "testNative_cannotLoadSharedLibrary");
+            runDeviceTests(
+                    PKG,
+                    TEST_CLASS,
+                    "testNativeSplit_withoutExtractLibs_nativeLibraryCannotBeLoaded");
         }
     }
 }

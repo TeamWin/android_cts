@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -356,6 +357,18 @@ public class SplitAppTest {
     @Test
     public void testNativeJni_shouldBeLoaded() throws Exception {
         assertThat(Native.add(7, 11), equalTo(18));
+    }
+
+    @Test
+    public void testNativeSplit_withoutExtractLibs_nativeLibraryCannotBeLoaded() throws Exception {
+        final Intent intent = new Intent();
+        intent.setClassName(PACKAGE, "com.android.cts.isolatedsplitapp.jni.JniActivity");
+        mActivityRule.launchActivity(intent);
+        mActivityRule.finishActivity();
+        Instrumentation.ActivityResult result = mActivityRule.getActivityResult();
+        final Intent resultData = result.getResultData();
+        final String errorMessage = resultData.getStringExtra(Intent.EXTRA_RETURN_RESULT);
+        assertThat(errorMessage, containsString("dlopen failed"));
     }
 
     @Test

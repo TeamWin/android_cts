@@ -17,5 +17,8 @@
     package="com.android.cts.isolatedsplitapp"
     featureSplit="isolated_native_jni_split">
     <uses-split android:name="isolated_native_number_proxy_split"/>
-    <application android:hasCode="false" />
+    <application>
+        <activity android:name="com.android.cts.isolatedsplitapp.jni.JniActivity">
+        </activity>
+    </application>
 </manifest>
