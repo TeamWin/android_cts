@@ -18,6 +18,7 @@ package android.app.cts;
 
 import android.app.PendingIntent;
 import android.app.PendingIntent.CanceledException;
+import android.app.stubs.MockActivity;
 import android.app.stubs.MockReceiver;
 import android.app.stubs.MockService;
 import android.app.stubs.PendingIntentStubActivity;
@@ -25,6 +26,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ResolveInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +35,9 @@ import android.os.Parcel;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -669,4 +674,88 @@ public class PendingIntentTest extends AndroidTestCase {
         assertNull(target);
     }
 
+    public void testGetIntentComponentAndType() {
+        Intent broadcastReceiverIntent = new Intent(MockReceiver.MOCKACTION);
+        broadcastReceiverIntent.setClass(mContext, MockReceiver.class);
+        PendingIntent broadcastReceiverPI = PendingIntent.getBroadcast(mContext, 1,
+                broadcastReceiverIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        assertTrue(broadcastReceiverPI.isBroadcast());
+        assertFalse(broadcastReceiverPI.isActivity());
+        assertFalse(broadcastReceiverPI.isForegroundService());
+        assertFalse(broadcastReceiverPI.isService());
+
+        List<ResolveInfo> broadcastReceiverResolveInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(broadcastReceiverPI,
+                        (pi) -> pi.queryIntentComponents(0));
+        if (broadcastReceiverResolveInfos != null && broadcastReceiverResolveInfos.size() > 0) {
+            ResolveInfo resolveInfo = broadcastReceiverResolveInfos.get(0);
+            assertNotNull(resolveInfo.activityInfo);
+            assertEquals(MockReceiver.class.getPackageName(), resolveInfo.activityInfo.packageName);
+            assertEquals(MockReceiver.class.getName(), resolveInfo.activityInfo.name);
+        } else {
+            fail("Cannot resolve broadcast receiver pending intent");
+        }
+
+        Intent activityIntent = new Intent();
+        activityIntent.setClass(mContext, MockActivity.class);
+        PendingIntent activityPI = PendingIntent.getActivity(mContext, 1,
+                activityIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        assertTrue(activityPI.isActivity());
+        assertFalse(activityPI.isBroadcast());
+        assertFalse(activityPI.isForegroundService());
+        assertFalse(activityPI.isService());
+
+        List<ResolveInfo> activityResolveInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(activityPI,
+                        (pi) -> pi.queryIntentComponents(0));
+        if (activityResolveInfos != null && activityResolveInfos.size() > 0) {
+            ResolveInfo resolveInfo = activityResolveInfos.get(0);
+            assertNotNull(resolveInfo.activityInfo);
+            assertEquals(MockActivity.class.getPackageName(), resolveInfo.activityInfo.packageName);
+            assertEquals(MockActivity.class.getName(), resolveInfo.activityInfo.name);
+        } else {
+            fail("Cannot resolve activity pending intent");
+        }
+
+        Intent serviceIntent = new Intent();
+        serviceIntent.setClass(mContext, MockService.class);
+        PendingIntent servicePI = PendingIntent.getService(mContext, 1, serviceIntent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        assertTrue(servicePI.isService());
+        assertFalse(servicePI.isActivity());
+        assertFalse(servicePI.isBroadcast());
+        assertFalse(servicePI.isForegroundService());
+
+        List<ResolveInfo> serviceResolveInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(servicePI,
+                        (pi) -> pi.queryIntentComponents(0));
+        if (serviceResolveInfos != null && serviceResolveInfos.size() > 0) {
+            ResolveInfo resolveInfo = serviceResolveInfos.get(0);
+            assertNotNull(resolveInfo.serviceInfo);
+            assertEquals(MockService.class.getPackageName(), resolveInfo.serviceInfo.packageName);
+            assertEquals(MockService.class.getName(), resolveInfo.serviceInfo.name);
+        } else {
+            fail("Cannot resolve service pending intent");
+        }
+
+        PendingIntent foregroundServicePI = PendingIntent.getForegroundService(mContext, 1,
+                serviceIntent, PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        assertTrue(foregroundServicePI.isForegroundService());
+        assertFalse(foregroundServicePI.isActivity());
+        assertFalse(foregroundServicePI.isBroadcast());
+        assertFalse(foregroundServicePI.isService());
+
+        List<ResolveInfo> foregroundServiceResolveInfos =
+                ShellIdentityUtils.invokeMethodWithShellPermissions(foregroundServicePI,
+                        (pi) -> pi.queryIntentComponents(0));
+        if (foregroundServiceResolveInfos != null && foregroundServiceResolveInfos.size() > 0) {
+            ResolveInfo resolveInfo = serviceResolveInfos.get(0);
+            assertNotNull(resolveInfo.serviceInfo);
+            assertEquals(MockService.class.getPackageName(), resolveInfo.serviceInfo.packageName);
+            assertEquals(MockService.class.getName(), resolveInfo.serviceInfo.name);
+        } else {
+            fail("Cannot resolve foreground service pending intent");
+        }
+    }
 }
