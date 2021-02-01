@@ -44,6 +44,10 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.Intent;
+import android.content.pm.LauncherApps;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -56,6 +60,8 @@ import com.android.compatibility.common.util.TestUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Collections;
 
 /**
  * Build/Install/Run:
@@ -177,7 +183,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
     }
 
-
     @Test
     public void testSetBackgroundColorActivity() {
         assumeNewApisEnabled();
@@ -215,5 +220,31 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         final TestJournalProvider.TestJournal journal =
                 TestJournalProvider.TestJournalContainer.get(REPLACE_ICON_EXIT);
         assertFalse(journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+    }
+
+    @Test
+    public void testShortcutChangeTheme() {
+        assumeNewApisEnabled();
+        final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
+        final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);
+        assumeTrue(launcherApps != null && shortcutManager != null);
+
+        final String shortCutId = "shortcut1";
+        final ShortcutInfo.Builder b = new ShortcutInfo.Builder(
+                mContext, shortCutId);
+        final Intent i = new Intent(Intent.ACTION_MAIN)
+                .setComponent(SPLASHSCREEN_ACTIVITY);
+        final ShortcutInfo shortcut = b.setShortLabel("label")
+                .setLongLabel("long label")
+                .setIntent(i)
+                .setStartingTheme(android.R.style.Theme_Black_NoTitleBar_Fullscreen)
+                .build();
+        try {
+            shortcutManager.addDynamicShortcuts(Collections.singletonList(shortcut));
+            runWithShellPermission(() -> launcherApps.startShortcut(shortcut, null, null));
+            testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLACK, Color.BLACK);
+        } finally {
+            shortcutManager.removeDynamicShortcuts(Collections.singletonList(shortCutId));
+        }
     }
 }
