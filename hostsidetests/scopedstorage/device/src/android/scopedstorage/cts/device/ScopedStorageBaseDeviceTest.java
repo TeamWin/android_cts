@@ -29,15 +29,11 @@ import static com.google.common.truth.Truth.assertThat;
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
 
-import androidx.test.runner.AndroidJUnit4;
-
 import org.junit.BeforeClass;
-import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.List;
 
-@RunWith(AndroidJUnit4.class)
 class ScopedStorageBaseDeviceTest {
     @BeforeClass
     public static void setup() throws Exception {
