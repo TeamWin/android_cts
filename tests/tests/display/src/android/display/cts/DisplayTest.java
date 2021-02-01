@@ -332,10 +332,7 @@ public class DisplayTest {
     @Test
     public void testModeSwitchOnPrimaryDisplay() throws Exception {
         Display.Mode[] modes = mDefaultDisplay.getSupportedModes();
-        if (modes.length == 1) {
-            // If there's only one mode we can't do mode switches.
-            return;
-        }
+        assumeTrue("Need two or more display modes to exercise switching.", modes.length > 1);
 
         // Create a deterministically shuffled list of display modes, which ends with the
         // current active mode. We'll switch to the modes in this order. The active mode is last
