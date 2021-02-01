@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -667,6 +668,10 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("device doesn't have " + feature, hasDeviceFeature(feature));
     }
 
+    private void assumeDoesNotHaveDeviceFeature(String feature) throws DeviceNotAvailableException {
+        assumeFalse("device has " + feature, hasDeviceFeature(feature));
+    }
+
     /**
      * Used by test cases to add additional checks priort to {@link #setUp()}, so that when it
      * throws an {@link AssumptionViolatedException} exception nothing is run
@@ -710,6 +715,11 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected final void assumeHasSecureLockScreenFeature() throws DeviceNotAvailableException {
         assumeHasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
+    }
+
+    protected final void assumeDoesNotHaveSecureLockScreenFeature()
+            throws DeviceNotAvailableException {
+        assumeDoesNotHaveDeviceFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     protected final void assumeHasFileBasedEncryptionAndSecureLockScreenFeatures()
