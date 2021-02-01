@@ -254,6 +254,10 @@ public class AdbUserParser30 extends AdbUserParser26 {
 
     private Map<String, UserType> mUserTypes;
 
+    AdbUserParser30(Users users) {
+        super(users);
+    }
+
     @Override
     public ParseResult parse(String dumpsysUsersOutput) throws AdbParseException {
         mUserTypes = parseUserTypes(dumpsysUsersOutput);

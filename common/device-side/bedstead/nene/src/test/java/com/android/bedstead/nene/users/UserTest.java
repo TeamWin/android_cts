@@ -18,6 +18,10 @@ package com.android.bedstead.nene.users;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
+import com.android.bedstead.nene.exceptions.NeneException;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -25,126 +29,181 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class UserTest {
 
-    private static final int INT_VALUE = 1;
-    private static final String STRING_VALUE = "String";
+    private static final int NON_EXISTING_USER_ID = 10000;
+    private static final int USER_ID = NON_EXISTING_USER_ID;
+    private static final int SERIAL_NO = 1000;
     private static final UserType USER_TYPE = new UserType(new UserType.MutableUserType());
+    private static final String USER_NAME = "userName";
+
+    private final Users mUsers = new Users();
 
     @Test
     public void id_returnsId() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        mutableUser.mId = INT_VALUE;
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mId = USER_ID;
+        User user = new User(mUsers, mutableUser);
 
-        assertThat(user.id()).isEqualTo(INT_VALUE);
+        assertThat(user.id()).isEqualTo(USER_ID);
     }
 
     @Test
-    public void id_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+    public void construct_idNotSet_throwsNullPointerException() {
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mId = null;
 
-        assertThat(user.id()).isNull();
+        assertThrows(NullPointerException.class, () -> new User(mUsers, mutableUser));
     }
 
     @Test
     public void serialNo_returnsSerialNo() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        mutableUser.mSerialNo = INT_VALUE;
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mSerialNo = SERIAL_NO;
+        User user = new User(mUsers, mutableUser);
 
-        assertThat(user.serialNo()).isEqualTo(INT_VALUE);
+        assertThat(user.serialNo()).isEqualTo(SERIAL_NO);
     }
 
     @Test
     public void serialNo_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.serialNo()).isNull();
     }
 
     @Test
     public void name_returnsName() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        mutableUser.mName = STRING_VALUE;
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mName = USER_NAME;
+        User user = new User(mUsers, mutableUser);
 
-        assertThat(user.name()).isEqualTo(STRING_VALUE);
+        assertThat(user.name()).isEqualTo(USER_NAME);
     }
 
     @Test
     public void name_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.name()).isNull();
     }
 
     @Test
     public void type_returnsName() {
-        User.MutableUser mutableUser = new User.MutableUser();
+        User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mType = USER_TYPE;
-        User user = new User(mutableUser);
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.type()).isEqualTo(USER_TYPE);
     }
 
     @Test
     public void type_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.type()).isNull();
     }
 
     @Test
     public void hasProfileOwner_returnsHasProfileOwner() {
-        User.MutableUser mutableUser = new User.MutableUser();
+        User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mHasProfileOwner = true;
-        User user = new User(mutableUser);
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.hasProfileOwner()).isTrue();
     }
 
     @Test
     public void hasProfileOwner_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.hasProfileOwner()).isNull();
     }
 
     @Test
     public void isPrimary_returnsIsPrimary() {
-        User.MutableUser mutableUser = new User.MutableUser();
+        User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mIsPrimary = true;
-        User user = new User(mutableUser);
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.isPrimary()).isTrue();
     }
 
     @Test
     public void isPrimary_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        User user = new User(mUsers, mutableUser);
 
         assertThat(user.isPrimary()).isNull();
     }
 
     @Test
     public void userHandle_returnsUserHandle() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        mutableUser.mId = INT_VALUE;
-        User user = new User(mutableUser);
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mId = USER_ID;
+        User user = new User(mUsers, mutableUser);
 
-        assertThat(user.userHandle().getIdentifier()).isEqualTo(INT_VALUE);
+        assertThat(user.userHandle().getIdentifier()).isEqualTo(USER_ID);
     }
 
     @Test
-    public void userHandle_notSet_returnsNull() {
-        User.MutableUser mutableUser = new User.MutableUser();
-        User user = new User(mutableUser);
+    public void resolve_doesNotExist_returnsNull() {
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mId = USER_ID;
+        User user = new User(mUsers, mutableUser);
 
-        assertThat(user.userHandle()).isNull();
+        assertThat(user.resolve()).isNull();
+    }
+
+    @Test
+    public void resolve_doesExist_returnsUser() {
+        User user = createUser().resolve();
+
+        try {
+            assertThat(user.resolve()).isNotNull();
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void resolve_doesExist_userHasCorrectDetails() {
+        User user = mUsers.create().name(USER_NAME).create().resolve();
+
+        try {
+            User resolvedUser = user.resolve();
+            assertThat(resolvedUser.name()).isEqualTo(USER_NAME);
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void remove_userDoesNotExist_throwsException() {
+        User user = createUser().resolve();
+        user.remove();
+
+        assertThrows(NeneException.class, user::remove);
+    }
+
+    @Test
+    public void remove_userExists_removesUser() {
+        User user = createUser().resolve();
+
+        user.remove();
+
+        assertThat(mUsers.users().stream().anyMatch(u -> u.id() == user.id())).isFalse();
+    }
+
+    private User.MutableUser createValidMutableUser() {
+        User.MutableUser mutableUser = new User.MutableUser();
+        mutableUser.mId = 1;
+        return mutableUser;
+    }
+
+    private UserReference createUser() {
+        return mUsers.create().name(USER_NAME).create();
     }
 }
