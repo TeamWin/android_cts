@@ -23,7 +23,6 @@ import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_DIRECT;
 import static android.net.wifi.WifiScanner.WIFI_BAND_24_GHZ;
-import static android.net.wifi.WifiScanner.WIFI_BAND_5_GHZ;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -3613,7 +3612,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         public void onCoexUnsafeChannelsChanged() {
             synchronized (mCoexLock) {
                 mOnCoexUnsafeChannelChangedCount++;
-                mLock.notify();
+                mCoexLock.notify();
             }
         }
 
@@ -3695,29 +3694,29 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
             synchronized (mLock) {
                 try {
+                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
                     // Callback should be called if the default algorithm is disabled.
-                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
+                    mLock.wait(TEST_WAIT_DURATION_MS);
                     mWifiManager.unregisterCoexCallback(callback);
-                    // Callback should not be called here since it was unregistered.
                     mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
-                    // now wait for callback
+                    // Callback should not be called here since it was unregistered.
                     mLock.wait(TEST_WAIT_DURATION_MS);
                 } catch (InterruptedException e) {
                     fail("Thread interrupted unexpectedly while waiting on mLock");
                 }
             }
 
-            if (callback.mOnCoexUnsafeChannelChangedCount == 0) {
+            if (callback.getOnCoexUnsafeChannelChangedCount() == 0) {
                 // Default algorithm enabled, setter should have done nothing
                 assertEquals(prevUnsafeChannels, mWifiManager.getCoexUnsafeChannels());
                 assertEquals(prevRestrictions, mWifiManager.getCoexRestrictions());
-            } else if (callback.mOnCoexUnsafeChannelChangedCount == 1) {
+            } else if (callback.getOnCoexUnsafeChannelChangedCount() == 1) {
                 // Default algorithm disabled, setter should set the getter values.
                 assertEquals(unsafeChannels, mWifiManager.getCoexUnsafeChannels());
                 assertEquals(restrictions, mWifiManager.getCoexRestrictions());
             } else {
                 fail("Coex callback called " + callback.mOnCoexUnsafeChannelChangedCount
-                        + " times. Expected 1 call." );
+                        + " times. Expected 0 or 1 calls." );
             }
         } finally {
             // Reset the previous unsafe channels if we overrode them.
