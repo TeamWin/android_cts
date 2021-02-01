@@ -37,6 +37,7 @@
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.StrictModeTest#testFileUriExposure" />
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.StrictModeTest#testVmPenaltyListener" />
     <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.StrictModeTest#testContentUriWithoutPermission" />
+    <option name="compatibility:exclude-filter" value="CtsOsTestCases android.os.cts.AutoRevokeTest" />
 
     <!-- No Gallery2, Music -->
     <option name="compatibility:exclude-filter" value="CtsProviderTestCases android.provider.cts.media.MediaStoreIntentsTest" />
