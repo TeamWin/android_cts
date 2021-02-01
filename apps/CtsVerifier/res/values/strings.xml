@@ -3443,7 +3443,7 @@ You should be prompted to select credentials; choose the ones you just installed
             For this test you need to install CtsEmptyDeviceOwner.apk by running\n
             adb install -r -t /path/to/CtsEmptyDeviceOwner.apk\n
             Then you need to set this app as the device owner by running\n
-            adb shell dpm set-device-owner com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
+            adb shell dpm set-device-owner --user 0 com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
     </string>
     <string name="device_owner_remove_device_owner_test">Remove device owner</string>
     <string name="device_owner_remove_device_owner_test_info">

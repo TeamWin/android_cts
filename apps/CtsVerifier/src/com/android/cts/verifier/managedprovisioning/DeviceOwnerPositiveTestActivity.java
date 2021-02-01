@@ -28,6 +28,7 @@ import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 
@@ -125,6 +126,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         setDeviceOwnerButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.i(TAG, getString(R.string.set_device_owner_dialog_text));
                 new AlertDialog.Builder(
                         DeviceOwnerPositiveTestActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
