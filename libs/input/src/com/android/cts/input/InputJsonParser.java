@@ -617,7 +617,7 @@ public class InputJsonParser {
                     source |= InputDevice.SOURCE_TOUCHPAD;
                     break;
                 case "SENSOR":
-                    source |= (InputDevice.SOURCE_JOYSTICK | 0x02000000);
+                    source |= InputDevice.SOURCE_SENSOR;
                     break;
                 default:
                     throw new RuntimeException("Unknown source chunk: " + trimmedSourceEntry
