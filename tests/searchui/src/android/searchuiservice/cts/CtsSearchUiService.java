@@ -77,8 +77,8 @@ public class CtsSearchUiService extends SearchUiService {
     public void onNotifyEvent(SearchSessionId sessionId,
             Query input, SearchTargetEvent event) {
         if (DEBUG){
-            Log.d(TAG, "onNotifyEvent query=" + input.toString() + ", event="
-                    + event.toString());
+            Log.d(TAG, "onNotifyEvent query=" + input.getInput() + ", event="
+                    + event.getTargetId());
         }
         sWatcher.verifier.onNotifyEvent(sessionId, input, event);
     }
@@ -86,7 +86,7 @@ public class CtsSearchUiService extends SearchUiService {
     @Override
     public void onQuery(SearchSessionId sessionId, Query input,
             Consumer<List<SearchTarget>> callback) {
-        if (DEBUG) Log.d(TAG, "onQuery query=" + input.toString());
+        if (DEBUG) Log.d(TAG, "onQuery query=" + input.getInput());
         if (sWatcher.searchTargets != null) {
             callback.accept(sWatcher.searchTargets);
         } else {
