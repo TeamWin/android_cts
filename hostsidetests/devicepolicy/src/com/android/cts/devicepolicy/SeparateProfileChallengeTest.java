@@ -51,7 +51,7 @@ public class SeparateProfileChallengeTest extends BaseDevicePolicyTest {
     @SecurityTest
     @Test
     public void testSeparateProfileChallengePermissions() throws Exception {
-        assumeSupportsMultiUser();
+        assumeCanCreateOneManagedUser();
 
         // Create managed profile.
         final int profileUserId = createManagedProfile(mPrimaryUserId);
