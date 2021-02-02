@@ -1403,6 +1403,16 @@ public class AppWidgetTest extends AppWidgetTestCase {
                         AppWidgetProviderWithFeatures.Provider3.class.getName())).widgetFeatures);
     }
 
+
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
+    public void testAppWidgetGetProviderInfo() {
+        AppWidgetProviderInfo info = getFirstAppWidgetProviderInfo();
+        assertNotNull(info.getProviderInfo());
+        assertEquals(info.provider.getClassName(), info.getProviderInfo().name);
+        assertEquals(info.provider.getPackageName(), info.getProviderInfo().packageName);
+    }
+
     private void waitForCallCount(AtomicInteger counter, int expectedCount) {
         synchronized (mLock) {
             final long startTimeMillis = SystemClock.uptimeMillis();

@@ -21,12 +21,18 @@ import static android.os.Build.VERSION.SDK_INT;
 import android.os.Build;
 
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
+
+import java.util.function.Function;
 
 /**
  * Utilities for interacting with adb shell commands.
  */
 public final class ShellCommandUtils {
+
+    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 100;
+    private static final long WAIT_UNTIL_DELAY_MILLIS = 10;
 
     private ShellCommandUtils() { }
 
@@ -52,6 +58,60 @@ public final class ShellCommandUtils {
         } catch (AssertionError e) {
             throw new AdbException("Error executing command", command, /* output= */ null, e);
         }
+    }
+
+    /**
+     * Execute an adb shell command and check that the output meets a given criteria.
+     *
+     * <p>On S and above, any output printed to standard error will result in an exception and the
+     * {@code outputSuccessChecker} not being called. Empty output will still be processed.
+     *
+     * <p>Prior to S, if there is no output on standard out, regardless of if there is output on
+     * standard error, {@code outputSuccessChecker} will not be called.
+     *
+     * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
+     * command executed successfully.
+     */
+    public static String executeCommandAndValidateOutput(
+            String command, Function<String, Boolean> outputSuccessChecker) throws AdbException {
+        String output = executeCommand(command);
+        if (!outputSuccessChecker.apply(output)) {
+            throw new AdbException("Command did not meet success criteria", command, output);
+        }
+        return output;
+    }
+
+    /**
+     * Execute an adb shell command and check that the output meets a given criteria. Run the
+     * command repeatedly until the output meets the criteria.
+     *
+     * <p>On S and above, any output printed to standard error will result in an exception and the
+     * {@code outputSuccessChecker} not being called. Empty output will still be processed.
+     *
+     * <p>Prior to S, if there is no output on standard out, regardless of if there is output on
+     * standard error, {@code outputSuccessChecker} will not be called.
+     *
+     * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
+     * command executed successfully.
+     */
+    public static String executeCommandUntilOutputValid(String command, Function<String, Boolean> outputSuccessChecker) throws AdbException, InterruptedException {
+        int attempts = 0;
+        while (attempts++ < MAX_WAIT_UNTIL_ATTEMPTS) {
+            try {
+                return executeCommandAndValidateOutput(command, outputSuccessChecker);
+            } catch (AdbException e) {
+                // ignore, will retry
+                Thread.sleep(WAIT_UNTIL_DELAY_MILLIS);
+            }
+        }
+        return executeCommandAndValidateOutput(command, outputSuccessChecker);
+    }
+
+    /**
+     * Return {@code true} if {@code output} starts with "success", case insensitive.
+     */
+    public static boolean startsWithSuccess(String output) {
+        return output.toUpperCase().startsWith("SUCCESS");
     }
 
     private static String executeCommandPreS(String command) throws AdbException {
