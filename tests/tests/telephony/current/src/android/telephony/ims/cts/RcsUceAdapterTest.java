@@ -100,6 +100,7 @@ public class RcsUceAdapterTest {
     private static HandlerThread sHandlerThread;
     private static ImsServiceConnector sServiceConnector;
     private static CarrierConfigReceiver sReceiver;
+    private static boolean sDeviceUceEnabled;
 
     private static String sTestPhoneNumber;
     private static String sTestContact2;
@@ -155,6 +156,10 @@ public class RcsUceAdapterTest {
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
         sServiceConnector.clearAllActiveImsServices(sTestSlot);
 
+        // Save the original config of device uce enabled and override it.
+        sDeviceUceEnabled = sServiceConnector.getDeviceUceEnabled();
+        sServiceConnector.setDeviceUceEnabled(true);
+
         sReceiver = new RcsUceAdapterTest.CarrierConfigReceiver(sTestSub);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
@@ -173,6 +178,7 @@ public class RcsUceAdapterTest {
         // // Restore all ImsService configurations that existed before the test.
         if (sServiceConnector != null) {
             sServiceConnector.disconnectServices();
+            sServiceConnector.setDeviceUceEnabled(sDeviceUceEnabled);
         }
         sServiceConnector = null;
 
@@ -587,7 +593,6 @@ public class RcsUceAdapterTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-
         ImsManager imsManager = getContext().getSystemService(ImsManager.class);
         RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
         assertNotNull("UCE adapter should not be null!", uceAdapter);
