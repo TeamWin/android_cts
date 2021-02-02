@@ -29,6 +29,7 @@ java_test_host {
         ":jdi-support",
         ":CtsJdwpTunnelDebuggableSampleApp",
         ":CtsJdwpTunnelProfileableSampleApp",
+        ":CtsJdwpTunnelDdmsSampleApp",
     ],
 
     // Tag this module as a cts test artifact
