@@ -52,10 +52,19 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
         if (isHeadlessSystemUserMode()) {
             affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, mPrimaryUserId);
+
+            // TODO(b/176993670): INTERACT_ACROSS_USERS is needd by DevicePolicyManagerWrapper to
+            // get the current user; the permission is available on mDeviceOwnerUserId because it
+            // was installed with -g, but not on mPrimaryUserId as the app is intalled by code
+            // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
+            // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
+            // we won't need to grant it anymore.
+            executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
+                    mPrimaryUserId, DEVICE_OWNER_PKG);
         }
 
         // Enable the notification listener
-        getDevice().executeShellCommand("cmd notification allow_listener com.android.cts."
+        executeShellCommand("cmd notification allow_listener com.android.cts."
                 + "deviceowner/com.android.cts.deviceowner.NotificationListener");
     }
 

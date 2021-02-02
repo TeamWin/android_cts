@@ -106,6 +106,28 @@ android_test_helper_app {
     package_splits: ["anydpi"],
 }
 
+android_test_helper_app {
+    name: "TestAppAOriginalV1",
+    manifest: "testapp/Av1.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v1"],
+    certificate: ":cts-ec-p256",
+    apex_available: [ "com.android.apex.apkrollback.test_v1" ],
+}
+
+android_test_helper_app {
+    name: "TestAppARotatedV2",
+    manifest: "testapp/Av2.xml",
+    sdk_version: "current",
+    srcs: ["testapp/src/**/*.java"],
+    resource_dirs: ["testapp/res_v2"],
+    certificate: ":cts-ec-p256",
+    additional_certificates: [":cts-ec-p256_2"],
+    lineage: "testapp/signing/ec-p256-por-1_2",
+    apex_available: [ "com.android.apex.apkrollback.test_v2" ],
+}
+
 java_library {
     name: "cts-install-lib-java",
     srcs: ["src/**/lib/*.java"],
@@ -128,6 +150,8 @@ java_library {
         ":TestAppACrashingV2",
         ":TestAppASplitV1",
         ":TestAppASplitV2",
+        ":TestAppAOriginalV1",
+        ":TestAppARotatedV2",
         ":StagedInstallTestApexV1",
         ":StagedInstallTestApexV2",
         ":StagedInstallTestApexV3",

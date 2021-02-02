@@ -130,6 +130,8 @@ public class NotificationAssistantServiceTest {
         sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
         mNotificationListenerService.mRankingMap.getRanking(sbn.getKey(), out);
 
+        // Assistant gets correct rank
+        assertTrue(mNotificationAssistantService.notificationRank >= 0);
         // Assistant modifies notification
         assertEquals(NotificationListenerService.Ranking.USER_SENTIMENT_POSITIVE,
                 out.getUserSentiment());
@@ -664,6 +666,7 @@ public class NotificationAssistantServiceTest {
 
         assertEquals(1, mNotificationAssistantService.notificationClickCount);
 
+        mStatusBarManager.collapsePanels();
         mUi.dropShellPermissionIdentity();
 
     }

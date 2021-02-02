@@ -158,4 +158,27 @@ public class RollbackManagerTest {
 
         assertThat(DeviceConfig.getProperties("testspace").getKeyset()).hasSize(0);
     }
+
+    /**
+     * Tests an app can be rolled back to the previous signing key.
+     *
+     * <p>The rollback capability in the signing lineage allows an app to be updated to an APK
+     * signed with a previous signing key in the lineage; however this often defeats the purpose
+     * of key rotation as a compromised key could then be used to roll an app back to the previous
+     * key. To avoid requiring the rollback capability to support APK rollbacks the PackageManager
+     * allows an app to be rolled back to the previous signing key if the rollback install reason
+     * is set.
+     */
+    @Test
+    public void testRollbackAfterKeyRotation() throws Exception {
+        Install.single(TestApp.AOriginal1).commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+
+        Install.single(TestApp.ARotated2).setEnableRollback().commit();
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(2);
+
+        RollbackInfo available = RollbackUtils.waitForAvailableRollback(TestApp.A);
+        RollbackUtils.rollback(available.getRollbackId(), TestApp.ARotated2);
+        assertThat(InstallUtils.getInstalledVersion(TestApp.A)).isEqualTo(1);
+    }
 }

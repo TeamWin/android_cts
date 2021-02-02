@@ -27,11 +27,15 @@ import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
 import android.os.Process;
 import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
+
+import androidx.test.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -44,9 +48,6 @@ import org.junit.runner.RunWith;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
-
-import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 /** Some tests in this class are ignored until b/126946674 is fixed. */
 @RunWith(AndroidJUnit4.class)
@@ -207,6 +208,17 @@ public class LauncherAppsTest {
 
         assertTrue(mLauncherApps.isActivityEnabled(FULL_COMPONENT_NAME, USER_HANDLE));
         assertFalse(mLauncherApps.isActivityEnabled(FULL_DISABLED_COMPONENT_NAME, USER_HANDLE));
+    }
+
+    @Test
+    @AppModeFull(reason = "Need special permission")
+    public void testGetActivityInfo() {
+        LauncherActivityInfo info = mLauncherApps.resolveActivity(
+                new Intent().setComponent(FULL_COMPONENT_NAME), USER_HANDLE);
+        assertNotNull(info);
+        assertNotNull(info.getActivityInfo());
+        assertEquals(info.getName(), info.getActivityInfo().name);
+        assertEquals(info.getComponentName().getPackageName(), info.getActivityInfo().packageName);
     }
 
     @After
