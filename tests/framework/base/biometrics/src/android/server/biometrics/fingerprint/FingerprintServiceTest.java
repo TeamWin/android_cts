@@ -61,7 +61,8 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
 
-    protected SensorStates getCurrentState() throws Exception {
+    @Override
+    protected SensorStates getSensorStates() throws Exception {
         final byte[] dump = Utils.executeShellCommand(DUMPSYS_FINGERPRINT);
         SensorServiceStateProto proto = SensorServiceStateProto.parseFrom(dump);
         return SensorStates.parseFrom(proto);
@@ -118,9 +119,9 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
 
         mInstrumentation.waitForIdleSync();
-        waitForIdleService(getCurrentState());
+        waitForIdleService();
 
-        final SensorStates sensorStates = getCurrentState();
+        final SensorStates sensorStates = getSensorStates();
         for (int i = 0; i < sensorStates.sensorStates.size(); i++) {
             final SensorState sensorState = sensorStates.sensorStates.valueAt(i);
             for (int j = 0; j < sensorState.getUserStates().size(); j++) {
@@ -147,13 +148,13 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService(getCurrentState());
+        waitForIdleService();
 
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService(getCurrentState());
+        waitForIdleService();
 
-        final SensorStates sensorStates = getCurrentState();
+        final SensorStates sensorStates = getSensorStates();
 
         // The (sensorId, userId) has one finger enrolled.
         assertEquals(1, sensorStates.sensorStates
@@ -178,11 +179,11 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService(getCurrentState());
+            waitForIdleService();
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService(getCurrentState());
+            waitForIdleService();
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);
@@ -193,7 +194,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
         mInstrumentation.waitForIdleSync();
 
         // At least one sensor should be authenticating
-        assertFalse(getCurrentState().areAllSensorsIdle());
+        assertFalse(getSensorStates().areAllSensorsIdle());
 
         // Nothing happened yet
         FingerprintCallbackHelper.State callbackState = getCallbackState(journal);
@@ -237,11 +238,11 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService(getCurrentState());
+            waitForIdleService();
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService(getCurrentState());
+            waitForIdleService();
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);
@@ -291,7 +292,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
                 (int) callbackState.mErrorsReceived.get(0));
 
         // Authentication lifecycle is done
-        assertTrue(getCurrentState().areAllSensorsIdle());
+        assertTrue(getSensorStates().areAllSensorsIdle());
 
         // Cleanup
         for (BiometricTestSession session : testSessions) {
