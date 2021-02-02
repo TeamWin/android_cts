@@ -71,13 +71,7 @@ public class DynamicLayoutTest {
     @Before
     public void setup() {
         mDefaultPaint = new TextPaint();
-        mDynamicLayout = new DynamicLayout(MULTLINE_CHAR_SEQUENCE,
-                mDefaultPaint,
-                DEFAULT_OUTER_WIDTH,
-                DEFAULT_ALIGN,
-                SPACING_MULT_NO_SCALE,
-                SPACING_ADD_NO_SCALE,
-                true);
+        mDynamicLayout = createBuilderWithDefaults(MULTLINE_CHAR_SEQUENCE).build();
     }
 
     @Test
@@ -431,6 +425,31 @@ public class DynamicLayoutTest {
                 .setJustificationMode(Layout.JUSTIFICATION_MODE_INTER_WORD);
         final DynamicLayout layout = builder.build();
         assertNotNull(layout);
+    }
+
+    /*
+     * Tests that DynamicLayout accounts for TransformationMethods that can change text length, such
+     * as AllCapsTransformationMethod ("ß" becomes "SS") and TranslationTransformationMethod
+     * (arbitrary length changes).
+     */
+    @Test
+    public void testDisplayTextUsedInsteadOfBase() {
+        DynamicLayout layout =
+                createBuilderWithDefaults(SINGLELINE_CHAR_SEQUENCE)
+                        .setDisplayText(MULTLINE_CHAR_SEQUENCE)
+                        .setEllipsize(TextUtils.TruncateAt.END)
+                        .setEllipsizedWidth(ELLIPSIZE_WIDTH)
+                        .build();
+
+        assertThat(layout.getLineCount()).isEqualTo(TEXT.length);
+
+        assertThat(layout.getLineStart(LINE0)).isEqualTo(0);
+        assertThat(layout.getLineStart(LINE1)).isEqualTo(TEXT[0].length());
+        assertThat(layout.getLineStart(LINE2)).isEqualTo(TEXT[0].length() + TEXT[1].length());
+
+        assertThat(layout.getEllipsisCount(LINE0)).isEqualTo(0);
+        assertThat(layout.getEllipsisCount(LINE1)).isEqualTo(0);
+        assertThat(layout.getEllipsisCount(LINE2)).isGreaterThan(0);
     }
 
     @Test
