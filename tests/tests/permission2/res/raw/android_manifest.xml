@@ -5401,11 +5401,6 @@
     <permission android:name="android.permission.MANAGE_TOAST_RATE_LIMITING"
                 android:protectionLevel="signature" />
 
-    <!-- @SystemApi Allows an application to use background blur.
-         @hide -->
-    <permission android:name="android.permission.USE_BACKGROUND_BLUR"
-        android:protectionLevel="signature|privileged" />
-
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
     <!-- Attribution for Country Detector. -->
