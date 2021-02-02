@@ -109,6 +109,10 @@ public abstract class AppWidgetTestCase {
                         provider.previewImage);
                 assertEquals(android.appwidget.cts.R.id.first_auto_advance_view_id,
                         provider.autoAdvanceViewId);
+                assertEquals(android.appwidget.cts.R.string.widget_description,
+                        provider.descriptionResource);
+                assertEquals(android.appwidget.cts.R.layout.preview_layout,
+                        provider.previewLayout);
                 firstProviderVerified = true;
             } else if (secondComponentName.equals(provider.provider)
                     && android.os.Process.myUserHandle().equals(provider.getProfile())) {

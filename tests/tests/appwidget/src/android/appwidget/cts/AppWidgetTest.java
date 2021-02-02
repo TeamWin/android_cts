@@ -16,6 +16,8 @@
 
 package android.appwidget.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -518,6 +520,10 @@ public class AppWidgetTest extends AppWidgetTestCase {
 
             Drawable previewImage = foundProvider.loadPreviewImage(context, 0);
             assertNotNull(previewImage);
+
+            assertThat(foundProvider.loadDescription(context)).isEqualTo("Widget description");
+
+            assertThat(foundProvider.previewLayout).isEqualTo(R.layout.preview_layout);
         } finally {
             // Clean up.
             host.deleteAppWidgetId(appWidgetId);
