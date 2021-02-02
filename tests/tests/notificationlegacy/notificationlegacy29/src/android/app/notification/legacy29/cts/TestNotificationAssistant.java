@@ -16,6 +16,7 @@
 
 package android.app.notification.legacy29.cts;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.os.Bundle;
@@ -37,6 +38,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     int notificationSeenCount = 0;
     int notificationHiddenCount = 0;
     int notificationClickCount = 0;
+    int notificationRank = -1;
     String snoozedKey;
     String snoozedUntilContext;
     private NotificationManager mNotificationManager;
@@ -82,7 +84,16 @@ public class TestNotificationAssistant extends NotificationAssistantService {
 
     @Override
     public Adjustment onNotificationEnqueued(StatusBarNotification sbn) {
+        return null;
+    }
+
+    @Override
+    public Adjustment onNotificationEnqueued(StatusBarNotification sbn, NotificationChannel channel,
+            RankingMap rankingMap) {
         Bundle signals = new Bundle();
+        Ranking ranking = new Ranking();
+        rankingMap.getRanking(sbn.getKey(), ranking);
+        notificationRank = ranking.getRank();
         signals.putInt(Adjustment.KEY_USER_SENTIMENT, Ranking.USER_SENTIMENT_POSITIVE);
         return new Adjustment(sbn.getPackageName(), sbn.getKey(), signals, "",
                 sbn.getUser());

@@ -70,6 +70,7 @@ import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.content.pm.Signature;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
@@ -633,6 +634,22 @@ public class PackageManagerTest {
                 resourceId));
         assertEquals(xmlName, mPackageManager.getResourcesForApplication(PACKAGE_NAME)
                 .getResourceName(resourceId));
+    }
+
+    @Test
+    public void testGetResources_withConfig() throws NameNotFoundException {
+        int resourceId = R.string.config_overridden_string;
+        ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0);
+
+        Configuration c1 = new Configuration(mContext.getResources().getConfiguration());
+        c1.orientation = Configuration.ORIENTATION_PORTRAIT;
+        assertEquals("default", mPackageManager.getResourcesForApplication(
+                appInfo, c1).getString(resourceId));
+
+        Configuration c2 = new Configuration(mContext.getResources().getConfiguration());
+        c2.orientation = Configuration.ORIENTATION_LANDSCAPE;
+        assertEquals("landscape", mPackageManager.getResourcesForApplication(
+                appInfo, c2).getString(resourceId));
     }
 
     @Test
