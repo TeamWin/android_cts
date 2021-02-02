@@ -21,8 +21,11 @@ import static com.google.common.truth.Truth.assertThat;
 import android.compat.cts.Change;
 import android.compat.cts.CompatChangeGatingTestCase;
 
+import com.google.common.collect.ImmutableSet;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -35,12 +38,19 @@ import org.w3c.dom.NodeList;
 
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
 
+    private static final Set<String> OVERRIDES_ALLOWLIST = ImmutableSet.of(
+        // This change id will sometimes remain enabled if an instrumentation test fails.
+        "ALLOW_TEST_API_ACCESS"
+    );
+
     /**
      * Check that there are no overrides.
      */
     public void testNoOverrides() throws Exception {
         for (Change c : getOnDeviceCompatConfig()) {
-            assertThat(c.hasOverrides).isFalse();
+            if (!OVERRIDES_ALLOWLIST.contains(c.changeName)) {
+                assertThat(c.hasOverrides).isFalse();
+            }
         }
     }
 
