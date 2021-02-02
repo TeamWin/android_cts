@@ -17,8 +17,10 @@
 package android.widget.cts;
 
 import android.app.Activity;
+import android.graphics.drawable.Icon;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.View;
 import android.widget.AnalogClock;
 
 import androidx.test.filters.SmallTest;
@@ -36,6 +38,8 @@ import org.xmlpull.v1.XmlPullParser;
 public class AnalogClockTest {
     private AttributeSet mAttrSet;
     private Activity mActivity;
+    private AnalogClock mClock;
+    private AnalogClock mClockWithAttrs;
 
     @Rule
     public ActivityTestRule<FrameLayoutCtsActivity> mActivityRule =
@@ -44,8 +48,12 @@ public class AnalogClockTest {
     @Before
     public void setup() throws Exception {
         mActivity = mActivityRule.getActivity();
-        XmlPullParser parser = mActivity.getResources().getXml(R.layout.analogclock);
+        XmlPullParser parser = mActivity.getResources().getXml(R.layout.analogclock_layout);
         mAttrSet = Xml.asAttributeSet(parser);
+
+        View layout = mActivity.getLayoutInflater().inflate(R.layout.analogclock_layout, null);
+        mClock = layout.findViewById(R.id.clock);
+        mClockWithAttrs = layout.findViewById(R.id.clock_with_attrs);
     }
 
     @Test
@@ -55,18 +63,67 @@ public class AnalogClockTest {
         new AnalogClock(mActivity, mAttrSet, 0);
     }
 
-    @Test(expected=NullPointerException.class)
+    @Test(expected = NullPointerException.class)
     public void testConstructorWithNullContext1() {
         new AnalogClock(null);
     }
 
-    @Test(expected=NullPointerException.class)
+    @Test(expected = NullPointerException.class)
     public void testConstructorWithNullContext2() {
         new AnalogClock(null, null);
     }
 
-    @Test(expected=NullPointerException.class)
+    @Test(expected = NullPointerException.class)
     public void testConstructorWithNullContext3() {
         new AnalogClock(null, null, -1);
+    }
+
+    @Test
+    public void testSetDial() {
+        Icon icon = Icon.createWithResource(mActivity, R.drawable.magenta_fill);
+        mClock.setDial(icon);
+        mClockWithAttrs.setDial(icon);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetDialWithNull() {
+        mClock.setDial(null);
+    }
+
+    @Test
+    public void testSetHourHand() {
+        Icon icon = Icon.createWithResource(mActivity, R.drawable.magenta_fill);
+        mClock.setHourHand(icon);
+        mClockWithAttrs.setHourHand(icon);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetHourHandWithNull() {
+        mClock.setHourHand(null);
+    }
+
+    @Test
+    public void testSetMinuteHand() {
+        Icon icon = Icon.createWithResource(mActivity, R.drawable.magenta_fill);
+        mClock.setMinuteHand(icon);
+        mClockWithAttrs.setMinuteHand(icon);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSetMinuteHandWithNull() {
+        mClock.setMinuteHand(null);
+    }
+
+    @Test
+    public void testSetSecondHand() {
+        Icon icon = Icon.createWithResource(mActivity, R.drawable.magenta_fill);
+        mClock.setSecondHand(icon);
+        mClockWithAttrs.setSecondHand(icon);
+    }
+
+    @Test
+    public void testSetSecondHandWithNull() {
+        mClock.setSecondHand(null);
+        mClockWithAttrs.setSecondHand(null);
     }
 }
