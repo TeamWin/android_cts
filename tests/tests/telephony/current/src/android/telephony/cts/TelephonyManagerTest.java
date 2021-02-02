@@ -1397,8 +1397,16 @@ public class TelephonyManagerTest {
             Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
             return;
         }
-        assertThat(mOnPhoneCapabilityChanged).isFalse();
 
+        // test without permission: verify SecurityException
+        try {
+            mTelephonyManager.getPhoneCapability();
+            fail("testGetPhoneCapability: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        assertThat(mOnPhoneCapabilityChanged).isFalse();
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
@@ -1415,7 +1423,15 @@ public class TelephonyManagerTest {
             mLock.wait(TOLERANCE);
         }
 
-        assertEquals(mPhoneCapability, mTelephonyManager.getPhoneCapability());
+        // test with permission
+        try {
+            PhoneCapability phoneCapability = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> tm.getPhoneCapability());
+
+            assertEquals(mPhoneCapability, phoneCapability);
+        } catch (SecurityException se) {
+            fail("testGetPhoneCapability: SecurityException not expected");
+        }
     }
 
     @Test
