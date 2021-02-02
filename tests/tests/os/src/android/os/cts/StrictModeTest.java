@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.WallpaperManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -661,6 +662,10 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertViolation("Tried to access UI related API:",
+                () -> applicationContext.getSystemService(WallpaperManager.class)
+                        .getDesiredMinimumWidth());
     }
 
     @Presubmit
@@ -691,6 +696,10 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertViolation("Tried to access UI related API:",
+                () -> displayContext.getSystemService(WallpaperManager.class)
+                        .getDesiredMinimumWidth());
     }
 
     @Presubmit
@@ -715,6 +724,9 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertNoViolation(() -> windowContext.getSystemService(WallpaperManager.class)
+                .getDesiredMinimumWidth());
     }
 
     @Presubmit
@@ -741,6 +753,9 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertNoViolation(() -> activity.getSystemService(WallpaperManager.class)
+                .getDesiredMinimumWidth());
     }
 
     @Presubmit
@@ -785,6 +800,9 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertNoViolation(() -> uiDerivedConfigContext.getSystemService(WallpaperManager.class)
+                .getDesiredMinimumWidth());
     }
 
     @Presubmit
@@ -815,6 +833,10 @@ public class StrictModeTest {
                 fail("Failed because of " + e);
             }
         });
+
+        assertViolation("Tried to access UI related API:",
+                () -> uiDerivedDisplayContext.getSystemService(WallpaperManager.class)
+                        .getDesiredMinimumWidth());
     }
 
     @Test
