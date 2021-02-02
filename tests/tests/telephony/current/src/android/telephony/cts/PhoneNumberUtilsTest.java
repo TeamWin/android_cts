@@ -387,13 +387,13 @@ public class PhoneNumberUtilsTest {
 
     @Test
     public void testFormatNumberToE164() {
-        assertNull(PhoneNumberUtils.formatNumber("invalid#", "us"));
-        assertNull(PhoneNumberUtils.formatNumberToE164("1234567", "us"));
+        assertNull(PhoneNumberUtils.formatNumber("invalid#", "US"));
+        assertNull(PhoneNumberUtils.formatNumberToE164("1234567", "US"));
 
-        assertEquals("+18004664114", PhoneNumberUtils.formatNumberToE164("800-GOOG-114", "us"));
-        assertEquals("+16502910000", PhoneNumberUtils.formatNumberToE164("650 2910000", "us"));
-        assertEquals("+12023458246", PhoneNumberUtils.formatNumberToE164("(202)345-8246", "us"));
-        assertEquals("+812023458246", PhoneNumberUtils.formatNumberToE164("202-345-8246", "jp"));
+        assertEquals("+18004664114", PhoneNumberUtils.formatNumberToE164("800-GOOG-114", "US"));
+        assertEquals("+16502910000", PhoneNumberUtils.formatNumberToE164("650 2910000", "US"));
+        assertEquals("+12023458246", PhoneNumberUtils.formatNumberToE164("(202)345-8246", "US"));
+        assertEquals("+812023458246", PhoneNumberUtils.formatNumberToE164("202-345-8246", "JP"));
     }
 
     @Test
