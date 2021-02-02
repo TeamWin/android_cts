@@ -67,6 +67,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
 import android.view.Gravity;
@@ -225,7 +226,11 @@ public class AccessibilityWindowQueryTest {
             final int windowCount = windows.size();
             for (int i = 0; i < windowCount; i++) {
                 AccessibilityWindowInfo window = windows.get(i);
-
+                // Skip other Apps windows since their state might not be stable while querying.
+                if (window.getType() == AccessibilityWindowInfo.TYPE_APPLICATION
+                        && !TextUtils.equals(window.getTitle(), mActivity.getTitle())) {
+                    continue;
+                }
                 window.getBoundsInScreen(boundsInScreen);
                 assertFalse(boundsInScreen.isEmpty()); // Varies on screen size, emptiness check.
                 assertNull(window.getParent());
