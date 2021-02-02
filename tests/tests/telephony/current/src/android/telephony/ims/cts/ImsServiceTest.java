@@ -1018,6 +1018,111 @@ public class ImsServiceTest {
         overrideCarrierConfig(null);
     }
 
+    @Test
+    public void testRcsCapabilitiesPublishNetworkResponseWithReasonHeader() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Trigger carrier config changed
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot find IMS service");
+        }
+
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to device ImsService with MmTel feature and RCS feature
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener callback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        // register the publish state callback
+        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(uceAdapter,
+                a -> a.addOnPublishStateChangedListener(getContext().getMainExecutor(), callback),
+                ImsException.class,
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+
+        // Verify receiving the publish state callback immediately after registering the callback.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Setup the operation of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "OK";
+            listener.onPublish();
+            cb.onNetworkResponse(networkResp, reason);
+        });
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Framework should trigger the device capabilities publish when IMS is registered.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // Verify it is getUcePublishState for the API "getUcePublishState".
+        int publishState = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(uceAdapter,
+                a -> a.getUcePublishState(),
+                ImsException.class,
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+
+        // Set the publish request fail (Reason header)
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "";
+            int reasonHeaderCause = 400;
+            String reasonHeaderText = "Bad Request";
+            listener.onPublish();
+            cb.onNetworkResponse(networkResp, reason, reasonHeaderCause, reasonHeaderText);
+        });
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+
+        // Verify that receive the publish failed callback
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        publishState = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(uceAdapter,
+                a -> a.getUcePublishState(),
+                ImsException.class,
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OTHER_ERROR, publishState);
+
+        overrideCarrierConfig(null);
+    }
+
     @Ignore("RCS APIs not public yet")
     @Test
     public void testRcsManagerRegistrationCallback() throws Exception {
