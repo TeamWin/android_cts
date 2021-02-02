@@ -858,8 +858,21 @@ abstract class CodecTestBase {
                     }
                 }
             }
-        } else if (!mSawInputEOS) {
-            enqueueEOS(mCodec.dequeueInputBuffer(-1));
+        } else {
+            MediaCodec.BufferInfo outInfo = new MediaCodec.BufferInfo();
+            while (!mSawInputEOS) {
+                int outputBufferId = mCodec.dequeueOutputBuffer(outInfo, Q_DEQ_TIMEOUT_US);
+                if (outputBufferId >= 0) {
+                    dequeueOutput(outputBufferId, outInfo);
+                } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    mOutFormat = mCodec.getOutputFormat();
+                    mSignalledOutFormatChanged = true;
+                }
+                int inputBufferId = mCodec.dequeueInputBuffer(Q_DEQ_TIMEOUT_US);
+                if (inputBufferId != -1) {
+                    enqueueEOS(inputBufferId);
+                }
+            }
         }
     }
 

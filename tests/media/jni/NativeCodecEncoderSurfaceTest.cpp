@@ -340,20 +340,37 @@ bool CodecEncoderSurfaceTest::waitForAllEncoderOutputs() {
 
 bool CodecEncoderSurfaceTest::queueEOS() {
     if (mIsCodecInAsyncMode) {
-        if (!hasSeenError() && !mSawDecInputEOS) {
-            callbackObject element = mAsyncHandleDecoder.getInput();
+        while (!hasSeenError() && !mSawDecInputEOS) {
+            callbackObject element = mAsyncHandleDecoder.getWork();
             if (element.bufferIndex >= 0) {
-                if (!enqueueDecoderEOS(element.bufferIndex)) return false;
+                if (element.isInput) {
+                    if (!enqueueDecoderEOS(element.bufferIndex)) return false;
+                } else {
+                    if (!dequeueDecoderOutput(element.bufferIndex, &element.bufferInfo)) {
+                        return false;
+                    }
+                }
             }
         }
     } else {
-        if (!mSawDecInputEOS) {
-            int bufferIndex = AMediaCodec_dequeueInputBuffer(mDecoder, -1);
-            if (bufferIndex >= 0) {
-                if (!enqueueDecoderEOS(bufferIndex)) return false;
+        AMediaCodecBufferInfo outInfo;
+        while (!mSawDecInputEOS) {
+            ssize_t oBufferID = AMediaCodec_dequeueOutputBuffer(mDecoder, &outInfo, kQDeQTimeOutUs);
+            if (oBufferID >= 0) {
+                if (!dequeueDecoderOutput(oBufferID, &outInfo)) return false;
+            } else if (oBufferID == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
+            } else if (oBufferID == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
+            } else if (oBufferID == AMEDIACODEC_INFO_OUTPUT_BUFFERS_CHANGED) {
             } else {
-                ALOGE("unexpected return value from *_dequeueInputBufferBuffer: %d",
-                      bufferIndex);
+                ALOGE("unexpected return value from *_dequeueOutputBuffer: %zd", oBufferID);
+                return false;
+            }
+            ssize_t iBufferId = AMediaCodec_dequeueInputBuffer(mDecoder, kQDeQTimeOutUs);
+            if (iBufferId >= 0) {
+                if (!enqueueDecoderEOS(iBufferId)) return false;
+            } else if (iBufferId == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
+            } else {
+                ALOGE("unexpected return value from *_dequeueInputBuffer: %zd", iBufferId);
                 return false;
             }
         }

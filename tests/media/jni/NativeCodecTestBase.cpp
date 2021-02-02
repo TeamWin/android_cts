@@ -464,19 +464,41 @@ bool CodecTestBase::doWork(int frameLimit) {
 bool CodecTestBase::queueEOS() {
     bool isOk = true;
     if (mIsCodecInAsyncMode) {
-        if (!hasSeenError() && isOk && !mSawInputEOS) {
-            callbackObject element = mAsyncHandle.getInput();
+        while (!hasSeenError() && isOk && !mSawInputEOS) {
+            callbackObject element = mAsyncHandle.getWork();
             if (element.bufferIndex >= 0) {
-                isOk = enqueueEOS(element.bufferIndex);
+                if (element.isInput) {
+                    isOk = enqueueEOS(element.bufferIndex);
+                } else {
+                    isOk = dequeueOutput(element.bufferIndex, &element.bufferInfo);
+                }
             }
         }
     } else {
-        if (!mSawInputEOS) {
-            int bufferIndex = AMediaCodec_dequeueInputBuffer(mCodec, -1);
-            if (bufferIndex >= 0) {
-                isOk = enqueueEOS(bufferIndex);
+        AMediaCodecBufferInfo outInfo;
+        while (isOk && !mSawInputEOS) {
+            ssize_t oBufferID = AMediaCodec_dequeueOutputBuffer(mCodec, &outInfo, kQDeQTimeOutUs);
+            if (oBufferID >= 0) {
+                isOk = dequeueOutput(oBufferID, &outInfo);
+            } else if (oBufferID == AMEDIACODEC_INFO_OUTPUT_FORMAT_CHANGED) {
+                if (mOutFormat) {
+                    AMediaFormat_delete(mOutFormat);
+                    mOutFormat = nullptr;
+                }
+                mOutFormat = AMediaCodec_getOutputFormat(mCodec);
+                mSignalledOutFormatChanged = true;
+            } else if (oBufferID == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
+            } else if (oBufferID == AMEDIACODEC_INFO_OUTPUT_BUFFERS_CHANGED) {
             } else {
-                ALOGE("unexpected return value from *_dequeueInputBuffer: %d", bufferIndex);
+                ALOGE("unexpected return value from *_dequeueOutputBuffer: %zd", oBufferID);
+                return false;
+            }
+            ssize_t iBufferId = AMediaCodec_dequeueInputBuffer(mCodec, kQDeQTimeOutUs);
+            if (iBufferId >= 0) {
+                isOk = enqueueEOS(iBufferId);
+            } else if (iBufferId == AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
+            } else {
+                ALOGE("unexpected return value from *_dequeueInputBuffer: %zd", iBufferId);
                 return false;
             }
         }
