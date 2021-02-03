@@ -122,6 +122,7 @@ public class SeccompDeviceTest {
                 case IsolatedService.MSG_SECCOMP_RESULT:
                     mAppZygoteResult = (msg.arg1 == 1);
                     mResultCondition.open();
+                    break;
                 default:
                     super.handleMessage(msg);
             }
