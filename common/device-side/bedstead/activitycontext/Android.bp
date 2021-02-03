@@ -1,6 +1,6 @@
 android_library {
     name: "ActivityContext",
-    sdk_version: "current",
+    sdk_version: "26",
     srcs: [
         "src/main/java/**/*.java"
     ],

@@ -47,19 +47,19 @@ public final class CustomEventTest {
     }
 
     @Test
-    public void queryTag_works() {
+    public void whereTag_works() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TAG_1)
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TAG_1);
+                .whereTag().isEqualTo(TAG_1);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TAG_1);
     }
 
     @Test
-    public void queryTag_skipsNonMatchingTags() {
+    public void whereTag_skipsNonMatching() {
         CustomEvent.logger(CONTEXT)
                 .setTag(TAG_1)
                 .log();
@@ -68,25 +68,25 @@ public final class CustomEventTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TAG_2);
+                .whereTag().isEqualTo(TAG_2);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TAG_2);
     }
 
     @Test
-    public void queryData_works() {
+    public void whereData_works() {
         CustomEvent.logger(CONTEXT)
                 .setData(DATA_1)
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withData(DATA_1);
+                .whereData().isEqualTo(DATA_1);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_1);
     }
 
     @Test
-    public void queryData_skipsNonMatchingData() {
+    public void whereData_skipsNonMatching() {
         CustomEvent.logger(CONTEXT)
                 .setData(DATA_1)
                 .log();
@@ -95,7 +95,7 @@ public final class CustomEventTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withData(DATA_2);
+                .whereData().isEqualTo(DATA_2);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_2);
     }

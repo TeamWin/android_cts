@@ -37,6 +37,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class EventLibActivityTest {
 
+    // This must exist as an <activity> in AndroidManifest.xml
     private static final String GENERATED_ACTIVITY_CLASS_NAME
             = "com.android.generatedEventLibActivity";
 
@@ -58,7 +59,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs = ActivityCreatedEvent
                 .queryPackage(CONTEXT.getPackageName())
-                .withActivityClass(EventLibActivity.class);
+                .whereActivity().isSameClassAs(EventLibActivity.class);
 
         assertThat(eventLogs.poll()).isNotNull();
     }
@@ -73,7 +74,7 @@ public class EventLibActivityTest {
 
         EventLogs<ActivityCreatedEvent> eventLogs = ActivityCreatedEvent
                 .queryPackage(CONTEXT.getPackageName())
-                .withActivityName(GENERATED_ACTIVITY_CLASS_NAME);
+                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.poll()).isNotNull();
     }

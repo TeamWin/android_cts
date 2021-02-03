@@ -29,14 +29,14 @@ public class SerializableParcelWrapper<E extends Parcelable> implements Serializ
 
     private static final long serialVersionUID = 0;
 
-    private E parcelable;
+    private E mParcelable;
 
     public SerializableParcelWrapper(E parcelable)  {
-        this.parcelable = parcelable;
+        mParcelable = parcelable;
     }
 
     public E get() {
-        return parcelable;
+        return mParcelable;
     }
 
     @Override
@@ -46,12 +46,16 @@ public class SerializableParcelWrapper<E extends Parcelable> implements Serializ
         }
         SerializableParcelWrapper<E> other = (SerializableParcelWrapper<E>) obj;
 
-        return parcelable.equals(other.parcelable);
+        if (mParcelable == null) {
+            return other.mParcelable == null;
+        }
+
+        return mParcelable.equals(other.mParcelable);
     }
 
     @Override
     public int hashCode() {
-        return parcelable.hashCode();
+        return mParcelable.hashCode();
     }
 
     // Serializable readObject
@@ -62,14 +66,15 @@ public class SerializableParcelWrapper<E extends Parcelable> implements Serializ
         inputStream.read(bytes);
         Parcel p = Parcel.obtain();
         p.unmarshall(bytes, 0, size);
-        parcelable = p.readParcelable(Parcelable.class.getClassLoader());
+        p.setDataPosition(0);
+        mParcelable = p.readParcelable(Parcelable.class.getClassLoader());
         p.recycle();
     }
 
     // Serializable writeObject
     private void writeObject(ObjectOutputStream outputStream) throws IOException {
         Parcel p = Parcel.obtain();
-        p.writeParcelable(parcelable, /* flags= */ 0);
+        p.writeParcelable(mParcelable, /* flags= */ 0);
         byte[] bytes = p.marshall();
         p.recycle();
 
