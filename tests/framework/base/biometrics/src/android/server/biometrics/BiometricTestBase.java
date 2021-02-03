@@ -27,18 +27,19 @@ import java.util.function.BooleanSupplier;
 /**
  * Base class for biometric tests, containing common useful logic.
  */
-public class BiometricTestBase extends ActivityManagerTestBase {
+public abstract class BiometricTestBase extends ActivityManagerTestBase {
 
     private static final String TAG = "BiometricTestBase";
 
+    protected abstract SensorStates getSensorStates() throws Exception;
+
     /**
      * Waits for the service to become idle
-     * @param state Current service state
      * @throws Exception
      */
-    protected void waitForIdleService(@NonNull SensorStates state) throws Exception {
+    protected void waitForIdleService() throws Exception {
         for (int i = 0; i < 10; i++) {
-            if (!state.areAllSensorsIdle()) {
+            if (!getSensorStates().areAllSensorsIdle()) {
                 Log.d(TAG, "Not idle yet..");
                 Thread.sleep(300);
             } else {
@@ -48,9 +49,9 @@ public class BiometricTestBase extends ActivityManagerTestBase {
         Log.d(TAG, "Timed out waiting for idle");
     }
 
-    protected void waitForBusySensor(@NonNull SensorStates state, int sensorId) throws Exception {
+    protected void waitForBusySensor(int sensorId) throws Exception {
         for (int i = 0; i < 10; i++) {
-            if (!state.sensorStates.get(sensorId).isBusy()) {
+            if (!getSensorStates().sensorStates.get(sensorId).isBusy()) {
                 Log.d(TAG, "Not busy yet..");
                 Thread.sleep(300);
             } else {

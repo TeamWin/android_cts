@@ -36,6 +36,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -373,6 +374,69 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                         () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
             }
 
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
+     *
+     * Verifies that the external scorer works even after wifi restart.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testSetWifiConnectedNetworkScorerOnSubsystemRestart() throws Exception {
+        CountDownLatch countDownLatchScorer = new CountDownLatch(1);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        TestConnectedNetworkScorer connectedNetworkScorer =
+                new TestConnectedNetworkScorer(countDownLatchScorer);
+        boolean disconnected = false;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // Clear any external scorer already active on the device.
+            mWifiManager.clearWifiConnectedNetworkScorer();
+            Thread.sleep(500);
+
+            mWifiManager.setWifiConnectedNetworkScorer(
+                    Executors.newSingleThreadExecutor(), connectedNetworkScorer);
+            // Since we're already connected, wait for onStart to be invoked.
+            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+
+            int prevSessionId = connectedNetworkScorer.startSessionId;
+            WifiManager.ScoreUpdateObserver prevScoreUpdateObserver =
+                    connectedNetworkScorer.scoreUpdateObserver;
+
+            // Expect one stop followed by one start after the restart
+
+            // Ensure that we got an onStop() for the previous connection when restart is invoked.
+            countDownLatchScorer = new CountDownLatch(1);
+            connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
+
+            // Restart wifi subsystem.
+            mWifiManager.restartWifiSubsystem(null);
+            // Wait for the device to connect back.
+            PollingCheck.check(
+                    "Wifi not connected",
+                    WIFI_CONNECT_TIMEOUT_MILLIS * 2,
+                    () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+
+            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(connectedNetworkScorer.stopSessionId).isEqualTo(prevSessionId);
+
+            // Followed by a new onStart() after the connection.
+            // Note: There is a 5 second delay between stop/start when restartWifiSubsystem() is
+            // invoked, so this should not be racy.
+            countDownLatchScorer = new CountDownLatch(1);
+            connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
+            assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(connectedNetworkScorer.startSessionId).isNotEqualTo(prevSessionId);
+
+            // Ensure that we did not get a new score update observer.
+            assertThat(connectedNetworkScorer.scoreUpdateObserver).isSameInstanceAs(
+                    prevScoreUpdateObserver);
+        } finally {
+            mWifiManager.clearWifiConnectedNetworkScorer();
             uiAutomation.dropShellPermissionIdentity();
         }
     }

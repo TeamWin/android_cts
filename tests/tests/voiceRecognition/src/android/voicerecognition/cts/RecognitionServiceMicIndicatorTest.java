@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
+import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.server.wm.WindowManagerStateHelper;
 import android.support.test.uiautomator.By;
@@ -55,11 +56,14 @@ public final class RecognitionServiceMicIndicatorTest {
     private final String TAG = "RecognitionServiceMicIndicatorTest";
     // same as Settings.Secure.VOICE_RECOGNITION_SERVICE
     private final String VOICE_RECOGNITION_SERVICE = "voice_recognition_service";
-    // same as Settings.Secure.VOICE_INTERACTION_SERVICE
-    private final String VOICE_INTERACTION_SERVICE = "voice_interaction_service";
+    private final String INDICATORS_FLAG = "camera_mic_icons_enabled";
+    // Same as PrivacyItemController DEFAULT_MIC_CAMERA
+    private final boolean DEFAULT_MIC_CAMERA = true;
     // Th notification privacy indicator
-    private final String PRIVACY_CHIP_PACLAGE_NAME = "com.android.systemui";
+    private final String PRIVACY_CHIP_PACKAGE_NAME = "com.android.systemui";
     private final String PRIVACY_CHIP_ID = "privacy_chip";
+    private final String PRIVACY_DIALOG_PACKAGE_NAME = "com.android.systemui";
+    private final String PRIVACY_DIALOG_CONTENT_ID = "text";
     private final String TV_MIC_INDICATOR_WINDOW_TITLE = "MicrophoneCaptureIndicator";
     // The cts app label
     private final String APP_LABEL = "CtsVoiceRecognitionTestCases";
@@ -76,6 +80,7 @@ public final class RecognitionServiceMicIndicatorTest {
     private UiDevice mUiDevice;
     private SpeechRecognitionActivity mActivity;
     private String mCameraLabel;
+    private String mOriginalIndicatorsState;
 
     @Rule
     public ActivityTestRule<SpeechRecognitionActivity> mActivityTestRule =
@@ -98,12 +103,20 @@ public final class RecognitionServiceMicIndicatorTest {
                     pm).toString();
         } catch (PackageManager.NameNotFoundException e) {
         }
+        runWithShellPermissionIdentity(() -> {
+            mOriginalIndicatorsState =
+                    DeviceConfig.getProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG);
+            Log.v(TAG, "setup(): mOriginalIndicatorsState=" + mOriginalIndicatorsState);
+        });
+        setIndicatorsEnabledState(Boolean.toString(true));
     }
 
     @After
     public void teardown() {
         // press back to close the dialog
         mUiDevice.pressHome();
+        // Restore original value.
+        setIndicatorsEnabledState(mOriginalIndicatorsState);
     }
 
     private void prepareDevice() {
@@ -117,6 +130,13 @@ public final class RecognitionServiceMicIndicatorTest {
         runWithShellPermissionIdentity(
                 () -> Settings.Secure.putString(mContext.getContentResolver(),
                         VOICE_RECOGNITION_SERVICE, recognizer));
+        mUiDevice.waitForIdle();
+    }
+
+    private void setIndicatorsEnabledState(String enabled) {
+        runWithShellPermissionIdentity(
+                () -> DeviceConfig.setProperty(DeviceConfig.NAMESPACE_PRIVACY, INDICATORS_FLAG,
+                        enabled, false));
         mUiDevice.waitForIdle();
     }
 
@@ -192,30 +212,38 @@ public final class RecognitionServiceMicIndicatorTest {
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
         final UiObject2 privacyChip =
-                mUiDevice.findObject(By.res(PRIVACY_CHIP_PACLAGE_NAME, PRIVACY_CHIP_ID));
+                mUiDevice.findObject(By.res(PRIVACY_CHIP_PACKAGE_NAME, PRIVACY_CHIP_ID));
         assertWithMessage("Can not find mic indicator").that(privacyChip).isNotNull();
 
         // Click the privacy indicator and verify the calling app name display status in the dialog.
         privacyChip.click();
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
-        final UiObject2 recognitionCallingAppLabel = mUiDevice.findObject(By.text(APP_LABEL));
+        // Make sure dialog is shown
+        final UiObject2 recognitionCallingAppLabel = mUiDevice.findObject(
+                By.res(PRIVACY_DIALOG_PACKAGE_NAME, PRIVACY_DIALOG_CONTENT_ID));
+        assertWithMessage("No permission dialog shown after clicking  privacy chip.").that(
+                recognitionCallingAppLabel).isNotNull();
+        // get dialog content
+        final String dialogDescription = recognitionCallingAppLabel.getText();
         if (trustVoiceService) {
-            // Check trust recognizer can blame calling app mic permission
+            // Check trust recognizer can blame calling apmic permission
             assertWithMessage(
                     "Trusted voice recognition service can blame the calling app name " + APP_LABEL
-                            + ", but does not find it.").that(
-                    recognitionCallingAppLabel).isNotNull();
-            assertThat(recognitionCallingAppLabel.getText()).isEqualTo(APP_LABEL);
+                            + ", but does not find it.")
+                    .that(dialogDescription)
+                    .contains(APP_LABEL);
 
             // Check trust recognizer cannot blame non-mic permission
-            final UiObject2 cemaraLabel = mUiDevice.findObject(By.text(mCameraLabel));
             assertWithMessage("Trusted voice recognition service cannot blame non-mic permission")
-                    .that(cemaraLabel).isNull();
+                    .that(dialogDescription)
+                    .doesNotContain(mCameraLabel);
         } else {
             assertWithMessage(
                     "Untrusted voice recognition service cannot blame the calling app name "
-                            + APP_LABEL).that(recognitionCallingAppLabel).isNull();
+                            + APP_LABEL)
+                    .that(dialogDescription)
+                    .doesNotContain(APP_LABEL);
         }
         // Wait for the privacy indicator to disappear to avoid the test becoming flaky.
         SystemClock.sleep(INDICATOR_DISMISS_TIMEOUT);

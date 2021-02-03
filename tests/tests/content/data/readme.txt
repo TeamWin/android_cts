@@ -24,8 +24,14 @@ To enable signature check, use ApkChecksums.writeChecksums to store the required
     HelloWorld5_hdpi-v4.digests
     HelloWorld5_mdpi-v4.digests
 
+Create a self-signed certificate:
+    openssl req -x509 -newkey rsa:4096 -nodes -keyout test-key.pem -out test-cert.x509.pem -days 36500 -subj "/C=US/ST=California/L=Mountain View/O=Android/OU=Android/CN=Android/emailAddress=incremental-dev@google.com"
 Sign:
     openssl cms -sign -binary -nosmimecap -in CtsPkgInstallTinyAppV2V3V4.digests -signer test-cert.x509.pem -inkey test-key.pem -outform der -out CtsPkgInstallTinyAppV2V3V4.digests.signature
+    openssl cms -sign -binary -nosmimecap -in HelloWorld5.digests -signer test-cert.x509.pem -inkey test-key.pem -outform der -out HelloWorld5.digests.signature
+    openssl cms -sign -binary -nosmimecap -in HelloWorld5_hdpi-v4.digests -signer test-cert.x509.pem -inkey test-key.pem -outform der -out HelloWorld5_hdpi-v4.digests.signature
+    openssl cms -sign -binary -nosmimecap -in HelloWorld5_mdpi-v4.digests -signer test-cert.x509.pem -inkey test-key.pem -outform der -out HelloWorld5_mdpi-v4.digests.signature
+
 Verify the resulting signature:
     openssl cms -verify -binary -in CtsPkgInstallTinyAppV2V3V4.digests.signature -inform der -CAfile test-cert.x509.pem -signer test-cert.x509.pem -content CtsPkgInstallTinyAppV2V3V4.digests
 Print out the content of the signature:

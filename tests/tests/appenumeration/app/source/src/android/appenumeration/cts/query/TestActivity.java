@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -49,6 +50,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.PatternMatcher;
 import android.os.RemoteCallback;
 import android.util.SparseArray;
@@ -56,6 +58,8 @@ import android.util.SparseArray;
 import java.util.ArrayList;
 
 public class TestActivity extends Activity {
+
+    private final static long TIMEOUT_MS = 3000;
 
     SparseArray<RemoteCallback> callbacks = new SparseArray<>();
 
@@ -137,14 +141,17 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_AWAIT_PACKAGE_REMOVED.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 awaitPackageBroadcast(
-                        remoteCallback, packageName, Intent.ACTION_PACKAGE_REMOVED, 3000);
+                        remoteCallback, packageName, Intent.ACTION_PACKAGE_REMOVED, TIMEOUT_MS);
             } else if (Constants.ACTION_AWAIT_PACKAGE_ADDED.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 awaitPackageBroadcast(
-                        remoteCallback, packageName, Intent.ACTION_PACKAGE_ADDED, 3000);
+                        remoteCallback, packageName, Intent.ACTION_PACKAGE_ADDED, TIMEOUT_MS);
             } else if (Constants.ACTION_QUERY_RESOLVER.equals(action)) {
                 final String authority = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 queryResolverForVisiblePackages(remoteCallback, authority);
+            } else if (Constants.ACTION_BIND_SERVICE.equals(action)) {
+                final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
+                bindService(remoteCallback, packageName);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -282,5 +289,48 @@ public class TestActivity extends Activity {
         result.putParcelable(EXTRA_RETURN_RESULT, data.getParcelableExtra(EXTRA_RETURN_RESULT));
         remoteCallback.sendResult(result);
         finish();
+    }
+
+    private void bindService(RemoteCallback remoteCallback, String packageName) {
+        final String SERVICE_NAME = "android.appenumeration.testapp.DummyService";
+        final Intent intent = new Intent();
+        intent.setClassName(packageName, SERVICE_NAME);
+        final ServiceConnection serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName className, IBinder service) {
+                // No-op
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName className) {
+                // No-op
+            }
+
+            @Override
+            public void onBindingDied(ComponentName name) {
+                // Remote service die
+                finish();
+            }
+
+            @Override
+            public void onNullBinding(ComponentName name) {
+                // Since the DummyService doesn't implement onBind, it returns null and
+                // onNullBinding would be called. Use postDelayed to keep this service
+                // connection alive for 3 seconds.
+                mainHandler.postDelayed(() -> {
+                    unbindService(this);
+                    finish();
+                }, TIMEOUT_MS);
+            }
+        };
+
+        final boolean bound = bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+        final Bundle result = new Bundle();
+        result.putBoolean(EXTRA_RETURN_RESULT, bound);
+        remoteCallback.sendResult(result);
+        // Don't invoke finish() right here if service is bound successfully to keep the service
+        // connection alive since the ServiceRecord would be remove from the ServiceMap once no
+        // client is binding the service.
+        if (!bound) finish();
     }
 }
