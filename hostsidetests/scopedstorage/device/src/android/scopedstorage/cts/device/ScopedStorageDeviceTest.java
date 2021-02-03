@@ -1036,6 +1036,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    public void testDefaultNoIsolatedStorageFlag() throws Exception {
+        assertThat(Environment.isExternalStorageLegacy()).isFalse();
+    }
+
+    @Test
     public void testCreateLowerCaseDeleteUpperCase() throws Exception {
         File upperCase = new File(getDownloadDir(), "CREATE_LOWER_DELETE_UPPER");
         File lowerCase = new File(getDownloadDir(), "create_lower_delete_upper");
