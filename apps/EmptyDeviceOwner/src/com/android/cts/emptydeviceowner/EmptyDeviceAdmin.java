@@ -16,15 +16,12 @@
 package com.android.cts.emptydeviceowner;
 
 import android.app.admin.DeviceAdminReceiver;
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
-import android.util.Log;
 
 public class EmptyDeviceAdmin extends DeviceAdminReceiver {
 
-	public static ComponentName getComponentName(Context context) {
-		return new ComponentName(context, EmptyDeviceAdmin.class);
-	}
+    public static ComponentName getComponentName(Context context) {
+        return new ComponentName(context, EmptyDeviceAdmin.class);
+    }
 }

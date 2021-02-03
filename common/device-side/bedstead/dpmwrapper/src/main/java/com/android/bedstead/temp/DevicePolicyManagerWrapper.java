@@ -243,6 +243,34 @@ public final class DevicePolicyManagerWrapper {
             doAnswer(answer).when(spy).setNetworkLoggingEnabled(any(), anyBoolean());
             doAnswer(answer).when(spy).isNetworkLoggingEnabled(any());
 
+            // Used by CtsVerifier
+            doAnswer(answer).when(spy).addUserRestriction(any(), any());
+            doAnswer(answer).when(spy).clearUserRestriction(any(), any());
+            doAnswer(answer).when(spy).clearDeviceOwnerApp(any());
+            doAnswer(answer).when(spy).setKeyguardDisabledFeatures(any(), anyInt());
+            doAnswer(answer).when(spy).setPasswordQuality(any(), anyInt());
+            doAnswer(answer).when(spy).setMaximumTimeToLock(any(), anyInt());
+            doAnswer(answer).when(spy).setPermittedAccessibilityServices(any(), any());
+            doAnswer(answer).when(spy).setPermittedInputMethods(any(), any());
+            doAnswer(answer).when(spy).setDeviceOwnerLockScreenInfo(any(), any());
+            doAnswer(answer).when(spy).setKeyguardDisabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setAutoTimeRequired(any(), anyBoolean());
+            doAnswer(answer).when(spy).setStatusBarDisabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setOrganizationName(any(), any());
+            doAnswer(answer).when(spy).setSecurityLoggingEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setPermissionGrantState(any(), any(), any(), anyInt());
+            doAnswer(answer).when(spy).clearPackagePersistentPreferredActivities(any(), any());
+            doAnswer(answer).when(spy).setAlwaysOnVpnPackage(any(), any(), anyBoolean());
+            doAnswer(answer).when(spy).setRecommendedGlobalProxy(any(), any());
+            doAnswer(answer).when(spy).uninstallCaCert(any(), any());
+            doAnswer(answer).when(spy).setMaximumFailedPasswordsForWipe(any(), anyInt());
+            doAnswer(answer).when(spy).setSecureSetting(any(), any(), any());
+            doAnswer(answer).when(spy).setAffiliationIds(any(), any());
+            doAnswer(answer).when(spy).setStartUserSessionMessage(any(), any());
+            doAnswer(answer).when(spy).setEndUserSessionMessage(any(), any());
+            doAnswer(answer).when(spy).setLogoutEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).removeUser(any(), any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
