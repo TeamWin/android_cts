@@ -102,4 +102,26 @@ public class CpuStatsTests extends DeviceTestCase implements IBuildReceiver {
             assertThat(atom.getCpuTimePerClusterFreq().getTimeMillis()).isAtLeast(0);
         }
     }
+
+    public void testCpuCyclesPerUidCluster() throws Exception {
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.CPU_CYCLES_PER_UID_CLUSTER_FIELD_NUMBER);
+
+        // Do some trivial work on the app
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        // Trigger atom pull
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+
+        for (AtomsProto.Atom atom : atoms) {
+            assertThat(atom.getCpuCyclesPerUidCluster().getUid()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerUidCluster().getCluster()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerUidCluster().getMcycles()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerUidCluster().getTimeMillis()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerUidCluster().getPowerProfileEstimate()).isAtLeast(0);
+        }
+    }
 }
