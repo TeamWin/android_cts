@@ -29,6 +29,7 @@ import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
 import android.app.appsearch.AppSearchEmail;
 import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.AppSearchMigrationHelper;
 import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
@@ -43,6 +44,8 @@ import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.SetSchemaResponse;
+import android.app.appsearch.exceptions.AppSearchException;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -52,6 +55,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -119,7 +123,7 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(emailSchema).build()));
     }
 
     @Test
@@ -144,7 +148,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         .build();
 
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(oldSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(oldSchema).build()));
 
         Set<AppSearchSchema> actualSchemaTypes = mDb1.getSchema().get();
         assertThat(actualSchemaTypes).containsExactly(oldSchema);
@@ -169,20 +173,151 @@ public abstract class AppSearchSessionCtsTestBase {
                         .build();
 
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(newSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(newSchema).build()));
 
         actualSchemaTypes = mDb1.getSchema().get();
         assertThat(actualSchemaTypes).containsExactly(newSchema);
     }
 
-    // TODO(b/169883602) add test for schema migration back when it is implemented in platform
+    @Test
+    @Ignore("TODO(b/177266929)")
+    public void testSetSchema_migrate() throws Exception {
+        // register the schema and index two emails
+        checkIsSetSchemaResponseSuccess(
+                mDb1.setSchema(
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
+
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        AppSearchEmail email2 =
+                new AppSearchEmail.Builder("uri2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb1.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(email1, email2)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("uri1", null, "uri2", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        // create new schema type and upgrade the version number
+        AppSearchSchema newEmailSchema =
+                new AppSearchSchema.Builder(AppSearchEmail.SCHEMA_TYPE)
+                        .setVersion(1) // upgrade version
+                        .addProperty(
+                                new AppSearchSchema.StringPropertyConfig.Builder("subject")
+                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
+                                        .setIndexingType(
+                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
+                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
+                                        .build())
+                        .build();
+
+        // set the new schema to AppSearch, the first email will be migrated successfully but the
+        // second one will be failed.
+        SetSchemaResponse setSchemaResponse =
+                mDb1.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .addSchemas(newEmailSchema)
+                                        .setMigrator(
+                                                AppSearchEmail.SCHEMA_TYPE,
+                                                new AppSearchSchema.Migrator() {
+                                                    @Override
+                                                    public void onUpgrade(
+                                                            int currentVersion,
+                                                            int targetVersion,
+                                                            @NonNull
+                                                                    AppSearchMigrationHelper helper)
+                                                            throws Exception {
+                                                        helper.queryAndTransform(
+                                                                AppSearchEmail.SCHEMA_TYPE,
+                                                                (currentVersion1,
+                                                                        finalVersion1,
+                                                                        document) -> {
+                                                                    if (document.getUri()
+                                                                            .equals("uri2")) {
+                                                                        return new AppSearchEmail
+                                                                                        .Builder(
+                                                                                        document
+                                                                                                .getUri())
+                                                                                .setSubject(
+                                                                                        "testPut"
+                                                                                            + " example"
+                                                                                            + " migrated")
+                                                                                .setTo(
+                                                                                        "Except to"
+                                                                                            + " fail,"
+                                                                                            + " property"
+                                                                                            + " not in"
+                                                                                            + " the schema")
+                                                                                .setCreationTimestampMillis(
+                                                                                        12345)
+                                                                                .build();
+                                                                    }
+                                                                    return new AppSearchEmail
+                                                                                    .Builder(
+                                                                                    document
+                                                                                            .getUri())
+                                                                            .setSubject(
+                                                                                    "testPut"
+                                                                                        + " example"
+                                                                                        + " migrated")
+                                                                            .setCreationTimestampMillis(
+                                                                                    12345)
+                                                                            .build();
+                                                                });
+                                                    }
+                                                })
+                                        .build())
+                        .get();
+
+        // Check the schema has been saved
+        Set<AppSearchSchema> actualSchema = new HashSet<>();
+        actualSchema.add(newEmailSchema);
+        assertThat(actualSchema).isEqualTo(mDb1.getSchema().get());
+
+        assertThat(setSchemaResponse.getDeletedTypes()).isEmpty();
+        assertThat(setSchemaResponse.getIncompatibleTypes())
+                .containsExactly(AppSearchEmail.SCHEMA_TYPE);
+        assertThat(setSchemaResponse.getMigratedTypes())
+                .containsExactly(AppSearchEmail.SCHEMA_TYPE);
+
+        // Check migrate the first email is success
+        AppSearchEmail expected =
+                new AppSearchEmail.Builder("uri1")
+                        .setSubject("testPut example migrated")
+                        .setCreationTimestampMillis(12345)
+                        .build();
+        assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1"))
+                .containsExactly(expected);
+
+        // Check migrate the second email is fail.
+        assertThat(setSchemaResponse.isSuccess()).isTrue();
+        assertThat(setSchemaResponse.getMigrationFailures()).hasSize(1);
+        SetSchemaResponse.MigrationFailure migrationFailure =
+                setSchemaResponse.getMigrationFailures().get(0);
+        assertThat(migrationFailure.getNamespace()).isEqualTo(GenericDocument.DEFAULT_NAMESPACE);
+        assertThat(migrationFailure.getSchemaType()).isEqualTo(AppSearchEmail.SCHEMA_TYPE);
+        assertThat(migrationFailure.getUri()).isEqualTo("uri2");
+    }
 
     @Test
     public void testPutDocuments() throws Exception {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail email =
@@ -195,14 +330,13 @@ public abstract class AppSearchSessionCtsTestBase {
 
         AppSearchBatchResult<String, Void> result =
                 checkIsBatchResultSuccess(
-                        mDb1.putDocuments(
+                        mDb1.put(
                                 new PutDocumentsRequest.Builder()
-                                        .addGenericDocument(email)
+                                        .addGenericDocuments(email)
                                         .build()));
         assertThat(result.getSuccesses()).containsExactly("uri1", null);
         assertThat(result.getFailures()).isEmpty();
     }
-
 
     @Test
     public void testUpdateSchema() throws Exception {
@@ -242,15 +376,13 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(oldEmailSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(oldEmailSchema).build()));
 
         // Try to index a gift. This should fail as it's not in the schema.
         GenericDocument gift =
                 new GenericDocument.Builder<>("gift1", "Gift").setPropertyLong("price", 5).build();
         AppSearchBatchResult<String, Void> result =
-                mDb1.putDocuments(
-                                new PutDocumentsRequest.Builder().addGenericDocument(gift).build())
-                        .get();
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(gift).build()).get();
         assertThat(result.isSuccess()).isFalse();
         assertThat(result.getFailures().get("gift1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -259,13 +391,12 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(newEmailSchema, giftSchema)
+                                .addSchemas(newEmailSchema, giftSchema)
                                 .build()));
 
         // Try to index the document again, which should now work
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(gift).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(gift).build()));
 
         // Indexing an email with a body should also work
         AppSearchEmail email =
@@ -274,11 +405,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email).build()));
     }
 
     @Test
+    @Ignore("TODO(b/177266929)")
     public void testRemoveSchema() throws Exception {
         // Schema registration
         AppSearchSchema emailSchema =
@@ -292,30 +423,28 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(emailSchema).build()));
 
         // Index an email and check it present.
         AppSearchEmail email =
                 new AppSearchEmail.Builder("email1").setSubject("testPut example").build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email).build()));
         List<GenericDocument> outDocuments =
                 doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "email1");
         assertThat(outDocuments).hasSize(1);
         AppSearchEmail outEmail = new AppSearchEmail(outDocuments.get(0));
         assertThat(outEmail).isEqualTo(email);
 
-        // TODO(b/169883602) add these back when schema migration is implemented in platform
-//        // Try to remove the email schema. This should fail as it's an incompatible change.
-//        Throwable failResult1 =
-//                expectThrows(
-//                                ExecutionException.class,
-//                                () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
-//                        .getCause();
-//        assertThat(failResult1).isInstanceOf(AppSearchException.class);
-//        assertThat(failResult1).hasMessageThat().contains("Schema is incompatible");
-//        assertThat(failResult1).hasMessageThat().contains("Deleted types: [builtin:Email]");
+        // Try to remove the email schema. This should fail as it's an incompatible change.
+        Throwable failResult1 =
+                expectThrows(
+                                ExecutionException.class,
+                                () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
+                        .getCause();
+        assertThat(failResult1).isInstanceOf(AppSearchException.class);
+        assertThat(failResult1).hasMessageThat().contains("Schema is incompatible");
+        assertThat(failResult1).hasMessageThat().contains("Deleted types: [builtin:Email]");
 
         // Try to remove the email schema again, which should now work as we set forceOverride to
         // be true.
@@ -338,10 +467,7 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchEmail email2 =
                 new AppSearchEmail.Builder("email2").setSubject("testPut example").build();
         AppSearchBatchResult<String, Void> failResult2 =
-                mDb1.putDocuments(
-                                new PutDocumentsRequest.Builder()
-                                        .addGenericDocument(email2)
-                                        .build())
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build())
                         .get();
         assertThat(failResult2.isSuccess()).isFalse();
         assertThat(failResult2.getFailures().get("email2").getErrorMessage())
@@ -352,6 +478,7 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
+    @Ignore("TODO(b/177266929)")
     public void testRemoveSchema_twoDatabases() throws Exception {
         // Schema registration in mDb1 and mDb2
         AppSearchSchema emailSchema =
@@ -365,16 +492,15 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(emailSchema).build()));
         checkIsSetSchemaResponseSuccess(
-                mDb2.setSchema(new SetSchemaRequest.Builder().addSchema(emailSchema).build()));
+                mDb2.setSchema(new SetSchemaRequest.Builder().addSchemas(emailSchema).build()));
 
         // Index an email and check it present in database1.
         AppSearchEmail email1 =
                 new AppSearchEmail.Builder("email1").setSubject("testPut example").build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
         List<GenericDocument> outDocuments =
                 doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "email1");
         assertThat(outDocuments).hasSize(1);
@@ -385,24 +511,22 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchEmail email2 =
                 new AppSearchEmail.Builder("email2").setSubject("testPut example").build();
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
         outDocuments = doGet(mDb2, GenericDocument.DEFAULT_NAMESPACE, "email2");
         assertThat(outDocuments).hasSize(1);
         outEmail = new AppSearchEmail(outDocuments.get(0));
         assertThat(outEmail).isEqualTo(email2);
 
-        // TODO(b/169883602) add these back when schema migration is implemented in platform
-//        // Try to remove the email schema in database1. This should fail as it's an incompatible
-//        // change.
-//        Throwable failResult1 =
-//                expectThrows(
-//                                ExecutionException.class,
-//                                () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
-//                        .getCause();
-//        assertThat(failResult1).isInstanceOf(AppSearchException.class);
-//        assertThat(failResult1).hasMessageThat().contains("Schema is incompatible");
-//        assertThat(failResult1).hasMessageThat().contains("Deleted types: [builtin:Email]");
+        // Try to remove the email schema in database1. This should fail as it's an incompatible
+        // change.
+        Throwable failResult1 =
+                expectThrows(
+                                ExecutionException.class,
+                                () -> mDb1.setSchema(new SetSchemaRequest.Builder().build()).get())
+                        .getCause();
+        assertThat(failResult1).isInstanceOf(AppSearchException.class);
+        assertThat(failResult1).hasMessageThat().contains("Schema is incompatible");
+        assertThat(failResult1).hasMessageThat().contains("Deleted types: [builtin:Email]");
 
         // Try to remove the email schema again, which should now work as we set forceOverride to
         // be true.
@@ -425,10 +549,7 @@ public abstract class AppSearchSessionCtsTestBase {
         AppSearchEmail email3 =
                 new AppSearchEmail.Builder("email3").setSubject("testPut example").build();
         AppSearchBatchResult<String, Void> failResult2 =
-                mDb1.putDocuments(
-                                new PutDocumentsRequest.Builder()
-                                        .addGenericDocument(email3)
-                                        .build())
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email3).build())
                         .get();
         assertThat(failResult2.isSuccess()).isFalse();
         assertThat(failResult2.getFailures().get("email3").getErrorMessage())
@@ -445,8 +566,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Make sure email could still be indexed in database 2.
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
     }
 
     @Test
@@ -454,7 +574,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -465,8 +585,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // Get the document
         List<GenericDocument> outDocuments = doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1");
@@ -485,7 +604,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_projection() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -508,9 +627,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -544,7 +663,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_projectionEmpty() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -567,9 +686,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -598,7 +717,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_projectionNonExistentType() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -621,9 +740,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -658,7 +777,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_wildcardProjection() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -681,9 +800,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -718,7 +837,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_wildcardProjectionEmpty() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -741,9 +860,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -774,7 +893,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testGetDocuments_wildcardProjectionNonExistentType() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index two documents
@@ -797,9 +916,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Get with type property paths {"Email", ["subject", "to"]}
@@ -837,7 +956,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -848,12 +967,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // Query for the document
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -864,7 +982,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Multi-term query
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body email",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -879,7 +997,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         Set<AppSearchEmail> emailSet = new HashSet<>();
         PutDocumentsRequest.Builder putDocumentsRequestBuilder = new PutDocumentsRequest.Builder();
         // Index 31 documents
@@ -892,13 +1010,13 @@ public abstract class AppSearchSessionCtsTestBase {
                             .setBody("This is the body of the testPut email")
                             .build();
             emailSet.add(inEmail);
-            putDocumentsRequestBuilder.addGenericDocument(inEmail);
+            putDocumentsRequestBuilder.addGenericDocuments(inEmail);
         }
-        checkIsBatchResultSuccess(mDb1.putDocuments(putDocumentsRequestBuilder.build()));
+        checkIsBatchResultSuccess(mDb1.put(putDocumentsRequestBuilder.build()));
 
         // Set number of results per page is 7.
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -928,7 +1046,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index two documents
         AppSearchEmail email1 =
@@ -950,14 +1068,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("short and stout. Here is my handle, here is my spout.")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Query for "little". It should match both emails.
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "little",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -971,7 +1089,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query for "little OR stout". It should match both emails.
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "little OR stout",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1000,8 +1118,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(genericSchema)
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(genericSchema)
                                 .build()));
 
         // Index a document
@@ -1017,14 +1135,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("foo", "body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(inEmail, inDoc)
+                                .addGenericDocuments(inEmail, inDoc)
                                 .build()));
 
         // Query for the documents
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1035,10 +1153,10 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query only for Document
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
-                                .addSchemaType(
+                                .addFilterSchemas(
                                         "Generic",
                                         "Generic") // duplicate type in filter won't matter.
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1053,7 +1171,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email =
@@ -1064,12 +1182,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email).build()));
 
         // Query for the document within our package
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "foo",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1082,7 +1199,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query for the document in some other package, which won't exist
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "foo",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1097,7 +1214,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index two documents
         AppSearchEmail expectedEmail =
@@ -1117,14 +1234,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(expectedEmail, unexpectedEmail)
+                                .addGenericDocuments(expectedEmail, unexpectedEmail)
                                 .build()));
 
         // Query for all namespaces
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1135,10 +1252,10 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query only for expectedNamespace
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
-                                .addNamespace("expectedNamespace")
+                                .addFilterNamespaces("expectedNamespace")
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                 .build());
         documents = convertSearchResultsToDocuments(searchResults);
@@ -1151,7 +1268,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -1162,12 +1279,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // Query for the document
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1193,7 +1309,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -1204,12 +1320,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // Query for the document
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1231,15 +1346,14 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration for another database
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // Query for the document
         searchResults =
-                mDb2.query(
+                mDb2.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1264,8 +1378,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1312,12 +1426,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"Email", ["body", "to"]}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1350,8 +1466,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1398,12 +1514,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"Email", []}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1434,8 +1552,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1482,12 +1600,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"NonExistentType", []}, {"Email", ["body", "to"]}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1521,8 +1641,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1569,12 +1689,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"*", ["body", "to"]}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1607,8 +1729,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1655,12 +1777,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"*", []}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1690,8 +1814,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(
                                         new AppSearchSchema.Builder("Note")
                                                 .addProperty(
                                                         new StringPropertyConfig.Builder("title")
@@ -1738,12 +1862,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("body", "Note body")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email, note).build()));
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email, note)
+                                .build()));
 
         // Query with type property paths {"NonExistentType", []}, {"*", ["body", "to"]}
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1776,10 +1902,10 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document to instance 1.
         AppSearchEmail inEmail1 =
@@ -1790,8 +1916,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail1).build()));
 
         // Index a document to instance 2.
         AppSearchEmail inEmail2 =
@@ -1802,12 +1927,11 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail2).build()));
 
         // Query for instance 1.
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1818,7 +1942,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query for instance 2.
         searchResults =
-                mDb2.query(
+                mDb2.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -1843,7 +1967,7 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
         checkIsSetSchemaResponseSuccess(
-                mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(genericSchema).build()));
+                mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(genericSchema).build()));
 
         // Index a document
         GenericDocument document =
@@ -1855,15 +1979,14 @@ public abstract class AppSearchSessionCtsTestBase {
                                         + "Another nonsense word that’s used a lot is bar")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(document).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(document).build()));
 
         // Query for the document
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "foo",
                         new SearchSpec.Builder()
-                                .addSchemaType("Generic")
+                                .addFilterSchemas("Generic")
                                 .setSnippetCount(1)
                                 .setSnippetCountPerProperty(1)
                                 .setMaxSnippetSize(10)
@@ -1893,7 +2016,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -1911,9 +2034,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Check the presence of the documents
@@ -1922,7 +2045,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Delete the document
         checkIsBatchResultSuccess(
-                mDb1.removeByUri(new RemoveByUriRequest.Builder().addUri("uri1").build()));
+                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
@@ -1934,7 +2057,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Test if we delete a nonexistent URI.
         AppSearchBatchResult<String, Void> deleteResult =
-                mDb1.removeByUri(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
 
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -1945,7 +2068,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -1963,9 +2086,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Check the presence of the documents
@@ -1973,7 +2096,7 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri2")).hasSize(1);
 
         // Delete the email 1 by query "foo"
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "foo",
                         new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
@@ -1985,7 +2108,7 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(getResult.getSuccesses().get("uri2")).isEqualTo(email2);
 
         // Delete the email 2 by query "bar"
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "bar",
                         new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
@@ -2000,7 +2123,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email =
@@ -2011,15 +2134,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
 
         // Try to delete email with query "foo", but restricted to a different package name.
         // Won't work and email will still exist.
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "foo",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
@@ -2029,7 +2151,7 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
 
         // Delete the email by query "foo", restricted to the correct package this time.
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "foo",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
@@ -2050,7 +2172,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2061,22 +2183,21 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
 
         // Can't delete in the other instance.
         AppSearchBatchResult<String, Void> deleteResult =
-                mDb2.removeByUri(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb2.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
 
         // Delete the document
         checkIsBatchResultSuccess(
-                mDb1.removeByUri(new RemoveByUriRequest.Builder().addUri("uri1").build()));
+                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
@@ -2086,8 +2207,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
 
         // Test if we delete a nonexistent URI.
-        deleteResult =
-                mDb1.removeByUri(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+        deleteResult = mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
     }
@@ -2099,8 +2219,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(genericSchema)
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(genericSchema)
                                 .build()));
 
         // Index documents
@@ -2120,9 +2240,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .build();
         GenericDocument document1 = new GenericDocument.Builder<>("uri3", "Generic").build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2, document1)
+                                .addGenericDocuments(email1, email2, document1)
                                 .build()));
 
         // Check the presence of the documents
@@ -2130,11 +2250,11 @@ public abstract class AppSearchSessionCtsTestBase {
                 .hasSize(3);
 
         // Delete the email type
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
-                                .addSchemaType(AppSearchEmail.SCHEMA_TYPE)
+                                .addFilterSchemas(AppSearchEmail.SCHEMA_TYPE)
                                 .build())
                 .get();
 
@@ -2155,10 +2275,10 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2176,22 +2296,20 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
         assertThat(doGet(mDb2, GenericDocument.DEFAULT_NAMESPACE, "uri2")).hasSize(1);
 
         // Delete the email type in instance 1
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
-                                .addSchemaType(AppSearchEmail.SCHEMA_TYPE)
+                                .addFilterSchemas(AppSearchEmail.SCHEMA_TYPE)
                                 .build())
                 .get();
 
@@ -2224,8 +2342,8 @@ public abstract class AppSearchSessionCtsTestBase {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
                         new SetSchemaRequest.Builder()
-                                .addSchema(AppSearchEmail.SCHEMA)
-                                .addSchema(genericSchema)
+                                .addSchemas(AppSearchEmail.SCHEMA)
+                                .addSchemas(genericSchema)
                                 .build()));
 
         // Index documents
@@ -2251,9 +2369,9 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setPropertyString("foo", "bar")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2, document1)
+                                .addGenericDocuments(email1, email2, document1)
                                 .build()));
 
         // Check the presence of the documents
@@ -2261,11 +2379,11 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(doGet(mDb1, /*namespace=*/ "document", "uri3")).hasSize(1);
 
         // Delete the email namespace
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
-                                .addNamespace("email")
+                                .addFilterNamespaces("email")
                                 .build())
                 .get();
 
@@ -2298,10 +2416,10 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2321,22 +2439,20 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, /*namespace=*/ "email", "uri1")).hasSize(1);
         assertThat(doGet(mDb2, /*namespace=*/ "email", "uri2")).hasSize(1);
 
         // Delete the email namespace in instance 1
-        mDb1.removeByQuery(
+        mDb1.remove(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_PREFIX)
-                                .addNamespace("email")
+                                .addFilterNamespaces("email")
                                 .build())
                 .get();
 
@@ -2369,10 +2485,10 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2390,20 +2506,16 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email2).build()));
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(email2).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
         assertThat(doGet(mDb2, GenericDocument.DEFAULT_NAMESPACE, "uri2")).hasSize(1);
 
         // Delete the all document in instance 1
-        mDb1.removeByQuery(
-                        "",
-                        new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
+        mDb1.remove("", new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
 
         // Make sure it's really gone in instance 1
@@ -2424,10 +2536,10 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
         checkIsSetSchemaResponseSuccess(
                 mDb2.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2459,19 +2571,19 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut second email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
         checkIsBatchResultSuccess(
-                mDb2.putDocuments(
+                mDb2.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email3, email4)
+                                .addGenericDocuments(email3, email4)
                                 .build()));
 
         // Check the presence of the documents
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2479,7 +2591,7 @@ public abstract class AppSearchSessionCtsTestBase {
         List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
         assertThat(documents).hasSize(2);
         searchResults =
-                mDb2.query(
+                mDb2.search(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2488,12 +2600,10 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(documents).hasSize(2);
 
         // Delete the all document in instance 1 with TERM_MATCH_PREFIX
-        mDb1.removeByQuery(
-                        "",
-                        new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
+        mDb1.remove("", new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
         searchResults =
-                mDb1.query(
+                mDb1.search(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2502,14 +2612,14 @@ public abstract class AppSearchSessionCtsTestBase {
         assertThat(documents).isEmpty();
 
         // Delete the all document in instance 2 with TERM_MATCH_EXACT_ONLY
-        mDb2.removeByQuery(
+        mDb2.remove(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                 .build())
                 .get();
         searchResults =
-                mDb2.query(
+                mDb2.search(
                         "",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2523,7 +2633,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index documents
         AppSearchEmail email1 =
@@ -2535,15 +2645,14 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(email1).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
 
         // Check the presence of the documents
         assertThat(doGet(mDb1, "namespace", "uri1")).hasSize(1);
 
         // Remove the document
         checkIsBatchResultSuccess(
-                mDb1.removeByUri(
+                mDb1.remove(
                         new RemoveByUriRequest.Builder()
                                 .setNamespace("namespace")
                                 .addUri("uri1")
@@ -2557,9 +2666,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
 
         // Delete the all documents
-        mDb1.removeByQuery(
-                        "",
-                        new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
+        mDb1.remove("", new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
 
         // Make sure it's still gone
@@ -2574,7 +2681,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Schema registration
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index a document
         AppSearchEmail inEmail =
@@ -2585,8 +2692,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         .setBody("This is the body of the testPut email")
                         .build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
-                        new PutDocumentsRequest.Builder().addGenericDocument(inEmail).build()));
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail).build()));
 
         // close and re-open the appSearchSession
         mDb1.close();
@@ -2594,7 +2700,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Query for the document
         SearchResultsShim searchResults =
-                mDb1.query(
+                mDb1.search(
                         "body",
                         new SearchSpec.Builder()
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2616,7 +2722,9 @@ public abstract class AppSearchSessionCtsTestBase {
             // Schema registration -- just mutate something
             sameThreadDb
                     .setSchema(
-                            new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+                            new SetSchemaRequest.Builder()
+                                    .addSchemas(AppSearchEmail.SCHEMA)
+                                    .build())
                     .get();
 
             // Close the database. No further call will be allowed.
@@ -2628,7 +2736,7 @@ public abstract class AppSearchSessionCtsTestBase {
                     expectThrows(
                             IllegalStateException.class,
                             () ->
-                                    sameThreadDb.query(
+                                    sameThreadDb.search(
                                             "query",
                                             new SearchSpec.Builder()
                                                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
@@ -2648,15 +2756,15 @@ public abstract class AppSearchSessionCtsTestBase {
     public void testReportUsage() throws Exception {
         checkIsSetSchemaResponseSuccess(
                 mDb1.setSchema(
-                        new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build()));
+                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
 
         // Index two documents.
         AppSearchEmail email1 = new AppSearchEmail.Builder("uri1").build();
         AppSearchEmail email2 = new AppSearchEmail.Builder("uri2").build();
         checkIsBatchResultSuccess(
-                mDb1.putDocuments(
+                mDb1.put(
                         new PutDocumentsRequest.Builder()
-                                .addGenericDocument(email1, email2)
+                                .addGenericDocuments(email1, email2)
                                 .build()));
 
         // Email 1 has more usages, but email 2 has more recent usages.
@@ -2694,7 +2802,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Query by number of usages
         List<GenericDocument> documents =
                 convertSearchResultsToDocuments(
-                        mDb1.query(
+                        mDb1.search(
                                 "",
                                 new SearchSpec.Builder()
                                         .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
@@ -2705,7 +2813,7 @@ public abstract class AppSearchSessionCtsTestBase {
         // Query by most recent usage
         documents =
                 convertSearchResultsToDocuments(
-                        mDb1.query(
+                        mDb1.search(
                                 "",
                                 new SearchSpec.Builder()
                                         .setRankingStrategy(
@@ -2719,7 +2827,7 @@ public abstract class AppSearchSessionCtsTestBase {
     @Test
     public void testFlush() throws Exception {
         // Schema registration
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchema(AppSearchEmail.SCHEMA).build())
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
 
         // Index a document
@@ -2733,9 +2841,9 @@ public abstract class AppSearchSessionCtsTestBase {
 
         AppSearchBatchResult<String, Void> result =
                 checkIsBatchResultSuccess(
-                        mDb1.putDocuments(
+                        mDb1.put(
                                 new PutDocumentsRequest.Builder()
-                                        .addGenericDocument(email)
+                                        .addGenericDocuments(email)
                                         .build()));
         assertThat(result.getSuccesses()).containsExactly("uri1", null);
         assertThat(result.getFailures()).isEmpty();
