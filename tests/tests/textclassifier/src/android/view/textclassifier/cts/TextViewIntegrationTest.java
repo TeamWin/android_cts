@@ -155,7 +155,7 @@ public class TextViewIntegrationTest {
     public void smartSelection_suggestSelectionNotIncludeTextClassification() throws Exception {
         smartSelectionInternal();
 
-        assertThat(mSimpleTextClassifier.isClassifyTextCalled()).isTrue();
+        assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(1);
     }
 
     @Test
@@ -163,7 +163,16 @@ public class TextViewIntegrationTest {
         mSimpleTextClassifier.setIncludeTextClassification(true);
         smartSelectionInternal();
 
-        assertThat(mSimpleTextClassifier.isClassifyTextCalled()).isFalse();
+        assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(0);
+    }
+
+    @Test
+    public void smartSelection_cancelSelectionDoesNotInvokeClassifyText() throws Exception {
+        smartSelectionInternal();
+        onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(0));
+        Thread.sleep(1000);
+
+        assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(1);
     }
 
     private void smartSelectionInternal() {
@@ -226,14 +235,14 @@ public class TextViewIntegrationTest {
         private static final String ANDROID_URL = "https://www.android.com";
         private static final Icon NO_ICON = Icon.createWithData(new byte[0], 0, 0);
         private boolean mSetIncludeTextClassification = false;
-        private boolean mIsClassifyTextCalled = false;
+        private int mClassifyTextInvocationCount = 0;
 
         public void setIncludeTextClassification(boolean setIncludeTextClassification) {
             mSetIncludeTextClassification = setIncludeTextClassification;
         }
 
-        public boolean isClassifyTextCalled() {
-            return mIsClassifyTextCalled;
+        public int getClassifyTextInvocationCount() {
+            return mClassifyTextInvocationCount;
         }
 
         @Override
@@ -255,7 +264,7 @@ public class TextViewIntegrationTest {
 
         @Override
         public TextClassification classifyText(TextClassification.Request request) {
-            mIsClassifyTextCalled = true;
+            mClassifyTextInvocationCount += 1;
             String spanText = request.getText().toString()
                     .substring(request.getStartIndex(), request.getEndIndex());
             if (TextUtils.equals(ANDROID_URL, spanText)) {
