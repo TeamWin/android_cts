@@ -919,6 +919,73 @@ public class RemoteViewsTest {
         assertEquals(10, textView.getPaddingBottom());
     }
 
+    @Test
+    public void testSetIntDimen() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        int expectedValue = mContext.getResources().getDimensionPixelSize(R.dimen.popup_row_height);
+
+        mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
+                R.dimen.popup_row_height);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(expectedValue, textView.getCompoundDrawablePadding());
+
+        mExpectedException.expect(ActionException.class);
+        mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
+                R.color.testcolor1);
+        mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetFloatDimen() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        float expectedValue = mContext.getResources().getDimension(R.dimen.popup_row_height);
+
+        mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", R.dimen.popup_row_height);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(expectedValue, textView.getTextScaleX(), 1e-4f);
+
+        mExpectedException.expect(ActionException.class);
+        mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", R.color.testcolor1);
+        mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetColor() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        int expectedValue = mContext.getColor(R.color.testcolor1);
+
+        mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", R.color.testcolor1);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(ColorStateList.valueOf(expectedValue), textView.getTextColors());
+
+        mExpectedException.expect(ActionException.class);
+        mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", R.dimen.popup_row_height);
+        mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetColorStateList_fromResources() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        ColorStateList expectedValue = mContext.getColorStateList(R.color.testcolorstatelist1);
+
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+                R.color.testcolorstatelist1);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(expectedValue, textView.getTextColors());
+
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+                R.color.testcolor1);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        expectedValue = mContext.getResources().getColorStateList(R.color.testcolor1,
+                mContext.getTheme());
+        assertEquals(expectedValue, textView.getTextColors());
+
+        mExpectedException.expect(ActionException.class);
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+                R.dimen.popup_row_height);
+        mRemoteViews.reapply(mContext, mResult);
+    }
+
     private void createSampleImage(File imagefile, int resid) throws IOException {
         try (InputStream source = mContext.getResources().openRawResource(resid);
              OutputStream target = new FileOutputStream(imagefile)) {
