@@ -2093,6 +2093,20 @@
                        android:value="multi_display_mode" />
         </activity>
 
+        <activity android:name=".nfc.hce.ScreenOnOnlyOffHostEmulatorActivity"
+                android:label="@string/nfc_screen_on_only_offhost_emulator"
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
+        <activity android:name=".nfc.hce.ScreenOffPaymentEmulatorActivity"
+                android:label="@string/nfc_screen_off_hce_payment_emulator"
+                android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
         <activity android:name=".nfc.hcef.HceFEmulatorActivity"
                 android:label="@string/nfc_hce_f_emulator"
                 android:configChanges="keyboardHidden|orientation|screenSize" >
@@ -2262,6 +2276,24 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
             <meta-data android:name="android.nfc.cardemulation.host_apdu_service" android:resource="@xml/payment_aid_list_1"/>
+        </service>
+        <service android:name=".nfc.hce.ScreenOnOnlyOffHostService" android:exported="true"
+                 android:permission="android.permission.BIND_NFC_SERVICE"
+                 android:enabled="false">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.OFF_HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.off_host_apdu_service" android:resource="@xml/screen_on_only_offhost_aid_list"/>
+        </service>
+        <service android:name=".nfc.hce.ScreenOffPaymentService" android:exported="true"
+                 android:permission="android.permission.BIND_NFC_SERVICE"
+                 android:enabled="false">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+            <meta-data android:name="android.nfc.cardemulation.host_apdu_service" android:resource="@xml/screen_off_payment_aid_list"/>
         </service>
 
         <service
