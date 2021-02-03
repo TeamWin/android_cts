@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.devicepolicy;
+package com.android.bedstead.temp;
 
-import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
-
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -55,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -72,7 +70,7 @@ public final class DevicePolicyManagerWrapper {
     private static final boolean VERBOSE = false;
 
     public static final String ACTION_WRAPPED_DPM_CALL =
-            "com.android.cts.deviceowner.action.WRAPPED_DPM_CALL";
+            "com.android.bedstead.temp.action.WRAPPED_DPM_CALL";
 
     private static final String EXTRA_METHOD = "methodName";
     private static final String EXTRA_NUMBER_ARGS = "number_args";
@@ -89,7 +87,6 @@ public final class DevicePolicyManagerWrapper {
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
     private static final String TYPE_ARRAY_LIST_PARCELABLE = "array_list_parcelable";
-    private static final String TYPE_ARRAY_SET_STRING = "array_set_string";
 
     public static final int RESULT_OK = 42;
     public static final int RESULT_EXCEPTION = 666;
@@ -102,6 +99,11 @@ public final class DevicePolicyManagerWrapper {
 
     private static final int MY_USER_ID = UserHandle.myUserId();
 
+    private static final HandlerThread HANDLER_THREAD =
+            new HandlerThread("DpmWrapperOrderedBroadcastsHandlerThread");
+
+    private static Handler sHandler;
+
     /***
      * Gets the {@link DevicePolicyManager} for the given context.
      *
@@ -109,6 +111,12 @@ public final class DevicePolicyManagerWrapper {
      */
     public static DevicePolicyManager get(Context context,
             Class<? extends DeviceAdminReceiver> receiverClass) {
+
+        if (sHandler == null) {
+            Log.i(TAG, "Starting handler thread " + HANDLER_THREAD);
+            HANDLER_THREAD.start();
+            sHandler = new Handler(HANDLER_THREAD.getLooper());
+        }
         int userId = context.getUserId();
         DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
         String receiverClassName = receiverClass.getName();
@@ -128,7 +136,6 @@ public final class DevicePolicyManagerWrapper {
         spy = Mockito.spy(dpm);
 
         Answer<?> answer = (inv) -> {
-            Log.d(TAG, "spying " + inv);
             Object[] args = inv.getArguments();
             Log.d(TAG, "spying " + inv + " method: " + inv.getMethod());
             String methodName = inv.getMethod().getName();
@@ -157,17 +164,24 @@ public final class DevicePolicyManagerWrapper {
 
             };
             if (VERBOSE) {
-                Log.v(TAG, "Broadcasting intent from user "  + userId + " to user "
+                Log.v(TAG, "Sending ordered broadcast from user " + userId + " to user "
                         + UserHandle.SYSTEM);
             }
-            runWithShellPermissionIdentity(() -> context.sendOrderedBroadcastAsUser(intent,
-                    UserHandle.SYSTEM, /* permission= */ null, myReceiver, /* scheduler= */ null,
-                    /* initialCode= */ 0, /* initialData= */ null, /* initialExtras= */ null));
 
-            if (VERBOSE) Log.d(TAG, "Waiting up to " + TIMEOUT_MS + "ms for response");
+            // NOTE: method below used to be wrapped under runWithShellPermissionIdentity() to get
+            // INTERACT_ACROSS_USER permission, but that's not needed anymore (as the permission
+            // is granted by the test. Besides, this class is now also used by DO apps that are not
+            // instrumented, so it was removed
+            context.sendOrderedBroadcastAsUser(intent,
+                    UserHandle.SYSTEM, /* permission= */ null, myReceiver, sHandler,
+                    /* initialCode= */ 0, /* initialData= */ null, /* initialExtras= */ null);
+
+            if (VERBOSE) {
+                Log.d(TAG, "Waiting up to " + TIMEOUT_MS + "ms for response on "
+                        + Thread.currentThread());
+            }
             if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                fail("Ordered broadcast for " + methodName + "() not received in " + TIMEOUT_MS
-                        + "ms");
+                fail("Ordered broadcast for %s() not received in %dms", methodName, TIMEOUT_MS);
             }
             if (VERBOSE) Log.d(TAG, "Got response");
 
@@ -180,7 +194,7 @@ public final class DevicePolicyManagerWrapper {
                 case RESULT_EXCEPTION:
                     throw (Exception) result.value;
                 default:
-                    fail("Received invalid result" + result);
+                    fail("Received invalid result: %s", result);
                     return null;
             }
         };
@@ -190,36 +204,41 @@ public final class DevicePolicyManagerWrapper {
         // which ones should be spied and which ones should not (in fact, if there was an interface,
         // we wouldn't need Mockito and could wrap the calls using java's DynamicProxy
 
-        // Basic methods used by most tests
-        doAnswer(answer).when(spy).isAdminActive(any());
-        doAnswer(answer).when(spy).isDeviceOwnerApp(any());
-        doAnswer(answer).when(spy).isManagedProfile(any());
-        doAnswer(answer).when(spy).isProfileOwnerApp(any());
-        doAnswer(answer).when(spy).isAffiliatedUser();
+        try {
+            // Basic methods used by most tests
+            doAnswer(answer).when(spy).isAdminActive(any());
+            doAnswer(answer).when(spy).isDeviceOwnerApp(any());
+            doAnswer(answer).when(spy).isManagedProfile(any());
+            doAnswer(answer).when(spy).isProfileOwnerApp(any());
+            doAnswer(answer).when(spy).isAffiliatedUser();
 
-        // Used by SetTimeTest
-        doAnswer(answer).when(spy).setTime(any(), anyLong());
-        doAnswer(answer).when(spy).setTimeZone(any(), any());
-        doAnswer(answer).when(spy).setGlobalSetting(any(), any(), any());
+            // Used by SetTimeTest
+            doAnswer(answer).when(spy).setTime(any(), anyLong());
+            doAnswer(answer).when(spy).setTimeZone(any(), any());
+            doAnswer(answer).when(spy).setGlobalSetting(any(), any(), any());
 
-        // Used by UserControlDisabledPackagesTest
-        doAnswer(answer).when(spy).setUserControlDisabledPackages(any(), any());
-        doAnswer(answer).when(spy).getUserControlDisabledPackages(any());
+            // Used by UserControlDisabledPackagesTest
+            doAnswer(answer).when(spy).setUserControlDisabledPackages(any(), any());
+            doAnswer(answer).when(spy).getUserControlDisabledPackages(any());
 
-        // Used by DeviceOwnerProvisioningTest
-        doAnswer(answer).when(spy).enableSystemApp(any(), any(String.class));
-        doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
+            // Used by DeviceOwnerProvisioningTest
+            doAnswer(answer).when(spy).enableSystemApp(any(), any(String.class));
+            doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
 
-        // Used by HeadlessSystemUserTest
-        doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());
-        doAnswer(answer).when(spy).getProfileOwnerAsUser(any());
+            // Used by HeadlessSystemUserTest
+            doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());
+            doAnswer(answer).when(spy).getProfileOwnerAsUser(any());
 
-        // Used by NetworkLoggingTest
-        doAnswer(answer).when(spy).retrieveNetworkLogs(any(), anyLong());
-        doAnswer(answer).when(spy).setNetworkLoggingEnabled(any(), anyBoolean());
-        doAnswer(answer).when(spy).isNetworkLoggingEnabled(any());
+            // Used by NetworkLoggingTest
+            doAnswer(answer).when(spy).retrieveNetworkLogs(any(), anyLong());
+            doAnswer(answer).when(spy).setNetworkLoggingEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).isNetworkLoggingEnabled(any());
 
-        // TODO(b/176993670): add more methods below as tests are converted
+            // TODO(b/176993670): add more methods below as tests are converted
+        } catch (Exception e) {
+            // Should never happen, but needs to be catch as some methods declare checked exceptions
+            Log.wtf("Exception setting mocks", e);
+        }
 
         sSpies.put(context, spy);
         Log.d(TAG, "get(): returning new spy for context " + context + " and user "
@@ -483,8 +502,11 @@ public final class DevicePolicyManagerWrapper {
     }
 
     private static void sendResult(DeviceAdminReceiver receiver, Object result) {
-        if (VERBOSE) Log.v(TAG, "Returning " + result);
+        if (VERBOSE) {
+            Log.v(TAG, "Sending '" + result + "' to " + receiver + " on " + Thread.currentThread());
+        }
         sendNoLog(receiver, RESULT_OK, result);
+        if (VERBOSE) Log.v(TAG, "Sent");
     }
 
     private static void sendNoLog(DeviceAdminReceiver receiver, int code, Object result) {
@@ -498,6 +520,10 @@ public final class DevicePolicyManagerWrapper {
 
     private static String resultCodeToString(int code) {
         return DebugUtils.constantToString(DevicePolicyManagerWrapper.class, "RESULT_", code);
+    }
+
+    private static void fail(String template, Object... args) {
+        throw new AssertionError(String.format(Locale.ENGLISH, template, args));
     }
 
     private DevicePolicyManagerWrapper() {
