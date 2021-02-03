@@ -199,9 +199,7 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertPermission(granted: Boolean, permission: String) {
-        val dump = device.executeShellCommand("dumpsys package $TARGET_PKG")
-        assertWithMessage(dump).that(getPermissionString(dump, permission))
-                .contains("granted=$granted")
+        assertThat(getPermissionString(permission)).contains("granted=$granted")
     }
 
     private fun grantPermission(permission: String) {
@@ -213,45 +211,49 @@ class PackageSetInstallerTest : BaseAppSecurityTest() {
     }
 
     private fun assertGrantState(state: GrantState, permission: String) {
-        val dump = device.executeShellCommand("dumpsys package $TARGET_PKG")
-        val output = getPermissionString(dump, permission)
+        val output = getPermissionString(permission)
 
         when (state) {
             GrantState.TRUE -> {
-                assertWithMessage(dump).that(output).contains("granted=true")
-                assertWithMessage(dump).that(output).doesNotContain("RESTRICTION")
-                assertWithMessage(dump).that(output).doesNotContain("EXEMPT")
+                assertThat(output).contains("granted=true")
+                assertThat(output).doesNotContain("RESTRICTION")
+                assertThat(output).doesNotContain("EXEMPT")
             }
             GrantState.TRUE_EXEMPT -> {
-                assertWithMessage(dump).that(output).contains("granted=true")
-                assertWithMessage(dump).that(output).contains("RESTRICTION_INSTALLER_EXEMPT")
+                assertThat(output).contains("granted=true")
+                assertThat(output).contains("RESTRICTION_INSTALLER_EXEMPT")
             }
             GrantState.TRUE_RESTRICTED -> {
-                assertWithMessage(dump).that(output).contains("granted=true")
-                assertWithMessage(dump).that(output).contains("APPLY_RESTRICTION")
-                assertWithMessage(dump).that(output).doesNotContain("EXEMPT")
+                assertThat(output).contains("granted=true")
+                assertThat(output).contains("APPLY_RESTRICTION")
+                assertThat(output).doesNotContain("EXEMPT")
             }
             GrantState.FALSE -> {
-                assertWithMessage(dump).that(output).contains("granted=false")
+                assertThat(output).contains("granted=false")
             }
         }
     }
 
-    private fun getPermissionString(output: String, permission: String) = retry {
-        output.lineSequence()
-                .dropWhile { !it.startsWith("Packages:") } // Wait for package header
-                .drop(1) // Drop the package header itself
-                .takeWhile { it.isEmpty() || it.first().isWhitespace() } // Until next header
-                .dropWhile { !it.trim().startsWith("User $mPrimaryUserId:") } // Find user
-                .drop(1) // Drop the user header itself
-                .takeWhile { !it.trim().startsWith("User") } // Until next user
-                .filter { it.contains("$permission: granted=") }
-                .firstOrNull()
-    }
+    private fun getPermissionString(permission: String) = retry {
+            device.executeShellCommand("dumpsys package $TARGET_PKG")
+                    .lineSequence()
+                    .dropWhile { !it.startsWith("Packages:") } // Wait for package header
+                    .drop(1) // Drop the package header itself
+                    .takeWhile { it.isEmpty() || it.first().isWhitespace() } // Until next header
+                    .dropWhile { !it.trim().startsWith("User $mPrimaryUserId:") } // Find user
+                    .drop(1) // Drop the user header itself
+                    .takeWhile { !it.trim().startsWith("User") } // Until next user
+                    .filter { it.contains("$permission: granted=") }
+                    .single()
+     }
 
     private fun <T> retry(block: () -> T?): T {
         repeat(10) {
-            block()?.let { return it }
+            try {
+                block()?.let { return it }
+            } catch (e : Exception) {
+                // do nothing
+            }
             Thread.sleep(1000)
         }
 
