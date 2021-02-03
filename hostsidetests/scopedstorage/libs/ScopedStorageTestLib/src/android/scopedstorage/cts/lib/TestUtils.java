@@ -124,7 +124,7 @@ public class TestUtils {
      */
     public static void setupDefaultDirectories() {
         for (File dir : getDefaultTopLevelDirs()) {
-            dir.mkdir();
+            dir.mkdirs();
             assertWithMessage("Could not setup default dir [%s]", dir.toString())
                     .that(dir.exists())
                     .isTrue();
