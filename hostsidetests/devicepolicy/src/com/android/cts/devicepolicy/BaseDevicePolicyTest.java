@@ -30,6 +30,7 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -1141,7 +1142,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     // TODO (b/174775905) remove after exposing the check from ITestDevice.
     boolean isHeadlessSystemUserMode() throws DeviceNotAvailableException {
-        final String result = getDevice()
+        return isHeadlessSystemUserMode(getDevice());
+    }
+
+    // TODO (b/174775905) remove after exposing the check from ITestDevice.
+    public static boolean isHeadlessSystemUserMode(ITestDevice device)
+            throws DeviceNotAvailableException {
+        final String result = device
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
     }
