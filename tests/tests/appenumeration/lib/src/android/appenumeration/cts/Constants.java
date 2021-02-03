@@ -133,6 +133,8 @@ public class Constants {
     public static final String ACTION_MANIFEST_PROVIDER = PKG_BASE + "action.PROVIDER";
     public static final String ACTION_SEND_RESULT = PKG_BASE + "cts.action.SEND_RESULT";
     public static final String ACTION_GET_PACKAGE_INFO = PKG_BASE + "cts.action.GET_PACKAGE_INFO";
+    public static final String ACTION_GET_PACKAGES_FOR_UID =
+            PKG_BASE + "cts.action.GET_PACKAGES_FOR_UID";
     public static final String ACTION_START_FOR_RESULT = PKG_BASE + "cts.action.START_FOR_RESULT";
     public static final String ACTION_START_DIRECTLY = PKG_BASE + "cts.action.START_DIRECTLY";
     public static final String ACTION_JUST_FINISH = PKG_BASE + "cts.action.JUST_FINISH";
