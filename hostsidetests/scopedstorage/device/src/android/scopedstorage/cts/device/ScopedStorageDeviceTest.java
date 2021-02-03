@@ -1127,7 +1127,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             assertThat(fileInPodcastsDirLowerCase.createNewFile()).isTrue();
         } finally {
             fileInPodcastsDirLowerCase.delete();
-            podcastsDirLowerCase.delete();
+            deleteAsLegacyApp(podcastsDirLowerCase);
             podcastsDir.mkdirs();
         }
     }
