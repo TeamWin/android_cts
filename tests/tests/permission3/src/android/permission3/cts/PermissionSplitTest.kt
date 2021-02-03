@@ -16,9 +16,6 @@
 
 package android.permission3.cts
 
-import android.Manifest
-import android.content.pm.PackageManager
-import com.android.compatibility.common.util.SystemUtil
 import org.junit.Assume.assumeFalse
 import org.junit.Before
 import org.junit.Test
@@ -56,18 +53,6 @@ class PermissionSplitTest : BaseUsePermissionTest() {
         testLocationPermissionSplit(false)
     }
 
-    @Test
-    fun testMicCamPermissionSplit30() {
-        installPackage(APP_APK_PATH_30)
-        testMicCamPermissionSplit(expectSplit = true, exemptPermissions = true)
-    }
-
-    @Test
-    fun testMicCamPermissionNoExemptNoSplit30() {
-        installPackage(APP_APK_PATH_30)
-        testMicCamPermissionSplit(expectSplit = false, exemptPermissions = false)
-    }
-
     private fun testLocationPermissionSplit(expectSplit: Boolean) {
         assertAppHasPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, false)
         assertAppHasPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, false)
@@ -83,44 +68,5 @@ class PermissionSplitTest : BaseUsePermissionTest() {
         }
 
         assertAppHasPermission(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION, expectSplit)
-    }
-
-    private fun testMicCamPermissionSplit(expectSplit: Boolean, exemptPermissions: Boolean) {
-        assertAppHasPermission(android.Manifest.permission.RECORD_AUDIO, false)
-        assertAppHasPermission(android.Manifest.permission.CAMERA, false)
-
-        if (exemptPermissions) {
-            SystemUtil.runWithShellPermissionIdentity {
-                packageManager.addWhitelistedRestrictedPermission(APP_PACKAGE_NAME,
-                        Manifest.permission.RECORD_BACKGROUND_AUDIO,
-                        PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM)
-                packageManager.addWhitelistedRestrictedPermission(APP_PACKAGE_NAME,
-                        Manifest.permission.BACKGROUND_CAMERA,
-                        PackageManager.FLAG_PERMISSION_WHITELIST_SYSTEM)
-            }
-        }
-
-        requestAppPermissionsAndAssertResult(
-                android.Manifest.permission.RECORD_AUDIO to true
-        ) {
-            if (expectSplit) {
-                clickPermissionRequestSettingsLinkAndAllowAlways()
-            } else {
-                clickPermissionRequestAllowForegroundButton()
-            }
-        }
-        assertAppHasPermission(android.Manifest.permission.RECORD_BACKGROUND_AUDIO, expectSplit)
-
-        requestAppPermissionsAndAssertResult(
-                android.Manifest.permission.CAMERA to true
-        ) {
-            if (expectSplit) {
-                clickPermissionRequestSettingsLinkAndAllowAlways()
-            } else {
-                clickPermissionRequestAllowForegroundButton()
-            }
-        }
-
-        assertAppHasPermission(android.Manifest.permission.BACKGROUND_CAMERA, expectSplit)
     }
 }
