@@ -416,6 +416,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
+            UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView(permissionLabel)
             click(By.text(permissionLabel))
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
