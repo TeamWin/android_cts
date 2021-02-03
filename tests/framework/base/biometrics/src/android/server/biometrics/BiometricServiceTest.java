@@ -210,9 +210,9 @@ public class BiometricServiceTest extends BiometricTestBase {
     @After
     public void cleanup() throws Exception {
         mInstrumentation.waitForIdleSync();
-        waitForIdleService(getCurrentState().mSensorStates);
+        waitForIdleService();
 
-        final BiometricServiceState state = getCurrentState();
+        BiometricServiceState state = getCurrentState();
 
         for (int i = 0; i < state.mSensorStates.sensorStates.size(); i++) {
             final int sensorId = state.mSensorStates.sensorStates.keyAt(i);
@@ -230,7 +230,13 @@ public class BiometricServiceTest extends BiometricTestBase {
         }
 
         // Authentication lifecycle is done
-        assertTrue(getCurrentState().mSensorStates.areAllSensorsIdle());
+        try {
+            waitForIdleService();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception when waiting for idle", e);
+        }
+        state = getCurrentState();
+        assertTrue("Sensor states: " + state.toString(), state.mSensorStates.areAllSensorsIdle());
 
         if (mWakeLock != null) {
             mWakeLock.release();
@@ -279,11 +285,11 @@ public class BiometricServiceTest extends BiometricTestBase {
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForBusySensor(getCurrentState().mSensorStates, sensorId);
+        waitForBusySensor(sensorId);
 
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService(getCurrentState().mSensorStates);
+        waitForIdleService();
 
         final BiometricServiceState state = getCurrentState();
         assertEquals(1, state.mSensorStates.sensorStates
@@ -644,5 +650,10 @@ public class BiometricServiceTest extends BiometricTestBase {
         for (BiometricTestSession session : biometricSessions) {
             session.close();
         }
+    }
+
+    @Override
+    protected SensorStates getSensorStates() throws Exception {
+        return getCurrentState().mSensorStates;
     }
 }

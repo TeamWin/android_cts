@@ -16,6 +16,7 @@
 
 package android.appenumeration.cts;
 
+import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
@@ -80,6 +81,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
@@ -524,6 +526,15 @@ public class AppEnumerationTests {
         assertVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
     }
 
+    @Test
+    public void bindService_consistentVisibility() throws Exception {
+        // Ensure package visibility isn't impacted by optimization or cached result.
+        // Target service shouldn't be visible to app without query permission even if
+        // another app with query permission is binding it.
+        assertServiceVisible(QUERIES_NOTHING_PERM, TARGET_FILTERS);
+        assertServiceNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -532,6 +543,18 @@ public class AppEnumerationTests {
             fail(sourcePackageName + " should not be able to see " + targetPackageName);
         } catch (PackageManager.NameNotFoundException ignored) {
         }
+    }
+
+    private void assertServiceVisible(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        assertTrue(bindService(sourcePackageName, targetPackageName));
+    }
+
+    private void assertServiceNotVisible(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        assertFalse(bindService(sourcePackageName, targetPackageName));
     }
 
     interface ThrowingBiFunction<T, U, R> {
@@ -640,6 +663,13 @@ public class AppEnumerationTests {
     private void startImplicitIntent(String sourcePackage) throws Exception {
         sendCommandBlocking(sourcePackage, TARGET_FILTERS, new Intent(ACTION_MANIFEST_ACTIVITY),
                 ACTION_START_DIRECTLY);
+    }
+
+    private boolean bindService(String sourcePackageName, String targetPackageName)
+            throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
+                /* intentExtra */ null, ACTION_BIND_SERVICE);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {

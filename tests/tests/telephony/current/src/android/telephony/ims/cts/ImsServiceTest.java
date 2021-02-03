@@ -102,6 +102,7 @@ public class ImsServiceTest {
 
     private static int sTestSlot = 0;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
+    private static boolean sDeviceUceEnabled;
 
     private static final int TEST_CONFIG_KEY = 1000;
     private static final int TEST_CONFIG_VALUE_INT = 0xDEADBEEF;
@@ -186,6 +187,10 @@ public class ImsServiceTest {
         // Configure SMS receiver based on the Android version.
         sServiceConnector.setDefaultSmsApp();
 
+        // Save the original device uce enabled config and override it.
+        sDeviceUceEnabled = sServiceConnector.getDeviceUceEnabled();
+        sServiceConnector.setDeviceUceEnabled(true);
+
         sReceiver = new CarrierConfigReceiver(sTestSub);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
@@ -201,6 +206,7 @@ public class ImsServiceTest {
         // Restore all ImsService configurations that existed before the test.
         if (sServiceConnector != null) {
             sServiceConnector.disconnectServices();
+            sServiceConnector.setDeviceUceEnabled(sDeviceUceEnabled);
         }
         sServiceConnector = null;
 
@@ -865,7 +871,6 @@ public class ImsServiceTest {
         if (!ImsUtils.shouldTestImsService()) {
             return;
         }
-
         // Trigger carrier config changed
         PersistableBundle bundle = new PersistableBundle();
         bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, true);

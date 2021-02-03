@@ -404,7 +404,11 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
 
+        // This test relies on ImageDecoder *not* scaling to account for density.
+        // Temporarily change the DisplayMetrics to prevent that scaling.
         Resources res = getResources();
+        final int originalDensity = res.getDisplayMetrics().densityDpi;
+        res.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_DEFAULT;
         ImageDecoder.Source src = ImageDecoder.createSource(res, record.resId);
         assertNotNull(src);
         l.doCrop = doCrop;
@@ -417,6 +421,8 @@ public class ImageDecoderTest {
         } catch (IOException e) {
             fail("Failed " + Utils.getAsResourceUri(record.resId)
                     + " with exception " + e);
+        } finally {
+            res.getDisplayMetrics().densityDpi = originalDensity;
         }
         assertNotNull(bm);
 

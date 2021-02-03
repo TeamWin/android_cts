@@ -1331,7 +1331,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testPasswordQualityWithoutSecureLockScreen() throws Exception {
-        assumeHasSecureLockScreenFeature();
+        assumeDoesNotHaveSecureLockScreenFeature();
 
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".UnavailableSecureLockScreenTest", mUserId);
     }
