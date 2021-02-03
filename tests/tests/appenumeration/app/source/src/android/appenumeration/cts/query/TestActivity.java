@@ -17,6 +17,7 @@
 package android.appenumeration.cts.query;
 
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
+import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
@@ -91,6 +92,9 @@ public class TestActivity extends Activity {
             if (ACTION_GET_PACKAGE_INFO.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendPackageInfo(remoteCallback, packageName);
+            } else if (ACTION_GET_PACKAGES_FOR_UID.equals(action)) {
+                final int uid = intent.getIntExtra(Intent.EXTRA_UID, -1);
+                sendPackagesForUid(remoteCallback, uid);
             } else if (ACTION_START_FOR_RESULT.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 int requestCode = RESULT_FIRST_USER + callbacks.size();
@@ -272,6 +276,14 @@ public class TestActivity extends Activity {
         }
         Bundle result = new Bundle();
         result.putParcelable(EXTRA_RETURN_RESULT, pi);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendPackagesForUid(RemoteCallback remoteCallback, int uid) {
+        final String[] packages = getPackageManager().getPackagesForUid(uid);
+        final Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, packages);
         remoteCallback.sendResult(result);
         finish();
     }
