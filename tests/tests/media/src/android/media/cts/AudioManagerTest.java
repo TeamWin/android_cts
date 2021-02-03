@@ -84,6 +84,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -370,40 +371,32 @@ public class AudioManagerTest extends InstrumentationTestCase {
     @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testRouting() throws Exception {
         // setBluetoothA2dpOn is a no-op, and getRouting should always return -1
-        // AudioManager.MODE_CURRENT
         boolean oldA2DP = mAudioManager.isBluetoothA2dpOn();
         mAudioManager.setBluetoothA2dpOn(true);
         assertEquals(oldA2DP , mAudioManager.isBluetoothA2dpOn());
         mAudioManager.setBluetoothA2dpOn(false);
         assertEquals(oldA2DP , mAudioManager.isBluetoothA2dpOn());
 
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_RINGTONE));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_NORMAL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_CALL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
+        assertEquals(-1, mAudioManager.getRouting(MODE_RINGTONE));
+        assertEquals(-1, mAudioManager.getRouting(MODE_NORMAL));
+        assertEquals(-1, mAudioManager.getRouting(MODE_IN_CALL));
+        assertEquals(-1, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
 
         mAudioManager.setBluetoothScoOn(true);
-        assertTrue(mAudioManager.isBluetoothScoOn());
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_RINGTONE));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_NORMAL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_CALL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
+        assertTrueCheckTimeout(mAudioManager, p -> p.isBluetoothScoOn(),
+                DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isBluetoothScoOn returned false");
 
         mAudioManager.setBluetoothScoOn(false);
-        assertFalse(mAudioManager.isBluetoothScoOn());
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_RINGTONE));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_NORMAL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_CALL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
+        assertTrueCheckTimeout(mAudioManager, p -> !p.isBluetoothScoOn(),
+                DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isBluetoothScoOn returned true");
 
         mAudioManager.setSpeakerphoneOn(true);
-        assertTrue(mAudioManager.isSpeakerphoneOn());
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_CALL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
+        assertTrueCheckTimeout(mAudioManager, p -> p.isSpeakerphoneOn(),
+                DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isSpeakerPhoneOn() returned false");
+
         mAudioManager.setSpeakerphoneOn(false);
-        assertFalse(mAudioManager.isSpeakerphoneOn());
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_CALL));
-        assertEquals(AudioManager.MODE_CURRENT, mAudioManager.getRouting(MODE_IN_COMMUNICATION));
+        assertTrueCheckTimeout(mAudioManager, p -> !p.isSpeakerphoneOn(),
+                DEFAULT_ASYNC_CALL_TIMEOUT_MS, "isSpeakerPhoneOn() returned true");
     }
 
     public void testVibrateNotification() throws Exception {
@@ -1855,6 +1848,32 @@ public class AudioManagerTest extends InstrumentationTestCase {
             actualIsMusicActive = mAudioManager.isMusicActive();
         }
         assertEquals(actualIsMusicActive, actualIsMusicActive);
+    }
+
+    private static final long REPEATED_CHECK_POLL_PERIOD_MS = 100; // 100ms
+    private static final long DEFAULT_ASYNC_CALL_TIMEOUT_MS = 5 * REPEATED_CHECK_POLL_PERIOD_MS;
+
+    /**
+     * Makes multiple attempts over a given timeout period to test the predicate on an AudioManager
+     * instance. Test success is evaluated against a true predicate result.
+     * @param am the AudioManager instance to use for the test
+     * @param predicate the test to run either until it returns true, or until the timeout expires
+     * @param timeoutMs the maximum time allowed for the test to pass
+     * @param errorString the string to be displayed in case of failure
+     * @throws Exception
+     */
+    private void assertTrueCheckTimeout(AudioManager am, Predicate<AudioManager> predicate,
+            long timeoutMs, String errorString) throws Exception {
+        long checkStart = SystemClock.uptimeMillis();
+        boolean result = false;
+        while (SystemClock.uptimeMillis() - checkStart < timeoutMs) {
+            result = predicate.test(am);
+            if (result) {
+                break;
+            }
+            Thread.sleep(REPEATED_CHECK_POLL_PERIOD_MS);
+        }
+        assertTrue(errorString, result);
     }
 
     // getParameters() & setParameters() are deprecated, so don't test

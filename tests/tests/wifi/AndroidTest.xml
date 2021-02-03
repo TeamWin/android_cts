@@ -37,6 +37,8 @@
         <option name="package" value="android.net.wifi.cts" />
         <option name="hidden-api-checks" value="false" />
         <option name="isolated-storage" value="false" />
+        <!-- testWifiScanTimestamp can take longer than the default 300s -->
+        <option name="test-timeout" value="3500000" />
     </test>
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">

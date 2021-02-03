@@ -153,6 +153,7 @@ public class Constants {
             PKG_BASE + "cts.action.START_SENDER_FOR_RESULT";
     public static final String ACTION_QUERY_RESOLVER =
             PKG_BASE + "cts.action.QUERY_RESOLVER_FOR_VISIBILITY";
+    public static final String ACTION_BIND_SERVICE = PKG_BASE + "cts.action.BIND_SERVICE";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_ERROR = "error";
