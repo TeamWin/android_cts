@@ -187,6 +187,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     @Test
+    @Ignore("Disabled, crashes in presubmit lab")
     public void testInstallWithIdSigPerUidTimeouts() throws Exception {
         executeShellCommand("atrace --async_start -b 1024 -c adb");
         try {
@@ -258,6 +259,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     @Test
+    @Ignore("Disabled, crashes in presubmit lab")
     public void testInstallWithIdSigPerUidTimeoutsIgnored() throws Exception {
         // Timeouts would be ignored as there are no readlogs collected.
         setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
