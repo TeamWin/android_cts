@@ -885,6 +885,7 @@ public class StrictModeTest {
     }
 
     @Test
+    @AppModeFull(reason = "Instant apps can only declare runtime receivers")
     public void testUnsafeIntentLaunch_ParceledIntentToStaticReceiver_ThrowsViolation()
             throws Exception {
         // This test verifies a violation is reported when an inner Intent is unparceled from the
