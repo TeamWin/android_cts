@@ -32,4 +32,5 @@ android_test {
         "cts",
         "general-tests",
     ],
+    platform_apis: true,
 }
