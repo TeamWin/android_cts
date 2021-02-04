@@ -423,47 +423,12 @@ public class RcsUceAdapterTest {
             //expected
         }
 
-        // The API requestCapabilities should fail when the ImsService is unavailable.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
-            fail("requestCapabilities should require ImsService with RcsFeature is available.");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE. " + e);
-        } catch (ImsException e) {
-            // Verify the operation is not supported for the subId
-            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
-                fail("requestCapabilities failed " + e);
-            }
-        }
-
         // The API requestAvailability should fail when it doesn't grant the permission.
         try {
             uceAdapter.requestAvailability(sTestNumberUri, Runnable::run, callback);
             fail("requestAvailability requires READ_PRIVILEGED_PHONE_STATE permission.");
         } catch (SecurityException e) {
             //expected
-        }
-
-        // The API requestAvailability should fail when the ImsService is unavailable.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestAvailability(
-                            sTestNumberUri, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
-            fail("requestAvailability should require ImsService is available.");
-        } catch (SecurityException e) {
-            fail("requestAvailability should succeed with READ_PRIVILEGED_PHONE_STATE " + e);
-        } catch (ImsException e) {
-            // Verify the operation is not supported for the subId
-            if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
-                fail("requestAvailability failed " + e);
-            }
         }
 
         // Trigger carrier config changed
