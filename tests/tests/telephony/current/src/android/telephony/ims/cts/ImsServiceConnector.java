@@ -553,6 +553,9 @@ class ImsServiceConnector {
         mDeviceServiceConnection.restoreOriginalPackage();
         mCarrierServiceConnection.restoreOriginalPackage();
         mDefaultSmsAppConnection.restoreOriginalPackage();
+
+        // Remove any overrides for single registration state
+        setDeviceSingleRegistrationEnabled(null);
     }
 
     void enableImsService(int slot) throws Exception {
@@ -567,7 +570,9 @@ class ImsServiceConnector {
 
     void setDeviceSingleRegistrationEnabled(Boolean enabled) throws Exception {
         TelephonyUtils.executeShellCommand(mInstrumentation, COMMAND_BASE
-                + COMMAND_SET_DEVICE_SINGLE_REGISTRATION_ENABLED + enabled);
+                + COMMAND_SET_DEVICE_SINGLE_REGISTRATION_ENABLED
+                // if "null" is sent, it will remove override
+                + (enabled != null ? enabled : "null"));
     }
 
     boolean getDeviceSingleRegistrationEnabled() throws Exception {
