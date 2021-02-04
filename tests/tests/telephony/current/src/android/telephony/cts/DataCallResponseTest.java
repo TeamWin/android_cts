@@ -29,6 +29,7 @@ import android.os.Parcel;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.DataCallResponse;
 import android.telephony.data.SliceInfo;
+import android.telephony.data.TrafficDescriptor;
 
 import org.junit.Test;
 
@@ -66,7 +67,10 @@ public class DataCallResponseTest {
                 .setMappedHplmnSliceDifferentiator(TEST_HPLMN_SLICE_DIFFERENTIATOR)
                 .setMappedHplmnSliceServiceType(TEST_HPLMN_SLICE_SERVICE_TYPE)
                 .build();
-
+    private static final String DNN = "DNN";
+    private static final String OS_APP_ID = "OS_APP_ID";
+    private static final List<TrafficDescriptor> TRAFFIC_DESCRIPTORS =
+            Arrays.asList(new TrafficDescriptor(DNN, OS_APP_ID));
 
     @Test
     public void testConstructorAndGetters() {
@@ -86,6 +90,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         assertThat(response.getCause()).isEqualTo(CAUSE);
@@ -103,6 +108,7 @@ public class DataCallResponseTest {
         assertThat(response.getHandoverFailureMode()).isEqualTo(HANDOVER_FAILURE_MODE_DO_FALLBACK);
         assertThat(response.getPduSessionId()).isEqualTo(PDU_SESSION_ID);
         assertThat(response.getSliceInfo()).isEqualTo(SLICE_INFO);
+        assertThat(response.getTrafficDescriptors()).isEqualTo(TRAFFIC_DESCRIPTORS);
     }
 
     @Test
@@ -123,6 +129,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         DataCallResponse equalsResponse = new DataCallResponse.Builder()
@@ -141,6 +148,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         assertThat(response).isEqualTo(equalsResponse);
@@ -164,6 +172,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         DataCallResponse notEqualsResponse = new DataCallResponse.Builder()
@@ -182,6 +191,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE_LEGACY)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         assertThat(response).isNotEqualTo(notEqualsResponse);
@@ -207,6 +217,7 @@ public class DataCallResponseTest {
                 .setHandoverFailureMode(HANDOVER_FAILURE_MODE)
                 .setPduSessionId(PDU_SESSION_ID)
                 .setSliceInfo(SLICE_INFO)
+                .setTrafficDescriptors(TRAFFIC_DESCRIPTORS)
                 .build();
 
         Parcel stateParcel = Parcel.obtain();
