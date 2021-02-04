@@ -167,6 +167,7 @@
 
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity"
              android:resizeableActivity="true"
+             android:theme="@style/no_starting_window"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivity2"/>
         <activity android:name="android.server.wm.MultiDisplaySystemDecorationTests$ImeTestActivityWithBrokenContextWrapper"/>
@@ -303,7 +304,8 @@
         </service>
 
         <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
-        <activity android:name="android.server.wm.CloseOnOutsideTestActivity" />
+        <activity android:name="android.server.wm.CloseOnOutsideTestActivity"
+                  android:theme="@style/no_starting_window"/>
         <activity android:name="android.server.wm.DialogFrameTestActivity" />
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity"
                   android:configChanges="orientation|screenSize"
@@ -356,7 +358,8 @@
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
         <activity android:name="android.app.Activity"/>
         <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity"/>
-        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"/>
+        <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"
+                  android:theme="@style/no_starting_window"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestHideOnCreateActivity"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestShowOnCreateActivity"/>
 

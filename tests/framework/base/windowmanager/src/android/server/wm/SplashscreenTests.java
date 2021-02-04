@@ -241,7 +241,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
         final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
-        final int iconAnimationDuration = journal.extras.getInt(ICON_ANIMATION_DURATION);
+        final long iconAnimationDuration = journal.extras.getLong(ICON_ANIMATION_DURATION);
         assertTrue(iconAnimationStart != 0);
         assertEquals(iconAnimationDuration, 500);
         assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));

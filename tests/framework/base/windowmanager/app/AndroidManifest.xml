@@ -360,6 +360,24 @@
              android:theme="@style/SplashscreenTheme"
              android:exported="true"/>
 
+        <activity android:name=".DisablePreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedNoPreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedAttrNoPreviewActivity"
+             android:showWhenLocked="true"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedAttrRemoveAttrNoPreviewActivity"
+             android:showWhenLocked="true"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedWithDialogNoPreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+
         <activity android:name=".NoHistoryActivity"
              android:noHistory="true"
              android:exported="true"/>
