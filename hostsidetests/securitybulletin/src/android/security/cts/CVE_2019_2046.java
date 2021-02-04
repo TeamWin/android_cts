@@ -27,14 +27,12 @@ public class CVE_2019_2046 extends SecurityTestCase {
 
     /**
      * b/117556220
-     * Vulnerability Behaviour: SIGSEGV in self
+     * Vulnerability Behaviour: SIGSEGV in pacrunner
      */
     @SecurityTest(minPatchLevel = "2019-05")
     @Test
     public void testPocCVE_2019_2046() throws Exception {
         pocPusher.only64();
-        String inputFiles[] = {"cve_2019_2046.pac"};
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2046",
-                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+        AdbUtils.runProxyAutoConfig("cve_2019_2046", "true", getDevice());
     }
 }
