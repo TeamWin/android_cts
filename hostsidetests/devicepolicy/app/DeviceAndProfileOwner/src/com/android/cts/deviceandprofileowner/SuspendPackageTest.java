@@ -16,10 +16,9 @@
 
 package com.android.cts.deviceandprofileowner;
 
-import android.content.Intent;
-import android.content.pm.PackageManager;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.getDefaultLauncher;
+
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.content.pm.ResolveInfo;
 import android.content.pm.SuspendDialogInfo;
 
 import java.util.Arrays;
@@ -87,8 +86,8 @@ public class SuspendPackageTest extends BaseDeviceAdminTest {
     /**
      * Verify that we cannot suspend launcher and dpc app.
      */
-    public void testSuspendNotSuspendablePackages() {
-        String launcherPackage = getLauncherPackage();
+    public void testSuspendNotSuspendablePackages() throws Exception {
+        String launcherPackage = getDefaultLauncher(getInstrumentation());
         String dpcPackage = ADMIN_RECEIVER_COMPONENT.getPackageName();
         String[] unsuspendablePackages = new String[] {launcherPackage, dpcPackage};
         String[] notHandledPackages = mDevicePolicyManager.setPackagesSuspended(
@@ -97,17 +96,6 @@ public class SuspendPackageTest extends BaseDeviceAdminTest {
                 true);
         // no package should be handled.
         assertArrayEqualIgnoreOrder(unsuspendablePackages, notHandledPackages);
-    }
-
-    /**
-     * @return the package name of launcher.
-     */
-    private String getLauncherPackage() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        ResolveInfo resolveInfo = mContext.getPackageManager().resolveActivity(intent,
-                PackageManager.MATCH_DEFAULT_ONLY);
-        return resolveInfo.activityInfo.packageName;
     }
 
     private static <T> void assertArrayEqualIgnoreOrder(T[] a, T[] b) {
