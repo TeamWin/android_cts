@@ -45,7 +45,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -186,8 +185,8 @@ public class PackageManagerShellCommandIncrementalTest {
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
+    @LargeTest
     @Test
-    @Ignore("Disabled, crashes in presubmit lab")
     public void testInstallWithIdSigPerUidTimeouts() throws Exception {
         executeShellCommand("atrace --async_start -b 1024 -c adb");
         try {
@@ -205,7 +204,6 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    @Ignore("Disabled, crashes in presubmit lab")
     public void testInstallWithIdSigStreamPerUidTimeoutsIncompleteData() throws Exception {
         executeShellCommand("atrace --async_start -b 1024 -c adb");
         try {
@@ -258,10 +256,11 @@ public class PackageManagerShellCommandIncrementalTest {
         }
     }
 
+    @LargeTest
     @Test
-    @Ignore("Disabled, crashes in presubmit lab")
     public void testInstallWithIdSigPerUidTimeoutsIgnored() throws Exception {
         // Timeouts would be ignored as there are no readlogs collected.
+        final int beforeReadDelayMs = 5000;
         setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
         setDeviceProperty("known_digesters_list", CTS_PACKAGE_NAME);
 
@@ -276,6 +275,9 @@ public class PackageManagerShellCommandIncrementalTest {
             installSplit(TEST_APK_SPLIT1);
             assertEquals("base, config.hdpi, config.mdpi", getSplits(TEST_APP_PACKAGE));
         }
+
+        // Allow IncrementalService to update the timeouts after full download.
+        Thread.currentThread().sleep(beforeReadDelayMs);
 
         // Try to read a split and see if we are throttled.
         final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), "split_config.mdpi.apk");
