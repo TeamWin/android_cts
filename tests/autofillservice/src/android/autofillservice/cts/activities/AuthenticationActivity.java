@@ -279,7 +279,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
                         (id) -> Helper.findNodeByResourceId(structure, id));
             }
         } else if (dataset != null) {
-            result = dataset.asDataset((id) -> Helper.findNodeByResourceId(structure, id));
+            result = dataset.asDatasetWithNodeResolver(
+                    (id) -> Helper.findNodeByResourceId(structure, id));
         } else {
             throw new IllegalStateException("no dataset or response");
         }
