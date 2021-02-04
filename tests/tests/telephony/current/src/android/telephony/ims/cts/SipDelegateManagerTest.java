@@ -143,6 +143,12 @@ public class SipDelegateManagerTest {
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
         InstrumentationRegistry.getInstrumentation().getContext()
                 .registerReceiver(sReceiver, filter);
+
+        if (!ImsUtils.shouldTestImsSingleRegistration()) {
+            // override FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION setting for this test to enable
+            // APIs.
+            sServiceConnector.setDeviceSingleRegistrationEnabled(true);
+        }
     }
 
     @AfterClass
@@ -238,22 +244,56 @@ public class SipDelegateManagerTest {
         if (!ImsUtils.shouldTestTelephony()) {
             return;
         }
-        if (ImsUtils.shouldTestImsService()) {
-            // Return if FEATURE_TELEPHONY_IMS is supported, we only want to test devices where
-            // telephony is supported, but IMS isn't.
-            return;
+
+        if (sServiceConnector != null) {
+            // Override FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION for this test so that telephony
+            // will report not enabled.
+            sServiceConnector.setDeviceSingleRegistrationEnabled(false);
         }
-        SipDelegateManager manager = getSipDelegateManager();
+
         try {
-            // If FEATURE_TELEPHONY_IMS is not supported this should already return false.
-            Boolean result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
-                    manager, SipDelegateManager::isSupported, ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
-            assertNotNull(result);
-            assertFalse("isSupported should return false on devices that do not support "
-                    + "feature FEATURE_TELEPHONY_IMS", result);
-        } catch (SecurityException e) {
-            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+            SipDelegateManager manager = getSipDelegateManager();
+
+            try {
+                // If FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION is not supported this should
+                // return false.
+                Boolean result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                        manager, SipDelegateManager::isSupported, ImsException.class,
+                        "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                assertNotNull(result);
+                assertFalse("isSupported should return false on devices that do not "
+                        + "support feature FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION", result);
+            } catch (SecurityException e) {
+                fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+            }
+
+            try {
+                // If FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION is not supported, this should throw
+                // an ImsException
+                DelegateRequest request = new DelegateRequest(Collections.emptySet());
+                TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
+                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                        manager, (m) -> m.createSipDelegate(request, Runnable::run,
+                                delegateConn, delegateConn), ImsException.class,
+                        "android.permission.MODIFY_PHONE_STATE");
+                fail("createSipDelegate should throw an ImsException with code "
+                        + "CODE_ERROR_UNSUPPORTED_OPERATION on devices that do not support feature "
+                        + "FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION");
+            } catch (SecurityException e) {
+                fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+            } catch (ImsException e) {
+                // expecting CODE_ERROR_UNSUPPORTED_OPERATION
+                if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
+                    fail("createSipDelegate should throw an ImsException with code "
+                            + "CODE_ERROR_UNSUPPORTED_OPERATION on devices that do not support "
+                            + "feature FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION");
+                }
+            }
+        } finally {
+            if (sServiceConnector != null) {
+                // restore override for the rest of the tests.
+                sServiceConnector.setDeviceSingleRegistrationEnabled(true);
+            }
         }
     }
 

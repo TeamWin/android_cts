@@ -68,6 +68,15 @@ public class ImsUtils {
         return hasTelephony && hasIms;
     }
 
+    public static boolean shouldTestImsSingleRegistration() {
+        final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()
+                .getPackageManager();
+        boolean hasIms = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY_IMS);
+        boolean hasSingleReg = pm.hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION);
+        return hasIms && hasSingleReg;
+    }
+
     public static int getPreferredActiveSubId() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         SubscriptionManager sm = (SubscriptionManager) context.getSystemService(
