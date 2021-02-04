@@ -76,7 +76,7 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
     4: PN9
   """
 
-  def test_solid_color_test_patterns(self):
+  def test_solid_color_test_pattern(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
