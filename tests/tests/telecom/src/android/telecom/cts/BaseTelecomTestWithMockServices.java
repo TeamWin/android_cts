@@ -175,9 +175,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // A failure to leave car mode in any of the tests would cause subsequent test failures,
         // but this failure should not affect other tests.
         mUiModeManager = mContext.getSystemService(UiModeManager.class);
-        if (mUiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_CAR) {
-            mUiModeManager.disableCarMode(0);
-        }
+        TestUtils.executeShellCommand(getInstrumentation(), "telecom reset-car-mode");
         assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
 
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
