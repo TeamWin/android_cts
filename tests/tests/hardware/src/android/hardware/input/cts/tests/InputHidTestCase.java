@@ -17,15 +17,20 @@
 package android.hardware.input.cts.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.hardware.Battery;
 import android.hardware.input.InputManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.os.Vibrator.OnVibratorStateChangedListener;
 import android.util.Log;
 import android.view.InputDevice;
 
@@ -34,6 +39,11 @@ import com.android.cts.input.HidDevice;
 import com.android.cts.input.HidResultData;
 import com.android.cts.input.HidTestData;
 import com.android.cts.input.HidVibratorTestData;
+
+import org.junit.Rule;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,10 +55,16 @@ public class InputHidTestCase extends InputTestCase {
     private static final String TAG = "InputHidTestCase";
     // Sync with linux uhid_event_type::UHID_OUTPUT
     private static final byte UHID_EVENT_TYPE_UHID_OUTPUT = 6;
+    private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
 
     private HidDevice mHidDevice;
     private int mDeviceId;
     private final int mRegisterResourceId;
+
+    @Rule
+    public MockitoRule rule = MockitoJUnit.rule();
+    @Mock
+    private OnVibratorStateChangedListener mListener;
 
     InputHidTestCase(int registerResourceId) {
         super(registerResourceId);
@@ -179,8 +195,17 @@ public class InputHidTestCase extends InputTestCase {
 
             final Vibrator vibrator = getVibrator();
             assertNotNull(vibrator);
+            vibrator.addVibratorStateListener(mListener);
+            verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                    .times(1)).onVibratorStateChanged(false);
+            reset(mListener);
             // Start vibration
             vibrator.vibrate(effect);
+            // Verify vibrator state listener
+            verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                    .times(1)).onVibratorStateChanged(true);
+            assertTrue(vibrator.isVibrating());
+
             final long startTime = SystemClock.elapsedRealtime();
             List<HidResultData> results = new ArrayList<>();
             int vibrationCount = 0;
@@ -213,6 +238,12 @@ public class InputHidTestCase extends InputTestCase {
                 }
             }
             assertEquals(vibrationCount, totalVibrations);
+            // Verify vibrator state listener
+            verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                    .times(1)).onVibratorStateChanged(false);
+            assertFalse(vibrator.isVibrating());
+            vibrator.removeVibratorStateListener(mListener);
+            reset(mListener);
         }
     }
 
