@@ -170,6 +170,14 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.app.stubs.LocalPhoneCallService"
+             android:foregroundServiceType="microphone|phoneCall"
+             android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.stubs.FOREGROUND_SERVICE" />
+            </intent-filter>
+        </service>
+
         <service android:name="android.app.stubs.LocalForegroundServiceLocation"
              android:foregroundServiceType="location|camera|microphone"
              android:exported="true">

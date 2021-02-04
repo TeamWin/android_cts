@@ -55,10 +55,14 @@ public class LocalForegroundService extends LocalService {
 
     private int mNotificationId = 0;
 
+    protected String getTag() {
+        return TAG;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.d(TAG, "service created: " + this + " in " + android.os.Process.myPid());
+        Log.d(getTag(), "service created: " + this + " in " + android.os.Process.myPid());
     }
 
     /** Returns the channel id for this service */
@@ -77,7 +81,7 @@ public class LocalForegroundService extends LocalService {
         Context context = getApplicationContext();
         final int command = intent.getIntExtra(EXTRA_COMMAND, -1);
 
-        Log.d(TAG, "service start cmd " + command + ", intent " + intent);
+        Log.d(getTag(), "service start cmd " + command + ", intent " + intent);
 
         switch (command) {
             case COMMAND_START_FOREGROUND:
@@ -85,15 +89,17 @@ public class LocalForegroundService extends LocalService {
                 handleIncomingMessengerIfNeeded(intent);
                 mNotificationId ++;
                 final boolean showNow = (command == COMMAND_START_FOREGROUND);
-                Log.d(TAG, "Starting foreground using notification " + mNotificationId);
-                Notification notification =
+                Log.d(getTag(), "Starting foreground using notification " + mNotificationId);
+                Notification.Builder builder =
                         new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                                 .setContentTitle(getNotificationTitle(mNotificationId))
-                                .setSmallIcon(R.drawable.black)
-                                .setShowForegroundImmediately(showNow)
-                                .build();
+                                .setSmallIcon(R.drawable.black);
+                if (showNow) {
+                    builder.setForegroundServiceBehavior(
+                            Notification.FOREGROUND_SERVICE_IMMEDIATE);
+                }
                 try {
-                    startForeground(mNotificationId, notification);
+                    startForeground(mNotificationId, builder.build());
                 } catch (ForegroundServiceStartNotAllowedException e) {
                     Log.d(TAG, "startForeground gets an "
                             + " ForegroundServiceStartNotAllowedException", e);
@@ -101,26 +107,26 @@ public class LocalForegroundService extends LocalService {
                 break;
             }
             case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION:
-                Log.d(TAG, "Stopping foreground removing notification");
+                Log.d(getTag(), "Stopping foreground removing notification");
                 stopForeground(true);
                 break;
             case COMMAND_STOP_FOREGROUND_DONT_REMOVE_NOTIFICATION:
-                Log.d(TAG, "Stopping foreground without removing notification");
+                Log.d(getTag(), "Stopping foreground without removing notification");
                 stopForeground(false);
                 break;
             case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS:
-                Log.d(TAG, "Stopping foreground removing notification using flags");
+                Log.d(getTag(), "Stopping foreground removing notification using flags");
                 stopForeground(Service.STOP_FOREGROUND_REMOVE | Service.STOP_FOREGROUND_DETACH);
                 break;
             case COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION:
-                Log.d(TAG, "Detaching foreground service notification");
+                Log.d(getTag(), "Detaching foreground service notification");
                 stopForeground(Service.STOP_FOREGROUND_DETACH);
                 break;
             case COMMAND_START_NO_FOREGROUND:
-                Log.d(TAG, "Starting without calling startForeground()");
+                Log.d(getTag(), "Starting without calling startForeground()");
                 break;
             default:
-                Log.e(TAG, "Unknown command: " + command);
+                Log.e(getTag(), "Unknown command: " + command);
         }
 
         sendBroadcast(
@@ -133,7 +139,7 @@ public class LocalForegroundService extends LocalService {
 
     @Override
     public void onDestroy() {
-        Log.d(TAG, "service destroyed: " + this + " in " + android.os.Process.myPid());
+        Log.d(getTag(), "service destroyed: " + this + " in " + android.os.Process.myPid());
         super.onDestroy();
     }
 
