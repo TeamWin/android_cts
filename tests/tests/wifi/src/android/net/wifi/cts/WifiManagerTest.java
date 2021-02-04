@@ -952,6 +952,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 assertNull(softApConfig.toWifiConfiguration());
             }
             if (!hasAutomotiveFeature()) {
+                // TODO: b/179557841 check the supported band to determine the assert band.
                 assertEquals(
                         SoftApConfiguration.BAND_2GHZ,
                         callback.reservation.getSoftApConfiguration().getBand());
@@ -1760,6 +1761,24 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         return false;
     }
 
+    private SparseIntArray getAvailableBandAndChannelForTesting(SoftApCapability capability) {
+        final int[] bands = {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ,
+              SoftApConfiguration.BAND_6GHZ, SoftApConfiguration.BAND_60GHZ};
+        SparseIntArray testBandsAndChannels = new SparseIntArray();
+        if (!BuildCompat.isAtLeastS()) {
+            testBandsAndChannels.put(SoftApConfiguration.BAND_2GHZ, 1);
+            return testBandsAndChannels;
+        }
+        for (int band : bands) {
+            int[] supportedList = capability.getSupportedChannelList(band);
+            if (supportedList.length != 0) {
+                testBandsAndChannels.put(band, supportedList[0]);
+            }
+        }
+        return testBandsAndChannels;
+    }
+
+
     /**
      * Test bridged AP enable succeeful when device supports it.
      * Also verify the callback info update correctly.
@@ -1910,7 +1929,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
                     .setAutoShutdownEnabled(true)
                     .setShutdownTimeoutMillis(100000)
-                    .setBand(SoftApConfiguration.BAND_2GHZ | SoftApConfiguration.BAND_5GHZ)
+                    .setBand(getAvailableBandAndChannelForTesting(
+                            callback.getCurrentSoftApCapability()).keyAt(0))
                     .setHiddenSsid(false);
 
             // Test SoftApConfiguration set and get
@@ -1988,10 +2008,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 
+            SparseIntArray testBandsAndChannels = getAvailableBandAndChannelForTesting(
+                    callback.getCurrentSoftApCapability());
+
             if (BuildCompat.isAtLeastS()) {
-                int[] supportedChannelList = callback.getCurrentSoftApCapability()
-                        .getSupportedChannelList(SoftApConfiguration.BAND_2GHZ);
-                assertNotEquals(supportedChannelList.length, 0);
+                assertNotEquals(0, testBandsAndChannels.size());
             }
             boolean isSupportCustomizedMac = callback.getCurrentSoftApCapability()
                     .areFeaturesSupported(
@@ -2001,7 +2022,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             SoftApConfiguration.Builder testSoftApConfigBuilder = new SoftApConfiguration.Builder()
                     .setSsid(TEST_SSID_UNQUOTED)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                    .setChannel(11, SoftApConfiguration.BAND_2GHZ);
+                    .setChannel(testBandsAndChannels.valueAt(0), testBandsAndChannels.keyAt(0));
 
             if (isSupportCustomizedMac) testSoftApConfigBuilder.setBssid(TEST_MAC);
 
@@ -2022,9 +2043,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     "SoftAp channel and state mismatch!!!", 5_000,
                     () -> {
                         executor.runAll();
+                        int sapChannel = ScanResult.convertFrequencyMhzToChannel(
+                                callback.getCurrentSoftApInfo().getFrequency());
                         return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
-                                && (callback.getOnSoftapInfoChangedCalledCount() > 1
-                                ? 2462 == callback.getCurrentSoftApInfo().getFrequency() : true);
+                                && testBandsAndChannels.valueAt(0) == sapChannel;
                     });
             // After Soft Ap enabled, check SoftAp info
             if (isSupportCustomizedMac) {
