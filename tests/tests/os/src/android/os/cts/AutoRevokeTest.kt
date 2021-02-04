@@ -42,10 +42,13 @@ import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
+import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.getEventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
+import com.android.compatibility.common.util.UI_ROOT
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
@@ -332,18 +335,16 @@ class AutoRevokeTest {
                 "permissions", "auto_revoke_unused_threshold_millis2", threshold.toString(), action)
     }
 
-    private fun installApp(apk: String = APK_PATH) {
-        assertThat(runShellCommandOrThrow("pm install -r $apk"), containsString("Success"))
+    private fun installApp() {
+        installApk(APK_PATH)
     }
 
-    private fun uninstallApp(packageName: String = APK_PACKAGE_NAME) {
-        assertThat(runShellCommandOrThrow("pm uninstall $packageName"), containsString("Success"))
+    private fun uninstallApp() {
+        uninstallApp(APK_PACKAGE_NAME)
     }
 
-    private fun startApp(packageName: String = APK_PACKAGE_NAME) {
-        // Don't throw on stderr - command may print a warning if app already running
-        runShellCommand("am start -n $packageName/$packageName.MainActivity")
-        awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
+    private fun startApp() {
+        startApp(APK_PACKAGE_NAME)
     }
 
     private fun goHome() {
@@ -359,17 +360,6 @@ class AutoRevokeTest {
                 runShellCommandOrThrow("am force-stop " + pkg),
                 equalTo(""))
         awaitAppState(pkg, greaterThan(IMPORTANCE_TOP_SLEEPING))
-    }
-
-    private fun awaitAppState(pkg: String, stateMatcher: Matcher<Int>) {
-        eventually {
-            runWithShellPermissionIdentity {
-                val packageImportance = context
-                        .getSystemService(ActivityManager::class.java)!!
-                        .getPackageImportance(pkg)
-                assertThat(packageImportance, stateMatcher)
-            }
-        }
     }
 
     private fun clickPermissionAllow() {
@@ -391,7 +381,7 @@ class AutoRevokeTest {
         packageName: String = APK_PACKAGE_NAME,
         action: () -> Unit
     ) {
-        installApp(apk)
+        installApk(apk)
         try {
             // Try to reduce flakiness caused by new package update not propagating in time
             Thread.sleep(1000)
@@ -432,18 +422,7 @@ class AutoRevokeTest {
 
     private fun getWhitelistToggle(): AccessibilityNodeInfo {
         waitForIdle()
-        return eventually {
-            val ui = instrumentation.uiAutomation.rootInActiveWindow
-            val node = ui.lowestCommonAncestor(
-                    { node -> node.textAsString == "Remove permissions if app isn’t used" },
-                    { node -> node.className == Switch::class.java.name })
-            if (node == null) {
-                ui.depthFirstSearch { it.isScrollable }?.performAction(ACTION_SCROLL_FORWARD)
-            }
-            return@eventually node.assertNotNull {
-                "No auto-revoke whitelist toggle found in\n${uiDump(ui)}"
-            }.depthFirstSearch { node -> node.className == Switch::class.java.name }!!
-        }
+        return waitFindSwitch("Remove permissions if app isn’t used")
     }
 
     private fun waitForIdle() {
@@ -483,27 +462,81 @@ class AutoRevokeTest {
             }
         }
     }
+}
 
-    /**
-     * For some reason waitFindObject sometimes fails to find UI that is present in the view hierarchy
-     */
-    private fun waitFindNode(matcher: Matcher<AccessibilityNodeInfo>): AccessibilityNodeInfo {
-        return eventually {
-            val ui = instrumentation.uiAutomation.rootInActiveWindow
-            ui.depthFirstSearch { node ->
-                matcher.matches(node)
-            }.assertNotNull {
-                "No view found matching $matcher:\n\n${uiDump(ui)}"
-            }
+private fun permissionStateToString(state: Int): String {
+    return constToString<PackageManager>("PERMISSION_", state)
+}
+
+fun waitFindSwitch(label: String): AccessibilityNodeInfo {
+    return getEventually {
+        val ui = UI_ROOT
+        val node = ui.lowestCommonAncestor(
+                { node -> node.textAsString == label },
+                { node -> node.className == Switch::class.java.name })
+        if (node == null) {
+            ui.depthFirstSearch { it.isScrollable }?.performAction(ACTION_SCROLL_FORWARD)
+        }
+        return@getEventually node.assertNotNull {
+            "Switch not found: $label in\n${uiDump(ui)}"
+        }.depthFirstSearch { node -> node.className == Switch::class.java.name }!!
+    }
+}
+
+/**
+ * For some reason waitFindObject sometimes fails to find UI that is present in the view hierarchy
+ */
+fun waitFindNode(matcher: Matcher<AccessibilityNodeInfo>): AccessibilityNodeInfo {
+    return getEventually {
+        val ui = UI_ROOT
+        ui.depthFirstSearch { node ->
+            matcher.matches(node)
+        }.assertNotNull {
+            "No view found matching $matcher:\n\n${uiDump(ui)}"
         }
     }
+}
 
-    private fun byTextIgnoreCase(txt: String): BySelector {
-        return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
+fun byTextIgnoreCase(txt: String): BySelector {
+    return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
+}
+
+fun awaitAppState(pkg: String, stateMatcher: Matcher<Int>) {
+    val context: Context = InstrumentationRegistry.getTargetContext()
+    eventually {
+        runWithShellPermissionIdentity {
+            val packageImportance = context
+                    .getSystemService(ActivityManager::class.java)!!
+                    .getPackageImportance(pkg)
+            assertThat(packageImportance, stateMatcher)
+        }
     }
+}
 
-    private fun permissionStateToString(state: Int): String {
-        return constToString<PackageManager>("PERMISSION_", state)
+fun startApp(packageName: String) {
+    assertThat(
+        runShellCommand("monkey -p $packageName -c android.intent.category.LAUNCHER 1"),
+        containsString("Events injected: 1"))
+    awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
+}
+
+fun uninstallApp(packageName: String) {
+    assertThat(runShellCommandOrThrow("pm uninstall $packageName"), containsString("Success"))
+}
+
+fun installApk(apk: String) {
+    assertThat(runShellCommandOrThrow("pm install -r $apk"), containsString("Success"))
+}
+
+fun assertPermission(packageName: String, permissionName: String, state: Int) {
+    assertThat(permissionName, containsString("permission."))
+    runWithShellPermissionIdentity {
+        assertEquals(
+                permissionStateToString(state),
+                permissionStateToString(
+                        InstrumentationRegistry.getTargetContext()
+                                .packageManager
+                                .checkPermission(permissionName, packageName)))
     }
 }
 

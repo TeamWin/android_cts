@@ -3463,7 +3463,7 @@ public class TelephonyManagerTest {
                 mTelephonyManager, getPolicyHelper);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
                         TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
                         !allowDataDuringVoiceCall));
 
@@ -3472,7 +3472,7 @@ public class TelephonyManagerTest {
                         mTelephonyManager, getPolicyHelper));
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
                         TelephonyManager.MOBILE_DATA_POLICY_DATA_ON_NON_DEFAULT_DURING_VOICE_CALL,
                         allowDataDuringVoiceCall));
 
@@ -3495,7 +3495,7 @@ public class TelephonyManagerTest {
                 mTelephonyManager, getPolicyHelper);
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
                         TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
                         !mmsAlwaysAllowed));
 
@@ -3504,7 +3504,7 @@ public class TelephonyManagerTest {
                         mTelephonyManager, getPolicyHelper));
 
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
-                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabledStatus(
+                mTelephonyManager, (tm) -> tm.setMobileDataPolicyEnabled(
                         TelephonyManager.MOBILE_DATA_POLICY_MMS_ALWAYS_ALLOWED,
                         mmsAlwaysAllowed));
 

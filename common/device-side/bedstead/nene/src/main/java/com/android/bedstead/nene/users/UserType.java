@@ -90,4 +90,14 @@ public final class UserType {
         stringBuilder.append(", maxAllowedPerParent=" + mMutableUserType.mMaxAllowedPerParent);
         return stringBuilder.toString();
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null || !(obj instanceof UserType)) {
+            return false;
+        }
+
+        UserType other = (UserType) obj;
+        return other.name().equals(name());
+    }
 }

@@ -293,6 +293,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         // Launch another task and make sure a configuration change triggers relaunch.
         launchAndWaitForActivity(SECOND_ACTIVITY);
+        separateTestJournal();
+
         final FontScaleSession fontScaleSession = mObjectTracker.manage(new FontScaleSession());
         final Float originalScale = fontScaleSession.get();
         fontScaleSession.set((originalScale == null ? 1f : originalScale) + 0.1f);

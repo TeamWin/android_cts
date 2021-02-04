@@ -3504,24 +3504,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
     }
 
-    /**
-     * Tests {@link WifiManager#getNetworkSuggestionUserApprovalStatus()}. New app just make
-     * suggestion should return pending status.
-     */
-    public void testGetNetworkSuggestionUserApprovalStatus() throws Exception {
-        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
-            return;
-        }
-        WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
-                .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE).build();
-
-        assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
-                mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
-        // New app should be pending approval.
-        assertEquals(WifiManager.STATUS_SUGGESTION_APPROVAL_PENDING,
-                mWifiManager.getNetworkSuggestionUserApprovalStatus());
-    }
-
     // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     public void testIsMultiStaConcurrencySupported() throws Exception {

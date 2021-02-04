@@ -31,11 +31,11 @@ import java.util.Map;
 @TargetApi(Build.VERSION_CODES.O)
 public interface AdbUserParser {
 
-    static AdbUserParser get(int sdkVersion) {
+    static AdbUserParser get(Users users, int sdkVersion) {
         if (sdkVersion >= 30) {
-            return new AdbUserParser30();
+            return new AdbUserParser30(users);
         }
-        return new AdbUserParser26();
+        return new AdbUserParser26(users);
     }
 
     /**

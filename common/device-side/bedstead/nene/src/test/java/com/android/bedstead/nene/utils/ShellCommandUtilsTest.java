@@ -32,6 +32,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.util.function.Function;
+
 @RunWith(JUnit4.class)
 public class ShellCommandUtilsTest {
 
@@ -40,6 +42,8 @@ public class ShellCommandUtilsTest {
     private static final String INVALID_COMMAND_LEGACY_OUTPUT = "pm list-users";
     private static final String INVALID_COMMAND_EXPECTED_LEGACY_OUTPUT = "Unknown command:";
     private static final String INVALID_COMMAND_CORRECT_OUTPUT = "pm set-harmful-app-warning --no";
+    private static final Function<String, Boolean> ALWAYS_PASS_OUTPUT_FILTER = (output) -> true;
+    private static final Function<String, Boolean> ALWAYS_FAIL_OUTPUT_FILTER = (output) -> false;
 
     @Test
     public void executeCommand_returnsOutput() throws Exception {
@@ -60,15 +64,48 @@ public class ShellCommandUtilsTest {
     public void executeCommand_invalidCommand_legacyOutput_preAndroid11_throwsException()
             throws Exception {
         // This is currently still the default behaviour
-        //assumeTrue("Legacy behaviour is only supported before 11", SDK_INT < Build.VERSION_CODES.R);
-        assumeTrue("This command's behaviour changed in Android P", SDK_INT >= Build.VERSION_CODES.P);
+        //assumeTrue("Legacy behaviour is only supported before 11",
+        // SDK_INT < Build.VERSION_CODES.R);
+        assumeTrue("This command's behaviour changed in Android P",
+                SDK_INT >= Build.VERSION_CODES.P);
         assertThat(ShellCommandUtils.executeCommand(INVALID_COMMAND_LEGACY_OUTPUT))
                 .contains(INVALID_COMMAND_EXPECTED_LEGACY_OUTPUT);
+    }
+
+    @Test
+    public void executeCommandAndValidateOutput_outputFilterMatched_returnsOutput()
+            throws Exception {
+        assertThat(
+                ShellCommandUtils.executeCommandAndValidateOutput(
+                        LIST_USERS_COMMAND, ALWAYS_PASS_OUTPUT_FILTER))
+                .isNotNull();
+    }
+
+    @Test
+    public void executeCommandAndValidateOutput_outputFilterNotMatched_throwsException() {
+        assertThrows(AdbException.class,
+                () -> ShellCommandUtils.executeCommandAndValidateOutput(
+                        LIST_USERS_COMMAND, ALWAYS_FAIL_OUTPUT_FILTER));
     }
 
     @Test
     public void executeCommand_invalidCommand_correctOutput_throwsException() {
         assertThrows(AdbException.class,
                 () -> ShellCommandUtils.executeCommand(INVALID_COMMAND_CORRECT_OUTPUT));
+    }
+
+    @Test
+    public void startsWithSuccess_doesStartWithSuccess_returnsTrue() {
+        assertThat(ShellCommandUtils.startsWithSuccess("suCceSs: ...")).isTrue();
+    }
+
+    @Test
+    public void startsWithSuccess_equalsSuccess_returnsTrue() {
+        assertThat(ShellCommandUtils.startsWithSuccess("success")).isTrue();
+    }
+
+    @Test
+    public void startsWithSuccess_doesNotStartWithSuccess_returnsFalse() {
+        assertThat(ShellCommandUtils.startsWithSuccess("not success...")).isFalse();
     }
 }

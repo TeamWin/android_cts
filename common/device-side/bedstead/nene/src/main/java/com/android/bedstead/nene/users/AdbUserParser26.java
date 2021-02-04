@@ -84,6 +84,15 @@ import java.util.Set;
 public class AdbUserParser26 implements AdbUserParser {
     static final int USER_LIST_BASE_INDENTATION = 2;
 
+    private final Users mUsers;
+
+    AdbUserParser26(Users users) {
+        if (users == null) {
+            throw new NullPointerException();
+        }
+        mUsers = users;
+    }
+
     @Override
     public ParseResult parse(String dumpsysUsersOutput) throws AdbParseException {
         ParseResult parseResult = new ParseResult();
@@ -96,7 +105,7 @@ public class AdbUserParser26 implements AdbUserParser {
         Set<String> userStrings = extractUserStrings(usersList);
         Map<Integer, User> users = new HashMap<>();
         for (String userString : userStrings) {
-            User user = new User(parseUser(userString));
+            User user = new User(mUsers, parseUser(userString));
             users.put(user.id(), user);
         }
         return users;

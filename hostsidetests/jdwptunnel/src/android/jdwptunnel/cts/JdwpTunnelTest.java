@@ -26,7 +26,6 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
-
 import com.sun.jdi.Bootstrap;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
@@ -38,13 +37,13 @@ import com.sun.jdi.request.BreakpointRequest;
 import com.sun.jdi.request.ClassPrepareRequest;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
-
+import java.io.*;
+import java.net.Socket;
+import java.time.Instant;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.time.Instant;
-import java.util.Map;
 
 /**
  * Host-side tests for setting up a JDWP connection to an app.
@@ -69,6 +68,8 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
       "android.jdwptunnel.sampleapp.profileable";
     private static final String PROFILEABLE_TEST_APP_ACTIVITY_CLASS_NAME =
       "ProfileableSampleDeviceActivity";
+    private static final String DDMS_TEST_APP_PACKAGE_NAME = "android.jdwptunnel.sampleapp.ddms";
+    private static final String DDMS_TEST_APP_ACTIVITY_CLASS_NAME = "DdmsSampleDeviceActivity";
 
     private ITestDevice mDevice;
 
@@ -76,6 +77,7 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         installPackage("CtsJdwpTunnelDebuggableSampleApp.apk");
         installPackage("CtsJdwpTunnelProfileableSampleApp.apk");
+        installPackage("CtsJdwpTunnelDdmsSampleApp.apk");
         mDevice = getDevice();
     }
 
@@ -117,10 +119,16 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         return port;
     }
 
-    private VirtualMachine startupTest(String packageName, String shortClassName) throws Exception {
+    private String startupForwarding(String packageName, String shortClassName, boolean debug)
+          throws Exception {
         moveToHomeScreen();
-        mDevice.executeShellCommand("cmd activity start-activity -D -W -n " +
-                packageName + "/." + shortClassName);
+        mDevice.executeShellCommand(
+            "cmd activity start-activity "
+                + (debug ? "-D" : "")
+                + " -W -n "
+                + packageName
+                + "/."
+                + shortClassName);
         // Don't keep trying after a minute.
         final Instant deadline = Instant.now().plusSeconds(60);
         String pid = "";
@@ -134,7 +142,11 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
         }
         String port = forwardJdwp(pid);
         assertTrue(!"".equals(port));
-        return getDebuggerConnection(port);
+        return port;
+    }
+
+    private VirtualMachine startupTest(String packageName, String shortClassName) throws Exception {
+      return getDebuggerConnection(startupForwarding(packageName, shortClassName, true));
     }
 
     /**
@@ -255,5 +267,38 @@ public class JdwpTunnelTest extends BaseHostJUnit4Test {
             }
             assertTrue(thrownByGetDebuggerConnection);
         }
+    }
+
+    /**
+     * Tests that we don't get any DDMS messages before the handshake.
+     *
+     * <p>Since DDMS can send asynchronous replies it could race with the JDWP handshake. This could
+     * confuse clients. See bug: 178655046
+     */
+    @Test
+    public void testDdmsWaitsForHandshake() throws DeviceNotAvailableException, Exception {
+        String port =
+            startupForwarding(DDMS_TEST_APP_PACKAGE_NAME, DDMS_TEST_APP_ACTIVITY_CLASS_NAME, false);
+        Socket sock = new Socket("localhost", Integer.decode(port).intValue());
+        OutputStream os = sock.getOutputStream();
+        // Let the test spin a bit. Try to lose any race with the app.
+        Thread.sleep(1000);
+        String handshake = "JDWP-Handshake";
+        byte[] handshake_bytes = handshake.getBytes("US-ASCII");
+        os.write(handshake_bytes);
+        os.flush();
+        InputStream is = sock.getInputStream();
+        // Make sure we get the handshake first.
+        for (byte b : handshake_bytes) {
+            assertEquals(b, is.read());
+        }
+
+        // Don't require anything in particular next since lots of things can send
+        // DDMS packets. Since there is no debugger connection we can assert that
+        // it is a DDMS packet at least by looking for a negative id.
+        // Skip the length
+        is.skip(4);
+        // Data sent big-endian so first byte has sign bit.
+        assertTrue((is.read() & 0x80) == 0x80);
     }
 }
