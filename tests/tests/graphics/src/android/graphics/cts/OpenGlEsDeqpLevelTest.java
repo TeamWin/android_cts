@@ -17,6 +17,7 @@
 package android.graphics.cts;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
@@ -27,6 +28,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -54,12 +56,15 @@ public class OpenGlEsDeqpLevelTest {
 
     @Test
     public void testOpenGlEsDeqpLevel() {
+        assumeTrue(
+                "Test does not apply for vendor image with API level lower than Android 12",
+                PropertyUtil.isVendorApiLevelNewerThan(29));
         if (DEBUG) {
             Log.d(TAG, "Checking whether " + PackageManager.FEATURE_OPENGLES_DEQP_LEVEL
                     + " has an acceptable value");
         }
         assertTrue("Feature " + PackageManager.FEATURE_OPENGLES_DEQP_LEVEL + " must be present "
-                        + "and have at least version " + MINIMUM_OPENGLES_DEQP_LEVEL,
+                + "and have at least version " + MINIMUM_OPENGLES_DEQP_LEVEL,
                 mPm.hasSystemFeature(PackageManager.FEATURE_OPENGLES_DEQP_LEVEL,
                         MINIMUM_OPENGLES_DEQP_LEVEL));
     }
