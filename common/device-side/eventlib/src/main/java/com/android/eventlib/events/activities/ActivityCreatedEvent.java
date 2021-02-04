@@ -16,6 +16,7 @@
 
 package com.android.eventlib.events.activities;
 
+import androidx.annotation.CheckResult;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PersistableBundle;
@@ -23,6 +24,12 @@ import android.os.PersistableBundle;
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
+import com.android.eventlib.info.ActivityInfo;
+import com.android.eventlib.queryhelpers.ActivityQuery;
+import com.android.eventlib.queryhelpers.ActivityQueryHelper;
+import com.android.eventlib.queryhelpers.BundleQueryHelper;
+import com.android.eventlib.queryhelpers.PersistableBundleQuery;
+import com.android.eventlib.queryhelpers.PersistableBundleQueryHelper;
 import com.android.eventlib.util.SerializableParcelWrapper;
 
 /**
@@ -38,52 +45,40 @@ public final class ActivityCreatedEvent extends Event {
 
     public static final class ActivityCreatedEventQuery
             extends EventLogsQuery<ActivityCreatedEvent, ActivityCreatedEventQuery> {
-        String mName;
-        String mSimpleName;
-        SerializableParcelWrapper<Bundle> mSavedInstanceState;
-        SerializableParcelWrapper<PersistableBundle> mPersistentState;
+        ActivityQueryHelper<ActivityCreatedEventQuery> mActivity = new ActivityQueryHelper<>(this);
+        BundleQueryHelper<ActivityCreatedEventQuery> mSavedInstanceState =
+                new BundleQueryHelper<>(this);
+        PersistableBundleQueryHelper<ActivityCreatedEventQuery> mPersistentState =
+                new PersistableBundleQueryHelper<>(this);
 
         private ActivityCreatedEventQuery(String packageName) {
             super(ActivityCreatedEvent.class, packageName);
         }
 
-        public ActivityCreatedEventQuery withSavedInstanceState(Bundle savedInstanceState) {
-            mSavedInstanceState = new SerializableParcelWrapper<>(savedInstanceState);
-            return this;
+        @CheckResult
+        public BundleQueryHelper<ActivityCreatedEventQuery> whereSavedInstanceState() {
+            return mSavedInstanceState;
         }
 
-        public ActivityCreatedEventQuery withPersistentState(PersistableBundle persistentState) {
-            mPersistentState = new SerializableParcelWrapper<>(persistentState);
-            return this;
+        @CheckResult
+        public PersistableBundleQuery<ActivityCreatedEventQuery> wherePersistentState() {
+            return mPersistentState;
         }
 
-        public ActivityCreatedEventQuery withActivityClass(Class<?> clazz) {
-            return withActivityName(clazz.getName());
-        }
-
-        public ActivityCreatedEventQuery withActivityName(String name) {
-            mName = name;
-            return this;
-        }
-
-        public ActivityCreatedEventQuery withActivitySimpleName(String simpleName) {
-            mSimpleName = simpleName;
-            return this;
+        @CheckResult
+        public ActivityQuery<ActivityCreatedEventQuery> whereActivity() {
+            return mActivity;
         }
 
         @Override
         protected boolean filter(ActivityCreatedEvent event) {
-            if (mSavedInstanceState != null
-                    && !mSavedInstanceState.equals(event.mSavedInstanceState)) {
+            if (!mSavedInstanceState.matches(event.mSavedInstanceState)) {
                 return false;
             }
-            if (mPersistentState != null && !mPersistentState.equals(event.mPersistentState)) {
+            if (!mPersistentState.matches(event.mPersistentState)) {
                 return false;
             }
-            if (mName != null && !mName.equals(event.mName)) {
-                return false;
-            }
-            if (mSimpleName != null && !mSimpleName.equals(event.mSimpleName)) {
+            if (!mActivity.matches(event.mActivity)) {
                 return false;
             }
             return true;
@@ -99,19 +94,21 @@ public final class ActivityCreatedEvent extends Event {
         private ActivityCreatedEventLogger(Activity activity, Bundle savedInstanceState) {
             super(activity, new ActivityCreatedEvent());
             mEvent.mSavedInstanceState = new SerializableParcelWrapper<>(savedInstanceState);
-            setName(activity.getClass().getName());
-            setSimpleName(activity.getClass().getSimpleName());
-            // TODO(scottjonathan): Add more information about the activity (e.g. parse the
-            //  manifest)
+            setActivity(activity);
         }
 
-        public ActivityCreatedEventLogger setName(String name) {
-            mEvent.mName = name;
+        public ActivityCreatedEventLogger setActivity(Activity activity) {
+            mEvent.mActivity = new ActivityInfo(activity);
             return this;
         }
 
-        public ActivityCreatedEventLogger setSimpleName(String simpleName) {
-            mEvent.mSimpleName = simpleName;
+        public ActivityCreatedEventLogger setActivity(Class<? extends Activity> activityClass) {
+            mEvent.mActivity = new ActivityInfo(activityClass);
+            return this;
+        }
+
+        public ActivityCreatedEventLogger setActivity(String activityClassName) {
+            mEvent.mActivity = new ActivityInfo(activityClassName);
             return this;
         }
 
@@ -128,8 +125,7 @@ public final class ActivityCreatedEvent extends Event {
 
     protected SerializableParcelWrapper<Bundle> mSavedInstanceState;
     protected SerializableParcelWrapper<PersistableBundle> mPersistentState;
-    protected String mName;
-    protected String mSimpleName;
+    protected ActivityInfo mActivity;
 
     public Bundle savedInstanceState() {
         if (mSavedInstanceState == null) {
@@ -145,12 +141,8 @@ public final class ActivityCreatedEvent extends Event {
         return mPersistentState.get();
     }
 
-    public String name() {
-        return mName;
-    }
-
-    public String simpleName() {
-        return mSimpleName;
+    public ActivityInfo activity() {
+        return mActivity;
     }
 
     @Override
@@ -158,8 +150,7 @@ public final class ActivityCreatedEvent extends Event {
         return "ActivityCreatedEvent{" +
                 " savedInstanceState=" + savedInstanceState() +
                 ", persistentState=" + persistentState() +
-                ", name=" + mName +
-                ", simpleName=" + mSimpleName +
+                ", activity=" + mActivity +
                 ", mPackageName='" + mPackageName + '\'' +
                 ", mTimestamp=" + mTimestamp +
                 '}';

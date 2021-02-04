@@ -28,19 +28,9 @@ import com.android.eventlib.events.activities.ActivityCreatedEvent;
 public class EventLibActivity extends Activity {
 
     private String mOverrideActivityClassName;
-    private String mOverrideActivitySimpleName;
 
     public void setOverrideActivityClassName(String overrideActivityClassName) {
         mOverrideActivityClassName = overrideActivityClassName;
-        mOverrideActivitySimpleName = getSimpleName(overrideActivityClassName);
-    }
-
-    private static String getSimpleName(String name) {
-        final int dot = name.lastIndexOf(".");
-        if (dot > 0) {
-            return name.substring(name.lastIndexOf(".")+1); // strip the package name
-        }
-        return name;
     }
 
     /** Log a {@link ActivityCreatedEvent}. */
@@ -63,8 +53,7 @@ public class EventLibActivity extends Activity {
                         .setPersistentState(persistentState);
 
         if (mOverrideActivityClassName != null) {
-            logger.setName(mOverrideActivityClassName)
-                    .setSimpleName(mOverrideActivitySimpleName);
+            logger.setActivity(mOverrideActivityClassName);
         }
 
         logger.log();

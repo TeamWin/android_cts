@@ -16,11 +16,16 @@
 
 package com.android.eventlib.events;
 
+import androidx.annotation.CheckResult;
 import android.content.Context;
 
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
 import com.android.eventlib.EventLogsQuery;
+import com.android.eventlib.queryhelpers.SerializableQuery;
+import com.android.eventlib.queryhelpers.SerializableQueryHelper;
+import com.android.eventlib.queryhelpers.StringQuery;
+import com.android.eventlib.queryhelpers.StringQueryHelper;
 
 import java.io.Serializable;
 
@@ -39,31 +44,31 @@ public final class CustomEvent extends Event {
 
     public static final class CustomEventQuery
             extends EventLogsQuery<CustomEvent, CustomEventQuery> {
-        String mTag = null;
-        Serializable mData = null;
+        StringQueryHelper<CustomEventQuery> mTag = new StringQueryHelper<>(this);
+        SerializableQueryHelper<CustomEventQuery> mData = new SerializableQueryHelper<>(this);
 
         private CustomEventQuery(String packageName) {
             super(CustomEvent.class, packageName);
         }
 
         /** Filter for a particular {@link CustomEvent#tag()}. */
-        public CustomEventQuery withTag(String tag) {
-            mTag = tag;
-            return this;
+        @CheckResult
+        public StringQuery<CustomEventQuery> whereTag() {
+            return mTag;
         }
 
         /** Filter for a particular {@link CustomEvent#data()}. */
-        public CustomEventQuery withData(Serializable data) {
-            mData = data;
-            return this;
+        @CheckResult
+        public SerializableQuery<CustomEventQuery> whereData() {
+            return mData;
         }
 
         @Override
         protected boolean filter(CustomEvent event) {
-            if (mTag != null && !mTag.equals(event.mTag)) {
+            if (!mTag.matches(event.mTag)) {
                 return false;
             }
-            if (mData != null && !mData.equals(event.mData)) {
+            if (!mData.matches(event.mData)) {
                 return false;
             }
             return true;
