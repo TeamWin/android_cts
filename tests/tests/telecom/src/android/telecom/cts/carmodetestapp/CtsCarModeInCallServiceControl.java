@@ -55,12 +55,18 @@ public class CtsCarModeInCallServiceControl extends Service {
 
         @Override
         public void disconnectCalls() {
-            CtsCarModeInCallService.getInstance().disconnectCalls();
+            if (CtsCarModeInCallService.getInstance() != null) {
+                CtsCarModeInCallService.getInstance().disconnectCalls();
+            }
         }
 
         @Override
         public int getCallCount() {
-            return CtsCarModeInCallService.getInstance().getCallCount();
+            if (CtsCarModeInCallService.getInstance() != null) {
+                return CtsCarModeInCallService.getInstance().getCallCount();
+            }
+            // if there's no instance, there's no calls
+            return 0;
         }
 
         @Override
