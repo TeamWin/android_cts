@@ -36,6 +36,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -381,7 +382,9 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
      * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
      *
      * Verifies that the external scorer works even after wifi restart.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testSetWifiConnectedNetworkScorerOnSubsystemRestart() throws Exception {
         CountDownLatch countDownLatchScorer = new CountDownLatch(1);

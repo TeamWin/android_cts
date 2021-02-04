@@ -64,8 +64,6 @@ public class ThemeHostTest extends DeviceTestCase {
 
     private static final String CLEAR_GENERATED_CMD = "rm -rf %s/*.png";
     private static final String STOP_CMD = String.format("am force-stop %s", APP_PACKAGE_NAME);
-    private static final String DENSITY_PROP_DEVICE = "ro.sf.lcd_density";
-    private static final String DENSITY_PROP_EMULATOR = "qemu.sf.lcd_density";
 
     /** Shell command used to obtain current device density. */
     private static final String WM_DENSITY = "wm density";
@@ -292,13 +290,13 @@ public class ThemeHostTest extends DeviceTestCase {
     }
 
     private static int getDensityForDevice(ITestDevice device) throws DeviceNotAvailableException {
-        final String densityProp;
-        if (isEmulator(device)) {
-            densityProp = DENSITY_PROP_EMULATOR;
-        } else {
-            densityProp = DENSITY_PROP_DEVICE;
+        final String output = device.executeShellCommand(WM_DENSITY);
+        final Pattern p = Pattern.compile("Physical density: (\\d+)");
+        final Matcher m = p.matcher(output);
+        if (m.find()) {
+            return Integer.parseInt(m.group(1));
         }
-        return Integer.parseInt(device.getProperty(densityProp));
+        throw new RuntimeException("Failed to detect device density");
     }
 
     private boolean checkHardwareTypeSkipTest() {
