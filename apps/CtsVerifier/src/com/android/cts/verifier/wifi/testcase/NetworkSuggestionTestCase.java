@@ -168,9 +168,10 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
             mCountDownLatch = countDownLatch;
         }
         @Override
-        public void onUserApprovalStatusChange() {
-            mUserApprovedStatus = mWifiManager.getNetworkSuggestionUserApprovalStatus();
-            if (mUserApprovedStatus == WifiManager.STATUS_SUGGESTION_APPROVAL_PENDING) {
+        public void onUserApprovalStatusChange(int status) {
+            mUserApprovedStatus = status;
+            if (status == WifiManager.STATUS_SUGGESTION_APPROVAL_PENDING
+                    || status == WifiManager.STATUS_SUGGESTION_APPROVAL_UNKNOWN) {
                 return;
             }
             mCountDownLatch.countDown();
@@ -242,17 +243,11 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
 
         final CountDownLatch userApprovalCountDownLatch = new CountDownLatch(1);
         if (BuildCompat.isAtLeastS()) {
-            mUserApprovedStatus = mWifiManager.getNetworkSuggestionUserApprovalStatus();
-            if (mUserApprovedStatus != WifiManager.STATUS_SUGGESTION_APPROVAL_APPROVED_BY_USER) {
-                mUserApprovalStatusListener = new UserApprovalStatusListener(
-                        userApprovalCountDownLatch);
-                if (!mWifiManager.addSuggestionUserApprovalStatusListener(
-                        Executors.newSingleThreadExecutor(), mUserApprovalStatusListener)) {
-                    setFailureReason(mContext.getString(R.string
-                            .wifi_status_suggestion_add_user_approval_status_listener_failure));
-                    return false;
-                }
-            }
+            mUserApprovalStatusListener = new UserApprovalStatusListener(
+                    userApprovalCountDownLatch);
+            mWifiManager.addSuggestionUserApprovalStatusListener(
+                    Executors.newSingleThreadExecutor(), mUserApprovalStatusListener);
+
         }
 
         // Step: Register network callback to wait for connection state.
@@ -280,18 +275,15 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
                 mListener.onTestMsgReceived(mContext.getString(
                         R.string.wifi_status_suggestion_wait_for_user_approval));
             }
-            if (mUserApprovalStatusListener != null) {
-                if (!userApprovalCountDownLatch.await(CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-                    setFailureReason(mContext.getString(
-                            R.string.wifi_status_suggestion_user_approval_status_failure));
-                    return false;
-                }
-                if (mUserApprovedStatus
-                        != WifiManager.STATUS_SUGGESTION_APPROVAL_APPROVED_BY_USER) {
-                    setFailureReason(mContext.getString(
-                            R.string.wifi_status_suggestion_user_approve_failure));
-                    return false;
-                }
+            if (!userApprovalCountDownLatch.await(CALLBACK_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_user_approval_status_failure));
+                return false;
+            }
+            if (mUserApprovedStatus != WifiManager.STATUS_SUGGESTION_APPROVAL_APPROVED_BY_USER) {
+                setFailureReason(mContext.getString(
+                        R.string.wifi_status_suggestion_user_approve_failure));
+                return false;
             }
         } else {
             mListener.onTestMsgReceived(mContext.getString(
