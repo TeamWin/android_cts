@@ -22,6 +22,7 @@ import android.cts.statsdatom.lib.AtomTestUtils;
 import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.internal.os.StatsdConfigProto;
 import com.android.os.AtomsProto;
@@ -34,6 +35,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.util.Collections;
 import java.util.List;
 
+@AppModeFull(reason = "Flaky in Instant mode")
 public class StatsdNotificationAtomTest extends DeviceTestCase implements IBuildReceiver {
     private static final String NOTIFICATION_TEST_APK = "CtsSystemUiDeviceApp.apk";
     private static final String NOTIFICATION_TEST_PKG = "android.systemui.cts";

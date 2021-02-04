@@ -154,7 +154,7 @@ public class EventLogsTest {
     @Test
     public void get_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get()).isNull();
     }
@@ -162,7 +162,7 @@ public class EventLogsTest {
     @Test
     public void get_differentPackage_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get()).isNull();
     }
@@ -170,7 +170,7 @@ public class EventLogsTest {
     @Test
     public void next_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next()).isNull();
     }
@@ -178,7 +178,7 @@ public class EventLogsTest {
     @Test
     public void next_differentPackage_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next()).isNull();
     }
@@ -186,7 +186,7 @@ public class EventLogsTest {
     @Test
     public void poll_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
     }
@@ -194,7 +194,7 @@ public class EventLogsTest {
     @Test
     public void poll_loggedAfter_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecond();
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
@@ -203,7 +203,7 @@ public class EventLogsTest {
     @Test
     public void poll_differentPackage_nothingLogged_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
     }
@@ -211,7 +211,7 @@ public class EventLogsTest {
     @Test
     public void poll_differentPackage_loggedAfter_returnsNull() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecondOnTestApp();
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
@@ -223,7 +223,7 @@ public class EventLogsTest {
         CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_2);
     }
@@ -234,7 +234,7 @@ public class EventLogsTest {
         CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
     }
@@ -245,7 +245,7 @@ public class EventLogsTest {
         CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
     }
@@ -257,7 +257,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get()).isNotNull();
     }
@@ -283,7 +283,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_1);
     }
@@ -294,7 +294,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_1);
     }
@@ -311,7 +311,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_1);
     }
@@ -322,7 +322,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_1);
     }
@@ -333,7 +333,7 @@ public class EventLogsTest {
                 .setTag(TEST_TAG1)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.next()).isNull();
@@ -343,7 +343,7 @@ public class EventLogsTest {
     public void next_differentPackage_hasReturnedAllEvents_returnsNull() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.next()).isNull();
@@ -355,7 +355,7 @@ public class EventLogsTest {
                 .setTag(TEST_TAG1)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
@@ -365,7 +365,7 @@ public class EventLogsTest {
     public void poll_differentPackage_hasReturnedAllEvents_returnsNull() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
@@ -382,7 +382,7 @@ public class EventLogsTest {
                 .setData(DATA_2)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
@@ -393,7 +393,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
@@ -410,7 +410,7 @@ public class EventLogsTest {
                 .setData(DATA_2)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
@@ -421,7 +421,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
@@ -438,7 +438,7 @@ public class EventLogsTest {
                 .setData(DATA_2)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
@@ -449,7 +449,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
@@ -466,7 +466,7 @@ public class EventLogsTest {
                 .setData(DATA_2)
                 .log();
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
@@ -477,7 +477,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_2);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
@@ -493,7 +493,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
     }
@@ -504,7 +504,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
     }
@@ -519,7 +519,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
     }
@@ -530,7 +530,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
     }
@@ -545,7 +545,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG1);
     }
@@ -555,7 +555,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG2, /* data= */ null);
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG1);
     }
@@ -647,7 +647,7 @@ public class EventLogsTest {
     @Test
     public void poll_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
@@ -663,7 +663,7 @@ public class EventLogsTest {
     @Test
     public void poll_differentPackage_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
@@ -970,7 +970,7 @@ public class EventLogsTest {
                 .log();
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
     }
@@ -980,7 +980,7 @@ public class EventLogsTest {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
 
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
     }
@@ -988,7 +988,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_noEvent_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
     }
@@ -996,7 +996,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_loggedAfter_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecond();
 
         assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
@@ -1005,7 +1005,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_differentPackage_noEvent_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
     }
@@ -1013,7 +1013,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_differentPackage_loggedAfter_throwsException() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecondOnTestApp();
 
         assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
@@ -1022,7 +1022,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
@@ -1038,7 +1038,7 @@ public class EventLogsTest {
     @Test
     public void pollOrFail_differentPackage_loggedAfter_returnsEvent() {
         EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(TEST_TAG1);
+                .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
@@ -1204,8 +1204,8 @@ public class EventLogsTest {
         CONTEXT.startActivityAsUser(intent, userHandle);
 
         CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                .withTag(tag)
-                .withData(data)
+                .whereTag().isEqualTo(tag)
+                .whereData().isEqualTo(data)
                 .onUser(userHandle)
                 .pollOrFail();
     }

@@ -56,6 +56,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -151,7 +152,8 @@ public class SearchUiManagerTest {
         mClient.query(query, Executors.newSingleThreadExecutor(), callbackVerifier);
     }
 
-    @Test
+    // flaky: 8 failure out of 100
+    @Ignore
     public void testQuery_mockCallback() {
         List<SearchTarget> targets = SearchUiUtils.generateSearchTargetList(2);
         Query query = SearchUiUtils.generateQuery();
