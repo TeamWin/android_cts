@@ -1,6 +1,17 @@
-# BEGIN-CR-2021
-"""CameraITS test to check solid color test pattern generation."""
-# END-CR-2021
+# Copyright 2021 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import os
 
@@ -65,7 +76,7 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
     4: PN9
   """
 
-  def test_solid_color_test_patterns(self):
+  def test_solid_color_test_pattern(self):
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
