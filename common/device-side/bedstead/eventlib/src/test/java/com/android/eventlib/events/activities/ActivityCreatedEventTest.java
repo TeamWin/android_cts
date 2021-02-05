@@ -44,8 +44,7 @@ public final class ActivityCreatedEventTest {
     private final Bundle mSavedInstanceState = new Bundle();
     private final PersistableBundle mPersistentState = new PersistableBundle();
 
-    private final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
-
+    private static final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
     private static final String CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName";
     private static final String DIFFERENT_CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName2";
 

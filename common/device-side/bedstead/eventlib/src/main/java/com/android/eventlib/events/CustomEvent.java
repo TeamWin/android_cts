@@ -16,8 +16,9 @@
 
 package com.android.eventlib.events;
 
-import androidx.annotation.CheckResult;
 import android.content.Context;
+
+import androidx.annotation.CheckResult;
 
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
@@ -113,12 +114,12 @@ public final class CustomEvent extends Event {
 
     @Override
     public String toString() {
-        return "CustomEvent{" +
-                "mTag='" + mTag + '\'' +
-                ", mData=" + mData +
-                ", mPackageName='" + mPackageName + '\'' +
-                ", mTimestamp=" + mTimestamp +
-                '}';
+        return "CustomEvent{"
+                + "tag='" + mTag + "'"
+                + ", data=" + mData
+                + ", packageName='" + mPackageName + "'"
+                + ", timestamp=" + mTimestamp
+                + "}";
     }
 }
 
