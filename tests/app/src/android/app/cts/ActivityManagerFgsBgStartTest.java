@@ -18,8 +18,8 @@ package android.app.cts;
 
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
-import static android.app.BroadcastOptions.TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_ALLOWED;
-import static android.app.BroadcastOptions.TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED;
+import static android.os.PowerWhitelistManager.TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED;
+import static android.os.PowerWhitelistManager.TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED;
 
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
@@ -1075,8 +1075,8 @@ public class ActivityManagerFgsBgStartTest {
      */
     @Test
     public void testTempAllowListType() throws Exception {
-        testTempAllowListTypeInternal(TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
-        testTempAllowListTypeInternal(TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_ALLOWED);
+        testTempAllowListTypeInternal(TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED);
+        testTempAllowListTypeInternal(TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED);
     }
 
     private void testTempAllowListTypeInternal(int type) throws Exception {
@@ -1119,7 +1119,7 @@ public class ActivityManagerFgsBgStartTest {
                         PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null,
                         options.toBundle());
             });
-            if (type == TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_ALLOWED) {
+            if (type == TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_ALLOWED) {
                 uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
                 waiter.doWait(WAITFOR_MSEC);
                 // Stop the FGS.
@@ -1128,7 +1128,7 @@ public class ActivityManagerFgsBgStartTest {
                         PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
                 uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                         WatchUidRunner.STATE_CACHED_EMPTY);
-            } else if (type == TEMPORARY_WHITELIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED) {
+            } else if (type == TEMPORARY_ALLOWLIST_TYPE_FOREGROUND_SERVICE_NOT_ALLOWED) {
                 // APP1 does not enter FGS state
                 try {
                     waiter.doWait(WAITFOR_MSEC);

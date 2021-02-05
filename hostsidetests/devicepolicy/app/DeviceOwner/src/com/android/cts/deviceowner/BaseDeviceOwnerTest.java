@@ -28,7 +28,7 @@ import android.test.AndroidTestCase;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.cts.devicepolicy.DevicePolicyManagerWrapper;
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 
 /**
  * Base class for device-owner based tests.

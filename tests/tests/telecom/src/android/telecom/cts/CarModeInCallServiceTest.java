@@ -72,6 +72,10 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
+        disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
+        disableAndVerifyCarMode(mCarModeIncallServiceControlTwo, Configuration.UI_MODE_TYPE_NORMAL);
+        disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+        disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
 
         if (mCarModeIncallServiceControlOne != null) {
             mCarModeIncallServiceControlOne.reset();

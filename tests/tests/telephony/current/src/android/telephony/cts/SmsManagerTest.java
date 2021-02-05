@@ -133,7 +133,7 @@ public class SmsManagerTest {
     private static boolean sHasShellPermissionIdentity = false;
     private static long sMessageId = 0L;
 
-    private static final int TIME_OUT = 1000 * 60 * 4;
+    private static final int TIME_OUT = 1000 * 60 * 10;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
 
     @Before
@@ -347,7 +347,7 @@ public class SmsManagerTest {
         }
     }
 
-    @Test
+    @Test(timeout = 10 * 60 * 1000)
     public void testSendAndReceiveMessages() throws Exception {
         assertFalse("[RERUN] SIM card does not provide phone number. Use a suitable SIM Card.",
                 TextUtils.isEmpty(mDestAddr));

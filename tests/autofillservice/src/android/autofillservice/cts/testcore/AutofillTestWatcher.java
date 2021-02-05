@@ -155,7 +155,7 @@ public final class AutofillTestWatcher extends TestWatcher {
             for (AbstractAutoFillActivity activity : sAllActivities) {
                 Log.d(TAG, "Waiting for " + activity);
                 try {
-                    activity.waintUntilDestroyed(Timeouts.ACTIVITY_RESURRECTION);
+                    activity.waitUntilDestroyed(Timeouts.ACTIVITY_RESURRECTION);
                 } catch (InterruptedException e) {
                     Log.e(TAG, "interrupted waiting for " + activity + " to be destroyed");
                     Thread.currentThread().interrupt();
