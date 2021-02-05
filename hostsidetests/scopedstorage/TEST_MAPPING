@@ -5,7 +5,9 @@
     },
     {
       "name": "CtsScopedStorageHostTest"
-    },
+    }
+  ],
+  "presubmit-large": [
     {
       "name": "CtsScopedStoragePublicVolumeHostTest"
     },
