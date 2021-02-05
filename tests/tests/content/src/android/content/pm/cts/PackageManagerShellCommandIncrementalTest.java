@@ -33,6 +33,7 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
@@ -43,6 +44,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -88,6 +90,10 @@ public class PackageManagerShellCommandIncrementalTest {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 
+    private static Context getContext() {
+        return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
     @Before
     public void onBefore() throws Exception {
         checkIncrementalDeliveryFeature();
@@ -100,9 +106,23 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     private void checkIncrementalDeliveryFeature() throws Exception {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        Assume.assumeTrue(context.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INCREMENTAL_DELIVERY));
+        Assume.assumeTrue(getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION));
+    }
+
+    private void checkIncrementalDeliveryV2Feature() throws Exception {
+        checkIncrementalDeliveryFeature();
+        Assume.assumeTrue(getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION, 2));
+    }
+
+    @Test
+    public void testAndroid12RequiresIncFsV2() throws Exception {
+        final boolean v2Required = (SystemProperties.getInt("ro.product.first_api_level", 0) > 30);
+        if (v2Required) {
+            Assert.assertTrue(getContext().getPackageManager().hasSystemFeature(
+                    PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION, 2));
+        }
     }
 
     @Test
@@ -112,7 +132,6 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(stateListenerResult.await());
         assertTrue(isAppInstalled(TEST_APP_PACKAGE));
     }
-
 
     @Test
     public void testSplitInstallWithIdSig() throws Exception {
@@ -207,6 +226,7 @@ public class PackageManagerShellCommandIncrementalTest {
     @Test
     @Ignore("flaky in the lab")
     public void testInstallWithIdSigStreamPerUidTimeoutsIncompleteData() throws Exception {
+        checkIncrementalDeliveryV2Feature();
         executeShellCommand("atrace --async_start -b 1024 -c adb");
         try {
             setDeviceProperty("incfs_default_timeouts", "5000000:5000000:5000000");
