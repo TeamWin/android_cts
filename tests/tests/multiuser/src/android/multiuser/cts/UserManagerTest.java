@@ -16,19 +16,35 @@
 
 package android.multiuser.cts;
 
-import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.app.Instrumentation;
 import android.content.Context;
 import android.os.UserManager;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 @RunWith(JUnit4.class)
-public class UserManagerTest {
+public final class UserManagerTest {
+
+    private final Instrumentation mInstrumentation = InstrumentationRegistry.getInstrumentation();
+    private final Context mContext = mInstrumentation.getContext();
+
+    private UserManager mUserManager;
+
+    @Before
+    public void setTestFixtures() {
+        mUserManager = mContext.getSystemService(UserManager.class);
+
+        assertWithMessage("UserManager service").that(mUserManager).isNotNull();
+    }
 
     /**
      * Verify that the isUserAGoat() method always returns false for API level 30. This is
@@ -36,8 +52,14 @@ public class UserManagerTest {
      */
     @Test
     public void testUserGoat_api30() {
-        final Context context = getInstrumentation().getContext();
-        assertFalse("isUserAGoat() should return false",
-                context.getSystemService(UserManager.class).isUserAGoat());
+        assertWithMessage("isUserAGoat()").that(mUserManager.isUserAGoat()).isFalse();
+    }
+
+    @Test
+    public void testIsHeadlessSystemUserMode() throws Exception {
+        boolean expected = getBooleanProperty(mInstrumentation,
+                "ro.fw.mu.headless_system_user");
+        assertWithMessage("isHeadlessSystemUserMode()")
+                .that(mUserManager.isHeadlessSystemUserMode()).isEqualTo(expected);
     }
 }
