@@ -36,6 +36,7 @@ import android.os.Parcelable;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.ArrayMap;
+import android.util.ArraySet;
 import android.util.DebugUtils;
 import android.util.Log;
 
@@ -47,12 +48,14 @@ import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -82,11 +85,16 @@ public final class DevicePolicyManagerWrapper {
     private static final String TYPE_BOOLEAN = "boolean";
     private static final String TYPE_INT = "int";
     private static final String TYPE_LONG = "long";
-    private static final String TYPE_STRING = "string";
+    private static final String TYPE_BYTE_ARRAY = "byte_array";
+    private static final String TYPE_STRING_OR_CHAR_SEQUENCE = "string";
     private static final String TYPE_PARCELABLE = "parcelable";
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
     private static final String TYPE_ARRAY_LIST_PARCELABLE = "array_list_parcelable";
+    private static final String TYPE_SET_STRING = "set_string";
+    // Used when a method is called passing a null argument - the proper method will have to be
+    // infered using findMethod()
+    private static final String TYPE_NULL = "null";
 
     public static final int RESULT_OK = 42;
     public static final int RESULT_EXCEPTION = 666;
@@ -192,7 +200,8 @@ public final class DevicePolicyManagerWrapper {
                 case RESULT_OK:
                     return result.value;
                 case RESULT_EXCEPTION:
-                    throw (Exception) result.value;
+                    Exception e = (Exception) result.value;
+                    throw (e instanceof InvocationTargetException) ? e.getCause() : e;
                 default:
                     fail("Received invalid result: %s", result);
                     return null;
@@ -270,7 +279,7 @@ public final class DevicePolicyManagerWrapper {
                         + Arrays.toString(parameterTypes));
 
             }
-            Method method = DevicePolicyManager.class.getDeclaredMethod(methodName, parameterTypes);
+            Method method = findMethod(methodName, parameterTypes);
             if (method == null) {
                 sendError(receiver, new IllegalArgumentException(
                         "Could not find method " + methodName + " using reflection"));
@@ -283,6 +292,61 @@ public final class DevicePolicyManagerWrapper {
             sendError(receiver, e);
         }
         return;
+    }
+
+    @Nullable
+    private static Method findMethod(String methodName, Class<?>[] parameterTypes)
+            throws NoSuchMethodException {
+        // Handle some special cases first...
+
+        // Methods that use CharSequence instead of String
+        if (methodName.equals("wipeData") && parameterTypes.length == 2) {
+            // wipeData() takes a CharSequence, but it's wrapped as String
+            return DevicePolicyManager.class.getDeclaredMethod(methodName,
+                    new Class<?>[] { int.class, CharSequence.class });
+        }
+
+        // Calls with null parameters (and hence the type cannot be inferred)
+        Method method = findMethodWithNullParameterCall(methodName, parameterTypes);
+        if (method != null) return method;
+
+        // ...otherwise return exactly what as asked
+        return DevicePolicyManager.class.getDeclaredMethod(methodName, parameterTypes);
+    }
+
+    @Nullable
+    private static Method findMethodWithNullParameterCall(String methodName,
+            Class<?>[] parameterTypes) {
+        if (parameterTypes == null) return null;
+
+        boolean hasNullParameter = false;
+        for (int i = 0; i < parameterTypes.length; i++) {
+            if (parameterTypes[i] == null) {
+                if (VERBOSE) {
+                    Log.v(TAG, "Found null parameter at index " + i + " of " + methodName);
+                }
+                hasNullParameter = true;
+                break;
+            }
+        }
+        if (!hasNullParameter) return null;
+
+        Method method = null;
+        for (Method candidate : DevicePolicyManager.class.getDeclaredMethods()) {
+            if (candidate.getName().equals(methodName)) {
+                if (method != null) {
+                    // TODO: figure out how to solve this scenario if it happen (most likely it will
+                    // need to use the non-null types and/or length of types to infer the right one
+                    Log.e(TAG, "found another method (" + candidate + ") for " + methodName
+                            + ", but will use " + method);
+                } else {
+                    method = candidate;
+                    Log.d(TAG, "using method " + method + " for " + methodName
+                            + " with null arguments");
+                }
+            }
+        }
+        return method;
     }
 
     /**
@@ -346,32 +410,43 @@ public final class DevicePolicyManagerWrapper {
             Log.v(TAG, "addArg(" + index + "): typeName= " + extraTypeName
                     + ", valueName= " + extraValueName);
         }
+        if (value == null) {
+            logMarshalling("Adding Null", index, extraTypeName, TYPE_NULL, extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_NULL);
+            return;
+
+        }
         if ((value instanceof Boolean)) {
-            logMarshalling("Adding Boolean", index, extraTypeName, TYPE_BOOLEAN,
-                    extraValueName, value);
+            logMarshalling("Adding Boolean", index, extraTypeName, TYPE_BOOLEAN, extraValueName,
+                    value);
             intent.putExtra(extraTypeName, TYPE_BOOLEAN);
             intent.putExtra(extraValueName, ((Boolean) value).booleanValue());
             return;
         }
         if ((value instanceof Integer)) {
-            logMarshalling("Adding Integer", index, extraTypeName, TYPE_INT,
-                    extraValueName, value);
+            logMarshalling("Adding Integer", index, extraTypeName, TYPE_INT, extraValueName, value);
             intent.putExtra(extraTypeName, TYPE_INT);
             intent.putExtra(extraValueName, ((Integer) value).intValue());
             return;
         }
         if ((value instanceof Long)) {
-            logMarshalling("Adding Long", index, extraTypeName, TYPE_LONG,
-                    extraValueName, value);
+            logMarshalling("Adding Long", index, extraTypeName, TYPE_LONG, extraValueName, value);
             intent.putExtra(extraTypeName, TYPE_LONG);
             intent.putExtra(extraValueName, ((Long) value).longValue());
             return;
         }
-        if ((value instanceof String)) {
-            logMarshalling("Adding String", index, extraTypeName, TYPE_STRING,
-                    extraValueName, value);
-            intent.putExtra(extraTypeName, TYPE_STRING);
-            intent.putExtra(extraValueName, (String) value);
+        if ((value instanceof byte[])) {
+            logMarshalling("Adding Byte[]", index, extraTypeName, TYPE_BYTE_ARRAY, extraValueName,
+                    value);
+            intent.putExtra(extraTypeName, TYPE_BYTE_ARRAY);
+            intent.putExtra(extraValueName, (byte[]) value);
+            return;
+        }
+        if ((value instanceof CharSequence)) {
+            logMarshalling("Adding CharSequence", index, extraTypeName,
+                    TYPE_STRING_OR_CHAR_SEQUENCE, extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_STRING_OR_CHAR_SEQUENCE);
+            intent.putExtra(extraValueName, (CharSequence) value);
             return;
         }
         if ((value instanceof Parcelable)) {
@@ -383,21 +458,21 @@ public final class DevicePolicyManagerWrapper {
         }
 
         if ((value instanceof ArrayList<?>)) {
-            ArrayList<?> arrayList = (ArrayList<?>) value;
+            List<?> list = (List<?>) value;
 
             String type = null;
-            if (arrayList.isEmpty()) {
-                Log.w(TAG, "Empty list at index " + index + "; assuming it's ArrayList<String>");
+            if (list.isEmpty()) {
+                Log.w(TAG, "Empty list at index " + index + "; assuming it's List<String>");
                 type = TYPE_ARRAY_LIST_STRING;
             } else {
-                Object firstItem = arrayList.get(0);
+                Object firstItem = list.get(0);
                 if (firstItem instanceof String) {
                     type = TYPE_ARRAY_LIST_STRING;
                 } else if (firstItem instanceof Parcelable) {
                     type = TYPE_ARRAY_LIST_PARCELABLE;
                 } else {
-                    throw new IllegalArgumentException("Unsupported ArrayList type at index "
-                            + index + ": " + firstItem);
+                    throw new IllegalArgumentException("Unsupported List type at index " + index
+                            + ": " + firstItem);
                 }
             }
 
@@ -405,11 +480,51 @@ public final class DevicePolicyManagerWrapper {
             intent.putExtra(extraTypeName, type);
             switch (type) {
                 case TYPE_ARRAY_LIST_STRING:
-                    intent.putStringArrayListExtra(extraValueName, (ArrayList<String>) arrayList);
+                    @SuppressWarnings("unchecked")
+                    ArrayList<String> arrayListString = (value instanceof ArrayList)
+                            ? (ArrayList<String>) list
+                            : new ArrayList<>((List<String>) list);
+                    intent.putStringArrayListExtra(extraValueName, arrayListString);
                     break;
                 case TYPE_ARRAY_LIST_PARCELABLE:
-                    intent.putParcelableArrayListExtra(extraValueName,
-                            (ArrayList<Parcelable>) arrayList);
+                    @SuppressWarnings("unchecked")
+                    ArrayList<Parcelable> arrayListParcelable = (ArrayList<Parcelable>) list;
+                    intent.putParcelableArrayListExtra(extraValueName, arrayListParcelable);
+                    break;
+                default:
+                    // should never happen because type is checked above
+                    throw new AssertionError("invalid type conversion: " + type);
+            }
+            return;
+        }
+
+        // TODO(b/176993670): ArraySet<> is encapsulate as ArrayList<>, so most of the code below
+        // could be reused (right now it was copy-and-paste from ArrayList<>, minus the Parcelable
+        // part.
+        if ((value instanceof Set<?>)) {
+            Set<?> set = (Set<?>) value;
+
+            String type = null;
+            if (set.isEmpty()) {
+                Log.w(TAG, "Empty set at index " + index + "; assuming it's Set<String>");
+                type = TYPE_SET_STRING;
+            } else {
+                Object firstItem = set.iterator().next();
+                if (firstItem instanceof String) {
+                    type = TYPE_SET_STRING;
+                } else {
+                    throw new IllegalArgumentException("Unsupported Set type at index "
+                            + index + ": " + firstItem);
+                }
+            }
+
+            logMarshalling("Adding " + type, index, extraTypeName, type, extraValueName, value);
+            intent.putExtra(extraTypeName, type);
+            switch (type) {
+                case TYPE_SET_STRING:
+                    @SuppressWarnings("unchecked")
+                    Set<String> stringSet = (Set<String>) value;
+                    intent.putStringArrayListExtra(extraValueName, new ArrayList<>(stringSet));
                     break;
                 default:
                     // should never happen because type is checked above
@@ -427,7 +542,7 @@ public final class DevicePolicyManagerWrapper {
         }
 
         throw new IllegalArgumentException("Unsupported value type at index " + index + ": "
-                + value.getClass());
+                + (value == null ? "null" : value.getClass()));
     }
 
     static void getArg(Bundle extras, Object[] args, @Nullable Class<?>[] parameterTypes,
@@ -441,17 +556,28 @@ public final class DevicePolicyManagerWrapper {
         }
         Object value = null;
         switch (type) {
+            case TYPE_NULL:
+                logMarshalling("Got null", index, extraTypeName, type, extraValueName, value);
+                break;
+            case TYPE_SET_STRING:
+                @SuppressWarnings("unchecked")
+                ArrayList<String> list = (ArrayList<String>) extras.get(extraValueName);
+                value = new ArraySet<String>(list);
+                logMarshalling("Got ArraySet<String>", index, extraTypeName, type, extraValueName,
+                        value);
+                break;
+
             case TYPE_ARRAY_LIST_STRING:
             case TYPE_ARRAY_LIST_PARCELABLE:
+            case TYPE_BYTE_ARRAY:
             case TYPE_BOOLEAN:
             case TYPE_INT:
             case TYPE_LONG:
-            case TYPE_STRING:
+            case TYPE_STRING_OR_CHAR_SEQUENCE:
             case TYPE_PARCELABLE:
             case TYPE_SERIALIZABLE:
                 value = extras.get(extraValueName);
-                logMarshalling("Got generic", index, extraTypeName, type, extraValueName,
-                        value);
+                logMarshalling("Got generic", index, extraTypeName, type, extraValueName, value);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported value type at index " + index + ": "
@@ -460,6 +586,8 @@ public final class DevicePolicyManagerWrapper {
         if (parameterTypes != null) {
             Class<?> parameterType = null;
             switch (type) {
+                case TYPE_NULL:
+                    break;
                 case TYPE_BOOLEAN:
                     parameterType = boolean.class;
                     break;
@@ -469,8 +597,19 @@ public final class DevicePolicyManagerWrapper {
                 case TYPE_LONG:
                     parameterType = long.class;
                     break;
+                case TYPE_STRING_OR_CHAR_SEQUENCE:
+                    // A String is a CharSequence, but most methods take String, so we're assuming
+                    // a string and handle the exceptional cases on findMethod()
+                    parameterType = String.class;
+                    break;
+                case TYPE_BYTE_ARRAY:
+                    parameterType = byte[].class;
+                    break;
                 case TYPE_ARRAY_LIST_STRING:
                     parameterType = List.class;
+                    break;
+                case TYPE_SET_STRING:
+                    parameterType = Set.class;
                     break;
                 default:
                     parameterType = value.getClass();
