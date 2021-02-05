@@ -760,9 +760,67 @@ public class RcsUceAdapterTest {
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
 
         networkRespError.forEach((networkResp, expectedCallbackResult) -> {
-            // Set the capabilities request will be failed with the given SIP code
+            // Set the capabilities request failed with the given SIP code (without Reason header)
             capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
                 cb.onNetworkResponse(networkResp.getKey(), networkResp.getValue());
+            });
+
+            // Request capabilities by calling the API requestCapabilities
+            try {
+                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                        uceAdapter,
+                        adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
+                        ImsException.class,
+                        "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            } catch (SecurityException e) {
+                fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+            } catch (ImsException e) {
+                fail("requestCapabilities failed " + e);
+            }
+
+            // Verify that the callback "onError" is called with the expected error code.
+            try {
+                assertEquals(expectedCallbackResult.intValue(), waitForIntResult(errorQueue));
+                assertEquals(0L, waitForLongResult(retryAfterQueue));
+            } catch (Exception e) {
+                fail("requestCapabilities with command error failed: " + e);
+            } finally {
+                errorQueue.clear();
+                retryAfterQueue.clear();
+            }
+
+            // Request capabilities by calling the API requestAvailability
+            try {
+                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                        uceAdapter,
+                        a -> a.requestAvailability(sTestNumberUri, Runnable::run, callback),
+                        ImsException.class,
+                        "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            } catch (SecurityException e) {
+                fail("requestAvailability should succeed with READ_PRIVILEGED_PHONE_STATE");
+            } catch (ImsException e) {
+                fail("requestAvailability failed " + e);
+            }
+
+            // Verify that the callback "onError" is called with the expected error code.
+            try {
+                assertEquals(expectedCallbackResult.intValue(), waitForIntResult(errorQueue));
+                assertEquals(0L, waitForLongResult(retryAfterQueue));
+            } catch (Exception e) {
+                fail("requestAvailability with command error failed: " + e);
+            } finally {
+                errorQueue.clear();
+                retryAfterQueue.clear();
+            }
+
+            /*
+             * Set the capabilities request failed with the given SIP code (with Reason header)
+             */
+            capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+                int networkRespCode = 200;
+                String networkReason = "OK";
+                cb.onNetworkResponse(networkRespCode, networkReason,
+                        networkResp.getKey(), networkResp.getValue());
             });
 
             // Request capabilities by calling the API requestCapabilities
