@@ -551,6 +551,7 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 .setIntentFlags(FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
                 .execute();
         mWmState.waitForActivityState(CLEAR_TASK_ON_LAUNCH_ACTIVITY, STATE_RESUMED);
+        mWmState.waitForActivityState(STANDARD_ACTIVITY, STATE_DESTROYED);
 
         // Make sure the task for the clearTaskonlaunch activity is front.
         assertEquals("The task for the clearTaskonlaunch activity must be front.",
