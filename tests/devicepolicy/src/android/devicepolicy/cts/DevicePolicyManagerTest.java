@@ -39,6 +39,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.enterprise.DeviceState;
+import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
 
 import org.junit.ClassRule;
@@ -88,6 +89,10 @@ public final class DevicePolicyManagerTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(featureNames = {
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
     @Test
     public void testCreateAndProvisionManagedProfile_setsProfileOwner() throws Exception {
         UserHandle profile = null;
@@ -109,6 +114,10 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(featureNames = {
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
     @Test
     public void testCreateAndProvisionManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
@@ -141,6 +150,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(featureNames = PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     public void testProvisionFullyManagedDevice_setsDeviceOwner() throws Exception {
         try {
@@ -162,6 +172,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(featureNames = PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     public void testProvisionFullyManagedDevice_doesNotThrowException() {
         try {
