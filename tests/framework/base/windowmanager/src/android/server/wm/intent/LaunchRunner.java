@@ -267,6 +267,11 @@ public class LaunchRunner {
 
         if (activity == null) {
             return activityContext;
+        } else if (startForResult && activityContext == activity) {
+            // The result may have been sent back to caller activity and forced the caller activity
+            // to be resumed again, before the started activity actually resumed. Just wait for idle
+            // for that case.
+            getInstrumentation().waitForIdleSync();
         } else {
             waitAndAssertActivityLaunched(activity, intent);
         }
