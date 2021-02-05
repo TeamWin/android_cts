@@ -24,7 +24,6 @@ import static android.content.pm.Checksum.TYPE_WHOLE_SHA1;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA256;
 import static android.content.pm.Checksum.TYPE_WHOLE_SHA512;
 import static android.content.pm.PackageInstaller.LOCATION_DATA_APP;
-import static android.content.pm.PackageManager.EXTRA_CHECKSUMS;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.TRUST_ALL;
 import static android.content.pm.PackageManager.TRUST_NONE;
@@ -54,10 +53,10 @@ import android.content.pm.cts.util.AbandonAllPackageSessionsRule;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.Parcelable;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ExceptionUtils;
 
+import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
@@ -201,9 +200,9 @@ public class ChecksumsTest {
 
     @Test
     public void testDefaultChecksums() throws Exception {
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(V2V3_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(V2V3_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -216,9 +215,9 @@ public class ChecksumsTest {
                 TEST_V4_SPLIT3, TEST_V4_SPLIT4});
         assertTrue(isAppInstalled(V4_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 6);
@@ -242,9 +241,9 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -259,9 +258,9 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK_V1);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 0);
@@ -272,9 +271,9 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK_SHA512);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -291,9 +290,9 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK_VERITY);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         // No usable hashes as verity-in-v2-signature does not cover the whole file.
@@ -303,10 +302,10 @@ public class ChecksumsTest {
     @LargeTest
     @Test
     public void testAllChecksums() throws Exception {
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(V2V3_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
@@ -325,10 +324,10 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
@@ -360,10 +359,10 @@ public class ChecksumsTest {
         installPackage(TEST_FIXED_APK_V1);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 5);
@@ -392,9 +391,9 @@ public class ChecksumsTest {
         installPackageIncrementally(TEST_V4_APK);
         assertTrue(isAppInstalled(V4_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -409,9 +408,9 @@ public class ChecksumsTest {
         installPackageIncrementally(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -429,10 +428,10 @@ public class ChecksumsTest {
         installPackageIncrementally(TEST_FIXED_APK);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, ALL_CHECKSUMS, TRUST_NONE,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 7);
@@ -462,9 +461,9 @@ public class ChecksumsTest {
     public void testInstallerChecksumsTrustNone() throws Exception {
         installApkWithChecksums(TEST_FIXED_APK_DIGESTS);
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -478,9 +477,9 @@ public class ChecksumsTest {
     public void testInstallerWrongChecksumsTrustAll() throws Exception {
         installApkWithChecksums(TEST_FIXED_APK_WRONG_DIGESTS);
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -520,9 +519,9 @@ public class ChecksumsTest {
                 installApkWithChecksums(TEST_FIXED_APK, "file", "file", TEST_FIXED_APK_DIGESTS,
                         signature));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -541,9 +540,9 @@ public class ChecksumsTest {
                 installApkWithChecksums(TEST_FIXED_APK, "file", "file", TEST_FIXED_APK_DIGESTS,
                         signature));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         // v2/v3+installer provided.
@@ -572,9 +571,9 @@ public class ChecksumsTest {
 
         final Certificate installerCertificate = getInstallerCertificate();
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         getPackageManager().requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         // v2/v3+installer provided.
@@ -607,8 +606,8 @@ public class ChecksumsTest {
         final List<Certificate> signatures = convertSignaturesToCertificates(
                 packageInfo.signingInfo.getApkContentsSigners());
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver.getIntentSender());
+        LocalListener receiver = new LocalListener();
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 3);
@@ -639,8 +638,8 @@ public class ChecksumsTest {
         final List<Certificate> signatures = convertSignaturesToCertificates(
                 packageInfo.signingInfo.getApkContentsSigners());
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
-        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver.getIntentSender());
+        LocalListener receiver = new LocalListener();
+        pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, signatures, receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -695,9 +694,9 @@ public class ChecksumsTest {
         }
 
         {
-            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            LocalListener receiver = new LocalListener();
             PackageManager pm = getPackageManager();
-            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
             ApkChecksum[] checksums = receiver.getResult();
             assertNotNull(checksums);
             assertEquals(checksums.length, 6);
@@ -760,9 +759,9 @@ public class ChecksumsTest {
         }
 
         {
-            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            LocalListener receiver = new LocalListener();
             PackageManager pm = getPackageManager();
-            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
             ApkChecksum[] checksums = receiver.getResult();
             assertNotNull(checksums);
             assertEquals(checksums.length, 10);
@@ -877,9 +876,9 @@ public class ChecksumsTest {
         }
 
         {
-            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            LocalListener receiver = new LocalListener();
             PackageManager pm = getPackageManager();
-            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
             ApkChecksum[] checksums = receiver.getResult();
             assertNotNull(checksums);
             assertEquals(checksums.length, 6);
@@ -942,9 +941,9 @@ public class ChecksumsTest {
         }
 
         {
-            LocalIntentReceiver receiver = new LocalIntentReceiver();
+            LocalListener receiver = new LocalListener();
             PackageManager pm = getPackageManager();
-            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver.getIntentSender());
+            pm.requestChecksums(V4_PACKAGE_NAME, true, 0, TRUST_ALL, receiver);
             ApkChecksum[] checksums = receiver.getResult();
             assertNotNull(checksums);
             assertEquals(checksums.length, 10);
@@ -1024,9 +1023,9 @@ public class ChecksumsTest {
         installApkWithChecksumsIncrementally(inPath);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 3);
@@ -1062,10 +1061,10 @@ public class ChecksumsTest {
                 signature);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_ALL,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 3);
@@ -1097,10 +1096,10 @@ public class ChecksumsTest {
         installApkWithChecksumsIncrementally(inPath);
         assertTrue(isAppInstalled(FIXED_PACKAGE_NAME));
 
-        LocalIntentReceiver receiver = new LocalIntentReceiver();
+        LocalListener receiver = new LocalListener();
         PackageManager pm = getPackageManager();
         pm.requestChecksums(FIXED_PACKAGE_NAME, true, 0, TRUST_NONE,
-                receiver.getIntentSender());
+                receiver);
         ApkChecksum[] checksums = receiver.getResult();
         assertNotNull(checksums);
         assertEquals(checksums.length, 1);
@@ -1355,38 +1354,27 @@ public class ChecksumsTest {
         }
     }
 
-    private static class LocalIntentReceiver {
+    private static class LocalListener implements PackageManager.OnChecksumsReadyListener {
         private final LinkedBlockingQueue<ApkChecksum[]> mResult = new LinkedBlockingQueue<>();
 
-        private IIntentSender.Stub mLocalSender = new IIntentSender.Stub() {
-            @Override
-            public void send(int code, Intent intent, String resolvedType, IBinder allowlistToken,
-                    IIntentReceiver finishedReceiver, String requiredPermission,
-                    Bundle options) {
-                Parcelable[] parcelables = intent.getParcelableArrayExtra(EXTRA_CHECKSUMS);
-                assertNotNull(parcelables);
-                ApkChecksum[] checksums = Arrays.copyOf(parcelables, parcelables.length,
-                        ApkChecksum[].class);
-                Arrays.sort(checksums, (ApkChecksum lhs, ApkChecksum rhs) ->  {
-                    final String lhsSplit = lhs.getSplitName();
-                    final String rhsSplit = rhs.getSplitName();
-                    if (Objects.equals(lhsSplit, rhsSplit)) {
-                        return Integer.signum(lhs.getType() - rhs.getType());
-                    }
-                    if (lhsSplit == null) {
-                        return -1;
-                    }
-                    if (rhsSplit == null) {
-                        return +1;
-                    }
-                    return lhsSplit.compareTo(rhsSplit);
-                });
-                mResult.offer(checksums);
-            }
-        };
-
-        public IntentSender getIntentSender() {
-            return new IntentSender((IIntentSender) mLocalSender);
+        @Override
+        public void onChecksumsReady(@NonNull List<ApkChecksum> checksumsList) {
+            ApkChecksum[] checksums = checksumsList.toArray(new ApkChecksum[checksumsList.size()]);
+            Arrays.sort(checksums, (ApkChecksum lhs, ApkChecksum rhs) ->  {
+                final String lhsSplit = lhs.getSplitName();
+                final String rhsSplit = rhs.getSplitName();
+                if (Objects.equals(lhsSplit, rhsSplit)) {
+                    return Integer.signum(lhs.getType() - rhs.getType());
+                }
+                if (lhsSplit == null) {
+                    return -1;
+                }
+                if (rhsSplit == null) {
+                    return +1;
+                }
+                return lhsSplit.compareTo(rhsSplit);
+            });
+            mResult.offer(checksums);
         }
 
         public ApkChecksum[] getResult() {
