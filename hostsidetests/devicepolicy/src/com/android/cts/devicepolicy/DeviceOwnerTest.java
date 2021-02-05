@@ -30,6 +30,7 @@ import android.stats.devicepolicy.EventId;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -93,21 +94,25 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             "usb_mass_storage_enabled";
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testDeviceOwnerSetup() throws Exception {
         executeDeviceOwnerTest("DeviceOwnerSetupTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testProxyStaticProxyTest() throws Exception {
         executeDeviceOwnerTest("proxy.StaticProxyTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testProxyPacProxyTest() throws Exception {
         executeDeviceOwnerTest("proxy.PacProxyTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testRemoteBugreportWithTwoUsers() throws Exception {
         assumeCanCreateAdditionalUsers(1);
         final int userId = createUser();
@@ -121,6 +126,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137071121)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_LowStorage() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -142,6 +148,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_MaxUsers() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -161,6 +168,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#getSecondaryUsers} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -175,6 +183,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      */
     @FlakyTest(bugId = 131743223)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_SwitchUser() throws Exception {
         assumeCanStartNewUser();
 
@@ -188,6 +197,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#stopUser} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_CannotStopCurrentUser() throws Exception {
         assumeCanStartNewUser();
 
@@ -201,6 +211,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#startUserInBackground} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_StartInBackground() throws Exception {
         assumeCanStartNewUser();
 
@@ -214,6 +225,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#startUserInBackground} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() throws Exception {
         assumeCanStartNewUser();
 
@@ -243,6 +255,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#stopUser} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_StopUser() throws Exception {
         assumeCanStartNewUser();
 
@@ -257,6 +270,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * automatically even when DISALLOW_REMOVE_USER is set.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser() throws Exception {
         assumeCanStartNewUser();
 
@@ -271,6 +285,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#logoutUser} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_LogoutUser() throws Exception {
         assumeCanStartNewUser();
 
@@ -285,6 +300,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#isAffiliatedUser} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_Affiliated() throws Exception {
         assumeCanStartNewUser();
 
@@ -298,6 +314,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#isEphemeralUser} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_Ephemeral() throws Exception {
         assumeCanStartNewUser();
 
@@ -319,6 +336,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#LEAVE_ALL_SYSTEM_APPS_ENABLED} is tested.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
         assumeCanStartNewUser();
 
@@ -327,6 +345,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -335,6 +354,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -343,6 +363,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -352,6 +373,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 126955083)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -359,11 +381,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testUserSession() throws Exception {
         executeDeviceOwnerTest("UserSessionTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testNetworkLoggingWithTwoUsers() throws Exception {
         assumeCanCreateAdditionalUsers(1);
 
@@ -380,6 +404,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137092833)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testNetworkLoggingWithSingleUser() throws Exception {
         executeDeviceTestMethod(".NetworkLoggingTest", "testProvidingWrongBatchTokenReturnsNull");
         executeDeviceTestMethod(".NetworkLoggingTest", "testNetworkLoggingAndRetrieval",
@@ -409,12 +434,14 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testSetAffiliationId_IllegalArgumentException() throws Exception {
         executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_null");
         executeDeviceTestMethod(".AffiliationTest", "testSetAffiliationId_containsEmptyString");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Ignore("b/145932189")
     public void testSetSystemUpdatePolicyLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
@@ -443,9 +470,9 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     .build());
     }
 
-    // feliepal: started here
     @FlakyTest(bugId = 127101449)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testWifiConfigLockdown() throws Exception {
         assumeHasWifiFeature();
 
@@ -462,6 +489,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * Execute WifiSetHttpProxyTest as device owner.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testWifiSetHttpProxyTest() throws Exception {
         assumeHasWifiFeature();
         try (LocationModeSetter locationModeSetter = new LocationModeSetter(getDevice())) {
@@ -471,6 +499,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCannotSetDeviceOwnerAgain() throws Exception {
         // verify that we can't set the same admin receiver as device owner again
         assertFalse(setDeviceOwner(
@@ -492,6 +521,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     // Execute HardwarePropertiesManagerTest as a device owner.
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testHardwarePropertiesManagerAsDeviceOwner() throws Exception {
 
         executeDeviceTestMethod(".HardwarePropertiesManagerTest", "testHardwarePropertiesManager");
@@ -499,12 +529,14 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     // Execute VrTemperatureTest as a device owner.
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testVrTemperaturesAsDeviceOwner() throws Exception {
 
         executeDeviceTestMethod(".VrTemperatureTest", "testVrTemperatures");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testIsManagedDeviceProvisioningAllowed() throws Exception {
         // This case runs when DO is provisioned
         // mHasFeature == true and provisioned, can't provision DO again.
@@ -515,6 +547,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * Can provision Managed Profile when DO is set by default if they are the same admin.
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     @RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
     public void testIsManagedProfileProvisioningAllowed_deviceOwnerIsSet() throws Exception {
         executeDeviceTestMethod(".PreDeviceOwnerTest",
@@ -523,6 +556,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137096267)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testAdminActionBookkeeping() throws Exception {
         executeDeviceOwnerTest("AdminActionBookkeepingTest");
         assertMetricsLogged(getDevice(), () -> {
@@ -541,6 +575,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testBluetoothRestriction() throws Exception {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
     }
@@ -551,6 +586,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testSetLocationEnabled() throws Exception {
         executeDeviceOwnerTest("SetLocationEnabledTest");
     }
@@ -564,6 +600,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      *  Only allow provisioning flow to be disabled if Android TV device
      */
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testAllowProvisioningProperty() throws Exception {
         boolean isProvisioningAllowedForNormalUsers =
                 getBooleanSystemProperty("ro.config.allowuserprovisioning", true);
@@ -571,6 +608,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testDisallowFactoryReset() throws Exception {
         int adminVersion = 24;
         changeUserRestrictionOrFail("no_factory_reset", true, mPrimaryUserId,
@@ -591,6 +629,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testBackupServiceEnabling() throws Exception {
         assumeHasBackupFeature();
         // The backup service cannot be enabled if the backup feature is not supported.
@@ -600,6 +639,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Device Owner should have access to all device identifiers.
         executeDeviceTestMethod(".DeviceIdentifiersTest",
@@ -607,6 +647,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testPackageInstallCache() throws Exception {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File apk = buildHelper.getTestFile(TEST_APP_APK);
@@ -649,6 +690,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @LargeTest
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testPackageInstallCache_multiUser() throws Exception {
         assumeCanCreateAdditionalUsers(1);
 
@@ -704,11 +746,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testAirplaneModeRestriction() throws Exception {
         executeDeviceOwnerTest("AirplaneModeRestrictionTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testOverrideApn() throws Exception {
         assumeHasTelephonyFeature();
 
@@ -717,11 +761,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 134487729)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testPrivateDnsPolicy() throws Exception {
         executeDeviceOwnerTest("PrivateDnsPolicyTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testSetKeyguardDisabledLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetKeyguardDisabledLogged");
@@ -731,6 +777,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testSetStatusBarDisabledLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetStatusBarDisabledLogged");
@@ -745,6 +792,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testDefaultSmsApplication() throws Exception {
         assumeHasTelephonyFeature();
 
@@ -756,6 +804,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testNoHiddenActivityFoundTest() throws Exception {
         try {
             // Install app to primary user
@@ -778,6 +827,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testSetGlobalSettingLogged() throws Exception {
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetGlobalSettingLogged");
@@ -835,6 +885,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testDevicePolicySafetyCheckerIntegration() throws Exception {
         executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testAllOperations");
     }

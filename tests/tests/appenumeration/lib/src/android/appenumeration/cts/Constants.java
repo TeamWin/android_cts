@@ -18,6 +18,7 @@ package android.appenumeration.cts;
 
 public class Constants {
     public static final String PKG_BASE = "android.appenumeration.";
+    public static final String TEST_PKG = "android.appenumeration.cts";
 
     /** A package that queries for {@link #TARGET_NO_API} package */
     public static final String QUERIES_PACKAGE = PKG_BASE + "queries.pkg";

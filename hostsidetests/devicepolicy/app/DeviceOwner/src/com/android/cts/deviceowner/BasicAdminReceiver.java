@@ -24,7 +24,7 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.android.cts.devicepolicy.DevicePolicyManagerWrapper;
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 
 public class BasicAdminReceiver extends DeviceAdminReceiver {
 

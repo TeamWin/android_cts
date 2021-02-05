@@ -23,7 +23,7 @@ import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.cts.devicepolicy.DevicePolicyManagerWrapper;
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 
 public class BaseDeviceAdminTest extends AndroidTestCase {
     private static final String TAG = BaseDeviceAdminTest.class.getSimpleName();
