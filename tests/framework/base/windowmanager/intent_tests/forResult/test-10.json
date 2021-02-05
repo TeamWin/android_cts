@@ -3,7 +3,7 @@
         "initialIntents": [
             {
                 "flags": "FLAG_ACTIVITY_NEW_TASK",
-                "class": "android.server.wm.intent.Activities$SingleInstanceActivity",
+                "class": "android.server.wm.intent.Activities$TaskAffinity1Activity",
                 "package": "android.server.wm.cts",
                 "startForResult": false
             }
@@ -11,7 +11,7 @@
         "act": [
             {
                 "flags": "",
-                "class": "android.server.wm.intent.Activities$RegularActivity",
+                "class": "android.server.wm.intent.Activities$SingleInstanceActivity",
                 "package": "android.server.wm.cts",
                 "startForResult": true
             }
@@ -22,7 +22,7 @@
             {
                 "activities": [
                     {
-                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$SingleInstanceActivity",
+                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity",
                         "state": "RESUMED"
                     }
                 ]
@@ -34,7 +34,7 @@
             {
                 "activities": [
                     {
-                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$RegularActivity",
+                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$SingleInstanceActivity",
                         "state": "RESUMED"
                     }
                 ]
@@ -42,7 +42,7 @@
             {
                 "activities": [
                     {
-                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$SingleInstanceActivity",
+                        "name": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity",
                         "state": "STOPPED"
                     }
                 ]
