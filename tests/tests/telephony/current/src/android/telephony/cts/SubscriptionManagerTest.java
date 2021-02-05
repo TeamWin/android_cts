@@ -47,6 +47,11 @@ import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.SubscriptionPlan;
 import android.telephony.TelephonyManager;
+import android.telephony.ims.ImsException;
+import android.telephony.ims.ImsManager;
+import android.telephony.ims.ImsMmTelManager;
+import android.telephony.ims.ImsRcsManager;
+import android.telephony.ims.RcsUceAdapter;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -61,6 +66,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -821,6 +828,97 @@ public class SubscriptionManagerTest {
 
         // Switch data back to previous preferredSubId.
         setPreferredDataSubId(preferredSubId);
+    }
+
+    @Test
+    public void testRestoreAllSimSpecificSettingsFromBackup() throws Exception {
+        if (!isSupported()) return;
+
+        int activeDataSubId = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getActiveDataSubscriptionId());
+        assertNotEquals(activeDataSubId, SubscriptionManager.INVALID_SUBSCRIPTION_ID);
+
+        byte[] backupData = ShellIdentityUtils.invokeMethodWithShellPermissions(mSm,
+                (sm) -> sm.getAllSimSpecificSettingsForBackup());
+        assertTrue(backupData.length > 0);
+
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_EDITABLE_ENHANCED_4G_LTE_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.KEY_HIDE_ENHANCED_4G_LTE_BOOL, false);
+        overrideCarrierConfig(bundle, activeDataSubId);
+
+        // Get the original ims values.
+        ImsManager imsManager = InstrumentationRegistry.getContext().getSystemService(
+                ImsManager.class);
+        ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(activeDataSubId);
+        boolean isVolteVtEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
+        boolean isVtImsEnabledOriginal = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mMmTelManager, (m) -> m.isVtSettingEnabled());
+
+        // Get the original RcsUce values.
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(activeDataSubId);
+        RcsUceAdapter rcsUceAdapter = imsRcsManager.getUceAdapter();
+        boolean isImsRcsUceEnabledOriginal =
+                ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
+                android.Manifest.permission.READ_PHONE_STATE);
+
+        //Change values in DB.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                (m) -> m.setAdvancedCallingSettingEnabled(!isVolteVtEnabledOriginal));
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mMmTelManager,
+                (m) -> m.setVtSettingEnabled(!isVtImsEnabledOriginal));
+        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                rcsUceAdapter, (a) -> a.setUceSettingEnabled(!isImsRcsUceEnabledOriginal),
+                ImsException.class);
+
+        // Restore back to original values.
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mSm,
+                (sm) -> sm.restoreAllSimSpecificSettingsFromBackup(backupData));
+        // Get ims values to verify with.
+        boolean isVolteVtEnabledAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mMmTelManager, (m) -> m.isAdvancedCallingSettingEnabled());
+        boolean isVtImsEnabledAfterRestore = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mMmTelManager, (m) -> m.isVtSettingEnabled());
+
+        // Get RcsUce values to verify with.
+        boolean isImsRcsUceEnabledAfterRestore =
+                ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                        rcsUceAdapter, (a) -> a.isUceSettingEnabled(), ImsException.class,
+                        android.Manifest.permission.READ_PHONE_STATE);
+
+        assertEquals(isVolteVtEnabledOriginal, isVolteVtEnabledAfterRestore);
+        assertEquals(isVtImsEnabledOriginal, isVtImsEnabledAfterRestore);
+        assertEquals(isImsRcsUceEnabledOriginal, isImsRcsUceEnabledAfterRestore);
+
+        // restore original carrier config.
+        overrideCarrierConfig(null, activeDataSubId);
+
+
+        try {
+            // Check api call will fail without proper permissions.
+            mSm.restoreAllSimSpecificSettingsFromBackup(backupData);
+            fail("SecurityException expected");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Nullable
+    private PersistableBundle getBundleFromBackupData(byte[] data) {
+        try (ByteArrayInputStream bis = new ByteArrayInputStream(data)) {
+            return PersistableBundle.readFromStream(bis);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    private void overrideCarrierConfig(PersistableBundle bundle, int subId) throws Exception {
+        CarrierConfigManager carrierConfigManager = InstrumentationRegistry.getContext()
+                .getSystemService(CarrierConfigManager.class);
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(carrierConfigManager,
+                (m) -> m.overrideConfig(subId, bundle));
     }
 
     private void setPreferredDataSubId(int subId) {
