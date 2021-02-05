@@ -40,6 +40,7 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "CtsForceStopHelper-constants",
         "ctsmediautil",
+        "DpmWrapper"
     ],
 
     libs: ["telephony-common"] + ["android.test.runner.stubs"] + ["android.test.base.stubs"] + ["android.test.mock.stubs"] + ["android.car"] + ["voip-common"] + ["truth-prebuilt"],

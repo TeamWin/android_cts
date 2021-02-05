@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,31 +20,36 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.UserManager;
 import android.util.Log;
 
-public final class DeviceOwnerChangedReceiver extends DeviceAdminReceiver {
+// TODO(b/179100903): temporarily class listing to ACTION_PROFILE_OWNER_CHANGED until
+// DPMS automatically sets it for headless system user mode
+public final class ProfileOwnerChangedReceiver extends DeviceAdminReceiver {
 
-    private static final String TAG = DeviceOwnerChangedReceiver.class.getSimpleName();
+    private static final String TAG = ProfileOwnerChangedReceiver.class.getSimpleName();
 
     @Override
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         Log.d(TAG, "onReceive(user " + context.getUserId() + "): action=" + action);
-        if (!DevicePolicyManager.ACTION_DEVICE_OWNER_CHANGED.equals(action)) {
+        if (!UserManager.isHeadlessSystemUserMode()) return;
+
+        if (!DevicePolicyManager.ACTION_PROFILE_OWNER_CHANGED.equals(action)) {
             Log.e(TAG, "Received invalid intent: " + intent);
             return;
         }
         DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
         String packageName = context.getPackageName();
-        if (!dpm.isDeviceOwnerApp(packageName)) {
-            Log.w(TAG, packageName + " is not the device owner");
+        if (!dpm.isProfileOwnerApp(packageName)) {
+            Log.w(TAG, packageName + " is not the profile owner");
             return;
         }
         ComponentName newAdmin = new ComponentName("com.android.cts.verifier",
         "com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver");
-        Log.d(TAG, "transferring ownership to " + newAdmin);
+        Log.d(TAG, "transferring profileship to " + newAdmin);
         dpm.transferOwnership(EmptyDeviceAdmin.getComponentName(context), newAdmin,
                 /* bundle= */ null);
-        Log.d(TAG, "ownership transferred to " + newAdmin.flattenToShortString());
+        Log.d(TAG, "profileship transferred to " + newAdmin.flattenToShortString());
     }
 }
