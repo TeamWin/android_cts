@@ -45,6 +45,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -204,6 +205,7 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
+    @Ignore("flaky in the lab")
     public void testInstallWithIdSigStreamPerUidTimeoutsIncompleteData() throws Exception {
         executeShellCommand("atrace --async_start -b 1024 -c adb");
         try {
