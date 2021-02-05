@@ -75,6 +75,7 @@ public class EabControllerTest {
     private static CarrierConfigReceiver sReceiver;
     private static String sTestPhoneNumber;
     private static Uri sTestNumberUri;
+    private static boolean sDeviceUceEnabled;
 
     private static final String TEST_SERVICE_DESCRIPTION = "description_test1";
 
@@ -140,6 +141,8 @@ public class EabControllerTest {
 
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
         sServiceConnector.clearAllActiveImsServices(sTestSlot);
+        sDeviceUceEnabled = sServiceConnector.getDeviceUceEnabled();
+        sServiceConnector.setDeviceUceEnabled(true);
 
         sReceiver = new CarrierConfigReceiver(sTestSub);
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
@@ -171,6 +174,7 @@ public class EabControllerTest {
             sServiceConnector.disconnectCarrierImsService();
             sServiceConnector.disconnectDeviceImsService();
             sServiceConnector.disconnectServices();
+            sServiceConnector.setDeviceUceEnabled(sDeviceUceEnabled);
         }
         sServiceConnector = null;
 
@@ -568,7 +572,6 @@ public class EabControllerTest {
 
     private static void connectTestImsService() throws Exception {
         assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
-                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
                 .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
                 .build()));
 
