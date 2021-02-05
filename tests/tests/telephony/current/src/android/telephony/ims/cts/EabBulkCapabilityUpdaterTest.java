@@ -85,6 +85,7 @@ public class EabBulkCapabilityUpdaterTest {
     private static String sUpdatePhoneNumber;
     private static Uri sTestNumberUri;
     private static boolean mPrevEabSettings = false;
+    private static boolean sDeviceUceEnabled;
 
     private static final int POLLING_RETRY_TIMES = 20;
     private static final int WAITING_IN_MILLI_SEC = 1000;
@@ -146,6 +147,8 @@ public class EabBulkCapabilityUpdaterTest {
 
         sServiceConnector = new ImsServiceConnector(InstrumentationRegistry.getInstrumentation());
         sServiceConnector.clearAllActiveImsServices(sTestSlot);
+        sDeviceUceEnabled = sServiceConnector.getDeviceUceEnabled();
+        sServiceConnector.setDeviceUceEnabled(true);
 
         IntentFilter filter = new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
         // ACTION_CARRIER_CONFIG_CHANGED is sticky, so we will get a callback right away.
@@ -165,6 +168,7 @@ public class EabBulkCapabilityUpdaterTest {
             sServiceConnector.disconnectCarrierImsService();
             sServiceConnector.disconnectDeviceImsService();
             sServiceConnector.disconnectServices();
+            sServiceConnector.setDeviceUceEnabled(sDeviceUceEnabled);
         }
         sServiceConnector = null;
 
@@ -512,7 +516,6 @@ public class EabBulkCapabilityUpdaterTest {
 
     private static void connectTestImsService() throws Exception {
         assertTrue(sServiceConnector.connectCarrierImsService(new ImsFeatureConfiguration.Builder()
-                .addFeature(sTestSlot, ImsFeature.FEATURE_MMTEL)
                 .addFeature(sTestSlot, ImsFeature.FEATURE_RCS)
                 .build()));
 
