@@ -17,7 +17,7 @@ android_test_helper_app {
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],
-    sdk_version: "current",
+    sdk_version: "test_current",
     min_sdk_version: "12",
     // tag this module as a cts test artifact
     test_suites: [

@@ -36,6 +36,7 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 import com.android.cts.verifier.R;
 
 import java.util.Collections;
@@ -62,6 +63,19 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
 
     public static ComponentName getReceiverComponentName() {
         return RECEIVER_COMPONENT_NAME;
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+        Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
+
+        if (action.equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
+            DevicePolicyManagerWrapper.onReceive(this, context, intent);
+            return;
+        }
+
+        super.onReceive(context, intent);
     }
 
     @Override
@@ -120,7 +134,9 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
 
             bindPrimaryUserService(context, iCrossUserService -> {
                 try {
-                    iCrossUserService.switchUser(Process.myUserHandle());
+                    UserHandle userHandle = Process.myUserHandle();
+                    Log.d(TAG, "calling switchUser(" + userHandle + ")");
+                    iCrossUserService.switchUser(userHandle);
                 } catch (RemoteException re) {
                     Log.e(TAG, "Error when calling primary user", re);
                 }

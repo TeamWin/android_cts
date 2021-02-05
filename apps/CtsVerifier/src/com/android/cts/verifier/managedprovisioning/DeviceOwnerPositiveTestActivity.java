@@ -21,7 +21,6 @@ import static com.android.cts.verifier.managedprovisioning.Utils.createInteracti
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
@@ -32,6 +31,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
@@ -51,9 +51,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
     private static final String ACTION_CHECK_DEVICE_OWNER =
             "com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER";
+    private static final String ACTION_CHECK_PROFILE_OWNER =
+            "com.android.cts.verifier.managedprovisioning.action.CHECK_PROFILE_OWNER";
     static final String EXTRA_TEST_ID = "extra-test-id";
 
     private static final String CHECK_DEVICE_OWNER_TEST_ID = "CHECK_DEVICE_OWNER";
+    private static final String CHECK_PROFILE_OWNER_TEST_ID = "CHECK_PROFILE_OWNER";
     private static final String DEVICE_ADMIN_SETTINGS_ID = "DEVICE_ADMIN_SETTINGS";
     private static final String WIFI_LOCKDOWN_TEST_ID = WifiLockdownTestActivity.class.getName();
     private static final String DISABLE_STATUS_BAR_TEST_ID = "DISABLE_STATUS_BAR";
@@ -83,12 +86,17 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Tidy up in case previous run crashed.
-        new ByodFlowTestHelper(this).tearDown();
+        if (!UserManager.isHeadlessSystemUserMode()) {
+            // TODO(b/177554984): figure out how to use it on headless system user mode - right now,
+            // it removes the current user on teardown
+
+            // Tidy up in case previous run crashed.
+            new ByodFlowTestHelper(this).tearDown();
+        }
 
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
-            DevicePolicyManager dpm = (DevicePolicyManager) getSystemService(
-                    Context.DEVICE_POLICY_SERVICE);
+            DevicePolicyManager dpm = DevicePolicyManagerWrapper.get(this,
+                    DeviceAdminTestReceiver.class);
             if (dpm.isDeviceOwnerApp(getPackageName())) {
                 // Set DISALLOW_ADD_USER on behalf of ManagedProvisioning.
                 dpm.addUserRestriction(DeviceAdminTestReceiver.getReceiverComponentName(),
@@ -97,7 +105,21 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         null, null);
             } else {
                 TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
-                        getString(R.string.device_owner_incorrect_device_owner), null);
+                        getString(R.string.device_owner_incorrect_profile_owner, getUserId()),
+                        null);
+            }
+
+            finish();
+            return;
+        }
+        if (ACTION_CHECK_PROFILE_OWNER.equals(getIntent().getAction())) {
+            DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
+            if (dpm.isProfileOwnerApp(getPackageName())) {
+                TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                        null, null);
+            } else {
+                TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                        getString(R.string.device_owner_incorrect_device_owner, getUserId()), null);
             }
             finish();
             return;
@@ -126,12 +148,19 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         setDeviceOwnerButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i(TAG, getString(R.string.set_device_owner_dialog_text));
+                StringBuilder builder = new StringBuilder();
+                if (UserManager.isHeadlessSystemUserMode()) {
+                    builder.append(getString(R.string.grant_headless_system_user_permissions));
+                }
+
+                String message = builder.append(getString(R.string.set_device_owner_dialog_text))
+                        .toString();
+                Log.i(TAG, message);
                 new AlertDialog.Builder(
                         DeviceOwnerPositiveTestActivity.this)
                         .setIcon(android.R.drawable.ic_dialog_info)
                         .setTitle(R.string.set_device_owner_dialog_title)
-                        .setMessage(R.string.set_device_owner_dialog_text)
+                        .setMessage(message)
                         .setPositiveButton(android.R.string.ok, null)
                         .show();
             }
@@ -141,12 +170,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
 
     @Override
     public void finish() {
-        // If this activity was started for checking device owner status, then no need to do any
-        // tear down.
-        if (!ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
-            // Pass and fail buttons are known to call finish() when clicked,
-            // and this is when we want to remove the device owner.
-            startActivity(createTearDownIntent());
+        String action = getIntent().getAction();
+        switch(action) {
+            case ACTION_CHECK_DEVICE_OWNER:
+            case ACTION_CHECK_PROFILE_OWNER:
+                // If this activity was started for checking device / profile owner status, then no
+                // need to do any tear down.
+                Log.d(TAG, "NOT starting createTearDownIntent() due to " + action);
+                break;
+            default:
+                // Pass and fail buttons are known to call finish() when clicked,
+                // and this is when we want to remove the device owner.
+                Log.d(TAG, "Starting createTearDownIntent() due to " + action);
+                startActivity(createTearDownIntent());
+                break;
         }
         super.finish();
     }
@@ -156,6 +193,12 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 R.string.device_owner_check_device_owner_test,
                 new Intent(ACTION_CHECK_DEVICE_OWNER)
                         .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
+        if (UserManager.isHeadlessSystemUserMode()) {
+            adapter.add(createTestItem(this, CHECK_PROFILE_OWNER_TEST_ID,
+                    R.string.device_owner_check_profile_owner_test,
+                    new Intent(ACTION_CHECK_PROFILE_OWNER)
+                            .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
+        }
 
         // device admin settings
         adapter.add(createInteractiveTestItem(this, DEVICE_ADMIN_SETTINGS_ID,
