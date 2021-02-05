@@ -24,6 +24,7 @@ android_test {
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "truth-prebuilt",
+        "testng", // Used for assertThrows
     ],
     manifest: "src/test/AndroidManifest.xml",
 }
