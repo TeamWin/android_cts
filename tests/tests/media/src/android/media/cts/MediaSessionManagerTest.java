@@ -36,6 +36,7 @@ import android.os.Looper;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
+import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -396,6 +397,24 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             if (session != null) {
                 session.release();
             }
+        }
+    }
+
+    public void testCustomClassConfigValuesAreValid() throws Exception {
+        final Context context = getInstrumentation().getTargetContext();
+        String customMediaKeyDispatcher = context.getString(
+                android.R.string.config_customMediaKeyDispatcher);
+        String customMediaSessionPolicyProvider = context.getString(
+                android.R.string.config_customMediaSessionPolicyProvider);
+        // MediaSessionService will call Class.forName(String) with the existing config value.
+        // If the config value is not valid (i.e. given class doesn't exist), the following
+        // methods will return false.
+        if (!customMediaKeyDispatcher.isEmpty()) {
+            assertTrue(mSessionManager.hasCustomMediaKeyDispatcher(customMediaKeyDispatcher));
+        }
+        if (!customMediaSessionPolicyProvider.isEmpty()) {
+            assertTrue(mSessionManager.hasCustomMediaSessionPolicyProvider(
+                    customMediaSessionPolicyProvider));
         }
     }
 
