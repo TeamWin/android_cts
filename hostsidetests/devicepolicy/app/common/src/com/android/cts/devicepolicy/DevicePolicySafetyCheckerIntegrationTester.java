@@ -25,7 +25,9 @@ import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_GRA
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_POLICY;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_RESTRICTIONS_PROVIDER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_RESTRICTION;
+import static android.app.admin.DevicePolicyManager.UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION;
 import static android.app.admin.DevicePolicyManager.operationToString;
+import static android.app.admin.DevicePolicyManager.unsafeOperationReasonToString;
 
 import static org.junit.Assert.fail;
 
@@ -145,13 +147,21 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     private void safeOperationTest(DevicePolicyManager dpm, ComponentName admin,
             List<String> failures, int operation, boolean overloaded) {
         String name = getOperationName(operation, overloaded);
+        // Currently there's just one reason...
+        int reason = UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION;
         try {
-            setOperationUnsafe(dpm, operation);
+            setOperationUnsafe(dpm, operation, reason);
             runCommonOrSpecificOperation(dpm, admin, operation, overloaded);
             Log.e(TAG, name + " didn't throw an UnsafeStateException");
             failures.add(name);
         } catch (UnsafeStateException e) {
             Log.d(TAG, name + " failed as expected: " + e);
+            int actualReason = e.getReason();
+            if (actualReason != reason) {
+                failures.add(String.format("received exception with reason %s instead of %s",
+                        unsafeOperationReasonToString(actualReason),
+                        unsafeOperationReasonToString(reason)));
+            }
         } catch (Exception e) {
             Log.e(TAG, name + " threw unexpected exception", e);
             failures.add(name + "(" + e + ")");
@@ -213,8 +223,8 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         }
     }
 
-    private void setOperationUnsafe(DevicePolicyManager dpm, int operation) {
+    private void setOperationUnsafe(DevicePolicyManager dpm, int operation, int reason) {
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(dpm,
-                (obj) -> obj.setNextOperationSafety(operation, false));
+                (obj) -> obj.setNextOperationSafety(operation, reason));
     }
 }

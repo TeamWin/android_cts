@@ -16,3 +16,8 @@ java_library {
     name: "CtsAppEnumerationTestLib",
     srcs: ["src/**/*.java"],
 }
+
+java_library_host {
+    name: "CtsAppEnumerationTestLibHost",
+    srcs: ["src/**/*.java"],
+}

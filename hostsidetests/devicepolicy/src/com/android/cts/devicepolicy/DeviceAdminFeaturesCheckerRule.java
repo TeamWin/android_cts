@@ -63,6 +63,14 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
                 assumeTrue("Device API level is " + apiLevel + ", minimum required is 21",
                         apiLevel >= 21); // requires Build.VERSION_CODES.L
 
+                String testName = description.getDisplayName();
+
+                if (description.getAnnotation(TemporaryIgnoreOnHeadlessSystemUserMode.class) != null
+                        && BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
+                    throw new AssumptionViolatedException(
+                            "TEMPORARILY skipping " + testName + " on headless system user mode");
+                }
+
                 List<String> requiredFeatures = new ArrayList<>();
                 requiredFeatures.add(FEATURE_DEVICE_ADMIN);
 
@@ -78,7 +86,6 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
                     clazz = clazz.getSuperclass();
                 }
 
-                String testName = description.getDisplayName();
                 CLog.v("Required features for test %s: %s", testName, requiredFeatures);
 
                 List<String> missingFeatures = new ArrayList<>(requiredFeatures.size());
@@ -142,5 +149,17 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
     @Target({ElementType.TYPE, ElementType.METHOD})
     public static @interface RequiresAdditionalFeatures {
         String[] value();
+    }
+
+    /**
+     * TODO(b/132260693): STOPSHIP - temporary annotation used on tests that haven't been fixed to
+     * run on headless system user yet
+     *
+     * <p><b>NOTE:</b> if a test shouldn't run on headless system user mode in the long term, we'll
+     * need a separate {@code IgnoreOnHeadlessSystemUserMode} annotation
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD})
+    public static @interface TemporaryIgnoreOnHeadlessSystemUserMode {
     }
 }

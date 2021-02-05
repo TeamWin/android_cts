@@ -17,6 +17,7 @@
 package android.graphics.cts;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.FeatureInfo;
 import android.content.pm.PackageManager;
@@ -27,6 +28,7 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -71,17 +73,20 @@ public class VulkanDeqpLevelTest {
     @CddTest(requirement = "7.1.4.2/C-1-8,C-1-9")
     @Test
     public void testVulkanDeqpLevel() {
-        if (mVulkanHardwareVersion != null
-                && mVulkanHardwareVersion.version >= VULKAN_1_0) {
-            if (DEBUG) {
-                Log.d(TAG, "Checking whether " + PackageManager.FEATURE_VULKAN_DEQP_LEVEL
-                        + " has an acceptable value");
-            }
-            assertTrue("Feature " + PackageManager.FEATURE_VULKAN_DEQP_LEVEL + " must be present "
-                            + "and have at least version " + MINIMUM_VULKAN_DEQP_LEVEL,
-                    mPm.hasSystemFeature(PackageManager.FEATURE_VULKAN_DEQP_LEVEL,
-                            MINIMUM_VULKAN_DEQP_LEVEL));
+        assumeTrue(
+                "Test does not apply for vendor image with API level lower than Android 11",
+                PropertyUtil.isVendorApiLevelNewerThan(28));
+        assumeTrue(
+                "Test does not apply if Vulkan 1.0 or higher is not supported",
+                mVulkanHardwareVersion != null && mVulkanHardwareVersion.version >= VULKAN_1_0);
+        if (DEBUG) {
+            Log.d(TAG, "Checking whether " + PackageManager.FEATURE_VULKAN_DEQP_LEVEL
+                    + " has an acceptable value");
         }
+        assertTrue("Feature " + PackageManager.FEATURE_VULKAN_DEQP_LEVEL + " must be present "
+                + "and have at least version " + MINIMUM_VULKAN_DEQP_LEVEL,
+                mPm.hasSystemFeature(PackageManager.FEATURE_VULKAN_DEQP_LEVEL,
+                        MINIMUM_VULKAN_DEQP_LEVEL));
     }
 
 }

@@ -134,7 +134,7 @@ public abstract class AbstractAutoFillActivity extends Activity {
     /**
      * Waits until {@link #onDestroy()} is called.
      */
-    public void waintUntilDestroyed(@NonNull Timeout timeout) throws InterruptedException {
+    public void waitUntilDestroyed(@NonNull Timeout timeout) throws InterruptedException {
         if (!mDestroyedLatch.await(timeout.ms(), TimeUnit.MILLISECONDS)) {
             throw new RetryableException(timeout, "activity %s not destroyed", this);
         }

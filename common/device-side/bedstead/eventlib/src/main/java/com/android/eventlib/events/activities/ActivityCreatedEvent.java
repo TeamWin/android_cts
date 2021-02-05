@@ -1,0 +1,158 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.eventlib.events.activities;
+
+import androidx.annotation.CheckResult;
+import android.app.Activity;
+import android.os.Bundle;
+import android.os.PersistableBundle;
+
+import com.android.eventlib.Event;
+import com.android.eventlib.EventLogger;
+import com.android.eventlib.EventLogsQuery;
+import com.android.eventlib.info.ActivityInfo;
+import com.android.eventlib.queryhelpers.ActivityQuery;
+import com.android.eventlib.queryhelpers.ActivityQueryHelper;
+import com.android.eventlib.queryhelpers.BundleQueryHelper;
+import com.android.eventlib.queryhelpers.PersistableBundleQuery;
+import com.android.eventlib.queryhelpers.PersistableBundleQueryHelper;
+import com.android.eventlib.util.SerializableParcelWrapper;
+
+/**
+ * Event logged when {@link Activity#onCreate(Bundle)} or
+ * {@link Activity#onCreate(Bundle, PersistableBundle)} is called.
+ */
+public final class ActivityCreatedEvent extends Event {
+
+    /** Begin a query for {@link ActivityCreatedEvent} events. */
+    public static ActivityCreatedEventQuery queryPackage(String packageName) {
+        return new ActivityCreatedEventQuery(packageName);
+    }
+
+    public static final class ActivityCreatedEventQuery
+            extends EventLogsQuery<ActivityCreatedEvent, ActivityCreatedEventQuery> {
+        ActivityQueryHelper<ActivityCreatedEventQuery> mActivity = new ActivityQueryHelper<>(this);
+        BundleQueryHelper<ActivityCreatedEventQuery> mSavedInstanceState =
+                new BundleQueryHelper<>(this);
+        PersistableBundleQueryHelper<ActivityCreatedEventQuery> mPersistentState =
+                new PersistableBundleQueryHelper<>(this);
+
+        private ActivityCreatedEventQuery(String packageName) {
+            super(ActivityCreatedEvent.class, packageName);
+        }
+
+        @CheckResult
+        public BundleQueryHelper<ActivityCreatedEventQuery> whereSavedInstanceState() {
+            return mSavedInstanceState;
+        }
+
+        @CheckResult
+        public PersistableBundleQuery<ActivityCreatedEventQuery> wherePersistentState() {
+            return mPersistentState;
+        }
+
+        @CheckResult
+        public ActivityQuery<ActivityCreatedEventQuery> whereActivity() {
+            return mActivity;
+        }
+
+        @Override
+        protected boolean filter(ActivityCreatedEvent event) {
+            if (!mSavedInstanceState.matches(event.mSavedInstanceState)) {
+                return false;
+            }
+            if (!mPersistentState.matches(event.mPersistentState)) {
+                return false;
+            }
+            if (!mActivity.matches(event.mActivity)) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /** Begin logging a {@link ActivityCreatedEvent}. */
+    public static ActivityCreatedEventLogger logger(Activity activity, Bundle savedInstanceState) {
+        return new ActivityCreatedEventLogger(activity, savedInstanceState);
+    }
+
+    public static final class ActivityCreatedEventLogger extends EventLogger<ActivityCreatedEvent> {
+        private ActivityCreatedEventLogger(Activity activity, Bundle savedInstanceState) {
+            super(activity, new ActivityCreatedEvent());
+            mEvent.mSavedInstanceState = new SerializableParcelWrapper<>(savedInstanceState);
+            setActivity(activity);
+        }
+
+        public ActivityCreatedEventLogger setActivity(Activity activity) {
+            mEvent.mActivity = new ActivityInfo(activity);
+            return this;
+        }
+
+        public ActivityCreatedEventLogger setActivity(Class<? extends Activity> activityClass) {
+            mEvent.mActivity = new ActivityInfo(activityClass);
+            return this;
+        }
+
+        public ActivityCreatedEventLogger setActivity(String activityClassName) {
+            mEvent.mActivity = new ActivityInfo(activityClassName);
+            return this;
+        }
+
+        public ActivityCreatedEventLogger setSavedInstanceState(Bundle savedInstanceState) {
+            mEvent.mSavedInstanceState = new SerializableParcelWrapper<>(savedInstanceState);
+            return this;
+        }
+
+        public ActivityCreatedEventLogger setPersistentState(PersistableBundle persistentState) {
+            mEvent.mPersistentState = new SerializableParcelWrapper<>(persistentState);
+            return this;
+        }
+    }
+
+    protected SerializableParcelWrapper<Bundle> mSavedInstanceState;
+    protected SerializableParcelWrapper<PersistableBundle> mPersistentState;
+    protected ActivityInfo mActivity;
+
+    public Bundle savedInstanceState() {
+        if (mSavedInstanceState == null) {
+            return null;
+        }
+        return mSavedInstanceState.get();
+    }
+
+    public PersistableBundle persistentState() {
+        if (mPersistentState == null) {
+            return null;
+        }
+        return mPersistentState.get();
+    }
+
+    public ActivityInfo activity() {
+        return mActivity;
+    }
+
+    @Override
+    public String toString() {
+        return "ActivityCreatedEvent{" +
+                " savedInstanceState=" + savedInstanceState() +
+                ", persistentState=" + persistentState() +
+                ", activity=" + mActivity +
+                ", mPackageName='" + mPackageName + '\'' +
+                ", mTimestamp=" + mTimestamp +
+                '}';
+    }
+}

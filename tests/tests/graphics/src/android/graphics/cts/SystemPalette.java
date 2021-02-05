@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.R;
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Pair;
 
 import androidx.annotation.ColorInt;
 import androidx.core.graphics.ColorUtils;
@@ -32,6 +33,9 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Arrays;
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -100,7 +104,7 @@ public class SystemPalette {
 
         final double[] labMain = new double[3];
         final double[] labAccent = new double[3];
-        final double[] expectedL = {100, 95, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0};
+        final double[] expectedL = {100, 95, 90, 80, 70, 60, 49, 40, 30, 20, 10, 0};
 
         for (int i = 0; i < mainColors.length; i++) {
             ColorUtils.RGBToLAB(Color.red(mainColors[i]), Color.green(mainColors[i]),
@@ -112,10 +116,66 @@ public class SystemPalette {
             // across the palette.
             assertWithMessage("Color " + Integer.toHexString((mainColors[i]))
                     + " at index " + i + " should have L " + expectedL[i] + " in LAB space.")
-                    .that(labMain[0]).isWithin(5).of(expectedL[i]);
+                    .that(labMain[0]).isWithin(3).of(expectedL[i]);
             assertWithMessage("Color " + Integer.toHexString((accentColors[i]))
                     + " at index " + i + " should have L " + expectedL[i] + " in LAB space.")
-                    .that(labAccent[0]).isWithin(5).of(expectedL[i]);
+                    .that(labAccent[0]).isWithin(3).of(expectedL[i]);
+        }
+    }
+
+    @Test
+    public void testContrastRatio() {
+        final Context context = getInstrumentation().getTargetContext();
+
+        final List<Pair<Integer, Integer>> atLeast4dot5 = Arrays.asList(new Pair<>(0, 500),
+                new Pair<>(50, 600), new Pair<>(100, 600), new Pair<>(200, 700),
+                new Pair<>(300, 800), new Pair<>(400, 900), new Pair<>(500, 1000));
+        final List<Pair<Integer, Integer>> atLeast3dot0 = Arrays.asList(new Pair<>(0, 400),
+                new Pair<>(50, 500), new Pair<>(100, 500), new Pair<>(200, 600),
+                new Pair<>(300, 700), new Pair<>(400, 800), new Pair<>(500, 900),
+                new Pair<>(600, 1000));
+
+        final int[] mainColors = getAllMainColors(context);
+        final int[] accentColors = getAllAccentColors(context);
+
+        for (int[] palette: Arrays.asList(mainColors, accentColors)) {
+            for (Pair<Integer, Integer> shades: atLeast4dot5) {
+                final int background = palette[shadeToArrayIndex(shades.first)];
+                final int foreground = palette[shadeToArrayIndex(shades.second)];
+                final double contrast = ColorUtils.calculateContrast(foreground, background);
+                assertWithMessage("Shade " + shades.first + " (#" + Integer.toHexString(background)
+                        + ") should have at least 4.5 contrast ratio against " + shades.second
+                        + " (#" + Integer.toHexString(foreground) + ")").that(contrast)
+                        .isGreaterThan(4.5);
+            }
+
+            for (Pair<Integer, Integer> shades: atLeast3dot0) {
+                final int background = palette[shadeToArrayIndex(shades.first)];
+                final int foreground = palette[shadeToArrayIndex(shades.second)];
+                final double contrast = ColorUtils.calculateContrast(foreground, background);
+                assertWithMessage("Shade " + shades.first + " (#" + Integer.toHexString(background)
+                        + ") should have at least 3.0 contrast ratio against " + shades.second
+                        + " (#" + Integer.toHexString(foreground) + ")").that(contrast)
+                        .isGreaterThan(3);
+            }
+        }
+    }
+
+    /**
+     * Convert the Material shade to an array position.
+     *
+     * @param shade Shade from 0 to 1000.
+     * @return index in array
+     * @see getAllMainColors(Context)
+     * @see getAllAccentColors(Context)
+     */
+    private int shadeToArrayIndex(int shade) {
+        if (shade == 0) {
+            return 0;
+        } else if (shade == 50) {
+            return 1;
+        } else {
+            return shade / 100 + 1;
         }
     }
 
