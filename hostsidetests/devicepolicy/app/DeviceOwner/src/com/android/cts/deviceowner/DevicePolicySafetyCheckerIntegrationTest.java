@@ -49,6 +49,7 @@ import android.os.Bundle;
 import android.os.UserHandle;
 
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
+import com.android.internal.util.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -87,7 +88,7 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
 
         @Override
         protected int[] getSafetyAwareOperations() {
-            return new int [] {
+            int[] operations = new int [] {
                     OPERATION_CREATE_AND_MANAGE_USER,
                     // TODO(b/175245108) Add test for this operation; testing
                     // dpm.installSystemUpdate will require upload a test system update file.
@@ -105,12 +106,10 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     OPERATION_SET_LOCK_TASK_FEATURES,
                     OPERATION_SET_LOCK_TASK_PACKAGES,
                     OPERATION_SET_LOGOUT_ENABLED,
-                    OPERATION_SET_OVERRIDE_APNS_ENABLED,
                     OPERATION_SET_PACKAGES_SUSPENDED,
                     OPERATION_SET_STATUS_BAR_DISABLED,
                     OPERATION_SET_SYSTEM_SETTING,
                     OPERATION_SET_SYSTEM_UPDATE_POLICY,
-                    OPERATION_SET_TRUST_AGENT_CONFIGURATION,
                     OPERATION_SET_USER_CONTROL_DISABLED_PACKAGES,
                     OPERATION_START_USER_IN_BACKGROUND,
                     OPERATION_STOP_USER,
@@ -118,6 +117,16 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
                     OPERATION_UNINSTALL_CA_CERT,
                     OPERATION_WIPE_DATA
             };
+
+            if (mHasTelephonyFeature) {
+                operations = ArrayUtils.appendInt(operations, OPERATION_SET_OVERRIDE_APNS_ENABLED);
+            }
+            if (mHasSecureLockScreen) {
+                operations = ArrayUtils.appendInt(operations,
+                        OPERATION_SET_TRUST_AGENT_CONFIGURATION);
+            }
+
+            return operations;
         }
 
         @Override

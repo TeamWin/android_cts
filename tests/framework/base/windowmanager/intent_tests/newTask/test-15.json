@@ -36,7 +36,11 @@
                     {
                         "name": "android.server.wm.cts/android.server.wm.intent.Activities$RegularActivity",
                         "state": "RESUMED"
-                    },
+                    }
+                ]
+            },
+            {
+                "activities": [
                     {
                         "name": "android.server.wm.cts/android.server.wm.intent.Activities$SingleInstanceActivity",
                         "state": "STOPPED"
