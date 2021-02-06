@@ -26,6 +26,7 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.telecom.Call;
 import android.telecom.CallScreeningService;
+import android.telecom.CallScreeningService.CallResponse;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
@@ -302,6 +303,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                             .setSkipCallLog(false)
                             .setSkipNotification(false)
                             .setShouldScreenCallViaAudioProcessing(false)
+                            .setCallComposerAttachmentsToShow(
+                                    CallResponse.CALL_COMPOSER_ATTACHMENT_PRIORITY
+                                            | CallResponse.CALL_COMPOSER_ATTACHMENT_SUBJECT)
                             .build();
             MockCallScreeningService.setCallbacks(createCallbackForCsTest(response));
 
@@ -342,6 +346,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                             .setSkipCallLog(false)
                             .setSkipNotification(false)
                             .setShouldScreenCallViaAudioProcessing(false)
+                            .setCallComposerAttachmentsToShow(
+                                    CallResponse.CALL_COMPOSER_ATTACHMENT_PRIORITY
+                                            | CallResponse.CALL_COMPOSER_ATTACHMENT_SUBJECT)
                             .build();
             MockCallScreeningService.setCallbacks(createCallbackForCsTest(response));
 
