@@ -18,6 +18,8 @@ package com.android.activitycontext;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.Activity;
 
 import com.android.compatibility.common.util.BlockingCallback;
@@ -35,6 +37,16 @@ public class ActivityContextTest {
     private static final String STRING_VALUE = "String";
     private static final int INT_VALUE = 1;
     private static final boolean BOOLEAN_VALUE = true;
+
+    @Test
+    public void getWithContext_nullRunnable_throwsException() {
+        assertThrows(NullPointerException.class, () -> ActivityContext.getWithContext(null));
+    }
+
+    @Test
+    public void runWithContext_nullRunnable_throwsException() {
+        assertThrows(NullPointerException.class, () -> ActivityContext.runWithContext(null));
+    }
 
     @Test
     public void getWithContext_passesActivityContext() throws Exception {
@@ -158,6 +170,24 @@ public class ActivityContextTest {
         ActivityContext.runWithContext(STRING_VALUE, callback);
 
         assertThat(callback.await()).isEqualTo(STRING_VALUE);
+    }
+
+    @Test
+    public void runWithContext_throwsRuntimeException_isThrownHere() {
+        assertThrows(RuntimeException.class, () -> {
+            ActivityContext.runWithContext((context) -> {
+                throw new RuntimeException();
+            });
+        });
+    }
+
+    @Test
+    public void runWithContext_throwsError_isThrownHere() {
+        assertThrows(AssertionError.class, () -> {
+            ActivityContext.runWithContext((context) -> {
+                throw new AssertionError();
+            });
+        });
     }
 
     private static final class BlockingActivityBiConsumerReturnsFirstArgument

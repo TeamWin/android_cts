@@ -215,6 +215,19 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
     }
 
     @Test
+    public void testP010() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                Log.v(TAG, "Testing YUV P010 capture for Camera " + id);
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.YCBCR_P010, /*repeating*/false);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    @Test
     public void testHeic() throws Exception {
         for (String id : mCameraIdsUnderTest) {
             try {

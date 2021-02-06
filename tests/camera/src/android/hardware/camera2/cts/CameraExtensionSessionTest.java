@@ -31,7 +31,6 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingExtensionSessionCallback;
 import com.android.ex.camera2.exceptions.TimeoutRuntimeException;
 
-import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCaptureSession;
@@ -46,7 +45,6 @@ import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.media.Image;
 import android.media.ImageReader;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Size;
 
 import static android.hardware.camera2.cts.CameraTestUtils.*;
@@ -56,56 +54,71 @@ import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 
+import androidx.test.rule.ActivityTestRule;
+
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CameraExtensionSessionTest extends
-        ActivityInstrumentationTestCase2<CameraExtensionTestActivity> {
+@RunWith(Parameterized.class)
+public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     private static final String TAG = "CameraExtensionSessionTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final long WAIT_FOR_COMMAND_TO_COMPLETE_MS = 5000;
     private static final long REPEATING_REQUEST_TIMEOUT_MS = 5000;
     public static final int MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS = 10000;
 
-    private Context mContext = null;
     private SurfaceTexture mSurfaceTexture = null;
-    public Camera2AndroidTestRule mTestRule = null;
+    private Camera2AndroidTestRule mTestRule = null;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        TextureView textureView = getActivity().getTextureView();
-        mContext = getInstrumentation().getTargetContext();
         mTestRule = new Camera2AndroidTestRule(mContext);
         mTestRule.before();
-
-        mSurfaceTexture = getAvailableSurfaceTexture(WAIT_FOR_COMMAND_TO_COMPLETE_MS, textureView);
     }
 
     @Override
     public void tearDown() throws Exception {
-        super.tearDown();
         if (mTestRule != null) {
             mTestRule.after();
         }
         if (mSurfaceTexture != null) {
             mSurfaceTexture.release();
+            mSurfaceTexture = null;
         }
+        super.tearDown();
     }
 
-    public CameraExtensionSessionTest() {
-        super(CameraExtensionTestActivity.class);
+    @Rule
+    public ActivityTestRule<CameraExtensionTestActivity> mActivityRule =
+            new ActivityTestRule<>(CameraExtensionTestActivity.class);
+
+    private void updatePreviewSurfaceTexture() {
+        if (mSurfaceTexture != null) {
+            return;
+        }
+
+        TextureView textureView = mActivityRule.getActivity().getTextureView();
+        mSurfaceTexture = getAvailableSurfaceTexture(WAIT_FOR_COMMAND_TO_COMPLETE_MS, textureView);
+        assertNotNull("Failed to acquire valid preview surface texture!", mSurfaceTexture);
     }
 
     // Verify that camera extension sessions can be created and closed as expected.
+    @Test
     public void testBasicExtensionLifecycle() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -147,13 +160,15 @@ public class CameraExtensionSessionTest extends
 
     // Verify that regular camera sessions close as expected after creating a camera extension
     // session.
+    @Test
     public void testCloseCaptureSession() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -220,13 +235,15 @@ public class CameraExtensionSessionTest extends
 
     // Verify that camera extension sessions close as expected when creating a regular capture
     // session.
+    @Test
     public void testCloseExtensionSession() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -288,13 +305,15 @@ public class CameraExtensionSessionTest extends
     }
 
     // Verify camera device query
+    @Test
     public void testGetDevice() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -345,13 +364,15 @@ public class CameraExtensionSessionTest extends
 
     // Test case for repeating/stopRepeating on all supported extensions and expected state/capture
     // callbacks.
+    @Test
     public void testRepeatingCapture() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -443,14 +464,16 @@ public class CameraExtensionSessionTest extends
 
     // Test case for multi-frame only capture on all supported extensions and expected state
     // callbacks. Verify still frame output.
+    @Test
     public void testMultiFrameCapture() throws Exception {
         final int IMAGE_COUNT = 10;
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -541,13 +564,15 @@ public class CameraExtensionSessionTest extends
 
     // Test case combined repeating with multi frame capture on all supported extensions.
     // Verify still frame output.
+    @Test
     public void testRepeatingAndCaptureCombined() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
@@ -793,13 +818,15 @@ public class CameraExtensionSessionTest extends
         }
     }
 
+    @Test
     public void testIllegalArguments() throws Exception {
-        for (String id : mTestRule.getCameraIdsUnderTest()) {
+        for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
             if (!staticMeta.isColorCorrectionSupported()) {
                 continue;
             }
+            updatePreviewSurfaceTexture();
             CameraExtensionCharacteristics extensionChars =
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();

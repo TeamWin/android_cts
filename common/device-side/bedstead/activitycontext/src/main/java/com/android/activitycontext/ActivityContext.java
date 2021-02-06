@@ -36,14 +36,17 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import javax.annotation.Nullable;
+
 public class ActivityContext extends EventLibActivity {
 
     private static final String LOG_TAG = "ActivityContext";
-    private static final Context CONTEXT =
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
     private static Function<Activity, ?> sRunnable;
-    private static Object sReturnValue;
+    private static @Nullable Object sReturnValue;
+    private static @Nullable Object sThrowValue;
     private static CountDownLatch sLatch;
 
     /**
@@ -59,22 +62,39 @@ public class ActivityContext extends EventLibActivity {
      * as returned by the callback.
      */
     public static <E> E getWithContext(Function<Activity, E> runnable) throws InterruptedException {
+        if (runnable == null) {
+            throw new NullPointerException();
+        }
         synchronized (ActivityContext.class) {
             sRunnable = runnable;
 
             sLatch = new CountDownLatch(1);
             sReturnValue = null;
+            sThrowValue = null;
 
             Intent intent = new Intent();
-            intent.setClass(CONTEXT, ActivityContext.class);
+            intent.setClass(sContext, ActivityContext.class);
             intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-            CONTEXT.startActivity(intent);
+            sContext.startActivity(intent);
         }
 
         sLatch.await();
 
         synchronized (ActivityContext.class) {
             sRunnable = null;
+
+            if (sThrowValue != null) {
+                if (sThrowValue instanceof RuntimeException) {
+                    throw (RuntimeException) sThrowValue;
+                }
+
+                if (sThrowValue instanceof Error) {
+                    throw (Error) sThrowValue;
+                }
+
+                throw new IllegalStateException("Invalid value for sThrowValue");
+            }
+
             return (E) sReturnValue;
         }
     }
@@ -118,7 +138,11 @@ public class ActivityContext extends EventLibActivity {
             if (sRunnable == null) {
                 Log.e(LOG_TAG, "Launched ActivityContext without runnable");
             } else {
-                sReturnValue = sRunnable.apply(this);
+                try {
+                    sReturnValue = sRunnable.apply(this);
+                } catch (RuntimeException | Error e) {
+                    sThrowValue = e;
+                }
                 sLatch.countDown();
             }
         }
