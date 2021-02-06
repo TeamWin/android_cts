@@ -41,7 +41,7 @@ public class BaseDeviceAdminTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        DevicePolicyManager dpm = DevicePolicyManagerWrapper.get(mContext, AdminReceiver.class);
+        dpm = DevicePolicyManagerWrapper.get(mContext, AdminReceiver.class);
         int userId = mContext.getUserId();
 
         mAdminComponent = new ComponentName(mContext, AdminReceiver.class);
