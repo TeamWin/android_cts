@@ -45,6 +45,16 @@ public class Utils {
 
     public static final long OPERATION_TIMEOUT_MS = 5000;
 
+    /** Decide which VoiceInteractionService should be started for testing. */
+    public static final int HOTWORD_DETECTION_SERVICE_NONE = 0;
+    public static final int HOTWORD_DETECTION_SERVICE_INVALIDATION = 1;
+    public static final int HOTWORD_DETECTION_SERVICE_WITHOUT_ISOLATED_PROCESS = 2;
+    public static final int HOTWORD_DETECTION_SERVICE_WITHIN_ISOLATED_PROCESS = 3;
+
+    /** Indicate which test event for testing. */
+    public static final int VOICE_INTERACTION_SERVICE_NORMAL_TEST = 0;
+    public static final int HOTWORD_DETECTION_SERVICE_CONFIG_TEST = 1;
+
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
     public static final String BROADCAST_INTENT = "android.intent.action.VOICE_TESTAPP";
@@ -116,6 +126,12 @@ public class Utils {
 
     public static final String SERVICE_NAME =
             "android.voiceinteraction.service/.MainInteractionService";
+
+    public static final String BROADCAST_CONFIG_RESULT_INTENT =
+            "android.intent.action.CONFIG_RESULT";
+    public static final String KEY_CONFIG_RESULT = "configResult";
+    public static final String KEY_SERVICE_TYPE = "serviceType";
+    public static final String KEY_TEST_EVENT = "testEvent";
 
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
