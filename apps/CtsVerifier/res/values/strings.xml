@@ -3449,12 +3449,18 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_positive_category">Device Owner Tests</string>
     <string name="set_device_owner_button_label">Set up device owner</string>
     <string name="set_device_owner_dialog_title">Set up device owner</string>
+    <string name="grant_headless_system_user_permissions">
+            For this test you need to grant INTERACT_ACROSS_USERS to CtsVerifier by running\n
+            adb shell pm grant --user current com.android.cts.verifier android.permission.INTERACT_ACROSS_USERS\n
+            adb shell pm grant --user 0 com.android.cts.verifier android.permission.INTERACT_ACROSS_USERS\n\n
+    </string>
     <string name="set_device_owner_dialog_text">
             For this test you need to install CtsEmptyDeviceOwner.apk by running\n
             adb install -r -t /path/to/CtsEmptyDeviceOwner.apk\n
             Then you need to set this app as the device owner by running\n
             adb shell dpm set-device-owner --user 0 com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
     </string>
+
     <string name="device_owner_remove_device_owner_test">Remove device owner</string>
     <string name="device_owner_remove_device_owner_test_info">
             Please check in Settings &gt; Security &gt; Device Administrators if CTSVerifier is
@@ -3463,7 +3469,9 @@ You should be prompted to select credentials; choose the ones you just installed
     </string>
     <string name="remove_device_owner_button">Remove device owner</string>
     <string name="device_owner_check_device_owner_test">Check device owner</string>
-    <string name="device_owner_incorrect_device_owner">Missing or incorrect device owner: CTSVerifier is not DO!</string>
+    <string name="device_owner_check_profile_owner_test">Check profile owner</string>
+    <string name="device_owner_incorrect_device_owner">Missing or incorrect device owner: CTSVerifier is not DO for user %1$d!</string>
+    <string name="device_owner_incorrect_profile_owner">Missing or incorrect profile owner: CTSVerifier is not PO for user %1$d!</string>
     <string name="device_owner_wifi_lockdown_test">WiFi configuration lockdown</string>
     <string name="device_owner_wifi_lockdown_info">
             Please enter the SSID and auth method of an available WiFi Access Point and press the button to create a

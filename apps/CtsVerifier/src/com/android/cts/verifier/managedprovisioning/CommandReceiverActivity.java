@@ -17,7 +17,6 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
-import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.MAKE_USER_EPHEMERAL;
 import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 
@@ -48,6 +47,7 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 import com.android.cts.verifier.R;
 
 import java.io.File;
@@ -186,8 +186,7 @@ public class CommandReceiverActivity extends Activity {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent();
         try {
-            mDpm = (DevicePolicyManager) getSystemService(
-                    Context.DEVICE_POLICY_SERVICE);
+            mDpm = DevicePolicyManagerWrapper.get(this, DeviceAdminTestReceiver.class);
             mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             final String command = getIntent().getStringExtra(EXTRA_COMMAND);
@@ -269,10 +268,20 @@ public class CommandReceiverActivity extends Activity {
                 } break;
                 case COMMAND_REMOVE_DEVICE_OWNER: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
+                        Log.e(TAG, COMMAND_REMOVE_DEVICE_OWNER + ": " + getPackageName()
+                                + " is not DO for user " + getUserId());
                         return;
                     }
                     clearAllPoliciesAndRestrictions();
                     mDpm.clearDeviceOwnerApp(getPackageName());
+
+                    // TODO(b/179100903): temporarily removing PO, should be done automatically
+                    if (UserManager.isHeadlessSystemUserMode()) {
+                        Log.i(TAG, "Disabling PO on user " + getUserId());
+                        DevicePolicyManager localDpm = getSystemService(DevicePolicyManager.class);
+                        localDpm.clearProfileOwner(mAdmin);
+                    }
+
                 } break;
                 case COMMAND_REQUEST_BUGREPORT: {
                     if (!mDpm.isDeviceOwnerApp(getPackageName())) {
@@ -533,6 +542,12 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void uninstallHelperPackage() {
+        // TODO(b/177554984): STOPSHIP: will need a special command on DpmWrapper for this one
+        if (UserManager.isHeadlessSystemUserMode()) {
+            Log.e(TAG, "uninstallHelperPackage(): skipping on headless system user mode");
+            return;
+        }
+
         try {
             getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
                     PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), PendingIntent.FLAG_MUTABLE_UNAUDITED)

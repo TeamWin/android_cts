@@ -38,5 +38,12 @@
             </intent-filter>
         </receiver>
 
+        <!-- TODO(b/179100903): temporarily receiver until DPMS automatically transfers PO on
+              headless system user mode -->
+        <receiver android:name=".ProfileOwnerChangedReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.app.action.PROFILE_OWNER_CHANGED"/>
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>
