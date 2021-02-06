@@ -870,6 +870,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.7")
     public void testVp9HdrStaticMetadata() throws Exception {
         final String staticInfo =
                 "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
@@ -878,6 +879,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 true /*metadataInContainer*/);
     }
 
+    @CddTest(requirement="5.3.9")
     public void testAV1HdrStaticMetadata() throws Exception {
         final String staticInfo =
                 "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
@@ -886,6 +888,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 false /*metadataInContainer*/);
     }
 
+    @CddTest(requirement="5.3.5")
     public void testH265HDR10StaticMetadata() throws Exception {
         // Expected value of MediaFormat.KEY_HDR_STATIC_INFO key.
         // The associated value is a ByteBuffer. This buffer contains the raw contents of the
@@ -900,6 +903,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 false /*metadataInContainer*/);
     }
 
+    @CddTest(requirement="5.3.7")
     public void testVp9Hdr10PlusMetadata() throws Exception {
         final String staticInfo =
                 "00 4c 1d b8 0b d0 84 80  3e c0 33 c4 86 12 3d 42" +
@@ -934,6 +938,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 staticInfo, dynamicInfo, true /*metadataInContainer*/);
     }
 
+    @CddTest(requirement="5.3.5")
     public void testH265Hdr10PlusMetadata() throws Exception {
         final String staticInfo =
                 "00 4c 1d b8 0b d0 84 80  3e c2 33 c4 86 13 3d 42" +
