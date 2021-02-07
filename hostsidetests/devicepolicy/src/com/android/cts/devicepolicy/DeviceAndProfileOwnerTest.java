@@ -1842,6 +1842,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testThrowsWhenTryingToReSetOrganizationId", mUserId);
     }
 
+    @Test
+    public void testAdminControlOverSensorPermissionGrantsDefault() throws Exception {
+        // By default, admin should not be able to grant sensors-related permissions.
+        executeDeviceTestMethod(".SensorPermissionGrantTest",
+                "testAdminCannotGrantSensorsPermission");
+    }
 
     /**
      * Executes a test class on device. Prior to running, turn off background data usage

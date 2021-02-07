@@ -357,6 +357,17 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
                 "testPermissionGrantStateGranted_userNotifiedOfLocationPermission");
     }
 
+    @Override
+    @Ignore("b/158735247")
+    @Test
+    public void testAdminControlOverSensorPermissionGrantsDefault() throws Exception {
+        // In Device Owner mode, by default, admin should be able to grant sensors-related
+        // permissions.
+        executeDeviceTestMethod(".SensorPermissionGrantTest",
+                "testAdminCanGrantSensorsPermissions");
+    }
+
+
     private void configureNotificationListener() throws DeviceNotAvailableException {
         getDevice().executeShellCommand("cmd notification allow_listener "
                 + "com.android.cts.deviceandprofileowner/.NotificationListener");
