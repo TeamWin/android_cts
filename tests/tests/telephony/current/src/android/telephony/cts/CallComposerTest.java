@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.OutcomeReceiver;
 import android.os.ParcelFileDescriptor;
@@ -33,8 +34,11 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -58,6 +62,10 @@ public class CallComposerTest {
     private String mPreviousDefaultDialer;
     private Context mContext;
     private boolean mPreviousTestMode;
+
+    @Rule
+    public final RequiredFeatureRule mTelephonyRequiredRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY);
 
     @Before
     public void setUp() throws Exception {
