@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,25 @@ import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
-public class VoiceInteractionMain extends Activity {
-    static final String TAG = "VoiceInteractionMain";
+public class CtsVoiceInteractionMainActivity extends Activity {
+    static final String TAG = "CtsVoiceInteractionMainActivity";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName(this, MainInteractionService.class));
-        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.VOICE_INTERACTION_SERVICE_NORMAL_TEST);
-        final Bundle intentExtras = getIntent().getExtras();
-        if (intentExtras != null) {
-            intent.putExtras(intentExtras);
+
+        Intent intent = getIntent();
+        int serviceType = intent.getIntExtra(Utils.KEY_SERVICE_TYPE, -1);
+        Intent serviceIntent = new Intent();
+        if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_NONE) {
+            serviceIntent.setComponent(new ComponentName(this, MainInteractionService.class));
+        } else {
+            Log.w(TAG, "Never here");
+            finish();
+            return;
         }
-        ComponentName serviceName = startService(intent);
+        serviceIntent.putExtra(Utils.KEY_TEST_EVENT, intent.getIntExtra(Utils.KEY_TEST_EVENT, -1));
+        ComponentName serviceName = startService(serviceIntent);
         Log.i(TAG, "Started service: " + serviceName);
         finish();
     }

@@ -323,7 +323,7 @@ public class TvInputServiceTest {
     }
 
     @Test
-    public void verifyCommandPauseResumeRecording() {
+    public void verifyCommandPauseResumeRecordingWithBundle() {
         final CountingRecordingSession session = tuneForRecording(CHANNEL_0);
         notifyTuned(CHANNEL_0);
         mTvRecordingClient.startRecording(CHANNEL_0);
@@ -338,7 +338,27 @@ public class TvInputServiceTest {
         PollingCheck.waitFor(TIME_OUT, () -> session.mResumeRecordingWithBundleCount > 0);
 
         assertThat(session.mResumeRecordingWithBundleCount).isEqualTo(1);
-   }
+        assertBundlesAreEqual(session.mResumeRecordingWithBundleData, bundle);
+
+    }
+
+    @Test
+    public void verifyCommandPauseResumeRecording() {
+        final CountingRecordingSession session = tuneForRecording(CHANNEL_0);
+        notifyTuned(CHANNEL_0);
+        mTvRecordingClient.startRecording(CHANNEL_0);
+
+        mTvRecordingClient.pauseRecording();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mPauseRecordingWithBundleCount > 0);
+
+        assertThat(session.mPauseRecordingWithBundleCount).isEqualTo(1);
+
+        mTvRecordingClient.resumeRecording();
+        PollingCheck.waitFor(TIME_OUT, () -> session.mResumeRecordingWithBundleCount > 0);
+
+        assertThat(session.mPauseRecordingWithBundleCount).isEqualTo(1);
+        assertBundlesAreEqual(session.mResumeRecordingWithBundleData, Bundle.EMPTY);
+    }
 
     @Test
     public void verifyCommandStopRecording() {
