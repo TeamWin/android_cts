@@ -4742,7 +4742,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="custom_rating">Example of input app specific custom rating.</string>
 
     <!-- A list of fully-qualified test classes that should not be run. -->
-    <string-array name="disabled_tests" />
+    <string-array name="disabled_tests">
+        <item>com.android.cts.verifier.telecom.CtsVerifierInCallUi</item>
+    </string-array>
 
     <!-- Strings for screen pinning test -->
     <string name="screen_pinning_test">Screen Pinning Test</string>
