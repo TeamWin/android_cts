@@ -115,9 +115,11 @@ public class DynamicLayoutTest {
                 true,
                 TextUtils.TruncateAt.START,
                 DEFAULT_OUTER_WIDTH);
-        assertEquals(0, dynamicLayout.getEllipsisCount(LINE1));
-        assertEquals(ELLIPSIS_UNDEFINED, dynamicLayout.getEllipsisStart(LINE1));
-        assertEquals(DEFAULT_OUTER_WIDTH, dynamicLayout.getEllipsizedWidth());
+        assertThat(dynamicLayout.getEllipsisCount(LINE0)).isEqualTo(0);
+        assertThat(dynamicLayout.getEllipsisStart(LINE0)).isEqualTo(0);
+        assertThat(dynamicLayout.getEllipsisCount(LINE1)).isEqualTo(0);
+        assertThat(dynamicLayout.getEllipsisStart(LINE1)).isEqualTo(ELLIPSIS_UNDEFINED);
+        assertThat(dynamicLayout.getEllipsizedWidth()).isEqualTo(DEFAULT_OUTER_WIDTH);
     }
 
     /*
