@@ -1078,14 +1078,19 @@ public class CameraTestUtils extends Assert {
      *
      * @param camera The CameraDevice to be configured.
      * @param outputs The OutputConfiguration list that is used for camera output.
+     * @param initialRequest The session parameters passed in during stream configuration
      * @param listener The callback CameraDevice will notify when capture results are available.
      */
     public static CameraCaptureSession tryConfigureCameraSessionWithConfig(CameraDevice camera,
-            List<OutputConfiguration> outputs,
+            List<OutputConfiguration> outputs, CaptureRequest initialRequest,
             CameraCaptureSession.StateCallback listener, Handler handler)
             throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
-        camera.createCaptureSessionByOutputConfigurations(outputs, sessionListener, handler);
+        SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outputs, new HandlerExecutor(handler),
+                sessionListener);
+        sessionConfig.setSessionParameters(initialRequest);
+        camera.createCaptureSession(sessionConfig);
 
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
                                    BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
