@@ -17,6 +17,7 @@ android_test {
     defaults: ["cts_support_defaults"],
     platform_apis: true,
     static_libs: [
+        "bouncycastle-repackaged-unbundled",
         "cts-core-test-runner-axt",
 
         // Jar containing expectations files.
