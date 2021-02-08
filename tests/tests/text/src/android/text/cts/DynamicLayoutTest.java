@@ -20,6 +20,7 @@ import static android.text.Layout.Alignment.ALIGN_NORMAL;
 import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -103,10 +104,13 @@ public class DynamicLayoutTest {
                 true);
     }
 
+    /*
+     * Test the ellipsis result when no ellipsis is needed, for a singleline text.
+     */
     @Test
-    public void testEllipsis() {
+    public void testEllipsis_singlelineNotEllipsized() {
         final DynamicLayout dynamicLayout = new DynamicLayout(SINGLELINE_CHAR_SEQUENCE,
-                MULTLINE_CHAR_SEQUENCE,
+                SINGLELINE_CHAR_SEQUENCE,
                 mDefaultPaint,
                 DEFAULT_OUTER_WIDTH,
                 DEFAULT_ALIGN,
@@ -119,6 +123,61 @@ public class DynamicLayoutTest {
         assertThat(dynamicLayout.getEllipsisStart(LINE0)).isEqualTo(0);
         assertThat(dynamicLayout.getEllipsisCount(LINE1)).isEqualTo(0);
         assertThat(dynamicLayout.getEllipsisStart(LINE1)).isEqualTo(ELLIPSIS_UNDEFINED);
+        assertThat(dynamicLayout.getEllipsizedWidth()).isEqualTo(DEFAULT_OUTER_WIDTH);
+    }
+
+    /*
+     * Test the ellipsis result when no ellipsis is needed, for a multiline text.
+     */
+    @Test
+    public void testEllipsis_multilineNotEllipsized() {
+        final DynamicLayout dynamicLayout = new DynamicLayout(MULTLINE_CHAR_SEQUENCE,
+                MULTLINE_CHAR_SEQUENCE,
+                mDefaultPaint,
+                DEFAULT_OUTER_WIDTH,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                true,
+                TextUtils.TruncateAt.START,
+                DEFAULT_OUTER_WIDTH);
+        assertThat(dynamicLayout.getLineCount()).isEqualTo(3);
+        for (int i = 0; i < LINE3; i++) {
+            assertWithMessage("Ellipsis count for line " + i)
+                    .that(dynamicLayout.getEllipsisCount(i)).isEqualTo(0);
+            assertWithMessage("Ellipsis start for line " + i)
+                    .that(dynamicLayout.getEllipsisStart(i)).isEqualTo(0);
+        }
+        assertThat(dynamicLayout.getEllipsisCount(LINE3)).isEqualTo(0);
+        assertThat(dynamicLayout.getEllipsisStart(LINE3)).isEqualTo(ELLIPSIS_UNDEFINED);
+        assertThat(dynamicLayout.getEllipsizedWidth()).isEqualTo(DEFAULT_OUTER_WIDTH);
+    }
+
+    /*
+     * Test the ellipsis result when no ellipsis is needed, when the display text is different from
+     * the base.
+     */
+    @Test
+    public void testEllipsis_transformedNotEllipsized() {
+        final DynamicLayout dynamicLayout = new DynamicLayout(SINGLELINE_CHAR_SEQUENCE,
+                MULTLINE_CHAR_SEQUENCE,
+                mDefaultPaint,
+                DEFAULT_OUTER_WIDTH,
+                DEFAULT_ALIGN,
+                SPACING_MULT_NO_SCALE,
+                SPACING_ADD_NO_SCALE,
+                true,
+                TextUtils.TruncateAt.START,
+                DEFAULT_OUTER_WIDTH);
+        assertThat(dynamicLayout.getLineCount()).isEqualTo(3);
+        for (int i = 0; i < LINE3; i++) {
+            assertWithMessage("Ellipsis count for line " + i)
+                    .that(dynamicLayout.getEllipsisCount(i)).isEqualTo(0);
+            assertWithMessage("Ellipsis start for line " + i)
+                    .that(dynamicLayout.getEllipsisStart(i)).isEqualTo(0);
+        }
+        assertThat(dynamicLayout.getEllipsisCount(LINE3)).isEqualTo(0);
+        assertThat(dynamicLayout.getEllipsisStart(LINE3)).isEqualTo(ELLIPSIS_UNDEFINED);
         assertThat(dynamicLayout.getEllipsizedWidth()).isEqualTo(DEFAULT_OUTER_WIDTH);
     }
 
