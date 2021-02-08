@@ -16,12 +16,16 @@
 
 package android.content.pm.cts;
 
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.getDefaultLauncher;
+import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
@@ -46,7 +50,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /** Some tests in this class are ignored until b/126946674 is fixed. */
@@ -54,10 +57,11 @@ import java.util.concurrent.TimeUnit;
 public class LauncherAppsTest {
 
     private Context mContext;
+    private Instrumentation mInstrumentation;
     private LauncherApps mLauncherApps;
     private UsageStatsManager mUsageStatsManager;
-    private ComponentName mDefaultHome;
-    private ComponentName mTestHome;
+    private String mDefaultHome;
+    private String mTestHome = PACKAGE_NAME;
 
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String FULL_CLASS_NAME = "android.content.pm.cts.LauncherMockActivity";
@@ -78,13 +82,21 @@ public class LauncherAppsTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mLauncherApps = (LauncherApps) mContext.getSystemService(Context.LAUNCHER_APPS_SERVICE);
         mUsageStatsManager = (UsageStatsManager) mContext.getSystemService(
                 Context.USAGE_STATS_SERVICE);
 
-        mDefaultHome = mContext.getPackageManager().getHomeActivities(new ArrayList<>());
-        mTestHome = new ComponentName(PACKAGE_NAME, FULL_CLASS_NAME);
-        setHomeActivity(mTestHome);
+        mDefaultHome = getDefaultLauncher(mInstrumentation);
+        setDefaultLauncher(mInstrumentation, mTestHome);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        unregisterObserver(DEFAULT_OBSERVER_ID);
+        if (mDefaultHome != null) {
+            setDefaultLauncher(mInstrumentation, mDefaultHome);
+        }
     }
 
     @Test
@@ -221,14 +233,6 @@ public class LauncherAppsTest {
         assertEquals(info.getComponentName().getPackageName(), info.getActivityInfo().packageName);
     }
 
-    @After
-    public void tearDown() throws Exception {
-        unregisterObserver(DEFAULT_OBSERVER_ID);
-        if (mDefaultHome != null) {
-            setHomeActivity(mDefaultHome);
-        }
-    }
-
     private void registerDefaultObserver() {
         registerObserver(DEFAULT_OBSERVER_ID, Duration.ofMinutes(DEFAULT_TIME_LIMIT),
                 Duration.ofMinutes(0));
@@ -244,10 +248,5 @@ public class LauncherAppsTest {
     private void unregisterObserver(int observerId) {
         SystemUtil.runWithShellPermissionIdentity(() ->
                 mUsageStatsManager.unregisterAppUsageLimitObserver(observerId));
-    }
-
-    private void setHomeActivity(ComponentName component) throws Exception {
-        SystemUtil.runShellCommand("cmd package set-home-activity --user "
-                + USER_HANDLE.getIdentifier() + " " + component.flattenToString());
     }
 }
