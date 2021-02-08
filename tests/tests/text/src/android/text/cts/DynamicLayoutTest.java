@@ -19,6 +19,8 @@ package android.text.cts;
 import static android.text.Layout.Alignment.ALIGN_NORMAL;
 import static android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -316,6 +318,32 @@ public class DynamicLayoutTest {
         assertLineSpecs(expected, dynamicLayout);
     }
 
+    /*
+     * Tests that the ellipsis result, for the case of TruncateAt.START and no ellipsization needed,
+     * isn't affected by a previous ellipsization. This tests the fix for a bug where the static
+     * StaticLayout instance reused internally was not properly reinitialized for this specific
+     * case.
+     */
+    @Test
+    public void testEllipsis_notAffectedByPreviousEllipsization() {
+        // Create an ellipsized DynamicLayout, but throw it away.
+        final String ellipsizedText = "Some arbitrary relatively long text";
+        final DynamicLayout ellipsizedLayout =
+                DynamicLayout.Builder.obtain(ellipsizedText, mDefaultPaint, 1 << 20 /* width */)
+                        .setEllipsize(TextUtils.TruncateAt.END)
+                        .setEllipsizedWidth(2 * (int) mDefaultPaint.getTextSize())
+                        .build();
+        // Make sure it was actually ellipsized.
+        assertThat(ellipsizedLayout.getEllipsisCount(LINE0)).isGreaterThan(0);
+
+        // Create a DynamicLayout that would trigger the bug.
+        final String text = "a\nb";
+        final DynamicLayout dynamicLayout =
+                createBuilderWithDefaults(text).setEllipsize(TextUtils.TruncateAt.START).build();
+
+        assertThat(dynamicLayout.getEllipsisCount(LINE0)).isEqualTo(0);
+    }
+
     @Test
     public void testBuilder_obtain() {
         final DynamicLayout.Builder builder = DynamicLayout.Builder.obtain(MULTLINE_CHAR_SEQUENCE,
@@ -421,4 +449,11 @@ public class DynamicLayoutTest {
         }
     }
 
+    private DynamicLayout.Builder createBuilderWithDefaults(CharSequence base) {
+        final DynamicLayout.Builder builder =
+                DynamicLayout.Builder.obtain(base, mDefaultPaint, DEFAULT_OUTER_WIDTH);
+        return builder.setAlignment(DEFAULT_ALIGN)
+                .setLineSpacing(SPACING_ADD_NO_SCALE, SPACING_MULT_NO_SCALE)
+                .setIncludePad(true);
+    }
 }
