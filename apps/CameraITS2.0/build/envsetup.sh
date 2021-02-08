@@ -56,7 +56,7 @@ export PYTHONPATH="$PWD/tests:$PYTHONPATH"
 
 
 
-for M in sensor_fusion_utils camera_properties_utils capture_request_utils error_util cv2_image_processing_utils image_processing_utils its_session_utils scene_change_utils target_exposure_utils
+for M in sensor_fusion_utils camera_properties_utils capture_request_utils cv2_image_processing_utils image_processing_utils its_session_utils scene_change_utils target_exposure_utils
 do
     python "utils/$M.py" 2>&1 | grep -q "OK" || \
         echo ">> Unit test for $M failed" >&2

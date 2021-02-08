@@ -14,6 +14,7 @@
 
 
 import logging
+import unittest
 from mobly import asserts
 import numpy as np
 import capture_request_utils
@@ -803,3 +804,8 @@ def solid_color_test_pattern(props):
   """
   return SOLID_COLOR_TEST_PATTERN in props.get(
       'android.sensor.availableTestPatternModes')
+
+
+if __name__ == '__main__':
+  unittest.main()
+
