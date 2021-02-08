@@ -37,9 +37,13 @@ public final class HdmiCecConstants {
     public static final int CEC_CONTROL_LEFT = 0x3;
     public static final int CEC_CONTROL_RIGHT = 0x4;
     public static final int CEC_CONTROL_BACK = 0xd;
+    public static final int CEC_CONTROL_POWER = 0x40;
     public static final int CEC_CONTROL_VOLUME_UP = 0x41;
     public static final int CEC_CONTROL_VOLUME_DOWN = 0x42;
     public static final int CEC_CONTROL_MUTE = 0x43;
+    public static final int CEC_CONTROL_POWER_TOGGLE_FUNCTION = 0x6B;
+    public static final int CEC_CONTROL_POWER_OFF_FUNCTION = 0x6C;
+    public static final int CEC_CONTROL_POWER_ON_FUNCTION = 0x6D;
 
     public static final int UNRECOGNIZED_OPCODE = 0x0;
 

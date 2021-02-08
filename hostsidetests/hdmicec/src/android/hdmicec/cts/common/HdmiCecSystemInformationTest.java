@@ -79,6 +79,57 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     }
 
     /**
+     * Tests {@code <Report Features>}
+     *
+     * <p>Tests that the device reports the correct information in {@code <Report Features>} in
+     * response to a {@code <Give Features>} message.
+     */
+    @Test
+    public void cect_reportFeatures_deviceTypeContainedInAllDeviceTypes() throws Exception {
+        CecVersionHelper.setCec20(getDevice());
+        List<LogicalAddress> testDevices =
+                Arrays.asList(
+                        LogicalAddress.TV,
+                        LogicalAddress.RECORDER_1,
+                        LogicalAddress.TUNER_1,
+                        LogicalAddress.PLAYBACK_1,
+                        LogicalAddress.AUDIO_SYSTEM,
+                        LogicalAddress.BROADCAST);
+        for (LogicalAddress testDevice : testDevices) {
+            if (testDevice == mDutLogicalAddress) {
+                /* Skip the DUT logical address */
+                continue;
+            }
+            hdmiCecClient.sendCecMessage(testDevice, CecOperand.GIVE_FEATURES);
+            String message = hdmiCecClient.checkExpectedOutput(CecOperand.REPORT_FEATURES);
+            int receivedParams = CecMessage.getParams(message, 2, 4);
+
+            int deviceType = 0;
+            switch (mDutLogicalAddress.getDeviceType()) {
+                case HdmiCecConstants.CEC_DEVICE_TYPE_PLAYBACK_DEVICE:
+                    deviceType = 1 << 4;
+                    break;
+                case HdmiCecConstants.CEC_DEVICE_TYPE_TV:
+                    deviceType = 1 << 7;
+                    break;
+                case HdmiCecConstants.CEC_DEVICE_TYPE_AUDIO_SYSTEM:
+                    deviceType = 1 << 3;
+                    break;
+                case HdmiCecConstants.CEC_DEVICE_TYPE_RECORDER:
+                    deviceType = 1 << 6;
+                    break;
+                case HdmiCecConstants.CEC_DEVICE_TYPE_TUNER:
+                    deviceType = 1 << 5;
+                    break;
+                case HdmiCecConstants.CEC_DEVICE_TYPE_RESERVED:
+                    break;
+            }
+
+            assertThat(receivedParams & deviceType).isNotEqualTo(1);
+        }
+    }
+
+    /**
      * Test 11.2.6-6
      * Tests that the device sends a {@code <CEC Version>} in response to a {@code <Get CEC
      * Version>}
