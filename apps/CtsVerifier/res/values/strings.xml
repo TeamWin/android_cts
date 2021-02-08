@@ -3475,7 +3475,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_wifi_lockdown_test">WiFi configuration lockdown</string>
     <string name="device_owner_wifi_lockdown_info">
             Please enter the SSID and auth method of an available WiFi Access Point and press the button to create a
-            WiFi configuration. This configuration can be seen on Settings &gt; WiFi. The test cases
+            WiFi configuration. This configuration must NOT EXIST yet (you can use Settings &gt; WiFi to verify - if it exists,
+            then select the option to forget it). The test cases
             are going to use this config. Please go through test cases in order (from top to bottom).
     </string>
     <string name="switch_wifi_lockdown_off_button">WiFi config lockdown off</string>
