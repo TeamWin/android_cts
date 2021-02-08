@@ -30,7 +30,8 @@ ANGLE_CHECK_TOL = 1  # degrees
 ANGLE_NUM_MIN = 10  # Minimum number of angles for find_angle() to be valid
 
 
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'],'test_images', 'ISO12233.png')
+CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images',
+                          'ISO12233.png')
 CHART_HEIGHT = 13.5  # cm
 CHART_DISTANCE_RFOV = 31.0  # cm
 CHART_DISTANCE_WFOV = 22.0  # cm
