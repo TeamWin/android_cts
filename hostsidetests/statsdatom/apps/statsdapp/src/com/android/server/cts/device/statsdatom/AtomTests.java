@@ -205,6 +205,8 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER, 105);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_RECORD_AUDIO_OUTPUT, 106);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM, 107);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_FINE_LOCATION_SOURCE, 108);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_COARSE_LOCATION_SOURCE, 109);
     }
 
     @Test
