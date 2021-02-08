@@ -24,10 +24,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class FakeView extends View {
+    private static final int BACKGROUND_COLOR = 0xFFFFFF00;
     private final BlockingQueue<String> mCalls = new ArrayBlockingQueue<>(3);
 
     public FakeView(Context context) {
         super(context);
+        setBackgroundColor(BACKGROUND_COLOR);
     }
 
     @Override
