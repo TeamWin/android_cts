@@ -17,6 +17,7 @@
 
 package android.media.cts;
 
+import android.annotation.Nullable;
 import android.annotation.RawRes;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
@@ -112,7 +113,7 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getAudioFormatWithEncoding(AudioFormat.ENCODING_OPUS));
     }
 
-    private AudioTrack getOffloadAudioTrack(@RawRes int audioRes, int bitRateInkbps,
+    private @Nullable AudioTrack getOffloadAudioTrack(@RawRes int audioRes, int bitRateInkbps,
                                             AudioFormat audioFormat) {
         if (!AudioManager.isOffloadedPlaybackSupported(audioFormat, DEFAULT_ATTR)) {
             Log.i(TAG, "skipping testAudioTrackOffload as offload encoding "
@@ -275,6 +276,9 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 getOffloadAudioTrack(R.raw.sine1khzs40dblong,
                         /* bitRateInkbps= */ 192,
                         getAudioFormatWithEncoding(AudioFormat.ENCODING_MP3));
+        if (offloadTrack == null) {
+            return;
+        }
         assertTrue(offloadTrack.isOffloadedPlayback());
     }
 
