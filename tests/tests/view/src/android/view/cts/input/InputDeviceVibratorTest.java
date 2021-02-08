@@ -16,14 +16,22 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.hardware.input.InputManager;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.os.Vibrator.OnVibratorStateChangedListener;
 import android.util.Log;
 import android.view.InputDevice;
 
@@ -38,8 +46,12 @@ import com.android.cts.input.UinputVibratorTestData;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoRule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,12 +65,19 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class InputDeviceVibratorTest {
     private static final String TAG = "InputDeviceVibratorTest";
+    private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
+
     private InputManager mInputManager;
     private UinputDevice mUinputDevice;
     private InputJsonParser mParser;
     private Instrumentation mInstrumentation;
     private Vibrator mVibrator;
     private int mDeviceId;
+
+    @Rule
+    public MockitoRule rule = MockitoJUnit.rule();
+    @Mock
+    private OnVibratorStateChangedListener mListener;
 
     /**
      * Get a vibrator from input device with specified Vendor Id and Product Id.
@@ -84,6 +103,7 @@ public class InputDeviceVibratorTest {
     @Before
     public void setup() {
         final int resourceId = R.raw.google_gamepad_register;
+
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mInputManager = mInstrumentation.getTargetContext().getSystemService(InputManager.class);
         assertNotNull(mInputManager);
@@ -96,6 +116,10 @@ public class InputDeviceVibratorTest {
         mVibrator = getVibrator(mParser.readVendorId(resourceId),
                 mParser.readProductId(resourceId));
         assertTrue(mVibrator != null);
+        mVibrator.addVibratorStateListener(mListener);
+        verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                .times(1)).onVibratorStateChanged(false);
+        reset(mListener);
     }
 
     @After
@@ -130,6 +154,11 @@ public class InputDeviceVibratorTest {
 
             // Start vibration
             mVibrator.vibrate(effect);
+            // Verify vibrator state listener
+            verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                    .times(1)).onVibratorStateChanged(true);
+            assertTrue(mVibrator.isVibrating());
+
             final long startTime = SystemClock.elapsedRealtime();
             List<UinputResultData> results = new ArrayList<>();
             int vibrationCount = 0;
@@ -154,8 +183,20 @@ public class InputDeviceVibratorTest {
                     throw new RuntimeException("Could not get JSON results from HidDevice");
                 }
             }
-            assertTrue(vibrationCount == totalVibrations);
+            assertEquals(vibrationCount, totalVibrations);
+            // Verify vibrator state listener
+            verify(mListener, timeout(CALLBACK_TIMEOUT_MILLIS)
+                    .times(1)).onVibratorStateChanged(false);
+            assertFalse(mVibrator.isVibrating());
+            reset(mListener);
         }
+        // Shouldn't get any listener state callback after removal
+        mVibrator.removeVibratorStateListener(mListener);
+        // Start vibration
+        mVibrator.vibrate(VibrationEffect.createOneShot(100 /* duration */, 255 /* amplitude */));
+        assertTrue(mVibrator.isVibrating());
+        // Verify vibrator state listener
+        verify(mListener, never()).onVibratorStateChanged(anyBoolean());
     }
 
     @Test
