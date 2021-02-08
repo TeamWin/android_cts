@@ -495,7 +495,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
         circle[i] = cv2_image_processing_utils.find_circle(
             img, '%s_%s_gray_%s.jpg' % (os.path.join(log_path, NAME), fmt, i),
             CIRCLE_MIN_AREA, CIRCLE_COLOR)
-        logging.debug('Circle radius %d:  %.2f', i, circle[i]['r'])
+        logging.debug('Circle radius %s:  %.2f', format(i), circle[i]['r'])
 
         # Undo zoom to image (if applicable).
         if fmt == 'yuv':

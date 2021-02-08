@@ -292,7 +292,7 @@ def main():
  # Get test parameters from config file
   test_params_content = get_test_params(config_file_contents)
   if not camera_id_combos:
-    camera_id_combos = test_params_content['camera'].split(',')
+    camera_id_combos = str(test_params_content['camera']).split(',')
   if not scenes:
     scenes = test_params_content['scene'].split(',')
 
