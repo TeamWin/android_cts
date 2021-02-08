@@ -20,6 +20,7 @@ import static android.os.Build.VERSION.ACTIVE_CODENAMES;
 import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 
 import android.os.Build;
+import android.os.SystemProperties;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.RestrictedBuildTest;
 
@@ -255,9 +256,15 @@ public class BuildTest extends TestCase {
 
         assertEquals(Build.SOC_MANUFACTURER, Build.SOC_MANUFACTURER.trim());
         assertTrue(SOC_MANUFACTURER_PATTERN.matcher(Build.SOC_MANUFACTURER).matches());
+        if (getVendorPartitionVersion() > Build.VERSION_CODES.R) {
+            assertFalse(Build.SOC_MANUFACTURER.equals(Build.UNKNOWN));
+        }
 
         assertEquals(Build.SOC_MODEL, Build.SOC_MODEL.trim());
         assertTrue(SOC_MODEL_PATTERN.matcher(Build.SOC_MODEL).matches());
+        if (getVendorPartitionVersion() > Build.VERSION_CODES.R) {
+            assertFalse(Build.SOC_MODEL.equals(Build.UNKNOWN));
+        }
 
         assertTrue(PRODUCT_PATTERN.matcher(Build.PRODUCT).matches());
 
@@ -347,5 +354,14 @@ public class BuildTest extends TestCase {
     private void assertNotEmpty(String value) {
         assertNotNull(value);
         assertFalse(value.isEmpty());
+    }
+
+    private int getVendorPartitionVersion() {
+        String version = SystemProperties.get("ro.vndk.version");
+        try {
+            return Integer.parseInt(version);
+        } catch (NumberFormatException ignore) {
+            return Build.VERSION_CODES.CUR_DEVELOPMENT;
+        }
     }
 }
