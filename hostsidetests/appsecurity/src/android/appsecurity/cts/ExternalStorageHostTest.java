@@ -626,6 +626,24 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void testMediaEscalation_RequestWriteFilePathSupport() throws Exception {
+        // Not adding tests for MEDIA_28 and MEDIA_29 as they need W_E_S for write access via file
+        // path for shared files, and will always have access as they have W_E_S.
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+        }, false);
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz, "testMediaEscalation_RequestWriteFilePathSupport",
+                user);
+    }
+
+    @Test
     public void testMediaEscalation() throws Exception {
         doMediaEscalation(MEDIA);
     }
