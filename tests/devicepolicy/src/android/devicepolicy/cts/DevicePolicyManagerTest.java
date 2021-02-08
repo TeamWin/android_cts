@@ -16,6 +16,8 @@
 
 package android.devicepolicy.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -193,14 +195,64 @@ public final class DevicePolicyManagerTest {
         }
     }
 
-    FullyManagedDeviceProvisioningParams createManagedDeviceProvisioningParams() {
+    @RequireRunOnPrimaryUser
+    @Test
+    public void provisionFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
+            throws ProvisioningException {
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            resetUserSetupCompletedFlag();
+
+            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isTrue();
+        } finally {
+            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
+            setUserSetupCompletedFlag();
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @Test
+    public void provisionFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
+            throws ProvisioningException {
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            resetUserSetupCompletedFlag();
+
+            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams(
+                    /* canControlPermissionGrant= */ false);
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+
+            assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isFalse();
+        } finally {
+            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
+            setUserSetupCompletedFlag();
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    FullyManagedDeviceProvisioningParams.Builder
+            createDefaultManagedDeviceProvisioningParamsBuilder() {
         return new FullyManagedDeviceProvisioningParams.Builder(
-                        DEVICE_ADMIN_COMPONENT_NAME,
-                        DEVICE_OWNER_NAME)
-                        // Don't remove system apps during provisioning until the testing
-                        // infrastructure supports restoring uninstalled apps.
-                        .setLeaveAllSystemAppsEnabled(true)
-                        .build();
+                DEVICE_ADMIN_COMPONENT_NAME,
+                DEVICE_OWNER_NAME)
+                // Don't remove system apps during provisioning until the testing
+                // infrastructure supports restoring uninstalled apps.
+                .setLeaveAllSystemAppsEnabled(true);
+    }
+
+    FullyManagedDeviceProvisioningParams createManagedDeviceProvisioningParams() {
+        return createDefaultManagedDeviceProvisioningParamsBuilder().build();
+    }
+
+    FullyManagedDeviceProvisioningParams createManagedDeviceProvisioningParams(
+            boolean canControlPermissionGrants) {
+        return createDefaultManagedDeviceProvisioningParamsBuilder()
+                .setDeviceOwnerCanGrantSensorsPermissions(canControlPermissionGrants)
+                .build();
     }
 
     private void resetUserSetupCompletedFlag() {

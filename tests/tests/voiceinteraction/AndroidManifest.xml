@@ -40,6 +40,10 @@
               <action android:name="android.intent.action.TEST_LOCAL_INTERACTION_ACTIVITY"/>
           </intent-filter>
       </activity>
+        <activity android:name="TestVoiceInteractionServiceActivity"
+            android:label="Voice Interaction Service Activity"
+            android:exported="true">
+        </activity>
       <receiver android:name="VoiceInteractionTestReceiver"
            android:exported="true"/>
     </application>

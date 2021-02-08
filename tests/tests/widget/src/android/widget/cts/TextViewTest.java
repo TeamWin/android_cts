@@ -3375,12 +3375,12 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
-    public void setSetImeTemporarilyConsumesInput() {
+    public void setSetImeConsumesInput() {
         InputConnection input = initTextViewForSimulatedIme();
         mTextView.setCursorVisible(true);
         assertTrue(mTextView.isCursorVisible());
 
-        mTextView.setImeTemporarilyConsumesInput(true);
+        mTextView.setImeConsumesInput(true);
         assertFalse(mTextView.isCursorVisible());
 
         mTextView.setCursorVisible(true);
