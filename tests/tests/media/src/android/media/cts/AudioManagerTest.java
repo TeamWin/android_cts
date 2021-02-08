@@ -660,13 +660,14 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     maxVolume),
                     minVolume < maxVolume);
 
-            mAudioManager.setStreamVolume(stream, 1, 0);
+            final int minNonZeroVolume = Math.max(minVolume, 1);
+            mAudioManager.setStreamVolume(stream, minNonZeroVolume, 0);
             if (mUseFixedVolume) {
                 assertEquals(maxVolume, mAudioManager.getStreamVolume(stream));
                 continue;
             }
             assertEquals(String.format("stream=%d", stream),
-                    1, mAudioManager.getStreamVolume(stream));
+                    minNonZeroVolume, mAudioManager.getStreamVolume(stream));
 
             if (stream == AudioManager.STREAM_MUSIC && mAudioManager.isWiredHeadsetOn()) {
                 // due to new regulations, music sent over a wired headset may be volume limited
@@ -706,7 +707,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.adjustStreamVolume(stream, ADJUST_SAME, 0);
 
             // volume raise
-            mAudioManager.setStreamVolume(stream, 1, 0);
+            mAudioManager.setStreamVolume(stream, minNonZeroVolume, 0);
             volume = mAudioManager.getStreamVolume(stream);
             while (volume < maxVolume) {
                 volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(stream));
