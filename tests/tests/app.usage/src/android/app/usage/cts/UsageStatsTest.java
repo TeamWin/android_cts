@@ -741,26 +741,6 @@ public class UsageStatsTest {
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
     }
 
-    /** Confirm the default value of {@link Settings.Global.ENABLE_RESTRICTED_BUCKET}. */
-    // TODO(148887416): get this test to work for instant apps
-    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
-    @Test
-    public void testDefaultEnableRestrictedBucketOff() throws Exception {
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, null);
-
-        launchSubActivity(TaskRootActivity.class);
-        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
-                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
-        // User force shouldn't have to deal with the timeout.
-        setStandByBucket(mTargetPackage, "restricted");
-        assertNotEquals("User was able to force into RESTRICTED bucket when bucket disabled",
-                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
-    }
-
     // TODO(148887416): get this test to work for instant apps
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
