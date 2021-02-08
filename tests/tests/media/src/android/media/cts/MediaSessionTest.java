@@ -26,8 +26,6 @@ import static android.media.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE
 import static android.media.cts.MediaSessionTestService.TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
@@ -50,7 +48,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
-import android.os.ResultReceiver;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
@@ -58,7 +55,6 @@ import android.view.KeyEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -397,7 +393,7 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     /**
-     * Test whether system doesn't crash by
+     * Test whether {@link IllegalArgumentException} is thrown when calling
      * {@link MediaSession#setMediaButtonReceiver(PendingIntent)} with implicit intent.
      */
     public void testSetMediaButtonReceiver_implicitIntent() throws Exception {
@@ -408,17 +404,14 @@ public class MediaSessionTest extends AndroidTestCase {
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
 
-        // Sets the media button receiver. Framework would try to keep the pending intent in the
-        // persistent store.
-        mSession.setMediaButtonReceiver(pi);
-
-        // Call explicit release, so change in the media key event session can be notified with the
-        // pending intent.
-        mSession.release();
-
-        // Also try to dispatch media key event. System would try to send key event via pending
-        // intent, but it would no-op because there's no receiver.
-        simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
+        // Sets the media button receiver. Framework won't save this since it is an invalid implicit
+        // intent and throw an IAE instead.
+        try {
+            mSession.setMediaButtonReceiver(pi);
+            fail();
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     /**
@@ -546,11 +539,6 @@ public class MediaSessionTest extends AndroidTestCase {
         mSession.setCallback(sessionCallback, new Handler(Looper.getMainLooper()));
         mSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS);
         mSession.setActive(true);
-
-        Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON).setComponent(
-                new ComponentName(getContext(), getContext().getClass()));
-        PendingIntent pi = PendingIntent.getBroadcast(getContext(), 0, mediaButtonIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
-        mSession.setMediaButtonReceiver(pi);
 
         // Set state to STATE_PLAYING to get higher priority.
         setPlaybackState(PlaybackState.STATE_PLAYING);
