@@ -43,6 +43,7 @@ android_test {
         "androidx.legacy_legacy-support-v4",
         "androidx.test.core",
         "cts-install-lib",
+        "ShortcutManagerTestUtils",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.
