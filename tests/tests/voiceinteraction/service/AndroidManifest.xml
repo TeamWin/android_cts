@@ -65,6 +65,14 @@
           </intent-filter>
           <meta-data android:name="android.speech" android:resource="@xml/recognition_service" />
       </service>
+        <activity android:name=".CtsVoiceInteractionMainActivity"
+            android:exported="true"
+            android:visibleToInstantApps="true">
+            <intent-filter>
+                <action android:name="android.intent.action.START_TEST_VOICE_INTERACTION" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>
 
