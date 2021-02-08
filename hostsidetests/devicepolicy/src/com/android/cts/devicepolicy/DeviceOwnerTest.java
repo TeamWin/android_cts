@@ -22,6 +22,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -854,6 +855,55 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     @Test
     public void testDevicePolicySafetyCheckerIntegration() throws Exception {
         executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testAllOperations");
+    }
+
+    @Test
+    public void testListForegroundAffiliatedUsers_notDeviceOwner() throws Exception {
+        if (!removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
+            fail("Failed to remove device owner for user " + mDeviceOwnerUserId);
+        }
+
+        executeDeviceTestMethod(".PreDeviceOwnerTest",
+                "testListForegroundAffiliatedUsers_notDeviceOwner");
+    }
+
+    @Test
+    public void testListForegroundAffiliatedUsers_onlyForegroundUser() throws Exception {
+        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
+                "testListForegroundAffiliatedUsers_onlyForegroundUser");
+    }
+
+    // TODO(b/132260693): createAffiliatedSecondaryUser() is failing on headless user
+    @TemporaryIgnoreOnHeadlessSystemUserMode
+    @Test
+    public void testListForegroundAffiliatedUsers_extraUser() throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        createAffiliatedSecondaryUser();
+
+        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
+                "testListForegroundAffiliatedUsers_onlyForegroundUser");
+    }
+
+    @Test
+    public void testListForegroundAffiliatedUsers_notAffiliated() throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        int userId = createUser();
+        switchUser(userId);
+
+        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
+                "testListForegroundAffiliatedUsers_empty");
+    }
+
+    // TODO(b/132260693): createAffiliatedSecondaryUser() is failing on headless user
+    @TemporaryIgnoreOnHeadlessSystemUserMode
+    @Test
+    public void testListForegroundAffiliatedUsers_affiliated() throws Exception {
+        assumeCanCreateAdditionalUsers(1);
+        int userId = createAffiliatedSecondaryUser();
+        switchUser(userId);
+
+        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
+                "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
     private int createAffiliatedSecondaryUser() throws Exception {
