@@ -163,7 +163,7 @@ public class AdbUtils {
     public static int runPoc(String pocName, ITestDevice device, int timeout,
             String arguments, IShellOutputReceiver receiver) throws Exception {
         String remoteFile = String.format("%s%s", TMP_PATH, pocName);
-        SecurityTestCase.getPocPusher(device).pushFile(pocName, remoteFile);
+        SecurityTestCase.getPocPusher(device).pushFile(pocName + "_sts", remoteFile);
 
         assertPocExecutable(pocName, device);
         if (receiver == null) {
