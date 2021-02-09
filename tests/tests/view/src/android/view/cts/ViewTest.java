@@ -5079,6 +5079,30 @@ public class ViewTest {
         assertFalse(view.isShowingLayoutBounds());
     }
 
+    @Test
+    public void testClipToOutline() {
+        View clipToOutlineUnsetView = mActivity.findViewById(R.id.clip_to_outline_unset);
+        assertFalse(clipToOutlineUnsetView.getClipToOutline());
+        clipToOutlineUnsetView.setClipToOutline(true);
+        assertTrue(clipToOutlineUnsetView.getClipToOutline());
+        clipToOutlineUnsetView.setClipToOutline(false);
+        assertFalse(clipToOutlineUnsetView.getClipToOutline());
+
+        View clipToOutlineFalseView = mActivity.findViewById(R.id.clip_to_outline_false);
+        assertFalse(clipToOutlineFalseView.getClipToOutline());
+        clipToOutlineFalseView.setClipToOutline(true);
+        assertTrue(clipToOutlineFalseView.getClipToOutline());
+        clipToOutlineFalseView.setClipToOutline(false);
+        assertFalse(clipToOutlineFalseView.getClipToOutline());
+
+        View clipToOutlineTrueView = mActivity.findViewById(R.id.clip_to_outline_true);
+        assertTrue(clipToOutlineTrueView.getClipToOutline());
+        clipToOutlineTrueView.setClipToOutline(false);
+        assertFalse(clipToOutlineTrueView.getClipToOutline());
+        clipToOutlineTrueView.setClipToOutline(true);
+        assertTrue(clipToOutlineTrueView.getClipToOutline());
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 
