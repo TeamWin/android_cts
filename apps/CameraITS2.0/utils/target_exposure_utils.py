@@ -17,6 +17,8 @@ import json
 import logging
 import os
 import sys
+import unittest
+
 import capture_request_utils
 import image_processing_utils
 import its_session_utils
@@ -245,3 +247,7 @@ def do_target_exposure_measurement(its_session):
 
   # Compute the exposure value that would result in a luma of 0.5.
   return sens * exp_time * 0.5 / luma_mean[0]
+
+
+if __name__ == '__main__':
+  unittest.main()

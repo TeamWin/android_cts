@@ -58,6 +58,8 @@ SCALE_TELE_IN_WFOV_BOX = 0.5
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
 SQUARE_TOL = 0.1  # Square W vs H mismatch RTOL
 
+TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
+
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
 
@@ -543,10 +545,10 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
   """Unit tests for this module."""
 
   def test_get_angle_identify_unrotated_chessboard_angle(self):
-    normal_img_path = resources.GetResourceFilename(
-        TEST_IMG_DIR + 'rotated_chessboards/normal.jpg')
-    wide_img_path = resources.GetResourceFilename(
-        TEST_IMG_DIR + 'rotated_chessboards/wide.jpg')
+    normal_img_path = os.path.join(
+        TEST_IMG_DIR, 'rotated_chessboards/normal.jpg')
+    wide_img_path = os.path.join(
+        TEST_IMG_DIR, 'rotated_chessboards/wide.jpg')
     normal_img = cv2.cvtColor(cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
     wide_img = cv2.cvtColor(cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
     normal_angle = get_angle(normal_img)
@@ -569,10 +571,10 @@ class Cv2ImageProcessingUtilsTests(unittest.TestCase):
     # For each rotated image pair (normal, wide), check angle against expected.
     for suffix, angle in test_cases:
       # Define image paths.
-      normal_img_path = resources.GetResourceFilename(
-          TEST_IMG_DIR + f'rotated_chessboards/normal{suffix}.jpg')
-      wide_img_path = resources.GetResourceFilename(
-          TEST_IMG_DIR + f'rotated_chessboards/wide{suffix}.jpg')
+      normal_img_path = os.path.join(
+          TEST_IMG_DIR, f'rotated_chessboards/normal{suffix}.jpg')
+      wide_img_path = os.path.join(
+          TEST_IMG_DIR, f'rotated_chessboards/wide{suffix}.jpg')
 
       # Load and color-convert images.
       normal_img = cv2.cvtColor(cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
