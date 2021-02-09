@@ -18,10 +18,26 @@ package com.android.cts.emptydeviceowner;
 import android.app.admin.DeviceAdminReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+
+import com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils;
 
 public class EmptyDeviceAdmin extends DeviceAdminReceiver {
 
+    private static final String TAG = EmptyDeviceAdmin.class.getSimpleName();
+
     public static ComponentName getComponentName(Context context) {
         return new ComponentName(context, EmptyDeviceAdmin.class);
+    }
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action = intent.getAction();
+        Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
+
+        if (DeviceAdminReceiverUtils.disableSelf(context, intent)) return;
+
+        super.onReceive(context, intent);
     }
 }
