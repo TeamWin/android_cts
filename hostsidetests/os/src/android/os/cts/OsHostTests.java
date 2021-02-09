@@ -16,6 +16,8 @@
 
 package android.os.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -61,7 +63,6 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
             "Verifying IntentFilter\\..* package:\"" + HOST_VERIFICATION_PKG + "\"";
     private static final Pattern HOST_PATTERN = Pattern.compile(".*hosts:\"(.*?)\"");
     // domains that should be validated against given our test apk
-    private static final String HOST_EXPLICIT = "explicit.example.com";
     private static final String HOST_WILDCARD = "wildcard.tld";
 
     /**
@@ -177,11 +178,9 @@ public class OsHostTests extends DeviceTestCase implements IBuildReceiver, IAbiR
                     Matcher m = HOST_PATTERN.matcher(line);
                     assertTrue(m.find());
                     final String hostgroup = m.group(1);
-                    HashSet<String> allHosts = new HashSet<String>(
+                    HashSet<String> allHosts = new HashSet<>(
                             Arrays.asList(hostgroup.split(" ")));
-                    assertEquals(2, allHosts.size());
-                    assertTrue("AllHosts Contains: " + allHosts, allHosts.contains(HOST_EXPLICIT));
-                    assertTrue("AllHosts Contains: " + allHosts, allHosts.contains(HOST_WILDCARD));
+                    assertThat(allHosts).containsExactly(HOST_WILDCARD);
                     foundVerifierOutput = true;
                     break;
                 }
