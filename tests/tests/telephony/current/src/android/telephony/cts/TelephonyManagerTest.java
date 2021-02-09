@@ -3445,7 +3445,7 @@ public class TelephonyManagerTest {
                                                 AccessNetworkConstants.AccessNetworkType.GERAN)
                                         .setSignalMeasurementType(
                                                 SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
-                                        .setThresholdsUnlimited(new int[]{})
+                                        .setThresholds(new int[]{}, true /*isSystem*/)
                                         .build()))
                         .setReportingRequestedWhileIdle(true)
                         .build();
@@ -3473,8 +3473,8 @@ public class TelephonyManagerTest {
                                                 AccessNetworkConstants.AccessNetworkType.GERAN)
                                         .setSignalMeasurementType(
                                                 SignalThresholdInfo.SIGNAL_MEASUREMENT_TYPE_RSSI)
-                                        .setThresholdsUnlimited(
-                                                new int[]{-113, -103, -97, -61, -51})
+                                        .setThresholds(new int[]{-113, -103, -97, -61, -51},
+                                            true /*isSystem*/)
                                         .build()))
                         .setReportingRequestedWhileIdle(true)
                         .build();
