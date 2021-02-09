@@ -17,6 +17,7 @@ import copy
 import io
 import logging
 import math
+import os
 import random
 import sys
 import unittest
@@ -41,6 +42,7 @@ DEFAULT_GAMMA_LUT = numpy.array([
     for i in range(MAX_LUT_SIZE)])
 NUM_TRIES = 2
 NUM_FRAMES = 4
+TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 
 
 
@@ -832,7 +834,7 @@ class ImageProcessingUtilsTest(unittest.TestCase):
     We do one level of initial blur as PNG image is not perfect.
     """
     blur_levels = [2, 4, 8]
-    chart_file = resources.GetResourceFilename(TEST_IMG_DIR + 'ISO12233.png')
+    chart_file = os.path.join(TEST_IMG_DIR, 'ISO12233.png')
     chart = cv2.imread(chart_file, cv2.IMREAD_ANYDEPTH)
     white_level = numpy.amax(chart).astype(float)
     sharpness = {}
