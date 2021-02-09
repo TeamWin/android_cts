@@ -16,10 +16,13 @@
 
 package android.provider.cts.simphonebook;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.Manifest;
 import android.content.Context;
+import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -34,6 +37,8 @@ import com.google.common.util.concurrent.SettableFuture;
 
 import org.junit.rules.ExternalResource;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -45,13 +50,17 @@ import java.util.concurrent.TimeoutException;
 class SimsPowerRule extends ExternalResource {
     private static final String TAG = SimsPowerRule.class.getSimpleName();
 
-    private TelephonyManager mTelephonyManager;
+    private final TelephonyManager mTelephonyManager;
+    private final SubscriptionManager mSubscriptionManager;
     private boolean mInitiallyOn;
+
+    private List<SubscriptionInfo> mInitiallyActiveSubscriptions;
 
     SimsPowerRule(boolean initiallyOn) {
         mInitiallyOn = initiallyOn;
         Context context = ApplicationProvider.getApplicationContext();
         mTelephonyManager = context.getSystemService(TelephonyManager.class);
+        mSubscriptionManager = context.getSystemService(SubscriptionManager.class);
     }
 
     static SimsPowerRule off() {
@@ -64,19 +73,30 @@ class SimsPowerRule extends ExternalResource {
 
     @Override
     protected void before() {
+        SystemUtil.runWithShellPermissionIdentity(() -> mInitiallyActiveSubscriptions =
+                        mSubscriptionManager.getActiveSubscriptionInfoList(),
+                Manifest.permission.READ_PHONE_STATE);
         if (mInitiallyOn) {
             return;
         }
-        for (int i = 0; i < mTelephonyManager.getSupportedModemCount(); i++) {
-            powerOff(i);
+        for (SubscriptionInfo subscriptionInfo : mInitiallyActiveSubscriptions) {
+            powerOff(subscriptionInfo);
         }
     }
 
     @Override
     protected void after() {
-        for (int i = 0; i < mTelephonyManager.getSupportedModemCount(); i++) {
-            powerOn(i);
+        for (SubscriptionInfo subscriptionInfo : mInitiallyActiveSubscriptions) {
+            powerOn(subscriptionInfo);
         }
+    }
+
+    void powerOn(SubscriptionInfo info) {
+        setSimPower(info.getSimSlotIndex(), 1);
+    }
+
+    void powerOff(SubscriptionInfo info) {
+        setSimPower(info.getSimSlotIndex(), 0);
     }
 
     void powerOn(int slotIndex) {
@@ -84,6 +104,10 @@ class SimsPowerRule extends ExternalResource {
     }
 
     void powerOff(int slotIndex) {
+        Optional<SubscriptionInfo> subscriptionInfoForSlot = mInitiallyActiveSubscriptions
+                .stream().filter(info -> info.getSimSlotIndex() == slotIndex).findFirst();
+        assertWithMessage("isPresent")
+                .that(subscriptionInfoForSlot.isPresent()).isTrue();
         setSimPower(slotIndex, 0);
     }
 
