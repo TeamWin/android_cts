@@ -17,13 +17,9 @@
 package android.server.wm;
 
 import static android.app.ActivityManager.LOCK_TASK_MODE_NONE;
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.wm.TestTaskOrganizer.INVALID_TASK_ID;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
@@ -40,9 +36,7 @@ import static android.server.wm.app27.Components.SDK_27_LAUNCHING_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_SEPARATE_PROCESS_ACTIVITY;
 import static android.server.wm.app27.Components.SDK_27_TEST_ACTIVITY;
 
-import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -100,6 +94,8 @@ public class MultiWindowTests extends ActivityManagerTestBase {
      */
     @Test
     public void testNonResizeableActivity() {
+        createManagedSupportsNonResizableMultiWindowSession().set(0);
+
         boolean gotAssertionError = false;
         try {
             launchActivityInPrimarySplit(NON_RESIZEABLE_ACTIVITY);
