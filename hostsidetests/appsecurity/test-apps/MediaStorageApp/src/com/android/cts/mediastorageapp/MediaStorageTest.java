@@ -446,6 +446,7 @@ public class MediaStorageTest {
         // Check File API support
         assertAccessFileAPISupport(file);
         assertReadWriteFileAPISupport(file);
+        assertRenameFileAPISupport(file);
         assertDeleteFileAPISupport(file);
     }
 
@@ -465,6 +466,20 @@ public class MediaStorageTest {
         try (FileInputStream fis = new FileInputStream(file)) {
             assertThat(ByteStreams.toByteArray(fis)).isEqualTo(bytes);
         }
+    }
+
+    public void assertRenameFileAPISupport(File oldFile) throws Exception {
+        final String oldName = oldFile.getAbsolutePath();
+        final String extension = oldName.substring(oldName.lastIndexOf('.')).trim();
+        // TODO(b/178816495): Changing the extension changes the media-type and hence the media-URI
+        // corresponding to the new file is not accessible to the caller. Rename to the same
+        // extension so that the test app does not lose access and is able to delete the file.
+        final String newName = "cts" + System.nanoTime() + extension;
+        final File newFile = Environment.buildPath(Environment.getExternalStorageDirectory(),
+                Environment.DIRECTORY_DOWNLOADS, newName);
+        assertThat(oldFile.renameTo(newFile)).isTrue();
+        // Rename back to oldFile for other ops like delete
+        assertThat(newFile.renameTo(oldFile)).isTrue();
     }
 
     private void assertDeleteFileAPISupport(File file) throws Exception {
