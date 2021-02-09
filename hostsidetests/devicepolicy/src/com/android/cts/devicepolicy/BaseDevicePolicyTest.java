@@ -28,7 +28,11 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.role.RoleProto;
+import com.android.role.RoleServiceDumpProto;
+import com.android.role.RoleUserStateProto;
 import com.android.tradefed.config.Option;
+import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -1129,19 +1133,30 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     }
 
     protected String getDefaultLauncher() throws Exception {
-        final String PREFIX = "Launcher: ComponentInfo{";
-        final String POSTFIX = "}";
-        final String commandOutput =
-                getDevice().executeShellCommand("cmd shortcut get-default-launcher");
-        if (commandOutput == null) {
-            return null;
-        }
-        String[] lines = commandOutput.split("\\r?\\n");
-        for (String line : lines) {
-            if (line.startsWith(PREFIX) && line.endsWith(POSTFIX)) {
-                return line.substring(PREFIX.length(), line.length() - POSTFIX.length());
+        final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
+        getDevice().executeShellCommand("dumpsys role --proto", receiver);
+
+        RoleUserStateProto roleState = null;
+        final RoleServiceDumpProto dumpProto =
+                RoleServiceDumpProto.parser().parseFrom(receiver.getOutput());
+        for (RoleUserStateProto userState : dumpProto.getUserStatesList()) {
+            if (getDevice().getCurrentUser() == userState.getUserId()) {
+                roleState = userState;
+                break;
             }
         }
+
+        if (roleState != null) {
+            final List<RoleProto> roles = roleState.getRolesList();
+            // Iterate through the roles until we find the Home role
+            for (RoleProto roleProto : roles) {
+                if ("android.app.role.HOME".equals(roleProto.getName())) {
+                    assertEquals(1, roleProto.getHoldersList().size());
+                    return roleProto.getHoldersList().get(0);
+                }
+            }
+        }
+
         throw new Exception("Default launcher not found");
     }
 

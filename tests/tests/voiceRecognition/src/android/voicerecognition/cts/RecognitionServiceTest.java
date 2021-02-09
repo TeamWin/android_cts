@@ -86,7 +86,8 @@ public final class RecognitionServiceTest {
             // startListening() will call noteProxyOpNoTrow(), if the permission check pass then the
             // RecognitionService.onStartListening() will be called. Otherwise, a TimeoutException
             // will be thrown.
-            mActivity.mCountDownLatch.await(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            assertThat(mActivity.mCountDownLatch.await(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+                    .isTrue();
         } catch (InterruptedException e) {
             assertWithMessage("onStartListening() not called. " + e).fail();
         }

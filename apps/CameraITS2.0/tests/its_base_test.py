@@ -143,7 +143,8 @@ class ItsBaseTest(base_test.BaseTestClass):
     self.tablet.adb.shell(['input', 'keyevent ', 'KEYCODE_WAKEUP'])
     self.tablet.adb.shell('settings put system screen_brightness {}'.format(
         self.tablet_screen_brightness))
-    logging.debug('Tablet brightness set to: %d', self.tablet_screen_brightness)
+    logging.debug('Tablet brightness set to: %s',
+                  format(self.tablet_screen_brightness))
     self.tablet.adb.shell('settings put system screen_off_timeout {}'.format(
         DISPLAY_TIMEOUT))
     self.tablet.adb.shell('am force-stop com.google.android.apps.docs')
