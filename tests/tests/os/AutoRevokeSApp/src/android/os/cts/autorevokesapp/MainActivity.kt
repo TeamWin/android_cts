@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.os.cts.autorevokedummyapp
+package android.os.cts.autorevokesapp
 
 import android.app.Activity
 import android.content.Intent
