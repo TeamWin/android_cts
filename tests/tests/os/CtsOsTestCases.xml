@@ -44,5 +44,6 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAutoRevokeDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk" />
         <option name="push" value="CtsAutoRevokePreRApp.apk->/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk" />
+        <option name="push" value="CtsCompanionTestApp.apk->/data/local/tmp/cts/os/CtsCompanionTestApp.apk" />
     </target_preparer>
 </configuration>
