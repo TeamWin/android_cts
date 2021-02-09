@@ -69,6 +69,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Presubmit
 public class BiometricServiceTest extends BiometricTestBase {
@@ -166,22 +167,17 @@ public class BiometricServiceTest extends BiometricTestBase {
     }
 
     private boolean anyEnrollmentsExist() throws Exception {
-        boolean result = false;
         final BiometricServiceState serviceState = getCurrentState();
-        for (int i = 0; i < serviceState.mSensorStates.sensorStates.size(); i++) {
-            final int sensorId = serviceState.mSensorStates.sensorStates.keyAt(i);
-            final SensorState sensorState = serviceState.mSensorStates.sensorStates.valueAt(i);
-            for (int j = 0; j < sensorState.getUserStates().size(); j++) {
-                final UserState userState = sensorState.getUserStates().valueAt(j);
-                final int userId = sensorState.getUserStates().keyAt(j);
+
+        for (SensorState sensorState : serviceState.mSensorStates.sensorStates.values()) {
+            for (UserState userState : sensorState.getUserStates().values()) {
                 if (userState.numEnrolled != 0) {
-                    Log.d(TAG, "Sensor " + sensorId + ", user " + userId
-                            + ", has " + userState.numEnrolled + ". State: " + serviceState);
-                    result = true;
+                    Log.d(TAG, "Enrollments still exist: " + serviceState);
+                    return true;
                 }
             }
         }
-        return result;
+        return false;
     }
 
     private void waitForAllUnenrolled() throws Exception {
@@ -252,17 +248,16 @@ public class BiometricServiceTest extends BiometricTestBase {
         try {
             final BiometricServiceState state = getCurrentState();
 
-            for (int i = 0; i < state.mSensorStates.sensorStates.size(); i++) {
-                final int sensorId = state.mSensorStates.sensorStates.keyAt(i);
-                final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
-                for (int j = 0; j < sensorState.getUserStates().size(); j++) {
-                    final UserState userState = sensorState.getUserStates().valueAt(j);
-                    final int userId = sensorState.getUserStates().keyAt(j);
-                    if (userState.numEnrolled != 0) {
-                        Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
+            for (Map.Entry<Integer, SensorState> sensorEntry
+                    : state.mSensorStates.sensorStates.entrySet()) {
+                for (Map.Entry<Integer, UserState> userEntry
+                        : sensorEntry.getValue().getUserStates().entrySet()) {
+                    if (userEntry.getValue().numEnrolled != 0) {
+                        Log.w(TAG, "Cleaning up for sensor: " + sensorEntry.getKey()
+                                + ", user: " + userEntry.getKey());
                         BiometricTestSession session = mBiometricManager.createTestSession(
-                                sensorId);
-                        session.cleanupInternalState(userId);
+                                sensorEntry.getKey());
+                        session.cleanupInternalState(userEntry.getKey());
                         session.close();
                     }
                 }
@@ -300,7 +295,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
         assertEquals(mSensorProperties.size(), state.mSensorStates.sensorStates.size());
         for (SensorProperties prop : mSensorProperties) {
-            assertTrue(state.mSensorStates.sensorStates.contains(prop.getSensorId()));
+            assertTrue(state.mSensorStates.sensorStates.containsKey(prop.getSensorId()));
         }
     }
 
