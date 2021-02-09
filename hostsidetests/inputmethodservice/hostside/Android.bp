@@ -26,5 +26,8 @@ java_test_host {
         "cts-tradefed",
         "tradefed",
     ],
-    static_libs: ["cts-inputmethodservice-common-host"],
+    static_libs: [
+        "cts-inputmethodservice-common-host",
+        "CompatChangeGatingTestBase",
+    ],
 }

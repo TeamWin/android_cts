@@ -16,6 +16,8 @@
 
 package android.graphics.fonts;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -126,6 +128,24 @@ public class FontTest {
         }
     }
 
+    private void assertAxesEquals(String msg, FontVariationAxis[] left, FontVariationAxis[] right) {
+        if (left == right) {
+            return;
+        }
+
+        if (left == null) {
+            assertWithMessage(msg).that(right).isEmpty();
+        } else if (right == null) {
+            assertWithMessage(msg).that(left).isEmpty();
+        } else {
+            assertWithMessage(msg).that(left).isEqualTo(right);
+        }
+    }
+
+    private void assertNullOrEmpty(String msg, FontVariationAxis[] actual) {
+        assertWithMessage(msg).that(actual == null || actual.length == 0).isTrue();
+    }
+
     @Test
     public void testBuilder_buffer() throws IOException {
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
@@ -141,7 +161,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -163,7 +183,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, ttcIndex, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -186,7 +206,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertEquals(path, axes, font.getAxes());
+            assertAxesEquals(path, axes, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -208,7 +228,7 @@ public class FontTest {
             assertEquals(path, customWeight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -224,7 +244,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -259,7 +279,7 @@ public class FontTest {
                 assertEquals(path, weight, font.getStyle().getWeight());
                 assertEquals(path, slant, font.getStyle().getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
-                assertNull(path, font.getAxes());
+                assertNullOrEmpty(path, font.getAxes());
                 assertNotNull(font.getBuffer());
                 assertNotNull(font.getFile());
             } finally {
@@ -286,7 +306,7 @@ public class FontTest {
                 assertEquals(path, weight, font.getStyle().getWeight());
                 assertEquals(path, slant, font.getStyle().getSlant());
                 assertEquals(path, ttcIndex, font.getTtcIndex());
-                assertNull(path, font.getAxes());
+                assertNullOrEmpty(path, font.getAxes());
                 assertNotNull(font.getBuffer());
                 assertNotNull(font.getFile());
             } finally {
@@ -314,7 +334,7 @@ public class FontTest {
                 assertEquals(path, weight, font.getStyle().getWeight());
                 assertEquals(path, slant, font.getStyle().getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
-                assertEquals(path, axes, font.getAxes());
+                assertAxesEquals(path, axes, font.getAxes());
                 assertNotNull(font.getBuffer());
                 assertNotNull(font.getFile());
             } finally {
@@ -341,7 +361,7 @@ public class FontTest {
                 assertEquals(path, customWeight, font.getStyle().getWeight());
                 assertEquals(path, slant, font.getStyle().getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
-                assertNull(path, font.getAxes());
+                assertNullOrEmpty(path, font.getAxes());
                 assertNotNull(font.getBuffer());
                 assertNotNull(font.getFile());
             } finally {
@@ -361,7 +381,7 @@ public class FontTest {
                 assertEquals(path, weight, font.getStyle().getWeight());
                 assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
-                assertNull(path, font.getAxes());
+                assertNullOrEmpty(path, font.getAxes());
                 assertNotNull(font.getBuffer());
                 assertNotNull(font.getFile());
             } finally {
@@ -401,7 +421,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -431,7 +451,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -463,7 +483,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertEquals(path, axes, font.getAxes());
+                    assertAxesEquals(path, axes, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -493,7 +513,7 @@ public class FontTest {
                     assertEquals(path, customWeight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -518,7 +538,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -549,7 +569,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -582,7 +602,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -616,7 +636,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertEquals(path, axes, font.getAxes());
+                    assertAxesEquals(path, axes, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -649,7 +669,7 @@ public class FontTest {
                     assertEquals(path, customWeight, font.getStyle().getWeight());
                     assertEquals(path, slant, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -675,7 +695,7 @@ public class FontTest {
                     assertEquals(path, weight, font.getStyle().getWeight());
                     assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
-                    assertNull(path, font.getAxes());
+                    assertNullOrEmpty(path, font.getAxes());
                     assertNotNull(font.getBuffer());
                     assertNull(font.getFile());
                 }
@@ -740,7 +760,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -760,7 +780,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, ttcIndex, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -781,7 +801,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertEquals(path, axes, font.getAxes());
+            assertAxesEquals(path, axes, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -801,7 +821,7 @@ public class FontTest {
             assertEquals(path, customWeight, font.getStyle().getWeight());
             assertEquals(path, slant, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -814,7 +834,7 @@ public class FontTest {
             assertEquals(path, weight, font.getStyle().getWeight());
             assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getStyle().getSlant());
             assertEquals(path, 0, font.getTtcIndex());
-            assertNull(path, font.getAxes());
+            assertNullOrEmpty(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
@@ -845,7 +865,7 @@ public class FontTest {
             assertEquals("ResId=#" + resId, weight, font.getStyle().getWeight());
             assertEquals("ResId=#" + resId, slant, font.getStyle().getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
-            assertNull("ResId=#" + resId, font.getAxes());
+            assertNullOrEmpty("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }
@@ -865,7 +885,7 @@ public class FontTest {
             assertEquals("ResId=#" + resId, weight, font.getStyle().getWeight());
             assertEquals("ResId=#" + resId, slant, font.getStyle().getSlant());
             assertEquals("ResId=#" + resId, ttcIndex, font.getTtcIndex());
-            assertNull("ResId=#" + resId, font.getAxes());
+            assertNullOrEmpty("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }
@@ -886,7 +906,7 @@ public class FontTest {
             assertEquals("ResId=#" + resId, weight, font.getStyle().getWeight());
             assertEquals("ResId=#" + resId, slant, font.getStyle().getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
-            assertEquals("ResId=#" + resId, axes, font.getAxes());
+            assertAxesEquals("ResId=#" + resId, axes, font.getAxes());
             assertNotNull("ResId=#" + font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }
@@ -906,7 +926,7 @@ public class FontTest {
             assertEquals("ResId=#" + resId, customWeight, font.getStyle().getWeight());
             assertEquals("ResId=#" + resId, slant, font.getStyle().getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
-            assertNull("ResId=#" + resId, font.getAxes());
+            assertNullOrEmpty("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }
@@ -921,7 +941,7 @@ public class FontTest {
             assertEquals("ResId=#" + resId, FontStyle.FONT_SLANT_ITALIC,
                     font.getStyle().getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
-            assertNull("ResId=#" + resId, font.getAxes());
+            assertNullOrEmpty("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }

@@ -44,6 +44,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.Manifest;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -61,6 +62,7 @@ import android.location.cts.common.BroadcastCapture;
 import android.location.cts.common.GetCurrentLocationCapture;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
+import android.location.cts.common.ProviderRequestListenerCapture;
 import android.location.cts.common.gnss.GnssAntennaInfoCapture;
 import android.location.cts.common.gnss.GnssMeasurementsCapture;
 import android.location.cts.common.gnss.GnssNavigationMessageCapture;
@@ -73,6 +75,7 @@ import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
@@ -802,6 +805,26 @@ public class LocationManagerFineTest {
         } finally {
             BatteryUtils.enableBatterySaver(false);
             BatteryUtils.runDumpsysBatteryReset();
+        }
+    }
+
+    @Test
+    public void testRegisterProviderRequestListener() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.LOCATION_HARDWARE);
+
+        try (ProviderRequestListenerCapture requestlistener = new ProviderRequestListenerCapture(
+                mContext);
+             LocationListenerCapture locationListener = new LocationListenerCapture(mContext)) {
+            mManager.registerProviderRequestListener(Executors.newSingleThreadExecutor(),
+                    requestlistener);
+            mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
+                    Executors.newSingleThreadExecutor(), locationListener);
+
+            assertThat(requestlistener.getNextProviderRequest(TIMEOUT_MS)).isNotNull();
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
     }
 

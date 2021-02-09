@@ -97,7 +97,7 @@ def main():
   get_argv_vals = lambda x: x.split('=')[1]
   for s in list(sys.argv[1:]):
     if 'camera=' in s:
-      camera_id_combos = get_argv_vals(s).split(',')
+      camera_id_combos = str(get_argv_vals(s)).split(',')
     elif 'num_runs=' in s:
       num_runs = int(get_argv_vals(s))
 
