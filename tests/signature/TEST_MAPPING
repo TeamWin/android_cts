@@ -28,15 +28,6 @@
       "name": "CtsIntentSignatureTestCases"
     },
     {
-        "name": "CtsHiddenApiKillswitchDebugClassTestCases"
-    },
-    {
-        "name": "CtsHiddenApiKillswitchSdklistTestCases"
-    },
-    {
-        "name": "CtsHiddenApiKillswitchWildcardTestCases"
-    },
-    {
         "name": "CtsSystemApiAnnotationTestCases"
     },
     {
@@ -51,6 +42,15 @@
     }
   ],
   "postsubmit": [
+    {
+        "name": "CtsHiddenApiKillswitchDebugClassTestCases"
+    },
+    {
+        "name": "CtsHiddenApiKillswitchSdklistTestCases"
+    },
+    {
+        "name": "CtsHiddenApiKillswitchWildcardTestCases"
+    },
     {
       "name": "CtsHiddenApiBlocklistApi27TestCases"
     },
