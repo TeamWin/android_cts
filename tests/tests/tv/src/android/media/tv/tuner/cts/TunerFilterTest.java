@@ -80,8 +80,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSettings() throws Exception {
         AvSettings settings =
                 AvSettings
@@ -112,8 +110,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDownloadSettings() throws Exception {
         DownloadSettings settings =
                 DownloadSettings
@@ -125,8 +121,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testPesSettings() throws Exception {
         PesSettings settings =
                 PesSettings
@@ -140,8 +134,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testRecordSettings() throws Exception {
         RecordSettings settings =
                 RecordSettings
@@ -161,8 +153,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithSectionBits() throws Exception {
         SectionSettingsWithSectionBits settings =
                 SectionSettingsWithSectionBits
@@ -184,8 +174,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testSectionSettingsWithTableInfo() throws Exception {
         SectionSettingsWithTableInfo settings =
                 SectionSettingsWithTableInfo
@@ -205,8 +193,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAlpFilterConfiguration() throws Exception {
         AlpFilterConfiguration config =
                 AlpFilterConfiguration
@@ -224,8 +210,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIpFilterConfiguration() throws Exception {
         IpFilterConfiguration config =
                 IpFilterConfiguration
@@ -258,8 +242,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testMmtpFilterConfiguration() throws Exception {
         MmtpFilterConfiguration config =
                 MmtpFilterConfiguration
@@ -274,8 +256,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTlvFilterConfiguration() throws Exception {
         TlvFilterConfiguration config =
                 TlvFilterConfiguration
@@ -294,8 +274,6 @@ public class TunerFilterTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTsFilterConfiguration() throws Exception {
         PesSettings settings =
                 PesSettings

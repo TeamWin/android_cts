@@ -133,15 +133,11 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTunerConstructor() throws Exception {
         assertNotNull(mTuner);
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTunerVersion() {
         assertNotNull(mTuner);
         int version = TunerVersionChecker.getTunerVersion();
@@ -150,8 +146,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTuning() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
@@ -165,8 +159,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testScanning() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
@@ -189,8 +181,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testFrontendStatus() throws Exception {
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
@@ -328,8 +318,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testLnb() throws Exception {
         Lnb lnb = mTuner.openLnb(getExecutor(), getLnbCallback());
         if (lnb == null) return;
@@ -342,8 +330,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenLnbByname() throws Exception {
         Lnb lnb = mTuner.openLnbByName("default", getExecutor(), getLnbCallback());
         if (lnb != null) {
@@ -352,8 +338,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testCiCam() throws Exception {
     // open filter to get demux resource
         mTuner.openFilter(
@@ -364,8 +348,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAvSyncId() throws Exception {
     // open filter to get demux resource
         Filter f = mTuner.openFilter(
@@ -388,8 +370,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testReadFilter() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
@@ -437,8 +417,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testAudioFilterStreamTypeConfig() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
@@ -475,8 +453,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testTimeFilter() throws Exception {
         if (!mTuner.getDemuxCapabilities().isTimeFilterSupported()) return;
         TimeFilter f = mTuner.openTimeFilter();
@@ -489,8 +465,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testIpFilter() throws Exception {
         Filter f = mTuner.openFilter(
                 Filter.TYPE_IP, Filter.SUBTYPE_IP, 1000, getExecutor(), getFilterCallback());
@@ -526,8 +500,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDescrambler() throws Exception {
         Descrambler d = mTuner.openDescrambler();
         byte[] keyToken = new byte[] {1, 3, 2};
@@ -543,8 +515,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDescramblerKeyTokenValidator() throws Exception {
         byte[] invalidToken = new byte[17];
         byte[] validToken = new byte[] {1, 3, 2};
@@ -554,24 +524,18 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenDvrRecorder() throws Exception {
         DvrRecorder d = mTuner.openDvrRecorder(100, getExecutor(), getRecordListener());
         assertNotNull(d);
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOpenDvPlayback() throws Exception {
         DvrPlayback d = mTuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
         assertNotNull(d);
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDemuxCapabilities() throws Exception {
         DemuxCapabilities d = mTuner.getDemuxCapabilities();
         assertNotNull(d);
@@ -592,8 +556,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testResourceLostListener() throws Exception {
         mTuner.setResourceLostListener(getExecutor(), new Tuner.OnResourceLostListener() {
             @Override
@@ -604,8 +566,6 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testOnTuneEventListener() throws Exception {
         mTuner.setOnTuneEventListener(getExecutor(), new OnTuneEventListener() {
             @Override
@@ -616,15 +576,11 @@ public class TunerTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testUpdateResourcePriority() throws Exception {
         mTuner.updateResourcePriority(100, 20);
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testShareFrontendFromTuner() throws Exception {
         Tuner other = new Tuner(mContext, null, 100);
         List<Integer> ids = other.getFrontendIds();
