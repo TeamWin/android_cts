@@ -324,6 +324,10 @@ public class CarrierConfigManagerTest {
 
     @Test
     public void testExtraRebroadcastOnUnlock() throws Throwable {
+        if (!hasTelephony()) {
+            return;
+        }
+
         BlockingQueue<Boolean> queue = new ArrayBlockingQueue<Boolean>(5);
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
@@ -347,7 +351,8 @@ public class CarrierConfigManagerTest {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
         mConfigManager.notifyConfigChangedForSubId(subId);
 
-        Boolean broadcastReceived = queue.poll(10L, TimeUnit.SECONDS);
+        Boolean broadcastReceived = queue.poll(BROADCAST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        assertNotNull(broadcastReceived);
         assertTrue(broadcastReceived);
     }
 
