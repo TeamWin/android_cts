@@ -133,6 +133,7 @@ public class SubscriptionManagerTest {
     @AfterClass
     public static void tearDownClass() throws Exception {
         if (!isSupported()) return;
+        TelephonyUtils.flushTelephonyMetrics(InstrumentationRegistry.getInstrumentation());
     }
 
     @Before
