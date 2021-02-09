@@ -23,6 +23,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
@@ -31,10 +32,12 @@ import android.telephony.TelephonyManager;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -47,6 +50,10 @@ public class CarrierSignalTest {
             mIntentFuture.complete(intent);
         }
     }
+
+    @Rule
+    public final RequiredFeatureRule mTelephonyRequiredRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY);
 
     private static final int TEST_TIMEOUT_MILLIS = 5000;
     private Context mContext;
