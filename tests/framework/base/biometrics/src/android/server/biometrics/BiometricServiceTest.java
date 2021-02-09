@@ -34,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
@@ -139,7 +140,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
     private void waitForState(@BiometricServiceState.AuthSessionState int state) throws Exception {
         for (int i = 0; i < 20; i++) {
-            BiometricServiceState serviceState = getCurrentState();
+            final BiometricServiceState serviceState = getCurrentState();
             if (serviceState.mState != state) {
                 Log.d(TAG, "Not in state " + state + " yet, current: " + serviceState.mState);
                 Thread.sleep(300);
@@ -153,7 +154,7 @@ public class BiometricServiceTest extends BiometricTestBase {
     private void waitForStateNotEqual(@BiometricServiceState.AuthSessionState int state)
             throws Exception {
         for (int i = 0; i < 20; i++) {
-            BiometricServiceState serviceState = getCurrentState();
+            final BiometricServiceState serviceState = getCurrentState();
             if (serviceState.mState == state) {
                 Log.d(TAG, "Not out of state yet, current: " + serviceState.mState);
                 Thread.sleep(300);
@@ -162,6 +163,37 @@ public class BiometricServiceTest extends BiometricTestBase {
             }
         }
         Log.d(TAG, "Timed out waiting for state to not equal: " + state);
+    }
+
+    private boolean anyEnrollmentsExist() throws Exception {
+        boolean result = false;
+        final BiometricServiceState serviceState = getCurrentState();
+        for (int i = 0; i < serviceState.mSensorStates.sensorStates.size(); i++) {
+            final int sensorId = serviceState.mSensorStates.sensorStates.keyAt(i);
+            final SensorState sensorState = serviceState.mSensorStates.sensorStates.valueAt(i);
+            for (int j = 0; j < sensorState.getUserStates().size(); j++) {
+                final UserState userState = sensorState.getUserStates().valueAt(j);
+                final int userId = sensorState.getUserStates().keyAt(j);
+                if (userState.numEnrolled != 0) {
+                    Log.d(TAG, "Sensor " + sensorId + ", user " + userId
+                            + ", has " + userState.numEnrolled + ". State: " + serviceState);
+                    result = true;
+                }
+            }
+        }
+        return result;
+    }
+
+    private void waitForAllUnenrolled() throws Exception {
+        for (int i = 0; i < 20; i++) {
+            if (anyEnrollmentsExist()) {
+                Log.d(TAG, "Enrollments still exist..");
+                Thread.sleep(300);
+            } else {
+                return;
+            }
+        }
+        fail("Some sensors still have enrollments. State: " + getCurrentState());
     }
 
     @NonNull
@@ -208,25 +240,35 @@ public class BiometricServiceTest extends BiometricTestBase {
     }
 
     @After
-    public void cleanup() throws Exception {
+    public void cleanup() {
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
 
-        BiometricServiceState state = getCurrentState();
+        try {
+            waitForIdleService();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception when waiting for idle", e);
+        }
 
-        for (int i = 0; i < state.mSensorStates.sensorStates.size(); i++) {
-            final int sensorId = state.mSensorStates.sensorStates.keyAt(i);
-            final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
-            for (int j = 0; j < sensorState.getUserStates().size(); j++) {
-                final UserState userState = sensorState.getUserStates().valueAt(j);
-                final int userId = sensorState.getUserStates().keyAt(j);
-                if (userState.numEnrolled != 0) {
-                    Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
-                    BiometricTestSession session = mBiometricManager.createTestSession(sensorId);
-                    session.cleanupInternalState(userId);
-                    session.close();
+        try {
+            final BiometricServiceState state = getCurrentState();
+
+            for (int i = 0; i < state.mSensorStates.sensorStates.size(); i++) {
+                final int sensorId = state.mSensorStates.sensorStates.keyAt(i);
+                final SensorState sensorState = state.mSensorStates.sensorStates.valueAt(i);
+                for (int j = 0; j < sensorState.getUserStates().size(); j++) {
+                    final UserState userState = sensorState.getUserStates().valueAt(j);
+                    final int userId = sensorState.getUserStates().keyAt(j);
+                    if (userState.numEnrolled != 0) {
+                        Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
+                        BiometricTestSession session = mBiometricManager.createTestSession(
+                                sensorId);
+                        session.cleanupInternalState(userId);
+                        session.close();
+                    }
                 }
             }
+        } catch (Exception e) {
+            Log.e(TAG, "Unable to get current state in cleanup()");
         }
 
         // Authentication lifecycle is done
@@ -235,8 +277,6 @@ public class BiometricServiceTest extends BiometricTestBase {
         } catch (Exception e) {
             Log.e(TAG, "Exception when waiting for idle", e);
         }
-        state = getCurrentState();
-        assertTrue("Sensor states: " + state.toString(), state.mSensorStates.areAllSensorsIdle());
 
         if (mWakeLock != null) {
             mWakeLock.release();
@@ -314,6 +354,7 @@ public class BiometricServiceTest extends BiometricTestBase {
             @NonNull ActivitySession activitySession) throws Exception {
         Log.d(TAG, "testBiometricOnly_authenticateFromForegroundActivity_forSensor: " + sensorId);
         final int userId = 0;
+        waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
         final TestJournal journal = TestJournalContainer.get(activitySession.getComponentName());
 
@@ -377,6 +418,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         Log.d(TAG, "testBiometricOnly_rejectThenErrorFromForegroundActivity_forSensor: "
                 + sensorId);
         final int userId = 0;
+        waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
 
         final TestJournal journal =
@@ -441,6 +483,7 @@ public class BiometricServiceTest extends BiometricTestBase {
             @NonNull BiometricTestSession session, int sensorId,
             @NonNull ActivitySession activitySession) throws Exception {
         Log.d(TAG, "testBiometricOnly_negativeButtonInvoked_forSensor: " + sensorId);
+        waitForAllUnenrolled();
         enrollForSensor(session, sensorId);
         final TestJournal journal = TestJournalContainer.get(activitySession.getComponentName());
 
@@ -527,6 +570,7 @@ public class BiometricServiceTest extends BiometricTestBase {
                 + ", shouldEnrollBiometric=" + shouldEnrollBiometric);
         if (shouldEnrollBiometric) {
             assertNotNull(session);
+            waitForAllUnenrolled();
             enrollForSensor(session, sensorId);
         }
 
@@ -618,6 +662,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         // Get the state once. This intentionally clears the scheduler's recent operations dump.
         BiometricServiceState state = getCurrentStateAndClearSchedulerLog();
 
+        waitForAllUnenrolled();
         Log.d(TAG, "Enrolling for: " + sensorId);
         enrollForSensor(targetSensorTestSession, sensorId);
         biometricSessions.add(targetSensorTestSession);
