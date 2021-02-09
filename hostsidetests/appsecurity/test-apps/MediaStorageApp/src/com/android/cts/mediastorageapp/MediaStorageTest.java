@@ -416,12 +416,6 @@ public class MediaStorageTest {
 
     private void doMediaEscalation_RequestWrite_withFilePathSupport(
             Callable<Uri> create) throws Exception {
-        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
-        final UiDevice device = UiDevice.getInstance(inst);
-        final String featureFlag = device.executeShellCommand(
-                "getprop sys.filepathsupport.mediauri").trim();
-        assumeTrue("This test requires file path support for createWriteRequest feature-flag on",
-                featureFlag.equals("true"));
         final Uri red = create.call();
         assertNotNull(red);
         String path = queryForSingleColumn(red, MediaColumns.DATA);
