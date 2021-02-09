@@ -129,11 +129,14 @@ android_test {
         "compatibility-device-util-axt",
         "CtsExternalServiceCommon",
         "cts-wm-util",
+        "libprotobuf-java-lite",
     ],
     srcs: [
+        ":libtombstone_proto-src",
         "AppExitTest/src/**/*.java",
         "src/android/app/cts/android/app/cts/tools/WatchUidRunner.java",
     ],
+    jarjar_rules: "AppExitTest/jarjar-rules.txt",
     test_suites: [
         "cts",
         "general-tests",
