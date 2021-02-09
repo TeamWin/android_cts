@@ -24,6 +24,7 @@ public class ZygotePreload implements android.app.ZygotePreload {
     static final String TAG = "SeccompDeviceTest";
 
     static volatile boolean sResult = false;
+    static volatile int sStartOfIsolatedRange = -1;
 
     static private boolean testSetResUidGidBlocked(int rid, int eid, int sid) {
         if (!SeccompDeviceTest.testSetresuidBlocked(rid, eid, sid)) {
@@ -63,6 +64,10 @@ public class ZygotePreload implements android.app.ZygotePreload {
         return sResult;
     }
 
+    static synchronized public int getStartOfIsolatedRange() {
+        return sStartOfIsolatedRange;
+    }
+
     /*
      * This is called from the app_zygote security context, which has two seccomp
      * filters in place:
@@ -97,30 +102,44 @@ public class ZygotePreload implements android.app.ZygotePreload {
         result &= testSetResUidGidBlocked(Process.LAST_ISOLATED_UID, Process.LAST_ISOLATED_UID,
                 Process.LAST_ISOLATED_UID);
 
-        // an allowed app zygote UID
-        // TODO this test assumes no other isolated app zygotes are currently running!
-        result &= testSetResUidGidAllowed(Process.FIRST_APP_ZYGOTE_ISOLATED_UID,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID, Process.FIRST_APP_ZYGOTE_ISOLATED_UID);
+        // Test all ranges of app zygote UIDs; we don't know here which
+        // isolated UID is assigned to our process, so we will test all ranges,
+        // and verify only one is allowed; then have the caller verify that
+        // this was indeed our allowed range.
+        for (int i = Process.FIRST_APP_ZYGOTE_ISOLATED_UID;
+                i < Process.LAST_APP_ZYGOTE_ISOLATED_UID; i += Process.NUM_UIDS_PER_APP_ZYGOTE) {
+            boolean rangeAllowed = testSetResUidGidAllowed(i, i, i);
+            if (rangeAllowed) {
+                if (sStartOfIsolatedRange != -1) {
+                    Log.e(TAG, "Found more than one allowed isolated UID range: "
+                            + sStartOfIsolatedRange + ", " + i);
+                    result = false;
+                    break;
+                }
+                sStartOfIsolatedRange = i;
 
-        // off-by-one
-        result &= testSetResUidGidBlocked(Process.FIRST_APP_ZYGOTE_ISOLATED_UID - 1,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID - 1,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID - 1);
+                // off-by-one and some variants
+                result &= testSetResUidGidBlocked(i - 1, i - 1, i - 1);
+                result &= testSetResUidGidBlocked(i, i - 1, i);
+                result &= testSetResUidGidBlocked(i, i, i - 1);
+                int overEndOfRange = i + Process.NUM_UIDS_PER_APP_ZYGOTE;
+                result &= testSetResUidGidBlocked(overEndOfRange, overEndOfRange, overEndOfRange);
+                result &= testSetResUidGidBlocked(overEndOfRange, i, i);
+                result &= testSetResUidGidBlocked(i, overEndOfRange, overEndOfRange);
 
-        // mixed allowed rgid with dis-allowed euid and suid (and variants)
-        result &= testSetResUidGidBlocked(Process.FIRST_APP_ZYGOTE_ISOLATED_UID, 0, 0);
-        result &= testSetResUidGidBlocked(Process.FIRST_APP_ZYGOTE_ISOLATED_UID,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID, 0);
-        result &= testSetResUidGidBlocked(0, Process.FIRST_APP_ZYGOTE_ISOLATED_UID, 0);
-        result &= testSetResUidGidBlocked(0, Process.FIRST_APP_ZYGOTE_ISOLATED_UID,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID);
-        result &= testSetResUidGidBlocked(0, 0, Process.FIRST_APP_ZYGOTE_ISOLATED_UID);
-        result &= testSetResUidGidBlocked(Process.FIRST_APP_ZYGOTE_ISOLATED_UID, 0,
-                Process.FIRST_APP_ZYGOTE_ISOLATED_UID);
+                // mixed allowed rgid with dis-allowed euid and suid (and variants)
+                result &= testSetResUidGidBlocked(i, 0, 0);
+                result &= testSetResUidGidBlocked(i, 0, i);
+                result &= testSetResUidGidBlocked(i, i, 0);
+                result &= testSetResUidGidBlocked(0, i, 0);
+                result &= testSetResUidGidBlocked(0, i, i);
+                result &= testSetResUidGidBlocked(0, 0, i);
+            }
+        }
 
-        // a disallowed app zygote UID
-        result &= testSetResUidGidBlocked(Process.LAST_APP_ZYGOTE_ISOLATED_UID,
-                Process.LAST_APP_ZYGOTE_ISOLATED_UID, Process.LAST_APP_ZYGOTE_ISOLATED_UID);
+        // one over the range
+        result &= testSetResUidGidBlocked(Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1,
+                Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1, Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1);
 
         // Store result
         sResult = result;

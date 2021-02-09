@@ -16,11 +16,16 @@
 
 package android.telephony.ims.cts;
 
+import android.telephony.ims.feature.CapabilityChangeRequest;
+import android.telephony.ims.feature.CapabilityChangeRequest.CapabilityPair;
+import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.RcsFeature;
 import android.telephony.ims.stub.CapabilityExchangeEventListener;
 import android.telephony.ims.stub.RcsCapabilityExchangeImplBase;
 import android.util.Log;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 
 public class TestRcsFeature extends RcsFeature {
@@ -36,6 +41,9 @@ public class TestRcsFeature extends RcsFeature {
     private CapabilityExchangeEventListener mCapEventListener;
     private TestImsService.DeviceCapPublishListener mDeviceCapPublishListener;
 
+    private CapabilityChangeRequest mCapabilityChangeRequest;
+    private int mCapabilitiesChangedResult = ImsFeature.CAPABILITY_SUCCESS;
+
     TestRcsFeature(TestImsService.ReadyListener readyListener,
             TestImsService.RemovedListener listener,
             TestImsService.CapabilitiesSetListener setListener,
@@ -50,6 +58,10 @@ public class TestRcsFeature extends RcsFeature {
 
     public void setDeviceCapPublishListener(TestImsService.DeviceCapPublishListener listener) {
         mDeviceCapPublishListener = listener;
+    }
+
+    public void overrideCapabilitiesEnabledResult(int result) {
+        mCapabilitiesChangedResult = result;
     }
 
     @Override
@@ -92,5 +104,31 @@ public class TestRcsFeature extends RcsFeature {
 
     public TestRcsCapabilityExchangeImpl getRcsCapabilityExchangeImpl() {
         return mCapExchangeImpl;
+    }
+
+    @Override
+    public void changeEnabledCapabilities(CapabilityChangeRequest request,
+            CapabilityCallbackProxy c) {
+        // Trigger the error callback if the result is failed
+        if (mCapabilitiesChangedResult != ImsFeature.CAPABILITY_SUCCESS) {
+            CapabilityChangeRequest.CapabilityPair capPair = request.getCapabilitiesToEnable()
+                    .get(0);
+            c.onChangeCapabilityConfigurationError(capPair.getCapability(), capPair.getRadioTech(),
+                    ImsFeature.CAPABILITY_ERROR_GENERIC);
+            return;
+        }
+        mCapabilityChangeRequest = request;
+        // Notify that the capabilities is changed.
+        mCapSetListener.onSet();
+    }
+
+    @Override
+    public boolean queryCapabilityConfiguration(int capability, int radioTech) {
+        List<CapabilityPair> pairList =  mCapabilityChangeRequest.getCapabilitiesToEnable();
+        if (pairList == null) return false;
+        Optional<CapabilityPair> queryResult = pairList.stream().filter(pair -> {
+            return (pair.getCapability() == capability) && (pair.getRadioTech() == radioTech);
+        }).findAny();
+        return queryResult.isPresent();
     }
 }

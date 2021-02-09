@@ -17,6 +17,7 @@
 package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -28,11 +29,14 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -169,6 +173,84 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         } finally {
             /* Wake up the device */
             device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        }
+    }
+
+    /**
+     * Test HF4-6-8
+     *
+     * Tests that a device comes out of the standby state when it receives a {@code <User Control
+     * Pressed>} message with power related operands.
+     */
+    @Ignore("b/178083922")
+    @Test
+    public void cect_hf4_6_8_userControlPressed_powerOn() throws Exception {
+        ITestDevice device = getDevice();
+        List<Integer> powerControlOperands = Arrays.asList(HdmiCecConstants.CEC_CONTROL_POWER,
+                HdmiCecConstants.CEC_CONTROL_POWER_ON_FUNCTION,
+                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+
+        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+                : LogicalAddress.TV;
+
+        for (Integer operand : powerControlOperands) {
+            try {
+                device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+                TimeUnit.SECONDS.sleep(MAX_SLEEP_TIME);
+                String wakeStateBefore = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Asleep");
+
+                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
+                        false);
+
+                TimeUnit.SECONDS.sleep(WAIT_TIME);
+                String wakeStateAfter = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertWithMessage("Device should wake up on <User Control Pressed> %s", operand)
+                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Awake");
+            } finally {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            }
+        }
+    }
+
+    /**
+     * Test HF4-6-10
+     *
+     * Tests that a device comes enters the standby state when it receives a {@code <User Control
+     * Pressed>} message with power related operands.
+     */
+    @Test
+    public void cect_hf4_6_10_userControlPressed_powerOff() throws Exception {
+        ITestDevice device = getDevice();
+        List<Integer> powerControlOperands = Arrays.asList(
+                HdmiCecConstants.CEC_CONTROL_POWER_OFF_FUNCTION,
+                HdmiCecConstants.CEC_CONTROL_POWER_TOGGLE_FUNCTION);
+
+        LogicalAddress source = mDutLogicalAddress == LogicalAddress.TV ? LogicalAddress.PLAYBACK_1
+                : LogicalAddress.TV;
+
+        for (Integer operand : powerControlOperands) {
+            try {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+                TimeUnit.SECONDS.sleep(WAIT_TIME);
+                String wakeStateBefore = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertThat(wakeStateBefore.trim()).isEqualTo("mWakefulness=Awake");
+
+                hdmiCecClient.sendUserControlPressAndRelease(source, mDutLogicalAddress, operand,
+                        false);
+
+                TimeUnit.SECONDS.sleep(WAIT_TIME);
+                String wakeStateAfter = device.executeShellCommand(
+                        "dumpsys power | grep mWakefulness=");
+                assertWithMessage("Device should go to standby on <User Control Pressed> %s",
+                        operand)
+                        .that(wakeStateAfter.trim()).isEqualTo("mWakefulness=Asleep");
+            } finally {
+                device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+            }
         }
     }
 }

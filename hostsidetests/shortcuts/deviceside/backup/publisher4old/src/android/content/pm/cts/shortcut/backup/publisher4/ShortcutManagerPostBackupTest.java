@@ -291,7 +291,7 @@ public class ShortcutManagerPostBackupTest extends ShortcutManagerDeviceTestBase
 
         // Force launcher 4 to be the default launcher so it'll receive the pin request.
         setDefaultLauncher(getInstrumentation(),
-                "android.content.pm.cts.shortcut.backup.launcher4/.MainActivity");
+                "android.content.pm.cts.shortcut.backup.launcher4");
 
         // Update, set and add have been tested already, so let's test "pin".
 

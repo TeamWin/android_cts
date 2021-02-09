@@ -1544,6 +1544,39 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     /**
+     * Test that ScanFile() after renaming file extension updates the right
+     * MIME type from the file metadata.
+     */
+    @Test
+    public void testScanUpdatesMimeTypeForRenameFileExtension() throws Exception {
+        final String audioFileName = "ScopedStorageDeviceTest_" + NONCE;
+        final File mpegFile = new File(getMusicDir(), audioFileName + ".mp3");
+        final File nonMpegFile = new File(getMusicDir(), audioFileName + ".snd");
+        try {
+            // Copy audio content to mpegFile
+            try (InputStream in =
+                         getContext().getResources().openRawResource(R.raw.test_audio);
+                 FileOutputStream out = new FileOutputStream(mpegFile)) {
+                FileUtils.copy(in, out);
+                out.getFD().sync();
+            }
+            assertThat(MediaStore.scanFile(getContentResolver(), mpegFile)).isNotNull();
+            assertThat(getFileMimeTypeFromDatabase(mpegFile)).isEqualTo("audio/mpeg");
+
+            // This rename changes MIME type from audio/mpeg to audio/basic
+            assertCanRenameFile(mpegFile, nonMpegFile);
+            assertThat(getFileMimeTypeFromDatabase(nonMpegFile)).isNotEqualTo("audio/mpeg");
+
+            assertThat(MediaStore.scanFile(getContentResolver(), nonMpegFile)).isNotNull();
+            // Above scan should read file metadata and update the MIME type to audio/mpeg
+            assertThat(getFileMimeTypeFromDatabase(nonMpegFile)).isEqualTo("audio/mpeg");
+        } finally {
+            mpegFile.delete();
+            nonMpegFile.delete();
+        }
+    }
+
+    /**
      * Test that app without write permission for file can't update the file.
      */
     @Test
