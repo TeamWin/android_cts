@@ -101,6 +101,8 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
         assertWithMessage("%s is deviceOwner", pkg).that(mDevicePolicyManager.isDeviceOwnerApp(pkg))
                 .isTrue();
         Log.i(TAG, "device owner app: " + pkg);
+        assertWithMessage("Admin should be able to grant sensors permissions by default").that(
+                mDevicePolicyManager.canAdminGrantSensorsPermissions()).isTrue();
     }
 
     private List<String> getPackageNameList() {
