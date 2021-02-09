@@ -20,7 +20,7 @@ import android.app.Activity;
 import android.cts.tagging.Utils;
 import android.os.Bundle;
 
-public class CrashActivity extends Activity {
+public class CrashMemtagAsyncActivity extends Activity {
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);

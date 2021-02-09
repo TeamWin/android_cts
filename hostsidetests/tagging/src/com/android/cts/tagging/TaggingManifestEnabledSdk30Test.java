@@ -74,7 +74,8 @@ public class TaggingManifestEnabledSdk30Test extends TaggingBaseTest {
     public void testCompatFeatureDisabledUserBuild() throws Exception {
         // Non-userdebug build - we're not allowed to disable compat features. Check to ensure that
         // even if we try that we still get pointer tagging.
-        if (getDevice().getBuildFlavor().contains("userdebug")) {
+        if (getDevice().getBuildFlavor().contains("userdebug")
+                || getDevice().getBuildFlavor().contains("eng")) {
             return;
         }
         runDeviceCompatTestReported(
