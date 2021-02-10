@@ -174,8 +174,3 @@ private fun click(label: String) {
     waitFindObject(byTextIgnoreCase(label)).click()
     waitForIdle()
 }
-
-private fun waitForIdle() {
-    InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(1000, 10000)
-    Thread.sleep(500)
-}
