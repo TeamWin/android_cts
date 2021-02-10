@@ -632,22 +632,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
                 PERM_WRITE_EXTERNAL_STORAGE,
         }, false);
 
-
-        setFilePathSupportForMediaUris(true);
-        final String featureFlag = getDevice().executeShellCommand(
-                "getprop sys.filepathsupport.mediauri").trim();
-        Assume.assumeTrue(
-                "This test requires file path support for createWriteRequest feature-flag on",
-                featureFlag.equals("true"));
         runDeviceTests(MEDIA.pkg, MEDIA.clazz, "testMediaEscalation_RequestWriteFilePathSupport",
                 user);
-        setFilePathSupportForMediaUris(false);
-    }
-
-    private void setFilePathSupportForMediaUris(boolean val) throws Exception {
-        getDevice().enableAdbRoot();
-        getDevice().executeShellCommand("setprop sys.filepathsupport.mediauri " + val);
-        getDevice().disableAdbRoot();
     }
 
     @Test
