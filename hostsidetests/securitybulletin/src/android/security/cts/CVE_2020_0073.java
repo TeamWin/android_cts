@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,30 @@
 
 package android.security.cts;
 
+import com.android.tradefed.device.ITestDevice;
+import com.android.compatibility.common.util.CrashUtils;
+
 import android.platform.test.annotations.SecurityTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.device.ITestDevice;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class CVE_2019_2046 extends SecurityTestCase {
+public class CVE_2020_0073 extends SecurityTestCase {
 
     /**
-     * b/117556220
-     * Vulnerability Behaviour: SIGSEGV in pacrunner
+     * b/147309942
+     * Vulnerability Behaviour: SIGABRT in self
      */
-    @SecurityTest(minPatchLevel = "2019-05")
+    @SecurityTest(minPatchLevel = "2020-04")
     @Test
-    public void testPocCVE_2019_2046() throws Exception {
+    public void testPocCVE_2020_0073() throws Exception {
         pocPusher.only64();
-        AdbUtils.runProxyAutoConfig("cve_2019_2046", "true", getDevice());
+        String binaryName = "CVE-2020-0073";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
 }
