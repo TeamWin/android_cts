@@ -13,6 +13,5 @@
 # limitations under the License.
 
 
-
 class CameraItsError(Exception):
   pass

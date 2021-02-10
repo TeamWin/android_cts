@@ -29,7 +29,8 @@ import image_processing_utils
 import its_session_utils
 
 
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'],'test_images', 'ISO12233.png')
+CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images',
+                          'ISO12233.png')
 CHART_ORIENTATIONS = ['nominal', 'flip', 'mirror', 'rotate']
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 PATCH_H = 0.5  # center 50%
