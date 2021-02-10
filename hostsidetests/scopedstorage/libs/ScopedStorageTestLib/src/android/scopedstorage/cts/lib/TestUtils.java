@@ -1084,6 +1084,11 @@ public class TestUtils {
                 Environment.DIRECTORY_PODCASTS);
     }
 
+    public static File getRecordingsDir() {
+        return new File(getExternalStorageDir(),
+                Environment.DIRECTORY_RECORDINGS);
+    }
+
     public static File getRingtonesDir() {
         return new File(getExternalStorageDir(),
                 Environment.DIRECTORY_RINGTONES);
@@ -1100,7 +1105,8 @@ public class TestUtils {
     public static File[] getDefaultTopLevelDirs() {
         return new File [] { getAlarmsDir(), getAndroidDir(), getAudiobooksDir(), getDcimDir(),
                 getDocumentsDir(), getDownloadDir(), getMusicDir(), getMoviesDir(),
-                getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRingtonesDir() };
+                getNotificationsDir(), getPicturesDir(), getPodcastsDir(), getRecordingsDir(),
+                getRingtonesDir() };
     }
 
     private static void assertInputStreamContent(InputStream in, byte[] expectedContent)
