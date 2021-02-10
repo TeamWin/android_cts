@@ -30,8 +30,10 @@ import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.Instrumentation.ActivityMonitor;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -50,6 +52,7 @@ import android.widget.AnalogClock;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Chronometer;
+import android.widget.CompoundButton;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -719,6 +722,48 @@ public class RemoteViewsTest {
     }
 
     @Test
+    public void testSetOnCheckedChangePendingIntent() throws Throwable {
+        String action = "my-checked-change-action";
+        MockBroadcastReceiver receiver =  new MockBroadcastReceiver();
+        mContext.registerReceiver(receiver, new IntentFilter(action));
+
+        Intent intent = new Intent(action).setPackage(mContext.getPackageName());
+        PendingIntent pendingIntent =
+                PendingIntent.getBroadcast(
+                        mContext,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+        mRemoteViews.setOnCheckedChangeResponse(R.id.remoteView_checkBox,
+                RemoteViews.RemoteResponse.fromPendingIntent(pendingIntent));
+
+        // View being checked to true should launch the intent with the extra set to true.
+        CompoundButton view = mResult.findViewById(R.id.remoteView_checkBox);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> view.setChecked(true));
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(receiver.mIntent);
+        assertTrue(receiver.mIntent.getBooleanExtra(RemoteViews.EXTRA_CHECKED, false));
+
+        // Changing the checked state from a RemoteViews action should not launch the intent.
+        receiver.mIntent = null;
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_checkBox, false);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        mInstrumentation.waitForIdleSync();
+        assertFalse(view.isChecked());
+        assertNull(receiver.mIntent);
+
+        // View being checked to false should launch the intent with the extra set to false.
+        receiver.mIntent = null;
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        mActivityRule.runOnUiThread(() -> view.setChecked(true));
+        mActivityRule.runOnUiThread(() -> view.setChecked(false));
+        mInstrumentation.waitForIdleSync();
+        assertNotNull(receiver.mIntent);
+        assertFalse(receiver.mIntent.getBooleanExtra(RemoteViews.EXTRA_CHECKED, true));
+    }
+
+    @Test
     public void testSetLong() throws Throwable {
         long base1 = 50;
         long base2 = -50;
@@ -1187,6 +1232,16 @@ public class RemoteViewsTest {
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {
                 target.write(buffer, 0, len);
             }
+        }
+    }
+
+    private static final class MockBroadcastReceiver extends BroadcastReceiver {
+
+        Intent mIntent;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mIntent = intent;
         }
     }
 }
