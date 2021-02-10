@@ -439,9 +439,24 @@ public class AdbUtils {
      * @param device device to be ran on
      */
     public static int runProxyAutoConfig(String pacName, ITestDevice device) throws Exception {
+        return runProxyAutoConfig(pacName, null, device);
+    }
+
+    /**
+     * Runs the binary against a given proxyautoconfig file, asserting that it doesn't
+     * crash
+     * @param pacName the name of the proxy autoconfig script from the /res folder
+     * @param arguments input arguments for pacrunner
+     * @param device device to be ran on
+     */
+    public static int runProxyAutoConfig(String pacName, String arguments,
+            ITestDevice device) throws Exception {
         pacName += ".pac";
         String targetPath = TMP_PATH + pacName;
         AdbUtils.pushResource("/" + pacName, targetPath, device);
+        if(arguments != null) {
+            targetPath += " " + arguments;
+        }
         runPocAssertNoCrashes(
                 "pacrunner", device, targetPath,
                 new CrashUtils.Config().setProcessPatterns("pacrunner"));

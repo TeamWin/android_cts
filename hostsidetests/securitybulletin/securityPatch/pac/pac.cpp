@@ -22,6 +22,7 @@
 
 #include <fstream>
 #include <iostream>
+#include "../includes/common.h"
 
 android::String16 url("");
 android::String16 host("");
@@ -38,10 +39,16 @@ class MyErrorListener : public net::ProxyErrorListener {
 };
 
 int main(int argc, char *argv[]) {
+  bool shouldRunMultipleTimes = false;
   if (argc != 2) {
-    std::cout << "incorrect number of arguments" << std::endl;
-    std::cout << "usage: ./pacrunner mypac.pac" << std::endl;
-    return EXIT_FAILURE;
+    if (argc != 3) {
+      std::cout << "incorrect number of arguments" << std::endl;
+      std::cout << "usage: ./pacrunner mypac.pac (or)" << std::endl;
+      std::cout << "usage: ./pacrunner mypac.pac true" << std::endl;
+      return EXIT_FAILURE;
+    } else {
+      shouldRunMultipleTimes = true;
+    }
   }
   net::ProxyResolverJSBindings *bindings =
       net::ProxyResolverJSBindings::CreateDefault();
@@ -65,6 +72,9 @@ int main(int argc, char *argv[]) {
   android::String16 script(raw);
 
   resolver.SetPacScript(script);
-  resolver.GetProxyForURL(url, host, &results);
+  time_t currentTime = start_timer();
+  do {
+    resolver.GetProxyForURL(url, host, &results);
+  } while (shouldRunMultipleTimes && timer_active(currentTime));
   return EXIT_SUCCESS;
 }
