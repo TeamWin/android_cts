@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util.enterprise.annotations;
-
-import com.android.compatibility.common.util.enterprise.DeviceState;
+package com.android.bedstead.harrier.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -27,10 +25,14 @@ import java.lang.annotation.Target;
  * Mark that a test method should run only when the device has a given feature.
  *
  * <p>You can guarantee that these methods do not run on devices lacking the feature by
- * using {@link DeviceState}.
+ * using {@code DeviceState}.
+ *
+ * <p>By default the test will be skipped if the feature is not available. If you'd rather the test
+ * fail then use {@code failureMode = FailureMode.FAIL}.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequireFeatures {
-    String[] featureNames();
+    String[] value();
+    FailureMode failureMode() default FailureMode.SKIP;
 }

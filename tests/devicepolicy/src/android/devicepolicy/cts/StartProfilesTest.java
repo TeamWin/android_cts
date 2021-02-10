@@ -43,7 +43,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.compatibility.common.util.enterprise.DeviceState;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
 
 import org.junit.After;
@@ -106,7 +106,7 @@ public final class StartProfilesTest {
 
     @Test
     //TODO: b/171565394 - remove after infra. updates
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStartProfile() throws InterruptedException {
@@ -136,7 +136,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStopProfile() throws InterruptedException {
@@ -168,7 +168,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStopAndRestartProfile() throws InterruptedException {
@@ -209,7 +209,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStopAndRestartProfile_dontWaitForBroadcast() throws InterruptedException {
@@ -248,7 +248,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStartProfileWithoutPermission_throwsException() {
@@ -263,7 +263,7 @@ public final class StartProfilesTest {
     }
 
     @Test
-    @RequireFeatures(featureNames = {PackageManager.FEATURE_MANAGED_USERS})
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
     public void testStopProfileWithoutPermission_throwsException() {
