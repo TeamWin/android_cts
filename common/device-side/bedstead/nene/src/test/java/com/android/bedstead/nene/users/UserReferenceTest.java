@@ -62,7 +62,7 @@ public class UserReferenceTest {
 
     @Test
     public void resolve_doesExist_userHasCorrectDetails() {
-        UserReference userReference = mUsers.create().name(USER_NAME).create();
+        UserReference userReference = mUsers.createUser().name(USER_NAME).create();
 
         try {
             User user = userReference.resolve();
@@ -83,10 +83,76 @@ public class UserReferenceTest {
 
         user.remove();
 
-        assertThat(mUsers.users().stream().anyMatch(u -> u.id() == user.id())).isFalse();
+        assertThat(mUsers.all().stream().anyMatch(u -> u.id() == user.id())).isFalse();
+    }
+
+    @Test
+    public void start_userDoesNotExist_throwsException() {
+        assertThrows(NeneException.class, () -> mUsers.user(NON_EXISTING_USER_ID).start());
+    }
+
+    @Test
+    public void start_userNotStarted_userIsStarted() {
+        UserReference user = createUser()
+                .start();
+
+        user.start();
+
+        try {
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void start_userAlreadyStarted_doesNothing() {
+        UserReference user = createUser()
+                .start();
+
+        user.start();
+
+        try {
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void stop_userDoesNotExist_throwsException() {
+        assertThrows(NeneException.class, () -> mUsers.user(NON_EXISTING_USER_ID).stop());
+    }
+
+    @Test
+    public void stop_userStarted_userIsStopped() {
+        UserReference user = createUser()
+                .start();
+
+        user.stop();
+
+        try {
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void stop_userNotStarted_doesNothing() {
+        UserReference user = createUser()
+                .stop();
+
+        user.stop();
+
+        try {
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
+        } finally {
+            user.remove();
+        }
     }
 
     private UserReference createUser() {
-        return mUsers.create().name(USER_NAME).create();
+        return mUsers.createUser().name(USER_NAME).create();
     }
 }
