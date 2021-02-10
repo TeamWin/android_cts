@@ -166,6 +166,9 @@ public class AdbUserParser26 implements AdbUserParser {
             user.mHasProfileOwner =
                     Boolean.parseBoolean(
                             userString.split("Has profile owner: ", 2)[1].split("\n", 2)[0]);
+            user.mState =
+                    User.UserState.fromDumpSysValue(
+                            userString.split("State: ", 2)[1].split("\n", 2)[0]);
             return user;
         } catch (RuntimeException e) {
             throw new AdbParseException("Error parsing user", userString, e);
