@@ -50,6 +50,7 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
             "com.android.tests.loadingprogress.device";
     private static final String TEST_APK = "CtsInstalledLoadingProgressTestsApp.apk";
     private static final String TEST_APP_PACKAGE_NAME = "com.android.tests.loadingprogress.app";
+    private static final String TEST_CLASS_NAME = DEVICE_TEST_PACKAGE_NAME + ".LoadingProgressTest";
     private static final String IDSIG_SUFFIX = ".idsig";
     private static final int WAIT_FOR_LOADING_PROGRESS_UPDATE_MS = 2000;
     private IncrementalInstallSession mSession;
@@ -87,19 +88,29 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
     @Test
     public void testGetLoadingProgressSuccess() throws Exception {
         // Check partial loading progress
-        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME,
-                DEVICE_TEST_PACKAGE_NAME + ".LoadingProgressTest",
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testGetPartialLoadingProgress"));
         // Trigger full download
-        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME,
-                DEVICE_TEST_PACKAGE_NAME + ".LoadingProgressTest",
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testReadAllBytes"));
         // Wait for loading progress to update
         RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
         // Check full loading progress
-        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME,
-                DEVICE_TEST_PACKAGE_NAME + ".LoadingProgressTest",
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testGetFullLoadingProgress"));
     }
 
+    @LargeTest
+    @Test
+    public void testOnPackageLoadingProgressChangedCalledWithPartialLoaded() throws Exception {
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "testOnPackageLoadingProgressChangedCalledWithPartialLoaded"));
+    }
+
+    @LargeTest
+    @Test
+    public void testOnPackageLoadingProgressChangedCalledWithFullyLoaded() throws Exception {
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "testOnPackageLoadingProgressChangedCalledWithFullyLoaded"));
+    }
 }

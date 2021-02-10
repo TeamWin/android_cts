@@ -19,11 +19,15 @@ package com.android.tests.loadingprogress.device;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.os.ConditionVariable;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.Process;
 import android.os.UserHandle;
 
@@ -31,6 +35,7 @@ import androidx.test.filters.LargeTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +56,10 @@ public class LoadingProgressTest {
     private PackageManager mPackageManager;
     private UserHandle mUser;
     private LauncherApps mLauncherApps;
+    private static final int WAIT_TIMEOUT_MILLIS = 1000; /* 1 second */
+    private ConditionVariable mCalled  = new ConditionVariable();
+    private final HandlerThread mCallbackThread = new HandlerThread("callback");
+    private LauncherAppsCallback mCallback;
 
     @Before
     public void setUp() {
@@ -59,6 +68,15 @@ public class LoadingProgressTest {
         assertNotNull(mPackageManager);
         mUser = Process.myUserHandle();
         mLauncherApps = mContext.getSystemService(LauncherApps.class);
+        mCallbackThread.start();
+    }
+
+    @After
+    public void tearDown() {
+        mCallbackThread.quit();
+        if (mCallback != null) {
+            mLauncherApps.unregisterCallback(mCallback);
+        }
     }
 
     @Test
@@ -97,5 +115,59 @@ public class LoadingProgressTest {
             assertTrue(activity.getUser().equals(mUser));
         }
         assertTrue(foundTestApp);
+    }
+
+    @Test
+    public void testOnPackageLoadingProgressChangedCalledWithPartialLoaded() throws Exception {
+        mCalled.close();
+        mCallback = new LauncherAppsCallback(
+                loadingProgress -> loadingProgress < 1.0f && loadingProgress > 0);
+        mLauncherApps.registerCallback(mCallback, new Handler(mCallbackThread.getLooper()));
+        assertTrue(mCalled.block(WAIT_TIMEOUT_MILLIS));
+    }
+
+    @Test
+    public void testOnPackageLoadingProgressChangedCalledWithFullyLoaded() throws Exception {
+        mCalled.close();
+        mCallback = new LauncherAppsCallback(loadingProgress -> 1 - loadingProgress < 0.001);
+        mLauncherApps.registerCallback(mCallback, new Handler(mCallbackThread.getLooper()));
+        testReadAllBytes();
+        assertTrue(mCalled.block(WAIT_TIMEOUT_MILLIS));
+    }
+
+    class LauncherAppsCallback extends LauncherApps.Callback {
+        private final Predicate<Float> mCondition;
+        LauncherAppsCallback(Predicate<Float> progressCondition) {
+            mCondition = progressCondition;
+        }
+        @Override
+        public void onPackageRemoved(String packageName, UserHandle user) {
+        }
+
+        @Override
+        public void onPackageAdded(String packageName, UserHandle user) {
+        }
+
+        @Override
+        public void onPackageChanged(String packageName, UserHandle user) {
+        }
+
+        @Override
+        public void onPackagesAvailable(String[] packageNames, UserHandle user, boolean replacing) {
+        }
+
+        @Override
+        public void onPackagesUnavailable(String[] packageNames, UserHandle user,
+                boolean replacing) {
+        }
+
+        @Override
+        public void onPackageLoadingProgressChanged(@NonNull String packageName,
+                @NonNull UserHandle user, float progress) {
+            if (mCondition.test(progress)) {
+                // Only release when progress meets the expected condition
+                mCalled.open();
+            }
+        }
     }
 }
