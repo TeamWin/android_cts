@@ -625,6 +625,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected int createUser() throws Exception {
         int userId = createUser(0);
+        CLog.i("Created user with id %d", userId);
         // TODO remove this and audit tests so they start users as necessary
         startUser(userId);
         return userId;

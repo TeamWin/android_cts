@@ -25,5 +25,6 @@ public class CrashActivity extends Activity {
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         Utils.accessMistaggedPointer();
+        finish();
     }
 }

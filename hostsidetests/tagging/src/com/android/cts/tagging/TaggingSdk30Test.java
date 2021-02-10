@@ -24,15 +24,13 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     protected static final String TEST_PKG = "android.cts.tagging.sdk30";
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
 
-    private static final long NATIVE_MEMORY_TAGGING_CHANGE_ID = 135772972;
-
-    private boolean supportsMemoryTagging;
+    private static final long NATIVE_MEMTAG_ASYNC_CHANGE_ID = 135772972;
+    private static final long NATIVE_MEMTAG_SYNC_CHANGE_ID = 177438394;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         installPackage(TEST_APK, true);
-        supportsMemoryTagging = !runCommand("grep 'Features.* mte' /proc/cpuinfo").isEmpty();
     }
 
     @Override
@@ -41,9 +39,7 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     }
 
     public void testHeapTaggingDefault() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -80,7 +76,8 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     public void testCompatFeatureDisabledUserBuild() throws Exception {
         // Non-userdebug build - we're not allowed to disable compat features. Check to ensure that
         // even if we try that we still get pointer tagging.
-        if (getDevice().getBuildFlavor().contains("userdebug")) {
+        if (getDevice().getBuildFlavor().contains("userdebug")
+                || getDevice().getBuildFlavor().contains("eng")) {
             return;
         }
         runDeviceCompatTestReported(
@@ -93,21 +90,49 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testMemoryTagChecksCompatFeatureEnabled() throws Exception {
-        if (!supportsMemoryTagging) {
+    public void testMemoryTagChecksSyncCompatFeatureEnabled() throws Exception {
+        if (!deviceSupportsMemoryTagging) {
             return;
         }
-        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagChecksEnabled",
-                /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMORY_TAGGING_CHANGE_ID),
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagSyncChecksEnabled",
+                /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_SYNC_CHANGE_ID),
+                /*disabledChanges*/ImmutableSet.of());
+    }
+
+    public void testMemoryTagChecksAsyncCompatFeatureEnabled() throws Exception {
+        if (!deviceSupportsMemoryTagging) {
+            return;
+        }
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagAsyncChecksEnabled",
+                /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_ASYNC_CHANGE_ID),
                 /*disabledChanges*/ImmutableSet.of());
     }
 
     public void testMemoryTagChecksCompatFeatureDisabled() throws Exception {
-        if (!supportsMemoryTagging) {
+        if (!deviceSupportsMemoryTagging) {
             return;
         }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagChecksDisabled",
-                /*enabledChanges*/ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(NATIVE_MEMORY_TAGGING_CHANGE_ID));
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/
+                ImmutableSet.of(NATIVE_MEMTAG_SYNC_CHANGE_ID, NATIVE_MEMTAG_ASYNC_CHANGE_ID));
+    }
+
+    public void testMemoryTagChecksSyncActivity() throws Exception {
+        if (!deviceSupportsMemoryTagging) {
+            return;
+        }
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagSyncActivityChecksEnabled",
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ImmutableSet.of());
+    }
+
+    public void testMemoryTagChecksAsyncActivity() throws Exception {
+        if (!deviceSupportsMemoryTagging) {
+            return;
+        }
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagAsyncActivityChecksEnabled",
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ImmutableSet.of());
     }
 }
