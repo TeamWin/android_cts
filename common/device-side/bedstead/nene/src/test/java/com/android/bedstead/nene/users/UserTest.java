@@ -20,8 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
-import com.android.bedstead.nene.exceptions.NeneException;
-
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -140,61 +139,40 @@ public class UserTest {
     }
 
     @Test
-    public void userHandle_returnsUserHandle() {
-        User.MutableUser mutableUser = createValidMutableUser();
-        mutableUser.mId = USER_ID;
-        User user = new User(mUsers, mutableUser);
-
-        assertThat(user.userHandle().getIdentifier()).isEqualTo(USER_ID);
-    }
-
-    @Test
-    public void resolve_doesNotExist_returnsNull() {
-        User.MutableUser mutableUser = createValidMutableUser();
-        mutableUser.mId = USER_ID;
-        User user = new User(mUsers, mutableUser);
-
-        assertThat(user.resolve()).isNull();
-    }
-
-    @Test
-    public void resolve_doesExist_returnsUser() {
-        User user = createUser().resolve();
+    public void state_userNotStarted_returnsState() {
+        UserReference user = createUser();
+        user.stop();
 
         try {
-            assertThat(user.resolve()).isNotNull();
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
         } finally {
             user.remove();
         }
     }
 
     @Test
-    public void resolve_doesExist_userHasCorrectDetails() {
-        User user = mUsers.create().name(USER_NAME).create().resolve();
+    @Ignore("TODO: Ensure we can enter the user locked state")
+    public void state_userLocked_returnsState() {
+        UserReference user = createUser();
+        user.start();
 
         try {
-            User resolvedUser = user.resolve();
-            assertThat(resolvedUser.name()).isEqualTo(USER_NAME);
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_LOCKED);
         } finally {
             user.remove();
         }
     }
 
     @Test
-    public void remove_userDoesNotExist_throwsException() {
-        User user = createUser().resolve();
-        user.remove();
+    public void state_userUnlocked_returnsState() {
+        UserReference user = createUser();
+        user.start();
 
-        assertThrows(NeneException.class, user::remove);
-    }
-
-    @Test
-    public void remove_userExists_removesUser() {
-        User user = createUser().resolve();
-
-        user.remove();
-
-        assertThat(mUsers.users().stream().anyMatch(u -> u.id() == user.id())).isFalse();
+        try {
+            assertThat(user.resolve().state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+        } finally {
+            user.remove();
+        }
     }
 
     private User.MutableUser createValidMutableUser() {
@@ -204,6 +182,6 @@ public class UserTest {
     }
 
     private UserReference createUser() {
-        return mUsers.create().name(USER_NAME).create();
+        return mUsers.createUser().name(USER_NAME).create();
     }
 }

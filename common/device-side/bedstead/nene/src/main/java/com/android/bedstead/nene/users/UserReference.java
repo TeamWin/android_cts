@@ -20,6 +20,7 @@ import android.os.UserHandle;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.users.User.UserState;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 
@@ -78,7 +79,60 @@ public abstract class UserReference {
             ShellCommandUtils.executeCommandUntilOutputValid("dumpsys user",
                     (output) -> !output.contains("UserInfo{" + mId + ":"));
         } catch (AdbException | InterruptedException e) {
-            throw new NeneException("Could not remove ", e);
+            throw new NeneException("Could not remove user + " + this, e);
         }
+    }
+
+    /**
+     * Start the user.
+     *
+     * <p>After calling this command, the user will be in the {@link UserState#RUNNING_UNLOCKED}
+     * state.
+     *
+     * <p>If the user does not exist, or the start fails for any other reason, a
+     * {@link NeneException} will be thrown.
+     */
+    //TODO(scottjonathan): Deal with users who won't unlock
+    public UserReference start() {
+        try {
+            // Expected success string is "Success: user started"
+            ShellCommand.builder("am start-user")
+                    .addOperand(mId)
+                    .addOperand("-w")
+                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+            User waitedUser = mUsers.waitForUserToNotExistOrMatch(
+                    this, (user) -> user.state() == UserState.RUNNING_UNLOCKED);
+            if (waitedUser == null) {
+                throw new NeneException("User does not exist " + this);
+            }
+        } catch (AdbException e) {
+            throw new NeneException("Could not start user " + this, e);
+        }
+
+        return this;
+    }
+
+    /**
+     * Stop the user.
+     *
+     * <p>After calling this command, the user will be in the {@link UserState#NOT_RUNNING} state.
+     */
+    public UserReference stop() {
+        try {
+            // Expects no output on success or failure
+            ShellCommand.builder("am stop-user")
+                    .addOperand(mId)
+                    .allowEmptyOutput(true)
+                    .executeAndValidateOutput(ShellCommandUtils::doesNotStartWithError);
+            User waitedUser = mUsers.waitForUserToNotExistOrMatch(
+                    this, (user) -> user.state() == UserState.NOT_RUNNING);
+            if (waitedUser == null) {
+                throw new NeneException("User does not exist " + this);
+            }
+        } catch (AdbException e) {
+            throw new NeneException("Could not stop user " + this, e);
+        }
+
+        return this;
     }
 }

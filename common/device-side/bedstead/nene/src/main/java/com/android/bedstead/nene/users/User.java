@@ -16,9 +16,10 @@
 
 package com.android.bedstead.nene.users;
 
-import androidx.annotation.Nullable;
 import android.os.Build;
+import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 /**
@@ -28,6 +29,31 @@ import androidx.annotation.RequiresApi;
  * updated reflection of the user on the device, see {@link #resolve()}.
  */
 public final class User extends UserReference {
+
+    private static final String LOG_TAG = "User";
+
+    public enum UserState {
+        NOT_RUNNING,
+        RUNNING_LOCKED,
+        RUNNING_UNLOCKED,
+        RUNNING_UNLOCKING,
+        STOPPING,
+        SHUTDOWN,
+        UNKNOWN;
+
+        static UserState fromDumpSysValue(String value) {
+            try {
+                return UserState.valueOf(value);
+            } catch (IllegalArgumentException e) {
+                if (value.equals("-1")) {
+                    return NOT_RUNNING;
+                }
+                Log.w(LOG_TAG, "Unknown user state string: " + value);
+                return UNKNOWN;
+            }
+        }
+    }
+
     static final class MutableUser {
         Integer mId;
         @Nullable Integer mSerialNo;
@@ -35,6 +61,7 @@ public final class User extends UserReference {
         @Nullable UserType mType;
         @Nullable Boolean mHasProfileOwner;
         @Nullable Boolean mIsPrimary;
+        @Nullable UserState mState;
     }
 
     private final MutableUser mMutableUser;
@@ -44,12 +71,19 @@ public final class User extends UserReference {
         mMutableUser = mutableUser;
     }
 
+    /** Get the serial number of the user. */
     public Integer serialNo() {
         return mMutableUser.mSerialNo;
     }
 
+    /** Get the name of the user. */
     public String name() {
         return mMutableUser.mName;
+    }
+
+    /** Get the {@link UserState} of the user. */
+    public UserState state() {
+        return mMutableUser.mState;
     }
 
     /**
@@ -62,6 +96,7 @@ public final class User extends UserReference {
         return mMutableUser.mType;
     }
 
+    /** {@code true} if the user has a profile owner. */
     public Boolean hasProfileOwner() {
         return mMutableUser.mHasProfileOwner;
     }
@@ -85,6 +120,7 @@ public final class User extends UserReference {
         stringBuilder.append(", type=" + mMutableUser.mType);
         stringBuilder.append(", hasProfileOwner" + mMutableUser.mHasProfileOwner);
         stringBuilder.append(", isPrimary=" + mMutableUser.mIsPrimary);
+        stringBuilder.append(", state=" + mMutableUser.mState);
         return stringBuilder.toString();
     }
 }
