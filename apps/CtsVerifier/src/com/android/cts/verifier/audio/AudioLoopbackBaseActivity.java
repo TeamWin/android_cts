@@ -45,6 +45,7 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -184,7 +185,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
 
         mIsPeripheralAttached = mOutputDevInfo != null || mInputDevInfo != null;
         showConnectedAudioPeripheral();
-
     }
 
     protected void handleDeviceConnection(AudioDeviceInfo deviceInfo) {
@@ -280,7 +280,7 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     // Common loging
     //
     protected void recordTestResults() {
-        ReportLog reportLog = getReportLog();
+        CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
                 "Estimated Latency",
                 mMeanLatencyMillis,
