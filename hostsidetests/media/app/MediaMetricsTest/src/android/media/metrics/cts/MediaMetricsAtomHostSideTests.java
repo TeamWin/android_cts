@@ -21,6 +21,7 @@ import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.PlaybackErrorEvent;
 import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
+import android.media.metrics.TrackChangeEvent;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -54,5 +55,25 @@ public class MediaMetricsAtomHostSideTests {
                         .setException(new Exception("test exception"))
                         .build();
         s.reportPlaybackErrorEvent(e);
+    }
+
+    @Test
+    public void testTrackChangeEvent_text() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        TrackChangeEvent e =
+                new TrackChangeEvent.Builder(TrackChangeEvent.TRACK_TYPE_TEXT)
+                        .setTimeSinceCreatedMillis(37278L)
+                        .setTrackState(TrackChangeEvent.TRACK_STATE_ON)
+                        .setTrackChangeReason(TrackChangeEvent.TRACK_CHANGE_REASON_MANUAL)
+                        .setContainerMimeType("text/foo")
+                        .setSampleMimeType("text/plain")
+                        .setCodecName("codec_1")
+                        .setBitrate(1024)
+                        .setLanguage("EN")
+                        .setLanguageRegion("US")
+                        .build();
+        s.reportTrackChangeEvent(e);
     }
 }
