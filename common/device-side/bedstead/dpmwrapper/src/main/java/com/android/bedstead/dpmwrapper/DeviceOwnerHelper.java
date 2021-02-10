@@ -19,7 +19,8 @@ import static com.android.bedstead.dpmwrapper.DataFormatter.addArg;
 import static com.android.bedstead.dpmwrapper.DataFormatter.getArg;
 import static com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory.RESULT_EXCEPTION;
 import static com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory.RESULT_OK;
-import static com.android.bedstead.dpmwrapper.Utils.ACTION_WRAPPED_DPM_CALL;
+import static com.android.bedstead.dpmwrapper.Utils.ACTION_WRAPPED_MANAGER_CALL;
+import static com.android.bedstead.dpmwrapper.Utils.EXTRA_CLASS;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_METHOD;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_NUMBER_ARGS;
 import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
@@ -65,14 +66,15 @@ public final class DeviceOwnerHelper {
         String action = intent.getAction();
         Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
 
-        if (!action.equals(ACTION_WRAPPED_DPM_CALL)) return false;
+        if (!action.equals(ACTION_WRAPPED_MANAGER_CALL)) return false;
 
         try {
+            String className = intent.getStringExtra(EXTRA_CLASS);
             String methodName = intent.getStringExtra(EXTRA_METHOD);
             int numberArgs = intent.getIntExtra(EXTRA_NUMBER_ARGS, 0);
             Log.d(TAG, "onReceive(): userId=" + context.getUserId()
-                    + ", intent=" + intent.getAction() + ", methodName=" + methodName
-                    + ", numberArgs=" + numberArgs);
+                    + ", intent=" + intent.getAction() + ", class=" + className
+                    + ", methodName=" + methodName + ", numberArgs=" + numberArgs);
             Object[] args = null;
             Class<?>[] parameterTypes = null;
             if (numberArgs > 0) {
@@ -86,13 +88,18 @@ public final class DeviceOwnerHelper {
                         + Arrays.toString(parameterTypes));
 
             }
-            Method method = findMethod(methodName, parameterTypes);
+            Class<?> managerClass = Class.forName(className);
+            Method method = findMethod(managerClass, methodName, parameterTypes);
             if (method == null) {
                 sendError(receiver, new IllegalArgumentException(
                         "Could not find method " + methodName + " using reflection"));
                 return true;
             }
-            Object result = method.invoke(receiver.getManager(context), args);
+            Object manager = managerClass.equals(DevicePolicyManager.class)
+                    ? receiver.getManager(context)
+                    : context.getSystemService(managerClass);
+
+            Object result = method.invoke(manager, args);
             Log.d(TAG, "onReceive(): result=" + result);
             sendResult(receiver, result);
         } catch (Exception e) {
@@ -115,27 +122,27 @@ public final class DeviceOwnerHelper {
     }
 
     @Nullable
-    private static Method findMethod(String methodName, Class<?>[] parameterTypes)
+    private static Method findMethod(Class<?> clazz, String methodName, Class<?>[] parameterTypes)
             throws NoSuchMethodException {
         // Handle some special cases first...
 
         // Methods that use CharSequence instead of String
         if (methodName.equals("wipeData") && parameterTypes.length == 2) {
             // wipeData() takes a CharSequence, but it's wrapped as String
-            return DevicePolicyManager.class.getDeclaredMethod(methodName,
+            return clazz.getDeclaredMethod(methodName,
                     new Class<?>[] { int.class, CharSequence.class });
         }
 
         // Calls with null parameters (and hence the type cannot be inferred)
-        Method method = findMethodWithNullParameterCall(methodName, parameterTypes);
+        Method method = findMethodWithNullParameterCall(clazz, methodName, parameterTypes);
         if (method != null) return method;
 
         // ...otherwise return exactly what as asked
-        return DevicePolicyManager.class.getDeclaredMethod(methodName, parameterTypes);
+        return clazz.getDeclaredMethod(methodName, parameterTypes);
     }
 
     @Nullable
-    private static Method findMethodWithNullParameterCall(String methodName,
+    private static Method findMethodWithNullParameterCall(Class<?> clazz, String methodName,
             Class<?>[] parameterTypes) {
         if (parameterTypes == null) return null;
 
@@ -152,7 +159,7 @@ public final class DeviceOwnerHelper {
         if (!hasNullParameter) return null;
 
         Method method = null;
-        for (Method candidate : DevicePolicyManager.class.getDeclaredMethods()) {
+        for (Method candidate : clazz.getDeclaredMethods()) {
             if (candidate.getName().equals(methodName)) {
                 if (method != null) {
                     // TODO: figure out how to solve this scenario if it happen (most likely it will

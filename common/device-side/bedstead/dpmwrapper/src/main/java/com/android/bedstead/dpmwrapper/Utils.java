@@ -25,8 +25,9 @@ final class Utils {
 
     static final int MY_USER_ID = UserHandle.myUserId();
 
-    static final String ACTION_WRAPPED_DPM_CALL =
-            "com.android.bedstead.temp.action.WRAPPED_DPM_CALL";
+    static final String ACTION_WRAPPED_MANAGER_CALL =
+            "com.android.bedstead.dpmwrapper.action.WRAPPED_MANAGER_CALL";
+    static final String EXTRA_CLASS = "className";
     static final String EXTRA_METHOD = "methodName";
     static final String EXTRA_NUMBER_ARGS = "number_args";
     static final String EXTRA_ARG_PREFIX = "arg_";
