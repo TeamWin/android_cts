@@ -16,14 +16,14 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.os.cts.autorevokedummyapp">
+    package="android.os.cts.autorevokerapp">
 
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
     <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30" />
 
     <application>
-        <activity android:name="android.os.cts.autorevokedummyapp.MainActivity"
+        <activity android:name="android.os.cts.autorevokerapp.MainActivity"
                   android:exported="true"
                   android:visibleToInstantApps="true" >
             <intent-filter>
