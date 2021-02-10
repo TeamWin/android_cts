@@ -20,7 +20,7 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-statsd",
     ],
     libs: ["android.test.runner.stubs"],
     static_libs: [
