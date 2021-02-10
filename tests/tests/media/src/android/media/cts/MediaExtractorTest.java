@@ -18,7 +18,9 @@ package android.media.cts;
 
 import static org.junit.Assert.assertNotEquals;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.hardware.display.DisplayManager;
 import android.icu.util.ULocale;
 import android.media.AudioFormat;
 import android.media.AudioPresentation;
@@ -35,11 +37,15 @@ import android.os.PersistableBundle;
 import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import android.view.Display;
+import android.view.Display.HdrCapabilities;
 import android.webkit.cts.CtsTestServer;
 
+import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.MediaUtils;
 
 import java.io.BufferedReader;
@@ -162,7 +168,27 @@ public class MediaExtractorTest extends AndroidTestCase {
         afd.close();
     }
 
+    private boolean advertisesDolbyVision() {
+        // Device advertises support for DV if 1) it has a DV decoder, OR
+        // 2) it lists DV on the Display HDR capabilities.
+        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+            return true;
+        }
+
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        DisplayManager displayManager = context.getSystemService(DisplayManager.class);
+        Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        HdrCapabilities cap = defaultDisplay.getHdrCapabilities();
+        for (int type : cap.getSupportedHdrTypes()) {
+            if (type == HdrCapabilities.HDR_TYPE_DOLBY_VISION) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // DolbyVisionMediaExtractor for profile-level (DvheDtr/Fhd30).
+    @CddTest(requirement="5.3.8")
     public void testDolbyVisionMediaExtractorProfileDvheDtr() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_30fps_dvhe_04.mp4");
 
@@ -182,7 +208,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
 
             MediaFormat trackFormatForDolbyVision =
@@ -210,11 +236,12 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (DvheStn/Fhd60).
+    @CddTest(requirement="5.3.8")
     public void SKIP_testDolbyVisionMediaExtractorProfileDvheStn() throws Exception {
         // duplicate of CtsMediaV2TestCases:ExtractorTest$ValidateKeyValuePairs[video/dolby-vision]
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_05.mp4");
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             // DvheStn exposes only a single non-backward compatible Dolby Vision HDR track.
             assertEquals("There must be 1 track", 1, mExtractor.getTrackCount());
             final MediaFormat trackFormat = mExtractor.getTrackFormat(0);
@@ -233,6 +260,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (DvheSt/Fhd60).
+    @CddTest(requirement="5.3.8")
     public void testDolbyVisionMediaExtractorProfileDvheSt() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvhe_08.mp4");
 
@@ -252,7 +280,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
 
             MediaFormat trackFormatForDolbyVision =
@@ -280,6 +308,7 @@ public class MediaExtractorTest extends AndroidTestCase {
     }
 
     // DolbyVisionMediaExtractor for profile-level (DvavSe/Fhd60).
+    @CddTest(requirement="5.3.8")
     public void testDolbyVisionMediaExtractorProfileDvavSe() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_1920x1080_60fps_dvav_09.mp4");
 
@@ -299,7 +328,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
 
             MediaFormat trackFormatForDolbyVision =
@@ -328,10 +357,11 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.0/Uhd30)
     @SmallTest
+    @CddTest(requirement="5.3.8")
     public void testDolbyVisionMediaExtractorProfileDvav1() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_3840x2160_30fps_dav1_10.mp4");
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             assertEquals(1, mExtractor.getTrackCount());
 
             // Dvav1 10 exposes a single backward compatible track.
@@ -352,6 +382,7 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     // DolbyVisionMediaExtractor for profile-level (Dvav1 10.1/Uhd30)
     @SmallTest
+    @CddTest(requirement="5.3.8")
     public void testDolbyVisionMediaExtractorProfileDvav1_2() throws Exception {
         TestMediaDataSource dataSource = setDataSource("video_dovi_3840x2160_30fps_dav1_10_2.mp4");
 
@@ -371,7 +402,7 @@ public class MediaExtractorTest extends AndroidTestCase {
             }
         }
 
-        if (MediaUtils.hasDecoder(MIMETYPE_VIDEO_DOLBY_VISION)) {
+        if (advertisesDolbyVision()) {
             assertEquals("There must be 2 tracks", 2, mExtractor.getTrackCount());
 
             MediaFormat trackFormatForDolbyVision =
