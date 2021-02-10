@@ -16,6 +16,7 @@
 
 package android.app.cts;
 
+import static android.app.UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 import static android.app.cts.NotificationManagerTest.toggleListenerAccess;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -28,6 +29,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.app.cts.android.app.cts.tools.FutureServiceConnection;
 import android.app.cts.android.app.cts.tools.NotificationHelper;
 import android.app.stubs.TestNotificationListener;
@@ -73,6 +75,8 @@ public class CloseSystemDialogsTest {
     private static final String ACTION_SENTINEL = "sentinel";
     private static final String REASON = "test";
     private static final long TIMEOUT_MS = 3000;
+    private static final String ACCESSIBILITY_SERVICE =
+            "android.app.stubs.shared.AppAccessibilityService";
 
     /**
      * This test is not self-instrumenting, so we need to bind to the service in the instrumentation
@@ -102,6 +106,9 @@ public class CloseSystemDialogsTest {
     private TestNotificationListener mNotificationListener;
     private NotificationHelper mNotificationHelper;
     private String mPreviousHiddenApiPolicy;
+    private String mPreviousAccessibilityServices;
+    private String mPreviousAccessibilityEnabled;
+    private boolean mResetAccessibility;
 
 
     @Before
@@ -141,6 +148,9 @@ public class CloseSystemDialogsTest {
     public void tearDown() throws Exception {
         if (mConnection != null) {
             mContext.unbindService(mConnection);
+        }
+        if (mResetAccessibility) {
+            setAccessibilityState(mPreviousAccessibilityEnabled, mPreviousAccessibilityServices);
         }
         mMainHandler.post(() -> mSawWindowManager.removeViewImmediate(mFakeView));
         mContext.unregisterReceiver(mIntentReceiver);
@@ -214,6 +224,18 @@ public class CloseSystemDialogsTest {
         mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
         assertThat(result.get()).isEqualTo(
                 ICloseSystemDialogsTestsService.RESULT_OK);
+        assertCloseSystemDialogsReceived();
+    }
+
+    @Test
+    public void testCloseSystemDialogs_withWindowAboveShadeAndTargetSdk30_isSent()
+            throws Exception {
+        mService = getService(APP_HELPER);
+        setAccessibilityService(APP_HELPER, ACCESSIBILITY_SERVICE);
+        assertTrue(mService.waitForAccessibilityServiceWindow(TIMEOUT_MS));
+
+        mService.sendCloseSystemDialogsBroadcast();
+
         assertCloseSystemDialogsReceived();
     }
 
@@ -359,6 +381,25 @@ public class CloseSystemDialogsTest {
                     Settings.Global.HIDDEN_API_POLICY);
             Settings.Global.putString(mResolver, Settings.Global.HIDDEN_API_POLICY, policy);
             return previous;
+        });
+    }
+
+    private void setAccessibilityService(String packageName, String service) throws Exception {
+        setAccessibilityState("1", packageName + "/" + service);
+    }
+
+    private void setAccessibilityState(String enabled, String services) {
+        mResetAccessibility = true;
+        UiAutomation uiAutomation = mInstrumentation.getUiAutomation(
+                FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        SystemUtil.runWithShellPermissionIdentity(uiAutomation, () -> {
+            mPreviousAccessibilityServices = Settings.Secure.getString(mResolver,
+                    Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            mPreviousAccessibilityEnabled = Settings.Secure.getString(mResolver,
+                    Settings.Secure.ACCESSIBILITY_ENABLED);
+            Settings.Secure.putString(mResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES,
+                    services);
+            Settings.Secure.putString(mResolver, Settings.Secure.ACCESSIBILITY_ENABLED, enabled);
         });
     }
 

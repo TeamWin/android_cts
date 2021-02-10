@@ -21,5 +21,14 @@
         <service
             android:name="android.app.stubs.shared.CloseSystemDialogsTestService"
             android:exported="true" />
+
+        <service
+            android:name=".AppAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>
