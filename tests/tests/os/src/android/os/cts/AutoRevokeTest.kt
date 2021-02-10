@@ -520,6 +520,11 @@ fun startApp(packageName: String) {
         runShellCommand("monkey -p $packageName -c android.intent.category.LAUNCHER 1"),
         containsString("Events injected: 1"))
     awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
+    waitForIdle()
+}
+
+fun waitForIdle() {
+    InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(1000, 10000)
 }
 
 fun uninstallApp(packageName: String) {
