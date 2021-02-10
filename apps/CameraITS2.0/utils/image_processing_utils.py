@@ -45,7 +45,6 @@ NUM_FRAMES = 4
 TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 
 
-
 # pylint: disable=unused-argument
 def convert_capture_to_rgb_image(cap,
                                  ccm_yuv_to_rgb=DEFAULT_YUV_TO_RGB_CCM,
