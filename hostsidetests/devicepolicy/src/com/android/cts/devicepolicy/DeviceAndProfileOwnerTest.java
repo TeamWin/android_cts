@@ -90,7 +90,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     public static final String CERT_INSTALLER_APK = "CtsCertInstallerApp.apk";
 
     protected static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
-    private static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
+    protected static final String DELEGATE_APP_APK = "CtsDelegateApp.apk";
     private static final String DELEGATION_CERT_INSTALL = "delegation-cert-install";
     private static final String DELEGATION_APP_RESTRICTIONS = "delegation-app-restrictions";
     private static final String DELEGATION_BLOCK_UNINSTALL = "delegation-block-uninstall";

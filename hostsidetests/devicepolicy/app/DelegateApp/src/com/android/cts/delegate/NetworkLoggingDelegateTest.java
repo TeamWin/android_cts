@@ -16,14 +16,11 @@
 package com.android.cts.delegate;
 
 import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
+
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.Activity;
-import android.app.admin.DelegatedAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.app.admin.NetworkEvent;
 import android.content.Context;
-import android.content.Intent;
 import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
@@ -33,9 +30,7 @@ import androidx.test.InstrumentationRegistry;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests that a delegate app with DELEGATION_NETWORK_LOGGING is able to control and access
@@ -44,13 +39,10 @@ import java.util.concurrent.TimeUnit;
 public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
 
     private static final String TAG = "NetworkLoggingDelegateTest";
-    private static final long TIMEOUT_MIN = 1;
 
     private Context mContext;
     private DevicePolicyManager mDpm;
-    private Activity mActivity;
     private UiDevice mDevice;
-
 
     private static final String[] URL_LIST = {
             "example.edu",
@@ -63,28 +55,6 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
             "google.de"
     };
 
-    public static class NetworkLogsReceiver extends DelegatedAdminReceiver {
-        static CountDownLatch mBatchCountDown;
-        static Throwable mExceptionFromReceiver;
-
-        @Override
-        public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
-                int networkLogsCount) {
-            try {
-                DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
-                final List<NetworkEvent> events = dpm.retrieveNetworkLogs(null, batchToken);
-                if (events == null || events.size() == 0) {
-                    fail("Failed to retrieve batch of network logs with batch token " + batchToken);
-                }
-            } catch (Throwable e) {
-                mExceptionFromReceiver = e;
-            } finally {
-            mBatchCountDown.countDown();
-            }
-        }
-
-    }
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -92,8 +62,7 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mContext = getInstrumentation().getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
-        NetworkLogsReceiver.mBatchCountDown = new CountDownLatch(1);
-        NetworkLogsReceiver.mExceptionFromReceiver = null;
+        DelegateTestUtils.NetworkLogsReceiver.sBatchCountDown = new CountDownLatch(1);
     }
 
     public void testCanAccessApis() throws Throwable {
@@ -123,12 +92,7 @@ public class NetworkLoggingDelegateTest extends InstrumentationTestCase {
             }
             mDevice.executeShellCommand("dpm force-network-logs");
 
-            assertTrue("Delegated app did not receive network logs within time limit",
-                    NetworkLogsReceiver.mBatchCountDown.await(TIMEOUT_MIN, TimeUnit.MINUTES));
-            if (NetworkLogsReceiver.mExceptionFromReceiver != null) {
-                // Rethrow any exceptions that might have happened in the receiver.
-                throw NetworkLogsReceiver.mExceptionFromReceiver;
-            }
+            DelegateTestUtils.NetworkLogsReceiver.waitForBroadcast();
         } finally {
             mDpm.setNetworkLoggingEnabled(null, false);
             assertFalse(mDpm.isNetworkLoggingEnabled(null));

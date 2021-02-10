@@ -23,6 +23,7 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_SELECTION;
 import static android.app.admin.DevicePolicyManager.DELEGATION_ENABLE_SYSTEM_APP;
 import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
 import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
@@ -186,22 +187,23 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 .contains(TEST_PKG));
     }
 
-    public void testDeviceOwnerOnlyDelegationsOnlyPossibleToBeSetByDeviceOwner() throws Exception {
-        final String doDelegations[] = {
-                DELEGATION_NETWORK_LOGGING};
+    public void testDeviceOwnerOrManagedPoOnlyDelegations() throws Exception {
+        final String doOrManagedPoDelegations[] = {DELEGATION_NETWORK_LOGGING};
         final boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(
                 mContext.getPackageName());
-        for (String scope : doDelegations) {
+        final boolean isManagedProfileOwner = mDevicePolicyManager.getProfileOwner() != null
+                && mDevicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT);
+        for (String scope : doOrManagedPoDelegations) {
             try {
                 mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
                         Collections.singletonList(scope));
-                if (!isDeviceOwner()) {
-                    fail("PO shouldn't be able to delegate "+ scope);
+                if (!isDeviceOwner() && !isManagedProfileOwner) {
+                    fail("PO not in a managed profile shouldn't be able to delegate " + scope);
                 }
             } catch (SecurityException e) {
-                if (isDeviceOwner) {
-                    fail("DO fails to delegate " + scope + " exception: " + e);
-                    Log.e(TAG, "DO fails to delegate " + scope, e);
+                if (isDeviceOwner || isManagedProfileOwner) {
+                    fail("DO or managed PO fails to delegate " + scope + " exception: " + e);
+                    Log.e(TAG, "DO or managed PO fails to delegate " + scope, e);
                 }
             }
         }
