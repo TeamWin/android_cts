@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,26 @@
 package com.android.cts.verifier.wifiaware;
 
 import android.content.Context;
+import android.os.Bundle;
 
+import com.android.cts.verifier.R;
 import com.android.cts.verifier.wifiaware.testcase.DataPathInBandTestCase;
 
 /**
- * Test activity for data-path, PMK, active subscribe
+ * Test activity for data-path, passphrase, unsolicited publish
  */
-public class DataPathPmkActiveSubscribeTestActivity extends BaseTestActivity {
+public class DataPathPassphraseUnsolicitedPublishAcceptAnyTestActivity extends BaseTestActivity {
     @Override
     protected BaseTestCase getTestCase(Context context) {
         return new DataPathInBandTestCase(context, /* isSecurityOpen */ false,
-                /* isPublish */ false, /* isUnsolicited */ false, /* usePmk */ true,
-                /* acceptAny */ false);
+                /* isPublish */ true, /* isUnsolicited */ true, /* usePmk */ false,
+                /* acceptAny */ true);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setInfoResources(R.string.aware_data_path_passphrase_unsolicited_publish,
+                R.string.aware_data_path_passphrase_unsolicited_publish_info, 0);
     }
 }
