@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import android.app.Activity;
 import android.graphics.drawable.Icon;
 import android.util.AttributeSet;
@@ -36,6 +39,9 @@ import org.xmlpull.v1.XmlPullParser;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class AnalogClockTest {
+    private static final String TIME_ZONE_NEW_YORK = "America/New_York";
+    private static final String TIME_ZONE_LOS_ANGELES = "America/Los_Angeles";
+
     private AttributeSet mAttrSet;
     private Activity mActivity;
     private AnalogClock mClock;
@@ -125,5 +131,26 @@ public class AnalogClockTest {
     public void testSetSecondHandWithNull() {
         mClock.setSecondHand(null);
         mClockWithAttrs.setSecondHand(null);
+    }
+
+    @Test
+    public void testTimeZone() {
+        assertNull(mClock.getTimeZone());
+        assertEquals(TIME_ZONE_NEW_YORK, mClockWithAttrs.getTimeZone());
+
+        mClock.setTimeZone(TIME_ZONE_NEW_YORK);
+        assertEquals(TIME_ZONE_NEW_YORK, mClock.getTimeZone());
+
+        mClock.setTimeZone(TIME_ZONE_LOS_ANGELES);
+        assertEquals(TIME_ZONE_LOS_ANGELES, mClock.getTimeZone());
+
+        mClock.setTimeZone("Some/Invalid_time_zone");
+        assertNull(mClock.getTimeZone());
+
+        mClock.setTimeZone(TIME_ZONE_NEW_YORK);
+        assertEquals(TIME_ZONE_NEW_YORK, mClock.getTimeZone());
+
+        mClock.setTimeZone(null);
+        assertNull(mClock.getTimeZone());
     }
 }
