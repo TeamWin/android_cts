@@ -62,7 +62,7 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
         }
     }
 
-    public void testHasCompanionInCallServiceAccess() {
+    public void testHasManageOngoingCallsPermission() {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -73,12 +73,12 @@ public class TelecomManagerTest extends BaseTelecomTestWithMockServices {
             invokeMethodWithShellPermissionsNoReturn(appOpsManager,
                     (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS,
                             uid, AppOpsManager.MODE_ALLOWED));
-            assertTrue(mTelecomManager.hasCompanionInCallServiceAccess());
+            assertTrue(mTelecomManager.hasManageOngoingCallsPermission());
             invokeMethodWithShellPermissionsNoReturn(appOpsManager,
                     (appOpsMan) -> appOpsMan.setUidMode(AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS,
                             uid, AppOpsManager.opToDefaultMode(
                                     AppOpsManager.OPSTR_MANAGE_ONGOING_CALLS)));
-            assertFalse(mTelecomManager.hasCompanionInCallServiceAccess());
+            assertFalse(mTelecomManager.hasManageOngoingCallsPermission());
         } catch (PackageManager.NameNotFoundException ex) {
             fail("Couldn't get uid for android.telecom.cts");
         }
