@@ -25,7 +25,9 @@
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen|keyguard"
     android:initialLayout="@layout/first_initial_layout"
+    android:description="@string/widget_description"
     android:initialKeyguardLayout="@layout/first_initial_keyguard_layout"
     android:previewImage="@drawable/first_android_icon"
+    android:previewLayout="@layout/preview_layout"
     android:autoAdvanceViewId="@id/first_auto_advance_view_id">
 </appwidget-provider>

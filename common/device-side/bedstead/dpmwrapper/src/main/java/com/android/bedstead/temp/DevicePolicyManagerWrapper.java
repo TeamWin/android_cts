@@ -271,6 +271,36 @@ public final class DevicePolicyManagerWrapper {
             doAnswer(answer).when(spy).setLogoutEnabled(any(), anyBoolean());
             doAnswer(answer).when(spy).removeUser(any(), any());
 
+            // Used by DevicePolicySafetyCheckerIntegrationTest
+            doAnswer(answer).when(spy).createAndManageUser(any(), any(), any(), any(), anyInt());
+            doAnswer(answer).when(spy).lockNow();
+            doAnswer(answer).when(spy).lockNow(anyInt());
+            doAnswer(answer).when(spy).logoutUser(any());
+            doAnswer(answer).when(spy).reboot(any());
+            doAnswer(answer).when(spy).removeActiveAdmin(any());
+            doAnswer(answer).when(spy).removeKeyPair(any(), any());
+            doAnswer(answer).when(spy).requestBugreport(any());
+            doAnswer(answer).when(spy).setAlwaysOnVpnPackage(any(), any(), anyBoolean(), any());
+            doAnswer(answer).when(spy).setApplicationHidden(any(), any(), anyBoolean());
+            doAnswer(answer).when(spy).setApplicationRestrictions(any(), any(), any());
+            doAnswer(answer).when(spy).setCameraDisabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setFactoryResetProtectionPolicy(any(), any());
+            doAnswer(answer).when(spy).setGlobalPrivateDnsModeOpportunistic(any());
+            doAnswer(answer).when(spy).setKeepUninstalledPackages(any(), any());
+            doAnswer(answer).when(spy).setLockTaskFeatures(any(), anyInt());
+            doAnswer(answer).when(spy).setLockTaskPackages(any(), any());
+            doAnswer(answer).when(spy).setMasterVolumeMuted(any(), anyBoolean());
+            doAnswer(answer).when(spy).setOverrideApnsEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setPermissionPolicy(any(), anyInt());
+            doAnswer(answer).when(spy).setRestrictionsProvider(any(), any());
+            doAnswer(answer).when(spy).setSystemUpdatePolicy(any(), any());
+            doAnswer(answer).when(spy).setTrustAgentConfiguration(any(), any(), any());
+            doAnswer(answer).when(spy).startUserInBackground(any(), any());
+            doAnswer(answer).when(spy).stopUser(any(), any());
+            doAnswer(answer).when(spy).switchUser(any(), any());
+            doAnswer(answer).when(spy).wipeData(anyInt(), any());
+            doAnswer(answer).when(spy).wipeData(anyInt());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
@@ -485,7 +515,7 @@ public final class DevicePolicyManagerWrapper {
             return;
         }
 
-        if ((value instanceof ArrayList<?>)) {
+        if ((value instanceof List<?>)) {
             List<?> list = (List<?>) value;
 
             String type = null;

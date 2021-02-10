@@ -16,6 +16,9 @@
 
 package android.widget.cts;
 
+import static android.util.TypedValue.COMPLEX_UNIT_DIP;
+import static android.util.TypedValue.COMPLEX_UNIT_PX;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -38,6 +41,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -939,7 +943,7 @@ public class RemoteViewsTest {
     public void testSetIntDimen_fromUnitDimension() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         float value = 12f;
-        int unit = TypedValue.COMPLEX_UNIT_DIP;
+        int unit = COMPLEX_UNIT_DIP;
         int expectedValue = TypedValue.complexToDimensionPixelSize(
                 TypedValue.createComplexDimension(value, unit),
                 mContext.getResources().getDisplayMetrics());
@@ -991,7 +995,7 @@ public class RemoteViewsTest {
     public void testSetFloatDimen_fromUnitDimension() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         float value = 12f;
-        int unit = TypedValue.COMPLEX_UNIT_DIP;
+        int unit = COMPLEX_UNIT_DIP;
         int expectedValue = TypedValue.complexToDimensionPixelSize(
                 TypedValue.createComplexDimension(value, unit),
                 mContext.getResources().getDisplayMetrics());
@@ -1061,6 +1065,49 @@ public class RemoteViewsTest {
         mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
                 R.dimen.popup_row_height);
         mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetViewOutlinePreferredRadius() throws Throwable {
+        View root = mResult.findViewById(R.id.remoteViews_good);
+        DisplayMetrics displayMetrics = root.getResources().getDisplayMetrics();
+
+        mRemoteViews.setViewOutlinePreferredRadius(
+                R.id.remoteViews_good, 8, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                TypedValue.applyDimension(COMPLEX_UNIT_DIP, 8, displayMetrics),
+                ((RemoteViews.RemoteViewOutlineProvider) root.getOutlineProvider()).getRadius(),
+                0.1 /* delta */);
+
+        mRemoteViews.setViewOutlinePreferredRadius(
+                R.id.remoteViews_good, 16, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                16,
+                ((RemoteViews.RemoteViewOutlineProvider) root.getOutlineProvider()).getRadius(),
+                0.1 /* delta */);
+    }
+
+    @Test
+    public void testSetViewOutlinePreferredRadiusDimen() throws Throwable {
+        View root = mResult.findViewById(R.id.remoteViews_good);
+
+        mRemoteViews.setViewOutlinePreferredRadiusDimen(
+                R.id.remoteViews_good, R.dimen.popup_row_height);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                root.getResources().getDimension(R.dimen.popup_row_height),
+                ((RemoteViews.RemoteViewOutlineProvider) root.getOutlineProvider()).getRadius(),
+                0.1 /* delta */);
+
+        mRemoteViews.setViewOutlinePreferredRadiusDimen(
+                R.id.remoteViews_good, 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                0,
+                ((RemoteViews.RemoteViewOutlineProvider) root.getOutlineProvider()).getRadius(),
+                0.1 /* delta */);
     }
 
     private void createSampleImage(File imagefile, int resid) throws IOException {
