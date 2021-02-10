@@ -46,6 +46,8 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import android.provider.Settings;
@@ -139,6 +141,9 @@ public class UsageStatsTest {
     private String mTargetPackage;
     private String mCachedUsageSourceSetting;
     private String mCachedEnableRestrictedBucketSetting;
+    private int mOtherUser;
+    private Context mOtherUserContext;
+    private UsageStatsManager mOtherUsageStats;
 
     @Before
     public void setUp() throws Exception {
@@ -167,6 +172,12 @@ public class UsageStatsTest {
         // Force stop test package to avoid any running test code from carrying over to the next run
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(TEST_APP_PKG));
         mUiDevice.pressHome();
+        // Destroy the other user if created
+        if (mOtherUser != 0) {
+            stopUser(mOtherUser, true, true);
+            removeUser(mOtherUser);
+            mOtherUser = 0;
+        }
     }
 
     private static void assertLessThan(long left, long right) {
@@ -206,11 +217,15 @@ public class UsageStatsTest {
         mUiDevice.wait(Until.hasObject(By.clazz(clazz)), TIMEOUT);
     }
 
-    private void launchTestActivity(String pkgName, String className) {
-        Intent intent = new Intent();
+    private Intent createTestActivityIntent(String pkgName, String className) {
+        final Intent intent = new Intent();
         intent.setClassName(pkgName, className);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        return intent;
+    }
+
+    private void launchTestActivity(String pkgName, String className) {
+        mContext.startActivity(createTestActivityIntent(pkgName, className));
         mUiDevice.wait(Until.hasObject(By.clazz(pkgName, className)), TIMEOUT);
     }
 
@@ -686,6 +701,60 @@ public class UsageStatsTest {
         fail("Couldn't find a user unlocked event.");
     }
 
+    @AppModeFull(reason = "No usage stats access in instant apps")
+    @Test
+    public void testCrossUserQuery_withPermission() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
+        final long startTime = System.currentTimeMillis();
+        // Create user
+        final int userId = createUser("Test User");
+        startUser(userId, true);
+        installExistingPackageAsUser(mContext.getPackageName(), userId);
+
+        // Query as Shell
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            final UserHandle otherUser = UserHandle.of(userId);
+            final Context userContext = mContext.createContextAsUser(otherUser, 0);
+
+            final UsageStatsManager usmOther = userContext.getSystemService(
+                    UsageStatsManager.class);
+            final List<UsageStats> stats = usmOther
+                    .queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime,
+                        System.currentTimeMillis());
+            for (UsageStats pkgStats : stats) {
+                System.err.println(pkgStats.getPackageName() + " has entry in other user");
+            }
+            assertFalse(stats.isEmpty());
+        });
+        // user cleanup done in @After
+    }
+
+    @AppModeFull(reason = "No usage stats access in instant apps")
+    @Test
+    public void testCrossUserQuery_withoutPermission() throws Exception {
+        assumeTrue(UserManager.supportsMultipleUsers());
+        final long startTime = System.currentTimeMillis();
+        // Create user
+        final int userId = createUser("Test User");
+        startUser(userId, true);
+        installExistingPackageAsUser(mContext.getPackageName(), userId);
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mOtherUserContext = mContext.createContextAsUser(UserHandle.of(userId), 0);
+            mOtherUsageStats = mOtherUserContext.getSystemService(UsageStatsManager.class);
+        });
+
+        try {
+            mOtherUsageStats.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime,
+                    System.currentTimeMillis());
+            fail("Query across users should require INTERACT_ACROSS_USERS permission");
+        } catch (SecurityException se) {
+            // Expected
+        }
+
+        // user cleanup done in @After
+    }
+
     // TODO(148887416): get this test to work for instant apps
     @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
     @Test
@@ -739,26 +808,6 @@ public class UsageStatsTest {
         assertEquals("Activity launch didn't bring RESTRICTED app into ACTIVE bucket",
                 UsageStatsManager.STANDBY_BUCKET_ACTIVE,
                 mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-    }
-
-    /** Confirm the default value of {@link Settings.Global.ENABLE_RESTRICTED_BUCKET}. */
-    // TODO(148887416): get this test to work for instant apps
-    @AppModeFull(reason = "Test APK Activity not found when installed as an instant app")
-    @Test
-    public void testDefaultEnableRestrictedBucketOff() throws Exception {
-        setSetting(Settings.Global.ENABLE_RESTRICTED_BUCKET, null);
-
-        launchSubActivity(TaskRootActivity.class);
-        assertEquals("Activity launch didn't bring app up to ACTIVE bucket",
-                UsageStatsManager.STANDBY_BUCKET_ACTIVE,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
-        // User force shouldn't have to deal with the timeout.
-        setStandByBucket(mTargetPackage, "restricted");
-        assertNotEquals("User was able to force into RESTRICTED bucket when bucket disabled",
-                UsageStatsManager.STANDBY_BUCKET_RESTRICTED,
-                mUsageStatsManager.getAppStandbyBucket(mTargetPackage));
-
     }
 
     // TODO(148887416): get this test to work for instant apps
@@ -1380,11 +1429,7 @@ public class UsageStatsTest {
 
         final long startTime = System.currentTimeMillis();
 
-        Intent intent = new Intent();
-        intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mUiDevice.wait(Until.hasObject(By.clazz(TEST_APP_PKG, TEST_APP_CLASS)), TIMEOUT);
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS);
         SystemClock.sleep(500);
 
         // Destroy the activity
@@ -1435,11 +1480,7 @@ public class UsageStatsTest {
     }
 
     private void startAndDestroyActivityWithLocus() {
-        Intent intent = new Intent();
-        intent.setClassName(TEST_APP_PKG, TEST_APP_CLASS_LOCUS);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        mUiDevice.wait(Until.hasObject(By.clazz(TEST_APP_PKG, TEST_APP_CLASS_LOCUS)), TIMEOUT);
+        launchTestActivity(TEST_APP_PKG, TEST_APP_CLASS_LOCUS);
         SystemClock.sleep(500);
 
         // Destroy the activity
@@ -1544,5 +1585,62 @@ public class UsageStatsTest {
     private boolean isAppInactiveAsPermissionlessApp(String pkg) throws Exception {
         final ITestReceiver testService = bindToTestService();
         return testService.isAppInactive(pkg);
+    }
+
+    private int createUser(String name) throws Exception {
+        final String output = executeShellCmd(
+                "pm create-user " + name);
+        if (output.startsWith("Success")) {
+            return mOtherUser = Integer.parseInt(output.substring(output.lastIndexOf(" ")).trim());
+        }
+        throw new IllegalStateException(String.format("Failed to create user: %s", output));
+    }
+
+    private boolean removeUser(final int userId) throws Exception {
+        final String output = executeShellCmd(String.format("pm remove-user %s", userId));
+        if (output.startsWith("Error")) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean startUser(int userId, boolean waitFlag) throws Exception {
+        String cmd = "am start-user " + (waitFlag ? "-w " : "") + userId;
+
+        final String output = executeShellCmd(cmd);
+        if (output.startsWith("Error")) {
+            return false;
+        }
+        if (waitFlag) {
+            String state = executeShellCmd("am get-started-user-state " + userId);
+            if (!state.contains("RUNNING_UNLOCKED")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean stopUser(int userId, boolean waitFlag, boolean forceFlag)
+            throws Exception {
+        StringBuilder cmd = new StringBuilder("am stop-user ");
+        if (waitFlag) {
+            cmd.append("-w ");
+        }
+        if (forceFlag) {
+            cmd.append("-f ");
+        }
+        cmd.append(userId);
+
+        final String output = executeShellCmd(cmd.toString());
+        if (output.contains("Error: Can't stop system user")) {
+            return false;
+        }
+        return true;
+    }
+
+    private void installExistingPackageAsUser(String packageName, int userId)
+            throws Exception {
+        executeShellCmd(
+                String.format("pm install-existing --user %d --wait %s", userId, packageName));
     }
 }

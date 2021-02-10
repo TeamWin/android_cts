@@ -18,15 +18,25 @@ package android.os.cts
 
 import android.companion.CompanionDeviceManager
 import android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP
+import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.MacAddress
+import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.test.InstrumentationTestCase
+import android.widget.TextView
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.MatcherUtils.hasIdThat
+import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
+import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
+import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
+import com.android.compatibility.common.util.children
+import com.android.compatibility.common.util.click
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.Matchers.hasSize
 import org.junit.Assert.assertThat
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -46,7 +56,9 @@ val InstrumentationTestCase.context get() = InstrumentationRegistry.getTargetCon
 @RunWith(AndroidJUnit4::class)
 class CompanionDeviceManagerTest : InstrumentationTestCase() {
 
-    val cdm by lazy { context.getSystemService(CompanionDeviceManager::class.java) }
+    val cdm: CompanionDeviceManager by lazy {
+        context.getSystemService(CompanionDeviceManager::class.java)
+    }
 
     private fun isShellAssociated(macAddress: String, packageName: String): Boolean {
         val userId = context.userId
@@ -119,4 +131,51 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
                     "cmd companiondevice disassociate $userId $packageName $DUMMY_MAC_ADDRESS")
         }
     }
+
+    @AppModeFull(reason = "Companion API for non-instant apps only")
+    @Test
+    fun testProfiles() {
+        val packageName = "android.os.cts.companiontestapp"
+        runShellCommand("pm uninstall $packageName")
+        installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
+        startApp(packageName)
+
+        click("Associate Watch")
+        val device = waitFindNode(hasIdThat(containsString("device_list")))
+                .children
+                .find { it.className == TextView::class.java.name }
+        assumeTrue("Test requires a discoverable bluetooth device nearby", device != null)
+        device!!.click()
+
+        eventually {
+            assertThat(getAssociatedDevices(packageName), hasSize(1))
+        }
+        val deviceAddress = getAssociatedDevices(packageName)[0]
+
+        runShellCommandOrThrow("cmd companiondevice simulate_connect $deviceAddress")
+        assertPermission(packageName, "android.permission.CALL_PHONE", PERMISSION_GRANTED)
+
+        runShellCommandOrThrow("cmd companiondevice simulate_disconnect $deviceAddress")
+        assertPermission(packageName, "android.permission.CALL_PHONE", PERMISSION_GRANTED)
+    }
+
+    private fun getAssociatedDevices(
+        pkg: String,
+        user: UserHandle = android.os.Process.myUserHandle()
+    ): List<String> {
+        return runShellCommandOrThrow("cmd companiondevice list ${user.identifier}")
+                .lines()
+                .filter { it.startsWith(pkg) }
+                .map { it.substringAfterLast(" ") }
+    }
+}
+
+private fun click(label: String) {
+    waitFindObject(byTextIgnoreCase(label)).click()
+    waitForIdle()
+}
+
+private fun waitForIdle() {
+    InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(1000, 10000)
+    Thread.sleep(500)
 }

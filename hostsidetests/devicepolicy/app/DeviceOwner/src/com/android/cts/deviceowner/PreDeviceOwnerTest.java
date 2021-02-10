@@ -18,6 +18,7 @@ package com.android.cts.deviceowner;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 /**
  * The following test can run in DeviceOwner mode or non-DeviceOwner mode.
@@ -25,11 +26,15 @@ import android.test.AndroidTestCase;
  */
 public class PreDeviceOwnerTest extends AndroidTestCase {
 
+    private static final String TAG = PreDeviceOwnerTest.class.getSimpleName();
+
     protected DevicePolicyManager mDevicePolicyManager;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+
+        Log.d(TAG, "setUp(): running on user " + mContext.getUserId());
 
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);

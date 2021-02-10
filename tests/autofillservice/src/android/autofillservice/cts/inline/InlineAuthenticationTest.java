@@ -237,73 +237,108 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
     @Presubmit
     @Test
     public void testDatasetAuthPinnedPresentationSelectedAndAutofilled() throws Exception {
+        testDatasetAuthEphemeralOrPinned(/* isEphemeralDataset= */ null, /* isPinned= */true);
+    }
+
+    @Presubmit
+    @Test
+    public void testDatasetAuthEphemeralIsTrue() throws Exception {
+        testDatasetAuthEphemeralOrPinned(/* isEphemeralDataset= */ true, /* isPinned= */false);
+    }
+
+    @Presubmit
+    @Test
+    public void testDatasetAuthEphemeralIsFalse() throws Exception {
+        testDatasetAuthEphemeralOrPinned(/* isEphemeralDataset= */ false, /* isPinned= */false);
+    }
+
+    @Presubmit
+    @Test
+    public void testDatasetAuthEphemeralNotSet() throws Exception {
+        testDatasetAuthEphemeralOrPinned(/* isEphemeralDataset= */ null, /* isPinned= */false);
+    }
+
+    private void testDatasetAuthEphemeralOrPinned(Boolean isEphemeralDataset, boolean isPinned)
+            throws Exception {
         // Set service.
         enableService();
 
         // Prepare the authenticated dataset
         final IntentSender authentication = AuthenticationActivity.createSender(mContext, 1,
                 new CannedFillResponse.CannedDataset.Builder()
-                        .setField(ID_USERNAME, "dude")
-                        .setField(ID_PASSWORD, "sweet")
-                        .build());
+                        .setField(ID_USERNAME, "dude", null,
+                                Helper.createInlinePresentation("dude"))
+                        .setField(ID_PASSWORD, "sweet", null,
+                                Helper.createInlinePresentation("sweet"))
+                        .build(), null, isEphemeralDataset);
 
         final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
                 .addDataset(new CannedFillResponse.CannedDataset.Builder()
                         .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE, null,
-                                Helper.createPinnedInlinePresentation("auth-pinned"))
+                                isPinned ? Helper.createPinnedInlinePresentation("auth-username")
+                                        : Helper.createInlinePresentation("auth-username"))
                         .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE, null,
-                                Helper.createInlinePresentation("auth-unpinned"))
+                                Helper.createInlinePresentation("auth-password"))
                         .setPresentation(createPresentation("auth"))
                         .setAuthentication(authentication)
                         .build());
         sReplier.addResponse(builder.build());
 
         // Trigger auto-fill, verify seeing dataset.
-        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-pinned");
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-username");
         sReplier.getNextFillRequest();
 
         // ...and select the dataset, then check the authentication result is autofilled.
         mActivity.expectAutoFill("dude", "sweet");
         AuthenticationActivity.setResultCode(RESULT_OK);
-        mUiBot.selectDataset("auth-pinned");
+        mUiBot.selectDataset("auth-username");
         mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
 
-        // Clear the username field, and expect to see the pinned suggestion again, rather than
-        // the one returned from auth intent.
+        // Clear the username field
         mActivity.onUsername((v) -> v.setText(""));
-        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-pinned");
+        final boolean expectOldDataset = isEphemeralDataset == null ? isPinned : isEphemeralDataset;
+        if (!expectOldDataset) {
+            // Expect to see the suggestion returned from auth intent.
+            assertSuggestionShownBySelectViewId(ID_USERNAME, "dude");
+            return;
+        }
 
+        // Below codes are only applicable for the ephemeral case (isEphemeralData is set to true
+        // or isPinned is set to true)
+
+        // Expect to see the old suggestion, rather than the one returned from auth intent.
+        assertSuggestionShownBySelectViewId(ID_USERNAME, "auth-username");
         // Now select the dataset again and verify that the same authentication flow happens.
         mActivity.expectAutoFill("dude", "sweet");
         AuthenticationActivity.setResultCode(RESULT_OK);
-        mUiBot.selectDataset("auth-pinned");
+        mUiBot.selectDataset("auth-username");
         mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
 
         // Clear the username field, put focus on password field, and then clear the password field,
-        // Expect to see unpinned suggestion.
+        // Expect to see the old suggestion.
         mActivity.onUsername((v) -> v.setText(""));
         mUiBot.selectByRelativeId(ID_PASSWORD);
         mActivity.onPassword((v) -> v.setText(""));
-        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-unpinned");
+        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-password");
 
         // Now select the dataset again and verify that the same authentication flow happens.
         mActivity.expectAutoFill("dude", "sweet");
         AuthenticationActivity.setResultCode(RESULT_OK);
-        mUiBot.selectDataset("auth-unpinned");
+        mUiBot.selectDataset("auth-password");
         mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
 
-        // Clear the password field, and expect to see the unpinned suggestion again, rather than
+        // Clear the password field, and expect to see the old suggestion again, rather than
         // the one returned from auth intent.
         mActivity.onPassword((v) -> v.setText(""));
-        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-unpinned");
+        assertSuggestionShownBySelectViewId(ID_PASSWORD, "auth-password");
 
         // Now select the dataset again and verify that the same authentication flow happens.
         mActivity.expectAutoFill("dude", "sweet");
         AuthenticationActivity.setResultCode(RESULT_OK);
-        mUiBot.selectDataset("auth-unpinned");
+        mUiBot.selectDataset("auth-password");
         mUiBot.waitForIdle();
         mActivity.assertAutoFilled();
     }

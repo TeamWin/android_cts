@@ -16,6 +16,7 @@ android_test_helper_app {
     name: "CtsEmptyDeviceOwner",
     defaults: ["cts_defaults"],
     srcs: ["src/**/*.java"],
+    static_libs: ["compatibility-device-util-axt"],
     resource_dirs: ["res"],
     sdk_version: "test_current",
     min_sdk_version: "12",

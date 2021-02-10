@@ -29,6 +29,7 @@ import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.os.Process
 import android.platform.test.annotations.AppModeFull
 import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
@@ -299,8 +300,9 @@ class AutoRevokeTest {
         repeat(2) {
             val mark = logcat.mark(LOG_TAG)
             eventually {
-                runShellCommandOrThrow("cmd jobscheduler run -u 0 " +
-                    "-f ${context.packageManager.permissionControllerPackageName} 2")
+                runShellCommandOrThrow("cmd jobscheduler run -u " +
+                        "${Process.myUserHandle().identifier} -f " +
+                        "${context.packageManager.permissionControllerPackageName} 2")
             }
             logcat.assertLogcatContainsInOrder("*:*", 30_000,
                     mark,

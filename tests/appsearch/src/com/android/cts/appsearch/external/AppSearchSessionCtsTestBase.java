@@ -456,7 +456,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace(GenericDocument.DEFAULT_NAMESPACE)
-                                        .addUri("email1")
+                                        .addUris("email1")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isFalse();
@@ -538,7 +538,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace(GenericDocument.DEFAULT_NAMESPACE)
-                                        .addUri("email1")
+                                        .addUris("email1")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isFalse();
@@ -595,7 +595,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Can't get the document in the other instance.
         AppSearchBatchResult<String, GenericDocument> failResult =
-                mDb2.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb2.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(failResult.isSuccess()).isFalse();
         assertThat(failResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -636,7 +636,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection(AppSearchEmail.SCHEMA_TYPE, "subject", "to")
                         .build();
         List<GenericDocument> outDocuments = doGet(mDb1, request);
@@ -695,7 +695,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection(AppSearchEmail.SCHEMA_TYPE, Collections.emptyList())
                         .build();
         List<GenericDocument> outDocuments = doGet(mDb1, request);
@@ -749,7 +749,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection("NonExistentType", Collections.emptyList())
                         .addProjection(AppSearchEmail.SCHEMA_TYPE, "subject", "to")
                         .build();
@@ -809,7 +809,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection(
                                 GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD, "subject", "to")
                         .build();
@@ -869,7 +869,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection(
                                 GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD,
                                 Collections.emptyList())
@@ -925,7 +925,7 @@ public abstract class AppSearchSessionCtsTestBase {
         GetByUriRequest request =
                 new GetByUriRequest.Builder()
                         .setNamespace("namespace")
-                        .addUri("uri1", "uri2")
+                        .addUris("uri1", "uri2")
                         .addProjection("NonExistentType", Collections.emptyList())
                         .addProjection(
                                 GetByUriRequest.PROJECTION_SCHEMA_TYPE_WILDCARD, "subject", "to")
@@ -2045,11 +2045,11 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Delete the document
         checkIsBatchResultSuccess(
-                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()));
+                mDb1.remove(new RemoveByUriRequest.Builder().addUris("uri1").build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1", "uri2").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1", "uri2").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2057,7 +2057,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Test if we delete a nonexistent URI.
         AppSearchBatchResult<String, Void> deleteResult =
-                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.remove(new RemoveByUriRequest.Builder().addUris("uri1").build()).get();
 
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2101,7 +2101,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1", "uri2").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1", "uri2").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2112,7 +2112,7 @@ public abstract class AppSearchSessionCtsTestBase {
                         "bar",
                         new SearchSpec.Builder().setTermMatch(SearchSpec.TERM_MATCH_PREFIX).build())
                 .get();
-        getResult = mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri2").build()).get();
+        getResult = mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri2").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri2").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2161,7 +2161,7 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .build())
                 .get();
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1", "uri2").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1", "uri2").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2190,24 +2190,24 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Can't delete in the other instance.
         AppSearchBatchResult<String, Void> deleteResult =
-                mDb2.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb2.remove(new RemoveByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
         assertThat(doGet(mDb1, GenericDocument.DEFAULT_NAMESPACE, "uri1")).hasSize(1);
 
         // Delete the document
         checkIsBatchResultSuccess(
-                mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()));
+                mDb1.remove(new RemoveByUriRequest.Builder().addUris("uri1").build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
 
         // Test if we delete a nonexistent URI.
-        deleteResult = mDb1.remove(new RemoveByUriRequest.Builder().addUri("uri1").build()).get();
+        deleteResult = mDb1.remove(new RemoveByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(deleteResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
     }
@@ -2260,7 +2260,7 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1", "uri2", "uri3").build())
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1", "uri2", "uri3").build())
                         .get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
@@ -2315,13 +2315,13 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Make sure it's really gone in instance 1
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
 
         // Make sure it's still in instance 2.
-        getResult = mDb2.getByUri(new GetByUriRequest.Builder().addUri("uri2").build()).get();
+        getResult = mDb2.getByUri(new GetByUriRequest.Builder().addUris("uri2").build()).get();
         assertThat(getResult.isSuccess()).isTrue();
         assertThat(getResult.getSuccesses().get("uri2")).isEqualTo(email2);
     }
@@ -2392,7 +2392,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace("email")
-                                        .addUri("uri1", "uri2")
+                                        .addUris("uri1", "uri2")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isFalse();
@@ -2404,7 +2404,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace("document")
-                                        .addUri("uri3")
+                                        .addUris("uri3")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isTrue();
@@ -2461,7 +2461,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace("email")
-                                        .addUri("uri1")
+                                        .addUris("uri1")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isFalse();
@@ -2473,7 +2473,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb2.getByUri(
                                 new GetByUriRequest.Builder()
                                         .setNamespace("email")
-                                        .addUri("uri2")
+                                        .addUris("uri2")
                                         .build())
                         .get();
         assertThat(getResult.isSuccess()).isTrue();
@@ -2520,13 +2520,13 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // Make sure it's really gone in instance 1
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
 
         // Make sure it's still in instance 2.
-        getResult = mDb2.getByUri(new GetByUriRequest.Builder().addUri("uri2").build()).get();
+        getResult = mDb2.getByUri(new GetByUriRequest.Builder().addUris("uri2").build()).get();
         assertThat(getResult.isSuccess()).isTrue();
         assertThat(getResult.getSuccesses().get("uri2")).isEqualTo(email2);
     }
@@ -2655,12 +2655,12 @@ public abstract class AppSearchSessionCtsTestBase {
                 mDb1.remove(
                         new RemoveByUriRequest.Builder()
                                 .setNamespace("namespace")
-                                .addUri("uri1")
+                                .addUris("uri1")
                                 .build()));
 
         // Make sure it's really gone
         AppSearchBatchResult<String, GenericDocument> getResult =
-                mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+                mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
@@ -2670,7 +2670,7 @@ public abstract class AppSearchSessionCtsTestBase {
                 .get();
 
         // Make sure it's still gone
-        getResult = mDb1.getByUri(new GetByUriRequest.Builder().addUri("uri1").build()).get();
+        getResult = mDb1.getByUri(new GetByUriRequest.Builder().addUris("uri1").build()).get();
         assertThat(getResult.isSuccess()).isFalse();
         assertThat(getResult.getFailures().get("uri1").getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);

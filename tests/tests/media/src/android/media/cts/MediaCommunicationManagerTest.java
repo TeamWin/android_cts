@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.media.MediaCommunicationManager;
@@ -46,5 +47,12 @@ public class MediaCommunicationManagerTest {
         MediaCommunicationManager manager = (MediaCommunicationManager)
                 mContext.getSystemService(Context.MEDIA_COMMUNICATION_SERVICE);
         assertNotNull(manager);
+    }
+
+    @Test
+    public void testGetVersion() {
+        MediaCommunicationManager manager = (MediaCommunicationManager)
+                mContext.getSystemService(Context.MEDIA_COMMUNICATION_SERVICE);
+        assertTrue(manager.getVersion() > 0);
     }
 }

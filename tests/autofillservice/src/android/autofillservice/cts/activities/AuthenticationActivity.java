@@ -61,6 +61,12 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
      */
     private static final String EXTRA_OUTPUT_CLIENT_STATE = "output_client_state";
 
+    /**
+     * When launched with this intent, it will pass it back to the
+     * {@link AutofillManager#EXTRA_AUTHENTICATION_RESULT_EPHEMERAL_DATASET} of the result.
+     */
+    private static final String EXTRA_OUTPUT_IS_EPHEMERAL_DATASET = "output_is_ephemeral_dataset";
+
 
     private static final int MSG_WAIT_FOR_LATCH = 1;
     private static final int MSG_REQUEST_AUTOFILL = 2;
@@ -109,10 +115,15 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
     public static IntentSender createSender(Context context, int id,
             CannedDataset dataset, Bundle outClientState) {
+        return createSender(context, id, dataset, outClientState, null);
+    }
+
+    public static IntentSender createSender(Context context, int id,
+            CannedDataset dataset, Bundle outClientState, Boolean isEphemeralDataset) {
         Preconditions.checkArgument(id > 0, "id must be positive");
         Preconditions.checkState(sDatasets.get(id) == null, "already have id");
         sDatasets.put(id, dataset);
-        return createSender(context, EXTRA_DATASET_ID, id, outClientState);
+        return createSender(context, EXTRA_DATASET_ID, id, outClientState, isEphemeralDataset);
     }
 
     /**
@@ -128,16 +139,21 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         Preconditions.checkArgument(id > 0, "id must be positive");
         Preconditions.checkState(sResponses.get(id) == null, "already have id");
         sResponses.put(id, response);
-        return createSender(context, EXTRA_RESPONSE_ID, id, outData);
+        return createSender(context, EXTRA_RESPONSE_ID, id, outData, null);
     }
 
     private static IntentSender createSender(Context context, String extraName, int id,
-            Bundle outClientState) {
+            Bundle outClientState, Boolean isEphemeralDataset) {
         final Intent intent = new Intent(context, AuthenticationActivity.class);
         intent.putExtra(extraName, id);
         if (outClientState != null) {
             Log.d(TAG, "Create with " + outClientState + " as " + EXTRA_OUTPUT_CLIENT_STATE);
             intent.putExtra(EXTRA_OUTPUT_CLIENT_STATE, outClientState);
+        }
+        if (isEphemeralDataset != null) {
+            Log.d(TAG, "Create with " + isEphemeralDataset + " as "
+                    + EXTRA_OUTPUT_IS_EPHEMERAL_DATASET);
+            intent.putExtra(EXTRA_OUTPUT_IS_EPHEMERAL_DATASET, isEphemeralDataset);
         }
         final PendingIntent pendingIntent =
                 PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_MUTABLE);
@@ -276,6 +292,14 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         if (outClientState != null) {
             Log.d(TAG, "Adding " + outClientState + " as " + AutofillManager.EXTRA_CLIENT_STATE);
             intent.putExtra(AutofillManager.EXTRA_CLIENT_STATE, outClientState);
+        }
+        if (getIntent().getExtras().containsKey(EXTRA_OUTPUT_IS_EPHEMERAL_DATASET)) {
+            final boolean isEphemeralDataset = getIntent().getBooleanExtra(
+                    EXTRA_OUTPUT_IS_EPHEMERAL_DATASET, false);
+            Log.d(TAG, "Adding " + isEphemeralDataset + " as "
+                    + AutofillManager.EXTRA_AUTHENTICATION_RESULT_EPHEMERAL_DATASET);
+            intent.putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT_EPHEMERAL_DATASET,
+                    isEphemeralDataset);
         }
 
         final int resultCode;

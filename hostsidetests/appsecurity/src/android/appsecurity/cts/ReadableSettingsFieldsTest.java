@@ -1,0 +1,91 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.appsecurity.cts;
+
+
+import static org.junit.Assert.assertTrue;
+
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.File;
+
+/**
+ * Test that:
+ * 1) all the public fields annotated with @Readable in Settings.Secure, Settings.System,
+ * Settings.Global classes are readable.
+ * 2) hidden fields added before S are also readable, via their raw Settings key String values.
+ * 3) public fields without the @Readable annotation will not be readable.
+ *
+ * Run with:
+ * atest android.appsecurity.cts.ReadableSettingsFieldsTest
+ */
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
+    private static final String TEST_PACKAGE = "com.android.cts.readsettingsfieldsapp";
+    private static final String TEST_CLASS = TEST_PACKAGE + ".ReadSettingsFieldsTest";
+    private static final String TEST_APK = "CtsReadSettingsFieldsApp.apk";
+
+    @Before
+    public void setUp() throws Exception {
+        new InstallMultiple().addFile(TEST_APK).run();
+        assertTrue(getDevice().isPackageInstalled(TEST_PACKAGE));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        getDevice().uninstallPackage(TEST_PACKAGE);
+    }
+
+    @Test
+    public void testSecurePublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecurePublicSettingsKeysAreReadable");
+    }
+
+    @Test
+    public void testSystemPublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemPublicSettingsKeysAreReadable");
+    }
+
+    @Test
+    public void testGlobalPublicSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalPublicSettingsKeysAreReadable");
+    }
+
+    @Test
+    public void testSecureSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSecureSomeHiddenSettingsKeysAreReadable");
+    }
+
+    @Test
+    public void testSystemSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testSystemSomeHiddenSettingsKeysAreReadable");
+    }
+
+    @Test
+    public void testGlobalSomeHiddenSettingsKeysAreReadable() throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalSomeHiddenSettingsKeysAreReadable");
+    }
+
+    //TODO(b/175024829): test that hidden keys without @Readable cannot be accessed
+}

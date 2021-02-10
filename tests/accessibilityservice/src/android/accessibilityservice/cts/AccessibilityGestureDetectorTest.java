@@ -245,8 +245,8 @@ public class AccessibilityGestureDetectorTest {
                 AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP,
                 displayId);
                 testGesture(
-                        twoFingerSingleTapAndHold(displayId),
-                        AccessibilityService.GESTURE_2_FINGER_SINGLE_TAP_AND_HOLD,
+                        twoFingerTripleTapAndHold(displayId),
+                        AccessibilityService.GESTURE_2_FINGER_TRIPLE_TAP_AND_HOLD,
                         displayId);
                 testGesture(
                 twoFingerDoubleTap(displayId),
@@ -541,8 +541,8 @@ public class AccessibilityGestureDetectorTest {
         return multiFingerMultiTap(2, 1, displayId);
     }
 
-    private GestureDescription twoFingerSingleTapAndHold(int displayId) {
-        return multiFingerMultiTapAndHold(2, 1, displayId);
+    private GestureDescription twoFingerTripleTapAndHold(int displayId) {
+        return multiFingerMultiTapAndHold(2, 3, displayId);
     }
 
     private GestureDescription twoFingerDoubleTap(int displayId) {

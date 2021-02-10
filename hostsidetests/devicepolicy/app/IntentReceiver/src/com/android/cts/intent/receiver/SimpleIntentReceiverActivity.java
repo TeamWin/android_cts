@@ -16,13 +16,12 @@
 
 package com.android.cts.intent.receiver;
 
-import android.app.admin.DevicePolicyManager;
 import android.app.Activity;
+import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
-
 import android.os.Bundle;
+import android.util.Log;
 
 /**
  * An activity that receives an intent and returns immediately, indicating its own name and if it is
@@ -41,8 +40,8 @@ public class SimpleIntentReceiverActivity extends Activity {
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         boolean inManagedProfile = dpm.isProfileOwnerApp("com.android.cts.managedprofile");
 
-        Log.i(TAG, "activity " + className + " started, is in managed profile: "
-                + inManagedProfile);
+        Log.i(TAG, "activity " + className + " started on user " + getUserId()
+                + ", is in managed profile: " + inManagedProfile);
         Intent result = new Intent();
         result.putExtra("extra_receiver_class", className);
         result.putExtra("extra_in_managed_profile", inManagedProfile);

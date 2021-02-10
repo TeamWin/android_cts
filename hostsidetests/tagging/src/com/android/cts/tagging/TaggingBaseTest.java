@@ -42,6 +42,8 @@ public class TaggingBaseTest extends CompatChangeGatingTestCase {
     // to have both requirements for tagged pointers: the correct architecture (aarch64) and the
     // full set of kernel patches (as indicated by a successful prctl(PR_GET_TAGGED_ADDR_CTRL)).
     protected boolean deviceSupportsTaggedPointers = false;
+    // True if test device supports ARM MTE extension.
+    protected boolean deviceSupportsMemoryTagging = false;
     // Initialized in setUp(), contains a set of pointer tagging changes that should be reported by
     // statsd. This set contains the compat change ID for heap tagging iff the device supports
     // tagged pointers (and is blank otherwise), as the kernel and manifest check in the zygote
@@ -84,7 +86,9 @@ public class TaggingBaseTest extends CompatChangeGatingTestCase {
             throw new Exception("Failed to get a result from the kernel helper.");
         }
 
-        if (deviceSupportsTaggedPointers) {
+        deviceSupportsMemoryTagging = !runCommand("grep 'Features.* mte' /proc/cpuinfo").isEmpty();
+
+        if (deviceSupportsTaggedPointers && !deviceSupportsMemoryTagging) {
             reportedChangeSet = ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID);
             testForWhenSoftwareWantsTagging = DEVICE_TAGGING_ENABLED_TEST_NAME;
         }

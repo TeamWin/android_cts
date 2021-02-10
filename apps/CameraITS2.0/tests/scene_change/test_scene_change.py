@@ -16,7 +16,6 @@
 import logging
 import multiprocessing
 import os.path
-import sys
 import time
 
 from mobly import test_runner
@@ -90,7 +89,11 @@ def toggle_screen(tablet, delay=1):
     delay: Float value for time delay. Default is 1 second.
   """
   t0 = time.time()
-  time.sleep(delay)
+  if delay >= 0:
+    time.sleep(delay)
+  else:
+    raise ValueError(f'Screen toggle time shifted to {delay} w/o scene change. '
+                     'Tablet does not appear to be toggling. Check setup.')
   tablet.adb.shell('input keyevent KEYCODE_POWER')
   t = time.time() - t0
   logging.debug('Toggling display at %.3f.', t)
@@ -221,18 +224,18 @@ class SceneChangeTest(its_base_test.ItsBaseTest):
         timing_adjustment = scene_change_utils.calc_timing_adjustment(
             converged_flag, scene_change_flag, bright_change_flag, bright_final)
         if timing_adjustment == scene_change_utils.SCENE_CHANGE_PASS_CODE:
-          sys.exit(0)
+          break
         elif timing_adjustment == scene_change_utils.SCENE_CHANGE_FAIL_CODE:
           raise AssertionError('Test fails. Check logging.error.')
         else:
-          scene_change_delay += timing_adjustment / _FPS
+          if burst == _NUM_TRIES-1:  # FAIL out after NUM_TRIES.
+            raise AssertionError(f'No scene change in {_NUM_TRIES}x tries.')
+          else:
+            scene_change_delay += timing_adjustment / _FPS
 
-        # Turn screen back ON.
         if tablet:
+          logging.debug('Turning screen back ON.')
           toggle_screen(tablet)
-
-    # FAIL out after NUM_TRIES.
-    raise AssertionError(f'No scene change in {_NUM_TRIES}x tries.')
 
 
 if __name__ == '__main__':

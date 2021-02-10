@@ -53,6 +53,9 @@ public class WifiRttTest extends TestBase {
     // Maximum variation from the average measurement (measures consistency)
     private static final int MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM = 2000;
 
+    // Maximum failure rate of one-sided RTT measurements (percentage)
+    private static final int MAX_NON11MC_FAILURE_RATE_PERCENT = 40;
+
     // Minimum valid RSSI value
     private static final int MIN_VALID_RSSI = -100;
 
@@ -438,6 +441,7 @@ public class WifiRttTest extends TestBase {
      * - Scan for visible APs for the test AP (which do not support IEEE 802.11mc) and are operating
      * - in the 5GHz band.
      * - Perform N (constant) RTT operations
+     * - Remove outliers while insuring greater than 50% of the results still remain
      * - Validate:
      *   - Failure ratio < threshold (constant)
      *   - Result margin < threshold (constant)
@@ -452,6 +456,7 @@ public class WifiRttTest extends TestBase {
         assertNotNull(
                 "Cannot find any test APs which are Non-IEEE 802.11mc - please verify that"
                         + " your test setup includes them!", testAp);
+
         // Perform RTT operations
         RangingRequest.Builder builder = new RangingRequest.Builder();
         builder.addNon80211mcCapableAccessPoint(testAp);
@@ -465,6 +470,7 @@ public class WifiRttTest extends TestBase {
         int distanceMax = 0;
         int[] statuses = new int[NUM_OF_RTT_ITERATIONS];
         int[] distanceMms = new int[NUM_OF_RTT_ITERATIONS];
+        boolean[] distanceInclusionMap = new boolean[NUM_OF_RTT_ITERATIONS];
         int[] distanceStdDevMms = new int[NUM_OF_RTT_ITERATIONS];
         int[] rssis = new int[NUM_OF_RTT_ITERATIONS];
         int[] numAttempted = new int[NUM_OF_RTT_ITERATIONS];
@@ -479,29 +485,26 @@ public class WifiRttTest extends TestBase {
                     callback.waitForCallback());
 
             List<RangingResult> currentResults = callback.getResults();
-            assertNotNull("Wi-Fi RTT results: null results (onRangingFailure) on iteration " + i,
+            assertNotNull(
+                    "Wi-Fi RTT results: null results (onRangingFailure) on iteration " + i,
                     currentResults);
-            assertEquals("Wi-Fi RTT results: unexpected # of results (expect 1) on iteration " + i,
+            assertEquals(
+                    "Wi-Fi RTT results: unexpected # of results (expect 1) on iteration " + i,
                     1, currentResults.size());
             RangingResult result = currentResults.get(0);
-            assertEquals("Wi-Fi RTT results: invalid result (wrong BSSID) entry on iteration " + i,
+            assertEquals(
+                    "Wi-Fi RTT results: invalid result (wrong BSSID) entry on iteration " + i,
                     result.getMacAddress().toString(), testAp.BSSID);
 
-            assertNull("Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
-                    + i, result.getPeerHandle());
+            assertNull(
+                    "Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
+                            + i, result.getPeerHandle());
 
             allResults.add(result);
             int status = result.getStatus();
             statuses[i] = status;
             if (status == RangingResult.STATUS_SUCCESS) {
                 distanceSum += result.getDistanceMm();
-                if (i == 0) {
-                    distanceMin = result.getDistanceMm();
-                    distanceMax = result.getDistanceMm();
-                } else {
-                    distanceMin = Math.min(distanceMin, result.getDistanceMm());
-                    distanceMax = Math.max(distanceMax, result.getDistanceMm());
-                }
 
                 assertTrue("Wi-Fi RTT results: invalid RSSI on iteration " + i,
                         result.getRssi() >= MIN_VALID_RSSI);
@@ -537,9 +540,11 @@ public class WifiRttTest extends TestBase {
         reportLog.addValues("status_codes", statuses, ResultType.NEUTRAL, ResultUnit.NONE);
         reportLog.addValues("distance_mm", Arrays.copyOf(distanceMms, numGoodResults),
                 ResultType.NEUTRAL, ResultUnit.NONE);
-        reportLog.addValues("distance_stddev_mm", Arrays.copyOf(distanceStdDevMms, numGoodResults),
+        reportLog.addValues("distance_stddev_mm",
+                Arrays.copyOf(distanceStdDevMms, numGoodResults),
                 ResultType.NEUTRAL, ResultUnit.NONE);
-        reportLog.addValues("rssi_dbm", Arrays.copyOf(rssis, numGoodResults), ResultType.NEUTRAL,
+        reportLog.addValues("rssi_dbm", Arrays.copyOf(rssis, numGoodResults),
+                ResultType.NEUTRAL,
                 ResultUnit.NONE);
         reportLog.addValues("num_attempted", Arrays.copyOf(numAttempted, numGoodResults),
                 ResultType.NEUTRAL, ResultUnit.NONE);
@@ -550,12 +555,43 @@ public class WifiRttTest extends TestBase {
         reportLog.submit();
 
         // Analyze results
-        assertTrue("Wi-Fi RTT failure rate exceeds threshold: FAIL=" + numFailures + ", ITERATIONS="
+        assertTrue("Wi-Fi RTT failure rate exceeds threshold: FAIL=" + numFailures
+                        + ", ITERATIONS="
                         + NUM_OF_RTT_ITERATIONS + ", AP RSSI=" + testAp.level
                         + ", AP SSID=" + testAp.SSID,
-                numFailures <= NUM_OF_RTT_ITERATIONS * MAX_FAILURE_RATE_PERCENT / 100);
+                numFailures <= NUM_OF_RTT_ITERATIONS * MAX_NON11MC_FAILURE_RATE_PERCENT / 100);
+
         if (numFailures != NUM_OF_RTT_ITERATIONS) {
+            // Calculate an initial average using all measurements to determine distance outliers
             double distanceAvg = (double) distanceSum / (NUM_OF_RTT_ITERATIONS - numFailures);
+            // Now figure out the distance outliers and mark them in the distance inclusion map
+            int validDistances = 0;
+            for (int i = 0; i < (NUM_OF_RTT_ITERATIONS - numFailures); i++) {
+                if (distanceMms[i] - MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM < distanceAvg) {
+                    // Distances that are in range for the distribution are included in the map
+                    distanceInclusionMap[i] = true;
+                    validDistances++;
+                } else {
+                    // Distances that are out of range for the distribution are excluded in the map
+                    distanceInclusionMap[i] = false;
+                }
+            }
+
+            assertTrue("After fails+outlier removal greater that 50% distances must remain: " +
+                    NUM_OF_RTT_ITERATIONS / 2, validDistances > NUM_OF_RTT_ITERATIONS / 2);
+
+            // Remove the distance outliers and find the new average, min and max.
+            distanceSum = 0;
+            distanceMax = Integer.MIN_VALUE;
+            distanceMin = Integer.MAX_VALUE;
+            for (int i = 0; i < (NUM_OF_RTT_ITERATIONS - numFailures); i++) {
+                if (distanceInclusionMap[i]) {
+                    distanceSum += distanceMms[i];
+                    distanceMin = Math.min(distanceMin, distanceMms[i]);
+                    distanceMax = Math.max(distanceMax, distanceMms[i]);
+                }
+            }
+            distanceAvg = (double) distanceSum / validDistances;
             assertTrue("Wi-Fi RTT: Variation (max direction) exceeds threshold, Variation ="
                             + (distanceMax - distanceAvg),
                     (distanceMax - distanceAvg) <= MAX_VARIATION_FROM_AVERAGE_DISTANCE_MM);
