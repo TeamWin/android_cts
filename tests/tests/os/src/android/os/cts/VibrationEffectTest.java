@@ -370,6 +370,15 @@ public class VibrationEffectTest {
     }
 
     @Test
+    public void testParcelingComposed() {
+        Parcel p = Parcel.obtain();
+        TEST_COMPOSED.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        VibrationEffect parceledEffect = VibrationEffect.CREATOR.createFromParcel(p);
+        assertEquals(TEST_COMPOSED, parceledEffect);
+    }
+
+    @Test
     public void testDescribeContents() {
         TEST_ONE_SHOT.describeContents();
         TEST_WAVEFORM.describeContents();
