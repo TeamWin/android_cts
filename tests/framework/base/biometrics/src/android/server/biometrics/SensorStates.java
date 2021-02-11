@@ -16,8 +16,6 @@
 
 package android.server.biometrics;
 
-import android.util.SparseArray;
-
 import androidx.annotation.NonNull;
 
 import com.android.server.biometrics.nano.BiometricSchedulerProto;
@@ -28,7 +26,9 @@ import com.android.server.biometrics.nano.UserStateProto;
 
 import com.google.common.primitives.Ints;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The overall state for a list of sensors. This could be either:
@@ -43,7 +43,7 @@ import java.util.List;
  */
 public class SensorStates {
 
-    @NonNull public final SparseArray<SensorState> sensorStates;
+    @NonNull public final Map<Integer, SensorState> sensorStates;
 
     public static class SchedulerState {
         private final int mCurrentOperation;
@@ -71,10 +71,10 @@ public class SensorStates {
     public static class SensorState {
         private final SchedulerState mSchedulerState;
         private final int mModality;
-        @NonNull private final SparseArray<UserState> mUserStates;
+        @NonNull private final Map<Integer, UserState> mUserStates;
 
         public SensorState(@NonNull SchedulerState schedulerState, int modality,
-                @NonNull SparseArray<UserState> userStates) {
+                @NonNull Map<Integer, UserState> userStates) {
             this.mSchedulerState = schedulerState;
             this.mModality = modality;
             this.mUserStates = userStates;
@@ -92,7 +92,7 @@ public class SensorStates {
             return mModality;
         }
 
-        @NonNull public SparseArray<UserState> getUserStates() {
+        @NonNull public Map<Integer, UserState> getUserStates() {
             return mUserStates;
         }
     }
@@ -107,10 +107,10 @@ public class SensorStates {
 
     @NonNull
     public static SensorStates parseFrom(@NonNull SensorServiceStateProto proto) {
-        final SparseArray<SensorState> sensorStates = new SparseArray<>();
+        final Map<Integer, SensorState> sensorStates = new HashMap<>();
 
         for (SensorStateProto sensorStateProto : proto.sensorStates) {
-            final SparseArray<UserState> userStates = new SparseArray<>();
+            final Map<Integer, UserState> userStates = new HashMap<>();
             for (UserStateProto userStateProto : sensorStateProto.userStates) {
                 userStates.put(userStateProto.userId, new UserState(userStateProto.numEnrolled));
             }
@@ -130,17 +130,14 @@ public class SensorStates {
      */
     @NonNull
     public static SensorStates merge(@NonNull List<SensorStates> sensorServiceStates) {
-        final SparseArray<SensorState> sensorStates = new SparseArray<>();
+        final Map<Integer, SensorState> sensorStates = new HashMap<>();
 
         for (SensorStates sensorServiceState : sensorServiceStates) {
-            for (int i = 0; i < sensorServiceState.sensorStates.size(); i++) {
-                final int sensorId = sensorServiceState.sensorStates.keyAt(i);
-                final SensorState sensorState = sensorServiceState.sensorStates.valueAt(i);
-                if (sensorStates.contains(sensorId)) {
+            for (Integer sensorId : sensorServiceState.sensorStates.keySet()) {
+                if (sensorStates.containsKey(sensorId)) {
                     throw new IllegalStateException("Duplicate sensorId found: " + sensorId);
                 }
-
-                sensorStates.put(sensorId, sensorState);
+                sensorStates.put(sensorId, sensorServiceState.sensorStates.get(sensorId));
             }
         }
 
@@ -148,41 +145,43 @@ public class SensorStates {
     }
 
     public boolean areAllSensorsIdle() {
-        for (int i = 0; i < sensorStates.size(); i++) {
-            if (sensorStates.valueAt(i).isBusy()) {
+        for (SensorState state : sensorStates.values()) {
+            if (state.isBusy()) {
                 return false;
             }
         }
+
         return true;
     }
 
     public boolean containsModality(int modality) {
-        for (int i = 0; i < sensorStates.size(); i++) {
-            if (sensorStates.valueAt(i).getModality() == modality) {
+        for (SensorState state : sensorStates.values()) {
+            if (state.getModality() == modality) {
                 return true;
             }
         }
+
         return false;
     }
 
-    private SensorStates(@NonNull SparseArray<SensorState> sensorStates) {
+    private SensorStates(@NonNull Map<Integer, SensorState> sensorStates) {
         this.sensorStates = sensorStates;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < sensorStates.size(); i++) {
-            sb.append("{SensorId: ").append(sensorStates.keyAt(i));
-            sb.append(", Operation: ").append(sensorStates.valueAt(i)
+
+        for (Integer sensorId : sensorStates.keySet()) {
+            sb.append("{SensorId: ").append(sensorId);
+            sb.append(", Operation: ").append(sensorStates.get(sensorId)
                     .getSchedulerState().mCurrentOperation);
 
-            final SparseArray<UserState> userStates = sensorStates.valueAt(i).getUserStates();
-            for (int j = 0; j < userStates.size(); j++) {
-                sb.append(", UserId: ").append(userStates.keyAt(j));
-                sb.append(", NumEnrolled: ").append(userStates.get(j).numEnrolled);
+            final Map<Integer, UserState> userStates = sensorStates.get(sensorId).getUserStates();
+            for (Integer userId : userStates.keySet()) {
+                sb.append(", UserId: ").append(userId);
+                sb.append(", NumEnrolled: ").append(userStates.get(userId).numEnrolled);
             }
-
             sb.append("} ");
         }
         return sb.toString();

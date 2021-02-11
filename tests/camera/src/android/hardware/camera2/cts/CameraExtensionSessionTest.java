@@ -686,9 +686,9 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     verify(captureCallback, times(1))
                             .onCaptureStarted(eq(extensionSession), eq(captureRequest),
                                     anyLong());
-                    verify(captureCallback, times(1))
+                    verify(captureCallback, timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                             .onCaptureProcessStarted(extensionSession, captureRequest);
-                    verify(captureCallback, times(1))
+                    verify(captureCallback, timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
                             .onCaptureSequenceCompleted(extensionSession,
                                     captureSequenceId);
                     verify(captureCallback, times(0))
