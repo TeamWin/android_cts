@@ -20,6 +20,7 @@ android_test {
         "androidx.annotation_annotation",
         "androidx.test.ext.junit",
         "androidx.test.rules",
+	"ctsdeviceutillegacy-axt",
         "mockito-target-minus-junit4",
         "android-common",
         "compatibility-device-util-axt",
