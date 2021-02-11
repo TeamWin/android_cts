@@ -286,7 +286,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
         // Send an error
         testSessions.get(0).notifyError(userId,
-                FingerprintManager.FINGERPRINT_ERROR_HW_UNAVAILABLE);
+                FingerprintManager.FINGERPRINT_ERROR_CANCELED);
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
@@ -296,7 +296,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
         assertEquals(FingerprintManager.FINGERPRINT_ACQUIRED_PARTIAL,
                 (int) callbackState.mAcquiredReceived.get(0));
         assertEquals(1, callbackState.mErrorsReceived.size());
-        assertEquals(FingerprintManager.FINGERPRINT_ERROR_HW_UNAVAILABLE,
+        assertEquals(FingerprintManager.FINGERPRINT_ERROR_CANCELED,
                 (int) callbackState.mErrorsReceived.get(0));
 
         // Authentication lifecycle is done
