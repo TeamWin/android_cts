@@ -27,7 +27,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_IDLE;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_PAUSED;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_PENDING_CONFIRM;
-import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_STARTED;
+import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_STARTED_UI_SHOWING;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_SHOWING_DEVICE_CREDENTIAL;
 
 import static org.junit.Assert.assertEquals;
@@ -375,7 +375,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         session.acceptAuthentication(userId);
         mInstrumentation.waitForIdleSync();
 
-        waitForStateNotEqual(STATE_AUTH_STARTED);
+        waitForStateNotEqual(STATE_AUTH_STARTED_UI_SHOWING);
 
         state = getCurrentState();
         Log.d(TAG, "State after acceptAuthentication: " + state);
@@ -445,7 +445,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         if (state.mState == STATE_AUTH_PAUSED) {
             findAndPressButton(BUTTON_ID_TRY_AGAIN);
             mInstrumentation.waitForIdleSync();
-            waitForState(STATE_AUTH_STARTED);
+            waitForState(STATE_AUTH_STARTED_UI_SHOWING);
         }
 
         // Send an error
@@ -582,7 +582,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         BiometricServiceState state = getCurrentState();
         Log.d(TAG, "State after launching activity: " + state);
         if (shouldEnrollBiometric) {
-            waitForState(STATE_AUTH_STARTED);
+            waitForState(STATE_AUTH_STARTED_UI_SHOWING);
             assertTrue(state.toString(), state.mSensorStates.sensorStates.get(sensorId).isBusy());
             // Press the credential button
             findAndPressButton(BUTTON_ID_USE_CREDENTIAL);
