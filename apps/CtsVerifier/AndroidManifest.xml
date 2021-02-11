@@ -3516,6 +3516,48 @@
                        android:value="single_display_mode" />
         </activity>
 
+        <activity android:name=".wifiaware.DataPathOpenSolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_open_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPmkUnsolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_pmk_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPmkSolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_pmk_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPassphraseUnsolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_passphrase_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathPassphraseSolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_passphrase_solicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
+        <activity android:name=".wifiaware.DataPathOpenUnsolicitedPublishAcceptAnyTestActivity"
+                  android:label="@string/aware_data_path_open_unsolicited_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" >
+            <meta-data android:name="display_mode"
+                       android:value="single_display_mode" />
+        </activity>
+
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:exported="true"
                 android:targetActivity=".TestListActivity">

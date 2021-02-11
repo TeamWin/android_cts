@@ -42,8 +42,9 @@
     </target_preparer>
     <!-- Load additional APKs onto device -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="CtsAutoRevokeDummyApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk" />
-        <option name="push" value="CtsAutoRevokePreRApp.apk->/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk" />
+        <option name="push" value="CtsAutoRevokeSApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeSApp.apk" />
+        <option name="push" value="CtsAutoRevokeRApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeRApp.apk" />
+        <option name="push" value="CtsAutoRevokeQApp.apk->/data/local/tmp/cts/os/CtsAutoRevokeQApp.apk" />
         <option name="push" value="CtsCompanionTestApp.apk->/data/local/tmp/cts/os/CtsCompanionTestApp.apk" />
     </target_preparer>
 </configuration>

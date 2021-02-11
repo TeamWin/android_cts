@@ -75,10 +75,12 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 
-private const val APK_PATH = "/data/local/tmp/cts/os/CtsAutoRevokeDummyApp.apk"
-private const val APK_PACKAGE_NAME = "android.os.cts.autorevokedummyapp"
-private const val APK_PATH_2 = "/data/local/tmp/cts/os/CtsAutoRevokePreRApp.apk"
-private const val APK_PACKAGE_NAME_2 = "android.os.cts.autorevokeprerapp"
+private const val APK_PATH_S_APP = "/data/local/tmp/cts/os/CtsAutoRevokeSApp.apk"
+private const val APK_PACKAGE_NAME_S_APP = "android.os.cts.autorevokesapp"
+private const val APK_PATH_R_APP = "/data/local/tmp/cts/os/CtsAutoRevokeRApp.apk"
+private const val APK_PACKAGE_NAME_R_APP = "android.os.cts.autorevokerapp"
+private const val APK_PATH_Q_APP = "/data/local/tmp/cts/os/CtsAutoRevokeQApp.apk"
+private const val APK_PACKAGE_NAME_Q_APP = "android.os.cts.autorevokeqapp"
 private const val READ_CALENDAR = "android.permission.READ_CALENDAR"
 
 /**
@@ -92,6 +94,11 @@ class AutoRevokeTest {
 
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
+
+    private lateinit var supportedApkPath: String
+    private lateinit var supportedAppPackageName: String
+    private lateinit var preMinVersionApkPath: String
+    private lateinit var preMinVersionAppPackageName: String
 
     companion object {
         const val LOG_TAG = "AutoRevokeTest"
@@ -107,6 +114,18 @@ class AutoRevokeTest {
         // Wake up the device
         runShellCommandOrThrow("input keyevent KEYCODE_WAKEUP")
         runShellCommandOrThrow("input keyevent 82")
+
+        if (isAutomotiveDevice()) {
+            supportedApkPath = APK_PATH_S_APP
+            supportedAppPackageName = APK_PACKAGE_NAME_S_APP
+            preMinVersionApkPath = APK_PATH_R_APP
+            preMinVersionAppPackageName = APK_PACKAGE_NAME_R_APP
+        } else {
+            supportedApkPath = APK_PATH_R_APP
+            supportedAppPackageName = APK_PACKAGE_NAME_R_APP
+            preMinVersionApkPath = APK_PATH_Q_APP
+            preMinVersionAppPackageName = APK_PACKAGE_NAME_Q_APP
+        }
     }
 
     @AppModeFull(reason = "Uses separate apps for testing")
@@ -133,7 +152,7 @@ class AutoRevokeTest {
                 runShellCommandOrThrow("cmd statusbar expand-notifications")
                 waitFindObject(By.textContains("unused app"))
                         .click()
-                waitFindObject(By.text(APK_PACKAGE_NAME))
+                waitFindObject(By.text(supportedAppPackageName))
                 waitFindObject(By.text("Calendar permission removed"))
             }
         }
@@ -165,17 +184,17 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
-    fun testPreRUnusedApp_doesntGetPermissionRevoked() {
+    fun testPreMinAutoRevokeVersionUnusedApp_doesntGetPermissionRevoked() {
         withUnusedThresholdMs(3L) {
-            withDummyApp(APK_PATH_2, APK_PACKAGE_NAME_2) {
+            withDummyApp(preMinVersionApkPath, preMinVersionAppPackageName) {
                 withDummyApp {
-                    startApp(APK_PACKAGE_NAME_2)
+                    startApp(preMinVersionAppPackageName)
                     clickPermissionAllow()
                     eventually {
-                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                        assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
                     }
 
-                    killDummyApp(APK_PACKAGE_NAME_2)
+                    killDummyApp(preMinVersionAppPackageName)
 
                     startApp()
                     clickPermissionAllow()
@@ -193,7 +212,7 @@ class AutoRevokeTest {
                     // Verify
                     eventually {
                         assertPermission(PERMISSION_DENIED)
-                        assertPermission(PERMISSION_GRANTED, APK_PACKAGE_NAME_2)
+                        assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
                     }
                 }
             }
@@ -269,27 +288,31 @@ class AutoRevokeTest {
         withDummyApp {
             val pm = context.packageManager
             runWithShellPermissionIdentity {
-                assertFalse(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+                assertFalse(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
             }
 
             runWithShellPermissionIdentity {
-                assertTrue(pm.setAutoRevokeWhitelisted(APK_PACKAGE_NAME, true))
+                assertTrue(pm.setAutoRevokeWhitelisted(supportedAppPackageName, true))
             }
             eventually {
                 runWithShellPermissionIdentity {
-                    assertTrue(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+                    assertTrue(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
                 }
             }
 
             runWithShellPermissionIdentity {
-                assertTrue(pm.setAutoRevokeWhitelisted(APK_PACKAGE_NAME, false))
+                assertTrue(pm.setAutoRevokeWhitelisted(supportedAppPackageName, false))
             }
             eventually {
                 runWithShellPermissionIdentity {
-                    assertFalse(pm.isAutoRevokeWhitelisted(APK_PACKAGE_NAME))
+                    assertFalse(pm.isAutoRevokeWhitelisted(supportedAppPackageName))
                 }
             }
         }
+    }
+
+    private fun isAutomotiveDevice(): Boolean {
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
     }
 
     private fun runAutoRevoke() {
@@ -338,15 +361,15 @@ class AutoRevokeTest {
     }
 
     private fun installApp() {
-        installApk(APK_PATH)
+        installApk(supportedApkPath)
     }
 
     private fun uninstallApp() {
-        uninstallApp(APK_PACKAGE_NAME)
+        uninstallApp(supportedAppPackageName)
     }
 
     private fun startApp() {
-        startApp(APK_PACKAGE_NAME)
+        startApp(supportedAppPackageName)
     }
 
     private fun goHome() {
@@ -357,7 +380,7 @@ class AutoRevokeTest {
         runShellCommandOrThrow("input keyevent KEYCODE_BACK")
     }
 
-    private fun killDummyApp(pkg: String = APK_PACKAGE_NAME) {
+    private fun killDummyApp(pkg: String = supportedAppPackageName) {
         assertThat(
                 runShellCommandOrThrow("am force-stop " + pkg),
                 equalTo(""))
@@ -365,7 +388,7 @@ class AutoRevokeTest {
     }
 
     private fun clickPermissionAllow() {
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+        if (isAutomotiveDevice()) {
             waitFindObject(By.text(Pattern.compile(
                     Pattern.quote(mPermissionControllerResources.getString(
                             mPermissionControllerResources.getIdentifier(
@@ -379,8 +402,8 @@ class AutoRevokeTest {
     }
 
     private inline fun withDummyApp(
-        apk: String = APK_PATH,
-        packageName: String = APK_PACKAGE_NAME,
+        apk: String = supportedApkPath,
+        packageName: String = supportedAppPackageName,
         action: () -> Unit
     ) {
         installApk(apk)
@@ -393,7 +416,7 @@ class AutoRevokeTest {
         }
     }
 
-    private fun assertPermission(state: Int, packageName: String = APK_PACKAGE_NAME) {
+    private fun assertPermission(state: Int, packageName: String = supportedAppPackageName) {
         runWithShellPermissionIdentity {
             assertEquals(
                 permissionStateToString(state),
@@ -402,7 +425,7 @@ class AutoRevokeTest {
         }
     }
 
-    private fun goToPermissions(packageName: String = APK_PACKAGE_NAME) {
+    private fun goToPermissions(packageName: String = supportedAppPackageName) {
         context.startActivity(Intent(ACTION_AUTO_REVOKE_PERMISSIONS)
                 .setData(Uri.fromParts("package", packageName, null))
                 .addFlags(FLAG_ACTIVITY_NEW_TASK))
@@ -520,6 +543,11 @@ fun startApp(packageName: String) {
         runShellCommand("monkey -p $packageName -c android.intent.category.LAUNCHER 1"),
         containsString("Events injected: 1"))
     awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
+    waitForIdle()
+}
+
+fun waitForIdle() {
+    InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(1000, 10000)
 }
 
 fun uninstallApp(packageName: String) {
