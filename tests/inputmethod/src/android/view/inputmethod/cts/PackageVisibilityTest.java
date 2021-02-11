@@ -52,6 +52,7 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -146,6 +147,7 @@ public final class PackageVisibilityTest extends EndToEndImeTestBase {
         testTargetPackageIsVisibleFromIme(false /* instant */);
     }
 
+    @Ignore("b/179983398")
     @AppModeInstant
     @Test
     public void testTargetPackageIsVisibleFromImeInstant() throws Exception {
