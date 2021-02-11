@@ -67,6 +67,7 @@ import static android.scopedstorage.cts.lib.TestUtils.getMusicDir;
 import static android.scopedstorage.cts.lib.TestUtils.getNotificationsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPicturesDir;
 import static android.scopedstorage.cts.lib.TestUtils.getPodcastsDir;
+import static android.scopedstorage.cts.lib.TestUtils.getRecordingsDir;
 import static android.scopedstorage.cts.lib.TestUtils.getRingtonesDir;
 import static android.scopedstorage.cts.lib.TestUtils.grantPermission;
 import static android.scopedstorage.cts.lib.TestUtils.installApp;
@@ -263,6 +264,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         final File moviesDir = getMoviesDir();
         final File musicDir = getMusicDir();
         final File picturesDir = getPicturesDir();
+        final File recordingsDir = getRecordingsDir();
         // Only audio files can be created in Music
         assertThrows(IOException.class, "Operation not permitted",
                 () -> {
@@ -315,6 +317,19 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 () -> {
                     new File(dcimDir, SUBTITLE_FILE_NAME).createNewFile();
                 });
+        // Only audio files can be created in Recordings
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, NONMEDIA_FILE_NAME).createNewFile();
+                });
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, VIDEO_FILE_NAME).createNewFile();
+                });
+        assertThrows(IOException.class, "Operation not permitted",
+                () -> {
+                    new File(recordingsDir, IMAGE_FILE_NAME).createNewFile();
+                });
 
         assertCanCreateFile(new File(getAlarmsDir(), AUDIO_FILE_NAME));
         assertCanCreateFile(new File(getAudiobooksDir(), AUDIO_FILE_NAME));
@@ -340,6 +355,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         assertCanCreateFile(new File(picturesDir, IMAGE_FILE_NAME));
         assertCanCreateFile(new File(picturesDir, VIDEO_FILE_NAME));
         assertCanCreateFile(new File(getPodcastsDir(), AUDIO_FILE_NAME));
+        assertCanCreateFile(new File(recordingsDir, AUDIO_FILE_NAME));
         assertCanCreateFile(new File(getRingtonesDir(), AUDIO_FILE_NAME));
 
         // No file whatsoever can be created in the top level directory

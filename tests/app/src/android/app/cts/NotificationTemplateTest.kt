@@ -17,11 +17,17 @@ package android.app.cts
 
 import android.R
 import android.app.Notification
+import android.app.PendingIntent
+import android.app.Person
+import android.app.cts.CtsAppTestUtils.platformNull
+import android.content.Intent
 import android.graphics.Bitmap
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.test.filters.SmallTest
 import com.google.common.truth.Truth.assertThat
+import kotlin.test.assertFailsWith
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
 
@@ -286,6 +292,7 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    @SmallTest
     fun testBaseTemplate_hasExpandedStateWithoutActions() {
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
@@ -398,6 +405,72 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
             val iconView = requireViewByIdName<ImageView>(activity, "icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
+    }
+
+    @SmallTest
+    fun testCallStyle_forIncomingCall_validatesArguments() {
+        val namedPerson = Person.Builder().setName("Named Person").build()
+        val namelessPerson = Person.Builder().setName("").build()
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forIncomingCall(platformNull(), pendingIntent, pendingIntent)
+        }
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forIncomingCall(namelessPerson, pendingIntent, pendingIntent)
+        }
+        assertFailsWith(NullPointerException::class, "declineIntent is required") {
+            Notification.CallStyle.forIncomingCall(namedPerson, platformNull(), pendingIntent)
+        }
+        assertFailsWith(NullPointerException::class, "answerIntent is required") {
+            Notification.CallStyle.forIncomingCall(namedPerson, pendingIntent, platformNull())
+        }
+        Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setStyle(Notification.CallStyle
+                        .forIncomingCall(namedPerson, pendingIntent, pendingIntent))
+                .build()
+    }
+
+    @SmallTest
+    fun testCallStyle_forOngoingCall_validatesArguments() {
+        val namedPerson = Person.Builder().setName("Named Person").build()
+        val namelessPerson = Person.Builder().setName("").build()
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forOngoingCall(platformNull(), pendingIntent)
+        }
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forOngoingCall(namelessPerson, pendingIntent)
+        }
+        assertFailsWith(NullPointerException::class, "hangUpIntent is required") {
+            Notification.CallStyle.forOngoingCall(namedPerson, platformNull())
+        }
+        Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setStyle(Notification.CallStyle.forOngoingCall(namedPerson, pendingIntent))
+                .build()
+    }
+
+    @SmallTest
+    fun testCallStyle_forScreeningCall_validatesArguments() {
+        val namedPerson = Person.Builder().setName("Named Person").build()
+        val namelessPerson = Person.Builder().setName("").build()
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forScreeningCall(platformNull(), pendingIntent, pendingIntent)
+        }
+        assertFailsWith(IllegalArgumentException::class, "person must have a non-empty a name") {
+            Notification.CallStyle.forScreeningCall(namelessPerson, pendingIntent, pendingIntent)
+        }
+        assertFailsWith(NullPointerException::class, "hangUpIntent is required") {
+            Notification.CallStyle.forScreeningCall(namedPerson, platformNull(), pendingIntent)
+        }
+        assertFailsWith(NullPointerException::class, "answerIntent is required") {
+            Notification.CallStyle.forScreeningCall(namedPerson, pendingIntent, platformNull())
+        }
+        Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setStyle(Notification.CallStyle
+                        .forScreeningCall(namedPerson, pendingIntent, pendingIntent))
+                .build()
+    }
+
+    private val pendingIntent by lazy {
+        PendingIntent.getBroadcast(mContext, 0, Intent("test"), PendingIntent.FLAG_IMMUTABLE)
     }
 
     companion object {

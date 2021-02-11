@@ -54,6 +54,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("deprecation")
 @Presubmit
@@ -123,16 +124,15 @@ public class FingerprintServiceTest extends BiometricTestBase {
         waitForIdleService();
 
         final SensorStates sensorStates = getSensorStates();
-        for (int i = 0; i < sensorStates.sensorStates.size(); i++) {
-            final SensorState sensorState = sensorStates.sensorStates.valueAt(i);
-            final int sensorId = sensorStates.sensorStates.keyAt(i);
-            for (int j = 0; j < sensorState.getUserStates().size(); j++) {
-                final int userId = sensorState.getUserStates().keyAt(j);
-                final UserState userState = sensorState.getUserStates().valueAt(j);
-                if (userState.numEnrolled != 0) {
-                    Log.w(TAG, "Cleaning up for sensor: " + sensorId + ", user: " + userId);
-                    BiometricTestSession session = mFingerprintManager.createTestSession(sensorId);
-                    session.cleanupInternalState(userId);
+        for (Map.Entry<Integer, SensorState> sensorEntry : sensorStates.sensorStates.entrySet()) {
+            for (Map.Entry<Integer, UserState> userEntry
+                    : sensorEntry.getValue().getUserStates().entrySet()) {
+                if (userEntry.getValue().numEnrolled != 0) {
+                    Log.w(TAG, "Cleaning up for sensor: " + sensorEntry.getKey()
+                            + ", user: " + userEntry.getKey());
+                    BiometricTestSession session =
+                            mFingerprintManager.createTestSession(sensorEntry.getKey());
+                    session.cleanupInternalState(userEntry.getKey());
                     session.close();
                 }
             }

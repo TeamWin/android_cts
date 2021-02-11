@@ -2016,6 +2016,12 @@
     <string name="aware_dp_ib_open_solicited">Data Path: Open: Solicited/Active</string>
     <string name="aware_dp_ib_passphrase_solicited">Data Path: Passphrase: Solicited/Active</string>
     <string name="aware_dp_ib_pmk_solicited">Data Path: PMK: Solicited/Active</string>
+    <string name="aware_dp_ib_open_unsolicited_accept_any">Data Path: Open: Unsolicited/Passive: accept any peer</string>
+    <string name="aware_dp_ib_passphrase_unsolicited_accept_any">Data Path: Passphrase: Unsolicited/Passive: accept any peer</string>
+    <string name="aware_dp_ib_pmk_unsolicited_accept_any">Data Path: PMK: Unsolicited/Passive: accept any peer</string>
+    <string name="aware_dp_ib_open_solicited_accept_any">Data Path: Open: Solicited/Active: accept any peer</string>
+    <string name="aware_dp_ib_passphrase_solicited_accept_any">Data Path: Passphrase: Solicited/Active: accept any peer</string>
+    <string name="aware_dp_ib_pmk_solicited_accept_any">Data Path: PMK: Solicited/Active: accept any peer</string>
     <string name="aware_discovery_ranging">Discovery with Ranging</string>
     <string name="aware_publish">Publish</string>
     <string name="aware_subscribe">Subscribe</string>
