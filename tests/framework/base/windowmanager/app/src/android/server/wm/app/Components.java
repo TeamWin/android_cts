@@ -121,6 +121,8 @@ public class Components extends ComponentsBase {
             component("SingleInstanceActivity");
     public static final ComponentName HOME_ACTIVITY = component("HomeActivity");
     public static final ComponentName SECONDARY_HOME_ACTIVITY = component("SecondaryHomeActivity");
+    public static final ComponentName UI_SCALING_TEST_ACTIVITY =
+            component("UiScalingTestActivity");
     public static final ComponentName SINGLE_HOME_ACTIVITY = component("SingleHomeActivity");
     public static final ComponentName SINGLE_SECONDARY_HOME_ACTIVITY =
             component("SingleSecondaryHomeActivity");
