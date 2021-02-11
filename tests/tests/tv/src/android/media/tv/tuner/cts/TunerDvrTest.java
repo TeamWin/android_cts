@@ -82,8 +82,6 @@ public class TunerDvrTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrSettings() throws Exception {
         DvrSettings settings = getDvrSettings();
 
@@ -95,8 +93,6 @@ public class TunerDvrTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrRecorder() throws Exception {
         DvrRecorder d = mTuner.openDvrRecorder(1000, getExecutor(), getRecordListener());
         assertNotNull(d);
