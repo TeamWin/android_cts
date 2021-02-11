@@ -129,6 +129,11 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
         // and profile owners on the primary user.
     }
 
+    @Test
+    public void testSetGetNetworkSlicingStatus() throws Exception {
+        executeDeviceTestMethod(".NetworkSlicingStatusTest", "testGetSetNetworkSlicingStatus");
+    }
+
     /** VPN tests don't require physical device for managed profile, thus overriding. */
     @FlakyTest
     @Override
