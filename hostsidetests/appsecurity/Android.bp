@@ -40,7 +40,8 @@ java_test_host {
     test_suites: [
         "cts",
         "general-tests",
-        "mts",
+        "mts-documentsui",
+        "mts-mediaprovider",
         "sts",
     ],
 
