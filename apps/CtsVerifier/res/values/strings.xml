@@ -2304,6 +2304,10 @@
     <string name="nls_snooze_one_time">Check that service can snooze a notification for a given time.</string>
     <string name="nls_get_snoozed">Check that service can retrieve snoozed notifications.</string>
     <string name="nls_unsnooze_one">Check that service can unsnooze a notification.</string>
+    <string name="nls_change_type_filter">Click this button to launch the settings page for this app\'s notification listener in settings. Note what types were allowed before you make and changes. Change the filter types to allow everything except silent notifications, and then return to this screen</string>
+    <string name="nls_original_filter_verification">Were all types except ongoing notifications allowed? Are all types except silent notifications allowed now?</string>
+    <string name="nls_filter_test">Checking that an alerting notification is received and a silent one is not</string>
+    <string name="nls_reset_type_filter">Go to settings and allow all notification types, and then return here.</string>
     <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>
