@@ -160,7 +160,7 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     }
 
     // Note we are just using storage state as a way to control when the job gets executed.
-    void setStorageState(boolean low) throws Exception {
+    void setStorageStateLow(boolean low) throws Exception {
         mStorageStateChanged = true;
         String res;
         if (low) {
