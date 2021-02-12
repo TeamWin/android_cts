@@ -87,6 +87,7 @@ import com.android.cts.mockime.ImeLayoutInfo;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -557,6 +558,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityWhenImeTransitionBetweenActivities(false /* instant */);
     }
 
+    @Ignore("b/179491219")
     @AppModeInstant
     @Test
     public void testImeVisibilityWhenImeTransitionBetweenActivities_Instant() throws Exception {
@@ -569,6 +571,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityTestWhenForceStopPackage(false /* instant */);
     }
 
+    @Ignore("b/179491012")
     @AppModeInstant
     @Test
     public void testImeInvisibleWhenForceStopPkgProcess_Instant() throws Exception {
