@@ -47,7 +47,7 @@ import android.view.inputmethod.InputMethodInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.cts.verifier.R;
 
 import java.io.File;
@@ -186,7 +186,8 @@ public class CommandReceiverActivity extends Activity {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent();
         try {
-            mDpm = DevicePolicyManagerWrapper.get(this, DeviceAdminTestReceiver.class);
+            mDpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
+                    DeviceAdminTestReceiver.class);
             mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             final String command = getIntent().getStringExtra(EXTRA_COMMAND);
