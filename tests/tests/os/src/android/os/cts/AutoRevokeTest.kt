@@ -16,7 +16,6 @@
 
 package android.os.cts
 
-import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
 import android.app.Instrumentation
 import android.content.Context
@@ -28,10 +27,7 @@ import android.content.pm.PackageManager.PERMISSION_DENIED
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Resources
 import android.net.Uri
-import android.os.ParcelFileDescriptor
-import android.os.Process
 import android.platform.test.annotations.AppModeFull
-import android.provider.DeviceConfig
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiObject2
@@ -40,15 +36,12 @@ import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
-import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.MatcherUtils.hasTextThat
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.getEventually
-import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
-import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UI_ROOT
 import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.click
@@ -61,7 +54,6 @@ import org.hamcrest.CoreMatchers.containsStringIgnoringCase
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers.greaterThan
-import org.hamcrest.Matchers.lessThanOrEqualTo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
@@ -69,7 +61,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.InputStream
 import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -141,7 +132,7 @@ class AutoRevokeTest {
                 Thread.sleep(5)
 
                 // Run
-                runAutoRevoke()
+                runAppHibernationJob(context, LOG_TAG)
 
                 // Verify
                 assertPermission(PERMISSION_DENIED)
@@ -167,7 +158,7 @@ class AutoRevokeTest {
                 Thread.sleep(5)
 
                 // Run
-                runAutoRevoke()
+                runAppHibernationJob(context, LOG_TAG)
                 Thread.sleep(1000)
 
                 // Verify
@@ -196,7 +187,7 @@ class AutoRevokeTest {
                     Thread.sleep(20)
 
                     // Run
-                    runAutoRevoke()
+                    runAppHibernationJob(context, LOG_TAG)
                     Thread.sleep(500)
 
                     // Verify
@@ -233,7 +224,7 @@ class AutoRevokeTest {
                 goBack()
                 goBack()
                 goBack()
-                runAutoRevoke()
+                runAppHibernationJob(context, LOG_TAG)
                 Thread.sleep(500L)
 
                 // Verify
@@ -259,7 +250,7 @@ class AutoRevokeTest {
                 goBack()
 
                 // Run
-                runAutoRevoke()
+                runAppHibernationJob(context, LOG_TAG)
                 Thread.sleep(500)
 
                 // Verify
@@ -299,51 +290,6 @@ class AutoRevokeTest {
 
     private fun isAutomotiveDevice(): Boolean {
         return context.packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
-    }
-
-    private fun runAutoRevoke() {
-        val logcat = Logcat()
-
-        // Sometimes first run observes stale package data
-        // so run twice to prevent that
-        repeat(2) {
-            val mark = logcat.mark(LOG_TAG)
-            eventually {
-                runShellCommandOrThrow("cmd jobscheduler run -u " +
-                        "${Process.myUserHandle().identifier} -f " +
-                        "${context.packageManager.permissionControllerPackageName} 2")
-            }
-            logcat.assertLogcatContainsInOrder("*:*", 30_000,
-                    mark,
-                    "onStartJob",
-                    "Done auto-revoke for user")
-        }
-    }
-
-    private inline fun <T> withDeviceConfig(
-        namespace: String,
-        name: String,
-        value: String,
-        action: () -> T
-    ): T {
-        val oldValue = runWithShellPermissionIdentity(ThrowingSupplier {
-            DeviceConfig.getProperty(namespace, name)
-        })
-        try {
-            runWithShellPermissionIdentity {
-                DeviceConfig.setProperty(namespace, name, value, false /* makeDefault */)
-            }
-            return action()
-        } finally {
-            runWithShellPermissionIdentity {
-                DeviceConfig.setProperty(namespace, name, oldValue, false /* makeDefault */)
-            }
-        }
-    }
-
-    private inline fun <T> withUnusedThresholdMs(threshold: Long, action: () -> T): T {
-        return withDeviceConfig(
-                "permissions", "auto_revoke_unused_threshold_millis2", threshold.toString(), action)
     }
 
     private fun installApp() {
@@ -392,14 +338,7 @@ class AutoRevokeTest {
         packageName: String = supportedAppPackageName,
         action: () -> Unit
     ) {
-        installApk(apk)
-        try {
-            // Try to reduce flakiness caused by new package update not propagating in time
-            Thread.sleep(1000)
-            action()
-        } finally {
-            uninstallApp(packageName)
-        }
+        withApp(apk, packageName, action)
     }
 
     private fun assertPermission(state: Int, packageName: String = supportedAppPackageName) {
@@ -507,26 +446,6 @@ fun byTextIgnoreCase(txt: String): BySelector {
     return By.text(Pattern.compile(txt, Pattern.CASE_INSENSITIVE))
 }
 
-fun awaitAppState(pkg: String, stateMatcher: Matcher<Int>) {
-    val context: Context = InstrumentationRegistry.getTargetContext()
-    eventually {
-        runWithShellPermissionIdentity {
-            val packageImportance = context
-                    .getSystemService(ActivityManager::class.java)!!
-                    .getPackageImportance(pkg)
-            assertThat(packageImportance, stateMatcher)
-        }
-    }
-}
-
-fun startApp(packageName: String) {
-    assertThat(
-        runShellCommand("monkey -p $packageName -c android.intent.category.LAUNCHER 1"),
-        containsString("Events injected: 1"))
-    awaitAppState(packageName, lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
-    waitForIdle()
-}
-
 fun waitForIdle() {
     InstrumentationRegistry.getInstrumentation().uiAutomation.waitForIdle(1000, 10000)
 }
@@ -568,12 +487,4 @@ inline fun <reified T> constToString(prefix: String, value: Int): String {
 
 inline fun <T> T?.assertNotNull(errorMsg: () -> String): T {
     return if (this == null) throw AssertionError(errorMsg()) else this
-}
-
-class Logcat() : LogcatInspector() {
-    override fun executeShellCommand(command: String?): InputStream {
-        val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
-        return ParcelFileDescriptor.AutoCloseInputStream(
-                instrumentation.uiAutomation.executeShellCommand(command))
-    }
 }
