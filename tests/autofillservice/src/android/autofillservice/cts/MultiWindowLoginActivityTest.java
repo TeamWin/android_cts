@@ -121,6 +121,7 @@ public class MultiWindowLoginActivityTest
         MultiWindowEmptyActivity.expectNewInstance(true);
 
         splitWindow(mActivity);
+        mUiBot.waitForIdleSync();
         MultiWindowLoginActivity loginActivity = MultiWindowLoginActivity.waitNewInstance();
 
         amStartActivity(MultiWindowEmptyActivity.class);
