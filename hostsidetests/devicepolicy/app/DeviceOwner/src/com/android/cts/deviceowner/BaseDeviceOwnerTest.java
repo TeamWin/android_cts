@@ -28,7 +28,7 @@ import android.test.AndroidTestCase;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 
 /**
  * Base class for device-owner based tests.
@@ -54,7 +54,8 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mDevice = UiDevice.getInstance(mInstrumentation);
-        mDevicePolicyManager = DevicePolicyManagerWrapper.get(mContext, BasicAdminReceiver.class);
+        mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
+                BasicAdminReceiver.class);
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
         mHasTelephonyFeature = mContext.getPackageManager().hasSystemFeature(

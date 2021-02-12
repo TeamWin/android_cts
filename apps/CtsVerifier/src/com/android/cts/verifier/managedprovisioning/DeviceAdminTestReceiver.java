@@ -36,7 +36,7 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 import com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils;
 import com.android.cts.verifier.R;
 
@@ -73,10 +73,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
 
         if (DeviceAdminReceiverUtils.disableSelf(context, intent)) return;
 
-        if (action.equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
-            DevicePolicyManagerWrapper.onReceive(this, context, intent);
-            return;
-        }
+        if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
 
         super.onReceive(context, intent);
     }
