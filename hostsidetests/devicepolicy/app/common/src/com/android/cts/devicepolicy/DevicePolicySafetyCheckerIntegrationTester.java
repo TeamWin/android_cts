@@ -19,15 +19,15 @@ import static android.app.admin.DevicePolicyManager.OPERATION_LOCK_NOW;
 import static android.app.admin.DevicePolicyManager.OPERATION_LOGOUT_USER;
 import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_ACTIVE_ADMIN;
 import static android.app.admin.DevicePolicyManager.OPERATION_REMOVE_KEY_PAIR;
+import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_ALWAYS_ON_VPN_PACKAGE;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_MASTER_VOLUME_MUTED;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_GRANT_STATE;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_PERMISSION_POLICY;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_RESTRICTIONS_PROVIDER;
 import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_RESTRICTION;
-import static android.app.admin.DevicePolicyManager.UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION;
+import static android.app.admin.DevicePolicyManager.operationSafetyReasonToString;
 import static android.app.admin.DevicePolicyManager.operationToString;
-import static android.app.admin.DevicePolicyManager.unsafeOperationReasonToString;
 
 import static org.junit.Assert.fail;
 
@@ -148,19 +148,36 @@ public class DevicePolicySafetyCheckerIntegrationTester {
             List<String> failures, int operation, boolean overloaded) {
         String name = getOperationName(operation, overloaded);
         // Currently there's just one reason...
-        int reason = UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION;
+        int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+
+        if (!dpm.isSafeOperation(reason)) {
+            failures.add("Operation " + name + " should be safe");
+            return;
+        }
         try {
             setOperationUnsafe(dpm, operation, reason);
+            if (dpm.isSafeOperation(reason)) {
+                failures.add("Operation " + name + " should be unsafe");
+                return;
+            }
             runCommonOrSpecificOperation(dpm, admin, operation, overloaded);
             Log.e(TAG, name + " didn't throw an UnsafeStateException");
             failures.add(name);
         } catch (UnsafeStateException e) {
             Log.d(TAG, name + " failed as expected: " + e);
-            int actualReason = e.getReason();
-            if (actualReason != reason) {
-                failures.add(String.format("received exception with reason %s instead of %s",
-                        unsafeOperationReasonToString(actualReason),
-                        unsafeOperationReasonToString(reason)));
+            List<Integer> actualReasons = e.getReasons();
+            if (actualReasons.size() != 1) {
+                failures.add(String.format("received invalid number of reasons (%s); expected just "
+                        + "1 (%d - %s)", actualReasons, reason,
+                        operationSafetyReasonToString(reason)));
+
+            } else {
+                int actualReason = actualReasons.get(0);
+                if (actualReason != reason) {
+                    failures.add(String.format("received exception with reason %s instead of %s",
+                            operationSafetyReasonToString(actualReason),
+                            operationSafetyReasonToString(reason)));
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, name + " threw unexpected exception", e);
