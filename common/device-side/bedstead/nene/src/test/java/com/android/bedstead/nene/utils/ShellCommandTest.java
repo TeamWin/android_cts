@@ -42,6 +42,7 @@ public class ShellCommandTest {
     private static final String INVALID_COMMAND_LEGACY_OUTPUT = "pm list-users";
     private static final String INVALID_COMMAND_EXPECTED_LEGACY_OUTPUT = "Unknown command:";
     private static final String INVALID_COMMAND_CORRECT_OUTPUT = "pm set-harmful-app-warning --no";
+    private static final String COMMAND_WITH_EMPTY_OUTPUT = "am stop-user 99999";
     private static final Function<String, Boolean> ALWAYS_PASS_OUTPUT_FILTER = (output) -> true;
     private static final Function<String, Boolean> ALWAYS_FAIL_OUTPUT_FILTER = (output) -> false;
     private static final String COMMAND = "pm list users";
@@ -157,5 +158,24 @@ public class ShellCommandTest {
     public void execute_invalidCommand_correctOutput_throwsException() {
         assertThrows(AdbException.class,
                 () -> ShellCommand.builder(INVALID_COMMAND_CORRECT_OUTPUT).execute());
+    }
+
+    @Test
+    public void execute_allowEmptyOutput_commandHasEmptyOutput_returnsOutput()
+            throws Exception {
+        assertThat(
+                ShellCommand.builder(COMMAND_WITH_EMPTY_OUTPUT)
+                        .allowEmptyOutput(true)
+                        .execute())
+                .isEmpty();
+    }
+
+    @Test
+    public void execute_allowEmptyOutput_commandHasNonEmptyOutput_returnsOutput()
+            throws Exception {
+        assertThat(ShellCommand.builder(LIST_USERS_COMMAND)
+                .allowEmptyOutput(true)
+                .execute())
+                .contains(LIST_USERS_EXPECTED_OUTPUT);
     }
 }

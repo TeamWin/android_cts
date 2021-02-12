@@ -55,7 +55,7 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
     public synchronized void setUp() throws Exception {
         mDevice = getDevice();
         assumeTrue("Test only applicable to TVs.", hasDeviceFeature(FEATURE_LEANBACK_ONLY));
-        assumeFalse("Test only applicable to devices launching on android R or later.",
+        assumeFalse("Test only applicable to devices launching on Android 11 or later.",
             (PropertyUtil.getFirstApiLevel(mDevice) < 30));
     }
 
@@ -67,11 +67,9 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testQuiescentBoot_sysPropSet_asleep() throws Exception {
+    public void testQuiescentBoot_asleep() throws Exception {
         mDevice.executeAdbCommand("reboot", "quiescent");
         mDevice.waitForBootComplete(REBOOT_TIMEOUT);
-        assertEquals("Quiescent system property (ro.boot.quiescent) not set.",
-                "1", mDevice.getProperty("ro.boot.quiescent"));
         assertEquals("Expected to boot into sleep state.", WAKEFULNESS_ASLEEP, getWakefulness());
     }
 
@@ -89,11 +87,6 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
         mDevice.executeAdbCommand("reboot", "quiescent");
         mDevice.waitForBootComplete(REBOOT_TIMEOUT);
 
-        mDevice.executeAdbCommand("reboot", "quiescent");
-        mDevice.waitForBootComplete(REBOOT_TIMEOUT);
-
-        assertEquals("Quiescent system property (ro.boot.quiescent) not set.",
-                "1", mDevice.getProperty("ro.boot.quiescent"));
         assertEquals("Expected to boot into sleep state.", WAKEFULNESS_ASLEEP, getWakefulness());
     }
 
@@ -105,8 +98,6 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
         mDevice.executeAdbCommand("reboot");
         mDevice.waitForBootComplete(REBOOT_TIMEOUT);
 
-        assertNull("Quiescent system property (ro.boot.quiescent) unexpectedly set.",
-                mDevice.getProperty("ro.boot.quiescent"));
         assertEquals("Expected to boot in awake state.", WAKEFULNESS_AWAKE, getWakefulness());
     }
 

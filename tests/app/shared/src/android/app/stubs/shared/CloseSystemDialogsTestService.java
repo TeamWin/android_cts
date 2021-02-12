@@ -18,6 +18,8 @@ package android.app.stubs.shared;
 
 import static android.app.PendingIntent.FLAG_IMMUTABLE;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import android.app.IActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -29,10 +31,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
+import android.os.ParcelableException;
 import android.os.RemoteException;
 import android.os.ResultReceiver;
 import android.os.ServiceManager;
 import android.view.IWindowManager;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This is a bound service used in conjunction with CloseSystemDialogsTest.
@@ -108,6 +114,19 @@ public class CloseSystemDialogsTestService extends Service {
         @Override
         public void closeSystemDialogsViaActivityManager(String reason) throws RemoteException {
             mActivityManager.closeSystemDialogs(reason);
+        }
+
+        @Override
+        public boolean waitForAccessibilityServiceWindow(long timeoutMs) throws RemoteException {
+            final AppAccessibilityService service;
+            try {
+                service = AppAccessibilityService.getConnected().get(timeoutMs, MILLISECONDS);
+            } catch (TimeoutException e) {
+                return false;
+            } catch (ExecutionException | InterruptedException e) {
+                throw new ParcelableException(e);
+            }
+            return service.waitWindowAdded(timeoutMs);
         }
     }
 

@@ -30,6 +30,7 @@
         android:dial="@drawable/blue_fill"
         android:hand_hour="@drawable/green_fill"
         android:hand_minute="@drawable/magenta_fill"
-        android:hand_second="@drawable/yellow_fill"/>
+        android:hand_second="@drawable/yellow_fill"
+        android:timeZone="America/New_York"/>
 </LinearLayout>
 

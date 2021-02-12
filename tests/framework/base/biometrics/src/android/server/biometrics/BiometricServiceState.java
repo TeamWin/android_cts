@@ -38,6 +38,7 @@ public class BiometricServiceState {
             STATE_AUTH_IDLE,
             STATE_AUTH_CALLED,
             STATE_AUTH_STARTED,
+            STATE_AUTH_STARTED_UI_SHOWING,
             STATE_AUTH_PAUSED,
             STATE_AUTH_PAUSED_RESUMING,
             STATE_AUTH_PENDING_CONFIRM,

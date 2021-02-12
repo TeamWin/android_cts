@@ -242,37 +242,31 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         });
     }
 
-    // Test NameNotFoundException with codec type.
-    // VP9 is not declare in the XML which leads to NameNotFoundException exception.
+    // Test unspecified codec type.
+    // VP9 is not declare in the XML which leads to isFormatSpecified return false.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
     public void testUnsupportedCodecMimetype() throws Exception {
-        assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
-            InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
-            final XmlPullParser parser = Xml.newPullParser();
-            parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
-            ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
-                    parser);
-            boolean supportVP9 = capability.isVideoMimeTypeSupported(
-                    MediaFormat.MIMETYPE_VIDEO_VP9);
-        });
+        InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
+        final XmlPullParser parser = Xml.newPullParser();
+        parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
+        ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
+                parser);
+        assertFalse(capability.isFormatSpecified(MediaFormat.MIMETYPE_VIDEO_VP9));
+        assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_VP9));
     }
 
-    // Test NameNotFoundException with hdr type.
-    // DOLBY_VISION is not declare in the XML which leads to NameNotFoundException exception.
+    // Test unspecified hdr type.
+    // DOLBY_VISION is not declare in the XML which leads to isFormatSpecified return false.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
     public void testUnsupportedHdrtype() throws Exception {
-        assertThrows(ApplicationMediaCapabilities.FormatNotFoundException.class, () -> {
-            InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
-            final XmlPullParser parser = Xml.newPullParser();
-            parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
-
-            ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
-                    parser);
-
-            boolean supportDolbyVision = capability.isHdrTypeSupported(
-                    MediaFeature.HdrType.DOLBY_VISION);
-        });
+        InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
+        final XmlPullParser parser = Xml.newPullParser();
+        parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
+        ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
+                parser);
+        assertFalse(capability.isFormatSpecified(MediaFeature.HdrType.DOLBY_VISION));
+        assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.DOLBY_VISION));
     }
 }

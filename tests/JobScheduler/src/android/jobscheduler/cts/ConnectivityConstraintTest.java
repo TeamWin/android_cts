@@ -18,10 +18,14 @@ package android.jobscheduler.cts;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 
+import static com.android.compatibility.common.util.TestUtils.waitUntil;
+
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.LinkProperties;
@@ -39,6 +43,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.CallbackAsserter;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -743,20 +748,33 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     private boolean isAirplaneModeOn() throws Exception {
         final String output = SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd connectivity airplane-mode").trim();
-        return "enabled" .equals(output);
+        return "enabled".equals(output);
     }
 
     private void setAirplaneMode(boolean on) throws Exception {
         if (isAirplaneModeOn() == on) {
             return;
         }
+        final CallbackAsserter airplaneModeBroadcastAsserter = CallbackAsserter.forBroadcast(
+                new IntentFilter(Intent.ACTION_AIRPLANE_MODE_CHANGED));
         SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd connectivity airplane-mode " + (on ? "enable" : "disable"));
+        airplaneModeBroadcastAsserter.assertCalled("Didn't get airplane mode changed broadcast",
+                15 /* 15 seconds */);
+        waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60_000,
+                () -> {
+                    if (on) {
+                        return mCm.getActiveNetwork() == null
+                                && (!mHasWifi || !isWiFiConnected(mCm, mWifiManager));
+                    } else {
+                        return mCm.getActiveNetwork() != null;
+                    }
+                });
         // Wait some time for the network changes to propagate. Can't use
         // waitUntil(isAirplaneModeOn() == on) because the response quickly gives the new
         // airplane mode status even though the network changes haven't propagated all the way to
         // JobScheduler.
-        Thread.sleep(2000);
+        Thread.sleep(5000);
     }
 
     private static class NetworkTracker extends ConnectivityManager.NetworkCallback {
