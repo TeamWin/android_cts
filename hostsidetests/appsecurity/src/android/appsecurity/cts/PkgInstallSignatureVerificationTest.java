@@ -770,13 +770,20 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
     }
 
-    public void testKnownSignerPermCurrentSignerInResource() throws Exception {
+    public void testKnownSignerPermGrantedWhenCurrentSignerInResource() throws Exception {
         // The knownSigner protection flag allows an app to declare other trusted signing
         // certificates in an array resource; if a requesting app's current signer is in this array
         // of trusted certificates then the permission should be granted.
         assertInstallFromBuildSucceeds("v3-rsa-2048-decl-knownSigner-ec-p256-1-3.apk");
-        assertInstallFromBuildSucceeds("v3-ec-p256-companion-uses-knownSigner.apk");
+        assertInstallFromBuildSucceeds("v3-ec-p256_3-companion-uses-knownSigner.apk");
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+
+        // If the declaring app changes the trusted certificates on an update any requesting app
+        // that no longer meets the requirements based on its signing identity should have the
+        // permission revoked. This app update only trusts ec-p256_1 but the app that was previously
+        // granted the permission based on its signing identity is signed by ec-p256_3.
+        assertInstallFromBuildSucceeds("v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
     }
 
     public void testKnownSignerPermCurrentSignerNotInResource() throws Exception {
@@ -788,12 +795,18 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
     }
 
-    public void testKnownSignerPermSignerInLineageInResource() throws Exception {
+    public void testKnownSignerPermGrantedWhenSignerInLineageInResource() throws Exception {
         // If an app requesting a knownSigner permission was previously signed by a certificate
         // that is trusted by the declaring app then the permission should be granted.
         assertInstallFromBuildSucceeds("v3-rsa-2048-decl-knownSigner-ec-p256-1-3.apk");
         assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-companion-uses-knownSigner.apk");
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
+
+        // If the declaring app changes the permission to no longer use the knownSigner flag then
+        // any app granted the permission based on a signing identity from the set of trusted
+        // certificates should have the permission revoked.
+        assertInstallFromBuildSucceeds("v3-rsa-2048-declperm.apk");
+        Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasNoPerm");
     }
 
     public void testKnownSignerPermSignerInLineageMatchesStringResource() throws Exception {
@@ -815,7 +828,6 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFromBuildSucceeds("v3-ec-p256-with-por_1_2-companion-uses-knownSigner.apk");
         Utils.runDeviceTests(getDevice(), DEVICE_TESTS_PKG, DEVICE_TESTS_CLASS, "testHasPerm");
     }
-
 
     public void testInstallV3SigPermDoubleDefNewerSucceeds() throws Exception {
         // make sure that if an app defines a signature permission already defined by another app,
