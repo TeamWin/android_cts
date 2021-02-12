@@ -16,18 +16,14 @@
 import logging
 import time
 
-
 from mobly import asserts
 from mobly import base_test
 from mobly import utils
 from mobly.controllers import android_device
 
-
-
-
-
 import its_session_utils
 
+ADAPTIVE_BRIGHTNESS_OFF = '0'
 DISPLAY_TIMEOUT = 1800000  # ms
 CTS_VERIFIER_PKG = 'com.android.cts.verifier'
 MBS_PKG_TXT = 'mbs'
@@ -141,8 +137,14 @@ class ItsBaseTest(base_test.BaseTestClass):
 
   def setup_tablet(self):
     self.tablet.adb.shell(['input', 'keyevent ', 'KEYCODE_WAKEUP'])
-    self.tablet.adb.shell('settings put system screen_brightness {}'.format(
-        self.tablet_screen_brightness))
+    # Turn off the adaptive brightness on tablet.
+    self.tablet.adb.shell(
+        ['settings', 'put', 'system', 'screen_brightness_mode',
+         ADAPTIVE_BRIGHTNESS_OFF])
+    # Set the screen brightness
+    self.tablet.adb.shell(
+        ['settings', 'put', 'system', 'screen_brightness',
+         str(self.tablet_screen_brightness)])
     logging.debug('Tablet brightness set to: %s',
                   format(self.tablet_screen_brightness))
     self.tablet.adb.shell('settings put system screen_off_timeout {}'.format(
