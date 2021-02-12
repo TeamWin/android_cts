@@ -22,23 +22,23 @@ import static org.junit.Assert.assertNotEquals;
 import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.data.ApnSetting;
-import android.telephony.data.ApnThrottleStatus;
+import android.telephony.data.ThrottleStatus;
 
 import org.junit.Test;
 
-public class ApnThrottleStatusTest {
+public class ThrottleStatusTest {
 
     private static final int SLOT_INDEX = 10;
     private static final int TRANSPORT_TYPE = AccessNetworkConstants.TRANSPORT_TYPE_WWAN;
     private static final int APN_TYPE = ApnSetting.TYPE_IMS;
-    private static final int THROTTLE_TYPE = ApnThrottleStatus.THROTTLE_TYPE_ELAPSED_TIME;
+    private static final int THROTTLE_TYPE = ThrottleStatus.THROTTLE_TYPE_ELAPSED_TIME;
     private static final long THROTTLE_EXPIRY_TIME_MILLIS = 5005;
-    private static final int RETRY_TYPE = ApnThrottleStatus.RETRY_TYPE_NEW_CONNECTION;
+    private static final int RETRY_TYPE = ThrottleStatus.RETRY_TYPE_NEW_CONNECTION;
 
     @Test
     public void testBuilderAndGetters() {
 
-        ApnThrottleStatus status = new ApnThrottleStatus.Builder()
+        ThrottleStatus status = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
@@ -57,14 +57,14 @@ public class ApnThrottleStatusTest {
     @Test
     public void testEquals() {
 
-        ApnThrottleStatus status1 = new ApnThrottleStatus.Builder()
+        ThrottleStatus status1 = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
                 .setThrottleExpiryTimeMillis(THROTTLE_EXPIRY_TIME_MILLIS)
                 .setRetryType(RETRY_TYPE)
                 .build();
-        ApnThrottleStatus status2 = new ApnThrottleStatus.Builder()
+        ThrottleStatus status2 = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
@@ -77,14 +77,14 @@ public class ApnThrottleStatusTest {
 
     @Test
     public void testNotEquals() {
-        ApnThrottleStatus status1 = new ApnThrottleStatus.Builder()
+        ThrottleStatus status1 = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
                 .setThrottleExpiryTimeMillis(THROTTLE_EXPIRY_TIME_MILLIS)
                 .setRetryType(RETRY_TYPE)
                 .build();
-        ApnThrottleStatus status2 = new ApnThrottleStatus.Builder()
+        ThrottleStatus status2 = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
@@ -96,7 +96,7 @@ public class ApnThrottleStatusTest {
 
     @Test
     public void testParcel() {
-        ApnThrottleStatus status = new ApnThrottleStatus.Builder()
+        ThrottleStatus status = new ThrottleStatus.Builder()
                 .setSlotIndex(SLOT_INDEX)
                 .setTransportType(TRANSPORT_TYPE)
                 .setApnType(APN_TYPE)
@@ -108,7 +108,7 @@ public class ApnThrottleStatusTest {
         status.writeToParcel(stateParcel, 0);
         stateParcel.setDataPosition(0);
 
-        ApnThrottleStatus postParcel = ApnThrottleStatus.CREATOR.createFromParcel(stateParcel);
+        ThrottleStatus postParcel = ThrottleStatus.CREATOR.createFromParcel(stateParcel);
         assertEquals(status, postParcel);
     }
 }
