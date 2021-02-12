@@ -125,6 +125,8 @@ public class MediaCodecTest extends AndroidTestCase {
     private static final int DECODING_TIMEOUT_MS = 10000;
 
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+
     /**
      * Tests:
      * <br> Exceptions for MediaCodec factory methods
@@ -2644,6 +2646,9 @@ public class MediaCodecTest extends AndroidTestCase {
                         AudioCapabilities acaps = caps.getAudioCapabilities();
                         int minSampleRate = acaps.getSupportedSampleRateRanges()[0].getLower();
                         int minChannelCount = 1;
+                        if (mIsAtLeastS) {
+                            minChannelCount = acaps.getMinInputChannelCount();
+                        }
                         int minBitrate = acaps.getBitrateRange().getLower();
                         format = MediaFormat.createAudioFormat(mime, minSampleRate, minChannelCount);
                         format.setInteger(MediaFormat.KEY_BIT_RATE, minBitrate);

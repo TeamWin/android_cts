@@ -34,6 +34,7 @@ public final class ShellCommand {
 
     public static final class Builder {
         private final StringBuilder commandBuilder;
+        private boolean mAllowEmptyOutput = false;
 
         private Builder(String command) {
             commandBuilder = new StringBuilder(command);
@@ -60,6 +61,16 @@ public final class ShellCommand {
         }
 
         /**
+         * If {@code false} an error will be thrown if the command has no output.
+         *
+         * <p>Defaults to {@code false}
+         */
+        public Builder allowEmptyOutput(boolean allowEmptyOutput) {
+            mAllowEmptyOutput = allowEmptyOutput;
+            return this;
+        }
+
+        /**
          * Build the full command including all options and operands.
          */
         public String build() {
@@ -68,14 +79,16 @@ public final class ShellCommand {
 
         /** See {@link ShellCommandUtils#executeCommand(java.lang.String)}. */
         public String execute() throws AdbException {
-            return ShellCommandUtils.executeCommand(commandBuilder.toString());
+            return ShellCommandUtils.executeCommand(
+                    commandBuilder.toString(), /* allowEmptyOutput= */ mAllowEmptyOutput);
         }
 
         /** See {@link ShellCommandUtils#executeCommandAndValidateOutput(String, Function)}. */
         public String executeAndValidateOutput(Function<String, Boolean> outputSuccessChecker)
                 throws AdbException {
             return ShellCommandUtils.executeCommandAndValidateOutput(
-                    commandBuilder.toString(), outputSuccessChecker);
+                    commandBuilder.toString(),
+                    /* allowEmptyOutput= */ mAllowEmptyOutput, outputSuccessChecker);
         }
     }
 }

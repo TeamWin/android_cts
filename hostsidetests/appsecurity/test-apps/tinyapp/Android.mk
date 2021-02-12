@@ -175,5 +175,67 @@ LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por-1_2_4-default-caps
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
+# This is a version of the test package that declares a signature permission
+# with the knownSigner protection flag. This app is signed with the rsa-2048
+# signing key with the trusted certificates being ec-p256 and ec-p256_3.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-ec-p256-1-3
+LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner.xml
+LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the test package that declares a signature permission
+# with the knownSigner protection flag using a string resource instead of a
+# string-array resource for the trusted certs.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1
+LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner-str-res.xml
+LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the test package that declares a signature permission
+# with the knownSigner protection flag using a string constant as the value
+# of the knownCerts attribute.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-str-const-ec-p256-1
+LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner-str-const.xml
+LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the companion package that uses the permission
+# declared with the knownSigner flag. This app's current signer is in
+# the array of certificate digests as declared by the test package
+# above.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256-companion-uses-knownSigner
+LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the companion package that uses the permission
+# declared with the knownSigner flag. This app's current signer is not
+# in the array of certificate digests as declared by the test package
+# above.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256_2-companion-uses-knownSigner
+LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the companion package that uses the permission
+# declared with the knownSigner flag. This app is signed with a rotated
+# signing key with the current signer not in the array of certificate
+# digests as declared by the test package, but the previous signer in
+# the lineage is. This app can be used to verify that knownSigner
+# permissions are also granted if the app was previously signed with
+# one of the declared digests.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-companion-uses-knownSigner
+LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
+LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
+LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
 cert_dir :=
 

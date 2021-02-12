@@ -36,6 +36,7 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.ShellUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -111,36 +112,44 @@ public class CallLogTest extends InstrumentationTestCase {
         double lon = -68.952545;
         builder.setLatitude(lat);
         builder.setLongitude(lon);
+        ShellUtils.runShellCommand("telecom set-default-dialer %s",
+                getInstrumentation().getContext().getPackageName());
 
-        Uri uri;
-        getInstrumentation().getUiAutomation()
-                .adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS,
-                        Manifest.permission.READ_VOICEMAIL);
         try {
-            uri = CallLog.Calls.addCall(context, builder.build());
+            Uri uri;
+            getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(Manifest.permission.INTERACT_ACROSS_USERS,
+                            Manifest.permission.READ_VOICEMAIL);
+            try {
+                uri = CallLog.Calls.addCall(context, builder.build());
+            } finally {
+                getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            }
+            assertNotNull(uri);
+
+            Cursor cursor = context.getContentResolver().query(
+                    uri, new String[]{CallLog.Calls.LOCATION}, null, null);
+            assertEquals(1, cursor.getCount());
+            cursor.moveToFirst();
+            String locationUriString = cursor.getString(
+                    cursor.getColumnIndex(CallLog.Calls.LOCATION));
+            assertNotNull(locationUriString);
+
+            Uri locationUri = Uri.parse(locationUriString);
+            Cursor locationCursor = context.getContentResolver().query(locationUri,
+                    new String[]{CallLog.Locations.LATITUDE, CallLog.Locations.LONGITUDE}, null,
+                    null);
+            assertEquals(1, locationCursor.getCount());
+            locationCursor.moveToFirst();
+            double storedLat = locationCursor.getDouble(
+                    locationCursor.getColumnIndex(CallLog.Locations.LATITUDE));
+            double storedLon = locationCursor.getDouble(
+                    locationCursor.getColumnIndex(CallLog.Locations.LONGITUDE));
+            assertEquals(lat, storedLat);
+            assertEquals(lon, storedLon);
         } finally {
-            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+            ShellUtils.runShellCommand("telecom set-default-dialer default");
         }
-        assertNotNull(uri);
-
-        Cursor cursor = context.getContentResolver().query(
-                uri, new String[] {CallLog.Calls.LOCATION}, null, null);
-        assertEquals(1, cursor.getCount());
-        cursor.moveToFirst();
-        String locationUriString = cursor.getString(cursor.getColumnIndex(CallLog.Calls.LOCATION));
-        assertNotNull(locationUriString);
-
-        Uri locationUri = Uri.parse(locationUriString);
-        Cursor locationCursor = context.getContentResolver().query(locationUri,
-                new String[] {CallLog.Locations.LATITUDE, CallLog.Locations.LONGITUDE}, null, null);
-        assertEquals(1, locationCursor.getCount());
-        locationCursor.moveToFirst();
-        double storedLat = locationCursor.getDouble(
-                locationCursor.getColumnIndex(CallLog.Locations.LATITUDE));
-        double storedLon = locationCursor.getDouble(
-                locationCursor.getColumnIndex(CallLog.Locations.LONGITUDE));
-        assertEquals(lat, storedLat);
-        assertEquals(lon, storedLon);
     }
 
     public void testCallComposerImageStorage() throws Exception {

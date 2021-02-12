@@ -61,14 +61,17 @@ public class SendBubbleActivity extends Activity {
     public void sendInvalidBubble(boolean autoExpand) {
         Context context = getApplicationContext();
 
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
         Notification n = new Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.black)
                 .setWhen(System.currentTimeMillis())
                 .setContentTitle("notify#" + BUBBLE_NOTIF_ID)
                 .setContentText("This is #" + BUBBLE_NOTIF_ID + "notification  ")
                 .setContentIntent(pendingIntent)
-                .setBubbleMetadata(getBubbleMetadata(autoExpand, false /* suppressNotification */))
+                .setBubbleMetadata(getBubbleMetadata(autoExpand,
+                        false /* suppressNotification */,
+                        false /* useShortcut */))
                 .build();
 
         NotificationManager noMan = (NotificationManager) context.getSystemService(
@@ -78,6 +81,11 @@ public class SendBubbleActivity extends Activity {
 
     /** Sends a notification that is properly configured to bubble. */
     public void sendBubble(boolean autoExpand, boolean suppressNotification) {
+        sendBubble(autoExpand, suppressNotification, false /* useShortcut */);
+    }
+
+    /** Sends a notification that is properly configured to bubble. */
+    public void sendBubble(boolean autoExpand, boolean suppressNotification, boolean useShortcut) {
         Context context = getApplicationContext();
         // Give it a person
         Person person = new Person.Builder()
@@ -95,7 +103,7 @@ public class SendBubbleActivity extends Activity {
                         .addMessage("Is it me you're looking for?",
                                 SystemClock.currentThreadTimeMillis(), person)
                 )
-                .setBubbleMetadata(getBubbleMetadata(autoExpand, suppressNotification))
+                .setBubbleMetadata(getBubbleMetadata(autoExpand, suppressNotification, useShortcut))
                 .build();
 
         NotificationManager noMan = (NotificationManager) context.getSystemService(
@@ -103,19 +111,29 @@ public class SendBubbleActivity extends Activity {
         noMan.notify(BUBBLE_NOTIF_ID, n);
     }
 
-    private BubbleMetadata getBubbleMetadata(boolean autoExpand, boolean suppressNotification) {
-        Context context = getApplicationContext();
-        final Intent intent = new Intent(context, BubbledActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        intent.setAction(Intent.ACTION_MAIN);
-        final PendingIntent pendingIntent =
-                PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+    private BubbleMetadata getBubbleMetadata(boolean autoExpand,
+            boolean suppressNotification,
+            boolean useShortcut) {
+        if (useShortcut) {
+            return new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
+                    .setAutoExpandBubble(autoExpand)
+                    .setSuppressNotification(suppressNotification)
+                    .build();
+        } else {
+            Context context = getApplicationContext();
+            final Intent intent = new Intent(context, BubbledActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setAction(Intent.ACTION_MAIN);
+            final PendingIntent pendingIntent =
+                    PendingIntent.getActivity(context, 0, intent,
+                            PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
-        return new Notification.BubbleMetadata.Builder(pendingIntent,
-                Icon.createWithResource(context, R.drawable.black))
-                .setAutoExpandBubble(autoExpand)
-                .setSuppressNotification(suppressNotification)
-                .build();
+            return new Notification.BubbleMetadata.Builder(pendingIntent,
+                    Icon.createWithResource(context, R.drawable.black))
+                    .setAutoExpandBubble(autoExpand)
+                    .setSuppressNotification(suppressNotification)
+                    .build();
+        }
     }
 
     /** Waits for the activity to be stopped. Do not call this method on main thread. */

@@ -31,7 +31,6 @@ import static com.android.cts.appdataisolation.common.FileUtils.assertFileExists
 import static com.android.cts.appdataisolation.common.FileUtils.touchFile;
 import static com.android.cts.appdataisolation.common.UserUtils.getCurrentUserId;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -42,24 +41,23 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.SystemProperties;
 import android.support.test.uiautomator.UiDevice;
-import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.cts.appdataisolation.common.FileUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -334,9 +332,20 @@ public class AppATests {
         assertDirIsNotAccessible(deDataRoot + "/" + APPB_PKG);
         assertDirIsNotAccessible(deDataRoot + "/" + NOT_INSTALLED_PKG);
 
-        assertDirIsNotAccessible(profileRoot);
-        assertDirIsNotAccessible(profileRoot + "/" + APPA_PKG);
-        assertDirIsNotAccessible(profileRoot + "/" + APPB_PKG);
-        assertDirIsNotAccessible(profileRoot + "/" + NOT_INSTALLED_PKG);
+        // If the vendor policy is pre-R then backward compatibility rules apply.
+        if (isVendorPolicyNewerThanR()) {
+            assertDirIsNotAccessible(profileRoot);
+            assertDirIsNotAccessible(profileRoot + "/" + APPA_PKG);
+            assertDirIsNotAccessible(profileRoot + "/" + APPB_PKG);
+            assertDirIsNotAccessible(profileRoot + "/" + NOT_INSTALLED_PKG);
+        }
+    }
+
+    private boolean isVendorPolicyNewerThanR() {
+        if (SystemProperties.get("ro.vndk.version").equals("S")) {
+            // Vendor build is S, but before the API level bump - good enough for us.
+            return true;
+        }
+        return PropertyUtil.isVendorApiLevelNewerThan(Build.VERSION_CODES.R);
     }
 }

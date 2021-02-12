@@ -94,6 +94,7 @@ public class CpuStatsTests extends DeviceTestCase implements IBuildReceiver {
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
+        // The list of atoms will be empty if the atom is not supported.
         List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
 
         for (AtomsProto.Atom atom : atoms) {
@@ -114,6 +115,7 @@ public class CpuStatsTests extends DeviceTestCase implements IBuildReceiver {
         AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
 
+        // The list of atoms will be empty if the atom is not supported.
         List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
 
         for (AtomsProto.Atom atom : atoms) {
@@ -122,6 +124,29 @@ public class CpuStatsTests extends DeviceTestCase implements IBuildReceiver {
             assertThat(atom.getCpuCyclesPerUidCluster().getMcycles()).isAtLeast(0);
             assertThat(atom.getCpuCyclesPerUidCluster().getTimeMillis()).isAtLeast(0);
             assertThat(atom.getCpuCyclesPerUidCluster().getPowerProfileEstimate()).isAtLeast(0);
+        }
+    }
+
+    public void testCpuCyclesPerThreadGroupCluster() throws Exception {
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.CPU_CYCLES_PER_THREAD_GROUP_CLUSTER_FIELD_NUMBER);
+
+        // Do some trivial work on the app
+        DeviceUtils.runDeviceTestsOnStatsdApp(getDevice(), ".AtomTests", "testSimpleCpu");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        // Trigger atom pull
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        // The list of atoms will be empty if the atom is not supported.
+        List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+
+        for (AtomsProto.Atom atom : atoms) {
+            assertThat(atom.getCpuCyclesPerThreadGroupCluster().getThreadGroup()).isNotEqualTo(
+              AtomsProto.CpuCyclesPerThreadGroupCluster.ThreadGroup.UNKNOWN_THREAD_GROUP);
+            assertThat(atom.getCpuCyclesPerThreadGroupCluster().getCluster()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerThreadGroupCluster().getMcycles()).isAtLeast(0);
+            assertThat(atom.getCpuCyclesPerThreadGroupCluster().getTimeMillis()).isAtLeast(0);
         }
     }
 }

@@ -53,6 +53,7 @@ public class UserBuilder {
         return this;
     }
 
+    /** Create the user. */
     public UserReference create() {
         if (mName == null) {
             throw new IllegalStateException("Name must be specified for a new user");
@@ -73,7 +74,25 @@ public class UserBuilder {
                     .split("id ")[1].trim());
             return new UnresolvedUser(mUsers, userId);
         } catch (AdbException e) {
-            throw new NeneException("Could not create", e);
+            throw new NeneException("Could not create user " + this, e);
         }
+    }
+
+    /**
+     * Create the user and start it.
+     *
+     * <p>Equivalent of calling {@link #create()} and then {@link User#start()}.
+     */
+    public UserReference createAndStart() {
+        return create().start();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder("UserBuilder{")
+            .append("name=").append(mName)
+            .append(", type=").append(mType)
+            .append("}")
+            .toString();
     }
 }

@@ -28,3 +28,11 @@ Given the setup described above you can run all of these tests with the command
 ```
 atest CtsHdmiCecHostTestCases
 ```
+
+To shard the test (distribute and run the tests on multiple devices), use this
+command -
+```
+./cts-tradefed run commandAndExit cts --enable-token-sharding --shard-count 3 -m CtsHdmiCecHostTestCases
+```
+
+The shard count corresponds to the number of DUTs connected to the host.
