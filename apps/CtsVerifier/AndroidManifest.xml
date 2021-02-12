@@ -1882,17 +1882,6 @@
                            android:value="multi_display_mode" />
         </activity>
 
-        <activity android:name=".tunnelmode.MediaCodecFlushActivity"
-                android:label="@string/media_codec_flush"
-                android:exported="true"
-                android:configChanges="keyboardHidden|orientation|screenSize">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_tunnel" />
-        </activity>
-
         <!-- FeatureSummaryActivity is replaced by CTS SystemFeaturesTest
         <activity android:name=".features.FeatureSummaryActivity" android:label="@string/feature_summary"
             android:exported="true">

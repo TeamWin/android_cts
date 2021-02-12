@@ -25,19 +25,25 @@ import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
+import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 public final class Users {
+
+    private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 60;
 
     private Map<Integer, User> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
     private final AdbUserParser parser = AdbUserParser.get(this, SDK_INT);
 
     /** Get all {@link User}s on the device. */
-    public Collection<User> users() {
+    public Collection<User> all() {
         fillCache();
 
         return mCachedUsers.values();
@@ -88,7 +94,7 @@ public final class Users {
     /**
      * Create a new user.
      */
-    public UserBuilder create() {
+    public UserBuilder createUser() {
         return new UserBuilder(this);
     }
 
@@ -102,6 +108,58 @@ public final class Users {
             mCachedUserTypes = result.mUserTypes;
         } catch (AdbException | AdbParseException e) {
             throw new RuntimeException("Error filling cache", e);
+        }
+    }
+
+    /**
+     * Block until the user with the given {@code userReference} exists and is in the correct state.
+     *
+     * <p>If this cannot be met before a timeout, a {@link NeneException} will be thrown.
+     */
+    User waitForUserToMatch(UserReference userReference, Function<User, Boolean> userChecker) {
+        return waitForUserToMatch(userReference, userChecker, /* waitForExist= */ true);
+    }
+
+    /**
+     * Block until the user with the given {@code userReference} to not exist or to be in the
+     * correct state.
+     *
+     * <p>If this cannot be met before a timeout, a {@link NeneException} will be thrown.
+     */
+    @Nullable
+    User waitForUserToNotExistOrMatch(
+            UserReference userReference, Function<User, Boolean> userChecker) {
+        return waitForUserToMatch(userReference, userChecker, /* waitForExist= */ false);
+    }
+
+    @Nullable
+    User waitForUserToMatch(
+            UserReference userReference, Function<User, Boolean> userChecker,
+            boolean waitForExist) {
+        // TODO(scottjonathan): This is pretty heavy because we resolve everything when we know we
+        //  are throwing away everything except one user. Optimise
+        try {
+            AtomicReference<User> returnUser = new AtomicReference<>();
+            PollingCheck.waitFor(WAIT_FOR_USER_TIMEOUT_MS, () -> {
+                User user = userReference.resolve();
+                returnUser.set(user);
+                if (user == null) {
+                    return !waitForExist;
+                }
+                return userChecker.apply(user);
+            });
+            return returnUser.get();
+        } catch (AssertionError e) {
+            User user = userReference.resolve();
+
+            if (user == null) {
+                throw new NeneException(
+                        "Timed out waiting for user state for user "
+                                + userReference + ". User does not exist.", e);
+            }
+            throw new NeneException(
+                    "Timed out waiting for user state, current state " + user, e
+            );
         }
     }
 }

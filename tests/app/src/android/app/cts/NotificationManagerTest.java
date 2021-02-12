@@ -788,7 +788,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         Set<String> categorySet = new ArraySet<>();
         categorySet.add(SHARE_SHORTCUT_CATEGORY);
-        Intent shortcutIntent = new Intent(mContext, SendBubbleActivity.class);
+        Intent shortcutIntent = new Intent(mContext, BubbledActivity.class);
         shortcutIntent.setAction(Intent.ACTION_VIEW);
 
         ShortcutInfo shortcut = new ShortcutInfo.Builder(mContext, SHARE_SHORTCUT_ID)
@@ -3630,6 +3630,86 @@ public class NotificationManagerTest extends AndroidTestCase {
         } finally {
             cleanupSendBubbleActivity();
             deleteShortcuts();
+        }
+    }
+
+    public void testNotificationManagerBubble_checkIsBubbled_pendingIntent()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            // make ourselves foreground so we can auto-expand the bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            a.sendBubble(true /* autoExpand */, false /* suppressNotif */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            assertTrue(activity.isBubbled());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    public void testNotificationManagerBubble_checkIsBubbled_shortcut()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            // make ourselves foreground so we can auto-expand the bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            a.sendBubble(true /* autoExpand */, false /* suppressNotif */, true /* useShortcut */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            assertTrue(activity.isBubbled());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
         }
     }
 

@@ -48,6 +48,7 @@ import android.view.ViewGroup;
 import android.widget.AbsoluteLayout;
 import android.widget.AnalogClock;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.Chronometer;
 import android.widget.DatePicker;
 import android.widget.EditText;
@@ -60,12 +61,15 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.NumberPicker;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.RatingBar;
 import android.widget.RelativeLayout;
 import android.widget.RemoteViews;
 import android.widget.RemoteViews.ActionException;
 import android.widget.SeekBar;
 import android.widget.StackView;
+import android.widget.Switch;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
@@ -415,6 +419,7 @@ public class RemoteViewsTest {
         assertTrue(mRemoteViews.onLoadClass(AbsoluteLayout.class));
         assertTrue(mRemoteViews.onLoadClass(AnalogClock.class));
         assertTrue(mRemoteViews.onLoadClass(Button.class));
+        assertTrue(mRemoteViews.onLoadClass(CheckBox.class));
         assertTrue(mRemoteViews.onLoadClass(Chronometer.class));
         assertTrue(mRemoteViews.onLoadClass(FrameLayout.class));
         assertTrue(mRemoteViews.onLoadClass(GridLayout.class));
@@ -424,8 +429,11 @@ public class RemoteViewsTest {
         assertTrue(mRemoteViews.onLoadClass(LinearLayout.class));
         assertTrue(mRemoteViews.onLoadClass(ListView.class));
         assertTrue(mRemoteViews.onLoadClass(ProgressBar.class));
+        assertTrue(mRemoteViews.onLoadClass(RadioButton.class));
+        assertTrue(mRemoteViews.onLoadClass(RadioGroup.class));
         assertTrue(mRemoteViews.onLoadClass(RelativeLayout.class));
         assertTrue(mRemoteViews.onLoadClass(StackView.class));
+        assertTrue(mRemoteViews.onLoadClass(Switch.class));
         assertTrue(mRemoteViews.onLoadClass(TextClock.class));
         assertTrue(mRemoteViews.onLoadClass(TextView.class));
         assertTrue(mRemoteViews.onLoadClass(ViewFlipper.class));
@@ -1108,6 +1116,67 @@ public class RemoteViewsTest {
                 0,
                 ((RemoteViews.RemoteViewOutlineProvider) root.getOutlineProvider()).getRadius(),
                 0.1 /* delta */);
+    }
+
+    @Test
+    public void testSetSwitchChecked() throws Throwable {
+        Switch toggle = mResult.findViewById(R.id.remoteView_switch);
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_switch, true);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertTrue(toggle.isChecked());
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_switch, false);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertFalse(toggle.isChecked());
+    }
+
+    @Test
+    public void testSetCheckBoxChecked() throws Throwable {
+        CheckBox checkBox = mResult.findViewById(R.id.remoteView_checkBox);
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_checkBox, true);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertTrue(checkBox.isChecked());
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_checkBox, false);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertFalse(checkBox.isChecked());
+    }
+
+    @Test
+    public void testSetRadioButtonChecked() throws Throwable {
+        RadioButton radioButton = mResult.findViewById(R.id.remoteView_radioButton1);
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_radioButton1, true);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertTrue(radioButton.isChecked());
+
+        mRemoteViews.setCompoundButtonChecked(R.id.remoteView_radioButton1, false);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertFalse(radioButton.isChecked());
+    }
+
+    @Test
+    public void testSetRadioGroupChecked() throws Throwable {
+        RadioGroup radioGroup = mResult.findViewById(R.id.remoteView_radioGroup);
+        RadioButton button1 = mResult.findViewById(R.id.remoteView_radioButton1);
+        RadioButton button2 = mResult.findViewById(R.id.remoteView_radioButton2);
+
+        mRemoteViews.setRadioGroupChecked(R.id.remoteView_radioGroup, R.id.remoteView_radioButton1);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertTrue(button1.isChecked());
+        assertFalse(button2.isChecked());
+
+        mRemoteViews.setRadioGroupChecked(R.id.remoteView_radioGroup, R.id.remoteView_radioButton2);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertFalse(button1.isChecked());
+        assertTrue(button2.isChecked());
+
+        mRemoteViews.setRadioGroupChecked(R.id.remoteView_radioGroup, -1);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertFalse(button1.isChecked());
+        assertFalse(button2.isChecked());
     }
 
     private void createSampleImage(File imagefile, int resid) throws IOException {

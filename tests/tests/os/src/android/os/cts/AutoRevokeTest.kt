@@ -136,9 +136,7 @@ class AutoRevokeTest {
                 // Setup
                 startApp()
                 clickPermissionAllow()
-                eventually {
-                    assertPermission(PERMISSION_GRANTED)
-                }
+                assertPermission(PERMISSION_GRANTED)
                 killDummyApp()
                 Thread.sleep(5)
 
@@ -146,9 +144,7 @@ class AutoRevokeTest {
                 runAutoRevoke()
 
                 // Verify
-                eventually {
-                    assertPermission(PERMISSION_DENIED)
-                }
+                assertPermission(PERMISSION_DENIED)
                 runShellCommandOrThrow("cmd statusbar expand-notifications")
                 waitFindObject(By.textContains("unused app"))
                         .click()
@@ -166,9 +162,7 @@ class AutoRevokeTest {
                 // Setup
                 startApp()
                 clickPermissionAllow()
-                eventually {
-                    assertPermission(PERMISSION_GRANTED)
-                }
+                assertPermission(PERMISSION_GRANTED)
                 killDummyApp()
                 Thread.sleep(5)
 
@@ -190,17 +184,13 @@ class AutoRevokeTest {
                 withDummyApp {
                     startApp(preMinVersionAppPackageName)
                     clickPermissionAllow()
-                    eventually {
-                        assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
-                    }
+                    assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
 
                     killDummyApp(preMinVersionAppPackageName)
 
                     startApp()
                     clickPermissionAllow()
-                    eventually {
-                        assertPermission(PERMISSION_GRANTED)
-                    }
+                    assertPermission(PERMISSION_GRANTED)
 
                     killDummyApp()
                     Thread.sleep(20)
@@ -210,10 +200,8 @@ class AutoRevokeTest {
                     Thread.sleep(500)
 
                     // Verify
-                    eventually {
-                        assertPermission(PERMISSION_DENIED)
-                        assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
-                    }
+                    assertPermission(PERMISSION_DENIED)
+                    assertPermission(PERMISSION_GRANTED, preMinVersionAppPackageName)
                 }
             }
         }
@@ -265,9 +253,7 @@ class AutoRevokeTest {
                 goToPermissions()
                 click("Calendar")
                 click("Allow")
-                eventually {
-                    assertPermission(PERMISSION_GRANTED)
-                }
+                assertPermission(PERMISSION_GRANTED)
                 goBack()
                 goBack()
                 goBack()
@@ -417,12 +403,7 @@ class AutoRevokeTest {
     }
 
     private fun assertPermission(state: Int, packageName: String = supportedAppPackageName) {
-        runWithShellPermissionIdentity {
-            assertEquals(
-                permissionStateToString(state),
-                permissionStateToString(
-                        context.packageManager.checkPermission(READ_CALENDAR, packageName)))
-        }
+        assertPermission(packageName, READ_CALENDAR, state)
     }
 
     private fun goToPermissions(packageName: String = supportedAppPackageName) {
@@ -560,13 +541,15 @@ fun installApk(apk: String) {
 
 fun assertPermission(packageName: String, permissionName: String, state: Int) {
     assertThat(permissionName, containsString("permission."))
-    runWithShellPermissionIdentity {
-        assertEquals(
-                permissionStateToString(state),
-                permissionStateToString(
-                        InstrumentationRegistry.getTargetContext()
-                                .packageManager
-                                .checkPermission(permissionName, packageName)))
+    eventually {
+        runWithShellPermissionIdentity {
+            assertEquals(
+                    permissionStateToString(state),
+                    permissionStateToString(
+                            InstrumentationRegistry.getTargetContext()
+                                    .packageManager
+                                    .checkPermission(permissionName, packageName)))
+        }
     }
 }
 

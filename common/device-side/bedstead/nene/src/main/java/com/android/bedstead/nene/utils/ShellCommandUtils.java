@@ -21,7 +21,6 @@ import static android.os.Build.VERSION.SDK_INT;
 import android.os.Build;
 
 import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.function.Function;
@@ -31,8 +30,9 @@ import java.util.function.Function;
  */
 public final class ShellCommandUtils {
 
-    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 100;
-    private static final long WAIT_UNTIL_DELAY_MILLIS = 10;
+    // 60 seconds
+    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
+    private static final long WAIT_UNTIL_DELAY_MILLIS = 100;
 
     private ShellCommandUtils() { }
 
@@ -48,11 +48,16 @@ public final class ShellCommandUtils {
      * <p>Callers should be careful to check the command's output is valid.
      */
     public static String executeCommand(String command) throws AdbException {
+        return executeCommand(command, /* allowEmptyOutput=*/ false);
+    }
+
+    static String executeCommand(String command, boolean allowEmptyOutput)
+            throws AdbException {
         if (SDK_INT < Build.VERSION_CODES.S) {
-            return executeCommandPreS(command);
+            return executeCommandPreS(command, allowEmptyOutput);
         }
 
-        // TODO: Add argument to force errors to stderr
+        // TODO(scottjonathan): Add argument to force errors to stderr
         try {
             return SystemUtil.runShellCommandOrThrow(command);
         } catch (AssertionError e) {
@@ -81,6 +86,17 @@ public final class ShellCommandUtils {
         return output;
     }
 
+    static String executeCommandAndValidateOutput(
+            String command,
+            boolean allowEmptyOutput,
+            Function<String, Boolean> outputSuccessChecker) throws AdbException {
+        String output = executeCommand(command, allowEmptyOutput);
+        if (!outputSuccessChecker.apply(output)) {
+            throw new AdbException("Command did not meet success criteria", command, output);
+        }
+        return output;
+    }
+
     /**
      * Execute an adb shell command and check that the output meets a given criteria. Run the
      * command repeatedly until the output meets the criteria.
@@ -94,7 +110,9 @@ public final class ShellCommandUtils {
      * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
      * command executed successfully.
      */
-    public static String executeCommandUntilOutputValid(String command, Function<String, Boolean> outputSuccessChecker) throws AdbException, InterruptedException {
+    public static String executeCommandUntilOutputValid(
+            String command, Function<String, Boolean> outputSuccessChecker)
+            throws AdbException, InterruptedException {
         int attempts = 0;
         while (attempts++ < MAX_WAIT_UNTIL_ATTEMPTS) {
             try {
@@ -114,10 +132,18 @@ public final class ShellCommandUtils {
         return output.toUpperCase().startsWith("SUCCESS");
     }
 
-    private static String executeCommandPreS(String command) throws AdbException {
+    /**
+     * Return {@code true} if {@code output} does not start with "error", case insensitive.
+     */
+    public static boolean doesNotStartWithError(String output) {
+        return !output.toUpperCase().startsWith("ERROR");
+    }
+
+    private static String executeCommandPreS(String command, boolean allowEmptyOutput)
+            throws AdbException {
         String result = SystemUtil.runShellCommand(command);
 
-        if (result.isEmpty()) {
+        if (!allowEmptyOutput && result.isEmpty()) {
             throw new AdbException(
                     "No output from command. There's likely an error on stderr", command, result);
         }

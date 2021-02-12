@@ -124,11 +124,11 @@ public class UsersTest {
     }
 
     @Test
-    public void users_containsCreatedUser() throws Exception {
+    public void all_containsCreatedUser() throws Exception {
         int userId = createUser();
 
         try {
-            User foundUser = mUsers.users().stream().filter(
+            User foundUser = mUsers.all().stream().filter(
                     u -> u.id() == userId).findFirst().get();
 
             assertThat(foundUser).isNotNull();
@@ -138,13 +138,13 @@ public class UsersTest {
     }
 
     @Test
-    public void users_userAddedSinceLastCallToUsers_containsNewUser() throws Exception {
+    public void all_userAddedSinceLastCallToUsers_containsNewUser() throws Exception {
         int userId = createUser();
-        mUsers.users();
+        mUsers.all();
         int userId2 = createUser();
 
         try {
-            User foundUser = mUsers.users().stream().filter(
+            User foundUser = mUsers.all().stream().filter(
                     u -> u.id() == userId).findFirst().get();
 
             assertThat(foundUser).isNotNull();
@@ -155,12 +155,12 @@ public class UsersTest {
     }
 
     @Test
-    public void users_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() throws Exception {
+    public void all_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() throws Exception {
         int userId = createUser();
-        mUsers.users();
+        mUsers.all();
         removeUser(userId);
 
-        assertThat(mUsers.users().stream().anyMatch(u -> u.id() == userId)).isFalse();
+        assertThat(mUsers.all().stream().anyMatch(u -> u.id() == userId)).isFalse();
     }
 
     @Test
@@ -184,22 +184,22 @@ public class UsersTest {
     }
 
     @Test
-    public void create_userIsCreated()  {
-        UserReference userReference = mUsers.create()
+    public void createUser_userIsCreated()  {
+        UserReference userReference = mUsers.createUser()
                 .name(USER_NAME) // required
                 .create();
 
         try {
             assertThat(
-                    mUsers.users().stream().anyMatch((u -> u.id() == userReference.id()))).isTrue();
+                    mUsers.all().stream().anyMatch((u -> u.id() == userReference.id()))).isTrue();
         } finally {
             userReference.remove();
         }
     }
 
     @Test
-    public void create_createdUserHasCorrectName() {
-        UserReference userReference = mUsers.create()
+    public void createUser_createdUserHasCorrectName() {
+        UserReference userReference = mUsers.createUser()
                 .name(USER_NAME) // required
                 .create();
 
@@ -211,11 +211,11 @@ public class UsersTest {
     }
 
     @Test
-    public void create_createdUserHasCorrectTypeName() {
+    public void createUser_createdUserHasCorrectTypeName() {
         assumeTrue("types are supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
 
         UserType type = mUsers.supportedType(RESTRICTED_USER_TYPE);
-        UserReference userReference = mUsers.create()
+        UserReference userReference = mUsers.createUser()
                 .name(USER_NAME) // required
                 .type(type)
                 .create();
@@ -228,10 +228,24 @@ public class UsersTest {
     }
 
     @Test
-    public void create_doesNotSpecifyName_throwsIllegalStateException() {
-        UserBuilder userBuilder = mUsers.create();
+    public void createUser_doesNotSpecifyName_throwsIllegalStateException() {
+        UserBuilder userBuilder = mUsers.createUser();
 
         assertThrows(IllegalStateException.class, userBuilder::create);
+    }
+
+    @Test
+    public void createAndStart_isStarted() {
+        User user = null;
+
+        try {
+            user = mUsers.createUser().name(USER_NAME).createAndStart().resolve();
+            assertThat(user.state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
+        } finally {
+            if (user != null) {
+                user.remove();
+            }
+        }
     }
 
     private int createUser() {

@@ -146,6 +146,7 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
         }
         case InputMessage::Type::FINISHED: {
             outMsg->body.finished.handled = msg.body.finished.handled;
+            outMsg->body.finished.consumeTime = msg.body.finished.consumeTime;
             break;
         }
         case InputMessage::Type::FOCUS: {

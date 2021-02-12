@@ -36,7 +36,10 @@ import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
 import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.uirendering.cts.util.MockVsyncHelper;
+import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EdgeEffect;
 
 import androidx.test.InstrumentationRegistry;
@@ -209,12 +212,41 @@ public class EdgeEffectTests {
     }
 
     @Test
-    public void testedgeEffectTypeAttribute() {
+    public void testEdgeEffectTypeAttribute() {
         final Context targetContext = InstrumentationRegistry.getTargetContext();
         final Context themeContext =
                 new ContextThemeWrapper(targetContext, R.style.StretchEdgeEffect);
         EdgeEffect withWarpEffect = new EdgeEffect(themeContext);
         assertEquals(EdgeEffect.TYPE_STRETCH, withWarpEffect.getType());
+    }
+
+    @Test
+    public void testCustomViewEdgeEffectAttribute() {
+        Context targetContext = InstrumentationRegistry.getTargetContext();
+        LayoutInflater layoutInflater = LayoutInflater.from(targetContext);
+        View view = layoutInflater.inflate(R.layout.stretch_edge_effect_view, null);
+        assertTrue(view instanceof CustomEdgeEffectView);
+        CustomEdgeEffectView customEdgeEffectView = (CustomEdgeEffectView) view;
+        assertEquals(EdgeEffect.TYPE_STRETCH, customEdgeEffectView.edgeEffect.getType());
+    }
+
+    @Test
+    public void testDistance() {
+        EdgeEffect effect = new EdgeEffect(getContext());
+
+        assertEquals(0f, effect.getDistance(), 0.001f);
+
+        assertEquals(0.1f, effect.onPullDistance(0.1f, 0.5f), 0.001f);
+
+        assertEquals(0.1f, effect.getDistance(), 0.001f);
+
+        assertEquals(-0.05f, effect.onPullDistance(-0.05f, 0.5f), 0.001f);
+
+        assertEquals(0.05f, effect.getDistance(), 0.001f);
+
+        assertEquals(-0.05f, effect.onPullDistance(-0.2f, 0.5f), 0.001f);
+
+        assertEquals(0f, effect.getDistance(), 0.001f);
     }
 
     private interface AlphaVerifier {
@@ -264,4 +296,28 @@ public class EdgeEffectTests {
         }));
     }
 
+    public static class CustomEdgeEffectView extends View {
+        public EdgeEffect edgeEffect;
+
+        public CustomEdgeEffectView(Context context) {
+            this(context, null);
+        }
+        public CustomEdgeEffectView(Context context, AttributeSet attrs) {
+            this(context, attrs, 0);
+        }
+
+        public CustomEdgeEffectView(Context context, AttributeSet attrs, int defStyleAttr) {
+            this(context, attrs, defStyleAttr, 0);
+        }
+
+        public CustomEdgeEffectView(
+                Context context,
+                AttributeSet attrs,
+                int defStyleAttr,
+                int defStyleRes
+        ) {
+            super(context, attrs, defStyleAttr, defStyleRes);
+            edgeEffect = new EdgeEffect(context, attrs);
+        }
+    }
 }
