@@ -67,8 +67,8 @@
             </intent-filter>
         </receiver>
 
-        <!--  TODO(b/176993670): remove if DevicePolicyManagerWrapper goes away -->
-        <receiver android:name="com.android.bedstead.temp.DevicePolicyManagerWrapper$BridgeReceiver"
+        <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
              android:exported="true">
         </receiver>
 

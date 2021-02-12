@@ -15,6 +15,9 @@
  */
 package com.android.cts.deviceowner;
 
+import static com.android.bedstead.dpmwrapper.TestAppHelper.registerTestCaseReceiver;
+import static com.android.bedstead.dpmwrapper.TestAppHelper.unregisterTestCaseReceiver;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -31,8 +34,6 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
-
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -172,8 +173,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         final IntentFilter filterNetworkLogsAvailable = new IntentFilter(
                 BasicAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE);
 
-        DevicePolicyManagerWrapper.registerTestCaseReceiver(mContext, mNetworkLogsReceiver,
-                filterNetworkLogsAvailable);
+        registerTestCaseReceiver(mContext, mNetworkLogsReceiver, filterNetworkLogsAvailable);
 
         // visit websites that shouldn't be logged as network logging isn't enabled yet
         for (int i = 0; i < NOT_LOGGED_URLS_LIST.length; i++) {
@@ -213,7 +213,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
             Log.e(TAG, "Timed out!");
         }
 
-        DevicePolicyManagerWrapper.unregisterTestCaseReceiver(mContext, mNetworkLogsReceiver);
+        unregisterTestCaseReceiver(mContext, mNetworkLogsReceiver);
 
         if (mBatchCountDown.getCount() > 0) {
             fail("Generated events for " + mBatchesRequested + " batches and waited for "
