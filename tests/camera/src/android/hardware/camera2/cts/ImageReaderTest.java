@@ -1064,9 +1064,22 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         Size[] availableSizes = mStaticInfo.getAvailableSizesForFormatChecked(format,
                 StaticMetadata.StreamDirection.Output);
 
+        boolean secureTest = setUsageFlag &&
+                ((usageFlag & HardwareBuffer.USAGE_PROTECTED_CONTENT) != 0);
+        Size secureDataSize = null;
+        if (secureTest) {
+            secureDataSize = mStaticInfo.getCharacteristics().get(
+                    CameraCharacteristics.SCALER_DEFAULT_SECURE_IMAGE_SIZE);
+        }
+
         // for each resolution, test imageReader:
         for (Size sz : availableSizes) {
             try {
+                // For secure mode test only test default secure data size if HAL advertises one.
+                if (secureDataSize != null && !secureDataSize.equals(sz)) {
+                    continue;
+                }
+
                 if (VERBOSE) {
                     Log.v(TAG, "Testing size " + sz.toString() + " format " + format
                             + " for camera " + mCamera.getId());
