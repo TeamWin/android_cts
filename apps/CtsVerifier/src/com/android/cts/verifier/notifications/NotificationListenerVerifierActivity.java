@@ -79,7 +79,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         implements Runnable {
     static final String TAG = "NoListenerVerifier";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
-    private static final String NOISY_NOTIFICATION_CHANNEL_ID = TAG + "Noisy";
+    private static final String NOISY_NOTIFICATION_CHANNEL_ID = TAG + "noisy";
     protected static final String PREFS = "listener_prefs";
     final int NUM_NOTIFICATIONS_SENT = 3; // # notifications sent by sendNotifications()
 
@@ -121,6 +121,10 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         tests.add(new IsEnabledTest());
         tests.add(new ServiceStartedTest());
         tests.add(new NotificationReceivedTest());
+        tests.add(new SendUserToChangeFilter());
+        tests.add(new AskIfFilterChanged());
+        tests.add(new NotificationTypeFilterTest());
+        tests.add(new ResetChangeFilter());
         tests.add(new LongMessageTest());
         tests.add(new DataIntactTest());
         tests.add(new AudiblyAlertedTest());
@@ -171,11 +175,11 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     @SuppressLint("NewApi")
     private void sendNotifications() {
         mTag1 = UUID.randomUUID().toString();
-        Log.d(TAG, "Sending " + mTag1);
+        Log.d(TAG, "Sending #1: " + mTag1);
         mTag2 = UUID.randomUUID().toString();
-        Log.d(TAG, "Sending " + mTag2);
+        Log.d(TAG, "Sending #2: " + mTag2);
         mTag3 = UUID.randomUUID().toString();
-        Log.d(TAG, "Sending " + mTag3);
+        Log.d(TAG, "Sending #3: " + mTag3);
 
         mWhen1 = System.currentTimeMillis() + 1;
         mWhen2 = System.currentTimeMillis() + 2;
@@ -191,7 +195,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         mPackageString = "com.android.cts.verifier";
 
-        Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+        Notification n1 = new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("ClearTest 1")
                 .setContentText(mTag1)
                 .setSmallIcon(mIcon1)
@@ -1805,6 +1809,118 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected Intent getIntent() {
             return new Intent(Settings.ACTION_SECURITY_SETTINGS)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        }
+    }
+
+    /**
+     * Sends the user to settings filter out silent notifications for this notification listener.
+     * Sends silent and not silent notifs and makes sure only the non silent is received
+     */
+    private class NotificationTypeFilterTest extends InteractiveTestCase {
+        int mRetries = 3;
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_filter_test);
+
+        }
+
+        @Override
+        protected void setUp() {
+            createChannels();
+            sendNotifications();
+            status = READY;
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            MockListener.getInstance().resetData();
+            deleteChannels();
+        }
+
+        @Override
+        protected void test() {
+            if (MockListener.getInstance().getPosted(mTag1) == null) {
+                Log.d(TAG, "Could not find " + mTag1);
+                if (--mRetries > 0) {
+                    sleep(100);
+                    status = RETEST;
+                } else {
+                    status = FAIL;
+                }
+            } else if (MockListener.getInstance().getPosted(mTag2) != null) {
+                logFail("Found" + mTag2);
+                status = FAIL;
+            } else {
+                status = PASS;
+            }
+        }
+    }
+
+    protected class SendUserToChangeFilter extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createUserItem(
+                    parent, R.string.cp_start_settings,  R.string.nls_change_type_filter);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            if (getIntent().resolveActivity(mPackageManager) == null) {
+                logFail("no settings activity");
+                status = FAIL;
+            } else {
+                if (buttonPressed) {
+                    status = PASS;
+                } else {
+                    status = RETEST_AFTER_LONG_DELAY;
+                }
+                next();
+            }
+        }
+
+        protected void tearDown() {
+            // wait for the service to start
+            delay();
+        }
+
+        @Override
+        protected Intent getIntent() {
+            Intent intent = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS);
+            intent.putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                    MockListener.COMPONENT_NAME.flattenToString());
+            return intent;
+        }
+    }
+
+    protected class ResetChangeFilter extends SendUserToChangeFilter {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createUserItem(
+                    parent, R.string.cp_start_settings,  R.string.nls_reset_type_filter);
+        }
+    }
+
+    protected class AskIfFilterChanged extends InteractiveTestCase {
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createPassFailItem(parent, R.string.nls_original_filter_verification);
+        }
+
+        @Override
+        boolean autoStart() {
+            return true;
+        }
+
+        @Override
+        protected void test() {
+            status = WAIT_FOR_USER;
+            next();
         }
     }
 }
