@@ -47,6 +47,10 @@
         <service android:name=".StatsdCtsForegroundService"
                  android:foregroundServiceType="camera" android:exported="true" />
 
+        <service android:name=".subservices.StatsdCtsBackgroundService000" android:exported="true" android:process=":statsd000" />
+        <service android:name=".subservices.StatsdCtsBackgroundService001" android:exported="true" android:process=":statsd001" />
+        <service android:name=".subservices.StatsdCtsBackgroundService002" android:exported="true" android:process=":statsd002" />
+
         <activity
             android:name=".VideoPlayerActivity"
             android:label="@string/app_name"

@@ -140,18 +140,35 @@ public class UidAtomTests extends DeviceAtomTestCase {
 
         Thread.sleep(WAIT_TIME_SHORT);
 
-        executeBackgroundService(ACTION_LMK);
-        Thread.sleep(15_000);
+        // In 32bit userspace and 64bit kernelspace system with large RAM,
+        // LMK is not always worked on only one process.
+        // Exponentially increasing requested memory will run out of
+        // address space before all the memory will be used.
+        // So, run multiple processes.
+        for (int i = 0; i < MAX_NUM_OF_TEST_PROCESS; i++) {
+            executeBackgroundServiceForLmk(i);
+            Thread.sleep(15_000);
 
-        // Sorted list of events in order in which they occurred.
-        List<EventMetricData> data = getEventMetricDataList();
+            // Sorted list of events in order in which they occurred.
+            List<EventMetricData> data = getEventMetricDataList();
 
-        assertThat(data).hasSize(1);
-        assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
-        LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
-        assertThat(atom.getUid()).isEqualTo(getUid());
-        assertThat(atom.getProcessName()).isEqualTo(DEVICE_SIDE_TEST_PACKAGE);
-        assertThat(atom.getOomAdjScore()).isAtLeast(500);
+            if (data.size() == 0) {
+                // LMK don't work. start the next process.
+                continue;
+            }
+
+            assertThat(data).hasSize(1);
+            assertThat(data.get(0).getAtom().hasLmkKillOccurred()).isTrue();
+            LmkKillOccurred atom = data.get(0).getAtom().getLmkKillOccurred();
+            assertThat(atom.getUid()).isEqualTo(getUid());
+            assertThat(atom.getProcessName()).contains(
+                DEVICE_SIDE_TEST_PACKAGE + PROCESS_SUFFIX_NAME);
+            assertThat(atom.getOomAdjScore()).isAtLeast(500);
+            return;
+        }
+
+        // Even if running multiple processes, LMK is not worked.
+        fail("LMK is not worked.");
     }
 
     public void testAppCrashOccurred() throws Exception {

@@ -41,6 +41,8 @@ public class DeviceAtomTestCase extends AtomTestCase {
             "com.android.server.cts.device.statsd.StatsdCtsForegroundService";
     private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT =
             "com.android.server.cts.device.statsd/.StatsdCtsBackgroundService";
+    private static final String DEVICE_SIDE_BG_SERVICE_COMPONENT_FOR_MULTIPROCESS =
+            "com.android.server.cts.device.statsd/.subservices.StatsdCtsBackgroundService";
     public static final long DEVICE_SIDE_TEST_PKG_HASH =
             Long.parseUnsignedLong("15694052924544098582");
 
@@ -49,6 +51,9 @@ public class DeviceAtomTestCase extends AtomTestCase {
     public static final String ACTION_LMK = "action.lmk";
 
     public static final String CONFIG_NAME = "cts_config";
+
+    public static final int MAX_NUM_OF_TEST_PROCESS = 3;
+    public static final String PROCESS_SUFFIX_NAME = ":statsd";
 
     @Override
     protected void setUp() throws Exception {
@@ -213,6 +218,13 @@ public class DeviceAtomTestCase extends AtomTestCase {
                 KEY_ACTION, actionValue));
     }
 
+    protected void executeBackgroundServiceForLmk(int id) throws Exception {
+        allowBackgroundServices();
+        getDevice().executeShellCommand(String.format(
+                "am startservice -n '%s%03d' -e %s %s",
+                DEVICE_SIDE_BG_SERVICE_COMPONENT_FOR_MULTIPROCESS, id,
+                KEY_ACTION, ACTION_LMK));
+    }
 
     /** Make the test app standby-active so it can run syncs and jobs immediately. */
     protected void allowImmediateSyncs() throws Exception {
