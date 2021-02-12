@@ -422,6 +422,16 @@ public class CarPropertyManagerTest extends CarApiTestBase {
                 mCarPropertyManager.isPropertyAvailable(
                         VehiclePropertyIds.WHEEL_TICK, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
 
+        CarPropertyConfig wheelTickConfig = mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.WHEEL_TICK);
+        CarPropertyConfig speedConfig = mCarPropertyManager.getCarPropertyConfig(
+                VehiclePropertyIds.PERF_VEHICLE_SPEED);
+        // Ignores the test if sampleRates for properties are too low.
+        Assume.assumeTrue("The SampleRates for properties are too low, "
+                + "skip testUnregisterWithPropertyId test",
+                wheelTickConfig.getMaxSampleRate() < FAST_OR_FASTEST_EVENT_COUNTER
+                        || speedConfig.getMaxSampleRate() < FAST_OR_FASTEST_EVENT_COUNTER);
+
         CarPropertyEventCounter speedAndWheelTicksListener = new CarPropertyEventCounter();
         mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
                 VehiclePropertyIds.PERF_VEHICLE_SPEED, CarPropertyManager.SENSOR_RATE_FASTEST);
