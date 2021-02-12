@@ -17,7 +17,6 @@
 package android.media.tv.cts;
 
 import static androidx.test.ext.truth.view.MotionEventSubject.assertThat;
-
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -56,7 +55,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
-import com.android.internal.util.ToBooleanFunction;
 
 import com.google.common.truth.Truth;
 
@@ -72,6 +70,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Test {@link android.media.tv.TvInputService}.
@@ -1508,4 +1507,30 @@ public class TvInputServiceTest {
             mError = null;
         }
     }
+
+
+    // Copied from {@link com.android.internal.util.ToBooleanFunction}
+    /**
+     * Represents a function that produces an boolean-valued result.  This is the
+     * {@code boolean}-producing primitive specialization for {@link Function}.
+     *
+     * <p>This is a <a href="package-summary.html">functional interface</a>
+     * whose functional method is {@link #apply(Object)}.
+     *
+     * @param <T> the type of the input to the function
+     *
+     * @see Function
+     */
+    @FunctionalInterface
+    private  interface ToBooleanFunction<T> {
+
+        /**
+         * Applies this function to the given argument.
+         *
+         * @param value the function argument
+         * @return the function result
+         */
+        boolean apply(T value);
+    }
+
 }
