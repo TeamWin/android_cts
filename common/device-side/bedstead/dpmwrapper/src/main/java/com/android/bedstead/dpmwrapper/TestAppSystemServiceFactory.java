@@ -17,7 +17,8 @@ package com.android.bedstead.dpmwrapper;
 
 import static com.android.bedstead.dpmwrapper.DataFormatter.addArg;
 import static com.android.bedstead.dpmwrapper.DataFormatter.getArg;
-import static com.android.bedstead.dpmwrapper.Utils.ACTION_WRAPPED_DPM_CALL;
+import static com.android.bedstead.dpmwrapper.Utils.ACTION_WRAPPED_MANAGER_CALL;
+import static com.android.bedstead.dpmwrapper.Utils.EXTRA_CLASS;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_METHOD;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_NUMBER_ARGS;
 import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
@@ -28,6 +29,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -40,7 +42,6 @@ import org.mockito.stubbing.Answer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,8 +77,44 @@ public final class TestAppSystemServiceFactory {
         return getSystemService(context, DevicePolicyManager.class, receiverClass);
     }
 
+    /**
+     * Gets the proper {@link WifiManager} instance to be used by the test.
+     */
+    public static WifiManager getWifiManager(Context context,
+            Class<? extends DeviceAdminReceiver> receiverClass) {
+        return getSystemService(context, WifiManager.class, receiverClass);
+    }
+
     private static <T> T getSystemService(Context context, Class<T> serviceClass,
             Class<? extends DeviceAdminReceiver> receiverClass) {
+
+        ServiceManagerWrapper<T> wrapper = null;
+        Class<?> wrappedClass;
+
+        if (serviceClass.equals(DevicePolicyManager.class)) {
+            wrappedClass = DevicePolicyManager.class;
+            @SuppressWarnings("unchecked")
+            ServiceManagerWrapper<T> safeCastWrapper =
+                    (ServiceManagerWrapper<T>) new DevicePolicyManagerWrapper();
+            wrapper = safeCastWrapper;
+        } else if (serviceClass.equals(WifiManager.class)) {
+            @SuppressWarnings("unchecked")
+            ServiceManagerWrapper<T> safeCastWrapper =
+                    (ServiceManagerWrapper<T>) new WifiManagerWrapper();
+            wrapper = safeCastWrapper;
+            wrappedClass = WifiManager.class;
+        } else {
+            throw new IllegalArgumentException("invalid service class: " + serviceClass);
+        }
+
+        @SuppressWarnings("unchecked")
+        T manager = (T) context.getSystemService(wrappedClass);
+
+        int userId = context.getUserId();
+        if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {
+            Log.i(TAG, "get(): returning 'pure' DevicePolicyManager for user " + userId);
+            return manager;
+        }
 
         if (sHandler == null) {
             Log.i(TAG, "Starting handler thread " + HANDLER_THREAD);
@@ -85,36 +122,20 @@ public final class TestAppSystemServiceFactory {
             sHandler = new Handler(HANDLER_THREAD.getLooper());
         }
 
-        T manager = null;
-        ServiceManagerWrapper<T> wrapper = null;
-
-        if (serviceClass.equals(DevicePolicyManager.class)) {
-            @SuppressWarnings("unchecked")
-            T safeCastManager = (T) context.getSystemService(DevicePolicyManager.class);
-            manager = safeCastManager;
-            @SuppressWarnings("unchecked")
-            ServiceManagerWrapper<T> safeCastWrapper =
-                    (ServiceManagerWrapper<T>) new DevicePolicyManagerWrapper();
-            wrapper = safeCastWrapper;
-        }
-
-        Objects.requireNonNull(wrapper, "invalid service class: " +  serviceClass);
-
-        int userId = context.getUserId();
         String receiverClassName = receiverClass.getName();
-        Log.d(TAG, "get():  receiverClassName: " + receiverClassName);
-
-        if (userId == UserHandle.USER_SYSTEM || !UserManager.isHeadlessSystemUserMode()) {
-            Log.i(TAG, "get(): returning 'pure' DevicePolicyManager for user " + userId);
-            return manager;
+        final String wrappedClassName = wrappedClass.getName();
+        if (VERBOSE) {
+            Log.v(TAG, "get(): receiverClassName: " + receiverClassName
+                    + ", wrappedClassName: " + wrappedClassName);
         }
 
         Answer<?> answer = (inv) -> {
             Object[] args = inv.getArguments();
             Log.d(TAG, "spying " + inv + " method: " + inv.getMethod());
             String methodName = inv.getMethod().getName();
-            Intent intent = new Intent(ACTION_WRAPPED_DPM_CALL)
+            Intent intent = new Intent(ACTION_WRAPPED_MANAGER_CALL)
                     .setClassName(context, receiverClassName)
+                    .putExtra(EXTRA_CLASS, wrappedClassName)
                     .putExtra(EXTRA_METHOD, methodName)
                     .putExtra(EXTRA_NUMBER_ARGS, args.length);
             for (int i = 0; i < args.length; i++) {

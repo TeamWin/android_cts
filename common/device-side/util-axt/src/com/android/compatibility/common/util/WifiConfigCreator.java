@@ -62,9 +62,12 @@ public class WifiConfigCreator {
     private final WifiManager mWifiManager;
 
     public WifiConfigCreator(Context context) {
+        this(context, context.getApplicationContext().getSystemService(WifiManager.class));
+    }
+
+    public WifiConfigCreator(Context context, WifiManager wifiManager) {
         mContext = context;
-        mWifiManager = (WifiManager)
-                context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        mWifiManager = wifiManager;
     }
 
     /**
@@ -80,7 +83,9 @@ public class WifiConfigCreator {
         int netId = mWifiManager.addNetwork(wifiConf);
 
         if (netId != -1) {
+            Log.i(TAG, "Added SSID '" + ssid + "': netId = " + netId + "; enabling it");
             mWifiManager.enableNetwork(netId, true);
+            Log.i(TAG, "SSID '" + ssid + "' enabled!");
         } else {
             Log.w(TAG, "Unable to add SSID '" + ssid + "': netId = " + netId);
         }
