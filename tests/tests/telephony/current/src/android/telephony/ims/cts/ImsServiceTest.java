@@ -45,6 +45,7 @@ import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsMmTelManager;
 import android.telephony.ims.ImsRcsManager;
 import android.telephony.ims.ImsReasonInfo;
+import android.telephony.ims.ImsRegistrationAttributes;
 import android.telephony.ims.ProvisioningManager;
 import android.telephony.ims.RcsClientConfiguration;
 import android.telephony.ims.RcsUceAdapter;
@@ -56,6 +57,7 @@ import android.telephony.ims.stub.CapabilityExchangeEventListener;
 import android.telephony.ims.stub.ImsConfigImplBase;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.telephony.ims.stub.ImsRegistrationImplBase;
+import android.util.ArraySet;
 import android.util.Base64;
 import android.util.Pair;
 
@@ -756,6 +758,112 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testMmTelManagerRegistrationCallbackS() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        final ArraySet<String> featureTags = new ArraySet<>();
+        featureTags.add("featureTag1");
+        featureTags.add("featureTag2");
+
+        triggerFrameworkConnectToCarrierImsService();
+
+        // Start deregistered
+        sServiceConnector.getCarrierService().getImsRegistration().onDeregistered(
+                new ImsReasonInfo(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED,
+                        ImsReasonInfo.CODE_UNSPECIFIED, ""));
+
+        LinkedBlockingQueue<ImsRegistrationAttributes> mRegQueue =
+                new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<ImsReasonInfo> mDeregQueue =
+                new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+            @Override
+            public void onRegistered(ImsRegistrationAttributes attributes) {
+                mRegQueue.offer(attributes);
+            }
+
+            @Override
+            public void onRegistering(ImsRegistrationAttributes attributes) {
+                mRegQueue.offer(attributes);
+            }
+
+            @Override
+            public void onUnregistered(ImsReasonInfo info) {
+                mDeregQueue.offer(info);
+            }
+        };
+
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            // First try without the correct permissions.
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+            fail("registerImsRegistrationCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+
+        // Latch will count down here (we callback on the state during registration).
+        try {
+            automan.adoptShellPermissionIdentity();
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.registerImsRegistrationCallback(getContext().getMainExecutor(), callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+        ImsReasonInfo deregResult = waitForResult(mDeregQueue);
+        assertNotNull(deregResult);
+        assertEquals(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED, deregResult.getCode());
+
+        // Start registration
+        ImsRegistrationAttributes lteTagsAttr = new ImsRegistrationAttributes.Builder(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE)
+                .setFeatureTags(featureTags)
+                .build();
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(lteTagsAttr);
+        ImsRegistrationAttributes attrResult = waitForResult(mRegQueue);
+        assertNotNull(attrResult);
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
+                attrResult.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, attrResult.getTransportType());
+        assertEquals(0, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
+
+        // Complete registration
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(lteTagsAttr);
+        attrResult = waitForResult(mRegQueue);
+        assertNotNull(attrResult);
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
+                attrResult.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, attrResult.getTransportType());
+        assertEquals(0, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
+
+        try {
+            automan.adoptShellPermissionIdentity();
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.unregisterImsRegistrationCallback(callback);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+
+        try {
+            ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+            ImsMmTelManager mmTelManager = imsManager.getImsMmTelManager(sTestSub);
+            mmTelManager.unregisterImsRegistrationCallback(callback);
+            fail("unregisterImsRegistrationCallback requires READ_PRECISE_PHONE_STATE permission.");
+        } catch (SecurityException e) {
+            //expected
+        }
+    }
+
+    @Test
     public void testMmTelManagerRegistrationCallback() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;
@@ -772,7 +880,6 @@ public class ImsServiceTest {
         // extend ImsMmTelManager.RegistrationCallback (because it doesn't exist), so this has to
         // happen as an anon class here.
         LinkedBlockingQueue<Integer> mQueue = new LinkedBlockingQueue<>();
-        // Deprecated in R, see testMmTelManagerRegistrationCallbackR below.
         ImsMmTelManager.RegistrationCallback callback = new ImsMmTelManager.RegistrationCallback() {
             @Override
             public void onRegistered(int imsTransportType) {
