@@ -385,6 +385,29 @@ public class ASurfaceControlTest {
     }
 
     @Test
+    public void testSurfaceControl_acquire() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        // increment one refcount
+                        nSurfaceControl_acquire(surfaceControl);
+                        // decrement one refcount incremented from create call
+                        nSurfaceControl_release(surfaceControl);
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+    }
+
+    @Test
     public void testSurfaceTransaction_setBuffer() throws Throwable {
         verifyTest(
                 new BasicSurfaceHolderCallback() {
@@ -1558,6 +1581,7 @@ public class ASurfaceControlTest {
     private static native void nSurfaceTransaction_apply(long surfaceTransaction);
     private static native long nSurfaceControl_createFromWindow(Surface surface);
     private static native long nSurfaceControl_create(long surfaceControl);
+    private static native void nSurfaceControl_acquire(long surfaceControl);
     private static native void nSurfaceControl_release(long surfaceControl);
     private static native long nSurfaceTransaction_setSolidBuffer(
             long surfaceControl, long surfaceTransaction, int width, int height, int color);
