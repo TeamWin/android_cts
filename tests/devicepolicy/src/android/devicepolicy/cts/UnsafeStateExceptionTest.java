@@ -15,8 +15,8 @@
  */
 package android.devicepolicy.cts;
 
-import static android.app.admin.DevicePolicyManager.UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION;
-import static android.app.admin.DevicePolicyManager.UNSAFE_OPERATION_REASON_NONE;
+import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+import static android.app.admin.DevicePolicyManager.OPERATION_SAFETY_REASON_NONE;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -33,12 +33,12 @@ public final class UnsafeStateExceptionTest {
 
     @Test
     public void testValidReason_drivingDistraction() {
-        assertExceptionWithValidReason(UNSAFE_OPERATION_REASON_DRIVING_DISTRACTION);
+        assertExceptionWithValidReason(OPERATION_SAFETY_REASON_DRIVING_DISTRACTION);
     }
 
     @Test
     public void testInvalidReason_none() {
-        assertExceptionWithInvalidReason(UNSAFE_OPERATION_REASON_NONE);
+        assertExceptionWithInvalidReason(OPERATION_SAFETY_REASON_NONE);
     }
 
     @Test
@@ -54,7 +54,7 @@ public final class UnsafeStateExceptionTest {
         UnsafeStateException exception = new UnsafeStateException(VALID_OPERATION, reason);
 
         assertWithMessage("operation").that(exception.getOperation()).isEqualTo(VALID_OPERATION);
-        assertWithMessage("reason").that(exception.getReason()).isEqualTo(reason);
+        assertWithMessage("reasons").that(exception.getReasons()).containsExactly(reason);
     }
 
     private void assertExceptionWithInvalidReason(int reason) {

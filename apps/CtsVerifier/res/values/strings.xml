@@ -2845,12 +2845,6 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <string name="provisioning_tests_byod">BYOD Provisioning tests</string>
 
-    <string name="provisioning_tests_byod_custom_color"> Custom provisioning color </string>
-    <string name="provisioning_tests_byod_custom_color_info">
-        Please press the Go button to start the provisioning.
-        Check that the top status bar is colorized in green.
-        Then hit back and stop the provisioning.
-    </string>
     <string name="provisioning_tests_byod_custom_image"> Custom provisioning image </string>
     <string name="provisioning_tests_byod_custom_image_info">
         1. Please press the Go button to start the provisioning.\n

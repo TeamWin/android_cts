@@ -24,7 +24,7 @@ import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 
 public class BasicAdminReceiver extends DeviceAdminReceiver {
 
@@ -50,10 +50,8 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
         String action = intent.getAction();
         Log.d(TAG, "onReceive(userId=" + context.getUserId() + "): " + action);
 
-        if (action.equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
-            DevicePolicyManagerWrapper.onReceive(this, context, intent);
-            return;
-        }
+        if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
+
         super.onReceive(context, intent);
     }
 
@@ -96,11 +94,10 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
         Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
         batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
 
-        DevicePolicyManagerWrapper.sendBroadcastToTestCaseReceiver(context, batchIntent);
+        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, batchIntent);
     }
 
-    private void sendUserBroadcast(Context context, String action,
-            UserHandle userHandle) {
+    private void sendUserBroadcast(Context context, String action, UserHandle userHandle) {
         Intent intent = new Intent(action);
         intent.putExtra(EXTRA_USER_HANDLE, userHandle);
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
