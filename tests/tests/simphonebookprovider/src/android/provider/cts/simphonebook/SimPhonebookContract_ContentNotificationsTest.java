@@ -20,7 +20,6 @@ import static android.provider.SimPhonebookContract.ElementaryFiles.EF_ADN;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.Instrumentation;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
@@ -35,8 +34,8 @@ import android.telephony.SubscriptionManager;
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.After;
@@ -54,6 +53,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_ContentNotificationsTest {
 
+    private static final int DEFAULT_TIMEOUT = 5000;
+
     @ClassRule
     public static final SimsPowerRule SIMS_POWER_RULE = SimsPowerRule.on();
     private final SimCleanupRule mSimCleanupRule = new SimCleanupRule(ElementaryFiles.EF_ADN);
@@ -64,24 +65,15 @@ public class SimPhonebookContract_ContentNotificationsTest {
             .around(mSimCleanupRule);
 
     private int mSubId;
-    private Instrumentation mInstrumentation;
     private ContentResolver mResolver;
-    private ContentObserver mObserver;
-    private List<Uri> mObserved;
+    private RecordingContentObserver mObserver;
 
     @Before
     public void setUp() {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mResolver = ApplicationProvider.getApplicationContext().getContentResolver();
-        mObserved = new CopyOnWriteArrayList<>();
-        mObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
-            @Override
-            public void onChange(boolean selfChange, @Nullable Uri uri) {
-                mObserved.add(uri);
-            }
-        };
+        mObserver = new RecordingContentObserver();
         mResolver.registerContentObserver(SimPhonebookContract.AUTHORITY_URI, false, mObserver);
-        assertThat(mObserved).isEmpty();
+        assertThat(mObserver.observed).isEmpty();
 
         // Make sure the provider has been created.
         mResolver.getType(SimPhonebookContract.SimRecords.getContentUri(1, EF_ADN));
@@ -95,39 +87,49 @@ public class SimPhonebookContract_ContentNotificationsTest {
     }
 
     @Test
-    public void insert_notifiesObserver() {
+    public void insert_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
         mResolver.insert(SimPhonebookContract.SimRecords.getContentUri(mSubId, EF_ADN), values);
 
-        mInstrumentation.runOnMainSync(() -> assertThat(mObserved).hasSize(1));
+        PollingCheck.check(
+                "No content notifications observed for insert.",
+                DEFAULT_TIMEOUT, () -> !mObserver.observed.isEmpty());
     }
 
     @Test
-    public void update_notifiesObserver() {
+    public void update_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
         Uri itemUri = mResolver.insert(
                 SimPhonebookContract.SimRecords.getContentUri(mSubId, EF_ADN), values);
-        mObserved.clear();
+        PollingCheck.check(
+                "No content notifications observed for insert.",
+                DEFAULT_TIMEOUT, () -> mObserver.observed.size() == 1);
 
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550102");
         mResolver.update(itemUri, values, null);
 
-        mInstrumentation.runOnMainSync(() -> assertThat(mObserved).hasSize(1));
+        PollingCheck.check(
+                "No content notifications observed for update.",
+                DEFAULT_TIMEOUT, () -> mObserver.observed.size() > 1);
     }
 
     @Test
-    public void delete_notifiesObserver() {
+    public void delete_notifiesObserver() throws Exception {
         ContentValues values = new ContentValues();
         values.put(SimPhonebookContract.SimRecords.PHONE_NUMBER, "5550101");
         Uri itemUri = mResolver.insert(
                 SimPhonebookContract.SimRecords.getContentUri(mSubId, EF_ADN), values);
-        mObserved.clear();
+        PollingCheck.check(
+                "No content notifications observed for insert.",
+                DEFAULT_TIMEOUT, () -> mObserver.observed.size() == 1);
 
         mResolver.delete(itemUri, null);
 
-        mInstrumentation.runOnMainSync(() -> assertThat(mObserved).hasSize(1));
+        PollingCheck.check(
+                "No content notifications observed for delete.",
+                DEFAULT_TIMEOUT, () -> mObserver.observed.size() > 1);
     }
 
     @Test
@@ -135,17 +137,34 @@ public class SimPhonebookContract_ContentNotificationsTest {
         try {
             // Mimic removal or insertion of a SIM by powering off the slot.
             SIMS_POWER_RULE.powerOff(0);
-            // Sleep a bit more even though the powerOff call waits for the subscription to become
-            // active to allow the listeners to be notified of any changes.
-            Thread.sleep(1000);
 
-            mInstrumentation.runOnMainSync(() -> assertThat(mObserved).isNotEmpty());
-            mObserved.clear();
+            PollingCheck.check(
+                    "No content notifications observed for SIM removal",
+                    DEFAULT_TIMEOUT, () -> mObserver.observed.size() >= 1);
+            // It takes some time the SIM state transitions to finish so we sleep a bit to attempt
+            // to allow the notifications they trigger to stop so that the notifications we observe
+            // for the power on aren't polluted by the power off.
+            Thread.sleep(DEFAULT_TIMEOUT);
+            mObserver.observed.clear();
         } finally {
             SIMS_POWER_RULE.powerOn(0);
-            Thread.sleep(1000);
         }
-        mInstrumentation.runOnMainSync(() -> assertThat(mObserved).isNotEmpty());
-        assertThat(mObserved).isNotEmpty();
+        PollingCheck.check(
+                "No content notifications observed for SIM insertion",
+                DEFAULT_TIMEOUT, () -> mObserver.observed.size() >= 1);
+    }
+
+    private static class RecordingContentObserver extends ContentObserver {
+
+        List<Uri> observed = new CopyOnWriteArrayList<>();
+
+        public RecordingContentObserver() {
+            super(new Handler(Looper.getMainLooper()));
+        }
+
+        @Override
+        public void onChange(boolean selfChange, @Nullable Uri uri) {
+            observed.add(uri);
+        }
     }
 }
