@@ -21,6 +21,7 @@ import static android.provider.SimPhonebookContract.ElementaryFiles.EF_ADN;
 import static com.android.internal.telephony.testing.CursorSubject.assertThat;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -32,6 +33,7 @@ import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.util.SparseBooleanArray;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
@@ -40,6 +42,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -47,6 +50,7 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,6 +85,37 @@ public class SimPhonebookContract_ElementaryFilesTest {
         List<SubscriptionInfo> subscriptionInfos = SystemUtil.callWithShellPermissionIdentity(
                 () -> mSubscriptionManager.getActiveSubscriptionInfoList(),
                 Manifest.permission.READ_PHONE_STATE);
+        // FDN and SDN support are more rare and less important than ADN so we allow the test to
+        // work on a SIM where they are unsupported. This does leave a gap in coverage but given
+        // their relatively low importance as compared to ADN and the fact that the implementation
+        // should be very similar for each type it's OK to just assume good faith on the part of the
+        // implementation.
+        SparseBooleanArray fdnSupportedBySubId = new SparseBooleanArray();
+        SparseBooleanArray sdnSupportedBySubId = new SparseBooleanArray();
+        for (SubscriptionInfo info : subscriptionInfos) {
+            int subscriptionId = info.getSubscriptionId();
+            try (Cursor cursor = mResolver.query(
+                    ElementaryFiles.getItemUri(subscriptionId, ElementaryFiles.EF_FDN),
+                    new String[]{ElementaryFiles.SUBSCRIPTION_ID}, null, null)) {
+                // If the EF is unsupported the item Uri will return an empty cursor
+                if (cursor.moveToFirst()) {
+                    assertWithMessage("subscriptionId")
+                            .that(subscriptionId).isEqualTo(cursor.getInt(0));
+                    fdnSupportedBySubId.append(subscriptionId, true);
+                }
+            }
+            try (Cursor cursor = mResolver.query(
+                    ElementaryFiles.getItemUri(subscriptionId, ElementaryFiles.EF_SDN),
+                    new String[]{ElementaryFiles.SUBSCRIPTION_ID}, null, null)) {
+                // If the EF is unsupported the item Uri will return an empty cursor
+                if (cursor.moveToFirst()) {
+                    assertWithMessage("subscriptionId")
+                            .that(subscriptionId).isEqualTo(cursor.getInt(0));
+                    sdnSupportedBySubId.append(subscriptionId, true);
+                }
+            }
+        }
+
         try (Cursor cursor = query(ElementaryFiles.CONTENT_URI,
                 new String[]{
                         ElementaryFiles.SLOT_INDEX,
@@ -91,12 +126,19 @@ public class SimPhonebookContract_ElementaryFilesTest {
                         ElementaryFiles.PHONE_NUMBER_MAX_LENGTH
                 })) {
 
-            assertThat(cursor).hasCount(subscriptionInfos.size() * 3);
+            assertThat(cursor).hasCount(subscriptionInfos.size() + fdnSupportedBySubId.size()
+                    + sdnSupportedBySubId.size());
             cursor.moveToPosition(-1);
             for (SubscriptionInfo info : subscriptionInfos) {
-                for (int efType : new int[]{
-                        ElementaryFiles.EF_ADN, ElementaryFiles.EF_FDN, ElementaryFiles.EF_SDN
-                }) {
+                List<Integer> supportedEfs = new ArrayList<>(3);
+                supportedEfs.add(ElementaryFiles.EF_ADN);
+                if (fdnSupportedBySubId.get(info.getSubscriptionId())) {
+                    supportedEfs.add(ElementaryFiles.EF_FDN);
+                }
+                if (sdnSupportedBySubId.get(info.getSubscriptionId())) {
+                    supportedEfs.add(ElementaryFiles.EF_SDN);
+                }
+                for (int efType : supportedEfs) {
                     assertThat(cursor.moveToNext()).isTrue();
                     assertThat(cursor)
                             .hasRowValue(ElementaryFiles.SLOT_INDEX, info.getSimSlotIndex())
@@ -142,24 +184,42 @@ public class SimPhonebookContract_ElementaryFilesTest {
     }
 
     @Test
-    public void query_itemUri_returnsCorrectRow() {
-        String[] projection = {
-                ElementaryFiles.SUBSCRIPTION_ID,
-                ElementaryFiles.EF_TYPE
-        };
-        try (Cursor adn = query(
+    public void query_adnItemUri_returnsCorrectRow() {
+        try (Cursor cursor = query(
                 ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_ADN),
-                projection);
-             Cursor fdn = query(
-                     ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_FDN),
-                     projection);
-             Cursor sdn = query(
-                     ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_SDN),
-                     projection)
-        ) {
-            assertThat(adn).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_ADN);
-            assertThat(fdn).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_FDN);
-            assertThat(sdn).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_SDN);
+                new String[]{
+                        ElementaryFiles.SUBSCRIPTION_ID,
+                        ElementaryFiles.EF_TYPE
+                })) {
+            assertThat(cursor).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_ADN);
+        }
+    }
+
+    @Test
+    public void query_fdnItemUri_returnsCorrectRow() {
+        try (Cursor cursor = query(
+                ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_FDN),
+                new String[]{
+                        ElementaryFiles.SUBSCRIPTION_ID,
+                        ElementaryFiles.EF_TYPE
+                })) {
+            // Use an assumption so that the tests don't fail if the SIM doesn't support FDN.
+            Assume.assumeTrue("SIM should support EF_FDN but does not.", cursor.moveToFirst());
+            assertThat(cursor).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_FDN);
+        }
+    }
+
+    @Test
+    public void query_sdnItemUri_returnsCorrectRow() {
+        try (Cursor cursor = query(
+                ElementaryFiles.getItemUri(mValidSubscriptionId, ElementaryFiles.EF_SDN),
+                new String[]{
+                        ElementaryFiles.SUBSCRIPTION_ID,
+                        ElementaryFiles.EF_TYPE
+                })) {
+            // Use an assumption so that the tests don't fail if the SIM doesn't support SDN.
+            Assume.assumeTrue("SIM should support EF_SDN but does not.", cursor.moveToFirst());
+            assertThat(cursor).hasSingleRow(mValidSubscriptionId, ElementaryFiles.EF_SDN);
         }
     }
 
