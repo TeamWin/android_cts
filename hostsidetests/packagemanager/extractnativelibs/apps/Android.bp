@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 cc_test_library {
     name: "libtest_extract_native_libs",
     gtest: false,
@@ -62,4 +66,3 @@ android_test_helper_app {
     compile_multilib: "both",
     v4_signature: true,
 }
-
