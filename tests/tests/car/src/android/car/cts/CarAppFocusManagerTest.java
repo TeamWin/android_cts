@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.car.cts;
 
 import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
