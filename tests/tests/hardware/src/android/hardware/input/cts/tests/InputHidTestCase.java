@@ -323,12 +323,20 @@ public class InputHidTestCase extends InputTestCase {
                 final String report = testData.reports.get(i);
                 mHidDevice.sendHidReport(report);
             }
-            // Delay before sysfs node was updated.
+            // Wait for power_supply sysfs node get updated.
             SystemClock.sleep(100);
             float capacity = battery.getCapacity();
             int status = battery.getStatus();
-            assertEquals("Test: " + testData.name, testData.capacity, capacity, 0.01f);
             assertEquals("Test: " + testData.name, testData.status, status);
+            boolean capacityMatch = false;
+            for (int i = 0; i < testData.capacities.length; i++) {
+                if (capacity == testData.capacities[i]) {
+                    capacityMatch = true;
+                    break;
+                }
+            }
+            assertTrue("Test: " + testData.name + " capacity " + capacity + " expect "
+                    + Arrays.toString(testData.capacities), capacityMatch);
         }
     }
 

@@ -335,7 +335,11 @@ public class InputJsonParser {
                     testData.reports.add(report);
                 }
 
-                testData.capacity = Float.valueOf(testcaseEntry.getString("capacity"));
+                JSONArray capacitiesArray = testcaseEntry.getJSONArray("capacities");
+                testData.capacities = new float[capacitiesArray.length()];
+                for (int i = 0; i < capacitiesArray.length(); i++) {
+                    testData.capacities[i] = Float.valueOf(capacitiesArray.getString(i));
+                }
                 testData.status = testcaseEntry.getInt("status");
                 tests.add(testData);
             } catch (JSONException e) {
