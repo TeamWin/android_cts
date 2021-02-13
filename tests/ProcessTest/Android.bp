@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // TODO: should it be android_helper_test_app?
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test {
     name: "ProcessTests",
     defaults: ["cts_defaults"],

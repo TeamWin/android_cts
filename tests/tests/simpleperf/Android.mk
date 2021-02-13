@@ -7,6 +7,8 @@ include $(LLVM_ROOT_PATH)/llvm.mk
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := CtsSimpleperfTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
