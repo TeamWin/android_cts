@@ -184,6 +184,10 @@ jlong SurfaceControl_create(JNIEnv* /*env*/, jclass, jlong parentSurfaceControlI
     return reinterpret_cast<jlong>(surfaceControl);
 }
 
+void SurfaceControl_acquire(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
+    ASurfaceControl_acquire(reinterpret_cast<ASurfaceControl*>(surfaceControl));
+}
+
 void SurfaceControl_release(JNIEnv* /*env*/, jclass, jlong surfaceControl) {
     ASurfaceControl_release(reinterpret_cast<ASurfaceControl*>(surfaceControl));
 }
@@ -444,13 +448,14 @@ void SurfaceTransaction_setColor(JNIEnv* /*env*/, jclass, jlong surfaceControl,
             r, g, b, alpha, ADATASPACE_UNKNOWN);
 }
 
-const std::array<JNINativeMethod, 20> JNI_METHODS = {{
+const std::array<JNINativeMethod, 21> JNI_METHODS = {{
     {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
     {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
     {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
     {"nSurfaceControl_createFromWindow", "(Landroid/view/Surface;)J",
                                             (void*)SurfaceControl_createFromWindow},
     {"nSurfaceControl_create", "(J)J", (void*)SurfaceControl_create},
+    {"nSurfaceControl_acquire", "(J)V", (void*)SurfaceControl_acquire},
     {"nSurfaceControl_release", "(J)V", (void*)SurfaceControl_release},
     {"nSurfaceTransaction_setSolidBuffer", "(JJIII)J", (void*)SurfaceTransaction_setSolidBuffer},
     {"nSurfaceTransaction_setQuadrantBuffer", "(JJIIIIII)J",

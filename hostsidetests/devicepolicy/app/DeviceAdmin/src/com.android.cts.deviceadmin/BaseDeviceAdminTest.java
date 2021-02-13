@@ -23,7 +23,7 @@ import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 
 public class BaseDeviceAdminTest extends AndroidTestCase {
     private static final String TAG = BaseDeviceAdminTest.class.getSimpleName();
@@ -41,7 +41,7 @@ public class BaseDeviceAdminTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        dpm = DevicePolicyManagerWrapper.get(mContext, AdminReceiver.class);
+        dpm = TestAppSystemServiceFactory.getDevicePolicyManager(mContext, AdminReceiver.class);
         int userId = mContext.getUserId();
 
         mAdminComponent = new ComponentName(mContext, AdminReceiver.class);

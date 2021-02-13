@@ -31,7 +31,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
@@ -95,7 +95,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
-            DevicePolicyManager dpm = DevicePolicyManagerWrapper.get(this,
+            DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
                     DeviceAdminTestReceiver.class);
             if (dpm.isDeviceOwnerApp(getPackageName())) {
                 // Set DISALLOW_ADD_USER on behalf of ManagedProvisioning.
