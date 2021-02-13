@@ -218,7 +218,6 @@ final class DataFormatter {
                 logMarshalling("Got ArraySet<String>", index, extraTypeName, type, extraValueName,
                         value);
                 break;
-
             case TYPE_ARRAY_LIST_STRING:
             case TYPE_ARRAY_LIST_PARCELABLE:
             case TYPE_BYTE_ARRAY:
