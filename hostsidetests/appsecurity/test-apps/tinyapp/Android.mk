@@ -185,6 +185,17 @@ LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is a version of the test package that declares a signature permission
+# without the knownSigner protection flag. This app is signed with the same
+# rsa-2048 signing key to allow updates from the package above. This app can
+# be used to verify behavior when an app initially uses the knownSigner flag
+# and subsequently removes the flag from the permission declaration.
+include $(LOCAL_PATH)/base.mk
+LOCAL_PACKAGE_NAME := v3-rsa-2048-declperm
+LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
+LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
+include $(BUILD_CTS_SUPPORT_PACKAGE)
+
+# This is a version of the test package that declares a signature permission
 # with the knownSigner protection flag using a string resource instead of a
 # string-array resource for the trusted certs.
 include $(LOCAL_PATH)/base.mk
@@ -207,9 +218,9 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # the array of certificate digests as declared by the test package
 # above.
 include $(LOCAL_PATH)/base.mk
-LOCAL_PACKAGE_NAME := v3-ec-p256-companion-uses-knownSigner
+LOCAL_PACKAGE_NAME := v3-ec-p256_3-companion-uses-knownSigner
 LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
-LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
+LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is a version of the companion package that uses the permission

@@ -29,8 +29,10 @@ public class HidBatteryTestData {
     // HID reports that are used as input to /dev/uhid
     public List<String> reports = new ArrayList<String>();
 
-    // Expected battery capacity
-    public float capacity;
+    // Expected battery capacities.
+    // Some input device drivers change battery capacity interpretations so we have to add
+    // alternative capacity levels for different version of drivers.
+    public float[] capacities;
 
     // Expected battery status
     public int status;
