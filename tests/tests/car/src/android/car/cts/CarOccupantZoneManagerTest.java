@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.car.cts;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -38,6 +39,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "Test relies on other server to connect to.")

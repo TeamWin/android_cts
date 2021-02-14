@@ -3017,6 +3017,8 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+            <meta-data android:name="android.service.notification.default_filter_types"
+                       android:value="1,2,4" />
         </service>
 
         <service android:name=".notifications.MockAssistant"
@@ -4184,8 +4186,8 @@
             </intent-filter>
         </receiver>
 
-        <!--  TODO(b/176993670): remove if DevicePolicyManagerWrapper goes away -->
-        <receiver android:name="com.android.bedstead.temp.DevicePolicyManagerWrapper$BridgeReceiver"
+        <!--  TODO(b/176993670): remove if DpmWrapperManagerWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
              android:exported="true">
         </receiver>
 

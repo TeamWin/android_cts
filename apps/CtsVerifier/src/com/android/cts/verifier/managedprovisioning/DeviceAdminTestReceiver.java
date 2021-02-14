@@ -32,15 +32,18 @@ import android.os.PersistableBundle;
 import android.os.Process;
 import android.os.RemoteException;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-import com.android.bedstead.temp.DevicePolicyManagerWrapper;
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 import com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils;
 import com.android.cts.verifier.R;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -68,14 +71,19 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (DeviceAdminReceiverUtils.disableSelf(context, intent)) return;
+        if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
+
         String action = intent.getAction();
         Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
 
-        if (DeviceAdminReceiverUtils.disableSelf(context, intent)) return;
-
-        if (action.equals(DevicePolicyManagerWrapper.ACTION_WRAPPED_DPM_CALL)) {
-            DevicePolicyManagerWrapper.onReceive(this, context, intent);
-            return;
+        // Must set affiliation on headless system user, otherwise some operations in the current
+        // user (which is PO) won't be allowed (like uininstalling a package)
+        if (ACTION_DEVICE_ADMIN_ENABLED.equals(action) && UserManager.isHeadlessSystemUserMode()) {
+            Set<String> ids = new HashSet<>();
+            ids.add("affh!");
+            Log.i(TAG, "Setting affiliation ids to " + ids);
+            getManager(context).setAffiliationIds(getWho(context), ids);
         }
 
         super.onReceive(context, intent);
