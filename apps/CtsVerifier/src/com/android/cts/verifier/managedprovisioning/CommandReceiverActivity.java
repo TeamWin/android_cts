@@ -523,11 +523,13 @@ public class CommandReceiverActivity extends Activity {
     }
 
     private void installHelperPackage() throws Exception {
+        LogAndSelfUnregisterBroadcastReceiver.register(this, ACTION_INSTALL_COMPLETE);
         final PackageInstaller packageInstaller = getPackageManager().getPackageInstaller();
         final PackageInstaller.Session session = packageInstaller.openSession(
                 packageInstaller.createSession(new PackageInstaller.SessionParams(
                         PackageInstaller.SessionParams.MODE_FULL_INSTALL)));
         final File file = new File(HELPER_APP_LOCATION);
+        Log.i(TAG, "installing helper package from " + file);
         final InputStream in = new FileInputStream(file);
         final OutputStream out = session.openWrite("CommandReceiverActivity", 0, file.length());
         final byte[] buffer = new byte[65536];
@@ -538,21 +540,20 @@ public class CommandReceiverActivity extends Activity {
         session.fsync(out);
         in.close();
         out.close();
-        session.commit(PendingIntent.getBroadcast(this, 0, new Intent(ACTION_INSTALL_COMPLETE), PendingIntent.FLAG_MUTABLE_UNAUDITED)
+        session.commit(PendingIntent
+                .getBroadcast(this, 0, new Intent(ACTION_INSTALL_COMPLETE),
+                        PendingIntent.FLAG_MUTABLE_UNAUDITED)
                 .getIntentSender());
     }
 
     private void uninstallHelperPackage() {
-        // TODO(b/177554984): STOPSHIP: will need a special command on DpmWrapper for this one
-        if (UserManager.isHeadlessSystemUserMode()) {
-            Log.e(TAG, "uninstallHelperPackage(): skipping on headless system user mode");
-            return;
-        }
-
+        LogAndSelfUnregisterBroadcastReceiver.register(this, ACTION_UNINSTALL_COMPLETE);
+        PackageInstaller packageInstaller = getPackageManager().getPackageInstaller();
+        Log.i(TAG, "Uninstalling package " + HELPER_APP_PKG + " using " + packageInstaller);
         try {
-            getPackageManager().getPackageInstaller().uninstall(HELPER_APP_PKG,
-                    PendingIntent.getBroadcast(this, 0, new Intent(ACTION_UNINSTALL_COMPLETE), PendingIntent.FLAG_MUTABLE_UNAUDITED)
-                            .getIntentSender());
+            packageInstaller.uninstall(HELPER_APP_PKG, PendingIntent.getBroadcast(this,
+                    /* requestCode= */ 0, new Intent(ACTION_UNINSTALL_COMPLETE),
+                    PendingIntent.FLAG_MUTABLE_UNAUDITED).getIntentSender());
         } catch (IllegalArgumentException e) {
             // The package is not installed: that's fine
         }
@@ -589,12 +590,16 @@ public class CommandReceiverActivity extends Activity {
         mDpm.uninstallCaCert(mAdmin, TEST_CA.getBytes());
         mDpm.setMaximumFailedPasswordsForWipe(mAdmin, 0);
         mDpm.setSecureSetting(mAdmin, Settings.Secure.DEFAULT_INPUT_METHOD, null);
-        mDpm.setAffiliationIds(mAdmin, Collections.emptySet());
         mDpm.setStartUserSessionMessage(mAdmin, null);
         mDpm.setEndUserSessionMessage(mAdmin, null);
         mDpm.setLogoutEnabled(mAdmin, false);
 
         uninstallHelperPackage();
+
+        // Must wait until package is uninstalled to reset affiliation ids, otherwise the package
+        // cannot be removed on headless system user mode (as caller must be an affiliated PO)
+        mDpm.setAffiliationIds(mAdmin, Collections.emptySet());
+
         removeManagedProfile();
         getPackageManager().setComponentEnabledSetting(
                 EnterprisePrivacyTestDefaultAppActivity.COMPONENT_NAME,
