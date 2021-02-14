@@ -21,6 +21,9 @@ import android.media.MediaDrm.KeyStatus;
 import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
+import android.media.NotProvisionedException;
+import android.media.ResourceBusyException;
+import android.media.UnsupportedSchemeException;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Looper;
@@ -1167,8 +1170,9 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                 byte[] ignoredInitData = new byte[] { 1 };
                 drm.getKeyRequest(sessionId, ignoredInitData, "cenc", MediaDrm.KEY_TYPE_STREAMING, null);
             } catch (MediaDrm.SessionException e) {
-                if (e.getErrorCode() != MediaDrm.SessionException.ERROR_RESOURCE_CONTENTION) {
-                    throw new Error("Incorrect error code, expected ERROR_RESOURCE_CONTENTION");
+                if (e.getErrorCode() != MediaDrm.SessionException.ERROR_RESOURCE_CONTENTION ||
+                        !e.isTransient()) {
+                    throw new Error("Expected transient ERROR_RESOURCE_CONTENTION");
                 }
                 gotException = true;
             }
@@ -1247,6 +1251,35 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         if (!MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID, "cenc",
                                               MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO)) {
             throw new Error("Clearkey claims not to support SECURITY_LEVEL_SW_SECURE_CRYPTO");
+        }
+    }
+
+    @Presubmit
+    public void testMediaDrmStateExceptionErrorCode()
+            throws ResourceBusyException, UnsupportedSchemeException, NotProvisionedException {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = null;
+        try {
+            drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+            byte[] sessionId = drm.openSession();
+            drm.closeSession(sessionId);
+
+            byte[] ignoredInitData = new byte[]{1};
+            drm.getKeyRequest(sessionId, ignoredInitData, "cenc",
+                    MediaDrm.KEY_TYPE_STREAMING,
+                    null);
+        } catch(MediaDrmStateException e) {
+            Log.i(TAG, "Verifying exception error code", e);
+            assertFalse("ERROR_SESSION_NOT_OPENED requires new session", e.isTransient());
+            assertEquals("Expected ERROR_SESSION_NOT_OPENED",
+                    MediaDrm.ErrorCodes.ERROR_SESSION_NOT_OPENED, e.getErrorCode());
+        }  finally {
+            if (drm != null) {
+                drm.close();
+            }
         }
     }
 
