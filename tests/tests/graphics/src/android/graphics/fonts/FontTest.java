@@ -33,6 +33,8 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.cts.R;
+import android.graphics.text.PositionedGlyphs;
+import android.graphics.text.TextRunShaper;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.util.Pair;
@@ -1166,12 +1168,8 @@ public class FontTest {
         Font bFont = new Font.Builder(aFont).build();
         assertEquals(aFont.getSourceIdentifier(), bFont.getSourceIdentifier());
 
-        // Created font from duplicated buffers must be equal.
-        Font cFont = new Font.Builder(aFont.getBuffer().duplicate()).build();
-        assertEquals(aFont.getSourceIdentifier(), cFont.getSourceIdentifier());
-
         // Different parameter should be unequal but sameSource returns true.
-        Font dFont = new Font.Builder(aFont.getBuffer().duplicate())
+        Font dFont = new Font.Builder(aFont)
                 .setFontVariationSettings("'wght' 400")
                 .setWeight(123)
                 .build();
@@ -1180,6 +1178,18 @@ public class FontTest {
         // Different source must be not equals.
         Font gFont = new Font.Builder(assets, "fonts/others/samplefont2.ttf").build();
         assertNotEquals(aFont.getSourceIdentifier(), gFont.getSourceIdentifier());
+
+        Typeface typeface = new Typeface.CustomFallbackBuilder(
+                new FontFamily.Builder(
+                        aFont
+                ).build()
+        ).build();
+
+        Paint paint = new Paint();
+        paint.setTypeface(typeface);
+        PositionedGlyphs glyphs = TextRunShaper.shapeTextRun("a", 0, 1, 0, 1, 0f, 0f, false, paint);
+        assertEquals(aFont, glyphs.getFont(0));
+        assertEquals(aFont.getSourceIdentifier(), glyphs.getFont(0).getSourceIdentifier());
     }
 
     @Test
