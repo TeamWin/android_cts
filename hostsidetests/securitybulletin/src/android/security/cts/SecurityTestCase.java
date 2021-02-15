@@ -231,7 +231,22 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
      * Check if a driver is present on a machine.
      */
     protected boolean containsDriver(ITestDevice device, String driver) throws Exception {
-        boolean containsDriver = AdbUtils.runCommandGetExitCode("test -r " + driver, device) == 0;
+        boolean containsDriver = false;
+        if (driver.contains("*")) {
+            // -A  list all files but . and ..
+            // -d  directory, not contents
+            // -1  list one file per line
+            // -f  unsorted
+            String ls = "ls -A -d -1 -f " + driver;
+            if (AdbUtils.runCommandGetExitCode(ls, device) == 0) {
+                String[] expanded = device.executeShellCommand(ls).split("\\R");
+                for (String expandedDriver : expanded) {
+                    containsDriver |= containsDriver(device, expandedDriver);
+                }
+            }
+        } else {
+            containsDriver = AdbUtils.runCommandGetExitCode("test -r " + driver, device) == 0;
+        }
 
         MetricsReportLog reportLog = buildMetricsReportLog(getDevice());
         reportLog.addValue("path", driver, ResultType.NEUTRAL, ResultUnit.NONE);
