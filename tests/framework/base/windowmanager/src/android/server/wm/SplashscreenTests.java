@@ -16,7 +16,12 @@
 
 package android.server.wm;
 
+import static android.app.UiModeManager.MODE_NIGHT_AUTO;
+import static android.app.UiModeManager.MODE_NIGHT_CUSTOM;
+import static android.app.UiModeManager.MODE_NIGHT_NO;
+import static android.app.UiModeManager.MODE_NIGHT_YES;
 import static android.server.wm.CliIntentExtra.extraBool;
+import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
@@ -25,12 +30,14 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HAN
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
+import static android.server.wm.app.Components.TestStartingWindowKeys.GET_NIGHT_MODE_ACTIVITY_CHANGED;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATING;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
+import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_SET_NIGHT_MODE_ON_CREATE;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowInsets.Type.systemBars;
@@ -43,11 +50,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.UiModeManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -181,6 +190,33 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+    }
+
+    @Test
+    public void testSetApplicationNightMode() throws Exception {
+        assumeNewApisEnabled();
+        final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
+        assumeTrue(uiModeManager != null);
+        final int systemNightMode = uiModeManager.getNightMode();
+        final int testNightMode = (systemNightMode == MODE_NIGHT_AUTO
+                || systemNightMode == MODE_NIGHT_CUSTOM) ? MODE_NIGHT_YES
+                : systemNightMode == MODE_NIGHT_YES ? MODE_NIGHT_NO : MODE_NIGHT_YES;
+        final int testConfigNightMode = testNightMode == MODE_NIGHT_YES
+                ? Configuration.UI_MODE_NIGHT_YES
+                : Configuration.UI_MODE_NIGHT_NO;
+        final String nightModeNo = String.valueOf(testNightMode);
+
+        TestJournalProvider.TestJournalContainer.start();
+        launchActivity(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY,
+                extraString(REQUEST_SET_NIGHT_MODE_ON_CREATE, nightModeNo));
+        mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
+        mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT);
+        TestUtils.waitUntil("Waiting for night mode changed", 5 /* timeoutSecond */, () ->
+                testConfigNightMode == journal.extras.getInt(GET_NIGHT_MODE_ACTIVITY_CHANGED));
+        assertEquals(testConfigNightMode,
+                journal.extras.getInt(GET_NIGHT_MODE_ACTIVITY_CHANGED));
     }
 
     @Test
