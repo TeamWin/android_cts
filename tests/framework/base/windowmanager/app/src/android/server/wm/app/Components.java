@@ -258,6 +258,9 @@ public class Components extends ComponentsBase {
         public static final String REQUEST_HANDLE_EXIT_ON_CREATE = "handle_exit_onCreate";
         public static final String REQUEST_HANDLE_EXIT_ON_RESUME = "handle_exit_onResume";
         public static final String CANCEL_HANDLE_EXIT = "cancel_handle_exit";
+
+        public static final String REQUEST_SET_NIGHT_MODE_ON_CREATE = "night_mode_onCreate";
+        public static final String GET_NIGHT_MODE_ACTIVITY_CHANGED = "get_night_mode_activity";
         public static final String DELAY_RESUME = "delay_resume";
     }
 
