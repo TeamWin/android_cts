@@ -59,4 +59,7 @@
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/animationDrawable</item>
         <item name="android:windowSplashScreenAnimationDuration">500</item>
     </style>
+    <style name="ShowBrandingTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowSplashScreenBrandingImage">@drawable/branding</item>
+    </style>
 </resources>

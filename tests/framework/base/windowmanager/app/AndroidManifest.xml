@@ -555,7 +555,9 @@
         <activity android:name=".BackgroundImageActivity"
              android:exported="true"/>
 
-        <activity android:name=".HandleSplashScreenExitActivity" android:exported="true"/>
+        <activity android:name=".HandleSplashScreenExitActivity"
+                  android:theme="@style/ShowBrandingTheme"
+                  android:exported="true"/>
         <activity android:name=".SplashScreenReplaceIconActivity"
                   android:exported="true"
                   android:theme="@style/ReplaceIconTheme"/>
