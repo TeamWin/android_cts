@@ -16,30 +16,38 @@
 
 package android.server.wm;
 
+import static android.server.wm.CliIntentExtra.extraBool;
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
+import static android.server.wm.app.Components.HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY;
 import static android.server.wm.app.Components.SPLASHSCREEN_ACTIVITY;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
+import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
+import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.WindowInsets.Type.captionBar;
 import static android.view.WindowInsets.Type.systemBars;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Insets;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
-import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.WindowMetrics;
+
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 
 /**
  * Build/Install/Run:
@@ -114,5 +122,45 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                     + "% of pixels have wrong color primaryPixels=" + primaryPixels
                     + " secondaryPixels=" + secondaryPixels + " wrongPixels=" + wrongPixels);
         }
+    }
+
+    private void assumeNewAPIsEnable() {
+        // Temporary verify by shell command before new APIs enable.
+        final String enableTest =
+                executeShellCommand("getprop persist.debug.shell_starting_surface").trim();
+        assumeTrue(Boolean.parseBoolean(enableTest));
+    }
+
+    @Test
+    public void testHandleExitAnimationOnCreate() throws Exception {
+        assumeNewAPIsEnable();
+        launchRuntimeHandleExitAnimationActivity(true, false, false, true);
+    }
+    @Test
+    public void testHandleExitAnimationOnResume() throws Exception {
+        assumeNewAPIsEnable();
+        launchRuntimeHandleExitAnimationActivity(false, true, false, true);
+    }
+    @Test
+    public void testHandleExitAnimationCancel() throws Exception {
+        assumeNewAPIsEnable();
+        launchRuntimeHandleExitAnimationActivity(true, false, true, false);
+    }
+
+    private void launchRuntimeHandleExitAnimationActivity(boolean extraOnCreate,
+            boolean extraOnResume, boolean extraCancel, boolean expectResult) throws Exception {
+        TestJournalProvider.TestJournalContainer.start();
+        launchActivity(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY,
+                extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, extraOnCreate),
+                extraBool(REQUEST_HANDLE_EXIT_ON_RESUME, extraOnResume),
+                extraBool(CANCEL_HANDLE_EXIT, extraCancel));
+
+        mWmState.computeState(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY);
+        mWmState.assertVisibility(HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY, true);
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(HANDLE_SPLASH_SCREEN_EXIT);
+        TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
+                () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
+        assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
     }
 }

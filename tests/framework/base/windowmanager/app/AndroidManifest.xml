@@ -555,6 +555,8 @@
         <activity android:name=".BackgroundImageActivity"
              android:exported="true"/>
 
+        <activity android:name=".HandleSplashScreenExitActivity" android:exported="true"/>
+
         <service android:name=".OverlayTestService"
                  android:exported="true" />
     </application>
