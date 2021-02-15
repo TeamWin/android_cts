@@ -53,4 +53,13 @@
         <item name="android:windowBackground">#20FFFFFF</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+
+    <style name="ReplaceIconTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowSplashScreenBackground">@drawable/blue</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/animationDrawable</item>
+        <item name="android:windowSplashScreenAnimationDuration">500</item>
+    </style>
+    <style name="ShowBrandingTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowSplashScreenBrandingImage">@drawable/branding</item>
+    </style>
 </resources>

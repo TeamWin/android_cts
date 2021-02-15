@@ -216,6 +216,11 @@ public class Components extends ComponentsBase {
     public static final ComponentName CRASHING_ACTIVITY =
             component("CrashingActivity");
 
+    public static final ComponentName HANDLE_SPLASH_SCREEN_EXIT_ACTIVITY =
+            component("HandleSplashScreenExitActivity");
+    public static final ComponentName SPLASH_SCREEN_REPLACE_ICON_ACTIVITY =
+            component("SplashScreenReplaceIconActivity");
+
     public static final ComponentName TEST_DREAM_SERVICE =
             component("TestDream");
 
@@ -237,6 +242,27 @@ public class Components extends ComponentsBase {
     public static class InputMethodTestActivity {
         public static final String EXTRA_PRIVATE_IME_OPTIONS = "private_ime_options";
         public static final String EXTRA_TEST_CURSOR_ANCHOR_INFO = "cursor_anchor_info";
+    }
+
+    /**
+     * The keys are used for {@link TestJournalProvider} when testing starting window.
+     */
+    public static class TestStartingWindowKeys {
+        public static final String HANDLE_SPLASH_SCREEN_EXIT = "HandleSplashScreenExitActivity";
+        public static final String REPLACE_ICON_EXIT = "SplashScreenReplaceIconActivity";
+        public static final String RECEIVE_SPLASH_SCREEN_EXIT = "receive_splash_screen_exit";
+        public static final String CONTAINS_CENTER_VIEW = "contains_center_view";
+        public static final String CONTAINS_BRANDING_VIEW = "contains_branding_view";
+        public static final String ICON_ANIMATION_DURATION = "icon_animation_duration";
+        public static final String ICON_ANIMATION_START = "icon_animation_start";
+
+        public static final String REQUEST_HANDLE_EXIT_ON_CREATE = "handle_exit_onCreate";
+        public static final String REQUEST_HANDLE_EXIT_ON_RESUME = "handle_exit_onResume";
+        public static final String CANCEL_HANDLE_EXIT = "cancel_handle_exit";
+
+        public static final String REQUEST_SET_NIGHT_MODE_ON_CREATE = "night_mode_onCreate";
+        public static final String GET_NIGHT_MODE_ACTIVITY_CHANGED = "get_night_mode_activity";
+        public static final String DELAY_RESUME = "delay_resume";
     }
 
     /**
