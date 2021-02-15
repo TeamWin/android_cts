@@ -97,7 +97,7 @@ public class UnsupportedErrorDialogTests extends ActivityManagerTestBase {
     @Test
     public void testDevSettingPrecedence() {
         try (SettingsSession<Integer> devDialogShow =
-                     globalIntSession(Settings.Secure.ANR_SHOW_BACKGROUND);
+                     secureIntSession(Settings.Secure.ANR_SHOW_BACKGROUND);
              SettingsSession<Integer> userDialogHide =
                      globalIntSession(Settings.Global.HIDE_ERROR_DIALOGS);
              SettingsSession<Integer> showOnFirstCrash =
@@ -105,7 +105,6 @@ public class UnsupportedErrorDialogTests extends ActivityManagerTestBase {
         ) {
             devDialogShow.set(1);
             showOnFirstCrash.set(1);
-            // I recon this would require pushing a configuration change
             userDialogHide.set(1);
 
             launchActivityNoWait(Components.CRASHING_ACTIVITY);
@@ -165,9 +164,11 @@ public class UnsupportedErrorDialogTests extends ActivityManagerTestBase {
         // wait for app to be focused
         mWmState.waitAndAssertAppFocus(Components.UNRESPONSIVE_ACTIVITY.getPackageName(),
                 2_000 /* waitTime */);
-        // wait for input manager to get the new focus app
-        SystemClock.sleep(500);
-        injectKey(KeyEvent.KEYCODE_BACK, false /* longPress */, false /* sync */);
+        // queue up enough key events to trigger an ANR
+        for (int i = 0; i < 14; i++) {
+            injectKey(KeyEvent.KEYCODE_TAB, false /* longPress */, false /* sync */);
+            SystemClock.sleep(500);
+        }
         ensureNoCrashDialog(Components.UNRESPONSIVE_ACTIVITY);
         ensureHomeFocused();
     }
