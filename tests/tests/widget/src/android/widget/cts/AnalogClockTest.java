@@ -19,7 +19,11 @@ package android.widget.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import android.annotation.ColorRes;
 import android.app.Activity;
+import android.content.res.ColorStateList;
+import android.graphics.BlendMode;
+import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.util.AttributeSet;
 import android.util.Xml;
@@ -152,5 +156,141 @@ public class AnalogClockTest {
 
         mClock.setTimeZone(null);
         assertNull(mClock.getTimeZone());
+    }
+
+    @Test
+    public void testSetDialTintList() {
+        assertNull(mClock.getDialTintList());
+        assertEquals(
+                getColorStateList(R.color.testcolorstatelist1),
+                mClockWithAttrs.getDialTintList());
+
+        ColorStateList tintList = new ColorStateList(
+                new int[][] { {android.R.attr.state_checked}, {}},
+                new int[] {Color.RED, Color.BLUE});
+        mClock.setDialTintList(tintList);
+        assertEquals(tintList, mClock.getDialTintList());
+
+        mClock.setDialTintList(null);
+        assertNull(mClock.getDialTintList());
+    }
+
+    @Test
+    public void testSetDialTintBlendMode() {
+        assertNull(mClock.getDialTintBlendMode());
+        assertEquals(BlendMode.SRC_IN, mClockWithAttrs.getDialTintBlendMode());
+
+        mClock.setDialTintBlendMode(BlendMode.COLOR);
+        mClockWithAttrs.setDialTintBlendMode(BlendMode.COLOR);
+        assertEquals(BlendMode.COLOR, mClock.getDialTintBlendMode());
+        assertEquals(BlendMode.COLOR, mClockWithAttrs.getDialTintBlendMode());
+
+        mClock.setDialTintBlendMode(null);
+        mClockWithAttrs.setDialTintBlendMode(null);
+        assertNull(mClock.getDialTintBlendMode());
+        assertNull(mClockWithAttrs.getDialTintBlendMode());
+    }
+
+    @Test
+    public void testSetHourHandTintList() {
+        assertNull(mClock.getHourHandTintList());
+        assertEquals(
+                getColorStateList(R.color.testcolor1),
+                mClockWithAttrs.getHourHandTintList());
+
+        ColorStateList tintList = new ColorStateList(
+                new int[][] { {android.R.attr.state_checked}, {}},
+                new int[] {Color.BLACK, Color.WHITE});
+        mClock.setHourHandTintList(tintList);
+        assertEquals(tintList, mClock.getHourHandTintList());
+
+        mClock.setHourHandTintList(null);
+        assertNull(mClock.getHourHandTintList());
+    }
+
+    @Test
+    public void testSetHourHandTintBlendMode() {
+        assertNull(mClock.getHourHandTintBlendMode());
+        assertEquals(BlendMode.SRC_OVER, mClockWithAttrs.getHourHandTintBlendMode());
+
+        mClock.setHourHandTintBlendMode(BlendMode.COLOR_BURN);
+        mClockWithAttrs.setHourHandTintBlendMode(BlendMode.COLOR_BURN);
+        assertEquals(BlendMode.COLOR_BURN, mClock.getHourHandTintBlendMode());
+        assertEquals(BlendMode.COLOR_BURN, mClockWithAttrs.getHourHandTintBlendMode());
+
+        mClock.setHourHandTintBlendMode(null);
+        mClockWithAttrs.setHourHandTintBlendMode(null);
+        assertNull(mClock.getHourHandTintBlendMode());
+        assertNull(mClockWithAttrs.getHourHandTintBlendMode());
+    }
+
+    @Test
+    public void testSetMinuteHandTintList() {
+        assertNull(mClock.getMinuteHandTintList());
+        assertEquals(
+                getColorStateList(R.color.testcolor2),
+                mClockWithAttrs.getMinuteHandTintList());
+
+        ColorStateList tintList = new ColorStateList(
+                new int[][] { {android.R.attr.state_active}, {}},
+                new int[] {Color.CYAN, Color.BLUE});
+        mClock.setMinuteHandTintList(tintList);
+        assertEquals(tintList, mClock.getMinuteHandTintList());
+
+        mClock.setMinuteHandTintList(null);
+        assertNull(mClock.getMinuteHandTintList());
+    }
+
+    @Test
+    public void testSetMinuteHandTintBlendMode() {
+        assertNull(mClock.getMinuteHandTintBlendMode());
+        assertEquals(BlendMode.SCREEN, mClockWithAttrs.getMinuteHandTintBlendMode());
+
+        mClock.setMinuteHandTintBlendMode(BlendMode.COLOR_DODGE);
+        mClockWithAttrs.setMinuteHandTintBlendMode(BlendMode.COLOR_DODGE);
+        assertEquals(BlendMode.COLOR_DODGE, mClock.getMinuteHandTintBlendMode());
+        assertEquals(BlendMode.COLOR_DODGE, mClockWithAttrs.getMinuteHandTintBlendMode());
+
+        mClock.setMinuteHandTintBlendMode(null);
+        mClockWithAttrs.setMinuteHandTintBlendMode(null);
+        assertNull(mClock.getMinuteHandTintBlendMode());
+        assertNull(mClockWithAttrs.getMinuteHandTintBlendMode());
+    }
+
+    @Test
+    public void testSetSecondHandTintList() {
+        assertNull(mClock.getSecondHandTintList());
+        assertEquals(
+                getColorStateList(R.color.testcolor3),
+                mClockWithAttrs.getSecondHandTintList());
+
+        ColorStateList tintList = new ColorStateList(
+                new int[][] { {android.R.attr.state_checked}, {}},
+                new int[] {Color.GREEN, Color.BLUE});
+        mClock.setSecondHandTintList(tintList);
+        assertEquals(tintList, mClock.getSecondHandTintList());
+
+        mClock.setSecondHandTintList(null);
+        assertNull(mClock.getSecondHandTintList());
+    }
+
+    @Test
+    public void testSetSecondHandTintBlendMode() {
+        assertNull(mClock.getSecondHandTintBlendMode());
+        assertEquals(BlendMode.PLUS, mClockWithAttrs.getSecondHandTintBlendMode());
+
+        mClock.setSecondHandTintBlendMode(BlendMode.DARKEN);
+        mClockWithAttrs.setSecondHandTintBlendMode(BlendMode.DARKEN);
+        assertEquals(BlendMode.DARKEN, mClock.getSecondHandTintBlendMode());
+        assertEquals(BlendMode.DARKEN, mClockWithAttrs.getSecondHandTintBlendMode());
+
+        mClock.setSecondHandTintBlendMode(null);
+        mClockWithAttrs.setSecondHandTintBlendMode(null);
+        assertNull(mClock.getSecondHandTintBlendMode());
+        assertNull(mClockWithAttrs.getSecondHandTintBlendMode());
+    }
+
+    private ColorStateList getColorStateList(@ColorRes int resId) {
+        return mClock.getContext().getColorStateList(resId);
     }
 }
