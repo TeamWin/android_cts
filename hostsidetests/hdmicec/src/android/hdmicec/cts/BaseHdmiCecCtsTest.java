@@ -188,7 +188,8 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
     }
 
     private static void setCecVersion(ITestDevice device, int cecVersion) throws Exception {
-        device.executeShellCommand("settings put global hdmi_cec_version " + cecVersion);
+        device.executeShellCommand("cmd hdmi_control cec_setting set hdmi_cec_version " +
+                cecVersion);
 
         TimeUnit.SECONDS.sleep(HdmiCecConstants.TIMEOUT_CEC_REINIT_SECONDS);
     }
