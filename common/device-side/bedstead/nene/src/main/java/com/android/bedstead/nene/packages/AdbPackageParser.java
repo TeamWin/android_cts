@@ -14,28 +14,22 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.users;
+package com.android.bedstead.nene.packages;
 
 import android.annotation.TargetApi;
 import android.os.Build;
 
-import androidx.annotation.Nullable;
-
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 import java.util.Map;
+import java.util.Set;
 
-/**
- * Parser for the output of "adb dumpsys user".
- */
+/** Parser for `adb dumpsys package`. */
 @TargetApi(Build.VERSION_CODES.O)
-interface AdbUserParser {
+interface AdbPackageParser {
 
-    static AdbUserParser get(Users users, int sdkVersion) {
-        if (sdkVersion >= 30) {
-            return new AdbUserParser30(users);
-        }
-        return new AdbUserParser26(users);
+    static AdbPackageParser get(Packages packages, int sdkVersion) {
+        return new AdbPackageParser26(packages);
     }
 
     /**
@@ -44,9 +38,9 @@ interface AdbUserParser {
      * <p>Values which are not used on the current version of Android will be {@code null}.
      */
     class ParseResult {
-        Map<Integer, User> mUsers;
-        @Nullable Map<String, UserType> mUserTypes;
+        Map<String, Package> mPackages;
+        Set<String> mFeatures;
     }
 
-    ParseResult parse(String dumpsysUsersOutput) throws AdbParseException;
+    ParseResult parse(String dumpsysPackageOutput) throws AdbParseException;
 }

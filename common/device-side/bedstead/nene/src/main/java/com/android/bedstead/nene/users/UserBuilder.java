@@ -26,6 +26,8 @@ import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 
+import java.util.UUID;
+
 /**
  * Builder for creating a new Android User.
  */
@@ -56,7 +58,7 @@ public class UserBuilder {
     /** Create the user. */
     public UserReference create() {
         if (mName == null) {
-            throw new IllegalStateException("Name must be specified for a new user");
+            mName = UUID.randomUUID().toString();
         }
 
         ShellCommand.Builder commandBuilder = ShellCommand.builder("pm create-user");

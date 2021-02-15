@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.nene.users;
+package com.android.bedstead.nene.packages;
 
 /**
- * Default implementation of {@link UserReference}.
- *
- * <p>Represents the abstract idea of a {@link User}, which may or may not exist.
+ * Default implementation of {@link PackageReference} used when we haven't fetched information from
+ * the device.
  */
-public final class UnresolvedUser extends UserReference {
-    UnresolvedUser(Users users, int id) {
-        super(users, id);
-    }
-
-    @Override
-    public String toString() {
-        return "UnresolvedUser{id=" + id() + "}";
+public final class UnresolvedPackage extends PackageReference {
+    UnresolvedPackage(Packages packages, String packageName) {
+        super(packages, packageName);
     }
 }

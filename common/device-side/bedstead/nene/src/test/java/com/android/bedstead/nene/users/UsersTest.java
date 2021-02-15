@@ -20,11 +20,10 @@ import static android.os.Build.VERSION.SDK_INT;
 
 import static com.google.common.truth.Truth.assertThat;
 
-
 import static org.junit.Assume.assumeTrue;
-import static org.testng.Assert.assertThrows;
 
 import android.os.Build;
+import android.os.UserHandle;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
@@ -178,6 +177,11 @@ public class UsersTest {
     }
 
     @Test
+    public void find_fromUserHandle_referencesCorrectId() {
+        assertThat(mUsers.find(UserHandle.of(USER_ID)).id()).isEqualTo(USER_ID);
+    }
+
+    @Test
     public void find_constructedReferenceReferencesCorrectId() {
         assertThat(mUsers.find(USER_ID).id()).isEqualTo(USER_ID);
     }
@@ -185,7 +189,6 @@ public class UsersTest {
     @Test
     public void createUser_userIsCreated()  {
         UserReference userReference = mUsers.createUser()
-                .name(USER_NAME) // required
                 .create();
 
         try {
@@ -215,7 +218,6 @@ public class UsersTest {
 
         UserType type = mUsers.supportedType(RESTRICTED_USER_TYPE);
         UserReference userReference = mUsers.createUser()
-                .name(USER_NAME) // required
                 .type(type)
                 .create();
 
@@ -224,13 +226,6 @@ public class UsersTest {
         } finally {
             userReference.remove();
         }
-    }
-
-    @Test
-    public void createUser_doesNotSpecifyName_throwsIllegalStateException() {
-        UserBuilder userBuilder = mUsers.createUser();
-
-        assertThrows(IllegalStateException.class, userBuilder::create);
     }
 
     @Test
