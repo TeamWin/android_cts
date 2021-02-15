@@ -32,7 +32,8 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_C
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
 import static android.server.wm.app.Components.TestStartingWindowKeys.GET_NIGHT_MODE_ACTIVITY_CHANGED;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
-import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATING;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_DURATION;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_START;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
@@ -239,7 +240,10 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         TestUtils.waitUntil("Waiting for runtime onSplashScreenExit", 5 /* timeoutSecond */,
                 () -> journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertTrue(journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
-        assertFalse(journal.extras.getBoolean(ICON_ANIMATING));
+        final long iconAnimationStart = journal.extras.getLong(ICON_ANIMATION_START);
+        final int iconAnimationDuration = journal.extras.getInt(ICON_ANIMATION_DURATION);
+        assertTrue(iconAnimationStart != 0);
+        assertEquals(iconAnimationDuration, 500);
         assertFalse(journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
     }
 

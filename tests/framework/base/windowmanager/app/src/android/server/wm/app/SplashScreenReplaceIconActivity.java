@@ -19,7 +19,8 @@ package android.server.wm.app;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.DELAY_RESUME;
-import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATING;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_DURATION;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_START;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
@@ -64,7 +65,8 @@ public class SplashScreenReplaceIconActivity extends Activity {
         TestJournalProvider.putExtras(baseContext, REPLACE_ICON_EXIT, bundle -> {
             bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
             bundle.putBoolean(CONTAINS_CENTER_VIEW, centerView != null);
-            bundle.putBoolean(ICON_ANIMATING, view.isIconAnimating());
+            bundle.putLong(ICON_ANIMATION_DURATION, view.getIconAnimationDurationMillis());
+            bundle.putLong(ICON_ANIMATION_START, view.getIconAnimationStartMillis());
         });
         view.remove();
     }
