@@ -17,6 +17,7 @@
 package android.server.wm.app;
 
 import static android.server.wm.app.Components.TestStartingWindowKeys.CANCEL_HANDLE_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_BRANDING_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
@@ -27,7 +28,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.server.wm.TestJournalProvider;
-import android.view.View;
 import android.window.SplashScreen;
 
 public class HandleSplashScreenExitActivity extends Activity {
@@ -44,12 +44,15 @@ public class HandleSplashScreenExitActivity extends Activity {
     private final SplashScreen.OnExitAnimationListener mSplashScreenExitHandler =
             view -> {
                 final Context baseContext = getBaseContext();
-                final View centerView = view.getIconView();
+                final boolean containsCenter = view.getIconView() != null;
+                final boolean containsBranding = view.getBrandingView() != null
+                        && view.getBrandingView().getBackground() != null;
                 TestJournalProvider.putExtras(baseContext, HANDLE_SPLASH_SCREEN_EXIT, bundle -> {
                     bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
-                    bundle.putBoolean(CONTAINS_CENTER_VIEW, centerView != null);
+                    bundle.putBoolean(CONTAINS_CENTER_VIEW, containsCenter);
+                    bundle.putBoolean(CONTAINS_BRANDING_VIEW, containsBranding);
                 });
-                view.remove();
+                view.postDelayed(view::remove, 500);
             };
 
     @Override

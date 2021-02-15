@@ -252,6 +252,7 @@ public class Components extends ComponentsBase {
         public static final String REPLACE_ICON_EXIT = "SplashScreenReplaceIconActivity";
         public static final String RECEIVE_SPLASH_SCREEN_EXIT = "receive_splash_screen_exit";
         public static final String CONTAINS_CENTER_VIEW = "contains_center_view";
+        public static final String CONTAINS_BRANDING_VIEW = "contains_branding_view";
         public static final String ICON_ANIMATING = "icon_animating";
 
         public static final String REQUEST_HANDLE_EXIT_ON_CREATE = "handle_exit_onCreate";
