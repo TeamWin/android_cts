@@ -225,6 +225,12 @@ public class Components extends ComponentsBase {
     public static final ComponentName OVERLAY_TEST_SERVICE =
             component("OverlayTestService");
 
+    public static final ComponentName BLUR_ACTIVITY =
+            component("BlurActivity");
+
+    public static final ComponentName BACKGROUND_IMAGE_ACTIVITY =
+            component("BackgroundImageActivity");
+
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
      */
@@ -377,6 +383,14 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_FINISH_POINT = "finish_point";
         public static final String FINISH_POINT_ON_PAUSE = "on_pause";
         public static final String FINISH_POINT_ON_STOP = "on_stop";
+    }
+
+    /**
+     * Extra constants for {@link android.server.wm.app.BlurActivity}.
+     */
+    public static class BlurActivity {
+        public static final String EXTRA_BACKGROUND_BLUR_RADIUS_PX = "background_blur_radius";
+        public static final String ACTION_FINISH = "android.server.wm.app.BlurActivity.finish";
     }
 
     /**
