@@ -271,6 +271,7 @@ public class LockTaskHostDrivenTest extends BaseDeviceAdminTest {
                 LockTaskUtilityActivity.waitUntilActivityResumed(ACTIVITY_RESUMED_TIMEOUT_MILLIS);
         if (!lockedActivityIsResumed) {
             launchLockTaskUtilityActivityWithoutStartingLockTask();
+            waitAndCheckLockedActivityIsResumed();
         }
     }
 
