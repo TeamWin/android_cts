@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import static org.junit.Assume.assumeTrue;
+
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.device.ITestDevice;
@@ -26,6 +28,7 @@ import org.junit.rules.TestRule;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,8 +68,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        ITestDevice device = getDevice();
-        CecVersionHelper.setCec14(device);
+        setCec14();
 
         if (mDutLogicalAddress == LogicalAddress.UNKNOWN) {
             mDutLogicalAddress = LogicalAddress.getLogicalAddress(getDumpsysLogicalAddress());
@@ -183,5 +185,32 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             }
         }
         throw new Exception("Could not parse active source from dumpsys.");
+    }
+
+    private static void setCecVersion(ITestDevice device, int cecVersion) throws Exception {
+        device.executeShellCommand("settings put global hdmi_cec_version " + cecVersion);
+
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.TIMEOUT_CEC_REINIT_SECONDS);
+    }
+
+    /**
+     * Configures the device to use CEC 2.0. Skips the test if the device does not support CEC 2.0.
+     * @throws Exception
+     */
+    public void setCec20() throws Exception {
+        setCecVersion(getDevice(), HdmiCecConstants.CEC_VERSION_2_0);
+        hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), mDutLogicalAddress,
+                CecOperand.GET_CEC_VERSION);
+        String reportCecVersion = hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
+                CecOperand.CEC_VERSION);
+        boolean supportsCec2 = CecMessage.getParams(reportCecVersion)
+                >= HdmiCecConstants.CEC_VERSION_2_0;
+
+        // Device still reports a CEC version < 2.0.
+        assumeTrue(supportsCec2);
+    }
+
+    public void setCec14() throws Exception {
+        setCecVersion(getDevice(), HdmiCecConstants.CEC_VERSION_1_4);
     }
 }

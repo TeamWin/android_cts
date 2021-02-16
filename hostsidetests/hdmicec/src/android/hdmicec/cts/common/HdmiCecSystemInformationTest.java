@@ -23,7 +23,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.CecVersionHelper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -86,7 +85,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_reportFeatures_deviceTypeContainedInAllDeviceTypes() throws Exception {
-        CecVersionHelper.setCec20(getDevice());
+        setCec20();
         List<LogicalAddress> testDevices =
                 Arrays.asList(
                         LogicalAddress.TV,
@@ -137,7 +136,6 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_11_2_6_6_GiveCecVersion() throws Exception {
         int cecVersion = HdmiCecConstants.CEC_VERSION_1_4;
-        CecVersionHelper.setCecVersion(getDevice(), cecVersion);
 
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
         String message =
@@ -157,7 +155,7 @@ public final class HdmiCecSystemInformationTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_2_12_GiveCecVersion() throws Exception {
         int cecVersion = HdmiCecConstants.CEC_VERSION_2_0;
-        CecVersionHelper.setCecVersion(getDevice(), cecVersion);
+        setCec20();
 
         hdmiCecClient.sendCecMessage(hdmiCecClient.getSelfDevice(), CecOperand.GET_CEC_VERSION);
         String reportCecVersion = hdmiCecClient.checkExpectedOutput(hdmiCecClient.getSelfDevice(),
