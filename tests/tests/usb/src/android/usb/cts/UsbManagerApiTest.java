@@ -46,6 +46,9 @@ public class UsbManagerApiTest {
     private UiAutomation mUiAutomation =
         InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
+    // Update latest HAL version here
+    private int USB_HAL_LATEST_VERSION = UsbManager.USB_HAL_V1_3;
+
     @Before
     public void setUp() {
         Assert.assertNotNull(mUsbManagerSys);
@@ -108,6 +111,36 @@ public class UsbManagerApiTest {
             Assert.fail("Expecting SecurityException on getGadgetHalVersion.");
         } catch (SecurityException secEx) {
             Log.d(TAG, "Expected SecurityException on getGadgetHalVersion.");
+        }
+    }
+
+    /**
+     * Verify NO SecurityException.
+     */
+    @Test
+    public void test_UsbApiForUsbHal() throws Exception {
+        // Adopt MANAGE_USB permission.
+        mUiAutomation.adoptShellPermissionIdentity(MANAGE_USB);
+
+        // Should pass with permission.
+        int version = mUsbManagerSys.getUsbHalVersion();
+        if (version == USB_HAL_LATEST_VERSION) {
+            Log.d(TAG, "Running with the latest HAL version");
+        } else if (version == UsbManager.USB_HAL_NOT_SUPPORTED) {
+            Log.d(TAG, "Not supported HAL version");
+        }
+        else {
+            Log.d(TAG, "Not the latest HAL version");
+        }
+
+        // Drop MANAGE_USB permission.
+        mUiAutomation.dropShellPermissionIdentity();
+
+        try {
+            mUsbManagerSys.getUsbHalVersion();
+            Assert.fail("Expecting SecurityException on getUsbHalVersion.");
+        } catch (SecurityException secEx) {
+            Log.d(TAG, "Expected SecurityException on getUsbHalVersion.");
         }
     }
 }
