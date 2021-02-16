@@ -27,12 +27,14 @@ import android.stats.tv.TifTuneState;
 
 import com.android.os.AtomsProto;
 import com.android.os.StatsLog;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.truth.Correspondence;
@@ -88,13 +90,11 @@ public class TvInputManagerServiceHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void verifyCommandTune() throws Exception {
-        final int atomTag = AtomsProto.Atom.TIF_TUNE_CHANGED_FIELD_NUMBER;
+    public void verifyCallbackVideoAvailable() throws Exception {
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), TEST_PKG,
-                atomTag,  /*uidInAttributionChain=*/true);
+                AtomsProto.Atom.TIF_TUNE_CHANGED_FIELD_NUMBER,  /*uidInAttributionChain=*/true);
 
-        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG,
-                "android.media.tv.cts.TvInputServiceTest", "verifyCommandTune");
+        runTvInputServiceTest("verifyCallbackVideoAvailable");
 
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
@@ -106,23 +106,86 @@ public class TvInputManagerServiceHostTest extends BaseHostJUnit4Test {
                         setHdmiPort(0);
         assertThat(tifTuneStateChanges).
                 comparingElementsUsing(TIF_TUNE_STATE_CHANGED_CORRESPONDENCE).
-                containsExactly(
-                        protoBuilder.
-                                setState(TifTuneState.CREATED).
-                                build(),
-                        protoBuilder.
-                                setState(TifTuneState.SURFACE_ATTACHED).
-                                build(),
-                        protoBuilder.
-                                setState(TifTuneState.TUNE_STARTED).
-                                build(),
-                        protoBuilder.
-                                setState(TifTuneState.SURFACE_DETACHED).
-                                build(),
-                        protoBuilder.
-                                setState(TifTuneState.RELEASED).
-                                build()
-                ).inOrder();
+                containsExactlyElementsIn(
+                        createAtomsFromStateList(protoBuilder,
+                                TifTuneState.CREATED,
+                                TifTuneState.SURFACE_ATTACHED,
+                                TifTuneState.TUNE_STARTED,
+                                TifTuneState.VIDEO_AVAILABLE,
+                                TifTuneState.SURFACE_DETACHED,
+                                TifTuneState.RELEASED)).
+                inOrder();
+    }
+
+    @Test
+    public void verifyCallbackVideoUnavailable() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), TEST_PKG,
+                AtomsProto.Atom.TIF_TUNE_CHANGED_FIELD_NUMBER,  /*uidInAttributionChain=*/true);
+
+        runTvInputServiceTest("verifyCallbackVideoUnavailable");
+
+        // Sorted list of events in order in which they occurred.
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        List<AtomsProto.TifTuneStateChanged> tifTuneStateChanges = Lists.transform(data,
+                input -> input.getAtom().getTifTuneChanged());
+        AtomsProto.TifTuneStateChanged.Builder protoBuilder =
+                AtomsProto.TifTuneStateChanged.newBuilder().
+                        setInputId(1).
+                        setHdmiPort(0);
+        assertThat(tifTuneStateChanges).
+                comparingElementsUsing(TIF_TUNE_STATE_CHANGED_CORRESPONDENCE).
+                containsExactlyElementsIn(
+                        createAtomsFromStateList(protoBuilder,
+                                TifTuneState.CREATED,
+                                TifTuneState.SURFACE_ATTACHED,
+                                TifTuneState.TUNE_STARTED,
+                                TifTuneState.VIDEO_UNAVAILABLE_REASON_TUNING,
+                                TifTuneState.SURFACE_DETACHED,
+                                TifTuneState.RELEASED)).
+                inOrder();
+    }
+
+    @Test
+    public void verifyCommandTune() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), TEST_PKG,
+                AtomsProto.Atom.TIF_TUNE_CHANGED_FIELD_NUMBER,  /*uidInAttributionChain=*/true);
+
+        runTvInputServiceTest("verifyCommandTune");
+
+        // Sorted list of events in order in which they occurred.
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        List<AtomsProto.TifTuneStateChanged> tifTuneStateChanges = Lists.transform(data,
+                input -> input.getAtom().getTifTuneChanged());
+        AtomsProto.TifTuneStateChanged.Builder protoBuilder =
+                AtomsProto.TifTuneStateChanged.newBuilder().
+                        setInputId(1).
+                        setHdmiPort(0);
+        assertThat(tifTuneStateChanges).
+                comparingElementsUsing(TIF_TUNE_STATE_CHANGED_CORRESPONDENCE).
+                containsExactlyElementsIn(
+                        createAtomsFromStateList(protoBuilder,
+                                TifTuneState.CREATED,
+                                TifTuneState.SURFACE_ATTACHED,
+                                TifTuneState.TUNE_STARTED,
+                                TifTuneState.SURFACE_DETACHED,
+                                TifTuneState.RELEASED)).
+                inOrder();
+
+    }
+
+    private void runTvInputServiceTest(String testMethodName)
+            throws DeviceNotAvailableException {
+        DeviceUtils.runDeviceTests(getDevice(), TEST_PKG,
+                "android.media.tv.cts.TvInputServiceTest", testMethodName);
+    }
+
+    private static Iterable<AtomsProto.TifTuneStateChanged> createAtomsFromStateList(
+            AtomsProto.TifTuneStateChanged.Builder protoBuilder, TifTuneState... tuneStates) {
+        ImmutableList.Builder<AtomsProto.TifTuneStateChanged> atoms = ImmutableList.builder();
+        for (int i = 0; i < tuneStates.length; i++) {
+            atoms.add(protoBuilder.setState(tuneStates[i]).build());
+        }
+        return atoms.build();
     }
 
     private static class CorrespondenceFieldChainBuilder<T> {
