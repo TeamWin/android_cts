@@ -549,6 +549,19 @@
              android:launchMode="singleTop"
              android:exported="true"/>
         <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
+        <activity android:name=".BlurActivity"
+             android:exported="true"
+             android:theme="@style/Theme.Tinted.Translucent.Dialog"/>
+        <activity android:name=".BackgroundImageActivity"
+             android:exported="true"/>
+
+        <activity android:name=".HandleSplashScreenExitActivity"
+                  android:theme="@style/ShowBrandingTheme"
+                  android:configChanges="uiMode"
+                  android:exported="true"/>
+        <activity android:name=".SplashScreenReplaceIconActivity"
+                  android:exported="true"
+                  android:theme="@style/ReplaceIconTheme"/>
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />
