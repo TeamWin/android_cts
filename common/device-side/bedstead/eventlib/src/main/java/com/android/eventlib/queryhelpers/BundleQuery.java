@@ -22,8 +22,12 @@ import androidx.annotation.CheckResult;
 
 import com.android.eventlib.EventLogsQuery;
 
+import java.io.Serializable;
+
 /** Query for a {@link Bundle}. */
-public interface BundleQuery<E extends EventLogsQuery> {
+public interface BundleQuery<E extends EventLogsQuery>  extends Serializable {
+
+    /** Query a given key on the {@link Bundle}. */
     @CheckResult
     BundleKeyQuery<E> key(String key);
 }

@@ -18,6 +18,8 @@ package com.android.eventlib;
 
 import android.os.UserHandle;
 
+import com.android.bedstead.nene.users.UserReference;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
@@ -104,6 +106,11 @@ public abstract class EventLogsQuery<E extends Event, F extends EventLogsQuery>
         }
         mUserHandle = userHandle;
         return (F) this;
+    }
+
+    /** Query a package running on another user. */
+    public F onUser(UserReference userReference) {
+        return onUser(userReference.userHandle());
     }
 
     UserHandle getUserHandle() {
