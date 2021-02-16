@@ -181,7 +181,8 @@ public class PowerManagerTest extends AndroidTestCase {
     private void setDischargePrediction(Duration d, boolean isPersonalized) {
         final PowerManager manager = BatteryUtils.getPowerManager();
         SystemUtil.runWithShellPermissionIdentity(
-                () -> manager.setBatteryDischargePrediction(d, isPersonalized));
+                () -> manager.setBatteryDischargePrediction(d, isPersonalized),
+                android.Manifest.permission.BATTERY_PREDICTION);
     }
 
     private void assertDischargePrediction(Duration d, boolean isPersonalized) {
