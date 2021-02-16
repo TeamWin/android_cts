@@ -16,14 +16,9 @@
 
 package android.compat.cts;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import android.compat.cts.CompatChangeGatingTestCase;
 
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -34,32 +29,32 @@ public class Change {
                                             + "(; enableSinceTargetSdk=(?<sinceSdk>[0-9]+))?"
                                             + "(; (?<disabled>disabled))?"
                                             + "(; (?<loggingOnly>loggingOnly))?"
-                                            + "(; deferredOverrides=(?<deferredOverrides>[^\\);]+))?"
-                                            + "(; packageOverrides=(?<overrides>[^\\)]+))?"
+                                            + "(; packageOverrides=(?<overrides>[^\\);]+))?"
+                                            + "(; rawOverrides=(?<rawOverrides>[^\\)]+))?"
                                             + "\\)");
     public long changeId;
     public String changeName;
     public int sinceSdk;
     public boolean disabled;
     public boolean loggingOnly;
-    public boolean hasDeferredOverrides;
+    public boolean hasRawOverrides;
     public boolean hasOverrides;
 
-    public String deferredOverridesStr;
+    public String rawOverrideStr;
     public String overridesStr;
 
     private Change(long changeId, String changeName, int sinceSdk,
-            boolean disabled, boolean loggingOnly, boolean hasDeferredOverrides,
-            boolean hasOverrides, String deferredOverridesStr,
+            boolean disabled, boolean loggingOnly, boolean hasRawOverrides,
+            boolean hasOverrides, String rawOverrideStr,
             String overridesStr) {
         this.changeId = changeId;
         this.changeName = changeName;
         this.sinceSdk = sinceSdk;
         this.disabled = disabled;
         this.loggingOnly = loggingOnly;
-        this.hasDeferredOverrides = hasDeferredOverrides;
+        this.hasRawOverrides = hasRawOverrides;
         this.hasOverrides = hasOverrides;
-        this.deferredOverridesStr = deferredOverridesStr;
+        this.rawOverrideStr = rawOverrideStr;
         this.overridesStr = overridesStr;
     }
 
@@ -69,10 +64,10 @@ public class Change {
         int sinceSdk = -1;
         boolean disabled = false;
         boolean loggingOnly = false;
-        boolean hasDeferredOverrides = false;
+        boolean hasRawOverrides = false;
         boolean hasOverrides = false;
 
-        String deferredOverridesStr = null;
+        String rawOverridesStr = null;
         String overridesStr = null;
 
         Matcher matcher = CHANGE_REGEX.matcher(line);
@@ -100,16 +95,16 @@ public class Change {
         if (matcher.group("loggingOnly") != null) {
             loggingOnly = true;
         }
-        if (matcher.group("deferredOverrides") != null) {
-            hasDeferredOverrides = true;
-            deferredOverridesStr = matcher.group("deferredOverrides");
-        }
         if (matcher.group("overrides") != null) {
             hasOverrides = true;
             overridesStr = matcher.group("overrides");
         }
+        if (matcher.group("rawOverrides") != null) {
+            hasRawOverrides = true;
+            rawOverridesStr = matcher.group("rawOverrides");
+        }
         return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly,
-                          hasDeferredOverrides, hasOverrides, deferredOverridesStr,
+                          hasRawOverrides, hasOverrides, rawOverridesStr,
                           overridesStr);
     }
 
@@ -160,7 +155,7 @@ public class Change {
             && this.sinceSdk == that.sinceSdk
             && this.disabled == that.disabled
             && this.loggingOnly == that.loggingOnly
-            && this.hasDeferredOverrides == that.hasDeferredOverrides
+            && this.hasRawOverrides == that.hasRawOverrides
             && this.hasOverrides == that.hasOverrides;
     }
 
@@ -177,9 +172,9 @@ public class Change {
         if (disabled) {
             sb.append("; disabled");
         }
-        if (hasDeferredOverrides) {
-            sb.append("; deferredOverrides={");
-            sb.append(deferredOverridesStr);
+        if (hasRawOverrides) {
+            sb.append("; rawOverrides={");
+            sb.append(rawOverrideStr);
             sb.append("}");
         }
         if (hasOverrides) {
