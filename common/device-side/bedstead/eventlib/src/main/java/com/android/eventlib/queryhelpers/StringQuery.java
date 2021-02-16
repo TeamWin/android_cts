@@ -18,8 +18,10 @@ package com.android.eventlib.queryhelpers;
 
 import com.android.eventlib.EventLogsQuery;
 
+import java.io.Serializable;
+
 /** Query for a {@link String}. */
-public interface StringQuery<E extends EventLogsQuery> {
+public interface StringQuery<E extends EventLogsQuery> extends Serializable {
     /** Require the {@link String} is equal to {@code string}. */
     E isEqualTo(String string);
 }
