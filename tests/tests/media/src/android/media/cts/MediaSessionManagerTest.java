@@ -79,8 +79,8 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
     public void testAddOnActiveSessionsListener() throws Exception {
         try {
             mSessionManager.addOnActiveSessionsChangedListener(null, null);
-            fail("Expected IAE for call to addOnActiveSessionsChangedListener");
-        } catch (IllegalArgumentException e) {
+            fail("Expected NPE for call to addOnActiveSessionsChangedListener");
+        } catch (NullPointerException e) {
             // Expected
         }
 
