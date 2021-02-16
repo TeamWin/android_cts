@@ -16,24 +16,21 @@
 
 package com.android.cts.verifier;
 
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlSerializer;
-
 import android.os.Environment;
-
 import android.util.Log;
 
-import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ReportLogDeviceInfoStore;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlSerializer;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import java.util.List;
 
 public class CtsVerifierReportLog extends ReportLog {
@@ -41,21 +38,16 @@ public class CtsVerifierReportLog extends ReportLog {
 
     private ReportLogDeviceInfoStore mStore;
 
-    private static final String CTSV_REPORTLOG_FILENAME = "ctsv-report-log-files";
-
     private static final String LOG_ERROR_STR = "Could not log metric.";
 
     public CtsVerifierReportLog(String reportLogName, String streamName) {
-        this(reportLogName, streamName,
-                new File(Environment.getExternalStorageDirectory(), CTSV_REPORTLOG_FILENAME));
-        Log.i(TAG, "----> CtsVerifierReportLog(" + reportLogName + ", " + streamName + ")");
+        this(reportLogName, streamName, new File(Environment.getExternalStorageDirectory(),
+                ReportExporter.CTSV_REPORTLOG_FOLDERNAME));
     }
 
     public CtsVerifierReportLog(String reportLogName, String streamName, File logDirectory) {
         super(reportLogName, streamName);
 
-        Log.i(TAG, "----> CtsVerifierReportLog(" + reportLogName + ", " + streamName
-                + ", " + logDirectory + ")");
         try {
             // dir value must match the src-dir value configured in ReportLogCollector target
             // preparer in cts/harness/tools/cts-tradefed/res/config/cts-preconditions.xml
@@ -68,7 +60,6 @@ public class CtsVerifierReportLog extends ReportLog {
                 File jsonFile = new File(logDirectory, mReportLogName + ".reportlog.json");
                 mStore = new ReportLogDeviceInfoStore(jsonFile, mStreamName);
                 mStore.open();
-                Log.i(TAG, "----> mStore: " + mStore);
             }
         } catch (Exception e) {
             Log.e(TAG, "Could not create report log file.", e);
@@ -81,7 +72,6 @@ public class CtsVerifierReportLog extends ReportLog {
      * does not appear in the result XML.
      */
     public void submit() {
-        Log.i(TAG, "----> submit()");
         try {
             mStore.close();
         } catch (Exception e) {
@@ -270,11 +260,9 @@ public class CtsVerifierReportLog extends ReportLog {
     // Serializable readObject
     private void readObject(ObjectInputStream inputStream) throws ClassNotFoundException,
             IOException {
-        Log.i(TAG, "----> readObject()");
     }
 
     // Serializable writeObject
     private void writeObject(ObjectOutputStream outputStream) throws IOException {
-        Log.i(TAG, "----> writeObject()");
     }
 }

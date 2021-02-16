@@ -16,18 +16,18 @@
 
 package com.android.cts.verifier.sample;
 
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
-
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -49,9 +49,6 @@ public class SampleTestActivity extends PassFailButtons.Activity {
      * The content of the test file being transferred.
      */
     private static final String TEST_STRING = "Sample Test String";
-
-    private static final String REPORT_LOG_NAME = "SampleTestActivity-Log";
-    private static final String REPORT_STREAM_NAME = "SampleTestActivity-Stream";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

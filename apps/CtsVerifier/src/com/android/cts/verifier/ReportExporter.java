@@ -35,6 +35,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -47,6 +51,9 @@ import java.util.logging.Logger;
 class ReportExporter extends AsyncTask<Void, Void, String> {
 
     public static final String REPORT_DIRECTORY = "verifierReports";
+
+    // Report Logs are stored here
+    public static final String CTSV_REPORTLOG_FOLDERNAME = "ctsv-report-logs";
 
     private static final Logger LOG = Logger.getLogger(ReportExporter.class.getName());
     private static final String COMMAND_LINE_ARGS = "";
@@ -64,6 +71,36 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
     ReportExporter(Context context, TestListAdapter adapter) {
         this.mContext = context;
         this.mAdapter = adapter;
+    }
+
+    //
+    // Copy any ReportLog files created by CTS-Verifier tests into the temp report directory
+    // so that they will get ZIPped into the transmitted file.
+    //
+    private void copyReportFiles(File tempDir) {
+        File externalStorageDirectory = Environment.getExternalStorageDirectory();
+        File reportLogFolder =
+                new File(Environment.getExternalStorageDirectory().getAbsolutePath()
+                        + File.separator
+                        + CTSV_REPORTLOG_FOLDERNAME);
+        File[] reportLogFiles = reportLogFolder.listFiles();
+
+        // if no ReportLog files have been created (i.e. the folder doesn't exist)
+        // then listFiles() returns null. Handle silently.
+        if (reportLogFiles != null) {
+            for (File reportLogFile : reportLogFiles) {
+                Path src = Paths.get(reportLogFile.getAbsolutePath());
+                Path dest = Paths.get(
+                        tempDir.getAbsolutePath()
+                                + File.separator
+                                + reportLogFile.getName());
+                try {
+                    Files.copy(src, dest, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException ex) {
+                    LOG.log(Level.WARNING, "Error copying ReportLog files. IOException: " + ex);
+                }
+            }
+        }
     }
 
     @Override
@@ -89,6 +126,9 @@ class ReportExporter extends AsyncTask<Void, Void, String> {
         // create a temporary directory for this particular report
         File tempDir = new File(verifierReportsDir, getReportName(suiteName));
         tempDir.mkdirs();
+
+        // Pull in any ReportLogs
+        copyReportFiles(tempDir);
 
         // create a File object for a report ZIP file
         File reportZipFile = new File(
