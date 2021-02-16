@@ -6,6 +6,7 @@ android_library {
         "src/main/aidl/**/I*.aidl",
     ],
     static_libs: [
+        "Nene",
         "androidx.test.ext.junit"],
     manifest: "src/main/AndroidManifest.xml",
     min_sdk_version: "26"

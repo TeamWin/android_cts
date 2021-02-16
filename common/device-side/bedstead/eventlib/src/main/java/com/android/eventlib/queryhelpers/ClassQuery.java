@@ -20,8 +20,10 @@ import androidx.annotation.CheckResult;
 
 import com.android.eventlib.EventLogsQuery;
 
+import java.io.Serializable;
+
 /** Query for a {@link Class}. */
-public interface ClassQuery<E extends EventLogsQuery> {
+public interface ClassQuery<E extends EventLogsQuery> extends Serializable {
     /** Require that the class is the same as {@code clazz}. */
     E isSameClassAs(Class<?> clazz);
 
