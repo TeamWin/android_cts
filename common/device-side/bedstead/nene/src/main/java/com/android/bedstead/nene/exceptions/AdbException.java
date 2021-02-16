@@ -16,21 +16,33 @@
 
 package com.android.bedstead.nene.exceptions;
 
+import androidx.annotation.Nullable;
+
 /**
  * An exception that gets thrown when interacting with Adb.
  */
 public class AdbException extends Exception {
 
-    private final String command;
-    private final String output;
+    private final String mCommand;
+    private final @Nullable String mOutput;
+    private final @Nullable String mErr;
 
     public AdbException(String message, String command, String output) {
+        this(message, command, output, /* err= */ (String) null);
+    }
+
+    public AdbException(String message, String command, String output, String err) {
         super(message);
         if (command == null) {
             throw new NullPointerException();
         }
-        this.command = command;
-        this.output = output;
+        this.mCommand = command;
+        this.mOutput = output;
+        this.mErr = err;
+    }
+
+    public AdbException(String message, String command, Throwable cause) {
+        this(message, command, /* output= */ null, cause);
     }
 
     public AdbException(String message, String command, String output, Throwable cause) {
@@ -38,20 +50,32 @@ public class AdbException extends Exception {
         if (command == null) {
             throw new NullPointerException();
         }
-        this.command = command;
-        this.output = output;
+        this.mCommand = command;
+        this.mOutput = output;
+        this.mErr = null;
     }
 
     public String command() {
-        return command;
+        return mCommand;
     }
 
     public String output() {
-        return output;
+        return mOutput;
     }
 
     @Override
     public String toString() {
-        return super.toString() + "[command=\"" + command + "\" output=\"" + output + "\"]";
+        StringBuilder stringBuilder = new StringBuilder(super.toString());
+
+        stringBuilder.append("[command=\"").append(mCommand).append("\"");
+        if (mOutput != null) {
+            stringBuilder.append(", output=\"").append(mOutput).append("\"");
+        }
+        if (mErr != null) {
+            stringBuilder.append(", err=\"").append(mErr).append("\"");
+        }
+        stringBuilder.append("]");
+
+        return stringBuilder.toString();
     }
 }
