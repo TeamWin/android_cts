@@ -35,6 +35,7 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
+import static android.content.pm.PackageManager.FEATURE_CROSS_LAYER_BLUR;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
@@ -998,6 +999,10 @@ public abstract class ActivityManagerTestBase {
                 && !hasDeviceFeature(FEATURE_EMBEDDED)
                 && !hasDeviceFeature(FEATURE_AUTOMOTIVE)
                 && getSupportsInsecureLockScreen();
+    }
+
+    protected boolean supportsBlur() {
+        return hasDeviceFeature(FEATURE_CROSS_LAYER_BLUR);
     }
 
     protected boolean isWatch() {
