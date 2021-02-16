@@ -24,8 +24,6 @@ import static org.junit.Assume.assumeThat;
 import android.compat.cts.Change;
 import android.compat.cts.CompatChangeGatingTestCase;
 
-import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-
 import java.util.List;
 
 public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatingTestCase {
@@ -52,9 +50,8 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
             Change ctsChange = getCtsChange();
             assertWithMessage("CTS specific change %s not found on device", CTS_CHANGE_ID_NAME)
                 .that(ctsChange).isNotNull();
-            assertThat(ctsChange.hasDeferredOverrides).isTrue();
-            assertThat(ctsChange.deferredOverridesStr)
-                .isEqualTo("{" + TEST_PACKAGE + "=true}");
+            assertThat(ctsChange.hasRawOverrides).isTrue();
+            assertThat(ctsChange.rawOverrideStr).isEqualTo("{" + TEST_PACKAGE + "=true}");
             assertThat(ctsChange.hasOverrides).isFalse();
 
         } finally {
@@ -70,7 +67,7 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
             Change ctsChange = getCtsChange();
             assertWithMessage("CTS specific change %s not found on device", CTS_CHANGE_ID_NAME)
                 .that(ctsChange).isNotNull();
-            assertThat(ctsChange.hasDeferredOverrides).isFalse();
+            assertThat(ctsChange.hasRawOverrides).isTrue();
             assertThat(ctsChange.hasOverrides).isTrue();
             assertThat(ctsChange.overridesStr).isEqualTo("{" + TEST_PACKAGE + "=true}");
 
@@ -87,9 +84,8 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
             Change ctsChange = getCtsChange();
             assertWithMessage("CTS specific change %s not found on device", CTS_CHANGE_ID_NAME)
                 .that(ctsChange).isNotNull();
-            assertThat(ctsChange.hasDeferredOverrides).isTrue();
-            assertThat(ctsChange.deferredOverridesStr)
-                    .isEqualTo("{" + TEST_PACKAGE + "=true}");
+            assertThat(ctsChange.hasRawOverrides).isTrue();
+            assertThat(ctsChange.rawOverrideStr).isEqualTo("{" + TEST_PACKAGE + "=true}");
             assertThat(ctsChange.hasOverrides).isFalse();
 
         } finally {
@@ -106,7 +102,7 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
             Change ctsChange = getCtsChange();
             assertWithMessage("CTS specific change %s not found on device", CTS_CHANGE_ID_NAME)
                 .that(ctsChange).isNotNull();
-            assertThat(ctsChange.hasDeferredOverrides).isFalse();
+            assertThat(ctsChange.hasRawOverrides).isTrue();
             assertThat(ctsChange.hasOverrides).isTrue();
             assertThat(ctsChange.overridesStr).isEqualTo("{" + TEST_PACKAGE + "=true}");
 
@@ -124,9 +120,8 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
             Change ctsChange = getCtsChange();
             assertWithMessage("CTS specific change %s not found on device", CTS_CHANGE_ID_NAME)
                 .that(ctsChange).isNotNull();
-            assertThat(ctsChange.hasDeferredOverrides).isTrue();
-            assertThat(ctsChange.deferredOverridesStr)
-                    .isEqualTo("{" + TEST_PACKAGE + "=true}");
+            assertThat(ctsChange.hasRawOverrides).isTrue();
+            assertThat(ctsChange.rawOverrideStr).isEqualTo("{" + TEST_PACKAGE + "=true}");
             assertThat(ctsChange.hasOverrides).isFalse();
 
         } finally {
