@@ -23,6 +23,7 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
+        "testng",
         "truth-prebuilt",
         "guava",
         "junit",
