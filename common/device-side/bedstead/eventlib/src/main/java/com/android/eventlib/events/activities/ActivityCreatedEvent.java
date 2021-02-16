@@ -16,10 +16,11 @@
 
 package com.android.eventlib.events.activities;
 
-import androidx.annotation.CheckResult;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+
+import androidx.annotation.CheckResult;
 
 import com.android.eventlib.Event;
 import com.android.eventlib.EventLogger;
@@ -43,6 +44,7 @@ public final class ActivityCreatedEvent extends Event {
         return new ActivityCreatedEventQuery(packageName);
     }
 
+    /** {@link EventLogsQuery} for {@link ActivityCreatedEvent}. */
     public static final class ActivityCreatedEventQuery
             extends EventLogsQuery<ActivityCreatedEvent, ActivityCreatedEventQuery> {
         ActivityQueryHelper<ActivityCreatedEventQuery> mActivity = new ActivityQueryHelper<>(this);
@@ -55,16 +57,26 @@ public final class ActivityCreatedEvent extends Event {
             super(ActivityCreatedEvent.class, packageName);
         }
 
+        /**
+         * Query {@code savedInstanceState} {@link Bundle} passed into
+         * {@link Activity#onCreate(Bundle)} or
+         * {@link Activity#onCreate(Bundle, PersistableBundle)}.
+         */
         @CheckResult
         public BundleQueryHelper<ActivityCreatedEventQuery> whereSavedInstanceState() {
             return mSavedInstanceState;
         }
 
+        /**
+         * Query {@code persistentState} {@link PersistableBundle} passed into
+         * {@link Activity#onCreate(Bundle, PersistableBundle)}.
+         */
         @CheckResult
         public PersistableBundleQuery<ActivityCreatedEventQuery> wherePersistentState() {
             return mPersistentState;
         }
 
+        /** Query {@link Activity}. */
         @CheckResult
         public ActivityQuery<ActivityCreatedEventQuery> whereActivity() {
             return mActivity;
@@ -90,6 +102,7 @@ public final class ActivityCreatedEvent extends Event {
         return new ActivityCreatedEventLogger(activity, savedInstanceState);
     }
 
+    /** {@link EventLogger} for {@link ActivityCreatedEvent}. */
     public static final class ActivityCreatedEventLogger extends EventLogger<ActivityCreatedEvent> {
         private ActivityCreatedEventLogger(Activity activity, Bundle savedInstanceState) {
             super(activity, new ActivityCreatedEvent());
@@ -127,6 +140,11 @@ public final class ActivityCreatedEvent extends Event {
     protected SerializableParcelWrapper<PersistableBundle> mPersistentState;
     protected ActivityInfo mActivity;
 
+    /**
+     * The {@code savedInstanceState} {@link Bundle} passed into
+     * {@link Activity#onCreate(Bundle)} or
+     * {@link Activity#onCreate(Bundle, PersistableBundle)}.
+     */
     public Bundle savedInstanceState() {
         if (mSavedInstanceState == null) {
             return null;
@@ -134,6 +152,10 @@ public final class ActivityCreatedEvent extends Event {
         return mSavedInstanceState.get();
     }
 
+    /**
+     * The {@code persistentState} {@link PersistableBundle} passed into
+     * {@link Activity#onCreate(Bundle, PersistableBundle)}.
+     */
     public PersistableBundle persistentState() {
         if (mPersistentState == null) {
             return null;
@@ -141,18 +163,19 @@ public final class ActivityCreatedEvent extends Event {
         return mPersistentState.get();
     }
 
+    /** Information about the {@link Activity} started. */
     public ActivityInfo activity() {
         return mActivity;
     }
 
     @Override
     public String toString() {
-        return "ActivityCreatedEvent{" +
-                " savedInstanceState=" + savedInstanceState() +
-                ", persistentState=" + persistentState() +
-                ", activity=" + mActivity +
-                ", mPackageName='" + mPackageName + '\'' +
-                ", mTimestamp=" + mTimestamp +
-                '}';
+        return "ActivityCreatedEvent{"
+                + " savedInstanceState=" + savedInstanceState()
+                + ", persistentState=" + persistentState()
+                + ", activity=" + mActivity
+                + ", packageName='" + mPackageName + "'"
+                + ", timestamp=" + mTimestamp
+                + "}";
     }
 }
