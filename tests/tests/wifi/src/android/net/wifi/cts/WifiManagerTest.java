@@ -570,7 +570,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertTrue(mWifiManager.isWifiEnabled());
         } finally {
             // cleanup
-            mWifiManager.unregisterWifiSubsystemRestartTrackingCallback(
+            mWifiManager.unregisterSubsystemRestartTrackingCallback(
                     mSubsystemRestartTrackingCallback);
             uiAutomation.dropShellPermissionIdentity();
         }
