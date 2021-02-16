@@ -27,7 +27,7 @@ import android.widget.TextView
 
 class MainActivity : Activity() {
 
-    val whitelistStatus by lazy { TextView(this) }
+    val allowlistStatus by lazy { TextView(this) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,9 +35,9 @@ class MainActivity : Activity() {
         setContentView(LinearLayout(this).apply {
             orientation = VERTICAL
 
-            addView(whitelistStatus)
+            addView(allowlistStatus)
             addView(Button(this@MainActivity).apply {
-                text = "Request whitelist"
+                text = "Request allowlist"
 
                 setOnClickListener {
                     startActivity(
@@ -53,6 +53,6 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
 
-        whitelistStatus.text = "Auto-revoke whitelisted: " + packageManager.isAutoRevokeWhitelisted
+        allowlistStatus.text = "Auto-revoke allowlisted: " + packageManager.isAutoRevokeWhitelisted
     }
 }
