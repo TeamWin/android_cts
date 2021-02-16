@@ -56,6 +56,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         put(SPLIT_APK_DM, "split_feature_x.dm");
     }};
 
+    private boolean mDmRequireFsVerity;
 
     @Before
     public void setUp() throws DeviceNotAvailableException {
@@ -63,6 +64,7 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         String apkVerityMode = device.getProperty("ro.apk_verity.mode");
         assumeTrue(device.getLaunchApiLevel() >= 30
                 || APK_VERITY_STANDARD_MODE.equals(apkVerityMode));
+        mDmRequireFsVerity = "true".equals(device.getProperty("pm.dexopt.dm.require_fsverity"));
     }
 
     @After
@@ -183,20 +185,22 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
 
     @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallOnlyBaseHasFsvSig()
+    public void testInstallBaseWithFsvSigAndSplitWithout()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple()
                 .addFile(BASE_APK)
                 .addFile(BASE_APK + FSV_SIG_SUFFIX)
                 .addFile(BASE_APK_DM)
+                .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM)
+                .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
                 .runExpectingFailure();
     }
 
     @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallOnlyDmHasFsvSig()
+    public void testInstallDmWithFsvSig()
             throws DeviceNotAvailableException, FileNotFoundException {
         new InstallMultiple()
                 .addFile(BASE_APK)
@@ -204,20 +208,46 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
                 .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
                 .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM)
-                .runExpectingFailure();
+                .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
+                .run();
+        verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
     }
 
     @CddTest(requirement="9.10/C-0-3,C-0-5")
     @Test
-    public void testInstallOnlySplitHasFsvSig()
+    public void testInstallDmWithMissingFsvSig()
             throws DeviceNotAvailableException, FileNotFoundException {
-        new InstallMultiple()
+        InstallMultiple installer = new InstallMultiple()
                 .addFile(BASE_APK)
                 .addFile(BASE_APK_DM)
+                .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
                 .addFile(SPLIT_APK)
-                .addFile(SPLIT_APK + FSV_SIG_SUFFIX)
+                .addFile(SPLIT_APK_DM);
+        if (mDmRequireFsVerity) {
+            installer.runExpectingFailure();
+        } else {
+            installer.run();
+            verifyFsverityInstall(BASE_APK_DM);
+        }
+    }
+
+    @CddTest(requirement="9.10/C-0-3,C-0-5")
+    @Test
+    public void testInstallSplitWithFsvSigAndBaseWithout()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        InstallMultiple installer = new InstallMultiple()
+                .addFile(BASE_APK)
+                .addFile(BASE_APK_DM)
+                .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
+                .addFile(SPLIT_APK)
                 .addFile(SPLIT_APK_DM)
-                .runExpectingFailure();
+                .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX);
+        if (mDmRequireFsVerity) {
+            installer.runExpectingFailure();
+        } else {
+            installer.run();
+            verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
+        }
     }
 
     @CddTest(requirement="9.10/C-0-3,C-0-5")
