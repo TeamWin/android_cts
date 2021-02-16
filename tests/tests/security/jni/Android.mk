@@ -22,24 +22,25 @@ LOCAL_MODULE := libctssecurity_jni
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
-		CtsSecurityJniOnLoad.cpp \
-		android_security_cts_CharDeviceTest.cpp \
-		android_security_cts_KernelSettingsTest.cpp \
-		android_security_cts_LinuxRngTest.cpp \
-		android_security_cts_NativeCodeTest.cpp \
-		android_security_cts_SELinuxTest.cpp \
-		android_security_cts_MMapExecutableTest.cpp \
-		android_security_cts_EncryptionTest.cpp \
+                CtsSecurityJniOnLoad.cpp \
+                android_security_cts_CharDeviceTest.cpp \
+                android_security_cts_KernelSettingsTest.cpp \
+                android_security_cts_LinuxRngTest.cpp \
+                android_security_cts_NativeCodeTest.cpp \
+                android_security_cts_SELinuxTest.cpp \
+                android_security_cts_MMapExecutableTest.cpp \
+                android_security_cts_EncryptionTest.cpp \
+                android_security_cts_cve_2021_0394.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
-		libnativehelper \
-		liblog \
-		libcutils \
-		libcrypto \
-		libselinux \
-		libc++ \
-		libpcre2 \
-		libpackagelistparser
+                libnativehelper \
+                liblog \
+                libcutils \
+                libcrypto \
+                libselinux \
+                libc++ \
+                libpcre2 \
+                libpackagelistparser
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
