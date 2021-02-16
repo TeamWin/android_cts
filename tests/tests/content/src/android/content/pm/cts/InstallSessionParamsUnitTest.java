@@ -27,6 +27,10 @@ import static android.content.pm.PackageManager.INSTALL_REASON_DEVICE_SETUP;
 import static android.content.pm.PackageManager.INSTALL_REASON_POLICY;
 import static android.content.pm.PackageManager.INSTALL_REASON_UNKNOWN;
 import static android.content.pm.PackageManager.INSTALL_REASON_USER;
+import static android.content.pm.PackageManager.INSTALL_SCENARIO_BULK;
+import static android.content.pm.PackageManager.INSTALL_SCENARIO_BULK_SECONDARY;
+import static android.content.pm.PackageManager.INSTALL_SCENARIO_DEFAULT;
+import static android.content.pm.PackageManager.INSTALL_SCENARIO_FAST;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -80,6 +84,8 @@ public class InstallSessionParamsUnitTest {
     @Parameterized.Parameter(9)
     public Optional<Integer> installReason;
     @Parameterized.Parameter(10)
+    public Optional<Integer> installScenario;
+    @Parameterized.Parameter(11)
     public boolean expectFailure;
 
     private PackageInstaller mInstaller = InstrumentationRegistry.getInstrumentation()
@@ -154,7 +160,10 @@ public class InstallSessionParamsUnitTest {
          /*installReason*/
                 {{INSTALL_REASON_UNKNOWN, INSTALL_REASON_POLICY, INSTALL_REASON_DEVICE_RESTORE,
                         INSTALL_REASON_DEVICE_SETUP, INSTALL_REASON_USER,
-                        /* parame is not verified */ 0xfff}, {}}};
+                        /* parame is not verified */ 0xfff}, {}},
+         /*installScenario*/
+                {{INSTALL_SCENARIO_DEFAULT, INSTALL_SCENARIO_FAST, INSTALL_SCENARIO_BULK,
+                        INSTALL_SCENARIO_BULK_SECONDARY}, {}}};
 
         ArrayList<Object[]> allTestParams = new ArrayList<>();
 
@@ -221,7 +230,7 @@ public class InstallSessionParamsUnitTest {
                 + " appPackageName=" + appPackageName + " appIcon=" + appIcon + " appLabel="
                 + appLabel + " originatingUri=" + originatingUri + " originatingUid="
                 + originatingUid + " referredUri=" + referredUri + " installReason=" + installReason
-                + " expectFailure=" + expectFailure);
+                + " installScenario=" + installScenario + " expectFailure=" + expectFailure);
 
         SessionParams params = new SessionParams(mode.get());
         installLocation.ifPresent(params::setInstallLocation);
@@ -233,6 +242,7 @@ public class InstallSessionParamsUnitTest {
         originatingUid.ifPresent(params::setOriginatingUid);
         referredUri.ifPresent(params::setReferrerUri);
         installReason.ifPresent(params::setInstallReason);
+        installScenario.ifPresent(params::setInstallScenario);
 
         try {
             mSessionId = mInstaller.createSession(params);
