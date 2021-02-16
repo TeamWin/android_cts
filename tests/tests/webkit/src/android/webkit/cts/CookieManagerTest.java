@@ -381,6 +381,63 @@ public class CookieManagerTest extends
         assertTrue(cookie.contains("test2"));
     }
 
+    public void testSameSiteLaxByDefault() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        mServer = new CtsTestServer(getActivity());
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        mCookieManager.setAcceptCookie(true);
+        mOnUiThread.setAcceptThirdPartyCookies(true);
+
+        // Verify that even with third party cookies enabled, cookies that don't explicitly
+        // specify SameSite=none are treated as SameSite=lax and not set in a 3P context.
+        String cookieUrl = toThirdPartyUrl(
+                mServer.getSetCookieUrl("/cookie_1.js", "test1", "value1"));
+        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        assertNull(mCookieManager.getCookie(cookieUrl));
+    }
+
+    public void testSameSiteNoneRequiresSecure() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        mServer = new CtsTestServer(getActivity());
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        mCookieManager.setAcceptCookie(true);
+
+        // Verify that cookies with SameSite=none are ignored when the cookie is not also Secure.
+        String cookieUrl =
+                mServer.getSetCookieUrl("/cookie_1.js", "test1", "value1", "SameSite=None");
+        String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        assertNull(mCookieManager.getCookie(cookieUrl));
+    }
+
+    public void testSchemefulSameSite() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        mServer = new CtsTestServer(getActivity());
+        mOnUiThread.getSettings().setJavaScriptEnabled(true);
+        mCookieManager.setAcceptCookie(true);
+        mOnUiThread.setAcceptThirdPartyCookies(true);
+
+        // Verify that two servers with different schemes on the same host are not considered
+        // same-site to each other.
+        CtsTestServer secureServer = new CtsTestServer(getActivity(),
+                CtsTestServer.SslMode.NO_CLIENT_AUTH, R.raw.trustedkey, R.raw.trustedcert);
+        try {
+            String cookieUrl = secureServer.getSetCookieUrl("/cookie_1.js", "test1", "value1");
+            String url = mServer.getLinkedScriptUrl("/content_1.html", cookieUrl);
+            mOnUiThread.loadUrlAndWaitForCompletion(url);
+            assertNull(mCookieManager.getCookie(cookieUrl));
+        } finally {
+            secureServer.shutdown();
+        }
+    }
+
     public void testb3167208() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
