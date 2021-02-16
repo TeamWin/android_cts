@@ -31,6 +31,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
+
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -42,6 +43,12 @@ import java.util.concurrent.CountDownLatch;
 public class BaseDeviceAdminTest extends InstrumentationTestCase {
 
     public static class BasicAdminReceiver extends DeviceAdminReceiver {
+
+        static final String ACTION_NETWORK_LOGS_AVAILABLE =
+                "com.android.cts.deviceandprofileowner.action.ACTION_NETWORK_LOGS_AVAILABLE";
+
+        static final String EXTRA_NETWORK_LOGS_BATCH_TOKEN =
+                "com.android.cts.deviceandprofileowner.extra.NETWORK_LOGS_BATCH_TOKEN";
 
         @Override
         public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
@@ -59,6 +66,16 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
             if (mOnPasswordExpiryTimeoutCalled != null) {
                 mOnPasswordExpiryTimeoutCalled.countDown();
             }
+        }
+
+        @Override
+        public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
+                int networkLogsCount) {
+            super.onNetworkLogsAvailable(context, intent, batchToken, networkLogsCount);
+            // send the broadcast, the rest of the test happens in NetworkLoggingTest
+            Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
+            batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
+            context.sendBroadcast(batchIntent);
         }
     }
 

@@ -389,4 +389,29 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testSecondaryLockscreen() throws Exception {
         // Managed profiles cannot have secondary lockscreens set.
     }
+
+    @Test
+    public void testNetworkLogging() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            // Turn network logging on.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetNetworkLogsEnabled_true", mUserId);
+
+            // Connect to websites from work profile, should be logged.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testConnectToWebsites_shouldBeLogged", mUserId);
+            // Connect to websites from personal profile, should not be logged.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testConnectToWebsites_shouldNotBeLogged", mPrimaryUserId);
+
+            // Verify all work profile network logs have been received.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testRetrieveNetworkLogs_forceNetworkLogs_receiveNetworkLogs", mUserId);
+        } finally {
+            // Turn network logging off.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetNetworkLogsEnabled_false", mUserId);
+        }
+    }
 }
