@@ -25,6 +25,8 @@ LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_MODULE := CtsSecurityHostTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 

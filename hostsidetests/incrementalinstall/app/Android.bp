@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // v1 implementation of test app built with v1 manifest.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test_helper_app {
     name: "IncrementalTestApp",
     srcs: ["v1/src/**/*.java"],

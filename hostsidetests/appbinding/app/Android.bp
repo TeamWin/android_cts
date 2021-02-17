@@ -25,6 +25,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_defaults {
     name: "cts_hostside_appbinding_defaults",
     libs: ["android.test.base"],

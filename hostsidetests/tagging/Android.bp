@@ -28,6 +28,10 @@
 // MTE tests are done at SDK level 30. The level doesn't really matter; there is
 // no manifest flag for MTE, and the compat feature is always disabled.
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_test_host {
     name: "CtsTaggingHostTestCases",
     defaults: ["cts_defaults"],
