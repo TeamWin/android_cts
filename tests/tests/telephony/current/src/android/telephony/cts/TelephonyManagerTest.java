@@ -307,12 +307,20 @@ public class TelephonyManagerTest {
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
                 }
         );
+        long allowedNetworkTypesEnable2g = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G);
+                }
+        );
         mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
                 allowedNetworkTypesUser);
         mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
                 allowedNetworkTypesPower);
         mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
                 allowedNetworkTypesCarrier);
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G,
+                allowedNetworkTypesEnable2g);
     }
 
     private void recoverAllowedNetworkType() {
@@ -2846,6 +2854,8 @@ public class TelephonyManagerTest {
         long allowedNetworkTypes3 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
                 | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
                 | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+        long allowedNetworkTypes4 = TelephonyManager.NETWORK_TYPE_LTE
+                | TelephonyManager.NETWORK_TYPE_EVDO_B;
 
         try {
             mIsAllowedNetworkTypeChanged = true;
@@ -2865,6 +2875,11 @@ public class TelephonyManagerTest {
                     (tm) -> tm.setAllowedNetworkTypesForReason(
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
                             allowedNetworkTypes3));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G,
+                            allowedNetworkTypes4));
             long deviceAllowedNetworkTypes1 = ShellIdentityUtils.invokeMethodWithShellPermissions(
                     mTelephonyManager, (tm) -> {
                         return tm.getAllowedNetworkTypesForReason(
@@ -2883,9 +2898,16 @@ public class TelephonyManagerTest {
                                 TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
                     }
             );
+            long deviceAllowedNetworkTypes4 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G);
+                    }
+            );
             assertEquals(allowedNetworkTypes1, deviceAllowedNetworkTypes1);
             assertEquals(allowedNetworkTypes2, deviceAllowedNetworkTypes2);
             assertEquals(allowedNetworkTypes3, deviceAllowedNetworkTypes3);
+            assertEquals(allowedNetworkTypes4, deviceAllowedNetworkTypes4);
         } catch (SecurityException se) {
             fail("testSetAllowedNetworkTypes: SecurityException not expected");
         }
