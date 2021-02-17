@@ -43,6 +43,12 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
         void execute(List<Uri> uris, SubscribeResponseCallback cb) throws ImsException;
     }
 
+    @FunctionalInterface
+    public interface OptionsOperation {
+        void execute(Uri contactUri, List<String> myCapabilities, OptionsResponseCallback callback)
+                throws ImsException;
+    }
+
     private DeviceCapPublishListener mPublishListener;
 
     // The operation of publishing capabilities
@@ -50,6 +56,9 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
 
     // The operation of requesting capabilities.
     private SubscribeOperation mSubscribeOperation;
+
+    // The operation of send Options
+    private OptionsOperation mOptionsOperation;
 
     /**
      * Create a new RcsCapabilityExchangeImplBase instance.
@@ -68,6 +77,10 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
         mSubscribeOperation = operator;
     }
 
+    public void setOptionsOperation(OptionsOperation operation) {
+        mOptionsOperation = operation;
+    }
+
     @Override
     public void publishCapabilities(String pidfXml, PublishResponseCallback cb) {
         try {
@@ -83,6 +96,16 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
             mSubscribeOperation.execute(uris, cb);
         } catch (ImsException e) {
             Log.w(LOG_TAG, "subscribeForCapabilities exception: " + e);
+        }
+    }
+
+    @Override
+    public void sendOptionsCapabilityRequest(Uri contactUri, List<String> myCapabilities,
+            OptionsResponseCallback callback) {
+        try {
+            mOptionsOperation.execute(contactUri, myCapabilities, callback);
+        } catch (ImsException e) {
+            Log.w(LOG_TAG, "sendOptionsCapabilityRequest exception: " + e);
         }
     }
 }
