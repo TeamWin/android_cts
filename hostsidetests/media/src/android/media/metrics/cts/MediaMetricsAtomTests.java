@@ -133,4 +133,25 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getLanguage()).isEqualTo("EN");
         assertThat(result.getLanguageRegion()).isEqualTo("US");
     }
+
+    public void testNetworkEvent() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_NETWORK_INFO_CHANGED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testNetworkEvent");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaNetworkInfoChanged()).isTrue();
+        AtomsProto.MediaNetworkInfoChanged result =
+                data.get(0).getAtom().getMediaNetworkInfoChanged();
+
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(3032L);
+        assertThat(result.getType().toString()).isEqualTo("NETWORK_TYPE_WIFI");
+    }
 }

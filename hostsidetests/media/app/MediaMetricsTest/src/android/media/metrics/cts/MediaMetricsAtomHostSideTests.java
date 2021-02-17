@@ -18,6 +18,7 @@ package android.media.metrics.cts;
 
 import android.content.Context;
 import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.NetworkEvent;
 import android.media.metrics.PlaybackErrorEvent;
 import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
@@ -75,5 +76,18 @@ public class MediaMetricsAtomHostSideTests {
                         .setLanguageRegion("US")
                         .build();
         s.reportTrackChangeEvent(e);
+    }
+
+    @Test
+    public void testNetworkEvent() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        NetworkEvent e =
+                new NetworkEvent.Builder()
+                        .setTimeSinceCreatedMillis(3032L)
+                        .setNetworkType(NetworkEvent.NETWORK_TYPE_WIFI)
+                        .build();
+        s.reportNetworkEvent(e);
     }
 }
