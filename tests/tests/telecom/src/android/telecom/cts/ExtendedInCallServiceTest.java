@@ -24,10 +24,12 @@ import android.app.UiModeManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.res.Configuration;
+import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.Call;
+import android.telecom.CallScreeningService;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.InCallService;
@@ -404,6 +406,52 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             if (blockedUri != null) {
                 unblockNumber(blockedUri);
             }
+        }
+    }
+
+    public void testCallComposerAttachmentsStrippedCorrectly() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        Bundle extras = new Bundle();
+        extras.putParcelable(TelecomManager.EXTRA_LOCATION, new Location(""));
+        extras.putInt(TelecomManager.EXTRA_PRIORITY, TelecomManager.PRIORITY_URGENT);
+        extras.putString(TelecomManager.EXTRA_CALL_SUBJECT, "blah blah blah");
+
+        TestUtils.setSystemDialerOverride(getInstrumentation());
+        MockCallScreeningService.enableService(mContext);
+        try {
+            CallScreeningService.CallResponse response =
+                    new CallScreeningService.CallResponse.Builder()
+                            .setDisallowCall(false)
+                            .setRejectCall(false)
+                            .setSilenceCall(false)
+                            .setSkipCallLog(false)
+                            .setSkipNotification(false)
+                            .setShouldScreenCallViaAudioProcessing(false)
+                            .setCallComposerAttachmentsToShow(0)
+                            .build();
+
+            MockCallScreeningService.setCallbacks(
+                    new MockCallScreeningService.CallScreeningServiceCallbacks() {
+                        @Override
+                        public void onScreenCall(Call.Details callDetails) {
+                            getService().respondToCall(callDetails, response);
+                        }
+                    });
+
+            addAndVerifyNewIncomingCall(createTestNumber(), extras);
+            verifyConnectionForIncomingCall(0);
+            MockInCallService inCallService = mInCallCallbacks.getService();
+            Call call = inCallService.getLastCall();
+
+            assertFalse(call.getDetails().getExtras().containsKey(TelecomManager.EXTRA_LOCATION));
+            assertFalse(call.getDetails().getExtras().containsKey(TelecomManager.EXTRA_PRIORITY));
+            assertFalse(call.getDetails().getExtras()
+                    .containsKey(TelecomManager.EXTRA_CALL_SUBJECT));
+        } finally {
+            MockCallScreeningService.disableService(mContext);
+            TestUtils.clearSystemDialerOverride(getInstrumentation());
         }
     }
 

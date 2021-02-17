@@ -25,6 +25,8 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.telecom.Call;
+import android.telecom.CallScreeningService;
+import android.telecom.CallScreeningService.CallResponse;
 import android.telecom.Connection;
 import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
@@ -291,7 +293,22 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         }
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.MODIFY_PHONE_STATE");
+        MockCallScreeningService.enableService(mContext);
         try {
+            CallScreeningService.CallResponse response =
+                    new CallScreeningService.CallResponse.Builder()
+                            .setDisallowCall(false)
+                            .setRejectCall(false)
+                            .setSilenceCall(false)
+                            .setSkipCallLog(false)
+                            .setSkipNotification(false)
+                            .setShouldScreenCallViaAudioProcessing(false)
+                            .setCallComposerAttachmentsToShow(
+                                    CallResponse.CALL_COMPOSER_ATTACHMENT_PRIORITY
+                                            | CallResponse.CALL_COMPOSER_ATTACHMENT_SUBJECT)
+                            .build();
+            MockCallScreeningService.setCallbacks(createCallbackForCsTest(response));
+
             addAndVerifyNewIncomingCall(createTestNumber(), null);
             MockConnection connection = verifyConnectionForIncomingCall();
 
@@ -300,9 +317,12 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                             .getArgs(0);
             assertFalse((boolean) callFilteringCompleteInvocations[0]);
             assertFalse((boolean) callFilteringCompleteInvocations[1]);
+            assertEquals(response, callFilteringCompleteInvocations[2]);
+            assertFalse((boolean) callFilteringCompleteInvocations[3]);
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
+            MockCallScreeningService.disableService(mContext);
         }
     }
 
@@ -315,8 +335,25 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         Uri testNumber = createTestNumber();
         Uri contactUri = TestUtils.insertContact(mContext.getContentResolver(),
                 testNumber.getSchemeSpecificPart());
+        TestUtils.setSystemDialerOverride(getInstrumentation());
+        MockCallScreeningService.enableService(mContext);
         try {
+            CallScreeningService.CallResponse response =
+                    new CallScreeningService.CallResponse.Builder()
+                            .setDisallowCall(false)
+                            .setRejectCall(false)
+                            .setSilenceCall(false)
+                            .setSkipCallLog(false)
+                            .setSkipNotification(false)
+                            .setShouldScreenCallViaAudioProcessing(false)
+                            .setCallComposerAttachmentsToShow(
+                                    CallResponse.CALL_COMPOSER_ATTACHMENT_PRIORITY
+                                            | CallResponse.CALL_COMPOSER_ATTACHMENT_SUBJECT)
+                            .build();
+            MockCallScreeningService.setCallbacks(createCallbackForCsTest(response));
+
             addAndVerifyNewIncomingCall(testNumber, null);
+
             MockConnection connection = verifyConnectionForIncomingCall();
 
             Object[] callFilteringCompleteInvocations =
@@ -324,12 +361,28 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                             .getArgs(0);
             assertFalse((boolean) callFilteringCompleteInvocations[0]);
             assertTrue((boolean) callFilteringCompleteInvocations[1]);
+            assertEquals(response, callFilteringCompleteInvocations[2]);
+            assertTrue((boolean) callFilteringCompleteInvocations[3]);
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
             TestUtils.deleteContact(mContext.getContentResolver(), contactUri);
+            MockCallScreeningService.disableService(mContext);
+            TestUtils.clearSystemDialerOverride(getInstrumentation());
         }
     }
+
+    private MockCallScreeningService.CallScreeningServiceCallbacks createCallbackForCsTest(
+            CallScreeningService.CallResponse response) {
+        return new MockCallScreeningService.CallScreeningServiceCallbacks() {
+            @Override
+            public void onScreenCall(Call.Details callDetails) {
+
+                getService().respondToCall(callDetails, response);
+            }
+        };
+    }
+
     public void testCallDirectionOutgoing() {
         if (!mShouldTestTelecom) {
             return;
