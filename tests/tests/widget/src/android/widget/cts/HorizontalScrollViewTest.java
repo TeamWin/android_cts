@@ -28,13 +28,17 @@ import static org.mockito.Mockito.verify;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Xml;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -42,11 +46,14 @@ import android.widget.TextView;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -73,6 +80,7 @@ public class HorizontalScrollViewTest {
     private HorizontalScrollView mScrollViewRegular;
     private HorizontalScrollView mScrollViewCustom;
     private MyHorizontalScrollView mScrollViewCustomEmpty;
+    private HorizontalScrollView mScrollViewStretch;
 
     @Rule
     public ActivityTestRule<HorizontalScrollViewCtsActivity> mActivityRule =
@@ -88,6 +96,8 @@ public class HorizontalScrollViewTest {
                 R.id.horizontal_scroll_view_custom);
         mScrollViewCustomEmpty = (MyHorizontalScrollView) mActivity.findViewById(
                 R.id.horizontal_scroll_view_custom_empty);
+        mScrollViewStretch = (HorizontalScrollView) mActivity.findViewById(
+                R.id.horizontal_scroll_view_stretch);
     }
 
     @Test
@@ -790,6 +800,297 @@ public class HorizontalScrollViewTest {
         mScrollViewRegular.setRightEdgeEffectColor(Color.GREEN);
         assertEquals(mScrollViewRegular.getLeftEdgeEffectColor(), Color.RED);
         assertEquals(mScrollViewRegular.getRightEdgeEffectColor(), Color.GREEN);
+    }
+
+    @Test
+    public void testStretchAtLeft() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the left:
+        showOnlyStretch();
+
+        int[] locationOnScreen = new int[2];
+        mActivityRule.runOnUiThread(() -> {
+            mScrollViewStretch.getLocationOnScreen(locationOnScreen);
+        });
+
+        Bitmap[] bitmap = new Bitmap[1];
+
+        int width = mScrollViewStretch.getWidth();
+        int height = mScrollViewStretch.getHeight();
+
+        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                locationOnScreen[0],
+                locationOnScreen[1],
+                50,
+                0,
+                50,
+                5,
+                new CtsTouchUtils.EventInjectionListener() {
+                    private int mNumEvents = 0;
+
+                    @Override
+                    public void onDownInjected(int xOnScreen, int yOnScreen) {
+                    }
+
+                    @Override
+                    public void onMoveInjected(int[] xOnScreen, int[] yOnScreen) {
+                        mNumEvents++;
+                        if (mNumEvents == 5) {
+                            // Have to take the picture after drag, but before the up event
+                            bitmap[0] = takeScreenshot(locationOnScreen[0], locationOnScreen[1],
+                                    width,
+                                    height);
+                        }
+                    }
+
+                    @Override
+                    public void onUpInjected(int xOnScreen, int yOnScreen) {
+                    }
+                });
+
+        // The blue should stretch beyond its normal dimensions. Avoid the shadow at the top.
+        assertEquals(Color.BLUE, bitmap[0].getPixel(52, 49));
+    }
+
+    // If this test is showing as flaky, it is more likely that it is broken. I've
+    // leaned toward false positive over false negative.
+    @LargeTest
+    @Test
+    public void testStretchLeftAndCatch() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        int[] locationOnScreen = new int[2];
+        mActivityRule.runOnUiThread(() -> {
+            mScrollViewStretch.getLocationOnScreen(locationOnScreen);
+        });
+
+        boolean[] wasDownDoneInTime = new boolean[1];
+
+        // Try at most 5 times. Give slow devices their best chance to respond, but
+        // don't penalize them with a flaky test if they can't complete in time.
+        for (int i = 0; i < 5 && !wasDownDoneInTime[0]; i++) {
+            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                    locationOnScreen[0],
+                    locationOnScreen[1],
+                    89,
+                    0,
+                    50,
+                    5,
+                    new CtsTouchUtils.EventInjectionListener() {
+                        private long mLastAnimationTime;
+
+                        @Override
+                        public void onDownInjected(int xOnScreen, int yOnScreen) {
+                        }
+
+                        @Override
+                        public void onMoveInjected(int[] xOnScreen, int[] yOnScreen) {
+                            mLastAnimationTime = AnimationUtils.currentAnimationTimeMillis();
+                        }
+
+                        @Override
+                        public void onUpInjected(int xOnScreen, int yOnScreen) {
+                            CtsTouchUtils.injectDownEvent(mInstrumentation.getUiAutomation(),
+                                    SystemClock.uptimeMillis(), locationOnScreen[0],
+                                    locationOnScreen[1], null);
+                            long animationTime = AnimationUtils.currentAnimationTimeMillis();
+                            // The receding time is 600 ms, but we don't want to be near the final
+                            // part of the animation when the pixels may overlap.
+                            if (animationTime - mLastAnimationTime < 400) {
+                                wasDownDoneInTime[0] = true;
+                            }
+                        }
+                    });
+
+            // To avoid flaky tests, this ensures that the down event was received before the
+            // recede went too far.
+            if (wasDownDoneInTime[0]) {
+                // Now make sure that we wait until the release should normally have finished:
+                sleepAnimationTime(600);
+
+                // Since we caught it, it should be held and still stretched.
+                int width = mScrollViewStretch.getWidth();
+                int height = mScrollViewStretch.getHeight();
+
+                Bitmap bitmap = takeScreenshot(locationOnScreen[0], locationOnScreen[1], width,
+                        height);
+
+                // The blue should still be stretched
+                assertEquals(Color.BLUE, bitmap.getPixel(52, 49));
+            }
+            CtsTouchUtils.injectUpEvent(mInstrumentation.getUiAutomation(),
+                    SystemClock.uptimeMillis(), false,
+                    locationOnScreen[0], locationOnScreen[1], null);
+        }
+    }
+
+    @Test
+    public void testStretchAtRight() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the left:
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the right
+            mScrollViewStretch.scrollTo(210, 0);
+        });
+
+        int[] locationOnScreen = new int[2];
+        mActivityRule.runOnUiThread(() -> {
+            mScrollViewStretch.getLocationOnScreen(locationOnScreen);
+        });
+
+        Bitmap[] bitmap = new Bitmap[1];
+
+        int width = mScrollViewStretch.getWidth();
+        int height = mScrollViewStretch.getHeight();
+
+        CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                locationOnScreen[0] + 89,
+                locationOnScreen[1],
+                -50,
+                0,
+                50,
+                5,
+                new CtsTouchUtils.EventInjectionListener() {
+                    private int mNumEvents = 0;
+                    @Override
+                    public void onDownInjected(int xOnScreen, int yOnScreen) {
+                    }
+
+                    @Override
+                    public void onMoveInjected(int[] xOnScreen, int[] yOnScreen) {
+                        mNumEvents++;
+                        if (mNumEvents == 5) {
+                            // Have to take the picture after drag, but before the up event
+                            bitmap[0] = takeScreenshot(locationOnScreen[0], locationOnScreen[1],
+                                    width,
+                                    height);
+                        }
+                    }
+
+                    @Override
+                    public void onUpInjected(int xOnScreen, int yOnScreen) {
+                    }
+                });
+
+        // The pink should stretch beyond its normal dimensions. Also avoid the shadow
+        assertEquals(Color.MAGENTA, bitmap[0].getPixel(38, 49));
+    }
+
+    // If this test is showing as flaky, it is more likely that it is broken. I've
+    // leaned toward false positive over false negative.
+    @LargeTest
+    @Test
+    public void testStretchRightAndCatch() throws Throwable {
+        // Make sure that the scroll view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Scroll all the way to the bottom
+            mScrollViewStretch.scrollTo(210, 0);
+        });
+
+        int[] locationOnScreen = new int[2];
+        mActivityRule.runOnUiThread(() -> {
+            mScrollViewStretch.getLocationOnScreen(locationOnScreen);
+        });
+
+        boolean[] wasDownDoneInTime = new boolean[1];
+
+        // Try at most 5 times. Give slow devices their best chance to respond, but
+        // don't penalize them with a flaky test if they can't complete in time.
+        for (int i = 0; i < 5 && !wasDownDoneInTime[0]; i++) {
+            CtsTouchUtils.emulateDragGesture(mInstrumentation, mActivityRule,
+                    locationOnScreen[0] + 89,
+                    locationOnScreen[1],
+                    -89,
+                    0,
+                    50,
+                    5,
+                    new CtsTouchUtils.EventInjectionListener() {
+                        private long mLastAnimationTime;
+
+                        @Override
+                        public void onDownInjected(int xOnScreen, int yOnScreen) {
+                        }
+
+                        @Override
+                        public void onMoveInjected(int[] xOnScreen, int[] yOnScreen) {
+                            mLastAnimationTime = AnimationUtils.currentAnimationTimeMillis();
+                        }
+
+                        @Override
+                        public void onUpInjected(int xOnScreen, int yOnScreen) {
+                            CtsTouchUtils.injectDownEvent(mInstrumentation.getUiAutomation(),
+                                    SystemClock.uptimeMillis(), locationOnScreen[0],
+                                    locationOnScreen[1], null);
+                            long animationTime = AnimationUtils.currentAnimationTimeMillis();
+                            // The receding time is 600 ms, but we don't want to be near the final
+                            // part of the animation when the pixels may overlap.
+                            if (animationTime - mLastAnimationTime < 400) {
+                                wasDownDoneInTime[0] = true;
+                            }
+                        }
+                    });
+
+            // To avoid flaky tests, this ensures that the down event was received before the
+            // recede went too far.
+            if (wasDownDoneInTime[0]) {
+                // Now make sure that we wait until the release should normally have finished:
+                sleepAnimationTime(600);
+
+                // Since we caught it, it should be held and still stretched.
+                int width = mScrollViewStretch.getWidth();
+                int height = mScrollViewStretch.getHeight();
+
+                Bitmap bitmap = takeScreenshot(locationOnScreen[0], locationOnScreen[1], width,
+                        height);
+
+                // The magenta should still be stretched
+                assertEquals(Color.MAGENTA, bitmap.getPixel(38, 49));
+            }
+            CtsTouchUtils.injectUpEvent(mInstrumentation.getUiAutomation(),
+                    SystemClock.uptimeMillis(), false,
+                    locationOnScreen[0], locationOnScreen[1], null);
+        }
+    }
+
+    /**
+     * This sleeps until the {@link AnimationUtils#currentAnimationTimeMillis()} changes
+     * by at least <code>durationMillis</code> milliseconds. This is useful for EdgeEffect because
+     * it uses that mechanism to determine the animation duration.
+     *
+     * @param durationMillis The time to sleep in milliseconds.
+     */
+    private void sleepAnimationTime(long durationMillis) throws Exception {
+        final long startTime = AnimationUtils.currentAnimationTimeMillis();
+        long currentTime = startTime;
+        final long endTime = startTime + durationMillis;
+        do {
+            Thread.sleep(endTime - currentTime);
+            currentTime = AnimationUtils.currentAnimationTimeMillis();
+        } while (currentTime < endTime);
+    }
+
+    private void showOnlyStretch() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            mScrollViewCustom.setVisibility(View.GONE);
+            mScrollViewCustomEmpty.setVisibility(View.GONE);
+            mScrollViewRegular.setVisibility(View.GONE);
+        });
+    }
+
+    private Bitmap takeScreenshot(int screenPositionX, int screenPositionY, int width, int height) {
+        SynchronousPixelCopy copy = new SynchronousPixelCopy();
+        Bitmap dest = Bitmap.createBitmap(
+                width, height,
+                mActivity.getWindow().isWideColorGamut()
+                        ? Bitmap.Config.RGBA_F16 : Bitmap.Config.ARGB_8888);
+        Rect srcRect = new Rect(0, 0, width, height);
+        srcRect.offset(screenPositionX, screenPositionY);
+        int copyResult = copy.request(mActivity.getWindow(), srcRect, dest);
+        assertEquals(PixelCopy.SUCCESS, copyResult);
+        return dest;
     }
 
     private boolean isInRange(int current, int from, int to) {
