@@ -7,6 +7,9 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := dhry
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-BSD SPDX-license-identifier-MIT SPDX-license-identifier-NCSA
+LOCAL_LICENSE_CONDITIONS := notice
+LOCAL_NOTICE_FILE := $(LOCAL_PATH)/LICENSE.TXT
 LOCAL_SRC_FILES := dhry_1.c dhry_2.c
 LOCAL_CFLAGS := -O3 -fno-inline-functions -DMSC_CLOCK -DCLK_TCK=1000000
 LOCAL_CFLAGS += -Wall -Werror -Wno-incompatible-library-redeclaration

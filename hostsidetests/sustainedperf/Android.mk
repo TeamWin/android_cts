@@ -24,6 +24,8 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_MODULE := CtsSustainedPerformanceHostTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0 SPDX-license-identifier-BSD SPDX-license-identifier-MIT SPDX-license-identifier-NCSA
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
 include $(BUILD_HOST_JAVA_LIBRARY)
