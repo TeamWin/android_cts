@@ -166,37 +166,6 @@ public class FontManagerTest {
     }
 
     @Test
-    public void fontManager_updateFontFile_nullPfd() {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        try {
-            fm.updateFontFile(null, new byte[256], 0);
-            fail("NullPointerException is expected.");
-        } catch (NullPointerException e) {
-            // pass
-        }
-    }
-
-    @Test
-    public void fontManager_updateFontFile_nullSignature() throws Exception {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        // Roboto-Regular.ttf is always available.
-        File robotoFile = new File("/system/fonts/Roboto-Regular.ttf");
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(robotoFile,
-                ParcelFileDescriptor.MODE_READ_ONLY);
-
-        try {
-            fm.updateFontFile(pfd, null, 0);
-            fail("NullPointerException is expected.");
-        } catch (NullPointerException e) {
-            // pass
-        }
-    }
-
-    @Test
     public void fontManager_updateFontFile_negativeBaseVersion() throws Exception {
         FontManager fm = getContext().getSystemService(FontManager.class);
         assertThat(fm).isNotNull();
@@ -207,7 +176,7 @@ public class FontManagerTest {
                 ParcelFileDescriptor.MODE_READ_ONLY);
 
         try {
-            fm.updateFontFile(pfd, new byte[256], -1);
+            fm.updateFontFile(new FontFileUpdateRequest(pfd, new byte[256]), -1);
             fail("IllegalArgumentException is expected.");
         } catch (IllegalArgumentException e) {
             // pass
@@ -226,7 +195,8 @@ public class FontManagerTest {
         byte[] randomSignature = new byte[256];
 
         try {
-            fm.updateFontFile(pfd, randomSignature, 0);
+            fm.updateFontFile(new FontFileUpdateRequest(pfd, randomSignature),
+                    fm.getFontConfig().getConfigVersion());
             fail("SecurityException is expected.");
         } catch (SecurityException e) {
             // pass
