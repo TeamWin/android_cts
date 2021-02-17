@@ -33,7 +33,7 @@ public class Poc17_05 extends SecurityTestCase {
      *  b/34277115
      */
     @Test
-    @SecurityTest(minPatchLevel = "2017-05")
+    // Don't add the SecurityTest annotation. This test doesn't work under userdebug builds.
     public void testPocCVE_2017_0630() throws Exception {
         if (containsDriver(getDevice(), "/sys/kernel/debug/tracing/printk_formats")) {
             String printkFormats = AdbUtils.runCommandLine(
