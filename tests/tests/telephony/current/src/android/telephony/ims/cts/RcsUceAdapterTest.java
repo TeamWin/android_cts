@@ -33,6 +33,7 @@ import static android.telephony.ims.stub.RcsCapabilityExchangeImplBase.COMMAND_C
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -61,6 +62,8 @@ import android.telephony.ims.RcsContactPresenceTuple.ServiceCapabilities;
 import android.telephony.ims.RcsContactUceCapability;
 import android.telephony.ims.RcsUceAdapter;
 import android.telephony.ims.feature.ImsFeature;
+import android.telephony.ims.stub.CapabilityExchangeEventListener;
+import android.telephony.ims.stub.CapabilityExchangeEventListener.OptionsRequestCallback;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
 import android.util.Log;
 import android.util.Pair;
@@ -68,6 +71,7 @@ import android.util.Pair;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.BlockedNumberUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.After;
@@ -92,6 +96,15 @@ import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 public class RcsUceAdapterTest {
+
+    private static final String FEATURE_TAG_CHAT =
+            "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.oma.cpm.session\"";
+    private static final String FEATURE_TAG_FILE_TRANSFER =
+            "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gpp-application.ims.iari.rcs.fthttp\"";
+    private static final String FEATURE_TAG_MMTEL_AUDIO_CALL =
+            "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel\"";
+    private static final String FEATURE_TAG_MMTEL_VIDEO_CALL =
+            "+g.3gpp.icsi-ref=\"urn%3Aurn-7%3A3gpp-service.ims.icsi.mmtel\";video";
 
     private static int sTestSlot = 0;
     private static int sTestSub = SubscriptionManager.INVALID_SUBSCRIPTION_ID;
@@ -621,7 +634,7 @@ public class RcsUceAdapterTest {
         assertNotNull("UCE adapter should not be null!", uceAdapter);
 
         // Connect to the TestImsService
-        setupTestImsService(uceAdapter);
+        setupTestImsService(uceAdapter, true, true, false);
 
         // Stay in the foreground
         lunchUceActivity();
@@ -710,7 +723,7 @@ public class RcsUceAdapterTest {
         assertNotNull("UCE adapter should not be null!", uceAdapter);
 
         // Connect to the ImsService
-        setupTestImsService(uceAdapter);
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* options */);
 
         ArrayList<Uri> numbers = new ArrayList<>(1);
         numbers.add(sTestNumberUri);
@@ -921,7 +934,7 @@ public class RcsUceAdapterTest {
         removeTestContactFromEab();
 
         // Connect to the ImsService
-        setupTestImsService(uceAdapter);
+        setupTestImsService(uceAdapter, true, true /* presence cap */, false /* OPTIONS */);
 
         TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
@@ -1031,12 +1044,295 @@ public class RcsUceAdapterTest {
         overrideCarrierConfig(null);
     }
 
-    private void setupTestImsService(RcsUceAdapter uceAdapter) throws Exception {
+    @Test
+    public void testRequestCapabilitiesWithOptionsMechanism() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, false, true /* OPTIONS enabled */);
+
+        TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
+                .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // The test contact
+        ArrayList<Uri> contacts = new ArrayList<>(3);
+        contacts.add(sTestNumberUri);
+
+        // The result callback
+        BlockingQueue<Long> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
+            @Override
+            public void onCapabilitiesReceived(List<RcsContactUceCapability> capabilities) {
+                capabilities.forEach(c -> capabilityQueue.offer(c));
+            }
+            @Override
+            public void onComplete() {
+                completeQueue.offer(true);
+            }
+            @Override
+            public void onError(int errorCode, long retryAfterMilliseconds) {
+                errorQueue.offer(new Long(errorCode));
+                errorQueue.offer(retryAfterMilliseconds);
+            }
+        };
+
+        // Set the result of the network response is 200 OK.
+        final List<String> featureTags = new ArrayList<>();
+        featureTags.add(FEATURE_TAG_CHAT);
+        featureTags.add(FEATURE_TAG_FILE_TRANSFER);
+        featureTags.add(FEATURE_TAG_MMTEL_AUDIO_CALL);
+        featureTags.add(FEATURE_TAG_MMTEL_VIDEO_CALL);
+        capabilityExchangeImpl.setOptionsOperation((contact, myCapabilities, optionsCallback) -> {
+            int sipCode = 200;
+            String reason = "OK";
+            optionsCallback.onNetworkResponse(sipCode, reason, featureTags);
+        });
+
+        // Request capabilities by calling the API requestCapabilities.
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+
+        // Verify the callback "onCapabilitiesReceived" is called.
+        RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        // Verify the callback "onComplete" is called.
+        waitForResult(completeQueue);
+        assertNotNull("RcsContactUceCapability should not be null", capability);
+        assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK, capability.getSourceType());
+        assertEquals(sTestNumberUri, capability.getContactUri());
+        assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND, capability.getRequestResult());
+        assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
+                capability.getCapabilityMechanism());
+        List<String> resultFeatureTags = capability.getOptionsFeatureTags();
+        assertEquals(featureTags.size(), resultFeatureTags.size());
+        for (String featureTag : featureTags) {
+            if (!resultFeatureTags.contains(featureTag)) {
+                fail("Cannot find feature tag in the result");
+            }
+        }
+        errorQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Request capabilities by calling the API requestAvailability.
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestAvailability(sTestContact2Uri,
+                            Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+
+        // Verify the callback "onCapabilitiesReceived" is called.
+        capability = waitForResult(capabilityQueue);
+        // Verify the callback "onComplete" is called.
+        waitForResult(completeQueue);
+        assertNotNull("RcsContactUceCapability should not be null", capability);
+        assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK, capability.getSourceType());
+        assertEquals(sTestContact2Uri, capability.getContactUri());
+        assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND, capability.getRequestResult());
+        assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
+                capability.getCapabilityMechanism());
+        resultFeatureTags = capability.getOptionsFeatureTags();
+        assertEquals(featureTags.size(), resultFeatureTags.size());
+        for (String featureTag : featureTags) {
+            if (!resultFeatureTags.contains(featureTag)) {
+                fail("Cannot find feature tag in the result");
+            }
+        }
+        errorQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Set the OPTIONS result is failed.
+        capabilityExchangeImpl.setOptionsOperation((contact, myCapabilities, optionsCallback) -> {
+            int sipCode = 400;
+            String reason = "Bad Request";
+            optionsCallback.onNetworkResponse(sipCode, reason, Collections.EMPTY_LIST);
+        });
+
+        // Request capabilities by calling the API requestCapabilities.
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+
+        // Verify the callback "onError" is called.
+        assertEquals(RcsUceAdapter.ERROR_GENERIC_FAILURE, waitForLongResult(errorQueue));
+
+        // The callback "onCapabilitiesReceived" should not be called.
+        if (capabilityQueue.poll() != null) {
+            fail("onCapabilitiesReceived should not be called.");
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testOptionsRequestFromNetwork() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, false, true /* OPTIONS enabled */);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        final Uri contact = sTestContact2Uri;
+        List<String> remoteCapabilities = new ArrayList<>();
+        remoteCapabilities.add(FEATURE_TAG_CHAT);
+        remoteCapabilities.add(FEATURE_TAG_FILE_TRANSFER);
+        remoteCapabilities.add(FEATURE_TAG_MMTEL_AUDIO_CALL);
+        remoteCapabilities.add(FEATURE_TAG_MMTEL_VIDEO_CALL);
+        BlockingQueue<Pair<RcsContactUceCapability, Boolean>> respToCapRequestQueue =
+                new LinkedBlockingQueue<>();
+        OptionsRequestCallback callback = new OptionsRequestCallback() {
+            @Override
+            public void onRespondToCapabilityRequest(RcsContactUceCapability capabilities,
+                    boolean isBlocked) {
+                respToCapRequestQueue.offer(new Pair<>(capabilities, isBlocked));
+            }
+            @Override
+            public void onRespondToCapabilityRequestWithError(int sipCode, String reason) {
+            }
+        };
+
+        // Notify the remote capability request
+        eventListener.onRemoteCapabilityRequest(contact, remoteCapabilities, callback);
+
+        // Verify receive the result
+        Pair<RcsContactUceCapability, Boolean> capability = waitForResult(respToCapRequestQueue);
+        assertNotNull("RcsContactUceCapability should not be null", capability);
+        assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK, capability.first.getSourceType());
+        assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND,
+                capability.first.getRequestResult());
+        assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
+                capability.first.getCapabilityMechanism());
+        // Should not report blocked
+        assertFalse("This number is not blocked, so the API should not report blocked",
+                capability.second);
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
+    public void testOptionsRequestFromNetworkBlocked() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        RcsUceAdapter uceAdapter = imsManager.getImsRcsManager(sTestSub).getUceAdapter();
+        assertNotNull("UCE adapter should not be null!", uceAdapter);
+
+        // Remove the test contact capabilities
+        removeTestContactFromEab();
+
+        // Connect to the ImsService
+        setupTestImsService(uceAdapter, true, false, true /* OPTIONS enabled */);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        final Uri contact = sTestNumberUri;
+        List<String> remoteCapabilities = new ArrayList<>();
+        remoteCapabilities.add(FEATURE_TAG_CHAT);
+        remoteCapabilities.add(FEATURE_TAG_FILE_TRANSFER);
+        remoteCapabilities.add(FEATURE_TAG_MMTEL_AUDIO_CALL);
+        remoteCapabilities.add(FEATURE_TAG_MMTEL_VIDEO_CALL);
+
+        BlockingQueue<Pair<RcsContactUceCapability, Boolean>> respToCapRequestQueue =
+                new LinkedBlockingQueue<>();
+        OptionsRequestCallback callback = new OptionsRequestCallback() {
+            @Override
+            public void onRespondToCapabilityRequest(RcsContactUceCapability capabilities,
+                    boolean isBlocked) {
+                respToCapRequestQueue.offer(new Pair<>(capabilities, isBlocked));
+            }
+            @Override
+            public void onRespondToCapabilityRequestWithError(int sipCode, String reason) {
+            }
+        };
+
+        // Must be default SMS app to block numbers
+        sServiceConnector.setDefaultSmsApp();
+        Uri blockedUri = BlockedNumberUtil.insertBlockedNumber(getContext(), sTestPhoneNumber);
+        assertNotNull("could not block number", blockedUri);
+        try {
+            // Notify the remote capability request
+            eventListener.onRemoteCapabilityRequest(contact, remoteCapabilities, callback);
+
+            // Verify receive the result
+            Pair<RcsContactUceCapability, Boolean> capability =
+                    waitForResult(respToCapRequestQueue);
+            assertNotNull("RcsContactUceCapability should not be null", capability);
+            assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK,
+                    capability.first.getSourceType());
+            assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND,
+                    capability.first.getRequestResult());
+            assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
+                    capability.first.getCapabilityMechanism());
+            // Should report blocked
+            assertTrue("this number is blocked, so API should report blocked",
+                    capability.second);
+        } finally {
+            BlockedNumberUtil.deleteBlockedNumber(getContext(), blockedUri);
+            sServiceConnector.restoreDefaultSmsApp();
+        }
+
+        overrideCarrierConfig(null);
+    }
+
+    private void setupTestImsService(RcsUceAdapter uceAdapter, boolean presencePublishEnabled,
+            boolean presenceCapExchangeEnabled, boolean sipOptionsEnabled) throws Exception {
         // Trigger carrier config changed
         PersistableBundle bundle = new PersistableBundle();
-        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL,
+                presencePublishEnabled);
         bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL,
-                true);
+                presenceCapExchangeEnabled);
+        bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, sipOptionsEnabled);
         overrideCarrierConfig(bundle);
 
         // Enable the UCE setting.
