@@ -154,4 +154,39 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(3032L);
         assertThat(result.getType().toString()).isEqualTo("NETWORK_TYPE_WIFI");
     }
+
+    public void testPlaybackMetrics() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIAMETRICS_PLAYBACK_REPORTED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testPlaybackMetrics");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        int appUid = DeviceUtils.getAppUid(getDevice(), TEST_PKG);
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediametricsPlaybackReported()).isTrue();
+        AtomsProto.MediametricsPlaybackReported result =
+                data.get(0).getAtom().getMediametricsPlaybackReported();
+
+        assertThat(result.getUid()).isEqualTo(appUid);
+        assertThat(result.getMediaDurationMillis()).isEqualTo(233L);
+        assertThat(result.getStreamSource().toString()).isEqualTo("STREAM_SOURCE_NETWORK");
+        assertThat(result.getStreamType().toString()).isEqualTo("STREAM_TYPE_OTHER");
+        assertThat(result.getPlaybackType().toString()).isEqualTo("PLAYBACK_TYPE_LIVE");
+        assertThat(result.getDrmType().toString()).isEqualTo("DRM_TYPE_WV_L1");
+        assertThat(result.getContentType().toString()).isEqualTo("CONTENT_TYPE_MAIN");
+        assertThat(result.getPlayerName()).isEqualTo("ExoPlayer");
+        assertThat(result.getPlayerVersion()).isEqualTo("1.01x");
+        assertThat(result.getVideoFramesPlayed()).isEqualTo(1024);
+        assertThat(result.getVideoFramesDropped()).isEqualTo(32);
+        assertThat(result.getAudioUnderrunCount()).isEqualTo(22);
+        assertThat(result.getNetworkBytesRead()).isEqualTo(102400);
+        assertThat(result.getLocalBytesRead()).isEqualTo(2000);
+        assertThat(result.getNetworkTransferDurationMillis()).isEqualTo(6000);
+    }
 }
