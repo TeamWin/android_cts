@@ -22,6 +22,8 @@ import static android.app.people.ConversationStatus.ACTIVITY_GAME;
 import static android.app.people.ConversationStatus.AVAILABILITY_AVAILABLE;
 import static android.app.people.ConversationStatus.AVAILABILITY_BUSY;
 
+import static junit.framework.Assert.fail;
+
 import static java.lang.Thread.sleep;
 
 import android.app.Notification;
@@ -32,7 +34,6 @@ import android.app.people.ConversationStatus;
 import android.app.people.PeopleManager;
 import android.app.stubs.R;
 import android.app.stubs.SendBubbleActivity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
@@ -40,6 +41,8 @@ import android.graphics.drawable.Icon;
 import android.os.SystemClock;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
+
+import androidx.test.InstrumentationRegistry;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -160,6 +163,31 @@ public class PeopleManagerTest extends AndroidTestCase {
                 )
                 .setSmallIcon(android.R.drawable.sym_def_app_icon);
         return nb;
+    }
+    public void testIsConversationWithoutPermission() throws Exception {
+        try {
+            mPeopleManager.isConversation(mContext.getPackageName(), SHARE_SHORTCUT_ID);
+            fail("Expected SecurityException");
+        } catch (Exception e) {
+            //expected
+        }
+    }
+
+    public void testIsConversationWithPermission() throws Exception {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PEOPLE_DATA");
+
+            // Shortcut exists and has label
+            assertTrue(mPeopleManager.isConversation(
+                    mContext.getPackageName(), SHARE_SHORTCUT_ID));
+            // Shortcut doesn't exist
+            assertFalse(mPeopleManager.isConversation(
+                    mContext.getPackageName(), SHARE_SHORTCUT_ID + 1));
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
     }
 
     public void testAddOrUpdateStatus_add() throws Exception {
