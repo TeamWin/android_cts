@@ -16,17 +16,23 @@
 
 package com.android.bedstead.nene;
 
+import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.users.Users;
 
 /**
  * Entry point to Nene Test APIs.
  */
 public final class TestApis {
-
     private final Users mUsers = new Users();
+    private final Packages mPackages = new Packages(this);
 
     /** Access Test APIs related to Users. */
     public Users users() {
         return mUsers;
+    }
+
+    /** Access Test APIs related to Packages. */
+    public Packages packages() {
+        return mPackages;
     }
 }

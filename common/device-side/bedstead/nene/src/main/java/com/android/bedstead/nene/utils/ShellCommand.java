@@ -16,7 +16,10 @@
 
 package com.android.bedstead.nene.utils;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.users.UserReference;
 
 import java.util.function.Function;
 
@@ -32,8 +35,21 @@ public final class ShellCommand {
         return new Builder(command);
     }
 
+    /**
+     * Create a builder and if {@code userReference} is not {@code null}, add "--user <userId>".
+     */
+    public static Builder builderForUser(@Nullable UserReference userReference, String command) {
+        Builder builder = builder(command);
+        if (userReference != null) {
+            builder.addOption("--user", userReference.id());
+        }
+
+        return builder;
+    }
+
     public static final class Builder {
         private final StringBuilder commandBuilder;
+        private byte[] mStdInBytes = null;
         private boolean mAllowEmptyOutput = false;
 
         private Builder(String command) {
@@ -80,7 +96,8 @@ public final class ShellCommand {
         /** See {@link ShellCommandUtils#executeCommand(java.lang.String)}. */
         public String execute() throws AdbException {
             return ShellCommandUtils.executeCommand(
-                    commandBuilder.toString(), /* allowEmptyOutput= */ mAllowEmptyOutput);
+                    commandBuilder.toString(),
+                    /* allowEmptyOutput= */ mAllowEmptyOutput);
         }
 
         /** See {@link ShellCommandUtils#executeCommandAndValidateOutput(String, Function)}. */
@@ -88,7 +105,8 @@ public final class ShellCommand {
                 throws AdbException {
             return ShellCommandUtils.executeCommandAndValidateOutput(
                     commandBuilder.toString(),
-                    /* allowEmptyOutput= */ mAllowEmptyOutput, outputSuccessChecker);
+                    /* allowEmptyOutput= */ mAllowEmptyOutput,
+                    outputSuccessChecker);
         }
     }
 }
