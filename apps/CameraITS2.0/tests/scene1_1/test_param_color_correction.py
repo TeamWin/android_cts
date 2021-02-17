@@ -131,33 +131,34 @@ class ParamColorCorrectionTest(its_base_test.ItsBaseTest):
       pylab.ylabel('RGB patch means')
       matplotlib.pyplot.savefig(
           '%s_plot_means.png' % os.path.join(log_path, NAME))
-
       # Ensure that image is not clamped to white/black.
-      assert all(RGB_RANGE_THRESH < g_means[i] < 1.0-RGB_RANGE_THRESH
-                 for i in capture_idxs), 'Image too dark/bright! Check setup.'
+      if not all(RGB_RANGE_THRESH < g_means[i] < 1.0-RGB_RANGE_THRESH
+                 for i in capture_idxs):
+        raise AssertionError('Image too dark/bright! Check setup.')
 
       # Expect G0 == G1 == G2, R0 == 0.5*R1 == R2, B0 == B1 == 0.5*B2
       # assert planes in caps expected to be equal
-      e_msg = 'G[0] vs G[1] too different. [0]: %.3f, [1]: %.3f' % (
-          g_means[0], g_means[1])
-      assert abs(g_means[1] - g_means[0]) < RGB_DIFF_THRESH, e_msg
-      e_msg = 'G[1] vs G[2] too different. [1]: %.3f, [2]: %.3f' % (
-          g_means[1], g_means[2])
-      assert abs(g_means[2] - g_means[1]) < RGB_DIFF_THRESH, e_msg
-      e_msg = 'R[0] vs R[2] too different. [0]: %.3f, [2]: %.3f' % (
-          r_means[0], r_means[2])
-      assert abs(r_means[2] - r_means[0]) < RGB_DIFF_THRESH, e_msg
-      e_msg = 'B[0] vs B[1] too different. [0]: %.3f, [1]: %.3f' % (
-          b_means[0], b_means[1])
-      assert abs(b_means[1] - b_means[0]) < RGB_DIFF_THRESH, e_msg
+      if abs(g_means[1] - g_means[0]) > RGB_DIFF_THRESH:
+        raise AssertionError('G[0] vs G[1] too different. '
+                             f'[0]: {g_means[0]:.3f}, [1]: {g_means[1]:.3f}')
+      if abs(g_means[2] - g_means[1]) > RGB_DIFF_THRESH:
+        raise AssertionError('G[1] vs G[2] too different. '
+                             f'[1]: {g_means[1]:.3f}, [2]: {g_means[2]:.3f}')
+      if abs(r_means[2] - r_means[0]) > RGB_DIFF_THRESH:
+        raise AssertionError('R[0] vs R[2] too different. '
+                             f'[0]: {r_means[0]:.3f}, [2]: {r_means[2]:.3f}')
+      if abs(b_means[1] - b_means[0]) > RGB_DIFF_THRESH:
+        raise AssertionError('B[0] vs B[1] too different. '
+                             f'[0]: {b_means[0]:.3f}, [1]: {b_means[1]:.3f}')
 
       # assert boosted planes in caps
-      e_msg = 'R[1] not boosted enough. [0]: %.3f, [1]: %.3f' % (
-          r_means[0], r_means[1])
-      assert abs(r_means[1] - 2*r_means[0]) < RGB_DIFF_THRESH, e_msg
-      e_msg = 'B[2] not boosted enough. [0]: %.3f, [2]: %.3f' % (
-          b_means[0], b_means[2])
-      assert abs(b_means[2] - 2*b_means[0]) < RGB_DIFF_THRESH, e_msg
+      if abs(r_means[1] - 2*r_means[0]) > RGB_DIFF_THRESH:
+        raise AssertionError('R[1] not boosted enough or too much. '
+                             f'[0]: {r_means[0]:.4f}, [1]: {r_means[1]:.4f}')
+      if abs(b_means[2] - 2*b_means[0]) > RGB_DIFF_THRESH:
+        raise AssertionError('B[2] not boosted enough or too much. '
+                             f'[0]: {b_means[0]:.4f}, [2]: {b_means[2]:.4f}')
+
 
 if __name__ == '__main__':
   test_runner.main()
