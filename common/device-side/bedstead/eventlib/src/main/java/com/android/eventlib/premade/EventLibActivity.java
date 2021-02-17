@@ -21,6 +21,9 @@ import android.os.Bundle;
 import android.os.PersistableBundle;
 
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
+import com.android.eventlib.events.activities.ActivityDestroyedEvent;
+import com.android.eventlib.events.activities.ActivityStartedEvent;
+import com.android.eventlib.events.activities.ActivityStoppedEvent;
 
 /**
  * An {@link Activity} which logs events for all lifecycle events.
@@ -59,10 +62,18 @@ public class EventLibActivity extends Activity {
         logger.log();
     }
 
+    /** Log a {@link ActivityStartedEvent}. */
     @Override
     protected void onStart() {
-        // TODO(scottjonathan): Add log
         super.onStart();
+        ActivityStartedEvent.ActivityStartedEventLogger logger =
+                ActivityStartedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 
     @Override
@@ -83,15 +94,31 @@ public class EventLibActivity extends Activity {
         super.onPause();
     }
 
+    /** Log a {@link ActivityStoppedEvent}. */
     @Override
     protected void onStop() {
-        // TODO(scottjonathan): Add log
         super.onStop();
+        ActivityStoppedEvent.ActivityStoppedEventLogger logger =
+                ActivityStoppedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 
+    /** Log a {@link ActivityDestroyedEvent}. */
     @Override
     protected void onDestroy() {
-        // TODO(scottjonathan): Add log
         super.onDestroy();
+        ActivityDestroyedEvent.ActivityDestroyedEventLogger logger =
+                ActivityDestroyedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 }

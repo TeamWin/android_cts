@@ -209,24 +209,24 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
-    fun testAutoRevoke_userWhitelisting() {
+    fun testAutoRevoke_userAllowlisting() {
         withUnusedThresholdMs(4L) {
             withDummyApp {
                 // Setup
                 startApp()
                 clickPermissionAllow()
-                assertWhitelistState(false)
+                assertAllowlistState(false)
 
                 // Verify
-                waitFindObject(byTextIgnoreCase("Request whitelist")).click()
+                waitFindObject(byTextIgnoreCase("Request allowlist")).click()
                 waitFindObject(byTextIgnoreCase("Permissions")).click()
-                val autoRevokeEnabledToggle = getWhitelistToggle()
+                val autoRevokeEnabledToggle = getAllowlistToggle()
                 assertTrue(autoRevokeEnabledToggle.isChecked)
 
-                // Grant whitelist
+                // Grant allowlist
                 autoRevokeEnabledToggle.click()
                 eventually {
-                    assertFalse(getWhitelistToggle().isChecked)
+                    assertFalse(getAllowlistToggle().isChecked)
                 }
 
                 // Run
@@ -238,7 +238,7 @@ class AutoRevokeTest {
 
                 // Verify
                 startApp()
-                assertWhitelistState(true)
+                assertAllowlistState(true)
                 assertPermission(PERMISSION_GRANTED)
             }
         }
@@ -270,7 +270,7 @@ class AutoRevokeTest {
 
     @AppModeFull(reason = "Uses separate apps for testing")
     @Test
-    fun testAutoRevoke_whitelistingApis() {
+    fun testAutoRevoke_allowlistingApis() {
         withDummyApp {
             val pm = context.packageManager
             runWithShellPermissionIdentity {
@@ -420,13 +420,13 @@ class AutoRevokeTest {
         waitForIdle()
     }
 
-    private fun assertWhitelistState(state: Boolean) {
+    private fun assertAllowlistState(state: Boolean) {
         assertThat(
-            waitFindObject(By.textStartsWith("Auto-revoke whitelisted: ")).text,
+            waitFindObject(By.textStartsWith("Auto-revoke allowlisted: ")).text,
             containsString(state.toString()))
     }
 
-    private fun getWhitelistToggle(): AccessibilityNodeInfo {
+    private fun getAllowlistToggle(): AccessibilityNodeInfo {
         waitForIdle()
         return waitFindSwitch("Remove permissions if app isn’t used")
     }

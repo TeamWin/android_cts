@@ -50,6 +50,9 @@ public class SampleTestActivity extends PassFailButtons.Activity {
      */
     private static final String TEST_STRING = "Sample Test String";
 
+    private static final String REPORT_LOG_NAME = "SampleTestActivity-Log";
+    private static final String REPORT_STREAM_NAME = "SampleTestActivity-Stream";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,7 +86,7 @@ public class SampleTestActivity extends PassFailButtons.Activity {
                 ResultUnit.FPS);
 
         // Alternatively, activities can invoke TestResult directly to record metrics
-        ReportLog reportLog = new PassFailButtons.CtsVerifierReportLog();
+        ReportLog reportLog = getReportLog();
         reportLog.setSummary("Sample Summary", 1.0, ResultType.HIGHER_BETTER, ResultUnit.BYTE);
         reportLog.addValues("Sample Values", metricValues, ResultType.NEUTRAL, ResultUnit.FPS);
         TestResult.setPassedResult(this, "manualSample", "manualDetails", reportLog);

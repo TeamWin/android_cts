@@ -21,6 +21,7 @@ android_test {
     ],
     static_libs: [
         "Nene",
+        "EventLib",
         "androidx.test.ext.junit",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",

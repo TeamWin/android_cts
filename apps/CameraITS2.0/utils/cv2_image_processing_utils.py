@@ -40,7 +40,8 @@ CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 
 CIRCLE_AR_ATOL = 0.1  # circle aspect ratio tolerance
-CIRCLISH_ATOL = 0.12  # contour area vs ideal circle area & aspect ratio TOL
+CIRCLISH_ATOL = 0.10  # contour area vs ideal circle area & aspect ratio TOL
+CIRCLISH_LOW_RES_ATOL = 0.15  # loosen for low res images
 CIRCLE_MIN_PTS = 20
 CIRCLE_RADIUS_NUMPTS_THRESH = 2  # contour num_pts/radius: empirically ~3x
 
@@ -49,6 +50,8 @@ CV2_RED = (255, 0, 0)  # color in cv2 to draw lines
 FOV_THRESH_SUPER_TELE = 40
 FOV_THRESH_TELE = 60
 FOV_THRESH_WFOV = 90
+
+LOW_RES_IMG_THRESH = 320 * 240
 
 RGB_GRAY_WEIGHTS = (0.299, 0.587, 0.114)  # RGB to Gray conversion matrix
 
@@ -330,6 +333,10 @@ def find_circle(img, img_name, min_area, color):
   """
   circle = {}
   img_size = img.shape
+  if img_size[0]*img_size[1] >= LOW_RES_IMG_THRESH:
+    circlish_atol = CIRCLISH_ATOL
+  else:
+    circlish_atol = CIRCLISH_LOW_RES_ATOL
 
   # convert to gray-scale image
   img_gray = numpy.dot(img[..., :3], RGB_GRAY_WEIGHTS)
@@ -354,12 +361,11 @@ def find_circle(img, img_name, min_area, color):
       colour = img_bw[shape['cty']][shape['ctx']]
       circlish = (math.pi * radius**2) / area
       aspect_ratio = shape['width'] / shape['height']
-      circlish_correction = aspect_ratio if aspect_ratio > 1.0 else 1/aspect_ratio
       logging.debug('Potential circle found. radius: %.2f, color: %d,'
                     'circlish: %.3f, ar: %.3f, pts: %d', radius, colour,
                     circlish, aspect_ratio, num_pts)
       if (colour == color and
-          numpy.isclose(1.0, circlish, atol=CIRCLISH_ATOL*circlish_correction) and
+          numpy.isclose(1.0, circlish, atol=circlish_atol) and
           numpy.isclose(1.0, aspect_ratio, atol=CIRCLE_AR_ATOL) and
           num_pts/radius >= CIRCLE_RADIUS_NUMPTS_THRESH):
 

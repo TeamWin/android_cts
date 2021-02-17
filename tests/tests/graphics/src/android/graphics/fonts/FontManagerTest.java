@@ -16,6 +16,9 @@
 
 package android.graphics.fonts;
 
+import static android.graphics.fonts.FontStyle.FONT_SLANT_UPRIGHT;
+import static android.graphics.fonts.FontStyle.FONT_WEIGHT_NORMAL;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
@@ -38,6 +41,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -161,20 +166,7 @@ public class FontManagerTest {
     }
 
     @Test
-    public void fontManager_nullPfd() throws Exception {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        try {
-            fm.updateFontFile(null, new byte[256], 0);
-            fail("NullPointerException is expected.");
-        } catch (NullPointerException e) {
-            // pass
-        }
-    }
-
-    @Test
-    public void fontManager_nullSignature() throws Exception {
+    public void fontManager_updateFontFile_negativeBaseVersion() throws Exception {
         FontManager fm = getContext().getSystemService(FontManager.class);
         assertThat(fm).isNotNull();
 
@@ -184,25 +176,7 @@ public class FontManagerTest {
                 ParcelFileDescriptor.MODE_READ_ONLY);
 
         try {
-            fm.updateFontFile(pfd, null, 0);
-            fail("NullPointerException is expected.");
-        } catch (NullPointerException e) {
-            // pass
-        }
-    }
-
-    @Test
-    public void fontManager_negativeBaseVersion() throws Exception {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        // Roboto-Regular.ttf is always available.
-        File robotoFile = new File("/system/fonts/Roboto-Regular.ttf");
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(robotoFile,
-                ParcelFileDescriptor.MODE_READ_ONLY);
-
-        try {
-            fm.updateFontFile(pfd, new byte[256], -1);
+            fm.updateFontFile(new FontFileUpdateRequest(pfd, new byte[256]), -1);
             fail("IllegalArgumentException is expected.");
         } catch (IllegalArgumentException e) {
             // pass
@@ -210,7 +184,7 @@ public class FontManagerTest {
     }
 
     @Test
-    public void fontManager_permissionEnforce() throws Exception {
+    public void fontManager_updateFontFile_permissionEnforce() throws Exception {
         FontManager fm = getContext().getSystemService(FontManager.class);
         assertThat(fm).isNotNull();
 
@@ -221,7 +195,47 @@ public class FontManagerTest {
         byte[] randomSignature = new byte[256];
 
         try {
-            fm.updateFontFile(pfd, randomSignature, 0);
+            fm.updateFontFile(new FontFileUpdateRequest(pfd, randomSignature),
+                    fm.getFontConfig().getConfigVersion());
+            fail("SecurityException is expected.");
+        } catch (SecurityException e) {
+            // pass
+        }
+    }
+
+    @Test
+    public void fontManager_updateFontFamily_negativeBaseVersion() {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        try {
+            fm.updateFontFamily(new FontFamilyUpdateRequest.Builder()
+                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily("test", Arrays.asList(
+                            new FontFamilyUpdateRequest.Font(
+                                    "Roboto-Regular",
+                                    new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
+                                    Collections.emptyList()))))
+                    .build(), -1);
+            fail("IllegalArgumentException is expected.");
+        } catch (IllegalArgumentException e) {
+            // pass
+        }
+    }
+
+
+    @Test
+    public void fontManager_updateFontFamily_permissionEnforce() {
+        FontManager fm = getContext().getSystemService(FontManager.class);
+        assertThat(fm).isNotNull();
+
+        try {
+            fm.updateFontFamily(new FontFamilyUpdateRequest.Builder()
+                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily("test", Arrays.asList(
+                            new FontFamilyUpdateRequest.Font(
+                                    "Roboto-Regular",
+                                    new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
+                                    Collections.emptyList()))))
+                    .build(), fm.getFontConfig().getConfigVersion());
             fail("SecurityException is expected.");
         } catch (SecurityException e) {
             // pass

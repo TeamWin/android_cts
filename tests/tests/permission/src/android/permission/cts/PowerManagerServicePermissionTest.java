@@ -58,7 +58,8 @@ public class PowerManagerServicePermissionTest extends AndroidTestCase {
         try {
             PowerManager manager = getContext().getSystemService(PowerManager.class);
             manager.setBatteryDischargePrediction(Duration.ofMillis(1000), false);
-            fail("Updating the discharge prediction requires the DEVICE_POWER permission");
+            fail("Updating the discharge prediction requires the DEVICE_POWER"
+                    + " or BATTERY_PREDICTION permission");
         } catch (SecurityException e) {
             // Expected Exception
         }

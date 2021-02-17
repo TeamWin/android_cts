@@ -19,11 +19,9 @@ package android.hdmicec.cts.common;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.CecVersionHelper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.Rule;
@@ -53,8 +51,7 @@ public final class HdmiCecFeatureAbortTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_hf4_2_11_featureAbortBehavior() throws Exception {
-        ITestDevice device = getDevice();
-        CecVersionHelper.setCec20(device);
+        setCec20();
 
         List<Integer> abortReasons = Arrays.asList(
                 HdmiCecConstants.ABORT_UNRECOGNIZED_MODE,

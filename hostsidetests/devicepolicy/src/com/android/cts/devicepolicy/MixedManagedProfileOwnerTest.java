@@ -28,6 +28,9 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Set of tests for managed profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
@@ -38,6 +41,8 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";
+
+    private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
 
     private int mParentUserId = -1;
 
@@ -238,6 +243,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
             // OrgOwnedProfileOwnerTest#testDelegatedCertInstallerDeviceIdAttestation
         });
     }
+
     @Test
     public void testDeviceIdAttestationForProfileOwner() throws Exception {
         // Test that Device ID attestation for the profile owner does not work without grant.
@@ -388,5 +394,62 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     public void testSecondaryLockscreen() throws Exception {
         // Managed profiles cannot have secondary lockscreens set.
+    }
+
+    @Test
+    public void testNetworkLogging() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        testNetworkLoggingOnWorkProfile(DEVICE_ADMIN_PKG, ".NetworkLoggingTest");
+    }
+
+    @Test
+    public void testNetworkLoggingDelegate() throws Exception {
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".WorkProfileNetworkLoggingDelegateTest",
+                    "testCannotAccessApis", mUserId);
+            // Set network logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetDelegateScope_delegationNetworkLogging", mUserId);
+
+            testNetworkLoggingOnWorkProfile(DELEGATE_APP_PKG,
+                    ".WorkProfileNetworkLoggingDelegateTest");
+        } finally {
+            // Remove network logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetDelegateScope_noDelegation", mUserId);
+        }
+    }
+
+    private void testNetworkLoggingOnWorkProfile(String packageName, String testClassName)
+            throws Exception {
+        try {
+            // Turn network logging on.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testSetNetworkLogsEnabled_true", mUserId);
+
+            // Connect to websites from work profile, should be logged.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testConnectToWebsites_shouldBeLogged", mUserId);
+            // Connect to websites from personal profile, should not be logged.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testConnectToWebsites_shouldNotBeLogged", mPrimaryUserId);
+
+            // Verify all work profile network logs have been received.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testRetrieveNetworkLogs_forceNetworkLogs_receiveNetworkLogs", mUserId);
+        } finally {
+            // Turn network logging off.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testSetNetworkLogsEnabled_false", mUserId);
+        }
+    }
+
+    @Override
+    List<String> getAdditionalDelegationScopes() {
+        final List<String> result = new ArrayList<>();
+        result.add(DELEGATION_NETWORK_LOGGING);
+        return result;
     }
 }

@@ -16,6 +16,9 @@
 
 package android.content.cts;
 
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.app.Activity;
@@ -1131,6 +1134,21 @@ public class ContextTest extends AndroidTestCase {
         mContext.unregisterReceiver(stickyReceiver);
     }
 
+    public void testCheckCallingOrSelfUriPermissions() {
+        List<Uri> uris = new ArrayList<>();
+        Uri uri1 = Uri.parse("content://ctstest1");
+        uris.add(uri1);
+        Uri uri2 = Uri.parse("content://ctstest2");
+        uris.add(uri2);
+
+        int[] retValue = mContext.checkCallingOrSelfUriPermissions(uris,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(retValue.length, 2);
+        // This package does not have access to the given URIs
+        assertEquals(PERMISSION_DENIED, retValue[0]);
+        assertEquals(PERMISSION_DENIED, retValue[1]);
+    }
+
     public void testCheckCallingOrSelfUriPermission() {
         Uri uri = Uri.parse("content://ctstest");
 
@@ -1328,6 +1346,28 @@ public class ContextTest extends AndroidTestCase {
         }.run();
     }
 
+    public void testCheckUriPermissions() {
+        List<Uri> uris = new ArrayList<>();
+        Uri uri1 = Uri.parse("content://ctstest1");
+        uris.add(uri1);
+        Uri uri2 = Uri.parse("content://ctstest2");
+        uris.add(uri2);
+
+        // Root has access to all URIs
+        int[] retValue = mContext.checkUriPermissions(uris, Binder.getCallingPid(), 0,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(retValue.length, 2);
+        assertEquals(PERMISSION_GRANTED, retValue[0]);
+        assertEquals(PERMISSION_GRANTED, retValue[1]);
+
+        retValue = mContext.checkUriPermissions(uris, Binder.getCallingPid(),
+                Binder.getCallingUid(), Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(retValue.length, 2);
+        // This package does not have access to the given URIs
+        assertEquals(PERMISSION_DENIED, retValue[0]);
+        assertEquals(PERMISSION_DENIED, retValue[1]);
+    }
+
     public void testCheckUriPermission1() {
         Uri uri = Uri.parse("content://ctstest");
 
@@ -1352,6 +1392,21 @@ public class ContextTest extends AndroidTestCase {
                 NOT_GRANTED_PERMISSION, Binder.getCallingPid(), Binder.getCallingUid(),
                 Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+    }
+
+    public void testCheckCallingUriPermissions() {
+        List<Uri> uris = new ArrayList<>();
+        Uri uri1 = Uri.parse("content://ctstest1");
+        uris.add(uri1);
+        Uri uri2 = Uri.parse("content://ctstest2");
+        uris.add(uri2);
+
+        int[] retValue = mContext.checkCallingUriPermissions(uris,
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        assertEquals(retValue.length, 2);
+        // This package does not have access to the given URIs
+        assertEquals(PERMISSION_DENIED, retValue[0]);
+        assertEquals(PERMISSION_DENIED, retValue[1]);
     }
 
     public void testCheckCallingUriPermission() {

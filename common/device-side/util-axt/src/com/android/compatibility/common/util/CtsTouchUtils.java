@@ -27,6 +27,7 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
+import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
 
 /**
@@ -182,11 +183,23 @@ public final class CtsTouchUtils {
                 dragDurationMs, moveEventCount, null);
     }
 
-    private static void emulateDragGesture(Instrumentation instrumentation,
+    /**
+     * Emulates a linear drag gesture between 2 points across the screen.
+     *
+     * @param instrumentation the instrumentation used to run the test
+     * @param dragStartX Start X of the emulated drag gesture
+     * @param dragStartY Start Y of the emulated drag gesture
+     * @param dragAmountX X amount of the emulated drag gesture
+     * @param dragAmountY Y amount of the emulated drag gesture
+     * @param dragDurationMs The time in milliseconds over which the drag occurs
+     * @param moveEventCount The number of events that produce the movement
+     * @param eventInjectionListener Called after each down, move, and up events.
+     */
+    public static void emulateDragGesture(Instrumentation instrumentation,
             ActivityTestRule<?> activityTestRule,
             int dragStartX, int dragStartY, int dragAmountX, int dragAmountY,
             int dragDurationMs, int moveEventCount,
-            EventInjectionListener eventInjectionListener) {
+            @Nullable EventInjectionListener eventInjectionListener) {
         // We are using the UiAutomation object to inject events so that drag works
         // across view / window boundaries (such as for the emulated drag and drop
         // sequences)
@@ -271,8 +284,18 @@ public final class CtsTouchUtils {
         }
     }
 
-    private static long injectDownEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
-            int yOnScreen, EventInjectionListener eventInjectionListener) {
+    /**
+     * Injects an {@link MotionEvent#ACTION_DOWN} event at the given coordinates.
+     *
+     * @param downTime The time of the event, usually from {@link SystemClock#uptimeMillis()}
+     * @param xOnScreen The x screen coordinate to press on
+     * @param yOnScreen The y screen coordinate to press on
+     * @param eventInjectionListener The listener to call back immediately after the down was
+     *                               sent.
+     * @return <code>downTime</code>
+     */
+    public static long injectDownEvent(UiAutomation uiAutomation, long downTime, int xOnScreen,
+            int yOnScreen, @Nullable EventInjectionListener eventInjectionListener) {
         MotionEvent eventDown = MotionEvent.obtain(
                 downTime, downTime, MotionEvent.ACTION_DOWN, xOnScreen, yOnScreen, 1);
         eventDown.setSource(InputDevice.SOURCE_TOUCHSCREEN);
@@ -367,7 +390,18 @@ public final class CtsTouchUtils {
         }
     }
 
-    private static void injectUpEvent(UiAutomation uiAutomation, long downTime,
+    /**
+     * Injects an {@link MotionEvent#ACTION_UP} event at the given coordinates.
+     *
+     * @param downTime The time of the event, usually from {@link SystemClock#uptimeMillis()}
+     * @param useCurrentEventTime <code>true</code> if it should use the current time for the
+     *                            up event or <code>false</code> to use <code>downTime</code>.
+     * @param xOnScreen The x screen coordinate to press on
+     * @param yOnScreen The y screen coordinate to press on
+     * @param eventInjectionListener The listener to call back immediately after the up was
+     *                               sent.
+     */
+    public static void injectUpEvent(UiAutomation uiAutomation, long downTime,
             boolean useCurrentEventTime, int xOnScreen, int yOnScreen,
             EventInjectionListener eventInjectionListener) {
         long eventTime = useCurrentEventTime ? SystemClock.uptimeMillis() : downTime;
