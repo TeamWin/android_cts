@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.cts.deviceandprofileowner;
+package com.android.cts.delegate;
 
-import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
-import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.BasicAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE;
-import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.BasicAdminReceiver.EXTRA_NETWORK_LOGS_BATCH_TOKEN;
+import static com.android.cts.delegate.DelegateTestUtils.assertExpectException;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,10 +26,7 @@ import android.app.admin.ConnectEvent;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.DnsEvent;
 import android.app.admin.NetworkEvent;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -50,20 +45,15 @@ import java.net.Inet4Address;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
-public class NetworkLoggingTest {
+public class WorkProfileNetworkLoggingDelegateTest {
 
-    private static final String TAG = "NetworkLoggingTest";
-    private static final String CTS_APP_PACKAGE_NAME = "com.android.cts.deviceandprofileowner";
-    private static final int FAKE_BATCH_TOKEN = -666;
-    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
-    private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
+    private static final String TAG = "WorkProfileNetworkLoggingDelegateTest";
+    private static final String CTS_APP_PACKAGE_NAME = "com.android.cts.delegate";
 
     // Should not be added to the list of network events.
     private static final String[] NOT_LOGGED_URLS_LIST = {
@@ -87,8 +77,6 @@ public class NetworkLoggingTest {
             "google.de"
     };
 
-    private final ArrayList<NetworkEvent> mNetworkEvents = new ArrayList<>();
-    private final NetworkLogsReceiver mReceiver = new NetworkLogsReceiver();
     private Context mContext;
     private DevicePolicyManager mDpm;
     private UiDevice mDevice;
@@ -98,13 +86,26 @@ public class NetworkLoggingTest {
         mContext = InstrumentationRegistry.getContext();
         mDpm = mContext.getSystemService(DevicePolicyManager.class);
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        DelegateTestUtils.NetworkLogsReceiver.sBatchCountDown = new CountDownLatch(1);
+    }
+
+    @Test
+    public void testCannotAccessApis() {
+        assertExpectException(SecurityException.class, null,
+                () -> mDpm.isNetworkLoggingEnabled(null));
+
+        assertExpectException(SecurityException.class, null,
+                () -> mDpm.setNetworkLoggingEnabled(null, true));
+
+        assertExpectException(SecurityException.class, null,
+                () -> mDpm.retrieveNetworkLogs(null, 0));
     }
 
     @Test
     public void testSetNetworkLogsEnabled_true() {
-        mDpm.setNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT, true);
+        mDpm.setNetworkLoggingEnabled(null, true);
 
-        assertThat(mDpm.isNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT)).isTrue();
+        assertThat(mDpm.isNetworkLoggingEnabled(null)).isTrue();
     }
 
     @Test
@@ -123,13 +124,10 @@ public class NetworkLoggingTest {
 
     @Test
     public void testRetrieveNetworkLogs_forceNetworkLogs_receiveNetworkLogs() throws Exception {
-        mContext.registerReceiver(mReceiver, new IntentFilter(ACTION_NETWORK_LOGS_AVAILABLE));
         mDevice.executeShellCommand("dpm force-network-logs");
-        mReceiver.waitForBroadcast();
+        DelegateTestUtils.NetworkLogsReceiver.waitForBroadcast();
 
-        verifyNetworkLogs(mNetworkEvents);
-
-        mContext.unregisterReceiver(mReceiver);
+        verifyNetworkLogs(DelegateTestUtils.NetworkLogsReceiver.getNetworkEvents());
     }
 
     private void verifyNetworkLogs(List<NetworkEvent> networkEvents) {
@@ -141,7 +139,7 @@ public class NetworkLoggingTest {
                     final DnsEvent dnsEvent = (DnsEvent) currentEvent;
                     if (Arrays.asList(LOGGED_URLS_LIST).contains(dnsEvent.getHostname())) {
                         receivedEventsFromLoggedUrlsList++;
-                    // Verify all hostnames looked-up from the personal profile were not logged.
+                        // Verify all hostnames looked-up from the personal profile were not logged.
                     } else {
                         Truth.assertWithMessage("A hostname that was looked-up from "
                                 + "the personal profile was logged.")
@@ -169,27 +167,9 @@ public class NetworkLoggingTest {
 
     @Test
     public void testSetNetworkLogsEnabled_false() {
-        mDpm.setNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT, false);
+        mDpm.setNetworkLoggingEnabled(null, false);
 
-        assertThat(mDpm.isNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT)).isFalse();
-    }
-
-    @Test
-    public void testSetDelegateScope_delegationNetworkLogging() {
-        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
-                Arrays.asList(DELEGATION_NETWORK_LOGGING));
-
-        assertThat(mDpm.getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG))
-                .contains(DELEGATION_NETWORK_LOGGING);
-    }
-
-    @Test
-    public void testSetDelegateScope_noDelegation() {
-        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
-                Arrays.asList());
-
-        assertThat(mDpm.getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG))
-                .doesNotContain(DELEGATION_NETWORK_LOGGING);
+        assertThat(mDpm.isNetworkLoggingEnabled(null)).isFalse();
     }
 
     private void connectToWebsite(String server) {
@@ -205,34 +185,6 @@ public class NetworkLoggingTest {
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
-            }
-        }
-    }
-
-    private class NetworkLogsReceiver extends BroadcastReceiver {
-
-        private final CountDownLatch mBatchCountDown = new CountDownLatch(1);
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (ACTION_NETWORK_LOGS_AVAILABLE.equals(intent.getAction())) {
-                final long token =
-                        intent.getLongExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, FAKE_BATCH_TOKEN);
-                final List<NetworkEvent> events =
-                        mDpm.retrieveNetworkLogs(ADMIN_RECEIVER_COMPONENT, token);
-                if (events == null) {
-                    fail("Failed to retrieve batch of network logs with batch token " + token);
-                } else {
-                    mNetworkEvents.addAll(events);
-                    mBatchCountDown.countDown();
-                }
-            }
-        }
-
-        private void waitForBroadcast() throws InterruptedException {
-            mReceiver.mBatchCountDown.await(3, TimeUnit.MINUTES);
-            if (mReceiver.mBatchCountDown.getCount() > 0) {
-                fail("Did not get DeviceAdminReceiver#onNetworkLogsAvailable callback");
             }
         }
     }

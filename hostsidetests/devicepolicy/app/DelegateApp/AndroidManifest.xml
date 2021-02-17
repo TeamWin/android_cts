@@ -24,7 +24,7 @@
         <activity android:name="com.android.cts.delegate.DelegatedScopesReceiverActivity"
              android:exported="true">
         </activity>
-        <receiver android:name=".NetworkLoggingDelegateTest$NetworkLogsReceiver"
+        <receiver android:name=".DelegateTestUtils$NetworkLogsReceiver"
              android:permission="android.permission.BIND_DEVICE_ADMIN"
              android:exported="true">
             <intent-filter>
