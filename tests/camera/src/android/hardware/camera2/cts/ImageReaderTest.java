@@ -1080,6 +1080,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     createDefaultImageReader(sz, format, MAX_NUM_IMAGES, mListener);
                 }
 
+                // Don't queue up images if we won't validate them
+                if (!validateImageData) {
+                    ImageDropperListener imageDropperListener = new ImageDropperListener();
+                    mReader.setOnImageAvailableListener(imageDropperListener, mHandler);
+                }
+
                 if (checkSession) {
                     checkImageReaderSessionConfiguration(
                             "Camera capture session validation for format: " + format + "failed");
