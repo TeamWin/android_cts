@@ -18,8 +18,6 @@ package com.android.bedstead.nene.utils;
 
 import static android.os.Build.VERSION.SDK_INT;
 
-import android.os.Build;
-
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -53,7 +51,7 @@ public final class ShellCommandUtils {
 
     static String executeCommand(String command, boolean allowEmptyOutput)
             throws AdbException {
-        if (SDK_INT < Build.VERSION_CODES.S) {
+        if (SDK_INT < 31) { // TODO(scottjonathan): Replace with S
             return executeCommandPreS(command, allowEmptyOutput);
         }
 
@@ -79,11 +77,9 @@ public final class ShellCommandUtils {
      */
     public static String executeCommandAndValidateOutput(
             String command, Function<String, Boolean> outputSuccessChecker) throws AdbException {
-        String output = executeCommand(command);
-        if (!outputSuccessChecker.apply(output)) {
-            throw new AdbException("Command did not meet success criteria", command, output);
-        }
-        return output;
+        return executeCommandAndValidateOutput(command,
+                /* allowEmptyOutput= */ false,
+                outputSuccessChecker);
     }
 
     static String executeCommandAndValidateOutput(
@@ -139,8 +135,9 @@ public final class ShellCommandUtils {
         return !output.toUpperCase().startsWith("ERROR");
     }
 
-    private static String executeCommandPreS(String command, boolean allowEmptyOutput)
-            throws AdbException {
+    private static String executeCommandPreS(
+            String command, boolean allowEmptyOutput) throws AdbException {
+
         String result = SystemUtil.runShellCommand(command);
 
         if (!allowEmptyOutput && result.isEmpty()) {
