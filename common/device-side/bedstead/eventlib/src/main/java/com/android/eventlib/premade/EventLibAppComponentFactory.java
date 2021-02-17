@@ -18,6 +18,7 @@ package com.android.eventlib.premade;
 
 import android.app.Activity;
 import android.app.AppComponentFactory;
+import android.content.BroadcastReceiver;
 import android.content.Intent;
 import android.util.Log;
 
@@ -29,19 +30,37 @@ public class EventLibAppComponentFactory extends AppComponentFactory {
     private static final String LOG_TAG = "EventLibACF";
 
     @Override
-    public Activity instantiateActivity(ClassLoader cl, String className, Intent intent)
+    public Activity instantiateActivity(ClassLoader classLoader, String className, Intent intent)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
 
         try {
-            return super.instantiateActivity(cl, className, intent);
+            return super.instantiateActivity(classLoader, className, intent);
         } catch (ClassNotFoundException e) {
             Log.d(LOG_TAG,
                     "Activity class (" + className + ") not found, routing to EventLibActivity");
             EventLibActivity activity =
                     (EventLibActivity) super.instantiateActivity(
-                            cl, EventLibActivity.class.getName(), intent);
+                            classLoader, EventLibActivity.class.getName(), intent);
             activity.setOverrideActivityClassName(className);
             return activity;
+        }
+    }
+
+    @Override
+    public BroadcastReceiver instantiateReceiver(ClassLoader classLoader, String className,
+            Intent intent)
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        try {
+            return super.instantiateReceiver(classLoader, className, intent);
+        } catch (ClassNotFoundException e) {
+            Log.d(LOG_TAG, "Broadcast Receiver class (" + className
+                    + ") not found, routing to EventLibBroadcastReceiver");
+
+            EventLibBroadcastReceiver receiver = (EventLibBroadcastReceiver)
+                    super.instantiateReceiver(
+                            classLoader, EventLibBroadcastReceiver.class.getName(), intent);
+            receiver.setOverrideBroadcastReceiverClassName(className);
+            return receiver;
         }
     }
 }
