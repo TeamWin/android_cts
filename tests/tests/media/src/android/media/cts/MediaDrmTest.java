@@ -17,10 +17,14 @@
 package android.media.cts;
 
 import android.media.MediaDrm;
+import android.media.NotProvisionedException;
 import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
+
 import java.util.List;
 import java.util.UUID;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -55,4 +59,36 @@ public class MediaDrmTest {
         }
     }
 
+    @Test
+    public void testGetLogMessages() throws Exception {
+        List<UUID> supportedCryptoSchemes = MediaDrm.getSupportedCryptoSchemes();
+        for (UUID scheme : supportedCryptoSchemes) {
+            MediaDrm drm = new MediaDrm(scheme);
+            try {
+                byte[] sid = drm.openSession();
+                drm.closeSession(sid);
+            } catch (NotProvisionedException e) {
+                Log.w(TAG, scheme.toString() + ": not provisioned", e);
+            }
+
+            List<MediaDrm.LogMessage> logMessages;
+            try {
+                logMessages = drm.getLogMessages();
+                Assert.assertFalse("Empty logs", logMessages.isEmpty());
+            } catch (UnsupportedOperationException e) {
+                Log.w(TAG, scheme.toString() + ": no LogMessage support", e);
+                return;
+            }
+
+            long end = System.currentTimeMillis();
+            for (MediaDrm.LogMessage log: logMessages) {
+                Assert.assertTrue("Log occurred in future",
+                        log.timestampMillis <= end);
+                Assert.assertTrue("Invalid log priority",
+                        log.priority >= Log.VERBOSE &&
+                                log.priority <= Log.ASSERT);
+                Log.i(TAG, log.toString());
+            }
+        }
+    }
 }
