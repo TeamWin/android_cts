@@ -19,6 +19,10 @@ package android.widget.cts;
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 import static android.util.TypedValue.COMPLEX_UNIT_PX;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
+import static junit.framework.Assert.fail;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -38,6 +42,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.BlendMode;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
@@ -86,6 +91,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.compatibility.common.util.WidgetTestUtils;
 
 import org.junit.Before;
@@ -251,6 +257,27 @@ public class RemoteViewsTest {
         BitmapDrawable dBlack = (BitmapDrawable) mContext.getDrawable(R.drawable.icon_black);
         WidgetTestUtils.assertEquals(dBlack.getBitmap(),
                 ((BitmapDrawable) image.getDrawable()).getBitmap());
+    }
+
+    @Test
+    public void testSetIcon_nightMode() throws Throwable {
+        ImageView image = (ImageView) mResult.findViewById(R.id.remoteView_image);
+        Icon iconLight = Icon.createWithResource(mContext, R.drawable.icon_green);
+        Icon iconDark = Icon.createWithResource(mContext, R.drawable.icon_blue);
+        mRemoteViews.setIcon(R.id.remoteView_image, "setImageIcon", iconLight, iconDark);
+
+        applyNightModeThenTest(false, () -> {
+            assertNotNull(image.getDrawable());
+            BitmapDrawable dLight = (BitmapDrawable) mContext.getDrawable(R.drawable.icon_green);
+            WidgetTestUtils.assertEquals(dLight.getBitmap(),
+                    ((BitmapDrawable) image.getDrawable()).getBitmap());
+        });
+        applyNightModeThenTest(true, () -> {
+            assertNotNull(image.getDrawable());
+            BitmapDrawable dDark = (BitmapDrawable) mContext.getDrawable(R.drawable.icon_blue);
+            WidgetTestUtils.assertEquals(dDark.getBitmap(),
+                    ((BitmapDrawable) image.getDrawable()).getBitmap());
+        });
     }
 
     @Test
@@ -1116,6 +1143,19 @@ public class RemoteViewsTest {
     }
 
     @Test
+    public void testSetColorStateInt_nightMode() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        mRemoteViews.setColorInt(R.id.remoteView_text, "setTextColor", Color.BLACK, Color.WHITE);
+
+        applyNightModeThenTest(
+                false,
+                () -> assertEquals(ColorStateList.valueOf(Color.BLACK), textView.getTextColors()));
+        applyNightModeThenTest(
+                true,
+                () -> assertEquals(ColorStateList.valueOf(Color.WHITE), textView.getTextColors()));
+    }
+
+    @Test
     public void testSetColorStateList_fromResources() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         ColorStateList expectedValue = mContext.getColorStateList(R.color.testcolorstatelist1);
@@ -1136,6 +1176,17 @@ public class RemoteViewsTest {
         mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
                 R.dimen.popup_row_height);
         mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetColorStateList_nightMode() throws Throwable {
+        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        ColorStateList lightMode = ColorStateList.valueOf(Color.BLACK);
+        ColorStateList darkMode = ColorStateList.valueOf(Color.WHITE);
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor", lightMode, darkMode);
+
+        applyNightModeThenTest(false, () -> assertEquals(lightMode, textView.getTextColors()));
+        applyNightModeThenTest(true, () -> assertEquals(darkMode, textView.getTextColors()));
     }
 
     @Test
@@ -1250,6 +1301,28 @@ public class RemoteViewsTest {
             for (int len = source.read(buffer); len > 0; len = source.read(buffer)) {
                 target.write(buffer, 0, len);
             }
+        }
+    }
+
+    /**
+     * Sets the night mode, reapplies the remote views, runs test, and then restores the previous
+     * night mode.
+     */
+    private void applyNightModeThenTest(
+            boolean nightMode, ThrowingRunnable test) throws Throwable {
+        final String nightModeText = runShellCommand("cmd uimode night");
+        final String[] nightModeSplit = nightModeText.split(":");
+        if (nightModeSplit.length != 2) {
+            fail("Failed to get initial night mode value from " + nightModeText);
+        }
+        final String initialNightMode = nightModeSplit[1].trim();
+
+        try {
+            runShellCommand("cmd uimode night " + (nightMode ? "yes" : "no"));
+            mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+            test.run();
+        } finally {
+            runShellCommand("cmd uimode night " + initialNightMode);
         }
     }
 
