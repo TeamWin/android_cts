@@ -137,8 +137,6 @@ public class TunerDvrTest {
     }
 
     @Test
-    @Ignore("b/174500129")
-    // TODO: Enable Tuner CTS after Tuner Service b/159067322 feature complete
     public void testDvrPlayback() throws Exception {
         DvrPlayback d = mTuner.openDvrPlayback(1000, getExecutor(), getPlaybackListener());
         assertNotNull(d);

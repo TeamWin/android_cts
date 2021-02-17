@@ -22,6 +22,8 @@ import android.content.IntentFilter;
 import androidx.annotation.Nullable;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -46,24 +48,30 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
     private static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
     private final BlockingQueue<Intent> mBlockingQueue;
-    private final String mExpectedAction;
+    private final List<String> mExpectedActions;
     private final Context mContext;
 
     public BlockingBroadcastReceiver(Context context, String expectedAction) {
+        this(context, List.of(expectedAction));
+    }
+
+    public BlockingBroadcastReceiver(Context context, List<String> expectedActions) {
         mContext = context;
-        mExpectedAction = expectedAction;
+        mExpectedActions = expectedActions;
         mBlockingQueue = new ArrayBlockingQueue<>(1);
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (mExpectedAction.equals(intent.getAction())) {
+        if (mExpectedActions.contains(intent.getAction())) {
             mBlockingQueue.add(intent);
         }
     }
 
     public void register() {
-        mContext.registerReceiver(this, new IntentFilter(mExpectedAction));
+        for (String expectedAction : mExpectedActions) {
+            mContext.registerReceiver(this, new IntentFilter(expectedAction));
+        }
     }
 
     /**

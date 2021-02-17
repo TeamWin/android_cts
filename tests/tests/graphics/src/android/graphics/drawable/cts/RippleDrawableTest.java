@@ -17,6 +17,7 @@
 package android.graphics.drawable.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -122,6 +123,21 @@ public class RippleDrawableTest {
         assertEquals(initialRadius, halfDrawable.getRadius());
         doubleDrawable.applyTheme(t);
         assertEquals(initialRadius, doubleDrawable.getRadius());
+    }
+
+    @Test
+    public void testStyle() {
+        final int invalid = -1;
+        RippleDrawable dr = new RippleDrawable(ColorStateList.valueOf(Color.RED), null, null);
+        assertEquals(RippleDrawable.STYLE_SOLID, dr.getRippleStyle());
+        dr.setRippleStyle(RippleDrawable.STYLE_PATTERNED);
+        assertEquals(RippleDrawable.STYLE_PATTERNED, dr.getRippleStyle());
+        try {
+            dr.setRippleStyle(invalid);
+            fail();
+        } catch (IllegalArgumentException e) {
+            assertEquals(RippleDrawable.STYLE_PATTERNED, dr.getRippleStyle());
+        }
     }
 
     @Test

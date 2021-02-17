@@ -112,6 +112,9 @@ public class ActivityManagerFgsBgStartTest {
         }
         cleanupResiduals();
         enableFgsRestriction(true, true, null);
+        for (String packageName: PACKAGE_NAMES) {
+            resetFgsRestriction(packageName);
+        }
     }
 
     private void cleanupResiduals() {
@@ -1167,6 +1170,17 @@ public class ActivityManagerFgsBgStartTest {
                     "am compat " + (enable ? "enable" : "disable")
                             + " FGS_BG_START_RESTRICTION_CHANGE_ID " + packageName);
         }
+    }
+
+    /**
+     * Clean up the FGS BG-launch restriction.
+     * @param packageName the packageName that will have its changeid override reset.
+     * @throws Exception
+     */
+    private void resetFgsRestriction(String packageName)
+            throws Exception {
+        CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                "am compat reset FGS_BG_START_RESTRICTION_CHANGE_ID " + packageName);
     }
 
     /**

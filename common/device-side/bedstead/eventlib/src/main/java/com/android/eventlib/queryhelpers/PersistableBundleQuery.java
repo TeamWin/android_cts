@@ -22,9 +22,12 @@ import androidx.annotation.CheckResult;
 
 import com.android.eventlib.EventLogsQuery;
 
-/** Query for a {@link PersistableBundle}. */
-public interface PersistableBundleQuery<E extends EventLogsQuery> {
+import java.io.Serializable;
 
+/** Query for a {@link PersistableBundle}. */
+public interface PersistableBundleQuery<E extends EventLogsQuery> extends Serializable {
+
+    /** Query a given key on the {@link PersistableBundle}. */
     @CheckResult
     PersistableBundleKeyQuery<E> key(String key);
 }

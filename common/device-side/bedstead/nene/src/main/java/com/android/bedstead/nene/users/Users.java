@@ -49,8 +49,13 @@ public final class Users {
         return mCachedUsers.values();
     }
 
+    /** Get a {@link UserReference} for the system user. */
+    public UserReference system() {
+        return find(0);
+    }
+
     /** Get a {@link UserReference} by {@code id}. */
-    public UserReference user(int id) {
+    public UserReference find(int id) {
         return new UnresolvedUser(this, id);
     }
 

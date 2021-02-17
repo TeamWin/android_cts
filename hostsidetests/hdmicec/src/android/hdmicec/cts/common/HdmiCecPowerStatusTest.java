@@ -22,7 +22,6 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.CecVersionHelper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
 
@@ -69,7 +68,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_6_20_broadcastsWhenTurningOn() throws Exception {
         ITestDevice device = getDevice();
-        CecVersionHelper.setCec20(device);
+        setCec20();
 
         // Move device to standby
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
@@ -101,7 +100,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
     @Test
     public void cect_hf4_6_21_broadcastsWhenGoingToStandby() throws Exception {
         ITestDevice device = getDevice();
-        CecVersionHelper.setCec20(device);
+        setCec20();
 
         // Turn device on
         device.executeShellCommand("input keyevent KEYCODE_WAKEUP");

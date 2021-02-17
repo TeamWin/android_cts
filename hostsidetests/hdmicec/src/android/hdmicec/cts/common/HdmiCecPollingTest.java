@@ -18,7 +18,6 @@ package android.hdmicec.cts.common;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecClientMessage;
-import android.hdmicec.cts.CecVersionHelper;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -61,9 +60,9 @@ public final class HdmiCecPollingTest extends BaseHdmiCecCtsTest {
      */
     @Test
     public void cect_hf4_2_10_Ack() throws Exception {
-        ITestDevice device = getDevice();
-        CecVersionHelper.setCec20(device);
+        setCec20();
 
+        ITestDevice device = getDevice();
         device.executeShellCommand("input keyevent KEYCODE_SLEEP");
 
         String command = CecClientMessage.POLL + " " + mDutLogicalAddress;

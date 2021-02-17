@@ -16,13 +16,21 @@
 
 package com.android.bedstead.nene.users;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.UserHandle;
+
+import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.User.UserState;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -33,6 +41,8 @@ import javax.annotation.Nullable;
  */
 public abstract class UserReference {
 
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getContext();
     private final Users mUsers;
     private final int mId;
 
@@ -131,6 +141,35 @@ public abstract class UserReference {
             }
         } catch (AdbException e) {
             throw new NeneException("Could not stop user " + this, e);
+        }
+
+        return this;
+    }
+
+    /**
+     * Make the user the foreground user.
+     */
+    public UserReference switchTo() {
+        try {
+            // TODO(scottjonathan): This will only work when either the user being foregrounded or
+            //  the user being backgrounded is the user running the test. We should support this
+            //  when this is not the case.
+            List<String> intents = new ArrayList<>();
+            intents.add(Intent.ACTION_USER_BACKGROUND);
+            intents.add(Intent.ACTION_USER_FOREGROUND);
+            BlockingBroadcastReceiver broadcastReceiver =
+                    new BlockingBroadcastReceiver(sContext, intents);
+            broadcastReceiver.register();
+
+            // Expects no output on success or failure
+            ShellCommand.builder("am switch-user")
+                    .addOperand(mId)
+                    .allowEmptyOutput(true)
+                    .executeAndValidateOutput(String::isEmpty);
+
+            broadcastReceiver.awaitForBroadcast();
+        } catch (AdbException e) {
+            throw new NeneException("Could not switch to user", e);
         }
 
         return this;

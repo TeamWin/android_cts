@@ -22,8 +22,10 @@ import androidx.annotation.CheckResult;
 
 import com.android.eventlib.EventLogsQuery;
 
+import java.io.Serializable;
+
 /** Query for a single key in a {@link PersistableBundle}. */
-public interface PersistableBundleKeyQuery<E extends EventLogsQuery> {
+public interface PersistableBundleKeyQuery<E extends EventLogsQuery>  extends Serializable {
     /** Require that the key exists. */
     E exists();
     /** Require that the key does not exist. */

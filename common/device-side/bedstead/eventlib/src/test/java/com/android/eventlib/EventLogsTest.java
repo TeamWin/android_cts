@@ -33,6 +33,8 @@ import android.os.UserManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.events.CustomEvent;
 
@@ -67,6 +69,7 @@ public class EventLogsTest {
     private boolean hasScheduledEventsOnTestApp = false;
     private final ScheduledExecutorService mScheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor();
+    private final TestApis mTestApis = new TestApis();
 
     @Before
     public void setUp() {
@@ -1096,10 +1099,6 @@ public class EventLogsTest {
 
     @Test
     public void differentUser_queryWorks() {
-        // TODO(scottjonathan): This tests on a profile because otherwise we can't start the
-        //  activity. Once ConnectedTests is available, replace this
-        // TODO(scottjonathan): Once bedstead-Marshall is ready, replace this setup/teardown with
-        // annotations
         UserHandle userHandle = createProfile();
         try {
             installTestAppInUser(userHandle);
@@ -1107,6 +1106,22 @@ public class EventLogsTest {
 
             EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                     .onUser(userHandle);
+
+            assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
+        } finally {
+            removeUser(userHandle);
+        }
+    }
+
+    @Test
+    public void differentUserSpecifiedByUserReference_queryWorks() {
+        UserHandle userHandle = createProfile();
+        try {
+            installTestAppInUser(userHandle);
+            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG1, /* data= */ null);
+
+            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                    .onUser(mTestApis.users().find(userHandle.getIdentifier()));
 
             assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
         } finally {
@@ -1136,7 +1151,14 @@ public class EventLogsTest {
     public void onUser_passesNullUser_throwsNullPointerException() {
         assertThrows(NullPointerException.class,
                 () -> CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                        .onUser(/* userHandle= */ null));
+                        .onUser(/* userHandle= */(UserHandle) null));
+    }
+
+    @Test
+    public void onUser_passesNullUserReference_throwsNullPointerException() {
+        assertThrows(NullPointerException.class,
+                () -> CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                        .onUser(/* userHandle= */(UserReference) null));
     }
 
     @Test
