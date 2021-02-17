@@ -13,38 +13,13 @@
 // limitations under the License.
 
 java_library_static {
-    name: "compatibility-device-util-axt",
+    name: "Harrier",
     sdk_version: "test_current",
 
     srcs: [
         "src/**/*.java",
-        "src/**/*.kt",
-        "src/**/*.aidl",
     ],
 
     static_libs: [
-        "compatibility-common-util-devicesidelib",
-        "androidx.test.rules",
-        "androidx.test.ext.junit",
-        "ub-uiautomator",
-        "mockito-target-minus-junit4",
-        "androidx.annotation_annotation",
-        "truth-prebuilt",
-        "Harrier"
-    ],
-
-    libs: [
-        "android.test.runner",
-        "android.test.base",
-    ],
-
-    jarjar_rules: "protobuf-jarjar-rules.txt",
-}
-
-filegroup {
-    name: "compatibility-device-util-nodeps",
-    srcs: [
-         "src/com/android/compatibility/common/util/IBinderParcelable.java",
-         "src/com/android/compatibility/common/util/ImeAwareEditText.java",
-    ],
+    ]
 }
