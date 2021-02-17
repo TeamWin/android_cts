@@ -1,0 +1,71 @@
+android_library {
+    name: "TestApp",
+    sdk_version: "test_current",
+    srcs: [
+        "src/main/java/**/*.java"
+    ],
+    static_libs: [
+        "Nene",
+    ],
+    manifest: "src/main/AndroidManifest.xml",
+    min_sdk_version: "27",
+    resource_zips: [":TestApp_Apps"],
+}
+
+android_test {
+    name: "TestAppTest",
+    srcs: [
+        "src/test/java/**/*.java"
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "Nene",
+        "TestApp",
+        "androidx.test.ext.junit",
+        "truth-prebuilt",
+        "testng" // for assertThrows
+    ],
+    manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "27"
+}
+
+python_binary_host {
+    name: "index_testapps",
+    defaults: ["base_default"],
+    main: "tools/index/index_testapps.py",
+    srcs: [
+        "tools/index/index_testapps.py",
+    ]
+}
+
+java_genrule {
+    name: "TestApp_Apps",
+    srcs: [":EmptyTestApp", ":EmptyTestApp2"],
+    out: ["TestApp_Apps.res.zip"],
+    tools: ["soong_zip", "index_testapps"],
+    cmd: "mkdir -p $(genDir)/res/raw"
+         + " && cp $(location :EmptyTestApp) $(genDir)/res/raw"
+         + " && cp $(location :EmptyTestApp2) $(genDir)/res/raw"
+         + " && $(location index_testapps) --directory $(genDir)/res/raw"
+         + " && $(location soong_zip) -o $(out) -C $(genDir)/res -D $(genDir)/res/raw"
+}
+
+android_test_helper_app {
+    name: "EmptyTestApp",
+    static_libs: [
+        "EventLib"
+    ],
+    manifest: "manifests/EmptyTestAppManifest.xml",
+    min_sdk_version: "27"
+}
+
+android_test_helper_app {
+    name: "EmptyTestApp2",
+    static_libs: [
+        "EventLib"
+    ],
+    manifest: "manifests/EmptyTestApp2Manifest.xml",
+    min_sdk_version: "27"
+}
