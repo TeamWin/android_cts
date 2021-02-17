@@ -43,7 +43,6 @@ public class UsersTest {
     private static final String RESTRICTED_USER_TYPE = "android.os.usertype.full.RESTRICTED";
     private static final int MAX_MANAGED_PROFILES = UserType.UNLIMITED;
     private static final int MAX_MANAGED_PROFILES_PER_PARENT = 1;
-    private static final long WAIT_FOR_REMOVE_USER_TIMEOUT_MS = 30000;
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
     private static final String USER_NAME = "userName";
@@ -164,23 +163,23 @@ public class UsersTest {
     }
 
     @Test
-    public void user_userExists_returnsUserReference() throws Exception {
+    public void find_userExists_returnsUserReference() throws Exception {
         int userId = createUser();
         try {
-            assertThat(mUsers.user(userId)).isNotNull();
+            assertThat(mUsers.find(userId)).isNotNull();
         } finally {
             removeUser(userId);
         }
     }
 
     @Test
-    public void user_userDoesNotExist_returnsUserReference() {
-        assertThat(mUsers.user(NON_EXISTING_USER_ID)).isNotNull();
+    public void find_userDoesNotExist_returnsUserReference() {
+        assertThat(mUsers.find(NON_EXISTING_USER_ID)).isNotNull();
     }
 
     @Test
-    public void user_constructedReferenceReferencesCorrectId() {
-        assertThat(mUsers.user(USER_ID).id()).isEqualTo(USER_ID);
+    public void find_constructedReferenceReferencesCorrectId() {
+        assertThat(mUsers.find(USER_ID).id()).isEqualTo(USER_ID);
     }
 
     @Test
@@ -246,6 +245,11 @@ public class UsersTest {
                 user.remove();
             }
         }
+    }
+
+    @Test
+    public void system_hasId0() {
+        assertThat(mUsers.system().id()).isEqualTo(0);
     }
 
     private int createUser() {

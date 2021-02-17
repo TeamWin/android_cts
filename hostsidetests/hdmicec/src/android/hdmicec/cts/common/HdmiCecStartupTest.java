@@ -22,16 +22,13 @@ import static org.junit.Assume.assumeTrue;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.CecVersionHelper;
 import android.hdmicec.cts.HdmiCecConstants;
-import android.hdmicec.cts.LogicalAddress;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import com.google.common.collect.ImmutableList;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -68,7 +65,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
     @Test
     public void cectVerifyStartupMessages() throws Exception {
         ITestDevice device = getDevice();
-        CecVersionHelper.setCec20(device);
+        setCec20();
 
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);

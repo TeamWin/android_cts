@@ -31,8 +31,12 @@ import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.RenderNode;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
+import android.uirendering.cts.bitmapverifiers.RectVerifier;
+import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.uirendering.cts.util.MockVsyncHelper;
@@ -40,9 +44,11 @@ import android.util.AttributeSet;
 import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.EdgeEffect;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.LargeTest;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -54,7 +60,7 @@ import org.mockito.ArgumentCaptor;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class EdgeEffectTests {
+public class EdgeEffectTests extends ActivityTestBase {
 
     private static final int WIDTH = 90;
     private static final int HEIGHT = 90;
@@ -247,6 +253,235 @@ public class EdgeEffectTests {
         assertEquals(-0.05f, effect.onPullDistance(-0.2f, 0.5f), 0.001f);
 
         assertEquals(0f, effect.getDistance(), 0.001f);
+    }
+
+    // This is only needed temporarily while using the offset RenderEffect substitution.
+    private int calculateEffectHeight(float width, float height) {
+        final float radiusFactor = 0.6f;
+        final float sin = (float) Math.sin(Math.PI / 6);
+        final float cos = (float) Math.cos(Math.PI / 6);
+        final float r = width * radiusFactor / sin;
+        final float y = cos * r;
+        final float h = r - y;
+
+        return (int) Math.min(height, h);
+    }
+
+    private RenderNode drawEdgeEffect(float rotationDegrees, int distance) {
+        int effectWidth = WIDTH - 20;
+        int boxHeight = HEIGHT - 20;
+        int effectHeight = boxHeight / 2;
+        float realEffectHeight = calculateEffectHeight(effectWidth, effectHeight);
+        float distanceFraction = distance / realEffectHeight;
+
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
+        edgeEffect.setSize(effectWidth, effectHeight);
+        edgeEffect.onPullDistance(distanceFraction, 0.5f);
+
+        Paint bluePaint = new Paint();
+        bluePaint.setColor(Color.BLUE);
+        bluePaint.setStyle(Paint.Style.FILL);
+
+        RenderNode innerNode = new RenderNode("effect");
+        innerNode.setPosition(0, 0, effectWidth, boxHeight);
+        innerNode.setClipToBounds(false);
+        Canvas effectCanvas = innerNode.beginRecording(effectWidth, boxHeight);
+        effectCanvas.drawRect(0f, 0f, effectWidth, boxHeight, bluePaint);
+        effectCanvas.rotate(rotationDegrees, effectWidth / 2f, boxHeight / 2f);
+
+        edgeEffect.draw(effectCanvas);
+        innerNode.endRecording();
+
+        Paint whitePaint = new Paint();
+        whitePaint.setStyle(Paint.Style.FILL);
+        whitePaint.setColor(Color.WHITE);
+
+        RenderNode outerNode = new RenderNode("outer");
+        outerNode.setPosition(0, 0, WIDTH, HEIGHT);
+        Canvas outerCanvas = outerNode.beginRecording(WIDTH, HEIGHT);
+        outerCanvas.drawRect(0, 0, WIDTH, HEIGHT, whitePaint);
+        outerCanvas.translate(10f, 10f);
+        outerCanvas.drawRenderNode(innerNode);
+        outerCanvas.translate(-10f, -10f);
+        outerNode.endRecording();
+        return outerNode;
+    }
+
+    @Test
+    public void testStretchTop() {
+        RenderNode renderNode = drawEdgeEffect(0, 5);
+
+        Rect innerRect = new Rect(10, 15, WIDTH - 10, HEIGHT - 5);
+
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, innerRect));
+    }
+
+    @Test
+    public void testStretchRotated() {
+        RenderNode renderNode = drawEdgeEffect(180, 5);
+
+        Rect innerRect = new Rect(10, 5, WIDTH - 10, HEIGHT - 15);
+
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, innerRect));
+    }
+
+    /**
+     * When a TYPE_STRETCH is used, a held pull should not retract.
+     */
+    @Test
+    @LargeTest
+    public void testStretchPullAndHold() throws Exception {
+        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+
+        // We must wait until the EdgeEffect would normally start receding (167 ms)
+        sleepAnimationTime(200);
+
+        // Drawing will cause updates of the distance if it is animating
+        RenderNode renderNode = new RenderNode(null);
+        Canvas canvas = renderNode.beginRecording();
+        edgeEffect.draw(canvas);
+
+        // A glow effect would start receding now, so let's be sure it doesn't:
+        sleepAnimationTime(200);
+        edgeEffect.draw(canvas);
+
+        // It should not be updating now
+        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+
+        // Now let's release it and it should start animating
+        edgeEffect.onRelease();
+
+        sleepAnimationTime(20);
+
+        // Now that it should be animating, the draw should update the distance
+        edgeEffect.draw(canvas);
+
+        assertTrue(edgeEffect.getDistance() < 0.25f);
+    }
+
+    /**
+     * When a TYPE_GLOW is used, a held pull should retract after the timeout.
+     */
+    @Test
+    @LargeTest
+    public void testGlowPullAndHold() throws Exception {
+        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_GLOW);
+        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+
+        // We must wait until the EdgeEffect would normally start receding (167 ms)
+        sleepAnimationTime(200);
+
+        // Drawing will cause updates of the distance if it is animating
+        RenderNode renderNode = new RenderNode(null);
+        Canvas canvas = renderNode.beginRecording();
+        edgeEffect.draw(canvas);
+
+        // It should start retracting now:
+        sleepAnimationTime(20);
+        edgeEffect.draw(canvas);
+        assertTrue(edgeEffect.getDistance() < 0.25f);
+    }
+
+    /**
+     * It should be possible to catch the stretch effect during an animation.
+     */
+    @Test
+    @LargeTest
+    public void testCatchStretchDuringAnimation() throws Exception {
+        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        assertEquals(0.25f, edgeEffect.getDistance(), 0.001f);
+        edgeEffect.onRelease();
+
+        // Wait some time to be sure it is animating away.
+        long startTime = AnimationUtils.currentAnimationTimeMillis();
+        sleepAnimationTime(20);
+
+        // Drawing will cause updates of the distance if it is animating
+        RenderNode renderNode = new RenderNode(null);
+        Canvas canvas = renderNode.beginRecording();
+        edgeEffect.draw(canvas);
+
+        // It should have started retracting. Now catch it.
+        float consumed = edgeEffect.onPullDistance(0f, 0.5f);
+        assertEquals(0f, consumed, 0f);
+
+        float distanceAfterAnimation = edgeEffect.getDistance();
+        assertTrue(distanceAfterAnimation < 0.25f);
+
+
+        sleepAnimationTime(50);
+
+        // There should be no change once it has been caught.
+        edgeEffect.draw(canvas);
+        assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
+    }
+
+    /**
+     * It should be possible to catch the glow effect during an animation.
+     */
+    @Test
+    @LargeTest
+    public void testCatchGlowDuringAnimation() throws Exception {
+        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_GLOW);
+        edgeEffect.onRelease();
+
+        // Wait some time to be sure it is animating away.
+        long startTime = AnimationUtils.currentAnimationTimeMillis();
+        sleepAnimationTime(20);
+
+        // Drawing will cause updates of the distance if it is animating
+        RenderNode renderNode = new RenderNode(null);
+        Canvas canvas = renderNode.beginRecording();
+        edgeEffect.draw(canvas);
+
+        // It should have started retracting. Now catch it.
+        float consumed = edgeEffect.onPullDistance(0f, 0.5f);
+        assertEquals(0f, consumed, 0f);
+
+        float distanceAfterAnimation = edgeEffect.getDistance();
+        assertTrue(distanceAfterAnimation < 0.25f);
+
+
+        sleepAnimationTime(50);
+
+        // There should be no change once it has been caught.
+        edgeEffect.draw(canvas);
+        assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
+    }
+
+    private EdgeEffect createEdgeEffectWithPull(int edgeEffectType) {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setType(edgeEffectType);
+        edgeEffect.setSize(100, 100);
+        edgeEffect.onPullDistance(0.25f, 0.5f);
+        return edgeEffect;
+    }
+
+    /**
+     * This sleeps until the {@link AnimationUtils#currentAnimationTimeMillis()} changes
+     * by at least <code>durationMillis</code> milliseconds. This is useful for EdgeEffect because
+     * it uses that mechanism to determine the animation duration.
+     *
+     * @param durationMillis The time to sleep in milliseconds.
+     */
+    private void sleepAnimationTime(long durationMillis) throws Exception {
+        final long startTime = AnimationUtils.currentAnimationTimeMillis();
+        long currentTime = startTime;
+        final long endTime = startTime + durationMillis;
+        do {
+            Thread.sleep(endTime - currentTime);
+            currentTime = AnimationUtils.currentAnimationTimeMillis();
+        } while (currentTime < endTime);
     }
 
     private interface AlphaVerifier {

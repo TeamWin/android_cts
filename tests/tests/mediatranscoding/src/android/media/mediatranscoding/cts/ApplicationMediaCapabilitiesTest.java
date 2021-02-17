@@ -246,7 +246,7 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     // VP9 is not declare in the XML which leads to isFormatSpecified return false.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
-    public void testUnsupportedCodecMimetype() throws Exception {
+    public void testUnspecifiedCodecMimetype() throws Exception {
         InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
         final XmlPullParser parser = Xml.newPullParser();
         parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
@@ -256,7 +256,19 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_VP9));
     }
 
-    // Test unspecified hdr type.
+    // Test unsupported codec type.
+    //    <format android:name="HEVC" supported="false"/>
+    public void testUnsupportedCodecMimetype() throws Exception {
+        InputStream xmlIs = mContext.getAssets().open("MediaCapabilitiesUnsupportedHevc.xml");
+        final XmlPullParser parser = Xml.newPullParser();
+        parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
+        ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
+                parser);
+        assertTrue(capability.isFormatSpecified(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
+    }
+
+    // Test unspecified and unsupported hdr type.
     // DOLBY_VISION is not declare in the XML which leads to isFormatSpecified return false.
     //    <format android:name="HEVC" supported="true"/>
     //    <format android:name="HDR10" supported="false"/>
@@ -268,5 +280,7 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
                 parser);
         assertFalse(capability.isFormatSpecified(MediaFeature.HdrType.DOLBY_VISION));
         assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.DOLBY_VISION));
+        assertTrue(capability.isFormatSpecified(MediaFeature.HdrType.HDR10));
+        assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10));
     }
 }

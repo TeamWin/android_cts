@@ -64,11 +64,14 @@ def _determine_angular_diff_thresh(first_api_level, sync_calibrated,
   """Determine angular difference threshold based on first API & sync type."""
   if first_api_level < 31:  # Original constraint.
     angular_diff_thresh = _ANGULAR_DIFF_THRESH_API30
+    logging.debug('first API level < 31')
   else:  # Change depending on APPROX or CALIBRATED time source.
     if sync_calibrated:  # CALIBRATED sync
       angular_diff_thresh = _ANGULAR_DIFF_THRESH_CALIBRATED
+      logging.debug('CALIBRATED sync')
     else:  # APPROXIMATE sync
       angular_diff_thresh = frame_to_frame_max
+      logging.debug('APPROXIMATE sync')
   logging.debug('angular diff threshold: %.2f', angular_diff_thresh)
   return angular_diff_thresh
 
@@ -205,6 +208,8 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
     angles = [i for i, _ in frame_pairs_angles]
     max_angle = numpy.amax(angles)
     min_angle = numpy.amin(angles)
+    logging.debug('Camera movement. min angle: %.2f, max: %.2f',
+                  min_angle, max_angle)
     if max_angle-min_angle < _ANGULAR_MOVEMENT_THRESHOLD:
       raise AssertionError(
           f'Not enough phone movement! min angle: {min_angle:.2f}, max angle: '
@@ -262,7 +267,7 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
     _plot_frame_pairs_angles(filtered_pairs_angles, ids, self.log_path)
 
     # Ensure camera moved.
-    self._assert_camera_movement(filtered_pairs_angles)
+    self._assert_camera_movement(masked_pairs_angles)
 
     # Ensure angle between the two cameras is not too different.
     max_frame_to_frame_diff = _determine_max_frame_to_frame_shift(

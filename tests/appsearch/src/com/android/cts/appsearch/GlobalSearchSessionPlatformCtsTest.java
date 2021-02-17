@@ -16,7 +16,6 @@
 package android.app.appsearch.cts;
 
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
-import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsSetSchemaResponseSuccess;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -127,15 +126,13 @@ public class GlobalSearchSessionPlatformCtsTest {
     }
 
     private void cleanup() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()));
+        mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
     }
 
     @Test
     public void testNoPackageAccess_default() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build()));
+        mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -149,16 +146,16 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_wrongPackageName() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(
-                                                "some.other.package", PKG_A_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(
+                                        "some.other.package", PKG_A_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -170,15 +167,15 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_wrongCertificate() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(PKG_A, new byte[] {10}))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_A, new byte[] {10}))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -190,15 +187,15 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testAllowPackageAccess() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -211,19 +208,19 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testAllowMultiplePackageAccess() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -236,15 +233,15 @@ public class GlobalSearchSessionPlatformCtsTest {
 
     @Test
     public void testNoPackageAccess_revoked() throws Exception {
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ true,
-                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ true,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -253,15 +250,15 @@ public class GlobalSearchSessionPlatformCtsTest {
         assertPackageCanAccess(EMAIL_DOCUMENT, PKG_A);
 
         // Set the schema again, but package access as false.
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ false,
-                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ false,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()
@@ -270,15 +267,15 @@ public class GlobalSearchSessionPlatformCtsTest {
         assertPackageCannotAccess(PKG_A);
 
         // Set the schema again, but with default (i.e. no) access
-        checkIsSetSchemaResponseSuccess(
-                mDb.setSchema(
-                        new SetSchemaRequest.Builder()
-                                .addSchemas(AppSearchEmail.SCHEMA)
-                                .setSchemaTypeVisibilityForPackage(
-                                        AppSearchEmail.SCHEMA_TYPE,
-                                        /*visible=*/ false,
-                                        new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
-                                .build()));
+        mDb.setSchema(
+                new SetSchemaRequest.Builder()
+                        .addSchemas(AppSearchEmail.SCHEMA)
+                        .setSchemaTypeVisibilityForPackage(
+                                AppSearchEmail.SCHEMA_TYPE,
+                                /*visible=*/ false,
+                                new PackageIdentifier(PKG_A, PKG_A_CERT_SHA256))
+                        .build())
+                .get();
         checkIsBatchResultSuccess(
                 mDb.put(
                         new PutDocumentsRequest.Builder()

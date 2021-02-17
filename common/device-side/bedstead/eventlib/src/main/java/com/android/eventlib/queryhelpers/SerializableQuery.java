@@ -21,7 +21,7 @@ import com.android.eventlib.EventLogsQuery;
 import java.io.Serializable;
 
 /** Query for a {@link Serializable}. */
-public interface SerializableQuery<E extends EventLogsQuery> {
+public interface SerializableQuery<E extends EventLogsQuery> extends Serializable {
     /** Require that the {@link Serializable} is equal to {@code serializable}. */
     E isEqualTo(Serializable serializable);
 }

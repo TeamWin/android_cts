@@ -22,8 +22,10 @@ import androidx.annotation.CheckResult;
 
 import com.android.eventlib.EventLogsQuery;
 
+import java.io.Serializable;
+
 /** Query for a single key in a {@link Bundle}. */
-public interface BundleKeyQuery<E extends EventLogsQuery> {
+public interface BundleKeyQuery<E extends EventLogsQuery> extends Serializable {
 
     /** Require that the key exists. */
     E exists();

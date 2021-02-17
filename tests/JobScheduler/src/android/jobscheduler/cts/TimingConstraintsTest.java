@@ -106,11 +106,12 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
      * {@link JobParameters#isOverrideDeadlineExpired()} returns the correct value.
      */
     public void testJobParameters_expiredDeadline() throws Exception {
-        // It is expected that the "device idle" constraint will *not* be met
+        // Make sure the storage constraint is *not* met
         // for the duration of the override deadline.
+        setStorageStateLow(true);
         JobInfo deadlineJob =
                 new JobInfo.Builder(EXPIRED_JOB_ID, kJobServiceComponent)
-                        .setRequiresDeviceIdle(true)
+                        .setRequiresStorageNotLow(true)
                         .setOverrideDeadline(2000L)
                         .build();
         kTestEnvironment.setExpectedExecutions(1);
@@ -132,10 +133,10 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
                         .setRequiresStorageNotLow(true)
                         .build();
         kTestEnvironment.setExpectedExecutions(1);
-        setStorageState(true);
+        setStorageStateLow(true);
         mJobScheduler.schedule(deadlineJob);
         // Run everything by making storage state not-low.
-        setStorageState(false);
+        setStorageStateLow(false);
         assertTrue("Failed to execute non-deadline job", kTestEnvironment.awaitExecution());
         assertFalse("Job that ran early (unexpired) didn't have" +
                         " JobParameters#isOverrideDeadlineExpired=false",
