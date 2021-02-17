@@ -19,10 +19,11 @@ package com.android.cts.devicepolicy;
 import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
-import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
 
+import android.Manifest;
 import android.app.AppOpsManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -33,10 +34,24 @@ import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class PermissionUtils {
+    private static final String LOG_TAG = PermissionUtils.class.getName();
+    private static final Set<String> LOCATION_PERMISSIONS = new HashSet<String>();
+
+    static {
+        LOCATION_PERMISSIONS.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        LOCATION_PERMISSIONS.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        LOCATION_PERMISSIONS.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+    }
 
     private static final String ACTION_CHECK_HAS_PERMISSION
             = "com.android.cts.permission.action.CHECK_HAS_PERMISSION";
@@ -63,20 +78,25 @@ public class PermissionUtils {
     public static void launchActivityAndRequestPermission(PermissionBroadcastReceiver
             receiver, UiDevice device, String permission, int expected,
             String packageName, String activityName) throws Exception {
-        final String resName;
+        final List<String> resNames = new ArrayList<>();
         switch(expected) {
             case PERMISSION_DENIED:
-                resName = "permission_deny_button";
+                resNames.add("permission_deny_button");
                 break;
             case PERMISSION_GRANTED:
-                resName = "permission_allow_button";
+                resNames.add("permission_allow_button");
+                // For the location permission, different buttons may be available.
+                if (LOCATION_PERMISSIONS.contains(permission)) {
+                    resNames.add("permission_allow_foreground_only_button");
+                    resNames.add("permission_allow_one_time_button");
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Invalid expected permission");
         }
         launchActivityWithAction(permission, ACTION_REQUEST_PERMISSION,
                 packageName, activityName);
-        pressPermissionPromptButton(device, resName);
+        pressPermissionPromptButton(device, resNames.toArray(new String[0]));
         assertEquals(expected, receiver.waitForBroadcast());
     }
 
@@ -126,17 +146,39 @@ public class PermissionUtils {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    private static void pressPermissionPromptButton(UiDevice mDevice, String resName) {
-        if (resName == null) {
-            throw new IllegalArgumentException("resName must not be null");
+    private static void pressPermissionPromptButton(UiDevice mDevice, String[] resNames) {
+        if ((resNames == null) || (resNames.length == 0)) {
+            throw new IllegalArgumentException("resNames must not be null or empty");
         }
 
-        BySelector selector = By
-                .clazz(android.widget.Button.class.getName())
-                .res("com.android.packageinstaller", resName);
-        mDevice.wait(Until.hasObject(selector), 5000);
-        UiObject2 button = mDevice.findObject(selector);
-        assertNotNull("Couldn't find button with resource id: " + resName, button);
-        button.click();
+        // The dialog was moved from the packageinstaller to the permissioncontroller.
+        // Search in multiple packages so the test is not affixed to a particular package.
+        String[] possiblePackages = new String[]{
+                "com.android.permissioncontroller.permission.ui",
+                "com.android.packageinstaller",
+                "com.android.permissioncontroller"};
+
+        boolean foundButton = false;
+        for (String resName : resNames) {
+            for (String possiblePkg : possiblePackages) {
+                BySelector selector = By
+                        .clazz(android.widget.Button.class.getName())
+                        .res(possiblePkg, resName);
+                mDevice.wait(Until.hasObject(selector), 5000);
+                UiObject2 button = mDevice.findObject(selector);
+                Log.d(LOG_TAG, String.format("Resource %s in Package %s found? %b", resName,
+                        possiblePkg, button != null));
+                if (button != null) {
+                    foundButton = true;
+                    button.click();
+                    break;
+                }
+            }
+            if (foundButton) {
+                break;
+            }
+        }
+
+        assertTrue("Couldn't find any button", foundButton);
     }
 }
