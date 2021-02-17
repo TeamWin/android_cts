@@ -16,6 +16,8 @@
 
 package android.appwidget.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
@@ -91,6 +93,22 @@ public abstract class AppWidgetTestCase {
                         android.appwidget.cts.R.dimen.first_min_resize_appwidget_size), provider.minResizeWidth);
                 assertEquals(getNormalizedDimensionResource(
                         android.appwidget.cts.R.dimen.first_min_resize_appwidget_size), provider.minResizeHeight);
+                assertThat(
+                        getNormalizedDimensionResource(
+                                android.appwidget.cts.R.dimen.first_max_resize_appwidget_size))
+                        .isEqualTo(provider.maxResizeWidth);
+                assertThat(
+                        getNormalizedDimensionResource(
+                                android.appwidget.cts.R.dimen.first_max_resize_appwidget_size))
+                        .isEqualTo(provider.maxResizeHeight);
+                assertThat(
+                        getIntResource(
+                                android.appwidget.cts.R.integer.first_target_cell_appwidget_size))
+                        .isEqualTo(provider.targetCellWidth);
+                assertThat(
+                        getIntResource(
+                                android.appwidget.cts.R.integer.first_target_cell_appwidget_size))
+                        .isEqualTo(provider.targetCellHeight);
                 assertEquals(getIntResource(android.appwidget.cts.R.integer.first_update_period_millis),
                         provider.updatePeriodMillis);
                 assertEquals(getInstrumentation().getTargetContext().getPackageName(),
@@ -124,6 +142,22 @@ public abstract class AppWidgetTestCase {
                         android.appwidget.cts.R.dimen.second_min_resize_appwidget_size), provider.minResizeWidth);
                 assertEquals(getNormalizedDimensionResource(
                         android.appwidget.cts.R.dimen.second_min_resize_appwidget_size), provider.minResizeHeight);
+                assertThat(
+                        getNormalizedDimensionResource(
+                                android.appwidget.cts.R.dimen.second_max_resize_appwidget_size))
+                        .isEqualTo(provider.maxResizeWidth);
+                assertThat(
+                        getNormalizedDimensionResource(
+                                android.appwidget.cts.R.dimen.second_max_resize_appwidget_size))
+                        .isEqualTo(provider.maxResizeHeight);
+                assertThat(
+                        getIntResource(
+                                android.appwidget.cts.R.integer.second_target_cell_appwidget_size))
+                        .isEqualTo(provider.targetCellWidth);
+                assertThat(
+                        getIntResource(
+                                android.appwidget.cts.R.integer.second_target_cell_appwidget_size))
+                        .isEqualTo(provider.targetCellHeight);
                 assertEquals(getIntResource(android.appwidget.cts.R.integer.second_update_period_millis),
                         provider.updatePeriodMillis);
                 assertEquals(getInstrumentation().getTargetContext().getPackageName(),
