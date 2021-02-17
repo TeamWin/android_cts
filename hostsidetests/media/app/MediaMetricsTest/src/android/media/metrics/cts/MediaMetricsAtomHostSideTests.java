@@ -20,6 +20,7 @@ import android.content.Context;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.NetworkEvent;
 import android.media.metrics.PlaybackErrorEvent;
+import android.media.metrics.PlaybackMetrics;
 import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
 import android.media.metrics.TrackChangeEvent;
@@ -89,5 +90,30 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkType(NetworkEvent.NETWORK_TYPE_WIFI)
                         .build();
         s.reportNetworkEvent(e);
+    }
+
+    @Test
+    public void testPlaybackMetrics() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackMetrics e =
+                new PlaybackMetrics.Builder()
+                        .setMediaDurationMillis(233L)
+                        .setStreamSource(PlaybackMetrics.STREAM_SOURCE_NETWORK)
+                        .setStreamType(PlaybackMetrics.STREAM_TYPE_OTHER)
+                        .setPlaybackType(PlaybackMetrics.PLAYBACK_TYPE_LIVE)
+                        .setDrmType(PlaybackMetrics.DRM_TYPE_WIDEVINE_L1)
+                        .setContentType(PlaybackMetrics.CONTENT_TYPE_MAIN)
+                        .setPlayerName("ExoPlayer")
+                        .setPlayerVersion("1.01x")
+                        .setVideoFramesPlayed(1024)
+                        .setVideoFramesDropped(32)
+                        .setAudioUnderrunCount(22)
+                        .setNetworkBytesRead(102400)
+                        .setLocalBytesRead(2000)
+                        .setNetworkTransferDurationMillis(6000)
+                        .build();
+        s.reportPlaybackMetrics(e);
     }
 }
