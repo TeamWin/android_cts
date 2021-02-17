@@ -21,9 +21,11 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assume.assumeThat;
 
+import android.Manifest;
 import android.content.Context;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.UiccSlotInfo;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -31,6 +33,7 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.rules.ExternalResource;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 class SimPhonebookRequirementsRule extends ExternalResource {
@@ -50,8 +53,12 @@ class SimPhonebookRequirementsRule extends ExternalResource {
         Context context = ApplicationProvider.getApplicationContext();
         TelephonyManager telephonyManager = Objects.requireNonNull(
                 context.getSystemService(TelephonyManager.class));
-        assumeThat(telephonyManager.getSupportedModemCount(),
-                greaterThanOrEqualTo(mMinimumSimCount));
+        UiccSlotInfo[] uiccSlots = SystemUtil.runWithShellPermissionIdentity(
+                telephonyManager::getUiccSlotsInfo,
+                Manifest.permission.READ_PRIVILEGED_PHONE_STATE);
+        int nonEsimCount = (int) Arrays.stream(uiccSlots)
+                .filter(info -> !info.getIsEuicc()).count();
+        assumeThat(nonEsimCount, greaterThanOrEqualTo(mMinimumSimCount));
 
         SubscriptionManager subscriptionManager = Objects.requireNonNull(
                 context.getSystemService(SubscriptionManager.class));
