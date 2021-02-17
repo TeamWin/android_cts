@@ -104,4 +104,33 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
                 "android.media.metrics.cts.MediaMetricsAtomHostSideTests.testPlaybackErrorEvent"))
                         .isTrue();
     }
+
+    public void testTrackChangeEvent_text() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_PLAYBACK_TRACK_CHANGED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testTrackChangeEvent_text");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaPlaybackTrackChanged()).isTrue();
+        AtomsProto.MediaPlaybackTrackChanged result =
+                data.get(0).getAtom().getMediaPlaybackTrackChanged();
+
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(37278L);
+        assertThat(result.getState().toString()).isEqualTo("ON");
+        assertThat(result.getReason().toString()).isEqualTo("REASON_MANUAL");
+        assertThat(result.getContainerMimeType()).isEqualTo("text/foo");
+        assertThat(result.getSampleMimeType()).isEqualTo("text/plain");
+        assertThat(result.getCodecName()).isEqualTo("codec_1");
+        assertThat(result.getBitrate()).isEqualTo(1024);
+        assertThat(result.getType().toString()).isEqualTo("TEXT");
+        assertThat(result.getLanguage()).isEqualTo("EN");
+        assertThat(result.getLanguageRegion()).isEqualTo("US");
+    }
 }
