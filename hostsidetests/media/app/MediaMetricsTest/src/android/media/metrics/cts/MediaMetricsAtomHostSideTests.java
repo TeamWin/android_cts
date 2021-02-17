@@ -18,6 +18,7 @@ package android.media.metrics.cts;
 
 import android.content.Context;
 import android.media.metrics.MediaMetricsManager;
+import android.media.metrics.PlaybackErrorEvent;
 import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
 
@@ -38,5 +39,20 @@ public class MediaMetricsAtomHostSideTests {
                         .setState(PlaybackStateEvent.STATE_JOINING_FOREGROUND)
                         .build();
         s.reportPlaybackStateEvent(e);
+    }
+
+    @Test
+    public void testPlaybackErrorEvent() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+        PlaybackErrorEvent e =
+                new PlaybackErrorEvent.Builder()
+                        .setTimeSinceCreatedMillis(17630000L)
+                        .setErrorCode(PlaybackErrorEvent.ERROR_CODE_RUNTIME)
+                        .setSubErrorCode(378)
+                        .setException(new Exception("test exception"))
+                        .build();
+        s.reportPlaybackErrorEvent(e);
     }
 }
