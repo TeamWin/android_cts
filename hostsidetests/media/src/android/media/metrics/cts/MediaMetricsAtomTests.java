@@ -79,4 +79,29 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         assertThat(result.getPlaybackState().toString()).isEqualTo("JOINING_FOREGROUND");
         assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(1763L);
     }
+
+    public void testPlaybackErrorEvent() throws Exception {
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), TEST_PKG,
+                AtomsProto.Atom.MEDIA_PLAYBACK_ERROR_REPORTED_FIELD_NUMBER);
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                "testPlaybackErrorEvent");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data.size()).isEqualTo(1);
+        assertThat(data.get(0).getAtom().hasMediaPlaybackErrorReported()).isTrue();
+        AtomsProto.MediaPlaybackErrorReported result =
+                data.get(0).getAtom().getMediaPlaybackErrorReported();
+
+        assertThat(result.getTimeSincePlaybackCreatedMillis()).isEqualTo(17630000L);
+        assertThat(result.getErrorCode().toString()).isEqualTo("ERROR_CODE_RUNTIME");
+        assertThat(result.getSubErrorCode()).isEqualTo(378);
+        assertThat(result.getExceptionStack().startsWith(
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests.testPlaybackErrorEvent"))
+                        .isTrue();
+    }
 }
