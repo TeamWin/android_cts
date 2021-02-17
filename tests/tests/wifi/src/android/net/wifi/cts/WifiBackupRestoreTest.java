@@ -253,6 +253,11 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
 
+
+            // get soft ap configuration and set it back to update configuration to user
+            // configuration.
+            mWifiManager.setSoftApConfiguration(mWifiManager.getSoftApConfiguration());
+
             // Retrieve original soft ap config.
             origSoftApConfig = mWifiManager.getSoftApConfiguration();
 
