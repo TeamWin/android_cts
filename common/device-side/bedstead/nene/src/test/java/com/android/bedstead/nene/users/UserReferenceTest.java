@@ -31,8 +31,8 @@ import android.os.Build;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
@@ -50,7 +50,8 @@ public class UserReferenceTest {
             InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
 
-    private final Users mUsers = new Users();
+    private final TestApis mTestApis = new TestApis();
+    private final Users mUsers = mTestApis.users();
 
     @Test
     public void id_returnsId() {
@@ -69,7 +70,7 @@ public class UserReferenceTest {
 
     @Test
     public void resolve_doesExist_returnsUser() {
-        UserReference userReference = createUser();
+        UserReference userReference = mUsers.createUser().create();
 
         try {
             assertThat(userReference.resolve()).isNotNull();
@@ -97,7 +98,7 @@ public class UserReferenceTest {
 
     @Test
     public void remove_userExists_removesUser() {
-        UserReference user = createUser();
+        UserReference user = mUsers.createUser().create();
 
         user.remove();
 
@@ -111,8 +112,7 @@ public class UserReferenceTest {
 
     @Test
     public void start_userNotStarted_userIsStarted() {
-        UserReference user = createUser()
-                .start();
+        UserReference user = mUsers.createUser().create().stop();
 
         user.start();
 
@@ -125,8 +125,7 @@ public class UserReferenceTest {
 
     @Test
     public void start_userAlreadyStarted_doesNothing() {
-        UserReference user = createUser()
-                .start();
+        UserReference user = mUsers.createUser().createAndStart();
 
         user.start();
 
@@ -144,8 +143,7 @@ public class UserReferenceTest {
 
     @Test
     public void stop_userStarted_userIsStopped() {
-        UserReference user = createUser()
-                .start();
+        UserReference user = mUsers.createUser().createAndStart();
 
         user.stop();
 
@@ -158,8 +156,7 @@ public class UserReferenceTest {
 
     @Test
     public void stop_userNotStarted_doesNothing() {
-        UserReference user = createUser()
-                .stop();
+        UserReference user = mUsers.createUser().create().stop();
 
         user.stop();
 
@@ -173,22 +170,15 @@ public class UserReferenceTest {
     @Test
     public void switchTo_userIsSwitched() throws Exception {
         assumeTrue(
-                "Install-existing only works for P+", SDK_INT >= Build.VERSION_CODES.P);
-        // TODO(scottjonathan): Might be a way of faking install-existing on older
-        //  versions (fetch the pkg and reinstall?)
-        assumeTrue(
                 "Adopting Shell Permissions only works for Q+", SDK_INT >= Build.VERSION_CODES.Q);
         // TODO(scottjonathan): In this case we can probably grant the permission through adb?
 
-        UserReference user = createUser().start();
+        UserReference user = mUsers.createUser().createAndStart();
         try {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 // for INTERACT_ACROSS_USERS
-                ShellCommand.builder("pm install-existing")
-                        .addOption("--user", user.id())
-                        .addOperand(sContext.getPackageName())
-                        .executeAndValidateOutput(
-                                (output) -> output.contains("installed for user"));
+
+                mTestApis.packages().find(sContext.getPackageName()).install(user);
                 user.switchTo();
 
                 Intent intent = new Intent();
@@ -207,9 +197,5 @@ public class UserReferenceTest {
             mUsers.system().switchTo();
             user.remove();
         }
-    }
-
-    private UserReference createUser() {
-        return mUsers.createUser().name(USER_NAME).create();
     }
 }
