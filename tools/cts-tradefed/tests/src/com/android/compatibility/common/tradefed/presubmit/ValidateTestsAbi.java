@@ -108,6 +108,16 @@ public class ValidateTestsAbi {
         "^CVE-\\d{4}-.+$"
     };
 
+    private static final String[] BINARY_SUFFIX_EXCEPTIONS = {
+        /**
+         * All STS test binaries rvc+ are in the form of *_sts32 or *_sts64.
+         *
+         * Many STS binaries are only feasible on a specific bitness so STS
+         * pushes the appropriate binary to compatible devices.
+         */
+        "_sts32", "_sts64",
+    };
+
     /**
      * Test that all apks have the same supported abis.
      * Sometimes, if a module is missing LOCAL_MULTILIB := both, we will end up with only one of
@@ -201,6 +211,11 @@ public class ValidateTestsAbi {
                 }
                 if (BINARY_EXCEPTIONS.contains(name)) {
                     return false;
+                }
+                for (String suffixException : BINARY_SUFFIX_EXCEPTIONS) {
+                    if (name.endsWith(suffixException)) {
+                        return false;
+                    }
                 }
                 File file = new File(dir, name);
                 if (file.isDirectory()) {
