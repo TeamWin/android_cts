@@ -1040,16 +1040,12 @@ public abstract class ActivityManagerTestBase {
 
     public void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
             String message) {
-        mWmState.waitForValidState(activityName);
-        mWmState.waitForActivityState(activityName, STATE_RESUMED);
         final String activityClassName = getActivityName(activityName);
         mWmState.waitForWithAmState(state -> activityClassName.equals(state.getFocusedActivity()),
                 "activity to be on top");
-
-        mWmState.assertValidity();
+        waitAndAssertResumedActivity(activityName, "Activity must be resumed");
         mWmState.assertFocusedActivity(message, activityName);
-        assertTrue("Activity must be resumed",
-                mWmState.hasActivityState(activityName, STATE_RESUMED));
+
         final int frontRootTaskId = mWmState.getFrontRootTaskId(displayId);
         WindowManagerState.ActivityTask frontRootTaskOnDisplay =
                 mWmState.getRootTask(frontRootTaskId);
@@ -1059,6 +1055,20 @@ public abstract class ActivityManagerTestBase {
                 frontRootTaskOnDisplay.isLeafTask() ? frontRootTaskOnDisplay.mResumedActivity
                         : frontRootTaskOnDisplay.getTopTask().mResumedActivity);
         mWmState.assertFocusedStack("Top activity's rootTask must also be on top", frontRootTaskId);
+    }
+
+    /**
+     * Waits and asserts that the activity represented by the given activity name is resumed and
+     * visible, but is not necessarily the top activity.
+     *
+     * @param activityName the activity name
+     * @param message the error message
+     */
+    public void waitAndAssertResumedActivity(ComponentName activityName, String message) {
+        mWmState.waitForValidState(activityName);
+        mWmState.waitForActivityState(activityName, STATE_RESUMED);
+        mWmState.assertValidity();
+        assertTrue(message, mWmState.hasActivityState(activityName, STATE_RESUMED));
         mWmState.assertVisibility(activityName, true /* visible */);
     }
 
