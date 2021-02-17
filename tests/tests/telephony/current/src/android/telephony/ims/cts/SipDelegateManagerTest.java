@@ -223,15 +223,38 @@ public class SipDelegateManagerTest {
         SipDelegateManager manager = getSipDelegateManager();
         try {
             manager.isSupported();
-            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE");
+            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE or "
+                    + "PERFORM_IMS_SINGLE_REGISTRATION");
         } catch (SecurityException e) {
             //expected
         }
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    manager, SipDelegateManager::isSupported, ImsException.class,
+                    "android.permission.PERFORM_IMS_SINGLE_REGISTRATION");
+        } catch (ImsException e) {
+            // Not a problem, only checking permissions here.
+        } catch (SecurityException e) {
+            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE or "
+                    + "PERFORM_IMS_SINGLE_REGISTRATION, exception:" + e);
+        }
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
+                    manager, SipDelegateManager::isSupported, ImsException.class,
+                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+
+        } catch (ImsException e) {
+            // Not a problem, only checking permissions here.
+        } catch (SecurityException e) {
+            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE or "
+                    + "PERFORM_IMS_SINGLE_REGISTRATION, exception:" + e);
+        }
+
         DelegateRequest d = new DelegateRequest(Collections.emptySet());
         TestSipDelegateConnection c = new TestSipDelegateConnection(d);
         try {
             manager.createSipDelegate(d, Runnable::run, c, c);
-            fail("createSipDelegate requires MODIFY_PHONE_STATE");
+            fail("createSipDelegate requires PERFORM_IMS_SINGLE_REGISTRATION");
         } catch (SecurityException e) {
             //expected
         }
@@ -259,12 +282,12 @@ public class SipDelegateManagerTest {
                 // return false.
                 Boolean result = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         manager, SipDelegateManager::isSupported, ImsException.class,
-                        "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                        "android.permission.PERFORM_IMS_SINGLE_REGISTRATION");
                 assertNotNull(result);
                 assertFalse("isSupported should return false on devices that do not "
                         + "support feature FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION", result);
             } catch (SecurityException e) {
-                fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+                fail("isSupported requires PERFORM_IMS_SINGLE_REGISTRATION permission");
             }
 
             try {
@@ -275,12 +298,12 @@ public class SipDelegateManagerTest {
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
                         manager, (m) -> m.createSipDelegate(request, Runnable::run,
                                 delegateConn, delegateConn), ImsException.class,
-                        "android.permission.MODIFY_PHONE_STATE");
+                        "android.permission.PERFORM_IMS_SINGLE_REGISTRATION");
                 fail("createSipDelegate should throw an ImsException with code "
                         + "CODE_ERROR_UNSUPPORTED_OPERATION on devices that do not support feature "
                         + "FEATURE_TELEPHONY_IMS_SINGLE_REGISTRATION");
             } catch (SecurityException e) {
-                fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+                fail("isSupported requires PERFORM_IMS_SINGLE_REGISTRATION permission");
             } catch (ImsException e) {
                 // expecting CODE_ERROR_UNSUPPORTED_OPERATION
                 if (e.getCode() != ImsException.CODE_ERROR_UNSUPPORTED_OPERATION) {
@@ -313,9 +336,9 @@ public class SipDelegateManagerTest {
             result = callUntilImsServiceIsAvailable(() ->
                     ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(manager,
                             SipDelegateManager::isSupported, ImsException.class,
-                            "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                            "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         } catch (SecurityException e) {
-            fail("isSupported requires READ_PRIVILEGED_PHONE_STATE permission");
+            fail("isSupported requires PERFORM_IMS_SINGLE_REGISTRATION permission");
         }
         assertNotNull(result);
         assertTrue("isSupported should return true", result);
@@ -335,7 +358,7 @@ public class SipDelegateManagerTest {
         Boolean result = callUntilImsServiceIsAvailable(() ->
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         getSipDelegateManager(), SipDelegateManager::isSupported,
-                        ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                        ImsException.class, "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         assertNotNull(result);
         assertFalse("isSupported should return false if"
                 + "CarrierConfigManager.Ims.KEY_RCS_SINGLE_REGISTRATION_REQUIRED_BOOL is set to "
@@ -365,7 +388,7 @@ public class SipDelegateManagerTest {
         Boolean result = callUntilImsServiceIsAvailable(() ->
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         getSipDelegateManager(), SipDelegateManager::isSupported,
-                        ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                        ImsException.class, "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that the ImsService is only "
                 + "attached for RCS and not MMTEL and RCS", result);
@@ -392,7 +415,7 @@ public class SipDelegateManagerTest {
         Boolean result = callUntilImsServiceIsAvailable(() ->
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         getSipDelegateManager(), SipDelegateManager::isSupported,
-                        ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                        ImsException.class, "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that SipTransport is not "
                 + "implemented", result);
@@ -417,7 +440,7 @@ public class SipDelegateManagerTest {
         Boolean result = callUntilImsServiceIsAvailable(() ->
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         getSipDelegateManager(), SipDelegateManager::isSupported,
-                        ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                        ImsException.class, "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that SipTransport is not "
                 + "set as capable in ImsService#getImsServiceCapabilities", result);
@@ -441,7 +464,7 @@ public class SipDelegateManagerTest {
         Boolean result = callUntilImsServiceIsAvailable(() ->
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                         getSipDelegateManager(), SipDelegateManager::isSupported,
-                        ImsException.class, "android.permission.READ_PRIVILEGED_PHONE_STATE"));
+                        ImsException.class, "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
         assertNotNull(result);
         assertFalse("isSupported should return false in the case that SipTransport is not "
                 + "set as capable in ImsService#getImsServiceCapabilities", result);
