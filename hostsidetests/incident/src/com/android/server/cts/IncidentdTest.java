@@ -69,8 +69,6 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         ActivityManagerIncidentTest.verifyActivityManagerServiceDumpProcessesProto(dump.getAmprocesses(), filterLevel);
 
-        AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
-
         // GraphicsStats is expected to be all AUTOMATIC.
 
         WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
