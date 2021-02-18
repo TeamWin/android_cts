@@ -117,6 +117,9 @@ class CameraMicIndicatorsPermissionTest {
             )
         }
 
+        pressBack()
+        pressBack()
+        pressHome()
         pressHome()
     }
 
@@ -153,8 +156,6 @@ class CameraMicIndicatorsPermissionTest {
             uiDevice.openNotification()
             assertPrivacyChipAndIndicatorsPresent(useMic, useCamera)
         }
-
-        pressBack()
     }
 
     private fun assertTvIndicatorsShown(useMic: Boolean, useCamera: Boolean) {
