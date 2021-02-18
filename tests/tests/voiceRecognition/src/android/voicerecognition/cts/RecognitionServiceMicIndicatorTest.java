@@ -50,6 +50,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RunWith(AndroidJUnit4.class)
 public final class RecognitionServiceMicIndicatorTest {
 
@@ -87,7 +90,7 @@ public final class RecognitionServiceMicIndicatorTest {
             new ActivityTestRule<>(SpeechRecognitionActivity.class);
 
     @Rule
-    public final SettingsStateChangerRule mVoiceRcognitionrviceSetterRule =
+    public final SettingsStateChangerRule mVoiceRecognitionServiceSetterRule =
             new SettingsStateChangerRule(mContext, VOICE_RECOGNITION_SERVICE,
                     mOriginalVoiceRecognizer);
 
@@ -96,6 +99,7 @@ public final class RecognitionServiceMicIndicatorTest {
         prepareDevice();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mActivity = mActivityTestRule.getActivity();
+        mActivity.init(false, null);
 
         final PackageManager pm = mContext.getPackageManager();
         try {
@@ -157,18 +161,18 @@ public final class RecognitionServiceMicIndicatorTest {
     }
 
     @Test
-    public void testNonTrustedRecognitionServiceCannotBlameCallingApp() throws Throwable {
+    public void testNonTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
         // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
         // is also a preinstalled app. This is a untrusted case.
         setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
 
         // verify that the untrusted app cannot blame the calling app mic access
-        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ false);
+        testVoiceRecognitionServiceBlameCallingApp(/* trustVoiceService */ true);
     }
 
     @Test
     public void testTrustedRecognitionServiceCanBlameCallingApp() throws Throwable {
-        // This is a workaound solution for R QPR. We treat trusted if the current voice recognizer
+        // This is a workaround solution for R QPR. We treat trusted if the current voice recognizer
         // is also a preinstalled app. This is a trusted case.
         boolean hasPreInstalledRecognizer = hasPreInstalledRecognizer(
                 getComponentPackageNameFromString(mOriginalVoiceRecognizer));
@@ -220,12 +224,18 @@ public final class RecognitionServiceMicIndicatorTest {
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
         // Make sure dialog is shown
-        final UiObject2 recognitionCallingAppLabel = mUiDevice.findObject(
+        List<UiObject2> recognitionCallingAppLabels = mUiDevice.findObjects(
                 By.res(PRIVACY_DIALOG_PACKAGE_NAME, PRIVACY_DIALOG_CONTENT_ID));
         assertWithMessage("No permission dialog shown after clicking  privacy chip.").that(
-                recognitionCallingAppLabel).isNotNull();
+                recognitionCallingAppLabels).isNotEmpty();
+
         // get dialog content
-        final String dialogDescription = recognitionCallingAppLabel.getText();
+        final String dialogDescription =
+                recognitionCallingAppLabels
+                        .stream()
+                        .map(UiObject2::getText)
+                        .collect(Collectors.joining("\n"));
+        Log.i(TAG, "Retrieved dialog description " + dialogDescription);
         if (trustVoiceService) {
             // Check trust recognizer can blame calling apmic permission
             assertWithMessage(
