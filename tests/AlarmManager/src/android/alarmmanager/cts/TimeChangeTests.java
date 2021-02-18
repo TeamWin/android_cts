@@ -16,6 +16,9 @@
 
 package android.alarmmanager.cts;
 
+import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
+import static android.app.AlarmManager.RTC_WAKEUP;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -26,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.util.Log;
 
@@ -48,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Tests that system time changes are handled appropriately for alarms
  */
+@AppModeFull
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class TimeChangeTests {
@@ -98,7 +103,7 @@ public class TimeChangeTests {
         final Intent alarmIntent = new Intent(ACTION_ALARM)
                 .setPackage(mContext.getPackageName())
                 .addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, PendingIntent.FLAG_MUTABLE);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
         mDeviceConfigStateHelper =
@@ -116,8 +121,7 @@ public class TimeChangeTests {
     public void elapsedAlarmsUnaffected() throws Exception {
         final long delayElapsed = 5_000;
         final long expectedTriggerElapsed = mTestStartElapsed + delayElapsed;
-        mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                expectedTriggerElapsed, mAlarmPi);
+        mAlarmManager.setExact(ELAPSED_REALTIME_WAKEUP, expectedTriggerElapsed, mAlarmPi);
         final long newRtc = mTestStartRtc - 32 * MILLIS_IN_MINUTE; // arbitrary, shouldn't matter
         setTime(newRtc);
         Thread.sleep(delayElapsed);
@@ -130,8 +134,7 @@ public class TimeChangeTests {
         final long newRtc = mTestStartRtc + 14 * MILLIS_IN_MINUTE; // arbitrary, but in the future
         final long delayRtc = 4_231;
         final long expectedTriggerRtc = newRtc + delayRtc;
-        mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, expectedTriggerRtc,
-                mAlarmPi);
+        mAlarmManager.setExact(RTC_WAKEUP, expectedTriggerRtc, mAlarmPi);
         Thread.sleep(delayRtc);
         assertFalse("Alarm fired before time was changed",
                 mAlarmLatch.await(DEFAULT_WAIT_MILLIS, TimeUnit.MILLISECONDS));

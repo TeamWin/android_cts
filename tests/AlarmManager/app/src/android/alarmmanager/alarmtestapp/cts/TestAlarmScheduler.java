@@ -21,6 +21,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 import android.util.Log;
 
 /**
@@ -45,10 +46,12 @@ public class TestAlarmScheduler extends BroadcastReceiver {
         final AlarmManager am = context.getSystemService(AlarmManager.class);
         final Intent receiverIntent = new Intent(context, TestAlarmReceiver.class);
         receiverIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        final long id = SystemClock.elapsedRealtime();
+        receiverIntent.putExtra(TestAlarmReceiver.EXTRA_ID, id);
         final PendingIntent alarmClockSender = PendingIntent.getBroadcast(context, 0,
-                receiverIntent, PendingIntent.FLAG_MUTABLE);
+                receiverIntent, PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         final PendingIntent alarmSender = PendingIntent.getBroadcast(context, 1, receiverIntent,
-                PendingIntent.FLAG_MUTABLE);
+                PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         switch (intent.getAction()) {
             case ACTION_SET_ALARM_CLOCK:
                 if (!intent.hasExtra(EXTRA_ALARM_CLOCK_INFO)) {
@@ -57,7 +60,7 @@ public class TestAlarmScheduler extends BroadcastReceiver {
                 }
                 final AlarmManager.AlarmClockInfo alarmClockInfo =
                         intent.getParcelableExtra(EXTRA_ALARM_CLOCK_INFO);
-                Log.d(TAG, "Setting alarm clock " + alarmClockInfo);
+                Log.d(TAG, "Setting alarm clock " + alarmClockInfo + " id: " + id);
                 am.setAlarmClock(alarmClockInfo, alarmClockSender);
                 break;
             case ACTION_SET_ALARM:
@@ -70,7 +73,7 @@ public class TestAlarmScheduler extends BroadcastReceiver {
                 final long interval = intent.getLongExtra(EXTRA_REPEAT_INTERVAL, 0);
                 final boolean allowWhileIdle = intent.getBooleanExtra(EXTRA_ALLOW_WHILE_IDLE,
                         false);
-                Log.d(TAG, "Setting alarm: type=" + type + ", triggerTime=" + triggerTime
+                Log.d(TAG, "Setting alarm: id=" + id + " type=" + type + ", triggerTime=" + triggerTime
                         + ", interval=" + interval + ", allowWhileIdle=" + allowWhileIdle);
                 if (interval > 0) {
                     am.setRepeating(type, triggerTime, interval, alarmSender);
