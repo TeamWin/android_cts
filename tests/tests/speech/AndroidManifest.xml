@@ -23,18 +23,7 @@
         <uses-library android:name="android.test.runner"/>
 
         <service android:name="android.speech.tts.cts.StubTextToSpeechService"
-             android:enabled="true"
              android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.TTS_SERVICE"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-            </intent-filter>
-        </service>
-
-        <service android:name="android.speech.tts.cts.ConnectionTestTextToSpeechService"
-            android:exported="true"
-            android:process=":ConnectionTest"
-            android:enabled="false">
             <intent-filter>
                 <action android:name="android.intent.action.TTS_SERVICE"/>
                 <category android:name="android.intent.category.DEFAULT"/>
