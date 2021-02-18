@@ -89,7 +89,7 @@ def take_caps_and_determine_sharpness(
   return data_set
 
 
-class TestLensMovementReporting(its_base_test.ItsBaseTest):
+class LensMovementReportingTest(its_base_test.ItsBaseTest):
   """Test if focus distance is properly reported.
 
   Do unit step of focus distance and check sharpness correlates.
