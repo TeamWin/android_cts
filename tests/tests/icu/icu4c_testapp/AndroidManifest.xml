@@ -16,7 +16,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.icu4c.cts">
-    <application>
+    <!-- extractNativeLibs="false" is needed to run on secondary ABI. -->
+    <application android:extractNativeLibs="false">
         <uses-library android:name="android.test.runner" />
     </application>
 
