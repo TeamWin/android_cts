@@ -62,6 +62,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
+import java.util.ArrayList;
+
 /**
  * Test {@link HorizontalScrollView}.
  */
@@ -1077,6 +1079,11 @@ public class HorizontalScrollViewTest {
             mScrollViewCustom.setVisibility(View.GONE);
             mScrollViewCustomEmpty.setVisibility(View.GONE);
             mScrollViewRegular.setVisibility(View.GONE);
+            // The stretch HorizontalScrollView is 90x90 pixels
+            Rect exclusionRect = new Rect(0, 0, 90, 90);
+            ArrayList exclusionRects = new ArrayList();
+            exclusionRects.add(exclusionRect);
+            mScrollViewStretch.setSystemGestureExclusionRects(exclusionRects);
         });
     }
 
