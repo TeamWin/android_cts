@@ -59,9 +59,11 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.internal.util.ArrayUtils;
 import com.android.internal.util.MemInfoReader;
+import com.android.server.os.TombstoneProtos.Tombstone;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -832,6 +834,21 @@ public final class ActivityManagerAppExitInfoTest extends InstrumentationTestCas
         assertTrue(list != null && list.size() == 1);
         verify(list.get(0), mStubPackagePid, mStubPackageUid, STUB_PACKAGE_NAME,
                 ApplicationExitInfo.REASON_CRASH_NATIVE, null, null, now, now2);
+
+        InputStream trace = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                list.get(0),
+                (i) -> {
+                    try {
+                        return i.getTraceInputStream();
+                    } catch (IOException ex) {
+                        return null;
+                    }
+                },
+                android.Manifest.permission.DUMP);
+
+        assertNotNull(trace);
+        Tombstone tombstone = Tombstone.parseFrom(trace);
+        assertEquals(tombstone.getPid(), mStubPackagePid);
     }
 
     public void testUserRequested() throws Exception {
