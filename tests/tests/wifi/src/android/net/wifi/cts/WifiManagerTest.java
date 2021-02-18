@@ -1670,6 +1670,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestSoftApCallback callback = new TestSoftApCallback(mLock);
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            // check that tethering is supported by the device
+            if (!mTetheringManager.isTetheringSupported()) {
+                return;
+            }
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 
