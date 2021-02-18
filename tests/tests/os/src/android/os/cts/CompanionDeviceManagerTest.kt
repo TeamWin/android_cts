@@ -136,7 +136,6 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
     @Test
     fun testProfiles() {
         val packageName = "android.os.cts.companiontestapp"
-        runShellCommand("pm uninstall $packageName")
         installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
         startApp(packageName)
 
