@@ -18,4 +18,8 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForBinderInVendorBan" />
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForVendorExecutingCore" />
+
+    <!-- Exclude @SecurityTest tests from CTS. These are tested in STS. -->
+    <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.SecurityTest" />
+    <option name="compatibility:test-arg" value="com.android.compatibility.common.tradefed.testtype.JarHostTest:exclude-annotation:android.platform.test.annotations.SecurityTest" />
 </configuration>
