@@ -62,6 +62,8 @@ public class NetworkLoggingTest {
     private static final String TAG = "NetworkLoggingTest";
     private static final String CTS_APP_PACKAGE_NAME = "com.android.cts.deviceandprofileowner";
     private static final int FAKE_BATCH_TOKEN = -666;
+    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    private static final String DELEGATION_NETWORK_LOGGING = "delegation-network-logging";
 
     // Should not be added to the list of network events.
     private static final String[] NOT_LOGGED_URLS_LIST = {
@@ -170,6 +172,24 @@ public class NetworkLoggingTest {
         mDpm.setNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT, false);
 
         assertThat(mDpm.isNetworkLoggingEnabled(ADMIN_RECEIVER_COMPONENT)).isFalse();
+    }
+
+    @Test
+    public void testSetDelegateScope_delegationNetworkLogging() {
+        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
+                Arrays.asList(DELEGATION_NETWORK_LOGGING));
+
+        assertThat(mDpm.getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG))
+                .contains(DELEGATION_NETWORK_LOGGING);
+    }
+
+    @Test
+    public void testSetDelegateScope_noDelegation() {
+        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
+                Arrays.asList());
+
+        assertThat(mDpm.getDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG))
+                .doesNotContain(DELEGATION_NETWORK_LOGGING);
     }
 
     private void connectToWebsite(String server) {

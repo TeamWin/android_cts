@@ -29,7 +29,7 @@ import java.util.Map;
  * Parser for the output of "adb dumpsys user".
  */
 @TargetApi(Build.VERSION_CODES.O)
-public interface AdbUserParser {
+interface AdbUserParser {
 
     static AdbUserParser get(Users users, int sdkVersion) {
         if (sdkVersion >= 30) {
@@ -48,7 +48,5 @@ public interface AdbUserParser {
         @Nullable Map<String, UserType> mUserTypes;
     }
 
-    default ParseResult parse(String dumpsysUsersOutput) throws AdbParseException {
-        throw new UnsupportedOperationException();
-    }
+    ParseResult parse(String dumpsysUsersOutput) throws AdbParseException;
 }

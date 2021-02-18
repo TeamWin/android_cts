@@ -163,6 +163,19 @@
             </intent-filter>
         </service>
 
+        <!-- Activity that allows the user to trigger the UCE APIs -->
+        <activity android:name="android.telephony.ims.cts.UceActivity"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.telephony.ims.cts.action_finish"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+
         <service
             android:name="android.telephony.gba.cts.TestGbaService"
             android:directBootAware="true"

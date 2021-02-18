@@ -27,7 +27,9 @@ import static android.content.pm.PackageManager.PERMISSION_DENIED;
 import static android.content.pm.PackageManager.PERMISSION_GRANTED;
 
 import android.Manifest.permission;
+import android.app.admin.DevicePolicyManager;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
@@ -78,6 +80,11 @@ public class PermissionsTest extends BaseDeviceAdminTest {
             permission.ACCESS_FINE_LOCATION,
             permission.ACCESS_BACKGROUND_LOCATION,
             permission.ACCESS_COARSE_LOCATION);
+
+    // TODO: Augment with more permissions
+    private static final Set<String> SENSORS_PERMISSIONS = Sets.newHashSet(
+            permission.ACCESS_FINE_LOCATION);
+
 
     private PermissionBroadcastReceiver mReceiver;
     private UiDevice mDevice;
@@ -425,6 +432,58 @@ public class PermissionsTest extends BaseDeviceAdminTest {
                 PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
         PermissionUtils.checkPermission(READ_CONTACTS, PERMISSION_GRANTED,
                 PERMISSION_APP_PACKAGE_NAME);
+    }
+
+    public void testSensorsRelatedPermissionsCannotBeGranted() throws Exception {
+        for (String sensorPermission: SENSORS_PERMISSIONS) {
+            // The permission cannot be granted.
+            assertFailedToSetPermissionGrantState(
+                    sensorPermission, DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+            // But the user can grant it.
+            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
+                    PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+
+            // And the package manager should show it as granted.
+            PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
+                    PERMISSION_APP_PACKAGE_NAME);
+        }
+    }
+
+    public void testSensorsRelatedPermissionsCanBeDenied() throws Exception {
+        for (String sensorPermission: SENSORS_PERMISSIONS) {
+            // The permission can be denied
+            setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DENIED);
+
+            assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DENIED);
+            assertCannotRequestPermissionFromActivity(sensorPermission);
+        }
+    }
+
+    public void testSensorsRelatedPermissionsNotGrantedViaPolicy() throws Exception {
+        setPermissionPolicy(PERMISSION_POLICY_AUTO_GRANT);
+        for (String sensorPermission: SENSORS_PERMISSIONS) {
+            // The permission is not granted by default.
+            PermissionUtils.checkPermission(sensorPermission, PERMISSION_DENIED,
+                    PERMISSION_APP_PACKAGE_NAME);
+            // But the user can grant it.
+            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
+                    PERMISSION_GRANTED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+
+            // And the package manager should show it as granted.
+            PermissionUtils.checkPermission(sensorPermission, PERMISSION_GRANTED,
+                    PERMISSION_APP_PACKAGE_NAME);
+        }
+    }
+
+    private void assertFailedToSetPermissionGrantState(String permission, int value) {
+        assertTrue(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                PERMISSION_APP_PACKAGE_NAME, permission, value));
+        assertEquals(mDevicePolicyManager.getPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
+                PERMISSION_APP_PACKAGE_NAME, permission),
+                DevicePolicyManager.PERMISSION_GRANT_STATE_DEFAULT);
+        assertEquals(mContext.getPackageManager().checkPermission(permission,
+                PERMISSION_APP_PACKAGE_NAME),
+                PackageManager.PERMISSION_DENIED);
     }
 
     private CountDownLatch initPermissionNotificationLatch() {

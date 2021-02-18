@@ -25,4 +25,9 @@ public final class UnresolvedUser extends UserReference {
     UnresolvedUser(Users users, int id) {
         super(users, id);
     }
+
+    @Override
+    public String toString() {
+        return "UnresolvedUser{id=" + id() + "}";
+    }
 }

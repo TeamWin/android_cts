@@ -86,9 +86,8 @@ public abstract class UserReference {
             ShellCommand.builder("pm remove-user")
                     .addOperand(mId)
                     .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
-            ShellCommandUtils.executeCommandUntilOutputValid("dumpsys user",
-                    (output) -> !output.contains("UserInfo{" + mId + ":"));
-        } catch (AdbException | InterruptedException e) {
+            mUsers.waitForUserToNotExistOrMatch(this, User::isRemoving);
+        } catch (AdbException e) {
             throw new NeneException("Could not remove user + " + this, e);
         }
     }
@@ -173,5 +172,21 @@ public abstract class UserReference {
         }
 
         return this;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof UserReference)) {
+            return false;
+        }
+
+        UserReference other = (UserReference) obj;
+
+        return other.id() == id();
+    }
+
+    @Override
+    public int hashCode() {
+        return id();
     }
 }

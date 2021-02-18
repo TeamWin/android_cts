@@ -46,6 +46,9 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String DEVICE_ADMIN_APK = DeviceAndProfileOwnerTest.DEVICE_ADMIN_APK;
     private static final String CERT_INSTALLER_PKG = DeviceAndProfileOwnerTest.CERT_INSTALLER_PKG;
     private static final String CERT_INSTALLER_APK = DeviceAndProfileOwnerTest.CERT_INSTALLER_APK;
+    private static final String DELEGATE_APP_PKG = DeviceAndProfileOwnerTest.DELEGATE_APP_PKG;
+    private static final String DELEGATE_APP_APK = DeviceAndProfileOwnerTest.DELEGATE_APP_APK;
+    private static final String LOG_TAG_PROFILE_OWNER = "profile-owner";
 
     private static final String ADMIN_RECEIVER_TEST_CLASS =
             DeviceAndProfileOwnerTest.ADMIN_RECEIVER_TEST_CLASS;
@@ -613,26 +616,75 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     @Test
     public void testNetworkLogging() throws Exception {
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        testNetworkLoggingOnWorkProfile(DEVICE_ADMIN_PKG, ".NetworkLoggingTest");
+    }
+
+    @Test
+    public void testNetworkLoggingDelegate() throws Exception {
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".WorkProfileNetworkLoggingDelegateTest",
+                    "testCannotAccessApis", mUserId);
+            // Set network logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetDelegateScope_delegationNetworkLogging", mUserId);
+
+            testNetworkLoggingOnWorkProfile(DELEGATE_APP_PKG,
+                    ".WorkProfileNetworkLoggingDelegateTest");
+        } finally {
+            // Remove network logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+                    "testSetDelegateScope_noDelegation", mUserId);
+        }
+    }
+
+    private void testNetworkLoggingOnWorkProfile(String packageName, String testClassName)
+            throws Exception {
         try {
             // Turn network logging on.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testSetNetworkLogsEnabled_true", mUserId);
 
             // Connect to websites from work profile, should be logged.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testConnectToWebsites_shouldBeLogged", mUserId);
             // Connect to websites from personal profile, should not be logged.
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
                     "testConnectToWebsites_shouldNotBeLogged", mPrimaryUserId);
 
             // Verify all work profile network logs have been received.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testRetrieveNetworkLogs_forceNetworkLogs_receiveNetworkLogs", mUserId);
         } finally {
             // Turn network logging off.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".NetworkLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testSetNetworkLogsEnabled_false", mUserId);
         }
+    }
+
+    @Test
+    public void testNetworkLoggingLogged() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        assertMetricsLogged(getDevice(), () -> {
+            testNetworkLoggingOnWorkProfile(DEVICE_ADMIN_PKG, ".NetworkLoggingTest");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setInt(1)
+                .setStrings(LOG_TAG_PROFILE_OWNER)
+                .build(),
+           new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_NETWORK_LOGS_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setStrings(LOG_TAG_PROFILE_OWNER)
+                .build(),
+           new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_LOGGING_ENABLED_VALUE)
+                .setAdminPackageName(DEVICE_ADMIN_PKG)
+                .setBoolean(false)
+                .setInt(0)
+                .setStrings(LOG_TAG_PROFILE_OWNER)
+                .build());
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {

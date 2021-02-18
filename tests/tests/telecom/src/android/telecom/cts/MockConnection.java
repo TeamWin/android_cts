@@ -21,6 +21,7 @@ import static android.telecom.CallAudioState.*;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
+import android.telecom.CallScreeningService;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.PhoneAccountHandle;
@@ -261,8 +262,11 @@ public class MockConnection extends Connection {
     }
 
     @Override
-    public void onCallFilteringCompleted(boolean isBlocked, boolean isInContacts) {
-        getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(isBlocked, isInContacts);
+    public void onCallFilteringCompleted(boolean isBlocked, boolean isInContacts,
+            CallScreeningService.CallResponse response,
+            boolean responseFromSystemDialer) {
+        getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(isBlocked, isInContacts,
+                response, responseFromSystemDialer);
     }
 
     public int getCurrentState()  {

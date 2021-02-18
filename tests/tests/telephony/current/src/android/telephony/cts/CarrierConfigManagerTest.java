@@ -337,23 +337,29 @@ public class CarrierConfigManagerTest {
                     // verify that REBROADCAST_ON_UNLOCK is populated
                     assertFalse(
                             intent.getBooleanExtra(CarrierConfigManager.EXTRA_REBROADCAST_ON_UNLOCK,
-                                    true));
+                            true));
                 }
             }
         };
 
-        final IntentFilter filter =
-                new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
-        getContext().registerReceiver(receiver, filter);
+        try {
+            final IntentFilter filter =
+                    new IntentFilter(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
+            getContext().registerReceiver(receiver, filter);
 
-        // verify that carrier config is received
-        int subId = SubscriptionManager.getDefaultSubscriptionId();
-        getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
-        mConfigManager.notifyConfigChangedForSubId(subId);
+            // verify that carrier config is received
+            int subId = SubscriptionManager.getDefaultSubscriptionId();
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            mConfigManager.notifyConfigChangedForSubId(subId);
 
-        Boolean broadcastReceived = queue.poll(BROADCAST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-        assertNotNull(broadcastReceived);
-        assertTrue(broadcastReceived);
+            Boolean broadcastReceived = queue.poll(BROADCAST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            assertNotNull(broadcastReceived);
+            assertTrue(broadcastReceived);
+        } finally {
+            // unregister receiver
+            getContext().unregisterReceiver(receiver);
+            receiver = null;
+        }
     }
 
     @Test

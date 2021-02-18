@@ -22,6 +22,9 @@ import android.os.PersistableBundle;
 
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
+import com.android.eventlib.events.activities.ActivityPausedEvent;
+import com.android.eventlib.events.activities.ActivityRestartedEvent;
+import com.android.eventlib.events.activities.ActivityResumedEvent;
 import com.android.eventlib.events.activities.ActivityStartedEvent;
 import com.android.eventlib.events.activities.ActivityStoppedEvent;
 
@@ -76,22 +79,46 @@ public class EventLibActivity extends Activity {
         logger.log();
     }
 
+    /** Log a {@link ActivityRestartedEvent}. */
     @Override
     protected void onRestart() {
-        // TODO(scottjonathan): Add log
         super.onRestart();
+        ActivityRestartedEvent.ActivityRestartedEventLogger logger =
+                ActivityRestartedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 
+    /** Log a {@link ActivityResumedEvent}. */
     @Override
     protected void onResume() {
-        // TODO(scottjonathan): Add log
         super.onResume();
+        ActivityResumedEvent.ActivityResumedEventLogger logger =
+                ActivityResumedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 
+    /** Log a {@link ActivityPausedEvent}. */
     @Override
     protected void onPause() {
-        // TODO(scottjonathan): Add log
         super.onPause();
+        ActivityPausedEvent.ActivityPausedEventLogger logger =
+                ActivityPausedEvent.logger(this);
+
+        if (mOverrideActivityClassName != null) {
+            logger.setActivity(mOverrideActivityClassName);
+        }
+
+        logger.log();
     }
 
     /** Log a {@link ActivityStoppedEvent}. */
