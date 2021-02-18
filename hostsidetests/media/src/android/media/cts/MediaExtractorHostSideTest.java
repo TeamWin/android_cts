@@ -83,6 +83,11 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
                 .isEqualTo(Mediametrics.ExtractorData.EntryPoint.NDK_WITH_JVM);
     }
 
+    public void testMediaMetricsPlaybackId() throws Exception {
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testPlaybackId");
+        assertThat(getMediaExtractorReportedPlaybackId()).isEqualTo("FakePlaybackId");
+    }
+
     // Internal methods.
 
     /** Removes any existing config with id {@link #CONFIG_ID}. */
@@ -135,12 +140,26 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
     }
 
     /**
-     * Returns all MediaParser reported metric events sorted by timestamp.
+     * Asserts that a single entry point has been reported by MediaMetrics and returns it.
      *
      * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
      */
     private Mediametrics.ExtractorData.EntryPoint getMediaExtractorReportedEntryPoint()
             throws Exception {
+        return getMediaExtractorReportedData().getEntryPoint();
+    }
+
+    /**
+     * Asserts that a single playback id has been reported by MediaMetrics and returns it.
+     *
+     * <p>Note: Calls {@link #getAndClearReportList()} to obtain the statsd report.
+     */
+    private String getMediaExtractorReportedPlaybackId()
+            throws Exception {
+        return getMediaExtractorReportedData().getPlaybackId();
+    }
+
+    private Mediametrics.ExtractorData getMediaExtractorReportedData() throws Exception {
         ConfigMetricsReportList reportList = getAndClearReportList();
         assertThat(reportList.getReportsCount()).isEqualTo(1);
         StatsLog.ConfigMetricsReport report = reportList.getReports(0);
@@ -158,7 +177,7 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
         mediametricsExtractorReported.removeIf(
                 entry -> !DEVICE_SIDE_TEST_PACKAGE.equals(entry.getPackageName()));
         assertThat(mediametricsExtractorReported).hasSize(1);
-        return mediametricsExtractorReported.get(0).getExtractorData().getEntryPoint();
+        return mediametricsExtractorReported.get(0).getExtractorData();
     }
 
     /** Gets a statsd report and removes it from the device. */
