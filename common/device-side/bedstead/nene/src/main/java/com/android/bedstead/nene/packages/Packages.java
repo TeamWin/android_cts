@@ -97,6 +97,8 @@ public final class Packages {
      * <p>The user must be started.
      *
      * <p>If the package is already installed, this will replace it.
+     *
+     * <p>If the package is marked testOnly, it will still be installed.
      */
     public void install(UserReference user, File apkFile) {
         if (user == null || apkFile == null) {
@@ -128,6 +130,8 @@ public final class Packages {
      * <p>The user must be started.
      *
      * <p>If the package is already installed, this will replace it.
+     *
+     * <p>If the package is marked testOnly, it will still be installed.
      */
     public void install(UserReference user, byte[] apkFile) {
         if (user == null || apkFile == null) {
@@ -141,6 +145,7 @@ public final class Packages {
             ShellCommand.builderForUser(user, "pm install")
                     .addOption("-S", apkFile.length)
                     .addOperand("-r")
+                    .addOperand("-t")
                     .writeToStdIn(apkFile)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
