@@ -435,7 +435,13 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
                 // Tested in ExtendedCameraCharacteristicsTest
                 return;
             case REQUEST_AVAILABLE_CAPABILITIES_SECURE_IMAGE_DATA:
-                // No other restrictions with other metadata keys which  are reliably testable.
+                if (!isCapabilityAvailable) {
+                    mCollector.expectTrue(
+                        "SCALER_DEFAULT_SECURE_IMAGE_SIZE must not present if the device" +
+                                "does not support SECURE_IMAGE_DATA capability",
+                        !mStaticInfo.areKeysAvailable(
+                                CameraCharacteristics.SCALER_DEFAULT_SECURE_IMAGE_SIZE));
+                }
                 return;
             default:
                 capabilityName = "Unknown";
