@@ -15,6 +15,16 @@
 // Prebuilts that are signed with corresponding key of
 // build/make/target/product/security/fsverity-release.x509.der
 
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "cts_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    //   SPDX-license-identifier-NCSA
+    default_applicable_licenses: ["cts_license"],
+}
+
 filegroup {
     name: "CtsApkVerityTestPrebuiltFiles",
     srcs: [
