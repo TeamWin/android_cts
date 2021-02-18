@@ -83,9 +83,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    // TODO(b/174158829): failing, will need to fix DPMS (it should only allow DO to be set when
-    // there is 2 users: system user and current user
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testCannotSetDeviceOwnerWhenSecondaryUserPresent() throws Exception {
         assumeSupportsMultiUser();
@@ -102,32 +99,26 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    // TODO(b/174158829): this test is currently passing on headless system mode (even without
-    // fixing the user id), but it might need to be disabled for that mode, as the headless system
-    // user cannot have accounts anyways
+    // TODO(b/174158829): this test is currently failing on headless system mode
     @TemporaryIgnoreOnHeadlessSystemUserMode
     @FlakyTest
     @Test
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mPrimaryUserId);
-        installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
+        installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
         try {
             runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
                     "testAddAccountExplicitly", mPrimaryUserId);
-            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT, mPrimaryUserId,
+            assertFalse(setDeviceOwner(DEVICE_OWNER_ADMIN_COMPONENT, mDeviceOwnerUserId,
                     /*expectFailure*/ true));
         } finally {
             // make sure we clean up in case we succeeded in setting the device owner
-            removeAdmin(DEVICE_OWNER_ADMIN_COMPONENT, mPrimaryUserId);
+            removeAdmin(DEVICE_OWNER_ADMIN_COMPONENT, mDeviceOwnerUserId);
             runDeviceTestsAsUser(ACCOUNT_MANAGEMENT_PKG, ".AccountUtilsTest",
                     "testRemoveAccountExplicitly", mPrimaryUserId);
         }
     }
 
-    // TODO(b/174158829): failing, most likely due to an issue on DPMS itself:
-    //E DevicePolicyManager: In headless system user mode, device owner can only be set on headless
-    //system user.
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testIsProvisioningAllowed() throws Exception {
         // Must install the apk since the test runs in the DO apk.
