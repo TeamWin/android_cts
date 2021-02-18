@@ -3233,26 +3233,27 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify WifiNetworkSuggestion.Builder.setIsEnhancedMacRandomizationEnabled(true) creates a
-     * WifiConfiguration with macRandomizationSetting == RANDOMIZATION_ENHANCED.
+     * Verify WifiNetworkSuggestion.Builder.setMacRandomizationSetting(WifiNetworkSuggestion
+     * .RANDOMIZATION_NON_PERSISTENT) creates a
+     * WifiConfiguration with macRandomizationSetting == RANDOMIZATION_NON_PERSISTENT.
      * Then verify by default, a WifiConfiguration created by suggestions should have
      * macRandomizationSetting == RANDOMIZATION_PERSISTENT.
      * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    public void testSuggestionBuilderEnhancedMacRandomizationSetting() throws Exception {
+    public void testSuggestionBuilderNonPersistentRandomization() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
         WifiNetworkSuggestion suggestion = new WifiNetworkSuggestion.Builder()
                 .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE)
-                .setIsEnhancedMacRandomizationEnabled(true)
+                .setMacRandomizationSetting(WifiNetworkSuggestion.RANDOMIZATION_NON_PERSISTENT)
                 .build();
         assertEquals(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
                 mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)));
         verifySuggestionFoundWithMacRandomizationSetting(TEST_SSID,
-                WifiConfiguration.RANDOMIZATION_ENHANCED);
+                WifiConfiguration.RANDOMIZATION_NON_PERSISTENT);
 
         suggestion = new WifiNetworkSuggestion.Builder()
                 .setSsid(TEST_SSID).setWpa2Passphrase(TEST_PASSPHRASE)
