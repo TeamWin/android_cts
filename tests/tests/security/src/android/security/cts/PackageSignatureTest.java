@@ -148,7 +148,10 @@ public class PackageSignatureTest extends AndroidTestCase {
             "com.android.apex.cts.shim",
 
             // Oom Catcher package to prevent tests from ooming device.
-            "com.android.cts.oomcatcher"
+            "com.android.cts.oomcatcher",
+
+            // Collects device info at the start of the test
+            "com.android.compatibility.common.deviceinfo"
 
             ));
 
