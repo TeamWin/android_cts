@@ -201,6 +201,35 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
         assertThat(e).hasMessageThat().isEqualTo(MISSING_SIM_EXCEPTION_MESSAGE);
     }
 
+    @Test
+    public void getEncodedNameLength_emptyName() {
+        assertThat(SimRecords.getEncodedNameLength(mResolver, "")).isEqualTo(0);
+    }
+
+    @Test
+    public void getEncodedNameLength_basicGsm() {
+        // This isn't actually exhaustive of all the basic GSM alphabet characters but
+        // it's pretty good coverage. These should all require 1 byte each when encoded.
+        String name = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz 1234567890"
+                + "!@#$%&*()_+,.?;:<>";
+        assertThat(SimRecords.getEncodedNameLength(mResolver, name)).isEqualTo(name.length());
+    }
+
+    @Test
+    public void getEncodedNameLength_ucsEncodable() {
+        String name = "日本";
+        // This won't use GMS alphabet so at minimum it will need to use a byte to indicate the
+        // encoding and then also multiple bytes for the characters (or another offset byte).
+        assertThat(SimRecords.getEncodedNameLength(mResolver, name))
+                .isGreaterThan(name.length() + 1);
+
+        // When the name contains a mix it still must use a less efficient encoding.
+        name = "abc日本";
+        assertThat(SimRecords.getEncodedNameLength(mResolver, name))
+                .isGreaterThan(name.length() + 1);
+    }
+
+
     @NonNull
     private Cursor query(Uri uri, String[] projection) {
         return Objects.requireNonNull(mResolver.query(uri, projection, null, null));

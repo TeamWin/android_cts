@@ -26,7 +26,7 @@ public class AdbException extends Exception {
 
     public AdbException(String message, String command, String output) {
         super(message);
-        if (command == null || output == null) {
+        if (command == null) {
             throw new NullPointerException();
         }
         this.command = command;
@@ -35,7 +35,7 @@ public class AdbException extends Exception {
 
     public AdbException(String message, String command, String output, Throwable cause) {
         super(message, cause);
-        if (command == null || output == null) {
+        if (command == null) {
             throw new NullPointerException();
         }
         this.command = command;

@@ -101,6 +101,7 @@ import java.util.function.Predicate;
 @RunWith(AndroidJUnit4.class)
 public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+    private static final long START_INPUT_TIMEOUT = TimeUnit.SECONDS.toMillis(10);
     private static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
     private static final long LAYOUT_STABLE_THRESHOLD = TimeUnit.SECONDS.toMillis(3);
 
@@ -657,7 +658,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             // IME is visible.
             try (AutoCloseable closable = launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
                     Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker))) {
-                expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+                expectEvent(stream, editorMatcher("onStartInput", marker), START_INPUT_TIMEOUT);
                 expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
                 expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
@@ -665,8 +666,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
                 expectImeVisible(TIMEOUT);
 
                 // Force stop test app package, and then expect IME should be invisible after the
-                // remote
-                // process stopped by forceStopPackage.
+                // remote process stopped by forceStopPackage.
                 TestUtils.forceStopPackage(TEST_ACTIVITY.getPackageName());
                 expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
                 expectImeInvisible(TIMEOUT);

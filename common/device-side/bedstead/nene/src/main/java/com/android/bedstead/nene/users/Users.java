@@ -17,8 +17,10 @@
 package com.android.bedstead.nene.users;
 
 import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Process.myUserHandle;
 
 import android.os.Build;
+import android.os.UserHandle;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -49,6 +51,11 @@ public final class Users {
         return mCachedUsers.values();
     }
 
+    /** Get a {@link UserReference} for the user running the current test process. */
+    public UserReference instrumented() {
+        return find(myUserHandle());
+    }
+
     /** Get a {@link UserReference} for the system user. */
     public UserReference system() {
         return find(0);
@@ -57,6 +64,11 @@ public final class Users {
     /** Get a {@link UserReference} by {@code id}. */
     public UserReference find(int id) {
         return new UnresolvedUser(this, id);
+    }
+
+    /** Get a {@link UserReference} by {@code userHandle}. */
+    public UserReference find(UserHandle userHandle) {
+        return new UnresolvedUser(this, userHandle.getIdentifier());
     }
 
     @Nullable
@@ -111,6 +123,11 @@ public final class Users {
 
             mCachedUsers = result.mUsers;
             mCachedUserTypes = result.mUserTypes;
+
+            // We don't expose users who are currently being removed
+            mCachedUsers.entrySet().removeIf(
+                    integerUserEntry -> integerUserEntry.getValue().isRemoving());
+
         } catch (AdbException | AdbParseException e) {
             throw new RuntimeException("Error filling cache", e);
         }
@@ -138,7 +155,7 @@ public final class Users {
     }
 
     @Nullable
-    User waitForUserToMatch(
+    private User waitForUserToMatch(
             UserReference userReference, Function<User, Boolean> userChecker,
             boolean waitForExist) {
         // TODO(scottjonathan): This is pretty heavy because we resolve everything when we know we

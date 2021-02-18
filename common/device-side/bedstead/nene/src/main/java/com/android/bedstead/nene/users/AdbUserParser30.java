@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.users;
 
+import static com.android.bedstead.nene.utils.ParserUtils.extractIndentedSections;
+
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
@@ -277,7 +279,7 @@ public class AdbUserParser30 extends AdbUserParser26 {
             user.mIsPrimary = Boolean.parseBoolean(
                     userString.split("isPrimary=", 2)[1].split("[ \n]", 2)[0]);
             user.mType = mUserTypes.get(userString.split("Type: ", 2)[1].split("\n", 2)[0]);
-        } catch (RuntimeException e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new AdbParseException("Error parsing user", userString, e);
         }
 
@@ -301,7 +303,7 @@ public class AdbUserParser30 extends AdbUserParser26 {
         try {
             return dumpsysUsersOutput.split(
                     "User types \\(\\d+ types\\):\n", 2)[1].split("\n\n", 2)[0];
-        } catch (RuntimeException e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new AdbParseException("Error extracting user types list", dumpsysUsersOutput, e);
         }
     }
@@ -331,7 +333,7 @@ public class AdbUserParser30 extends AdbUserParser26 {
                     userTypeString.split("mMaxAllowedPerParent: ", 2)[1].split("\n")[0]);
 
             return userType;
-        } catch (RuntimeException e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new AdbParseException("Error parsing userType", userTypeString, e);
         }
     }

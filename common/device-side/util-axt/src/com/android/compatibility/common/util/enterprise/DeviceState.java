@@ -18,6 +18,8 @@ package com.android.compatibility.common.util.enterprise;
 
 import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -36,11 +38,12 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import androidx.test.core.app.ApplicationProvider;
 
+import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasTvProfile;
 import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireFeatures;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
 import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnTvProfile;
@@ -152,8 +155,8 @@ public final class DeviceState implements TestRule {
                 RequireFeatures requireFeaturesAnnotation =
                         description.getAnnotation(RequireFeatures.class);
                 if (requireFeaturesAnnotation != null) {
-                    for (String feature: requireFeaturesAnnotation.featureNames()) {
-                        requireFeature(feature);
+                    for (String feature: requireFeaturesAnnotation.value()) {
+                        requireFeature(feature, requireFeaturesAnnotation.failureMode());
                     }
                 }
 
@@ -176,9 +179,15 @@ public final class DeviceState implements TestRule {
         return base;
     }
 
-    private void requireFeature(String feature) {
-        assumeTrue("Device must have feature " + feature,
-                mContext.getPackageManager().hasSystemFeature(feature));
+    private void requireFeature(String feature, FailureMode failureMode) {
+        if (failureMode.equals(FailureMode.FAIL)) {
+            assertThat(mContext.getPackageManager().hasSystemFeature(feature)).isTrue();
+        } else if (failureMode.equals(FailureMode.SKIP)) {
+            assumeTrue("Device must have feature " + feature,
+                    mContext.getPackageManager().hasSystemFeature(feature));
+        } else {
+            throw new IllegalStateException("Unknown failure mode: " + failureMode);
+        }
     }
 
     private void requireUserSupported(String userType) {
@@ -466,7 +475,7 @@ public final class DeviceState implements TestRule {
     }
 
     public void ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
-        requireFeature("android.software.managed_users");
+        requireFeature("android.software.managed_users", FailureMode.SKIP);
         requireUserSupported(MANAGED_PROFILE_TYPE);
 
         if (getWorkProfileId(forUser) == null) {

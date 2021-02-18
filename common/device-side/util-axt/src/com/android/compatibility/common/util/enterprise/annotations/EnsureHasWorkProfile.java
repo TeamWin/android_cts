@@ -28,7 +28,8 @@ import java.lang.annotation.Target;
 /**
  * Mark that a test method should run on a user which has a work profile.
  *
- * <p>Use of this annotation implies {@code RequireFeatures("android.software.managed_users")}.
+ * <p>Use of this annotation implies
+ * {@code RequireFeatures("android.software.managed_users", SKIP)}.
  *
  * <p>Your test configuration may be configured so that this test is only run on a user which has
  * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters

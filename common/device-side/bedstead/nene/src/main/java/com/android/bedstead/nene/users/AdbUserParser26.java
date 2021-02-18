@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.users;
 
+import static com.android.bedstead.nene.utils.ParserUtils.extractIndentedSections;
+
 import android.os.Build;
 
 import androidx.annotation.RequiresApi;
@@ -23,7 +25,6 @@ import androidx.annotation.RequiresApi;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -79,6 +80,9 @@ import java.util.Set;
  *   Supports switchable users: false
  *   All guests ephemeral: false
  * @}
+ *
+ * <p>This class is structured so that future changes in ADB output can be dealt with by
+ *  extending this class and overriding the appropriate section parsers.
  */
 @RequiresApi(Build.VERSION_CODES.O)
 public class AdbUserParser26 implements AdbUserParser {
@@ -114,45 +118,13 @@ public class AdbUserParser26 implements AdbUserParser {
     String extractUsersList(String dumpsysUsersOutput) throws AdbParseException {
         try {
             return dumpsysUsersOutput.split("Users:\n", 2)[1].split("\n\n", 2)[0];
-        } catch (RuntimeException e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new AdbParseException("Error extracting user list", dumpsysUsersOutput, e);
         }
     }
 
     Set<String> extractUserStrings(String usersList) throws AdbParseException {
         return extractIndentedSections(usersList, USER_LIST_BASE_INDENTATION);
-    }
-
-    Set<String> extractIndentedSections(String list, int baseIndentation) throws AdbParseException {
-        try {
-            Set<String> sections = new HashSet<>();
-            String[] lines = list.split("\n");
-            StringBuilder sectionBuilder = null;
-            for (String line : lines) {
-                int indentation = countIndentation(line);
-                if (indentation == baseIndentation) {
-                    // New item
-                    if (sectionBuilder != null) {
-                        sections.add(sectionBuilder.toString().trim());
-                    }
-                    sectionBuilder = new StringBuilder(line).append("\n");
-                } else {
-                    sectionBuilder.append(line).append("\n");
-                }
-            }
-            sections.add(sectionBuilder.toString().trim());
-            return sections;
-        } catch (RuntimeException e) {
-            throw new AdbParseException("Error extracting indented sections", list, e);
-        }
-    }
-
-    int countIndentation(String s) {
-        String trimmed = s.trim();
-        if (trimmed.isEmpty()) {
-            return s.length();
-        }
-        return s.indexOf(trimmed);
     }
 
     User.MutableUser parseUser(String userString) throws AdbParseException {
@@ -169,8 +141,9 @@ public class AdbUserParser26 implements AdbUserParser {
             user.mState =
                     User.UserState.fromDumpSysValue(
                             userString.split("State: ", 2)[1].split("\n", 2)[0]);
+            user.mIsRemoving = userString.contains("<removing>");
             return user;
-        } catch (RuntimeException e) {
+        } catch (IndexOutOfBoundsException e) {
             throw new AdbParseException("Error parsing user", userString, e);
         }
     }

@@ -30,6 +30,7 @@ java_library_static {
         "mockito-target-minus-junit4",
         "androidx.annotation_annotation",
         "truth-prebuilt",
+        "Harrier"
     ],
 
     libs: [

@@ -31,6 +31,9 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
+import com.android.eventlib.events.activities.ActivityPausedEvent;
+import com.android.eventlib.events.activities.ActivityRestartedEvent;
+import com.android.eventlib.events.activities.ActivityResumedEvent;
 import com.android.eventlib.events.activities.ActivityStartedEvent;
 import com.android.eventlib.events.activities.ActivityStoppedEvent;
 
@@ -180,6 +183,112 @@ public class EventLibActivityTest {
         activity.finish();
 
         EventLogs<ActivityDestroyedEvent> eventLogs = ActivityDestroyedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void pauseEventLibActivity_logsActivityPausedEvent() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), EventLibActivity.class.getName());
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.runOnMainSync(() -> {
+            sInstrumentation.callActivityOnPause(activity);
+        });
+
+        EventLogs<ActivityPausedEvent> eventLogs = ActivityPausedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().isSameClassAs(EventLibActivity.class);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void pauseEventLibActivity_withGeneratedActivityClass_logsActivityPausedEventWithCorrectClassName() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), GENERATED_ACTIVITY_CLASS_NAME);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.runOnMainSync(() -> {
+            sInstrumentation.callActivityOnPause(activity);
+        });
+
+        EventLogs<ActivityPausedEvent> eventLogs = ActivityPausedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void resumeEventLibActivity_logsActivityResumedEvent() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), EventLibActivity.class.getName());
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.callActivityOnResume(activity);
+
+        EventLogs<ActivityResumedEvent> eventLogs = ActivityResumedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().isSameClassAs(EventLibActivity.class);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void resumeEventLibActivity_withGeneratedActivityClass_logsActivityResumedEventWithCorrectClassName() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), GENERATED_ACTIVITY_CLASS_NAME);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.callActivityOnResume(activity);
+
+        EventLogs<ActivityResumedEvent> eventLogs = ActivityResumedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void restartedEventLibActivity_logsActivityRestartedEvent() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), EventLibActivity.class.getName());
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.callActivityOnRestart(activity);
+
+        EventLogs<ActivityRestartedEvent> eventLogs = ActivityRestartedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereActivity().isSameClassAs(EventLibActivity.class);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void restartEventLibActivity_withGeneratedActivityClass_logsActivityRestartedEventWithCorrectClassName() {
+        Intent intent = new Intent();
+        intent.setPackage(sContext.getPackageName());
+        intent.setClassName(sContext.getPackageName(), GENERATED_ACTIVITY_CLASS_NAME);
+        intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+        Activity activity = sInstrumentation.startActivitySync(intent);
+        EventLogs.resetLogs();
+
+        sInstrumentation.callActivityOnRestart(activity);
+
+        EventLogs<ActivityRestartedEvent> eventLogs = ActivityRestartedEvent
                 .queryPackage(sContext.getPackageName())
                 .whereActivity().className().isEqualTo(GENERATED_ACTIVITY_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
