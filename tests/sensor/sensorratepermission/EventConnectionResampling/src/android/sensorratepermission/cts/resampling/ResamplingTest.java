@@ -68,6 +68,7 @@ public class ResamplingTest extends SensorTestCase {
     private static TestSensorEnvironment mTestEnvironment;
 
     @Override
+    @SuppressWarnings("JUnit4ClassUsedInJUnit3")
     protected void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         SensorManager sensorManager = mContext.getSystemService(SensorManager.class);
