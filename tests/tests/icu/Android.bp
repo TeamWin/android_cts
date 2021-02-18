@@ -36,8 +36,10 @@ java_test_host {
     defaults: ["cts_support_defaults"],
     test_config: "CtsIcu4cTestCases.xml",
     data: [
-        ":cintltst",
-        ":intltest",
+        ":cintltst32",
+        ":cintltst64",
+        ":intltest32",
+        ":intltest64",
         ":icu4c_test_data",
         ":ICU4CTestRunner",
     ],
