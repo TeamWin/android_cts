@@ -24,7 +24,8 @@ android_test {
         // TODO: Remove this once we remove ui automator usage
         "androidx.test.uiautomator_uiautomator",
         "EventLib",
-        "ActivityContext"
+        "ActivityContext",
+        "Harrier"
     ],
     srcs: ["src/**/*.java"],
     test_suites: [

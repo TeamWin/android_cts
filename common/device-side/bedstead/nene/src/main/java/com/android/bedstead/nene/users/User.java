@@ -62,6 +62,7 @@ public final class User extends UserReference {
         @Nullable Boolean mHasProfileOwner;
         @Nullable Boolean mIsPrimary;
         @Nullable UserState mState;
+        @Nullable Boolean mIsRemoving;
     }
 
     private final MutableUser mMutableUser;
@@ -84,6 +85,11 @@ public final class User extends UserReference {
     /** Get the {@link UserState} of the user. */
     public UserState state() {
         return mMutableUser.mState;
+    }
+
+    /** True if the user is currently being removed. */
+    public boolean isRemoving() {
+        return mMutableUser.mIsRemoving;
     }
 
     /**
@@ -121,6 +127,7 @@ public final class User extends UserReference {
         stringBuilder.append(", hasProfileOwner" + mMutableUser.mHasProfileOwner);
         stringBuilder.append(", isPrimary=" + mMutableUser.mIsPrimary);
         stringBuilder.append(", state=" + mMutableUser.mState);
+        stringBuilder.append("}");
         return stringBuilder.toString();
     }
 }

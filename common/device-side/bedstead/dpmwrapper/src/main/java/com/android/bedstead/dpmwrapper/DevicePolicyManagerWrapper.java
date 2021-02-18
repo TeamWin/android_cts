@@ -142,6 +142,9 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).wipeData(anyInt(), any());
             doAnswer(answer).when(spy).wipeData(anyInt());
 
+            // Used by ListForegroundAffiliatedUsersTest
+            doAnswer(answer).when(spy).listForegroundAffiliatedUsers();
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions

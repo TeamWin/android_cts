@@ -35,6 +35,7 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.BlendMode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
@@ -846,6 +847,23 @@ public class RemoteViewsTest {
         mExpectedException.expect(ActionException.class);
         mRemoteViews.setIntent(R.id.remoteView_absolute, "setIntentField", intent);
         mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetBlendMode() throws Throwable {
+        ImageView imageView = mResult.findViewById(R.id.remoteView_image);
+
+        mRemoteViews.setBlendMode(R.id.remoteView_image, "setImageTintBlendMode", BlendMode.PLUS);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(BlendMode.PLUS, imageView.getImageTintBlendMode());
+
+        mRemoteViews.setBlendMode(R.id.remoteView_image, "setImageTintBlendMode", BlendMode.SRC_IN);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(BlendMode.SRC_IN, imageView.getImageTintBlendMode());
+
+        mRemoteViews.setBlendMode(R.id.remoteView_image, "setImageTintBlendMode", null);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertNull(imageView.getImageTintBlendMode());
     }
 
     @Test

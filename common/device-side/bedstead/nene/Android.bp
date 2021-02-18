@@ -28,6 +28,16 @@ android_test {
         "truth-prebuilt",
         "testng" // for assertThrows
     ],
+    data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "26"
+}
+
+android_test_helper_app {
+    name: "NeneTestApp1",
+    static_libs: [
+        "EventLib"
+    ],
+    manifest: "testapps/TestApp1.xml",
     min_sdk_version: "26"
 }
