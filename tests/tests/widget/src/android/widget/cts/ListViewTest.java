@@ -58,11 +58,15 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.cts.util.StretchEdgeUtil;
 import android.widget.cts.util.TestUtils;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.LargeTest;
@@ -107,10 +111,14 @@ public class ListViewTest {
     private final String[] mNameList = new String[] {
         "Jacky", "David", "Kevin", "Michael", "Andy"
     };
+    private final int[] mColorList = new int[] {
+        Color.BLUE, Color.CYAN, Color.GREEN, Color.YELLOW, Color.RED, Color.MAGENTA
+    };
 
     private Instrumentation mInstrumentation;
     private Activity mActivity;
     private ListView mListView;
+    private ListView mListViewStretch;
     private TextView mTextView;
     private TextView mSecondTextView;
 
@@ -118,6 +126,7 @@ public class ListViewTest {
     private ArrayAdapter<String> mAdapter_countries;
     private ArrayAdapter<String> mAdapter_longCountries;
     private ArrayAdapter<String> mAdapter_names;
+    private ColorAdapter mAdapterColors;
 
     @Rule
     public ActivityTestRule<ListViewCtsActivity> mActivityRule =
@@ -136,8 +145,10 @@ public class ListViewTest {
                 android.R.layout.simple_list_item_1, mLongCountryList);
         mAdapter_names = new ArrayAdapter<>(mActivity, android.R.layout.simple_list_item_1,
                 mNameList);
+        mAdapterColors = new ColorAdapter(mActivity, mColorList);
 
         mListView = (ListView) mActivity.findViewById(R.id.listview_default);
+        mListViewStretch = (ListView) mActivity.findViewById(R.id.listview_stretch);
     }
 
     @Test
@@ -1147,6 +1158,71 @@ public class ListViewTest {
         Assert.assertEquals(tag, newItem.getTag());
     }
 
+    @Test
+    public void testStretchAtTop() throws Throwable {
+        // Make sure that the view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        assertTrue(StretchEdgeUtil.dragDownStretches(mActivityRule, mListViewStretch));
+    }
+
+    // If this test is showing as flaky, it is more likely that it is broken. I've
+    // leaned toward false positive over false negative.
+    @LargeTest
+    @Test
+    public void testStretchTopAndCatch() throws Throwable {
+        // Make sure that the view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        assertTrue(StretchEdgeUtil.dragDownTapAndHoldStretches(mActivityRule, mListViewStretch));
+    }
+
+    private void scrollToBottomOfStretch() throws Throwable {
+        do {
+            mActivityRule.runOnUiThread(() -> {
+                mListViewStretch.scrollListBy(50);
+            });
+        } while (mListViewStretch.pointToPosition(0, 40) != mColorList.length - 1);
+    }
+
+    @Test
+    public void testStretchAtBottom() throws Throwable {
+        // Make sure that the view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        scrollToBottomOfStretch();
+        assertTrue(StretchEdgeUtil.dragUpStretches(mActivityRule, mListViewStretch));
+    }
+
+    // If this test is showing as flaky, it is more likely that it is broken. I've
+    // leaned toward false positive over false negative.
+    @LargeTest
+    @Test
+    public void testStretchBottomAndCatch() throws Throwable {
+        // Make sure that the view we care about is on screen and at the top:
+        showOnlyStretch();
+
+        scrollToBottomOfStretch();
+        assertTrue(StretchEdgeUtil.dragUpTapAndHoldStretches(mActivityRule, mListViewStretch));
+    }
+
+    private void showOnlyStretch() throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            ViewGroup parent = (ViewGroup) mListViewStretch.getParent();
+            for (int i = 0; i < parent.getChildCount(); i++) {
+                View child = parent.getChildAt(i);
+                if (child != mListViewStretch) {
+                    child.setVisibility(View.GONE);
+                }
+            }
+            mListViewStretch.setAdapter(mAdapterColors);
+            mListViewStretch.setDivider(null);
+            mListViewStretch.setDividerHeight(0);
+        });
+        // Give it an opportunity to finish layout.
+        mActivityRule.runOnUiThread(() -> {});
+    }
+
     private static class StableArrayAdapter<T> extends ArrayAdapter<T> {
         public StableArrayAdapter(Context context, int resource, List<T> objects) {
             super(context, resource, objects);
@@ -1294,5 +1370,44 @@ public class ListViewTest {
                 () -> mListView.setScrollY(mListView.getHeight() / 2));
 
         verify(overscrollFooterDrawable, atLeastOnce()).draw(any(Canvas.class));
+    }
+
+    private static class ColorAdapter extends BaseAdapter {
+        private int[] mColors;
+        private Context mContext;
+
+        ColorAdapter(Context context, int[] colors) {
+            mContext = context;
+            mColors = colors;
+        }
+
+        @Override
+        public int getCount() {
+            return mColors.length;
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return mColors[position];
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @NonNull
+        @Override
+        public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+            int color = mColors[position];
+            if (convertView != null) {
+                convertView.setBackgroundColor(color);
+                return convertView;
+            }
+            View view = new View(mContext);
+            view.setBackgroundColor(color);
+            view.setLayoutParams(new ViewGroup.LayoutParams(90, 50));
+            return view;
+        }
     }
 }
