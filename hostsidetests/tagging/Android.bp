@@ -1,33 +1,3 @@
-// Full truth table of whether tagging should be enabled. Note that a report from statsd is not
-// available if the kernel or manifest flag is disabled, as the zygote never probes compat (i.e.
-// mPlatformCompat.isChangeEnabled(NATIVE_HEAP_POINTER_TAGGING) never gets run). Also note that
-// disabling a compat feature is only supported on userdebug builds.
-//
-// +==================================================================================+
-// | #  | Kernel  | Manifest | SDK   | Forced   | Userdebug || Has     | Report from |
-// |    | Support | Flag     | Level | Compat   | Build     || Tagging | statsd?     |
-// | -- | ------- | -------- | ----- | -------- | --------- || ------- | ----------- |
-// | 1  | No      | -        | -     | -        | -         || No      | No          |
-// | 2  | Yes     | Off      | -     | -        | -         || No      | No          |
-// | 3  | Yes     | None/On  | 29    | Off/None | -         || No      | Yes         |
-// | 4  | Yes     | None/On  | 29/30 | On       | -         || Yes     | Yes         |
-// | 5  | Yes     | None/On  | 30    | None     | -         || Yes     | Yes         |
-// | 6  | Yes     | None/On  | 30    | Off      | Yes       || No      | Yes         |
-// | 7  | Yes     | None/On  | 30    | Off      | No        || Yes     | Yes         |
-// +==================================================================================+
-//
-// And coverage of this truth table comes from:
-//  #1. All tests on a device with an unsupported kernel.
-//  #2. TaggingManifestDisabledTest.*
-//  #3. Tagging(ManifestEnabled)?Sdk29.testDefault
-//  #4. Tagging(ManifestEnabled)?Sdk(29|30).testCompatFeatureEnabled
-//  #5. Tagging(ManifestEnabled)?Sdk30.testDefault
-//  #6. Tagging(ManifestEnabled)?Sdk30.testCompatFeatureDisabledUserdebugBuild
-//  #7. Tagging(ManifestEnabled)?Sdk30.testCompatFeatureDisabledUserBuild
-//
-// MTE tests are done at SDK level 30. The level doesn't really matter; there is
-// no manifest flag for MTE, and the compat feature is always disabled.
-
 java_test_host {
     name: "CtsTaggingHostTestCases",
     defaults: ["cts_defaults"],

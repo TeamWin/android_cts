@@ -19,7 +19,6 @@ package com.android.cts.tagging;
 import com.google.common.collect.ImmutableSet;
 
 public class TaggingManifestEnabledSdk29Test extends TaggingBaseTest {
-
     protected static final String TEST_APK = "CtsHostsideTaggingManifestEnabledSdk29App.apk";
     protected static final String TEST_PKG = "android.cts.tagging.sdk29.manifest_enabled";
 
@@ -32,14 +31,13 @@ public class TaggingManifestEnabledSdk29Test extends TaggingBaseTest {
     @Override
     protected void tearDown() throws Exception {
         uninstallPackage(TEST_PKG, true);
+        super.tearDown();
     }
 
-    public void testDefault() throws Exception {
+    public void testHeapTaggingCompatFeatureDefault() throws Exception {
         // Even though the manifest enables tagged pointers, the targetSdkVersion still needs to be
         // >= 30.
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 DEVICE_TAGGING_DISABLED_TEST_NAME,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -47,10 +45,9 @@ public class TaggingManifestEnabledSdk29Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ reportedChangeSet);
     }
 
-    public void testCompatFeatureEnabled() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
+        // We can still force the feature on though!
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
