@@ -40,11 +40,12 @@ cc_defaults {
     compile_multilib: "both",
     multilib: {
         lib32: {
-            suffix: "32",
+            suffix: "_sts32",
         },
         lib64: {
-            suffix: "64",
+            suffix: "_sts64",
         },
+        // build/soong/common/arch.go default returns nil; no default possible
     },
     arch: {
         arm: {
