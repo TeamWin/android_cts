@@ -20,14 +20,21 @@ import static org.junit.Assert.assertNotNull;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.testtype.Abi;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.IAbi;
+import com.android.tradefed.util.AbiUtils;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * Tests that verify installing of various split APKs from host side.
@@ -259,6 +266,45 @@ public class SplitTests extends BaseAppSecurityTest {
         runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementBadly");
         getInstallMultiple(instant, useNaturalAbi).inheritFrom(PKG).addFile(revisionApk).run();
         runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementWell");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testNativeSplitForEachSupportedAbi_full() throws Exception {
+        testNativeForEachSupportedAbi(false);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testNativeSplitForEachSupportedAbi_instant() throws Exception {
+        testNativeForEachSupportedAbi(true);
+    }
+
+
+    private void specifyAbiToTest(boolean instant, String abiListProperty, String testMethodName)
+            throws FileNotFoundException, DeviceNotAvailableException {
+        final String propertyAbiListValue = getDevice().getProperty(abiListProperty);
+        final Set<String> supportedAbiSet =
+                AbiUtils.parseAbiListFromProperty(propertyAbiListValue);
+        for (String abi : supportedAbiSet) {
+            String apk = ABI_TO_APK.get(abi);
+            new InstallMultiple(instant, true).inheritFrom(PKG).addFile(apk).run();
+
+            // Without specifying abi for executing "adb shell am",
+            // a UnsatisfiedLinkError will happen.
+            IAbi iAbi = new Abi(abi, AbiUtils.getBitness(abi));
+            setAbi(iAbi);
+            runDeviceTests(PKG, CLASS, testMethodName);
+        }
+    }
+
+    private void testNativeForEachSupportedAbi(boolean instant)
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple(instant, true).addFile(APK).run();
+
+        // make sure this device can run both 32 bit and 64 bit
+        specifyAbiToTest(instant, "ro.product.cpu.abilist64", "testNative64Bit");
+        specifyAbiToTest(instant, "ro.product.cpu.abilist32", "testNative32Bit");
     }
 
     /**

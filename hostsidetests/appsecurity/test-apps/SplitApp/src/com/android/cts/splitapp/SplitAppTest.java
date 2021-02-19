@@ -48,6 +48,7 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.ConditionVariable;
 import android.os.Environment;
 import android.system.Os;
@@ -78,6 +79,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -277,6 +279,24 @@ public class SplitAppTest {
     @Test
     public void testNativeRevision_sub_shouldImplementWell() throws Exception {
         assertEquals(1, Native.sub(0, -1));
+    }
+
+    @Test
+    public void testNative64Bit() throws Exception {
+        Log.d(TAG, "The device supports 32Bit ABIs \""
+                + Arrays.deepToString(Build.SUPPORTED_32_BIT_ABIS) + "\" and 64Bit ABIs \""
+                + Arrays.deepToString(Build.SUPPORTED_64_BIT_ABIS) + "\"");
+
+        assertThat(Native.getAbiBitness()).isEqualTo(64);
+    }
+
+    @Test
+    public void testNative32Bit() throws Exception {
+        Log.d(TAG, "The device supports 32Bit ABIs \""
+                + Arrays.deepToString(Build.SUPPORTED_32_BIT_ABIS) + "\" and 64Bit ABIs \""
+                + Arrays.deepToString(Build.SUPPORTED_64_BIT_ABIS) + "\"");
+
+        assertThat(Native.getAbiBitness()).isEqualTo(32);
     }
 
     @Test
