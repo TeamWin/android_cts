@@ -262,11 +262,9 @@ public class MockConnection extends Connection {
     }
 
     @Override
-    public void onCallFilteringCompleted(boolean isBlocked, boolean isInContacts,
-            CallScreeningService.CallResponse response,
-            boolean responseFromSystemDialer) {
-        getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(isBlocked, isInContacts,
-                response, responseFromSystemDialer);
+    public void onCallFilteringCompleted(
+            Connection.CallFilteringCompletionInfo callFilteringCompletionInfo) {
+        getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(callFilteringCompletionInfo);
     }
 
     public int getCurrentState()  {
