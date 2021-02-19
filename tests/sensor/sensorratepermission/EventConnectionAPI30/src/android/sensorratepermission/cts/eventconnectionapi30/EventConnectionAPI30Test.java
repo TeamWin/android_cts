@@ -86,8 +86,13 @@ public class EventConnectionAPI30Test {
                 sensor,
                 SensorManager.SENSOR_DELAY_FASTEST,
                 (int) TimeUnit.SECONDS.toMicros(5));
+        Assume.assumeTrue("Failed to create mTestEnvironment!", mTestEnvironment != null);
+
         mEventConnectionTestHelper = new SensorRatePermissionEventConnectionTestHelper(
                 mTestEnvironment);
+        Assume.assumeTrue("Failed to create mEventConnectionTestHelper!",
+                mEventConnectionTestHelper != null);
+
         mSensorPrivacyManager = context.getSystemService(SensorPrivacyManager.class);
         // In context of this app (targetSDK = 30), this returns the original supported min delay
         // of the sensor
@@ -99,7 +104,9 @@ public class EventConnectionAPI30Test {
 
     @After
     public void tearDown() throws InterruptedException {
-        mEventConnectionTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        if (mEventConnectionTestHelper != null) {
+            mEventConnectionTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        }
     }
 
     @Test
