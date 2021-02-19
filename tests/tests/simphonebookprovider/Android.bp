@@ -5,7 +5,8 @@ package {
 filegroup {
     name: "cts-simphonebook-rules-sources",
     srcs: [
-        "src/android/provider/cts/simphonebook/SimCleanupRule.java",
+        "src/android/provider/cts/simphonebook/RemovableSims.java",
+        "src/android/provider/cts/simphonebook/SimsCleanupRule.java",
         "src/android/provider/cts/simphonebook/SimPhonebookRequirementsRule.java",
         "src/android/provider/cts/simphonebook/SimsPowerRule.java",
     ],
