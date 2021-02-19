@@ -79,15 +79,22 @@ public class EventConnectionAPI31Test {
                 sensor,
                 SensorManager.SENSOR_DELAY_FASTEST,
                 (int) TimeUnit.SECONDS.toMicros(5));
+        Assume.assumeTrue("Failed to create mTestEnvironment!", mTestEnvironment != null);
+
         mEventConnectionTestHelper = new SensorRatePermissionEventConnectionTestHelper(
                 mTestEnvironment);
+        Assume.assumeTrue("Failed to create mEventConnectionTestHelper!",
+                mEventConnectionTestHelper != null);
+
         mSensorPrivacyManager = context.getSystemService(SensorPrivacyManager.class);
         mUserID = UserHandle.myUserId();
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        mEventConnectionTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        if (mEventConnectionTestHelper != null) {
+            mEventConnectionTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        }
     }
 
     @Test
