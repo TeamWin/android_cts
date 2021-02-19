@@ -24,4 +24,5 @@ public class Native {
     public static native int add(int a, int b);
     public static native String arch();
     public static native int sub(int a, int b);
+    public static native int getAbiBitness();
 }

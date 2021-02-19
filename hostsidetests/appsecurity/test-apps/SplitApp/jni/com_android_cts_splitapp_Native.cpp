@@ -24,6 +24,15 @@
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
 
+#ifdef __LIVE_ONLY_32BIT__
+#define ABI_BITNESS 32
+#else // __LIVE_ONLY_32BIT__
+#define ABI_BITNESS 64
+#endif // __LIVE_ONLY_32BIT__
+
+static jint get_abi_bitness(JNIEnv* env, jobject thiz) {
+    return ABI_BITNESS;
+}
 
 static jint add(JNIEnv *env, jobject thiz, jint a, jint b) {
     int result = a + b;
@@ -49,6 +58,7 @@ static jint sub(JNIEnv* env, jobject thiz, jint a, jint b) {
 static const char *classPathName = "com/android/cts/splitapp/Native";
 
 static JNINativeMethod methods[] = {
+        {"getAbiBitness", "()I", (void*)get_abi_bitness},
         {"add", "(II)I", (void*)add},
         {"arch", "()Ljava/lang/String;", (void*)arch},
         {"sub", "(II)I", (void*)sub},
@@ -90,9 +100,9 @@ jint JNI_OnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env = NULL;
 
 #ifdef __REVISION_HAVE_SUB__
-    LOGI("JNI_OnLoad revision");
+    LOGI("JNI_OnLoad revision %d bits", ABI_BITNESS);
 #else  // __REVISION_HAVE_SUB__
-    LOGI("JNI_OnLoad");
+    LOGI("JNI_OnLoad %d bits", ABI_BITNESS);
 #endif // __REVISION_HAVE_SUB__
 
     if (vm->GetEnv(&uenv.venv, JNI_VERSION_1_4) != JNI_OK) {

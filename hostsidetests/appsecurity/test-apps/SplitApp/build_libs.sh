@@ -19,27 +19,40 @@
 # use the NDK with maximum backward compatibility, such as the NDK bundle in Android SDK.
 NDK_BUILD="$HOME/Android/android-ndk-r16b/ndk-build"
 
-function generateCopyRightComment {
-  local year=$1
+function generateCopyRightComment() {
+  local year="$1"
+  local isAndroidManifest="$2"
+  local lineComment='#'
+  local copyrightStart=""
+  local copyrightEnd=""
+  local commentStart=""
+  local commentEnd=""
+  if [[ -n "$isAndroidManifest" ]]; then
+    lineComment=""
+    copyrightStart=$'<!--\n'
+    copyrightEnd=$'\n-->'
+    commentStart='<!--'
+    commentEnd='-->'
+  fi
 
   copyrightInMk=$(
     cat <<COPYRIGHT_COMMENT
-# Copyright (C) ${year} The Android Open Source Project
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+${copyrightStart}${lineComment} Copyright (C) ${year} The Android Open Source Project
+${lineComment}
+${lineComment} Licensed under the Apache License, Version 2.0 (the "License");
+${lineComment} you may not use this file except in compliance with the License.
+${lineComment} You may obtain a copy of the License at
+${lineComment}
+${lineComment}      http://www.apache.org/licenses/LICENSE-2.0
+${lineComment}
+${lineComment} Unless required by applicable law or agreed to in writing, software
+${lineComment} distributed under the License is distributed on an "AS IS" BASIS,
+${lineComment} WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+${lineComment} See the License for the specific language governing permissions and
+${lineComment} limitations under the License.${copyrightEnd}
 
-# Automatically generated file from build_libs.sh.
-# DO NOT MODIFY THIS FILE.
+${commentStart}${lineComment} Automatically generated file from build_libs.sh.${commentEnd}
+${commentStart}${lineComment} DO NOT MODIFY THIS FILE.${commentEnd}
 
 COPYRIGHT_COMMENT
   )
@@ -59,8 +72,9 @@ LIBS_ANDROID_MK
 }
 
 function generateAndroidManifest {
-  local targetFile=$1
-  local arch=$2
+  local targetFile="$1"
+  local arch="$2"
+  local splitNamePart="$3"
   (
     cat <<ANDROIDMANIFEST
 <?xml version="1.0" encoding="utf-8"?>
@@ -68,7 +82,7 @@ function generateAndroidManifest {
 <!-- DO NOT MODIFY THIS FILE. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.splitapp"
-        split="lib_${arch}">
+        split="lib${splitNamePart}_${arch}">
     <application android:hasCode="false" />
 </manifest>
 ANDROIDMANIFEST
@@ -78,14 +92,9 @@ ANDROIDMANIFEST
 
 function generateModuleForContentPartialMk {
   local arch="$1"
-  local packagePartialName=""
-  local rawDir="raw"
-  local aaptRevisionFlags=""
-  if [[ -n "$2" ]]; then
-    packagePartialName="_revision${2}"
-    rawDir="raw_revision"
-    aaptRevisionFlags=" --revision-code ${2}"
-  fi
+  local packagePartialName="$2"
+  local rawDir="$3"
+  local aaptRevisionFlags="$4"
 
   localPackage=$(
     cat <<MODULE_CONTENT_FOR_PARTIAL_MK
@@ -113,8 +122,10 @@ function generateAndroidMk() {
   local targetFile="$1"
   local arch="$2"
   local copyrightInMk=$(generateCopyRightComment "2014")
-  local baseSplitMkModule=$(generateModuleForContentPartialMk "${arch}")
-  local revisionSplitMkModule=$(generateModuleForContentPartialMk "${arch}" 12)
+  local baseSplitMkModule=$(generateModuleForContentPartialMk "${arch}" "" "raw" "")
+  local revisionSplitMkModule=$(generateModuleForContentPartialMk "${arch}" "_revision12" \
+      "raw_revision" " --revision-code 12")
+
   (
     cat <<LIBS_ARCH_ANDROID_MK
 #
@@ -143,7 +154,8 @@ for arch in $(ls libs/); do
     mv tmp/$arch/raw/lib/$arch/libsplitappjni_revision.so \
       tmp/$arch/raw_revision/lib/$arch/libsplitappjni.so
 
-    generateAndroidManifest "tmp/$arch/AndroidManifest.xml" "${arch//[^a-zA-Z0-9_]/_}"
+    archWithoutDash="${arch//[^a-zA-Z0-9_]/_}"
+    generateAndroidManifest "tmp/$arch/AndroidManifest.xml" "${archWithoutDash}" ""
 
     generateAndroidMk "tmp/$arch/Android.mk" "$arch"
   )
