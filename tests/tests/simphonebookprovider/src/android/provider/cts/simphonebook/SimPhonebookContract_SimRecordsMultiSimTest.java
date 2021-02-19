@@ -24,10 +24,12 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
+import android.telephony.SubscriptionInfo;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
@@ -40,17 +42,18 @@ import org.junit.rules.RuleChain;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Objects;
 
 /** Tests of {@link SimRecords} for devices that have multiple SIM cards. */
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_SimRecordsMultiSimTest {
 
-    private final SimCleanupRule mSim1Rule = SimCleanupRule.forAdnOnSlot(0);
-    private final SimCleanupRule mSim2Rule = SimCleanupRule.forAdnOnSlot(1);
+    private final SimPhonebookRequirementsRule mRequirementsRule =
+            new SimPhonebookRequirementsRule(2);
     @Rule
-    public final TestRule mRule = RuleChain.outerRule(new SimPhonebookRequirementsRule(2))
-            .around(mSim1Rule).around(mSim2Rule);
+    public final TestRule mRule = RuleChain.outerRule(mRequirementsRule)
+            .around(new SimsCleanupRule(EF_ADN));
 
     private ContentResolver mResolver;
 
@@ -59,9 +62,12 @@ public class SimPhonebookContract_SimRecordsMultiSimTest {
 
     @Before
     public void setUp() {
-        mResolver = ApplicationProvider.getApplicationContext().getContentResolver();
-        mSubscriptionId1 = mSim1Rule.getSubscriptionId();
-        mSubscriptionId2 = mSim2Rule.getSubscriptionId();
+        Context context = ApplicationProvider.getApplicationContext();
+        mResolver = context.getContentResolver();
+        RemovableSims removableSims = new RemovableSims(context);
+        List<SubscriptionInfo> infos = removableSims.getSubscriptionInfoForRemovableSims();
+        mSubscriptionId1 = infos.get(0).getSubscriptionId();
+        mSubscriptionId2 = infos.get(1).getSubscriptionId();
     }
 
     @Test
