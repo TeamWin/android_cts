@@ -19,7 +19,6 @@ package com.android.cts.tagging;
 import com.google.common.collect.ImmutableSet;
 
 public class TaggingSdk30Test extends TaggingBaseTest {
-
     protected static final String TEST_APK = "CtsHostsideTaggingSdk30App.apk";
     protected static final String TEST_PKG = "android.cts.tagging.sdk30";
     private static final String TEST_RUNNER = "androidx.test.runner.AndroidJUnitRunner";
@@ -36,9 +35,10 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     @Override
     protected void tearDown() throws Exception {
         uninstallPackage(TEST_PKG, true);
+        super.tearDown();
     }
 
-    public void testHeapTaggingDefault() throws Exception {
+    public void testHeapTaggingCompatFeatureDefault() throws Exception {
         runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(),
@@ -48,9 +48,7 @@ public class TaggingSdk30Test extends TaggingBaseTest {
     }
 
     public void testHeapTaggingCompatFeatureEnabled() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -58,35 +56,15 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testCompatFeatureDisabledUserdebugBuild() throws Exception {
-        // Userdebug build - check that we can force disable the compat feature at runtime.
-        if (!getDevice().getBuildFlavor().contains("userdebug")) {
-            return;
-        }
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
-                DEVICE_TAGGING_DISABLED_TEST_NAME,
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*reportedEnabledChanges*/ ImmutableSet.of(),
-                /*reportedDisabledChanges*/ reportedChangeSet);
-    }
-
-    public void testCompatFeatureDisabledUserBuild() throws Exception {
-        // Non-userdebug build - we're not allowed to disable compat features. Check to ensure that
-        // even if we try that we still get pointer tagging.
-        if (getDevice().getBuildFlavor().contains("userdebug")
-                || getDevice().getBuildFlavor().contains("eng")) {
-            return;
-        }
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureDisabled() throws Exception {
+        // We're not allowed to disable compat features (see
+        // force_non_debuggable_final_build_for_compat in TaggingBaseTest for more info). Check to
+        // ensure that even if we try that we still get pointer tagging.
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*reportedEnabledChanges*/ reportedChangeSet,
+                /*reportedEnabledChanges*/ ImmutableSet.of(),
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
@@ -96,7 +74,7 @@ public class TaggingSdk30Test extends TaggingBaseTest {
         }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagSyncChecksEnabled",
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_SYNC_CHANGE_ID),
-                /*disabledChanges*/ImmutableSet.of());
+                /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testMemoryTagChecksAsyncCompatFeatureEnabled() throws Exception {
@@ -105,7 +83,7 @@ public class TaggingSdk30Test extends TaggingBaseTest {
         }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagAsyncChecksEnabled",
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_ASYNC_CHANGE_ID),
-                /*disabledChanges*/ImmutableSet.of());
+                /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testMemoryTagChecksCompatFeatureDisabled() throws Exception {
@@ -118,13 +96,44 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 ImmutableSet.of(NATIVE_MEMTAG_SYNC_CHANGE_ID, NATIVE_MEMTAG_ASYNC_CHANGE_ID));
     }
 
+    // Ensure that enabling MTE on non-MTE hardware is a no-op. Note - No statsd report for
+    // NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID. The fallback for an app that requests MTE on non-MTE
+    // hardware is an implicit TBI. Compat is never probed for the status of the heap pointer
+    // tagging feature in this instance.
+    public void testMemoryTagChecksCompatFeatureEnabledNonMTE() throws Exception {
+        if (deviceSupportsMemoryTagging) {
+            return;
+        }
+        // Tagged Pointers should still be used if the kernel/HW supports it.
+        runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", testForWhenSoftwareWantsTagging,
+                /*enabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_ASYNC_CHANGE_ID),
+                /*disabledChanges*/ ImmutableSet.of(),
+                // Don't check statsd report for NATIVE_MEMTAG_ASYNC_CHANGE_ID, as on non-aarch64
+                // we never probed compat for this feature.
+                /*reportedEnabledChanges*/ ImmutableSet.of(),
+                /*reportedDisabledChanges*/ ImmutableSet.of());
+    }
+
+    // Ensure that disabling MTE on non-MTE hardware is a no-op.
+    public void testMemoryTagChecksCompatFeatureDisabledNonMTE() throws Exception {
+        if (deviceSupportsMemoryTagging) {
+            return;
+        }
+        // Tagged Pointers should still be used if the kernel/HW supports it.
+        runDeviceCompatTestReported(TEST_PKG, ".TaggingTest", testForWhenSoftwareWantsTagging,
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ ImmutableSet.of(NATIVE_MEMTAG_ASYNC_CHANGE_ID),
+                /*reportedEnabledChanges*/ reportedChangeSet,
+                /*reportedDisabledChanges*/ ImmutableSet.of());
+    }
+
     public void testMemoryTagChecksSyncActivity() throws Exception {
         if (!deviceSupportsMemoryTagging) {
             return;
         }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagSyncActivityChecksEnabled",
                 /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of());
+                /*disabledChanges*/ ImmutableSet.of());
     }
 
     public void testMemoryTagChecksAsyncActivity() throws Exception {
@@ -133,6 +142,6 @@ public class TaggingSdk30Test extends TaggingBaseTest {
         }
         runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testMemoryTagAsyncActivityChecksEnabled",
                 /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ImmutableSet.of());
+                /*disabledChanges*/ ImmutableSet.of());
     }
 }
