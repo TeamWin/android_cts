@@ -64,7 +64,7 @@ public final class ShellCommandUtils {
             throws AdbException {
         logCommand(command, allowEmptyOutput, stdInBytes);
 
-        if (SDK_INT < 31) { // TODO(scottjonathan): Replace with S
+        if (SDK_INT < Versions.S) {
             return executeCommandPreS(command, allowEmptyOutput, stdInBytes);
         }
 
