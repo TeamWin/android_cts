@@ -18,15 +18,30 @@ package com.android.bedstead.nene.utils;
 
 import static android.os.Build.VERSION.SDK_INT;
 
-import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.compatibility.common.util.SystemUtil;
+import android.app.UiAutomation;
+import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.compatibility.common.util.FileUtils;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.function.Function;
 
 /**
  * Utilities for interacting with adb shell commands.
  */
 public final class ShellCommandUtils {
+
+    private static final String LOG_TAG = ShellCommandUtils.class.getName();
+
+    private static final int OUT_DESCRIPTOR_INDEX = 0;
+    private static final int IN_DESCRIPTOR_INDEX = 1;
+    private static final int ERR_DESCRIPTOR_INDEX = 2;
 
     // 60 seconds
     private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
@@ -46,21 +61,53 @@ public final class ShellCommandUtils {
      * <p>Callers should be careful to check the command's output is valid.
      */
     public static String executeCommand(String command) throws AdbException {
-        return executeCommand(command, /* allowEmptyOutput=*/ false);
+        return executeCommand(command, /* allowEmptyOutput=*/ false, /* stdInBytes= */ null);
     }
 
-    static String executeCommand(String command, boolean allowEmptyOutput)
+    static String executeCommand(String command, boolean allowEmptyOutput, byte[] stdInBytes)
             throws AdbException {
+        logCommand(command, allowEmptyOutput, stdInBytes);
+
         if (SDK_INT < 31) { // TODO(scottjonathan): Replace with S
-            return executeCommandPreS(command, allowEmptyOutput);
+            return executeCommandPreS(command, allowEmptyOutput, stdInBytes);
         }
 
         // TODO(scottjonathan): Add argument to force errors to stderr
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
-            return SystemUtil.runShellCommandOrThrow(command);
-        } catch (AssertionError e) {
-            throw new AdbException("Error executing command", command, /* output= */ null, e);
+
+            ParcelFileDescriptor[] fds = automation.executeShellCommandRwe(command);
+            ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
+            ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
+            ParcelFileDescriptor fdErr = fds[ERR_DESCRIPTOR_INDEX];
+
+            writeStdInAndClose(fdIn, stdInBytes);
+
+            String out = readStreamAndClose(fdOut);
+            String err = readStreamAndClose(fdErr);
+
+            if (!err.isEmpty()) {
+                throw new AdbException("Error executing command", command, out, err);
+            }
+
+            Log.d(LOG_TAG, "Command result: " + out);
+
+            return out;
+        } catch (IOException e) {
+            throw new AdbException("Error executing command", command, e);
         }
+    }
+
+    private static void logCommand(String command, boolean allowEmptyOutput, byte[] stdInBytes) {
+        StringBuilder logBuilder = new StringBuilder("Executing shell command ");
+        logBuilder.append(command);
+        if (allowEmptyOutput) {
+            logBuilder.append(" (allow empty output)");
+        }
+        if (stdInBytes != null) {
+            logBuilder.append(" (writing to stdIn)");
+        }
+        Log.d(LOG_TAG, logBuilder.toString());
     }
 
     /**
@@ -79,14 +126,16 @@ public final class ShellCommandUtils {
             String command, Function<String, Boolean> outputSuccessChecker) throws AdbException {
         return executeCommandAndValidateOutput(command,
                 /* allowEmptyOutput= */ false,
+                /* stdInBytes= */ null,
                 outputSuccessChecker);
     }
 
     static String executeCommandAndValidateOutput(
             String command,
             boolean allowEmptyOutput,
+            byte[] stdInBytes,
             Function<String, Boolean> outputSuccessChecker) throws AdbException {
-        String output = executeCommand(command, allowEmptyOutput);
+        String output = executeCommand(command, allowEmptyOutput, stdInBytes);
         if (!outputSuccessChecker.apply(output)) {
             throw new AdbException("Command did not meet success criteria", command, output);
         }
@@ -136,15 +185,48 @@ public final class ShellCommandUtils {
     }
 
     private static String executeCommandPreS(
-            String command, boolean allowEmptyOutput) throws AdbException {
+            String command, boolean allowEmptyOutput, byte[] stdInBytes) throws AdbException {
+        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        ParcelFileDescriptor[] fds = automation.executeShellCommandRw(command);
+        ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
+        ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
 
-        String result = SystemUtil.runShellCommand(command);
+        try {
+            writeStdInAndClose(fdIn, stdInBytes);
 
-        if (!allowEmptyOutput && result.isEmpty()) {
+            try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fdOut)) {
+                String out = new String(FileUtils.readInputStreamFully(fis));
+
+                if (!allowEmptyOutput && out.isEmpty()) {
+                    throw new AdbException(
+                            "No output from command. There's likely an error on stderr",
+                            command, out);
+                }
+
+                Log.d(LOG_TAG, "Command result: " + out);
+
+                return out;
+            }
+        } catch (IOException e) {
             throw new AdbException(
-                    "No output from command. There's likely an error on stderr", command, result);
+                    "Error reading command output", command, e);
         }
+    }
 
-        return result;
+    private static void writeStdInAndClose(ParcelFileDescriptor fdIn, byte[] stdInBytes)
+            throws IOException {
+        if (stdInBytes != null) {
+            try (FileOutputStream fos = new ParcelFileDescriptor.AutoCloseOutputStream(fdIn)) {
+                fos.write(stdInBytes);
+            }
+        } else {
+            fdIn.close();
+        }
+    }
+
+    private static String readStreamAndClose(ParcelFileDescriptor fd) throws IOException {
+        try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fd)) {
+            return new String(FileUtils.readInputStreamFully(fis));
+        }
     }
 }
