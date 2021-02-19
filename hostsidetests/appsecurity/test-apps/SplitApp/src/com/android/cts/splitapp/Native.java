@@ -25,4 +25,8 @@ public class Native {
     public static native String arch();
     public static native int sub(int a, int b);
     public static native int getAbiBitness();
+    public static native int getNumberAViaProxy();
+    public static native int getNumberBViaProxy();
+    public static native int getNumberADirectly();
+    public static native int getNumberBDirectly();
 }

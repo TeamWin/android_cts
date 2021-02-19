@@ -18,11 +18,51 @@
 
 #include <android/log.h>
 #include <stdio.h>
+#include <dlfcn.h>
 
 #include "jni.h"
 
 #define  LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 #define  LOGI(...)  __android_log_print(ANDROID_LOG_INFO,LOG_TAG,__VA_ARGS__)
+
+typedef int (*pFuncGetNumber)();
+
+static jint get_number_from_other_library(
+        const char* library_file_name, const char* function_name) {
+    void *handle;
+    char *error;
+    handle = dlopen (library_file_name, RTLD_LAZY);
+    if (!handle) {
+        LOGE("Can't load %s: %s\n", library_file_name, dlerror());
+        return -1;
+    }
+    pFuncGetNumber functionGetNumber = (pFuncGetNumber) dlsym(handle, function_name);
+    if ((error = dlerror()) != NULL)  {
+        LOGE("Can't load function %s: %s\n", function_name, error);
+        dlclose(handle);
+        return -2;
+    }
+    int ret = functionGetNumber();
+    dlclose(handle);
+
+    return ret;
+}
+
+static jint get_number_a_via_proxy(JNIEnv *env, jobject thiz) {
+    return get_number_from_other_library("libsplitapp_number_proxy.so", "get_number_a");
+}
+
+static jint get_number_b_via_proxy(JNIEnv *env, jobject thiz) {
+    return get_number_from_other_library("libsplitapp_number_proxy.so", "get_number_b");
+}
+
+static jint get_number_a_from_provider(JNIEnv *env, jobject thiz) {
+    return get_number_from_other_library("libsplitapp_number_provider_a.so", "get_number");
+}
+
+static jint get_number_b_from_provider(JNIEnv *env, jobject thiz) {
+    return get_number_from_other_library("libsplitapp_number_provider_b.so", "get_number");
+}
 
 #ifdef __LIVE_ONLY_32BIT__
 #define ABI_BITNESS 32
@@ -62,6 +102,10 @@ static JNINativeMethod methods[] = {
         {"add", "(II)I", (void*)add},
         {"arch", "()Ljava/lang/String;", (void*)arch},
         {"sub", "(II)I", (void*)sub},
+        {"getNumberAViaProxy", "()I", (void*) get_number_a_via_proxy},
+        {"getNumberBViaProxy", "()I", (void*) get_number_b_via_proxy},
+        {"getNumberADirectly", "()I", (void*) get_number_a_from_provider},
+        {"getNumberBDirectly", "()I", (void*) get_number_b_from_provider},
 };
 
 static int registerNativeMethods(JNIEnv* env, const char* className, JNINativeMethod* gMethods, int numMethods) {

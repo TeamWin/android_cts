@@ -72,6 +72,10 @@ public class SplitTests extends BaseAppSecurityTest {
     private static final String APK_mips64 = "CtsSplitApp_mips64.apk";
     private static final String APK_mips = "CtsSplitApp_mips.apk";
 
+    private static final String APK_NUMBER_PROVIDER_A = "CtsSplitApp_number_provider_a.apk";
+    private static final String APK_NUMBER_PROVIDER_B = "CtsSplitApp_number_provider_b.apk";
+    private static final String APK_NUMBER_PROXY = "CtsSplitApp_number_proxy.apk";
+
     private static final String APK_DIFF_REVISION = "CtsSplitAppDiffRevision.apk";
     private static final String APK_DIFF_REVISION_v7 = "CtsSplitAppDiffRevision_v7.apk";
 
@@ -266,6 +270,15 @@ public class SplitTests extends BaseAppSecurityTest {
         runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementBadly");
         getInstallMultiple(instant, useNaturalAbi).inheritFrom(PKG).addFile(revisionApk).run();
         runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementWell");
+
+        getInstallMultiple(instant, useNaturalAbi).inheritFrom(PKG)
+                .addFile(APK_NUMBER_PROVIDER_A)
+                .addFile(APK_NUMBER_PROVIDER_B)
+                .addFile(APK_NUMBER_PROXY).run();
+        runDeviceTests(PKG, CLASS, "testNative_getNumberADirectly_shouldBeSeven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberAViaProxy_shouldBeSeven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberBDirectly_shouldBeEleven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberBViaProxy_shouldBeEleven");
     }
 
     @Test
@@ -352,8 +365,16 @@ public class SplitTests extends BaseAppSecurityTest {
         for (String apk : ABI_TO_REVISION_APK.values()) {
             instInheritFrom.addFile(apk);
         }
+        instInheritFrom.addFile(APK_NUMBER_PROVIDER_A);
+        instInheritFrom.addFile(APK_NUMBER_PROVIDER_B);
+        instInheritFrom.addFile(APK_NUMBER_PROXY);
         instInheritFrom.run();
         runDeviceTests(PKG, CLASS, "testNativeRevision_sub_shouldImplementWell");
+
+        runDeviceTests(PKG, CLASS, "testNative_getNumberADirectly_shouldBeSeven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberAViaProxy_shouldBeSeven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberBDirectly_shouldBeEleven");
+        runDeviceTests(PKG, CLASS, "testNative_getNumberBViaProxy_shouldBeEleven");
     }
 
     /**
