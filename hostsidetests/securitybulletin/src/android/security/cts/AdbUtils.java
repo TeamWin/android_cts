@@ -182,7 +182,7 @@ public class AdbUtils {
             String arguments, Map<String, String> envVars,
             IShellOutputReceiver receiver) throws Exception {
         String remoteFile = String.format("%s%s", TMP_PATH, pocName);
-        SecurityTestCase.getPocPusher(device).pushFile(pocName, remoteFile);
+        SecurityTestCase.getPocPusher(device).pushFile(pocName + "_sts", remoteFile);
 
         assertPocExecutable(pocName, device);
         if (receiver == null) {
