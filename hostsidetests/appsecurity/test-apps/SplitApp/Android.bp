@@ -25,6 +25,7 @@ java_defaults {
     static_libs: [
         "androidx.test.rules",
         "truth-prebuilt",
+        "hamcrest-library",
     ],
     libs: [
         "android.test.runner.stubs",
