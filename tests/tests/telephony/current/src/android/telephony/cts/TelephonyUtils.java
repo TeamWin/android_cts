@@ -36,6 +36,9 @@ public class TelephonyUtils {
 
     private static final String COMMAND_END_BLOCK_SUPPRESSION = "cmd phone end-block-suppression";
 
+    private static final String COMMAND_FLUSH_TELEPHONY_METRICS =
+            "/system/bin/dumpsys activity service TelephonyDebugService --metricsproto";
+
     public static void addTestEmergencyNumber(Instrumentation instr, String testNumber)
             throws Exception {
         executeShellCommand(instr, COMMAND_ADD_TEST_EMERGENCY_NUMBER + testNumber);
@@ -48,6 +51,10 @@ public class TelephonyUtils {
 
     public static void endBlockSuppression(Instrumentation instr) throws Exception {
         executeShellCommand(instr, COMMAND_END_BLOCK_SUPPRESSION);
+    }
+
+    public static void flushTelephonyMetrics(Instrumentation instr) throws Exception {
+        executeShellCommand(instr, COMMAND_FLUSH_TELEPHONY_METRICS);
     }
 
     public static boolean isSkt(TelephonyManager telephonyManager) {
