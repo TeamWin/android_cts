@@ -19,6 +19,7 @@ package android.voiceinteraction.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
+import android.platform.test.annotations.AppModeFull;
 import android.service.voice.VoiceInteractionService;
 import android.voiceinteraction.common.Utils;
 
@@ -33,6 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "No real use case for instant mode hotword detection service")
 public final class HotwordDetectionServiceTest extends AbstractVoiceInteractionTestCase {
     static final String TAG = "HotwordDetectionServiceTest";
 
