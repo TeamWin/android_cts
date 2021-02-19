@@ -38,10 +38,9 @@ SHARPNESS_RTOL = 0.15
 def check_edge_modes(sharpness):
   """Check that the sharpness for the different edge modes is correct."""
   logging.debug(' Verify HQ is sharper than OFF')
-  e_msg = 'HQ: %.5f, OFF: %.5f, RTOL: %.2f' % (
-      sharpness[EDGE_MODES['HQ']], sharpness[EDGE_MODES['OFF']],
-      SHARPNESS_RTOL)
-  assert sharpness[EDGE_MODES['HQ']] > sharpness[EDGE_MODES['OFF']], e_msg
+  if sharpness[EDGE_MODES['HQ']] < sharpness[EDGE_MODES['OFF']]:
+    raise AssertionError(f"HQ: {sharpness[EDGE_MODES['HQ']]:.5f}, "
+                         f"OFF: {sharpness[EDGE_MODES['OFF']]:.5f}")
 
   logging.debug('Verify ZSL is similar to OFF')
   e_msg = 'ZSL: %.5f, OFF: %.5f, RTOL: %.2f' % (
