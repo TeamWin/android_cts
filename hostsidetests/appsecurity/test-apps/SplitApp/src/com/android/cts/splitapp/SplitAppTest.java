@@ -300,6 +300,26 @@ public class SplitAppTest {
     }
 
     @Test
+    public void testNative_getNumberADirectly_shouldBeSeven() throws Exception {
+        assertThat(Native.getNumberADirectly()).isEqualTo(7);
+    }
+
+    @Test
+    public void testNative_getNumberAViaProxy_shouldBeSeven() throws Exception {
+        assertThat(Native.getNumberAViaProxy()).isEqualTo(7);
+    }
+
+    @Test
+    public void testNative_getNumberBDirectly_shouldBeEleven() throws Exception {
+        assertThat(Native.getNumberBDirectly()).isEqualTo(11);
+    }
+
+    @Test
+    public void testNative_getNumberBViaProxy_shouldBeEleven() throws Exception {
+        assertThat(Native.getNumberBViaProxy()).isEqualTo(11);
+    }
+
+    @Test
     public void testFeatureWarmBase() throws Exception {
         final Resources r = getContext().getResources();
         final PackageManager pm = getContext().getPackageManager();
