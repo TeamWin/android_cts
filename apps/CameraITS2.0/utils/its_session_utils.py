@@ -1120,8 +1120,8 @@ def load_scene(cam, props, scene, tablet, chart_distance):
   logging.debug('Displaying %s on the tablet', file_name)
   # Display the scene on the tablet depending on camera_fov
   tablet.adb.shell(
-      'am start -a android.intent.action.VIEW -d file:/sdcard/Download/%s'%
-      file_name)
+      'am start -t application/pdf -a android.intent.action.VIEW '
+      f'-d file:/sdcard/Download/{file_name}')
   time.sleep(LOAD_SCENE_DELAY_SEC)
   rfov_camera_in_rfov_box = (
       numpy.isclose(

@@ -2272,6 +2272,11 @@
     <permission android:name="android.permission.READ_PRIVILEGED_PHONE_STATE"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows read access to privileged network state in the device config.
+         @hide Used internally. -->
+    <permission android:name="android.permission.READ_NETWORK_DEVICE_CONFIG"
+        android:protectionLevel="signature|privileged" />
+
     <!-- Allows to read device identifiers and use ICC based authentication like EAP-AKA.
          Often required in authentication to access the carrier's server and manage services
          of the subscriber.
@@ -5465,6 +5470,12 @@
     <!-- @hide Allows an application to create/destroy input consumer. -->
     <permission android:name="android.permission.INPUT_CONSUMER"
                 android:protectionLevel="signature" />
+
+    <!-- Allows an app to use exact alarm scheduling APIs to perform timing
+     sensitive background work.
+    -->
+    <permission android:name="android.permission.SCHEDULE_EXACT_ALARM"
+                android:protectionLevel="normal|appop"/>
 
     <!-- @hide Allows an application to control the system's device state managed by the
          {@link android.service.devicestate.DeviceStateManagerService}. For example, on foldable

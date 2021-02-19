@@ -56,7 +56,9 @@ public class CtsVoiceRecognitionService extends RecognitionService {
             // empty bundle here.
             try {
                 listener.results(Bundle.EMPTY);
+                Log.i(TAG, "Invoked #results");
             } catch (RemoteException e) {
+                Log.e(TAG, "Failed to invoke #results", e);
             }
         }
         mediaRecorderReady();

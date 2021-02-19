@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-package android.speech.tts.cts;
+package android.voicerecognition.cts;
 
-/**
- * {@link android.speech.tts.TextToSpeech} testing related constants.
- */
-class TextToSpeechConstants {
-
-    static final String TTS_TEST_ON_UNBIND_ACTION = "android.speech.tts.cts.ON_UNBIND_ACTION";
-
-    static final String MOCK_TTS_ENGINE = "android.speech.tts.cts";
-
-    private TextToSpeechConstants() {
-    }
+enum RecognizerMethod {
+    RECOGNIZER_METHOD_UNSPECIFIED,
+    RECOGNIZER_METHOD_START_LISTENING,
+    RECOGNIZER_METHOD_STOP_LISTENING,
+    RECOGNIZER_METHOD_CANCEL,
+    RECOGNIZER_METHOD_DESTROY
 }
