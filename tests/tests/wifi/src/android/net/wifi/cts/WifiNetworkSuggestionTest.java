@@ -1103,4 +1103,74 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
     }
+
+    /**
+     * Simulate connection failure to a network using restricted suggestion API & different net
+     * capability (need corresponding net capability requested for platform to connect).
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectToOemPaidSuggestionFailure() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .setOemPaid(true)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
+    }
+
+    /**
+     * Simulate connection failure to a network using restricted suggestion API & different net
+     * capability (need corresponding net capability requested for platform to connect).
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectToOemPrivateSuggestionFailure() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .setOemPrivate(true)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
+    }
+
+    /**
+     * Simulate connection failure to a restricted network using suggestion API & restricted net
+     * capability (need corresponding restricted bit set in suggestion for platform to connect).
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectSuggestionFailureWithOemPaidNetCapability() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
+    }
+
+    /**
+     * Simulate connection failure to a restricted network using suggestion API & restricted net
+     * capability (need corresponding restricted bit set in suggestion for platform to connect).
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectSuggestionFailureWithOemPrivateNetCapability() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
+    }
 }

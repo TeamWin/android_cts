@@ -334,4 +334,116 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
         // Ensure that there are 2 wifi connections available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
+
+    /**
+     * Tests the concurrent connection flow.
+     * 1. Connect to a network using internet connectivity API.
+     * 2. Simulate connection failure to a network using restricted suggestion API & different net
+     *    capability (need corresponding net capability requested for platform to connect).
+     * 3. Verify that only 1 connection is active.
+     */
+    @Test
+    public void testConnectToOemPaidSuggestionFailureWhenConnectedToInternetNetwork()
+            throws Exception {
+        // First trigger internet connectivity.
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
+
+        // Now trigger restricted connection.
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetworkForRestrictedConnection)
+                        .setOemPaid(true)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
+                NET_CAPABILITY_OEM_PRIVATE);
+
+        // Ensure that there is only 1 connection available for apps.
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+    }
+
+    /**
+     * Tests the concurrent connection flow.
+     * 1. Connect to a network using internet connectivity API.
+     * 2. Simulate connection failure to a network using restricted suggestion API & different net
+     *    capability (need corresponding net capability requested for platform to connect).
+     * 3. Verify that only 1 connection is active.
+     */
+    @Test
+    public void testConnectToOemPrivateSuggestionFailureWhenConnectedToInternetNetwork()
+            throws Exception {
+        // First trigger internet connectivity.
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
+
+        // Now trigger restricted connection.
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetworkForRestrictedConnection)
+                        .setOemPrivate(true)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
+                NET_CAPABILITY_OEM_PAID);
+
+        // Ensure that there is only 1 connection available for apps.
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+    }
+
+    /**
+     * Tests the concurrent connection flow.
+     * 1. Connect to a network using internet connectivity API.
+     * 2. Simulate connection failure to a restricted network using suggestion API & restricted net
+     *    capability (need corresponding restricted bit set in suggestion for platform to connect).
+     * 3. Verify that only 1 connection is active.
+     */
+    @Test
+    public void
+            testConnectToSuggestionFailureWithOemPaidNetCapabilityWhenConnectedToInternetNetwork()
+            throws Exception {
+        // First trigger internet connectivity.
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
+
+        // Now trigger restricted connection.
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetworkForRestrictedConnection)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
+                NET_CAPABILITY_OEM_PAID);
+
+        // Ensure that there is only 1 connection available for apps.
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+    }
+
+    /**
+     * Tests the concurrent connection flow.
+     * 1. Connect to a network using internet connectivity API.
+     * 2. Simulate connection failure to a restricted network using suggestion API & restricted net
+     *    capability (need corresponding restricted bit set in suggestion for platform to connect).
+     * 3. Verify that only 1 connection is active.
+     */
+    @Test
+    public void
+        testConnectToSuggestionFailureWithOemPrivateNetCapabilityWhenConnectedToInternetNetwork()
+            throws Exception {
+        // First trigger internet connectivity.
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
+
+        // Now trigger restricted connection.
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetworkForRestrictedConnection)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
+                mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
+                NET_CAPABILITY_OEM_PRIVATE);
+
+        // Ensure that there is only 1 connection available for apps.
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
+    }
 }

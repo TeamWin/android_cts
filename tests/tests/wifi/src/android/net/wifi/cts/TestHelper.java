@@ -328,7 +328,7 @@ public class TestHelper {
     }
 
     /**
-     * Tests the entire connection flow using the provided suggestion.
+     * Tests the entire connection success flow using the provided suggestion.
      *
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
@@ -343,6 +343,48 @@ public class TestHelper {
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
             @Nullable Integer restrictedNetworkCapability) {
+        return testConnectionFlowWithSuggestionInternal(
+                network, suggestion, executorService, restrictedNetworkCapability, true);
+    }
+
+    /**
+     * Tests the connection failure flow using the provided suggestion.
+     *
+     * @param network saved network from the device to use for the connection.
+     * @param suggestion suggestion to use for the connection.
+     * @param executorService Excutor service to run scan periodically (to trigger connection).
+     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     *                                    the provided capability.
+     *
+     * @return NetworkCallback used for the connection (can be used by client to release the
+     * connection.
+     */
+    public ConnectivityManager.NetworkCallback testConnectionFailureFlowWithSuggestion(
+            WifiConfiguration network, WifiNetworkSuggestion suggestion,
+            @NonNull ScheduledExecutorService executorService,
+            @Nullable Integer restrictedNetworkCapability) {
+        return testConnectionFlowWithSuggestionInternal(
+                network, suggestion, executorService, restrictedNetworkCapability, false);
+    }
+
+    /**
+     * Tests the entire connection success/failure flow using the provided suggestion.
+     *
+     * @param network saved network from the device to use for the connection.
+     * @param suggestion suggestion to use for the connection.
+     * @param executorService Excutor service to run scan periodically (to trigger connection).
+     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     *                                    the provided capability.
+     * @param expectConnectionSuccess Whether to expect connection success or not.
+     *
+     * @return NetworkCallback used for the connection (can be used by client to release the
+     * connection.
+     */
+    private ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionInternal(
+            WifiConfiguration network, WifiNetworkSuggestion suggestion,
+            @NonNull ScheduledExecutorService executorService,
+            @Nullable Integer restrictedNetworkCapability,
+            boolean expectConnectionSuccess) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
@@ -372,12 +414,19 @@ public class TestHelper {
                     Log.w(TAG, "Failed to trigger scan");
                 }
             }, 0, DURATION_MILLIS, TimeUnit.MILLISECONDS);
-            // now wait for connection to complete and wait for callback
-            assertThat(countDownLatch.await(
-                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
-            assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-            assertConnectionEquals(
-                    network, (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
+            if (expectConnectionSuccess) {
+                // now wait for connection to complete and wait for callback
+                assertThat(countDownLatch.await(
+                        DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+                assertThat(testNetworkCallback.onAvailableCalled).isTrue();
+                assertConnectionEquals(
+                        network,
+                        (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
+            } else {
+                // now wait for connection to timeout.
+                assertThat(countDownLatch.await(
+                        DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isFalse();
+            }
         } catch (InterruptedException e) {
         } finally {
             uiAutomation.dropShellPermissionIdentity();
