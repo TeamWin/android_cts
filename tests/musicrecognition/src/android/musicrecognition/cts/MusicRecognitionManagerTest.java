@@ -20,16 +20,23 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
-import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
@@ -39,16 +46,15 @@ import android.media.MediaRecorder;
 import android.media.musicrecognition.MusicRecognitionManager;
 import android.media.musicrecognition.RecognitionRequest;
 import android.os.Binder;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.RequiredServiceRule;
-import com.android.compatibility.common.util.ShellUtils;
 
 import com.google.common.util.concurrent.MoreExecutors;
 
@@ -70,6 +76,7 @@ import org.mockito.MockitoAnnotations;
 public class MusicRecognitionManagerTest {
     private static final String TAG = MusicRecognitionManagerTest.class.getSimpleName();
     private static final long VERIFY_TIMEOUT_MS = 40_000;
+    private static final long VERIFY_APPOP_CHANGE_TIMEOUT_MS = 2000;
 
     @Rule public TestName mTestName = new TestName();
     @Rule
@@ -169,6 +176,62 @@ public class MusicRecognitionManagerTest {
                 eq(MusicRecognitionManager.RECOGNITION_FAILED_SERVICE_UNAVAILABLE));
         verify(mCallback, never()).onRecognitionSucceeded(any(), any(), any());
     }
+
+    @Test
+    public void testRecordAudioOpsAreTracked() {
+        mWatcher.result = new MediaMetadata.Builder()
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, "artist")
+                .putString(MediaMetadata.METADATA_KEY_TITLE, "title")
+                .build();
+
+        final String packageName = CtsMusicRecognitionService.SERVICE_PACKAGE;
+        final int uid = Process.myUid();
+
+        final AppOpsManager appOpsManager = getInstrumentation().getContext()
+                .getSystemService(AppOpsManager.class);
+        final AppOpsManager.OnOpActiveChangedListener listener = mock(
+                AppOpsManager.OnOpActiveChangedListener.class);
+        // Assert the app op is not started
+        assertFalse(appOpsManager.isOpActive(AppOpsManager.OPSTR_RECORD_AUDIO, uid, packageName));
+
+        // Start watching for record audio op
+        appOpsManager.startWatchingActive(new String[] { AppOpsManager.OPSTR_RECORD_AUDIO },
+                getInstrumentation().getContext().getMainExecutor(), listener);
+
+        // Invoke API
+        RecognitionRequest request = invokeMusicRecognitionApi();
+
+        // The app op should start
+        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
+                .only()).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                eq(uid), eq(packageName), eq(true));
+
+        // Wait for streaming to finish.
+        reset(listener);
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // The app op should finish
+        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
+                .only()).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                eq(uid), eq(packageName), eq(false));
+
+
+        // Start with a clean slate
+        reset(listener);
+
+        // Stop watching for app op
+        appOpsManager.stopWatchingActive(listener);
+
+        // No other callbacks expected
+        verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS).times(0))
+                .onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
+                        anyInt(), anyString(), anyBoolean());
+    }
+
 
     private RecognitionRequest invokeMusicRecognitionApi() {
         AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.MIC, 16_000,
