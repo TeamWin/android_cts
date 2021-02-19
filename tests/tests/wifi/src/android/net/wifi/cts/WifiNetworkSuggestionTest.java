@@ -16,10 +16,8 @@
 
 package android.net.wifi.cts;
 
-import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
-import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiEnterpriseConfig.Eap.AKA;
 import static android.net.wifi.WifiEnterpriseConfig.Eap.WAPI_CERT;
 import static android.os.Process.myUid;
@@ -35,21 +33,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.NonNull;
-import android.annotation.Nullable;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.MacAddress;
-import android.net.Network;
-import android.net.NetworkCapabilities;
-import android.net.NetworkRequest;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.PasspointConfiguration;
@@ -58,7 +48,6 @@ import android.net.wifi.hotspot2.pps.HomeSp;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
@@ -68,7 +57,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -87,12 +75,9 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
@@ -116,13 +101,11 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     private ConnectivityManager mConnectivityManager;
     private UiDevice mUiDevice;
     private WifiConfiguration mTestNetwork;
-    private TestNetworkCallback mNsNetworkCallback;
+    private ConnectivityManager.NetworkCallback mNsNetworkCallback;
     private ScheduledExecutorService mExecutorService;
+    private TestHelper mTestHelper;
 
     private static final int DURATION_MILLIS = 10_000;
-    private static final int DURATION_NETWORK_CONNECTION_MILLIS = 60_000;
-    private static final int DURATION_SCREEN_TOGGLE_MILLIS = 2000;
-
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -148,7 +131,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         // enable Wifi
         sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.isWifiEnabled());
-        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!wifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+        }
         PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> wifiManager.isWifiEnabled());
     }
 
@@ -175,6 +160,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mExecutorService = Executors.newSingleThreadScheduledExecutor();
+        mTestHelper = new TestHelper(mContext, mUiDevice);
 
         // skip the test if WiFi is not supported
         assumeTrue(WifiFeature.isWifiSupported(mContext));
@@ -185,7 +171,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 mContext.getSystemService(LocationManager.class).isLocationEnabled()).isTrue();
 
         // turn screen on
-        turnScreenOn();
+        mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -195,8 +181,9 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         assertFalse("Need at least one saved network", savedNetworks.isEmpty());
-        // Pick the last saved network on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
+        // Pick any network in range.
+        mTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
+                .get(0);
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
@@ -232,25 +219,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         // Clear any existing app state after each test.
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
-        turnScreenOff();
-    }
-
-    private static void setWifiEnabled(boolean enable) throws Exception {
-        // now trigger the change using shell commands.
-        SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
-    }
-
-    private void turnScreenOn() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        mUiDevice.executeShellCommand("wm dismiss-keyguard");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE_MILLIS);
-    }
-
-    private void turnScreenOff() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE_MILLIS);
+        mTestHelper.turnScreenOff();
     }
 
     private static final String CA_SUITE_B_RSA3072_CERT_STRING =
@@ -1088,116 +1057,17 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 + "network suggestion with unmetered config");
     }
 
-    private static WifiNetworkSuggestion.Builder
-    createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-            @NonNull WifiConfiguration network) {
-        WifiNetworkSuggestion.Builder suggestionBuilder = new WifiNetworkSuggestion.Builder()
-                .setSsid(WifiInfo.sanitizeSsid(network.SSID))
-                .setBssid(MacAddress.fromString(network.BSSID));
-        if (network.preSharedKey != null) {
-            if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
-                suggestionBuilder.setWpa2Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
-            } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
-                suggestionBuilder.setWpa3Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
-            } else {
-                fail("Unsupported security type found in saved networks");
-            }
-        } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
-            suggestionBuilder.setIsEnhancedOpen(true);
-        } else if (!network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
-            fail("Unsupported security type found in saved networks");
-        }
-        suggestionBuilder.setIsHiddenSsid(network.hiddenSSID);
-        return suggestionBuilder;
-    }
-
-    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
-        private final CountDownLatch mCountDownLatch;
-        public boolean onAvailableCalled = false;
-        public boolean onUnavailableCalled = false;
-        public NetworkCapabilities networkCapabilities;
-
-        TestNetworkCallback(CountDownLatch countDownLatch) {
-            mCountDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
-            onAvailableCalled = true;
-            this.networkCapabilities = networkCapabilities;
-            mCountDownLatch.countDown();
-        }
-
-        @Override
-        public void onUnavailable() {
-            onUnavailableCalled = true;
-            mCountDownLatch.countDown();
-        }
-    }
-
-    private void assertConnectionEquals(@NonNull WifiConfiguration network,
-            @NonNull WifiInfo wifiInfo) {
-        assertThat(network.SSID).isEqualTo(wifiInfo.getSSID());
-        assertThat(network.BSSID).isEqualTo(wifiInfo.getBSSID());
-    }
-
-    /**
-     * Tests the entire connection flow using the provided suggestion.
-     */
-    private void testConnectionFlowWithSuggestion(
-            WifiConfiguration network, WifiNetworkSuggestion suggestion,
-            @Nullable Integer restrictedNetworkCapability) {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        // File the network request & wait for the callback.
-        mNsNetworkCallback = new TestNetworkCallback(countDownLatch);
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-            // File a request for restricted (oem paid) wifi network.
-            NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
-                    .addTransportType(TRANSPORT_WIFI)
-                    .addCapability(NET_CAPABILITY_INTERNET);
-            if (restrictedNetworkCapability == null) {
-                // If not a restricted connection, a network callback is sufficient.
-                mConnectivityManager.registerNetworkCallback(nrBuilder.build(), mNsNetworkCallback);
-            } else {
-                nrBuilder.addCapability(restrictedNetworkCapability);
-                mConnectivityManager.requestNetwork(nrBuilder.build(), mNsNetworkCallback);
-            }
-            // Add wifi network suggestion.
-            assertThat(mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)))
-                    .isEqualTo(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS);
-            // Wait for the request to reach the wifi stack before kick-start periodic scans.
-            Thread.sleep(100);
-            // Step: Trigger scans periodically to trigger network selection quicker.
-            mExecutorService.scheduleAtFixedRate(() -> {
-                if (!mWifiManager.startScan()) {
-                    Log.w(TAG, "Failed to trigger scan");
-                }
-            }, 0, DURATION_MILLIS, TimeUnit.MILLISECONDS);
-            // now wait for connection to complete and wait for callback
-            assertThat(countDownLatch.await(
-                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
-        } catch (InterruptedException e) {
-        } finally {
-            uiAutomation.dropShellPermissionIdentity();
-        }
-        assertThat(mNsNetworkCallback.onAvailableCalled).isTrue();
-        assertConnectionEquals(
-                network, (WifiInfo) mNsNetworkCallback.networkCapabilities.getTransportInfo());
-    }
-
     /**
      * Connect to a network using suggestion API.
      */
     @Test
     public void testConnectToSuggestion() throws Exception {
         WifiNetworkSuggestion suggestion =
-                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
                         .build();
-        testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, null /* restrictedNetworkCapability */);
+        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, null /* restrictedNetworkCapability */);
     }
 
     /**
@@ -1209,10 +1079,12 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @Test
     public void testConnectToOemPaidSuggestion() throws Exception {
         WifiNetworkSuggestion suggestion =
-                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
                         .setOemPaid(true)
                         .build();
-        testConnectionFlowWithSuggestion(mTestNetwork, suggestion, NET_CAPABILITY_OEM_PAID);
+        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
     }
 
     /**
@@ -1224,9 +1096,11 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @Test
     public void testConnectToOemPrivateSuggestion() throws Exception {
         WifiNetworkSuggestion suggestion =
-                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
                         .setOemPrivate(true)
                         .build();
-        testConnectionFlowWithSuggestion(mTestNetwork, suggestion, NET_CAPABILITY_OEM_PRIVATE);
+        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
     }
 }

@@ -16,39 +16,25 @@
 
 package android.net.wifi.cts;
 
-import static android.net.NetworkCapabilitiesProto.NET_CAPABILITY_INTERNET;
-import static android.net.NetworkCapabilitiesProto.TRANSPORT_WIFI;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
-import static junit.framework.TestCase.assertFalse;
-
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.UiAutomation;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.MacAddress;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.NetworkRequestMatchCallback;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.os.PatternMatcher;
-import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
-import android.text.TextUtils;
 
 import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
@@ -57,7 +43,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -77,7 +62,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * Tests the entire connection flow using {@link WifiNetworkSpecifier} embedded in a
@@ -192,16 +176,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     private WifiManager mWifiManager;
     private ConnectivityManager mConnectivityManager;
     private UiDevice mUiDevice;
-    private final Object mLock = new Object();
-    private final Object mUiLock = new Object();
     private WifiConfiguration mTestNetwork;
-    private TestNetworkCallback mNetworkCallback;
+    private ConnectivityManager.NetworkCallback mNrNetworkCallback;
+    private TestHelper mTestHelper;
 
     private static final int DURATION = 10_000;
-    private static final int DURATION_UI_INTERACTION = 25_000;
-    private static final int DURATION_NETWORK_CONNECTION = 60_000;
-    private static final int DURATION_SCREEN_TOGGLE = 2000;
-    private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -210,7 +189,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertNotNull(wifiManager);
+        assertThat(wifiManager).isNotNull();
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -224,13 +203,16 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 () -> wifiManager.setScanThrottleEnabled(false));
 
         // enable Wifi
-        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!wifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+        }
         PollingCheck.check("Wifi not enabled", DURATION, () -> wifiManager.isWifiEnabled());
 
         // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.getPrivilegedConfiguredNetworks());
-        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
+        assertWithMessage("Need at least one saved network")
+                .that(savedNetworks.isEmpty()).isFalse();
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
@@ -248,9 +230,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertNotNull(wifiManager);
+        assertThat(wifiManager).isNotNull();
 
-        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!wifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+        }
 
         // Re-enable networks.
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -271,11 +255,12 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         mWifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mTestHelper = new TestHelper(mContext, mUiDevice);
 
         assumeTrue(WifiFeature.isWifiSupported(mContext));
 
         // turn screen on
-        turnScreenOn();
+        mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
         if (BuildCompat.isAtLeastS()) {
@@ -285,8 +270,9 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
 
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
-        // Pick the last saved network on the device (assumes that it is in range)
-        mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
+        // Pick any network in range.
+        mTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
+                .get(0);
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
@@ -298,261 +284,25 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @After
     public void tearDown() throws Exception {
         // If there is failure, ensure we unregister the previous request.
-        if (mNetworkCallback != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
+        if (mNrNetworkCallback != null) {
+            mConnectivityManager.unregisterNetworkCallback(mNrNetworkCallback);
         }
         // Clear any existing app state after each test.
         if (BuildCompat.isAtLeastS()) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
-        turnScreenOff();
-    }
-
-    private static void setWifiEnabled(boolean enable) throws Exception {
-        // now trigger the change using shell commands.
-        SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
-    }
-
-    private void turnScreenOn() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        mUiDevice.executeShellCommand("wm dismiss-keyguard");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE);
-    }
-
-    private void turnScreenOff() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE);
-    }
-
-    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
-        private final Object mLock;
-        public boolean onAvailableCalled = false;
-        public boolean onUnavailableCalled = false;
-        public NetworkCapabilities networkCapabilities;
-
-        TestNetworkCallback(Object lock) {
-            mLock = lock;
-        }
-
-        @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
-            synchronized (mLock) {
-                onAvailableCalled = true;
-                this.networkCapabilities = networkCapabilities;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onUnavailable() {
-            synchronized (mLock) {
-                onUnavailableCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    private static class TestNetworkRequestMatchCallback implements NetworkRequestMatchCallback {
-        private final Object mLock;
-
-        public boolean onRegistrationCalled = false;
-        public boolean onAbortCalled = false;
-        public boolean onMatchCalled = false;
-        public boolean onConnectSuccessCalled = false;
-        public boolean onConnectFailureCalled = false;
-        public WifiManager.NetworkRequestUserSelectionCallback userSelectionCallback = null;
-        public List<ScanResult> matchedScanResults = null;
-
-        TestNetworkRequestMatchCallback(Object lock) {
-            mLock = lock;
-        }
-
-        @Override
-        public void onUserSelectionCallbackRegistration(
-                WifiManager.NetworkRequestUserSelectionCallback userSelectionCallback) {
-            synchronized (mLock) {
-                onRegistrationCalled = true;
-                this.userSelectionCallback = userSelectionCallback;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onAbort() {
-            synchronized (mLock) {
-                onAbortCalled = true;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onMatch(List<ScanResult> scanResults) {
-            synchronized (mLock) {
-                // This can be invoked multiple times. So, ignore after the first one to avoid
-                // disturbing the rest of the test sequence.
-                if (onMatchCalled) return;
-                onMatchCalled = true;
-                matchedScanResults = scanResults;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onUserSelectionConnectSuccess(WifiConfiguration config) {
-            synchronized (mLock) {
-                onConnectSuccessCalled = true;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onUserSelectionConnectFailure(WifiConfiguration config) {
-            synchronized (mLock) {
-                onConnectFailureCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    private void handleUiInteractions(boolean shouldUserReject) {
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestNetworkRequestMatchCallback networkRequestMatchCallback =
-                new TestNetworkRequestMatchCallback(mUiLock);
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-
-            // 1. Wait for registration callback.
-            synchronized (mUiLock) {
-                try {
-                    mWifiManager.registerNetworkRequestMatchCallback(
-                            Executors.newSingleThreadExecutor(), networkRequestMatchCallback);
-                    mUiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            assertTrue(networkRequestMatchCallback.onRegistrationCalled);
-            assertNotNull(networkRequestMatchCallback.userSelectionCallback);
-
-            // 2. Wait for matching scan results
-            synchronized (mUiLock) {
-                try {
-                    mUiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            assertTrue(networkRequestMatchCallback.onMatchCalled);
-            assertNotNull(networkRequestMatchCallback.matchedScanResults);
-            assertThat(networkRequestMatchCallback.matchedScanResults.size()).isAtLeast(1);
-
-            // 3. Trigger connection to one of the matched networks or reject the request.
-            if (shouldUserReject) {
-                networkRequestMatchCallback.userSelectionCallback.reject();
-            } else {
-                networkRequestMatchCallback.userSelectionCallback.select(mTestNetwork);
-            }
-
-            // 4. Wait for connection success or abort.
-            synchronized (mUiLock) {
-                try {
-                    mUiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            if (shouldUserReject) {
-                assertTrue(networkRequestMatchCallback.onAbortCalled);
-            } else {
-                assertTrue(networkRequestMatchCallback.onConnectSuccessCalled);
-            }
-        } finally {
-            mWifiManager.unregisterNetworkRequestMatchCallback(networkRequestMatchCallback);
-            uiAutomation.dropShellPermissionIdentity();
-        }
-    }
-
-    /**
-     * Tests the entire connection flow using the provided specifier.
-     *
-     * @param specifier Specifier to use for network request.
-     * @param shouldUserReject Whether to simulate user rejection or not.
-     */
-    private void testConnectionFlowWithSpecifier(
-            WifiNetworkSpecifier specifier, boolean shouldUserReject) {
-        // Fork a thread to handle the UI interactions.
-        Thread uiThread = new Thread(() -> handleUiInteractions(shouldUserReject));
-
-        // File the network request & wait for the callback.
-        mNetworkCallback = new TestNetworkCallback(mLock);
-        synchronized (mLock) {
-            try {
-                // File a request for wifi network.
-                mConnectivityManager.requestNetwork(
-                        new NetworkRequest.Builder()
-                                .addTransportType(TRANSPORT_WIFI)
-                                .removeCapability(NET_CAPABILITY_INTERNET)
-                                .setNetworkSpecifier(specifier)
-                                .build(),
-                        mNetworkCallback);
-                // Wait for the request to reach the wifi stack before kick-starting the UI
-                // interactions.
-                Thread.sleep(100);
-                // Start the UI interactions.
-                uiThread.run();
-                // now wait for callback
-                mLock.wait(DURATION_NETWORK_CONNECTION);
-            } catch (InterruptedException e) {
-            }
-        }
-        if (shouldUserReject) {
-            assertTrue(mNetworkCallback.onUnavailableCalled);
-        } else {
-            assertTrue(mNetworkCallback.onAvailableCalled);
-        }
-
-        try {
-            // Ensure that the UI interaction thread has completed.
-            uiThread.join(DURATION_UI_INTERACTION);
-        } catch (InterruptedException e) {
-            fail("UI interaction interrupted");
-        }
-
-        // Release the request after the test.
-        mConnectivityManager.unregisterNetworkCallback(mNetworkCallback);
-        mNetworkCallback = null;
+        mTestHelper.turnScreenOff();
     }
 
     private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier) {
-        testConnectionFlowWithSpecifier(specifier, false);
+        mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
+                mTestNetwork, specifier, false);
     }
 
     private void testUserRejectionWithSpecifier(WifiNetworkSpecifier specifier) {
-        testConnectionFlowWithSpecifier(specifier, true);
-    }
-
-    private static String removeDoubleQuotes(String string) {
-        return WifiInfo.sanitizeSsid(string);
-    }
-
-    private WifiNetworkSpecifier.Builder createSpecifierBuilderWithCredentialFromSavedNetwork() {
-        WifiNetworkSpecifier.Builder specifierBuilder = new WifiNetworkSpecifier.Builder();
-        if (mTestNetwork.preSharedKey != null) {
-            if (mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
-                specifierBuilder.setWpa2Passphrase(removeDoubleQuotes(mTestNetwork.preSharedKey));
-            } else if (mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
-                specifierBuilder.setWpa3Passphrase(removeDoubleQuotes(mTestNetwork.preSharedKey));
-            } else {
-                fail("Unsupported security type found in saved networks");
-            }
-        } else if (mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
-            specifierBuilder.setIsEnhancedOpen(true);
-        } else if (!mTestNetwork.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
-            fail("Unsupported security type found in saved networks");
-        }
-        specifierBuilder.setIsHiddenSsid(mTestNetwork.hiddenSSID);
-        return specifierBuilder;
+        mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
+                mTestNetwork, specifier, true);
     }
 
     /**
@@ -560,8 +310,9 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testConnectionWithSpecificSsid() {
-        WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
+                        mTestNetwork)
                 .build();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
@@ -573,68 +324,17 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     public void testConnectionWithSsidPattern() {
         // Creates a ssid pattern by dropping the last char in the saved network & pass that
         // as a prefix match pattern in the request.
-        String ssidUnquoted = removeDoubleQuotes(mTestNetwork.SSID);
+        String ssidUnquoted = WifiInfo.sanitizeSsid(mTestNetwork.SSID);
         assertThat(ssidUnquoted.length()).isAtLeast(2);
         String ssidPrefix = ssidUnquoted.substring(0, ssidUnquoted.length() - 1);
         // Note: The match may return more than 1 network in this case since we use a prefix match,
         // But, we will still ensure that the UI interactions in the test still selects the
         // saved network for connection.
-        WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(mTestNetwork)
                 .setSsidPattern(new PatternMatcher(ssidPrefix, PatternMatcher.PATTERN_PREFIX))
                 .build();
         testSuccessfulConnectionWithSpecifier(specifier);
-    }
-
-    private static class TestScanResultsCallback extends WifiManager.ScanResultsCallback {
-        private final Object mLock;
-        public boolean onAvailableCalled = false;
-
-        TestScanResultsCallback(Object lock) {
-            mLock = lock;
-        }
-
-        @Override
-        public void onScanResultsAvailable() {
-            synchronized (mLock) {
-                onAvailableCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    /**
-     * Loops through all available scan results and finds the first match for the saved network.
-     *
-     * Note:
-     * a) If there are more than 2 networks with the same SSID, but different credential type, then
-     * this matching may pick the wrong one.
-     */
-    private ScanResult findScanResultMatchingSavedNetwork() {
-        for (int i = 0; i < SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID; i++) {
-            // Trigger a scan to get fresh scan results.
-            TestScanResultsCallback scanResultsCallback = new TestScanResultsCallback(mLock);
-            synchronized (mLock) {
-                try {
-                    mWifiManager.registerScanResultsCallback(
-                            Executors.newSingleThreadExecutor(), scanResultsCallback);
-                    mWifiManager.startScan(new WorkSource(myUid()));
-                    // now wait for callback
-                    mLock.wait(DURATION_NETWORK_CONNECTION);
-                } catch (InterruptedException e) {
-                } finally {
-                    mWifiManager.unregisterScanResultsCallback(scanResultsCallback);
-                }
-            }
-            List<ScanResult> scanResults = mWifiManager.getScanResults();
-            if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
-            for (ScanResult scanResult : scanResults) {
-                if (TextUtils.equals(scanResult.SSID, removeDoubleQuotes(mTestNetwork.SSID))) {
-                    return scanResult;
-                }
-            }
-        }
-        fail("No matching scan results found");
-        return null;
     }
 
     /**
@@ -642,10 +342,10 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testConnectionWithSpecificBssid() {
-        ScanResult scanResult = findScanResultMatchingSavedNetwork();
-        WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
-                .setBssid(MacAddress.fromString(scanResult.BSSID))
-                .build();
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .build();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
 
@@ -654,14 +354,15 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testConnectionWithBssidPattern() {
-        ScanResult scanResult = findScanResultMatchingSavedNetwork();
         // Note: The match may return more than 1 network in this case since we use a prefix match,
         // But, we will still ensure that the UI interactions in the test still selects the
         // saved network for connection.
-        WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
-                .setBssidPattern(MacAddress.fromString(scanResult.BSSID),
-                        MacAddress.fromString("ff:ff:ff:00:00:00"))
-                .build();
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .setBssidPattern(MacAddress.fromString(mTestNetwork.BSSID),
+                                MacAddress.fromString("ff:ff:ff:00:00:00"))
+                        .build();
         testSuccessfulConnectionWithSpecifier(specifier);
     }
 
@@ -670,9 +371,10 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testUserRejectionWithSpecificSsid() {
-        WifiNetworkSpecifier specifier = createSpecifierBuilderWithCredentialFromSavedNetwork()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
-                .build();
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
+                        mTestNetwork)
+                        .build();
         testUserRejectionWithSpecifier(specifier);
     }
 
@@ -683,11 +385,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa2Enterprise() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa2EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -700,11 +402,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa3Enterprise() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -717,11 +419,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
     @Test
     public void testBuilderForWpa3EnterpriseWithStandardApi() {
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3EnterpriseStandardModeConfig(new WifiEnterpriseConfig())
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3EnterpriseConfig(new WifiEnterpriseConfig())
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
@@ -741,11 +443,11 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         enterpriseConfig.setAltSubjectMatch("domain.com");
 
         WifiNetworkSpecifier specifier1 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         WifiNetworkSpecifier specifier2 = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(mTestNetwork.SSID))
+                .setSsid(WifiInfo.sanitizeSsid(mTestNetwork.SSID))
                 .setWpa3Enterprise192BitModeConfig(enterpriseConfig)
                 .build();
         assertThat(specifier1.canBeSatisfiedBy(specifier2)).isTrue();
