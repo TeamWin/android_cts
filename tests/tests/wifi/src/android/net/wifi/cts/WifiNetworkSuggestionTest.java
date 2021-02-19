@@ -16,20 +16,66 @@
 
 package android.net.wifi.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.net.wifi.WifiEnterpriseConfig.Eap.AKA;
 import static android.net.wifi.WifiEnterpriseConfig.Eap.WAPI_CERT;
+import static android.os.Process.myUid;
 
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
+import android.annotation.NonNull;
+import android.annotation.Nullable;
+import android.app.UiAutomation;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.MacAddress;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiEnterpriseConfig;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.hotspot2.PasspointConfiguration;
 import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.platform.test.annotations.AppModeFull;
+import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.core.os.BuildCompat;
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.ShellIdentityUtils;
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -41,10 +87,19 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @AppModeFull(reason = "Cannot get WifiManager in instant app mode")
 @SmallTest
-public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
+@RunWith(AndroidJUnit4.class)
+public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
+    private static final String TAG = "WifiNetworkSuggestionTest";
+
     private static final String TEST_SSID = "testSsid";
     private static final String TEST_BSSID = "00:df:aa:bc:12:23";
     private static final String TEST_PASSPHRASE = "testPassword";
@@ -52,23 +107,150 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     private static final int TEST_PRIORITY_GROUP = 1;
     private static final int TEST_SUB_ID = 1;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
+    private static boolean sWasVerboseLoggingEnabled;
+    private static boolean sWasScanThrottleEnabled;
+    private static boolean sWasWifiEnabled;
+
+    private Context mContext;
+    private WifiManager mWifiManager;
+    private ConnectivityManager mConnectivityManager;
+    private UiDevice mUiDevice;
+    private WifiConfiguration mTestNetwork;
+    private TestNetworkCallback mNsNetworkCallback;
+    private ScheduledExecutorService mExecutorService;
+
+    private static final int DURATION_MILLIS = 10_000;
+    private static final int DURATION_NETWORK_CONNECTION_MILLIS = 60_000;
+    private static final int DURATION_SCREEN_TOGGLE_MILLIS = 2000;
+
+
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        // skip the test if WiFi is not supported
+        // Don't use assumeTrue in @BeforeClass
+        if (!WifiFeature.isWifiSupported(context)) return;
+
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
+        assertThat(wifiManager).isNotNull();
+
+        // turn on verbose logging for tests
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isVerboseLoggingEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setVerboseLoggingEnabled(true));
+        // Disable scan throttling for tests.
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isScanThrottleEnabled());
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setScanThrottleEnabled(false));
+
+        // enable Wifi
+        sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isWifiEnabled());
+        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> wifiManager.isWifiEnabled());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            super.tearDown();
-            return;
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        if (!WifiFeature.isWifiSupported(context)) return;
+
+        WifiManager wifiManager = context.getSystemService(WifiManager.class);
+        assertThat(wifiManager).isNotNull();
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setWifiEnabled(sWasWifiEnabled));
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mWifiManager = mContext.getSystemService(WifiManager.class);
+        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mExecutorService = Executors.newSingleThreadScheduledExecutor();
+
+        // skip the test if WiFi is not supported
+        assumeTrue(WifiFeature.isWifiSupported(mContext));
+        // skip the test if location is not supported
+        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
+
+        assertWithMessage("Please enable location for this test!").that(
+                mContext.getSystemService(LocationManager.class).isLocationEnabled()).isTrue();
+
+        // turn screen on
+        turnScreenOn();
+
+        // Clear any existing app state before each test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+
+        // check we have >= 1 saved network
+        List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.getPrivilegedConfiguredNetworks());
+        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
+        // Pick the last saved network on the device (assumes that it is in range)
+        mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
+
+        // Disconnect & disable auto-join on the saved network to prevent auto-connect from
+        // interfering with the test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> {
+                    for (WifiConfiguration savedNetwork : savedNetworks) {
+                        mWifiManager.disableNetwork(savedNetwork.networkId);
+                    }
+                    mWifiManager.disconnect();
+                });
+
+        // Wait for Wifi to be disconnected.
+        PollingCheck.check(
+                "Wifi not disconnected",
+                20_000,
+                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        // Re-enable networks.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> {
+                    for (WifiConfiguration savedNetwork : mWifiManager.getConfiguredNetworks()) {
+                        mWifiManager.enableNetwork(savedNetwork.networkId, false);
+                    }
+                });
+        // Release the requests after the test.
+        if (mNsNetworkCallback != null) {
+            mConnectivityManager.unregisterNetworkCallback(mNsNetworkCallback);
         }
-        super.tearDown();
+        mExecutorService.shutdownNow();
+        // Clear any existing app state after each test.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        turnScreenOff();
+    }
+
+    private static void setWifiEnabled(boolean enable) throws Exception {
+        // now trigger the change using shell commands.
+        SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
+    }
+
+    private void turnScreenOn() throws Exception {
+        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        mUiDevice.executeShellCommand("wm dismiss-keyguard");
+        // Since the screen on/off intent is ordered, they will not be sent right now.
+        Thread.sleep(DURATION_SCREEN_TOGGLE_MILLIS);
+    }
+
+    private void turnScreenOff() throws Exception {
+        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
+        // Since the screen on/off intent is ordered, they will not be sent right now.
+        Thread.sleep(DURATION_SCREEN_TOGGLE_MILLIS);
     }
 
     private static final String CA_SUITE_B_RSA3072_CERT_STRING =
@@ -99,7 +281,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                     + "27HHbC0JXjNvlm2DLp23v4NTxS7WZGYsxyUj5DZrxBxqCsTXu/01w1BrQKWKh9FM\n"
                     + "aVrlA8omfVODK2CSuw+KhEMHepRv/AUgsLl4L4+RMoa+\n"
                     + "-----END CERTIFICATE-----\n";
-    public static final X509Certificate CA_SUITE_B_RSA3072_CERT =
+    private static final X509Certificate CA_SUITE_B_RSA3072_CERT =
             loadCertificate(CA_SUITE_B_RSA3072_CERT_STRING);
 
     private static final String CA_SUITE_B_ECDSA_CERT_STRING =
@@ -118,7 +300,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                     + "5soIeLVYc8bPYN1pbhXW1gIxALdEe2sh03nBHyQH4adYoZungoCwt8mp/7sJFxou\n"
                     + "9UnRegyBgGzf74ROWdpZHzh+Pg==\n"
                     + "-----END CERTIFICATE-----\n";
-    public static final X509Certificate CA_SUITE_B_ECDSA_CERT =
+    private static final X509Certificate CA_SUITE_B_ECDSA_CERT =
             loadCertificate(CA_SUITE_B_ECDSA_CERT_STRING);
 
     private static final String CLIENT_SUITE_B_RSA3072_CERT_STRING =
@@ -147,7 +329,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                     + "HVVcP7U8RgqrbIjL1QgHU4KBhGi+WSUh/mRplUCNvHgcYdcHi/gHpj/j6ubwqIGV\n"
                     + "z4iSolAHYTmBWcLyE0NgpzE6ntp+53r2KaUJA99l2iGVzbWTwqPSm0XAVw==\n"
                     + "-----END CERTIFICATE-----\n";
-    public static final X509Certificate CLIENT_SUITE_B_RSA3072_CERT =
+    private static final X509Certificate CLIENT_SUITE_B_RSA3072_CERT =
             loadCertificate(CLIENT_SUITE_B_RSA3072_CERT_STRING);
 
     private static final byte[] CLIENT_SUITE_B_RSA3072_KEY_DATA = new byte[]{
@@ -451,7 +633,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
             (byte) 0x93, (byte) 0x9e, (byte) 0x62, (byte) 0x94, (byte) 0xc6, (byte) 0x07,
             (byte) 0x83, (byte) 0x96, (byte) 0xd6, (byte) 0x27, (byte) 0xa6, (byte) 0xd8
     };
-    public static final PrivateKey CLIENT_SUITE_B_RSA3072_KEY =
+    private static final PrivateKey CLIENT_SUITE_B_RSA3072_KEY =
             loadPrivateKey("RSA", CLIENT_SUITE_B_RSA3072_KEY_DATA);
 
     private static final String CLIENT_SUITE_B_ECDSA_CERT_STRING =
@@ -468,7 +650,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
                     + "ueJmP87KF92/thhoQ9OrRo8uJITPmNDswwIwP2Q1AZCSL4BI9dYrqu07Ar+pSkXE\n"
                     + "R7oOqGdZR+d/MvXcFSrbIaLKEoHXmQamIHLe\n"
                     + "-----END CERTIFICATE-----\n";
-    public static final X509Certificate CLIENT_SUITE_B_ECDSA_CERT =
+    private static final X509Certificate CLIENT_SUITE_B_ECDSA_CERT =
             loadCertificate(CLIENT_SUITE_B_ECDSA_CERT_STRING);
 
     private static final byte[] CLIENT_SUITE_B_ECC_KEY_DATA = new byte[]{
@@ -504,7 +686,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
             (byte) 0x4c, (byte) 0x8b, (byte) 0xe1, (byte) 0x93, (byte) 0x42, (byte) 0x0d,
             (byte) 0x67, (byte) 0x1d, (byte) 0xc3, (byte) 0xa2, (byte) 0xeb
     };
-    public static final PrivateKey CLIENT_SUITE_B_ECC_KEY =
+    private static final PrivateKey CLIENT_SUITE_B_ECC_KEY =
             loadPrivateKey("EC", CLIENT_SUITE_B_ECC_KEY_DATA);
 
     private static X509Certificate loadCertificate(String blob) {
@@ -588,11 +770,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa2Passphrase() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                 .setWpa2Passphrase(TEST_PASSPHRASE)
@@ -606,11 +785,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3Passphrase() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWpa3Passphrase(TEST_PASSPHRASE)
@@ -624,11 +800,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWapiPassphrase() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWapiPassphrase(TEST_PASSPHRASE)
@@ -648,11 +821,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa2Enterprise() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
@@ -669,11 +839,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3Enterprise() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
@@ -690,11 +857,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3EnterpriseWithStandardApi() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
@@ -711,11 +875,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3EnterpriseWithSuiteBRsaCerts() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_RSA3072_CERT);
@@ -737,11 +898,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3EnterpriseWithSuiteBEccCerts() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
@@ -763,11 +921,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3Enterprise192bitWithSuiteBRsaCerts() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_RSA3072_CERT);
@@ -789,11 +944,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWpa3Enterprise192bitWithSuiteBEccCerts() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
@@ -815,11 +967,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithWapiEnterprise() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WAPI_CERT);
         WifiNetworkSuggestion suggestion =
@@ -863,11 +1012,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithPasspointConfig() throws Exception {
-        if (!WifiFeature.isWifiSupported(getContext())) {
-            // skip the test if WiFi is not supported
-            return;
-        }
         PasspointConfiguration passpointConfig = createPasspointConfig();
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams(true)
@@ -882,10 +1028,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
      */
+    @Test
     public void testBuilderWithCarrierMergedNetwork() throws Exception {
-        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
@@ -905,11 +1049,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with non enterprise
      * network will fail.
      */
+    @Test
     public void testBuilderWithCarrierMergedNetworkWithNonEnterpriseNetwork() throws Exception {
-        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
-            return;
-        }
-
         try {
             createBuilderWithCommonParams()
                     .setWpa2Passphrase(TEST_PASSPHRASE)
@@ -926,10 +1067,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with unmetered network
      * will fail.
      */
+    @Test
     public void testBuilderWithCarrierMergedNetworkWithUnmeteredNetwork() throws Exception {
-        if (!(WifiFeature.isWifiSupported(getContext()) && BuildCompat.isAtLeastS())) {
-            return;
-        }
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
         enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TLS);
         enterpriseConfig.setCaCertificate(CA_SUITE_B_ECDSA_CERT);
@@ -947,5 +1086,147 @@ public class WifiNetworkSuggestionTest extends WifiJUnit3TestBase {
         }
         fail("Did not receive expected IllegalStateException when tried to build a carrier merged "
                 + "network suggestion with unmetered config");
+    }
+
+    private static WifiNetworkSuggestion.Builder
+    createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+            @NonNull WifiConfiguration network) {
+        WifiNetworkSuggestion.Builder suggestionBuilder = new WifiNetworkSuggestion.Builder()
+                .setSsid(WifiInfo.sanitizeSsid(network.SSID))
+                .setBssid(MacAddress.fromString(network.BSSID));
+        if (network.preSharedKey != null) {
+            if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
+                suggestionBuilder.setWpa2Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
+            } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
+                suggestionBuilder.setWpa3Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
+            } else {
+                fail("Unsupported security type found in saved networks");
+            }
+        } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
+            suggestionBuilder.setIsEnhancedOpen(true);
+        } else if (!network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
+            fail("Unsupported security type found in saved networks");
+        }
+        suggestionBuilder.setIsHiddenSsid(network.hiddenSSID);
+        return suggestionBuilder;
+    }
+
+    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
+        private final CountDownLatch mCountDownLatch;
+        public boolean onAvailableCalled = false;
+        public boolean onUnavailableCalled = false;
+        public NetworkCapabilities networkCapabilities;
+
+        TestNetworkCallback(CountDownLatch countDownLatch) {
+            mCountDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
+                LinkProperties linkProperties, boolean blocked) {
+            onAvailableCalled = true;
+            this.networkCapabilities = networkCapabilities;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onUnavailable() {
+            onUnavailableCalled = true;
+            mCountDownLatch.countDown();
+        }
+    }
+
+    private void assertConnectionEquals(@NonNull WifiConfiguration network,
+            @NonNull WifiInfo wifiInfo) {
+        assertThat(network.SSID).isEqualTo(wifiInfo.getSSID());
+        assertThat(network.BSSID).isEqualTo(wifiInfo.getBSSID());
+    }
+
+    /**
+     * Tests the entire connection flow using the provided suggestion.
+     */
+    private void testConnectionFlowWithSuggestion(
+            WifiConfiguration network, WifiNetworkSuggestion suggestion,
+            @Nullable Integer restrictedNetworkCapability) {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        // File the network request & wait for the callback.
+        mNsNetworkCallback = new TestNetworkCallback(countDownLatch);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            // File a request for restricted (oem paid) wifi network.
+            NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
+                    .addTransportType(TRANSPORT_WIFI)
+                    .addCapability(NET_CAPABILITY_INTERNET);
+            if (restrictedNetworkCapability == null) {
+                // If not a restricted connection, a network callback is sufficient.
+                mConnectivityManager.registerNetworkCallback(nrBuilder.build(), mNsNetworkCallback);
+            } else {
+                nrBuilder.addCapability(restrictedNetworkCapability);
+                mConnectivityManager.requestNetwork(nrBuilder.build(), mNsNetworkCallback);
+            }
+            // Add wifi network suggestion.
+            assertThat(mWifiManager.addNetworkSuggestions(Arrays.asList(suggestion)))
+                    .isEqualTo(WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS);
+            // Wait for the request to reach the wifi stack before kick-start periodic scans.
+            Thread.sleep(100);
+            // Step: Trigger scans periodically to trigger network selection quicker.
+            mExecutorService.scheduleAtFixedRate(() -> {
+                if (!mWifiManager.startScan()) {
+                    Log.w(TAG, "Failed to trigger scan");
+                }
+            }, 0, DURATION_MILLIS, TimeUnit.MILLISECONDS);
+            // now wait for connection to complete and wait for callback
+            assertThat(countDownLatch.await(
+                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+        } catch (InterruptedException e) {
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+        assertThat(mNsNetworkCallback.onAvailableCalled).isTrue();
+        assertConnectionEquals(
+                network, (WifiInfo) mNsNetworkCallback.networkCapabilities.getTransportInfo());
+    }
+
+    /**
+     * Connect to a network using suggestion API.
+     */
+    @Test
+    public void testConnectToSuggestion() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                        .build();
+        testConnectionFlowWithSuggestion(
+                mTestNetwork, suggestion, null /* restrictedNetworkCapability */);
+    }
+
+    /**
+     * Connect to a network using restricted suggestion API.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectToOemPaidSuggestion() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                        .setOemPaid(true)
+                        .build();
+        testConnectionFlowWithSuggestion(mTestNetwork, suggestion, NET_CAPABILITY_OEM_PAID);
+    }
+
+    /**
+     * Connect to a network using restricted suggestion API.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectToOemPrivateSuggestion() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(mTestNetwork)
+                        .setOemPrivate(true)
+                        .build();
+        testConnectionFlowWithSuggestion(mTestNetwork, suggestion, NET_CAPABILITY_OEM_PRIVATE);
     }
 }
