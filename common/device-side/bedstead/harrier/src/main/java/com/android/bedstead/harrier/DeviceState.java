@@ -34,20 +34,22 @@ import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import androidx.test.core.app.ApplicationProvider;
-
-import com.android.bedstead.harrier.annotations.FailureMode;
-import com.android.bedstead.harrier.annotations.RequireFeatures;
-import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.FailureMode;
+import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -77,6 +79,7 @@ import java.util.regex.Pattern;
 public final class DeviceState implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
+    private final TestApis mTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
     private final boolean mSkipTestTeardown;
@@ -181,17 +184,19 @@ public final class DeviceState implements TestRule {
 
     private void requireFeature(String feature, FailureMode failureMode) {
         if (failureMode.equals(FailureMode.FAIL)) {
-            assertThat(mContext.getPackageManager().hasSystemFeature(feature)).isTrue();
+            assertThat(mTestApis.packages().features().contains(feature)).isTrue();
         } else if (failureMode.equals(FailureMode.SKIP)) {
             assumeTrue("Device must have feature " + feature,
-                    mContext.getPackageManager().hasSystemFeature(feature));
+                    mTestApis.packages().features().contains(feature));
         } else {
             throw new IllegalStateException("Unknown failure mode: " + failureMode);
         }
     }
 
     private void requireUserSupported(String userType) {
-        assumeTrue("Device must support user type " + userType + " only supports: " + getSupportedProfileTypes(), getSupportedProfileTypes().contains(userType));
+        assumeTrue("Device must support user type " + userType
+                + " only supports: " + mTestApis.users().supportedTypes(),
+                mTestApis.users().supportedType(userType) != null);
     }
 
     public enum UserType {
@@ -653,35 +658,13 @@ public final class DeviceState implements TestRule {
     }
 
     private int getMaxNumberOfUsersSupported() {
-        String command = "pm get-max-users";
-        String commandOutput = runCommandWithOutput(command);
         try {
-            return Integer.parseInt(commandOutput.substring(commandOutput.lastIndexOf(" ")).trim());
-        } catch (NumberFormatException e) {
+            return ShellCommand.builder("pm get-max-users")
+                    .validate((output) -> output.startsWith("Maximum supported users:"))
+                    .executeAndParseOutput(
+                            (output) -> Integer.parseInt(output.split(": ", 2)[1].trim()));
+        } catch (AdbException e) {
             throw new IllegalStateException("Invalid command output", e);
         }
-    }
-
-    private Set<String> mSupportedProfileTypesCache = null;
-    private static final Pattern USER_TYPE_PATTERN = Pattern.compile("mName: (.+)");
-
-    private Set<String> getSupportedProfileTypes() {
-        if (mSupportedProfileTypesCache != null) {
-            return mSupportedProfileTypesCache;
-        }
-
-        String command = "dumpsys user";
-        String commandOutput = runCommandWithOutput(command);
-
-        String userArea = commandOutput.split("User types \\(\\d+ types\\):")[1].split("\n\n")[0];
-        mSupportedProfileTypesCache = new HashSet<>();
-
-        Matcher matcher = USER_TYPE_PATTERN.matcher(userArea);
-
-        while(matcher.find()) {
-            mSupportedProfileTypesCache.add(matcher.group(1));
-        }
-
-        return mSupportedProfileTypesCache;
     }
 }

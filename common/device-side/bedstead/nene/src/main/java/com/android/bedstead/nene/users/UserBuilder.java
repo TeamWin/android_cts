@@ -71,9 +71,10 @@ public class UserBuilder {
 
         // Expected success string is e.g. "Success: created user id 14"
         try {
-            int userId = Integer.parseInt(
-                    commandBuilder.executeAndValidateOutput(ShellCommandUtils::startsWithSuccess)
-                    .split("id ")[1].trim());
+            int userId =
+                    commandBuilder.validate(ShellCommandUtils::startsWithSuccess)
+                            .executeAndParseOutput(
+                                    (output) -> Integer.parseInt(output.split("id ")[1].trim()));
             return new UnresolvedUser(mUsers, userId);
         } catch (AdbException e) {
             throw new NeneException("Could not create user " + this, e);
