@@ -527,12 +527,14 @@ public class TunerTest {
     public void testOpenDvrRecorder() throws Exception {
         DvrRecorder d = mTuner.openDvrRecorder(100, getExecutor(), getRecordListener());
         assertNotNull(d);
+        d.close();
     }
 
     @Test
     public void testOpenDvPlayback() throws Exception {
         DvrPlayback d = mTuner.openDvrPlayback(100, getExecutor(), getPlaybackListener());
         assertNotNull(d);
+        d.close();
     }
 
     @Test
