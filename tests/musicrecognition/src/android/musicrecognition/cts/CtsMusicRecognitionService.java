@@ -21,10 +21,10 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.ComponentName;
 import android.media.AudioFormat;
 import android.media.MediaMetadata;
-import android.media.musicrecognition.MusicRecognitionManager;
 import android.media.musicrecognition.MusicRecognitionService;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -36,8 +36,10 @@ import java.util.concurrent.TimeUnit;
 
 /** No-op implementation of MusicRecognitionService for testing purposes. */
 public class CtsMusicRecognitionService extends MusicRecognitionService {
+    private static final String TAG = CtsMusicRecognitionService.class.getSimpleName();
+    public static final String SERVICE_PACKAGE = "android.musicrecognition.cts";
     public static final ComponentName SERVICE_COMPONENT = new ComponentName(
-            "android.musicrecognition.cts", CtsMusicRecognitionService.class.getName());
+            SERVICE_PACKAGE, CtsMusicRecognitionService.class.getName());
 
     private static Watcher sWatcher;
 
@@ -54,7 +56,9 @@ public class CtsMusicRecognitionService extends MusicRecognitionService {
         if (sWatcher.failureCode != 0) {
             callback.onRecognitionFailed(sWatcher.failureCode);
         } else {
+            Log.i(TAG, "Reading audio stream...");
             sWatcher.stream = readStream(stream);
+            Log.i(TAG, "Reading audio done.");
             callback.onRecognitionSucceeded(sWatcher.result, sWatcher.resultExtras);
         }
     }
