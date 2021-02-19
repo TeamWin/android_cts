@@ -2288,12 +2288,20 @@ public class PhoneStateListenerTest {
                             TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
                 }
         );
+        long allowedNetworkTypeEnable2g = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G);
+                }
+        );
         assertThat(allowedNetworkTypeUser).isEqualTo(
                 mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER));
         assertThat(allowedNetworkTypePower).isEqualTo(
                 mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER));
         assertThat(allowedNetworkTypeCarrier).isEqualTo(
                 mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER));
+        assertThat(allowedNetworkTypeEnable2g).isEqualTo(
+                mAllowedNetworkTypes.get(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_ENABLE_2G));
 
         // Test unregister
         unRegisterPhoneStateListener(mOnAllowedNetworkTypesChangedCalled,

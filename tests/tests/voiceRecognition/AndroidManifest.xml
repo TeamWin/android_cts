@@ -28,6 +28,15 @@
                   android:label="SpeechRecognitionActivity"
                   android:exported="true">
         </activity>
+
+        <service android:name="CtsRecognitionService"
+                 android:label="@string/service_name"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.speech.RecognitionService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

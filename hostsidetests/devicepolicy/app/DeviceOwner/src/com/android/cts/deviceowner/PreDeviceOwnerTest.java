@@ -15,6 +15,8 @@
  */
 package com.android.cts.deviceowner;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.test.AndroidTestCase;
@@ -41,7 +43,8 @@ public class PreDeviceOwnerTest extends AndroidTestCase {
     }
 
     public void testIsProvisioningAllowedFalse() {
-        assertFalse(mDevicePolicyManager.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE));
+        assertFalse(mDevicePolicyManager
+                .isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE));
     }
 
     public void testIsProvisioningNotAllowedForManagedProfileAction() {
@@ -49,4 +52,8 @@ public class PreDeviceOwnerTest extends AndroidTestCase {
                 .isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE));
     }
 
+    public void testListForegroundAffiliatedUsers_notDeviceOwner() throws Exception {
+        assertThrows(SecurityException.class,
+                () -> mDevicePolicyManager.listForegroundAffiliatedUsers());
+    }
 }

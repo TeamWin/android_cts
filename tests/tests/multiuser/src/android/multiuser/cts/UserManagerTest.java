@@ -60,6 +60,14 @@ public final class UserManagerTest {
         boolean expected = getBooleanProperty(mInstrumentation,
                 "ro.fw.mu.headless_system_user");
         assertWithMessage("isHeadlessSystemUserMode()")
-                .that(mUserManager.isHeadlessSystemUserMode()).isEqualTo(expected);
+                .that(UserManager.isHeadlessSystemUserMode()).isEqualTo(expected);
     }
+
+    @Test
+    public void testIsUserForeground_currentUser() throws Exception {
+        assertWithMessage("isUserForeground() for current user")
+                .that(mUserManager.isUserForeground()).isTrue();
+    }
+    // TODO(b/173541467): add testIsUserForeground_backgroundUser()
+    // TODO(b/179163496): add testIsUserForeground_ tests for profile users
 }
