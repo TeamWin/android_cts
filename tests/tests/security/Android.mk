@@ -45,7 +45,8 @@ LOCAL_JNI_SHARED_LIBRARIES := libctssecurity_jni libcts_jni libnativehelper_comp
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)\
                    src/android/security/cts/activity/ISecureRandomService.aidl\
-                   aidl/android/security/cts/IIsolatedService.aidl
+                   aidl/android/security/cts/IIsolatedService.aidl\
+                   aidl/android/security/cts/CVE_2021_0327/IBadProvider.aidl\
 
 LOCAL_PACKAGE_NAME := CtsSecurityTestCases
 
