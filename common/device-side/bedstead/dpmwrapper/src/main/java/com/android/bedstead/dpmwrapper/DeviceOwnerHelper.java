@@ -29,6 +29,7 @@ import static com.android.bedstead.dpmwrapper.Utils.isHeadlessSystemUser;
 import android.annotation.Nullable;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -128,9 +129,13 @@ public final class DeviceOwnerHelper {
 
         // Methods that use CharSequence instead of String
         if (methodName.equals("wipeData") && parameterTypes.length == 2) {
-            // wipeData() takes a CharSequence, but it's wrapped as String
             return clazz.getDeclaredMethod(methodName,
                     new Class<?>[] { int.class, CharSequence.class });
+        }
+        if ((methodName.equals("setStartUserSessionMessage")
+                || methodName.equals("setEndUserSessionMessage"))) {
+            return clazz.getDeclaredMethod(methodName,
+                    new Class<?>[] { ComponentName.class, CharSequence.class });
         }
 
         // Calls with null parameters (and hence the type cannot be inferred)
