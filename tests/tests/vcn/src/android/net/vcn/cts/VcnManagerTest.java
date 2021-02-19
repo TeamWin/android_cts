@@ -18,12 +18,24 @@ package android.net.vcn.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.ipsec.ike.SaProposal.DH_GROUP_2048_BIT_MODP;
+import static android.net.ipsec.ike.SaProposal.ENCRYPTION_ALGORITHM_AES_GCM_12;
+import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.ipsec.ike.ChildSaProposal;
+import android.net.ipsec.ike.IkeFqdnIdentification;
+import android.net.ipsec.ike.IkeSaProposal;
+import android.net.ipsec.ike.IkeSessionParams;
+import android.net.ipsec.ike.SaProposal;
+import android.net.ipsec.ike.TunnelModeChildSessionParams;
 import android.net.vcn.VcnConfig;
+import android.net.vcn.VcnControlPlaneIkeConfig;
 import android.net.vcn.VcnGatewayConnectionConfig;
 import android.net.vcn.VcnManager;
 import android.os.ParcelUuid;
@@ -50,12 +62,14 @@ public class VcnManagerTest {
     private final VcnManager mVcnManager;
     private final SubscriptionManager mSubscriptionManager;
     private final TelephonyManager mTelephonyManager;
+    private final ConnectivityManager mConnectivityManager;
 
     public VcnManagerTest() {
         mContext = InstrumentationRegistry.getContext();
         mVcnManager = mContext.getSystemService(VcnManager.class);
         mSubscriptionManager = mContext.getSystemService(SubscriptionManager.class);
         mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
+        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
     }
 
     @Before
@@ -64,8 +78,43 @@ public class VcnManagerTest {
     }
 
     private VcnConfig buildVcnConfig() {
+        final IkeSaProposal ikeProposal =
+                new IkeSaProposal.Builder()
+                        .addEncryptionAlgorithm(
+                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .addDhGroup(DH_GROUP_2048_BIT_MODP)
+                        .addPseudorandomFunction(PSEUDORANDOM_FUNCTION_AES128_XCBC)
+                        .build();
+
+        final String serverHostname = "2001:db8:1::100";
+        final String testLocalId = "test.client.com";
+        final String testRemoteId = "test.server.com";
+        final byte[] psk = "psk".getBytes();
+
+        // TODO: b/180521384: Build the IkeSessionParams without a Context when the no-arg
+        // IkeSessionParams.Builder constructor is exposed.
+        final IkeSessionParams ikeParams =
+                new IkeSessionParams.Builder(mContext)
+                        .setServerHostname(serverHostname)
+                        .addSaProposal(ikeProposal)
+                        .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
+                        .setRemoteIdentification(new IkeFqdnIdentification(testRemoteId))
+                        .setAuthPsk(psk)
+                        .build();
+
+        final ChildSaProposal childProposal =
+                new ChildSaProposal.Builder()
+                        .addEncryptionAlgorithm(
+                                ENCRYPTION_ALGORITHM_AES_GCM_12, SaProposal.KEY_LEN_AES_128)
+                        .build();
+        final TunnelModeChildSessionParams childParams =
+                new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
+
+        final VcnControlPlaneIkeConfig controlConfig =
+                new VcnControlPlaneIkeConfig(ikeParams, childParams);
+
         final VcnGatewayConnectionConfig gatewayConnConfig =
-                new VcnGatewayConnectionConfig.Builder()
+                new VcnGatewayConnectionConfig.Builder(controlConfig)
                         .addExposedCapability(NET_CAPABILITY_INTERNET)
                         .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
                         .setRetryInterval(
@@ -84,11 +133,23 @@ public class VcnManagerTest {
 
     @Test(expected = SecurityException.class)
     public void testSetVcnConfig_noCarrierPrivileges() throws Exception {
+        // TODO: b/180521384: Remove the assertion when constructing IkeSessionParams does not
+        // require an active default network.
+        assertNotNull(
+                "You must have an active network connection to complete CTS",
+                mConnectivityManager.getActiveNetwork());
+
         mVcnManager.setVcnConfig(new ParcelUuid(UUID.randomUUID()), buildVcnConfig());
     }
 
     @Test
     public void testSetVcnConfig_withCarrierPrivileges() throws Exception {
+        // TODO: b/180521384: Remove the assertion when constructing IkeSessionParams does not
+        // require an active default network.
+        assertNotNull(
+                "You must have an active network connection to complete CTS",
+                mConnectivityManager.getActiveNetwork());
+
         final int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
         CarrierPrivilegeUtils.withCarrierPrivileges(mContext, dataSubId, () -> {
             SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, dataSubId, (subGrp) -> {
