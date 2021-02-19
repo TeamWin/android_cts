@@ -29,7 +29,6 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.service.dataloader.DataLoaderService;
-import android.text.TextUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -53,6 +52,9 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -233,28 +235,38 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    public void testInstallSysTrace() throws Exception {
-        // Async atrace dump uses less resources but requires periodic pulls.
-        // Overall timeout of 10secs in 100ms intervals should be enough.
-        final int atraceDumpIterations = 100;
-        final int atraceDumpDelayMs = 100;
+    public void testInstallSysTraceDebuggable() throws Exception {
+        doTestInstallSysTrace(TEST_APK);
+    }
 
-        final String expected = "|page_read:";
-        final ByteArrayOutputStream result = new ByteArrayOutputStream();
+    private boolean checkSysTraceForSubstring(String testApk, final String expected,
+            int atraceDumpIterations, int atraceDumpDelayMs) throws Exception {
+        return checkSysTrace(
+                atraceDumpIterations,
+                atraceDumpDelayMs,
+                () -> installPackage(testApk),
+                (stdout) -> stdout.contains(expected));
+    }
+
+    private boolean checkSysTrace(
+            int atraceDumpIterations,
+            int atraceDumpDelayMs,
+            final Callable<Void> installer,
+            final Function<String, Boolean> checker)
+            throws Exception {
+        final int beforeReadDelayMs = 1000;
+
+        final CompletableFuture<Boolean> result = new CompletableFuture<>();
         final Thread readFromProcess = new Thread(() -> {
             try {
                 executeShellCommand("atrace --async_start -b 1024 -c adb");
                 try {
                     for (int i = 0; i < atraceDumpIterations; ++i) {
-                        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(
-                                "atrace --async_dump");
-                        try (InputStream inputStream =
-                                     new ParcelFileDescriptor.AutoCloseInputStream(
-                                stdout)) {
-                            final String found = waitForSubstring(inputStream, expected);
-                            if (!TextUtils.isEmpty(found)) {
-                                result.write(found.getBytes());
-                                return;
+                        final String stdout = executeShellCommand("atrace --async_dump");
+                        try {
+                            if (checker.apply(stdout)) {
+                                result.complete(true);
+                                break;
                             }
                             Thread.currentThread().sleep(atraceDumpDelayMs);
                         } catch (InterruptedException ignored) {
@@ -269,13 +281,27 @@ public class PackageManagerShellCommandIncrementalTest {
         readFromProcess.start();
 
         for (int i = 0; i < 3; ++i) {
-            installPackage(TEST_APK);
+            installer.call();
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            Thread.currentThread().sleep(beforeReadDelayMs);
             uninstallPackageSilently(TEST_APP_PACKAGE);
         }
 
         readFromProcess.join();
-        assertNotEquals(0, result.size());
+        return result.getNow(false);
+    }
+
+    private void doTestInstallSysTrace(String testApk) throws Exception {
+        // Async atrace dump uses less resources but requires periodic pulls.
+        // Overall timeout of 10secs in 100ms intervals should be enough.
+        final int atraceDumpIterations = 100;
+        final int atraceDumpDelayMs = 100;
+        final String expected = "|page_read:";
+
+        assertTrue(
+                "No page reads (" + expected + ") found in atrace dump",
+                checkSysTraceForSubstring(testApk, expected, atraceDumpIterations,
+                        atraceDumpDelayMs));
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
@@ -302,10 +328,11 @@ public class PackageManagerShellCommandIncrementalTest {
         return TEST_APK_PATH + baseName;
     }
 
-    private void installPackage(String baseName) throws IOException {
+    private Void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
                 executeShellCommand("pm install-incremental -t -g " + file.getPath()));
+        return null;
     }
 
     private String uninstallPackageSilently(String packageName) throws IOException {
