@@ -19,11 +19,14 @@ package com.android.bedstead.nene.users;
 import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Process.myUserHandle;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
+import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
+
 import android.os.Build;
 import android.os.UserHandle;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
@@ -32,7 +35,9 @@ import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -84,31 +89,64 @@ public final class Users {
     }
 
     /** Get all supported {@link UserType}s. */
-    @RequiresApi(Build.VERSION_CODES.R)
-    @Nullable
     public Set<UserType> supportedTypes() {
-        if (SDK_INT < Build.VERSION_CODES.R) {
-            return null;
-        }
-        if (mCachedUserTypeValues == null) {
-            // supportedTypes cannot change so we don't need to refill the cache
-            fillCache();
-        }
+        ensureSupportedTypesCacheFilled();
         return mCachedUserTypeValues;
     }
 
     /** Get a {@link UserType} with the given {@code typeName}, or {@code null} */
-    @RequiresApi(Build.VERSION_CODES.R)
-    @Nullable
     public UserType supportedType(String typeName) {
-        if (SDK_INT < Build.VERSION_CODES.R) {
-            return null;
-        }
-        if (mCachedUserTypes == null) {
-            // supportedTypes cannot change so we don't need to refill the cache
-            fillCache();
-        }
+        ensureSupportedTypesCacheFilled();
         return mCachedUserTypes.get(typeName);
+    }
+
+    private void ensureSupportedTypesCacheFilled() {
+        if (mCachedUserTypes != null) {
+            // SupportedTypes don't change so don't need to be refreshed
+            return;
+        }
+        if (SDK_INT < Build.VERSION_CODES.R) {
+            mCachedUserTypes = new HashMap<>();
+            mCachedUserTypes.put(MANAGED_PROFILE_TYPE_NAME, managedProfileUserType());
+            mCachedUserTypes.put(SYSTEM_USER_TYPE_NAME, systemUserType());
+            mCachedUserTypes.put(SECONDARY_USER_TYPE_NAME, secondaryUserType());
+            mCachedUserTypeValues = new HashSet<>();
+            mCachedUserTypeValues.addAll(mCachedUserTypes.values());
+            return;
+        }
+
+        fillCache();
+    }
+
+    private UserType managedProfileUserType() {
+        UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
+        managedProfileMutableUserType.mName = MANAGED_PROFILE_TYPE_NAME;
+        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.PROFILE);
+        managedProfileMutableUserType.mEnabled = true;
+        managedProfileMutableUserType.mMaxAllowed = -1;
+        managedProfileMutableUserType.mMaxAllowedPerParent = 1;
+        return new UserType(managedProfileMutableUserType);
+    }
+
+    private UserType systemUserType() {
+        UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
+        managedProfileMutableUserType.mName = SYSTEM_USER_TYPE_NAME;
+        managedProfileMutableUserType.mBaseType =
+                Set.of(UserType.BaseType.FULL, UserType.BaseType.SYSTEM);
+        managedProfileMutableUserType.mEnabled = true;
+        managedProfileMutableUserType.mMaxAllowed = -1;
+        managedProfileMutableUserType.mMaxAllowedPerParent = -1;
+        return new UserType(managedProfileMutableUserType);
+    }
+
+    private UserType secondaryUserType() {
+        UserType.MutableUserType managedProfileMutableUserType = new UserType.MutableUserType();
+        managedProfileMutableUserType.mName = SECONDARY_USER_TYPE_NAME;
+        managedProfileMutableUserType.mBaseType = Set.of(UserType.BaseType.FULL);
+        managedProfileMutableUserType.mEnabled = true;
+        managedProfileMutableUserType.mMaxAllowed = -1;
+        managedProfileMutableUserType.mMaxAllowedPerParent = -1;
+        return new UserType(managedProfileMutableUserType);
     }
 
     /**
@@ -125,11 +163,32 @@ public final class Users {
             AdbUserParser.ParseResult result = parser.parse(userDumpsysOutput);
 
             mCachedUsers = result.mUsers;
-            mCachedUserTypes = result.mUserTypes;
+            if (result.mUserTypes != null) {
+                mCachedUserTypes = result.mUserTypes;
+            } else {
+                ensureSupportedTypesCacheFilled();
+            }
 
-            // We don't expose users who are currently being removed
-            mCachedUsers.entrySet().removeIf(
-                    integerUserEntry -> integerUserEntry.getValue().isRemoving());
+            Iterator<Map.Entry<Integer, User>> iterator = mCachedUsers.entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                Map.Entry<Integer, User> entry = iterator.next();
+
+                if (entry.getValue().isRemoving()) {
+                    // We don't expose users who are currently being removed
+                    iterator.remove();
+                } else if (SDK_INT < Build.VERSION_CODES.R) {
+                    if (entry.getValue().id() == 0) {
+                        entry.getValue().mMutableUser.mType = supportedType(SYSTEM_USER_TYPE_NAME);
+                        entry.getValue().mMutableUser.mIsPrimary = true;
+                    } else {
+                        // TODO: Mark as profile when there is a parent
+                        entry.getValue().mMutableUser.mType =
+                                supportedType(SECONDARY_USER_TYPE_NAME);
+                        entry.getValue().mMutableUser.mIsPrimary = false;
+                    }
+                }
+            }
 
             mCachedUserTypeValues = new HashSet<>();
             mCachedUserTypeValues.addAll(mCachedUserTypes.values());

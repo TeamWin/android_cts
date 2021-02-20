@@ -16,10 +16,11 @@
 
 package com.android.bedstead.nene.users;
 
+import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+
 import android.os.Build;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -49,7 +50,10 @@ public class UserBuilder {
         return this;
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
+    /** Set the {@link UserType}.
+     *
+     * <p>Defaults to android.os.usertype.full.SECONDARY
+     */
     public UserBuilder type(UserType type) {
         mType = type;
         return this;
@@ -64,7 +68,20 @@ public class UserBuilder {
         ShellCommand.Builder commandBuilder = ShellCommand.builder("pm create-user");
 
         if (mType != null) {
-            commandBuilder.addOption("--user-type", mType.name());
+            if (mType.baseType().contains(UserType.BaseType.SYSTEM)) {
+                throw new NeneException(
+                        "Can not create additional system users " + this);
+            }
+
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                if (!mType.name().equals(SECONDARY_USER_TYPE_NAME)) {
+                    // TODO(scottjonathan): Support creating profiles (which need a parent)
+                    throw new NeneException(
+                            "Can not create users of type " + mType + " on this device");
+                }
+            } else {
+                commandBuilder.addOption("--user-type", mType.name());
+            }
         }
 
         commandBuilder.addOperand(mName);
