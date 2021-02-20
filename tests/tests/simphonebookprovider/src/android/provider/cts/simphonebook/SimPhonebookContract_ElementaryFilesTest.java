@@ -26,6 +26,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -70,14 +71,14 @@ public class SimPhonebookContract_ElementaryFilesTest {
     public final TestRule mRule = RuleChain
             .outerRule(new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY))
             .around(new SimPhonebookRequirementsRule())
-            .around(new SimCleanupRule(ElementaryFiles.EF_ADN));
+            .around(new SimsCleanupRule(ElementaryFiles.EF_ADN));
 
     @Before
     public void setUp() {
-        mResolver = ApplicationProvider.getApplicationContext().getContentResolver();
-        mSubscriptionManager = ApplicationProvider.getApplicationContext().getSystemService(
-                SubscriptionManager.class);
-        mValidSubscriptionId = SubscriptionManager.getDefaultSubscriptionId();
+        Context context = ApplicationProvider.getApplicationContext();
+        mResolver = context.getContentResolver();
+        mSubscriptionManager = context.getSystemService(SubscriptionManager.class);
+        mValidSubscriptionId = new RemovableSims(context).getDefaultSubscriptionId();
     }
 
     @Test
@@ -98,7 +99,7 @@ public class SimPhonebookContract_ElementaryFilesTest {
                     ElementaryFiles.getItemUri(subscriptionId, ElementaryFiles.EF_FDN),
                     new String[]{ElementaryFiles.SUBSCRIPTION_ID}, null, null)) {
                 // If the EF is unsupported the item Uri will return an empty cursor
-                if (cursor.moveToFirst()) {
+                if (Objects.requireNonNull(cursor).moveToFirst()) {
                     assertWithMessage("subscriptionId")
                             .that(subscriptionId).isEqualTo(cursor.getInt(0));
                     fdnSupportedBySubId.append(subscriptionId, true);
@@ -108,7 +109,7 @@ public class SimPhonebookContract_ElementaryFilesTest {
                     ElementaryFiles.getItemUri(subscriptionId, ElementaryFiles.EF_SDN),
                     new String[]{ElementaryFiles.SUBSCRIPTION_ID}, null, null)) {
                 // If the EF is unsupported the item Uri will return an empty cursor
-                if (cursor.moveToFirst()) {
+                if (Objects.requireNonNull(cursor).moveToFirst()) {
                     assertWithMessage("subscriptionId")
                             .that(subscriptionId).isEqualTo(cursor.getInt(0));
                     sdnSupportedBySubId.append(subscriptionId, true);

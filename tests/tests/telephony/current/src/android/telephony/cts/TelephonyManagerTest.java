@@ -160,7 +160,7 @@ public class TelephonyManagerTest {
     private String mSelfCertHash;
 
     private static final int TOLERANCE = 1000;
-    private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 10;
+    private static final int TIMEOUT_FOR_NETWORK_OPS = TOLERANCE * 180;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
     private static final String TAG = "TelephonyManagerTest";

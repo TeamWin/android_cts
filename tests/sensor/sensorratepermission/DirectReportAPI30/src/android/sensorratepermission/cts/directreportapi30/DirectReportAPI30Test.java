@@ -32,6 +32,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -72,6 +73,9 @@ public class DirectReportAPI30Test {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         mDirectReportTestHelper = new SensorRatePermissionDirectReportTestHelper(context,
                 sensorType);
+        Assume.assumeTrue("Failed to create mDirectReportTestHelper!",
+                mDirectReportTestHelper != null);
+
         mSensorManager = context.getSystemService(SensorManager.class);
         mSensorPrivacyManager = context.getSystemService(SensorPrivacyManager.class);
         mUserID = UserHandle.myUserId();
@@ -79,7 +83,9 @@ public class DirectReportAPI30Test {
 
     @After
     public void tearDown() throws InterruptedException {
-        mDirectReportTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        if (mDirectReportTestHelper != null) {
+            mDirectReportTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        }
     }
 
     @Test
@@ -126,9 +132,6 @@ public class DirectReportAPI30Test {
         // the sensor corresponds to a sampling rate of > 200 Hz and that the sensor supports
         // direct channel.
         Sensor s = mDirectReportTestHelper.getSensor();
-        if (s == null) {
-            return;
-        }
         if (s.getHighestDirectReportRateLevel() <= SensorDirectChannel.RATE_FAST
                 || !s.isDirectChannelTypeSupported(SensorDirectChannel.TYPE_HARDWARE_BUFFER)) {
             return;

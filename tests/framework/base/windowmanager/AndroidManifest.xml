@@ -435,6 +435,9 @@
 
         <activity android:name="android.server.wm.WindowUntrustedTouchTest$TestActivity"
                   android:exported="true"/>
+
+        <activity android:name="android.server.wm.DisplayHashManagerTest$TestActivity"
+                   android:exported="true"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

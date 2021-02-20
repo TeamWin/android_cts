@@ -37,7 +37,6 @@ import android.platform.test.annotations.LargeTest;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.provider.SimPhonebookContract.SimRecords;
 import android.telephony.PhoneNumberUtils;
-import android.telephony.SubscriptionManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
@@ -72,9 +71,8 @@ public class SimPhonebookContract_SimRecordsTest {
      */
     private String mPin2 = "1234";
 
-    private final SimCleanupRule mAdnCleanupRule = new SimCleanupRule(ElementaryFiles.EF_ADN);
-    private final SimCleanupRule mFdnCleanupRule = new SimCleanupRule(ElementaryFiles.EF_FDN,
-            mPin2);
+    private final SimsCleanupRule mAdnCleanupRule = new SimsCleanupRule(ElementaryFiles.EF_ADN);
+    private final SimsCleanupRule mFdnCleanupRule = new SimsCleanupRule(ElementaryFiles.EF_FDN);
     @Rule
     public final TestRule mRule = RuleChain
             .outerRule(new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY))
@@ -97,7 +95,7 @@ public class SimPhonebookContract_SimRecordsTest {
     public void setUp() {
         mContext = ApplicationProvider.getApplicationContext();
         mResolver = mContext.getContentResolver();
-        mDefaultSubscriptionId = SubscriptionManager.getDefaultSubscriptionId();
+        mDefaultSubscriptionId = new RemovableSims(mContext).getDefaultSubscriptionId();
 
         Bundle args = InstrumentationRegistry.getArguments();
         if (args.containsKey("sim-pin2")) {

@@ -133,9 +133,11 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
     public void setUp() throws Exception {
         Log.d(TAG, "setUp");
         super.setUp();
-
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mContentResolver = mContext.getContentResolver();
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.WRITE_MEDIA_STORAGE");
         mMediaTranscodeManager = mContext.getSystemService(MediaTranscodeManager.class);
         assertNotNull(mMediaTranscodeManager);
         androidx.test.InstrumentationRegistry.registerInstance(
@@ -155,6 +157,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
     @Override
     public void tearDown() throws Exception {
+        InstrumentationRegistry
+                .getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         super.tearDown();
     }
 
@@ -614,7 +618,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
 
     // Transcoding video on behalf of init dameon and expect UnsupportedOperationException due to
     // CTS test is not a privilege caller.
-    public void testPidAndUidForwarding() throws Exception {
+    // Disable this test as Android S will only allow MediaProvider to access the API.
+    /*public void testPidAndUidForwarding() throws Exception {
         if (shouldSkip()) {
             return;
         }
@@ -644,7 +649,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                                 transcodeCompleteSemaphore.release();
                             });
         });
-    }
+    }*/
 
     public void testTranscodingProgressUpdate() throws Exception {
         if (shouldSkip()) {

@@ -18,6 +18,15 @@
 #          Please don't change this file to Android.bp.
 LOCAL_PATH := $(call my-dir)
 
+# Default cflags
+MY_CFLAGS :=  -Wall -Werror -Wno-unused-parameter -D__ANDROID_ARCH__=\"$(TARGET_ARCH_ABI)\"
+
+# If the TARGET_ARCH_ABI is 32bit, it adds __LIVE_ONLY_32BIT__ in MY_CFLAGS.
+ABIS_FOR_32BIT_ONLY := armeabi-v7a armeabi x86 mips
+ifneq ($(filter $(TARGET_ARCH_ABI),$(ABIS_FOR_32BIT_ONLY)),)
+MY_CFLAGS += -D__LIVE_ONLY_32BIT__=1
+endif
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libsplitappjni
@@ -25,7 +34,7 @@ LOCAL_SRC_FILES := com_android_cts_splitapp_Native.cpp
 
 LOCAL_LDLIBS += -llog
 
-LOCAL_CFLAGS := -D__ANDROID_ARCH__=\"$(TARGET_ARCH_ABI)\"
+LOCAL_CFLAGS := $(MY_CFLAGS)
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
@@ -39,8 +48,7 @@ LOCAL_SRC_FILES := com_android_cts_splitapp_Native.cpp
 
 LOCAL_LDLIBS += -llog
 
-LOCAL_CFLAGS := -D__ANDROID_ARCH__=\"$(TARGET_ARCH_ABI)\" \
-                -D__REVISION_HAVE_SUB__=1
+LOCAL_CFLAGS := $(MY_CFLAGS) -D__REVISION_HAVE_SUB__=1
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests

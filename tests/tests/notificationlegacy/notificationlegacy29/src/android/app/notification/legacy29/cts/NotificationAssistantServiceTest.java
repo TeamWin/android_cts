@@ -16,6 +16,8 @@
 
 package android.app.notification.legacy29.cts;
 
+import static android.service.notification.NotificationAssistantService.FEEDBACK_RATING;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.TestCase.assertFalse;
@@ -37,7 +39,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.os.UserHandle;
 import android.provider.Telephony;
 import android.service.notification.Adjustment;
 import android.service.notification.NotificationAssistantService;
@@ -55,12 +56,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -671,6 +668,23 @@ public class NotificationAssistantServiceTest {
 
     }
 
+    @Test
+    public void testOnNotificationFeedbackReceived() throws Exception {
+        setUpListeners(); // also enables assistant
+        mUi.adoptShellPermissionIdentity("android.permission.STATUS_BAR_SERVICE", "android.permission.EXPAND_STATUS_BAR");
+
+        sendNotification(1, ICON_ID);
+        StatusBarNotification sbn = getFirstNotificationFromPackage(TestNotificationListener.PKG);
+
+        Bundle feedback = new Bundle();
+        feedback.putInt(FEEDBACK_RATING, 1);
+
+        mStatusBarManager.sendNotificationFeedback(sbn.getKey(), feedback);
+        Thread.sleep(SLEEP_TIME * 2);
+        assertEquals(1, mNotificationAssistantService.notificationFeedback);
+
+        mUi.dropShellPermissionIdentity();
+    }
 
     private StatusBarNotification getFirstNotificationFromPackage(String PKG)
             throws InterruptedException {

@@ -98,14 +98,7 @@ public final class Packages {
         if (user == null || apkFile == null) {
             throw new NullPointerException();
         }
-        User resolvedUser = user.resolve();
-        // TODO(scottjonathan): Consider if it's worth the additional call here - we could
-        //  optionally instead timeout the shell command (it doesn't respond if the user isn't
-        //  started)
-        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
-            throw new NeneException("Packages can not be installed in non-started users "
-                    + "(Trying to install into user " + resolvedUser + ")");
-        }
+        checkUserStartedBeforeInstall(user);
 
         // By default when using ADB we don't know the package name of the file upon success.
         // we could make an additional call to get it (either parsing all installed and finding the
@@ -121,6 +114,43 @@ public final class Packages {
                     .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
         } catch (AdbException e) {
             throw new NeneException("Could not install " + apkFile + " for user " + user, e);
+        }
+    }
+
+    /**
+     * Install an APK from the given byte array to a given {@link UserReference}.
+     *
+     * <p>The user must be started.
+     *
+     * <p>If the package is already installed, this will replace it.
+     */
+    public void install(UserReference user, byte[] apkFile) {
+        if (user == null || apkFile == null) {
+            throw new NullPointerException();
+        }
+
+        checkUserStartedBeforeInstall(user);
+
+        try {
+            // Expected output "Success"
+            ShellCommand.builderForUser(user, "pm install")
+                    .addOption("-S", apkFile.length)
+                    .addOperand("-r")
+                    .writeToStdIn(apkFile)
+                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+        } catch (AdbException e) {
+            throw new NeneException("Could not install from bytes for user " + user, e);
+        }
+    }
+
+    private void checkUserStartedBeforeInstall(UserReference user) {
+        User resolvedUser = user.resolve();
+        // TODO(scottjonathan): Consider if it's worth the additional call here - we could
+        //  optionally instead timeout the shell command (it doesn't respond if the user isn't
+        //  started)
+        if (resolvedUser == null || resolvedUser.state() != RUNNING_UNLOCKED) {
+            throw new NeneException("Packages can not be installed in non-started users "
+                    + "(Trying to install into user " + resolvedUser + ")");
         }
     }
 
