@@ -90,7 +90,7 @@ _REPEATED_TESTS = {
     'scene_change': []
 }
 
-_DST_SCENE_DIR = '/sdcard/Download/'
+_DST_SCENE_DIR = '/mnt/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
 
 

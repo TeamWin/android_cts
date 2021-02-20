@@ -23,12 +23,15 @@ import static org.testng.Assert.assertThrows;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 @RunWith(JUnit4.class)
 public class PackagesTest {
@@ -39,6 +42,7 @@ public class PackagesTest {
     private static final String TEST_APP_PACKAGE_NAME =
             "com.android.bedstead.nene.testapps.TestApp1";
     private static final File TEST_APP_APK_FILE = new File("/data/local/tmp/NeneTestApp1.apk");
+    private static final byte[] TEST_APP_BYTES = loadBytes(TEST_APP_APK_FILE);
 
     private final TestApis mTestApis = new TestApis();
     private final UserReference mUser = mTestApis.users().instrumented();
@@ -46,6 +50,14 @@ public class PackagesTest {
             mTestApis.packages().find("com.android.providers.telephony");
     private final UserReference mNonExistingUser = mTestApis.users().find(99999);
     private final File mApkFile = new File("");
+
+    private static byte[] loadBytes(File file) {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return FileUtils.readInputStreamFully(fis);
+        } catch (IOException e) {
+            throw new AssertionError("Could not read file bytes");
+        }
+    }
 
     @Test
     public void construct_nullTestApis_throwsException() {
@@ -122,14 +134,39 @@ public class PackagesTest {
     }
 
     @Test
+    public void install_byteArray_nullUser_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.packages().install(/* user= */ null, TEST_APP_BYTES));
+    }
+
+    @Test
     public void install_nullApkFile_throwsException() {
         assertThrows(NullPointerException.class,
                 () -> mTestApis.packages().install(mUser, (File) /* apkFile= */ null));
     }
 
     @Test
+    public void install_nullByteArray_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.packages().install(mUser, (byte[]) /* apkFile= */ null));
+    }
+
+    @Test
     public void install_instrumentedUser_isInstalled() {
         mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_APK_FILE);
+        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+
+        try {
+            assertThat(packageReference.resolve().installedOnUsers())
+                    .contains(mTestApis.users().instrumented());
+        } finally {
+            packageReference.uninstall(mTestApis.users().instrumented());
+        }
+    }
+
+    @Test
+    public void install_byteArray_instrumentedUser_isInstalled() {
+        mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_BYTES);
         PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
@@ -154,6 +191,19 @@ public class PackagesTest {
     }
 
     @Test
+    public void install_byteArray_differentUser_isInstalled() {
+        UserReference user = mTestApis.users().createUser().createAndStart();
+        mTestApis.packages().install(user, TEST_APP_BYTES);
+        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+
+        try {
+            assertThat(packageReference.resolve().installedOnUsers()).contains(user);
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
     public void install_userNotStarted_throwsException() {
         UserReference user = mTestApis.users().createUser().create().stop();
 
@@ -166,9 +216,27 @@ public class PackagesTest {
     }
 
     @Test
+    public void install_byteArray_userNotStarted_throwsException() {
+        UserReference user = mTestApis.users().createUser().create().stop();
+
+        try {
+            assertThrows(NeneException.class, () -> mTestApis.packages().install(user,
+                    TEST_APP_BYTES));
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
     public void install_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class, () -> mTestApis.packages().install(mNonExistingUser,
                 TEST_APP_APK_FILE));
+    }
+
+    @Test
+    public void install_byteArray_userDoesNotExist_throwsException() {
+        assertThrows(NeneException.class, () -> mTestApis.packages().install(mNonExistingUser,
+                TEST_APP_BYTES));
     }
 
     @Test
@@ -185,6 +253,19 @@ public class PackagesTest {
     }
 
     @Test
+    public void install_byteArray_alreadyInstalledForUser_installs() {
+        mTestApis.packages().install(mUser, TEST_APP_BYTES);
+        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+
+        try {
+            mTestApis.packages().install(mUser, TEST_APP_BYTES);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
+        } finally {
+            packageReference.uninstall(mUser);
+        }
+    }
+
+    @Test
     public void install_alreadyInstalledOnOtherUser_installs() {
         UserReference otherUser = mTestApis.users().createUser().createAndStart();
         PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
@@ -192,6 +273,22 @@ public class PackagesTest {
             mTestApis.packages().install(otherUser, TEST_APP_APK_FILE);
 
             mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
+        } finally {
+            packageReference.uninstall(mUser);
+            otherUser.remove();
+        }
+    }
+
+    @Test
+    public void install_byteArray_alreadyInstalledOnOtherUser_installs() {
+        UserReference otherUser = mTestApis.users().createUser().createAndStart();
+        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+        try {
+            mTestApis.packages().install(otherUser, TEST_APP_BYTES);
+
+            mTestApis.packages().install(mUser, TEST_APP_BYTES);
 
             assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
         } finally {

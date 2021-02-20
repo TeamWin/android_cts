@@ -3172,8 +3172,9 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_security" />
             <!-- KeyChain is only installed on communication-oriented devices inheriting core.mk -->
+            <!-- KeyChain is disabled for automotive as feature is not fully supported. -->
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback" />
+                    android:value="android.hardware.type.watch:android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
             <meta-data android:name="display_mode"
                        android:value="single_display_mode" />
         </activity>
