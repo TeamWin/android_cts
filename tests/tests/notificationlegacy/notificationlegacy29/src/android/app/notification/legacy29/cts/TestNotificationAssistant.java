@@ -39,6 +39,7 @@ public class TestNotificationAssistant extends NotificationAssistantService {
     int notificationHiddenCount = 0;
     int notificationClickCount = 0;
     int notificationRank = -1;
+    int notificationFeedback = 0;
     String snoozedKey;
     String snoozedUntilContext;
     private NotificationManager mNotificationManager;
@@ -140,4 +141,10 @@ public class TestNotificationAssistant extends NotificationAssistantService {
 
     @Override
     public void onNotificationClicked(String key) { notificationClickCount++; }
+
+    @Override
+    public void onNotificationFeedbackReceived(String key, RankingMap rankingMap, Bundle feedback) {
+        notificationFeedback = feedback.getInt(FEEDBACK_RATING, 0);
+    }
+
 }

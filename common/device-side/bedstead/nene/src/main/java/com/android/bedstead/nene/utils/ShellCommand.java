@@ -87,6 +87,14 @@ public final class ShellCommand {
         }
 
         /**
+         * Write the given {@code stdIn} to standard in.
+         */
+        public Builder writeToStdIn(byte[] stdIn) {
+            mStdInBytes = stdIn;
+            return this;
+        }
+
+        /**
          * Build the full command including all options and operands.
          */
         public String build() {
@@ -97,7 +105,8 @@ public final class ShellCommand {
         public String execute() throws AdbException {
             return ShellCommandUtils.executeCommand(
                     commandBuilder.toString(),
-                    /* allowEmptyOutput= */ mAllowEmptyOutput);
+                    /* allowEmptyOutput= */ mAllowEmptyOutput,
+                    mStdInBytes);
         }
 
         /** See {@link ShellCommandUtils#executeCommandAndValidateOutput(String, Function)}. */
@@ -106,6 +115,7 @@ public final class ShellCommand {
             return ShellCommandUtils.executeCommandAndValidateOutput(
                     commandBuilder.toString(),
                     /* allowEmptyOutput= */ mAllowEmptyOutput,
+                    mStdInBytes,
                     outputSuccessChecker);
         }
     }

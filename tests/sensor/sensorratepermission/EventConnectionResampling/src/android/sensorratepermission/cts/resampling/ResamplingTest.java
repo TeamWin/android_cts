@@ -39,7 +39,6 @@ import android.hardware.cts.helpers.sensorverification.StandardDeviationVerifica
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.Assert;
-import org.junit.Assume;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -73,8 +72,9 @@ public class ResamplingTest extends SensorTestCase {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         SensorManager sensorManager = mContext.getSystemService(SensorManager.class);
         Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        Assume.assumeTrue("Failed to find a sensor!", sensor != null);
-
+        if (sensor == null) {
+            return;
+        }
         mTestEnvironment = new TestSensorEnvironment(
                 mContext,
                 sensor,
@@ -85,6 +85,9 @@ public class ResamplingTest extends SensorTestCase {
     }
 
     public void testResamplingEventConnections() throws Exception {
+        if (mTestEnvironment == null || mEventConnectionTestHelper == null) {
+            return;
+        }
         // Start an app that registers a listener with high sampling rate
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(
@@ -105,6 +108,9 @@ public class ResamplingTest extends SensorTestCase {
     }
 
     public void testSensorDefaultVerifications() throws Exception {
+        if (mTestEnvironment == null) {
+            return;
+        }
         TestSensorOperation op = TestSensorOperation.createOperation(
                 mTestEnvironment,
                 NUM_EVENTS_COUNT);

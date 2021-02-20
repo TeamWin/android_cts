@@ -28,6 +28,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -66,13 +67,18 @@ public class DirectReportAPI31Test {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         mDirectReportTestHelper = new SensorRatePermissionDirectReportTestHelper(context,
                 sensorType);
+        Assume.assumeTrue("Failed to create mDirectReportTestHelper!",
+                mDirectReportTestHelper != null);
+
         mSensorPrivacyManager = context.getSystemService(SensorPrivacyManager.class);
         mUserID = UserHandle.myUserId();
     }
 
     @After
     public void tearDown() throws InterruptedException {
-        mDirectReportTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        if (mDirectReportTestHelper != null) {
+            mDirectReportTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
+        }
     }
 
     @Test

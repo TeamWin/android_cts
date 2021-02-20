@@ -194,7 +194,12 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
                 matchingNetworksWithBssid.size() >= 2);
         // Pick any 2 bssid for test.
         mTestNetworkForPeerToPeer = matchingNetworksWithBssid.get(0);
-        mTestNetworkForInternetConnection = matchingNetworksWithBssid.get(1);
+        // Try to find a bssid for another saved network in range. If none exists, fallback
+        // to using 2 bssid's for the same network.
+        mTestNetworkForInternetConnection = matchingNetworksWithBssid.stream()
+                .filter(w -> !w.SSID.equals(mTestNetworkForPeerToPeer.SSID))
+                .findAny()
+                .orElse(matchingNetworksWithBssid.get(1));
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.

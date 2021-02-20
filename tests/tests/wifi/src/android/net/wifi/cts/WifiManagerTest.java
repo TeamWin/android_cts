@@ -1704,8 +1704,6 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         if (BuildCompat.isAtLeastS()) {
             assertEquals(currentConfig.getMacRandomizationSetting(),
                     testSoftApConfig.getMacRandomizationSetting());
-            assertTrue(Arrays.equals(currentConfig.getBands(),
-                    testSoftApConfig.getBands()));
             assertEquals(currentConfig.getChannels().toString(),
                     testSoftApConfig.getChannels().toString());
             assertEquals(currentConfig.isBridgedModeOpportunisticShutdownEnabled(),
@@ -1803,15 +1801,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 () -> mWifiManager.isWifiEnabled() == true);
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
-
+            int[] testBands = {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ};
             // Test bridged SoftApConfiguration set and get (setBands)
             SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
                     .setSsid(TEST_SSID_UNQUOTED)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                    .setBands(new int[] {
-                    SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ})
+                    .setBands(testBands)
                     .build();
-            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testSoftApConfig.getBands(),
+            boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testBands,
                     callback.getCurrentSoftApCapability());
             verifySetGetSoftApConfig(testSoftApConfig);
 
@@ -2005,6 +2002,10 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         TestSoftApCallback callback = new TestSoftApCallback(mLock);
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            // check that tethering is supported by the device
+            if (!mTetheringManager.isTetheringSupported()) {
+                return;
+            }
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
 

@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.net.Uri;
@@ -29,7 +30,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
-import android.telephony.SubscriptionManager;
 
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
@@ -57,7 +57,7 @@ public class SimPhonebookContract_ContentNotificationsTest {
 
     @ClassRule
     public static final SimsPowerRule SIMS_POWER_RULE = SimsPowerRule.on();
-    private final SimCleanupRule mSimCleanupRule = new SimCleanupRule(ElementaryFiles.EF_ADN);
+    private final SimsCleanupRule mSimCleanupRule = new SimsCleanupRule(ElementaryFiles.EF_ADN);
     @Rule
     public final TestRule mRule = RuleChain
             .outerRule(new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY))
@@ -70,7 +70,8 @@ public class SimPhonebookContract_ContentNotificationsTest {
 
     @Before
     public void setUp() {
-        mResolver = ApplicationProvider.getApplicationContext().getContentResolver();
+        Context context = ApplicationProvider.getApplicationContext();
+        mResolver = context.getContentResolver();
         mObserver = new RecordingContentObserver();
         mResolver.registerContentObserver(SimPhonebookContract.AUTHORITY_URI, false, mObserver);
         assertThat(mObserver.observed).isEmpty();
@@ -78,7 +79,7 @@ public class SimPhonebookContract_ContentNotificationsTest {
         // Make sure the provider has been created.
         mResolver.getType(SimPhonebookContract.SimRecords.getContentUri(1, EF_ADN));
 
-        mSubId = SubscriptionManager.getDefaultSubscriptionId();
+        mSubId = new RemovableSims(context).getDefaultSubscriptionId();
     }
 
     @After
