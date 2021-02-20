@@ -17,9 +17,22 @@
 package com.android.cts.isolatedsplitapp;
 
 public class Native {
+    static boolean sIsLoadedLibrary;
     static {
-        System.loadLibrary("splitappjni_isolated");
+        try {
+            System.loadLibrary("splitappjni_isolated");
+            sIsLoadedLibrary = true;
+        } catch (UnsatisfiedLinkError e) {
+            sIsLoadedLibrary = false;
+        }
     }
 
     public static native int add(int numberA, int numberB);
+    public static native int getNumberAViaProxy();
+    public static native int getNumberBViaProxy();
+    public static native int getNumberADirectly();
+    public static native int getNumberBDirectly();
+    public static boolean isLoadedLibrary() {
+        return sIsLoadedLibrary;
+    }
 }
