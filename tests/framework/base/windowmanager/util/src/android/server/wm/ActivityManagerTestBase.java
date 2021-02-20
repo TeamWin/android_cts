@@ -116,6 +116,7 @@ import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
 import android.app.Instrumentation;
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -1203,6 +1204,10 @@ public abstract class ActivityManagerTestBase {
                 .getBoolean(android.R.bool.config_perDisplayFocusEnabled);
     }
 
+    protected static void removeLockCredential() {
+        runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
+    }
+
     protected static boolean remoteInsetsControllerControlsSystemBars() {
         return getInstrumentation().getTargetContext().getResources()
                 .getBoolean(android.R.bool.config_remoteInsetsControllerControlsSystemBars);
@@ -1361,7 +1366,6 @@ public abstract class ActivityManagerTestBase {
 
         public LockScreenSession(int flags) {
             mIsLockDisabled = isLockDisabled();
-            mLockCredentialSet = false;
             // Enable lock screen (swipe) by default.
             setLockDisabled(false);
             if ((flags & FLAG_REMOVE_ACTIVITIES_ON_CLOSE) != 0) {
@@ -1386,11 +1390,6 @@ public abstract class ActivityManagerTestBase {
                     mInstrumentation.sendStringSync(LOCK_CREDENTIAL));
             pressEnterButton();
             return this;
-        }
-
-        private void removeLockCredential() {
-            runCommandAndPrintOutput("locksettings clear --old " + LOCK_CREDENTIAL);
-            mLockCredentialSet = false;
         }
 
         LockScreenSession disableLockScreen() {
@@ -1454,6 +1453,7 @@ public abstract class ActivityManagerTestBase {
             setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
+                mLockCredentialSet = false;
             }
 
             // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
@@ -2480,8 +2480,34 @@ public abstract class ActivityManagerTestBase {
      * to collect multiple errors.
      */
     private class PostAssertionRule extends ErrorCollector {
+        private Throwable mLastError;
+
         @Override
         protected void verify() throws Throwable {
+            if (mLastError != null) {
+                // Try to recover the bad state of device to avoid subsequent test failures.
+                final KeyguardManager kgm = mContext.getSystemService(KeyguardManager.class);
+                if (kgm != null && kgm.isKeyguardLocked()) {
+                    mLastError.addSuppressed(new IllegalStateException("Keyguard is locked"));
+                    // To clear the credential immediately, the screen need to be turned on.
+                    pressWakeupButton();
+                    removeLockCredential();
+                    // Off/on to refresh the keyguard state.
+                    pressSleepButton();
+                    pressWakeupButton();
+                    pressUnlockButton();
+                }
+                final String overlayDisplaySettings = Settings.Global.getString(
+                        mContext.getContentResolver(), Settings.Global.OVERLAY_DISPLAY_DEVICES);
+                if (overlayDisplaySettings != null && overlayDisplaySettings.length() > 0) {
+                    mLastError.addSuppressed(new IllegalStateException(
+                            "Overlay display is found: " + overlayDisplaySettings));
+                    // Remove the overlay display because it may obscure the screen and causes the
+                    // next tests to fail.
+                    SettingsSession.delete(Settings.Global.getUriFor(
+                            Settings.Global.OVERLAY_DISPLAY_DEVICES));
+                }
+            }
             if (!sIllegalTaskStateFound) {
                 // Skip if a illegal task state was already found in previous test, or all tests
                 // afterward could also fail and fire unnecessary false alarms.
@@ -2493,6 +2519,12 @@ public abstract class ActivityManagerTestBase {
                 }
             }
             super.verify();
+        }
+
+        @Override
+        public void addError(Throwable error) {
+            super.addError(error);
+            mLastError = error;
         }
     }
 
