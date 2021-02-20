@@ -41,6 +41,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         DeviceUtils.installStatsdTestApp(getDevice(), mCtsBuild);
+        DeviceUtils.turnScreenOn(getDevice());
         Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
     }
 
