@@ -77,7 +77,7 @@ public class MediaDrmTest {
                 Assert.assertFalse("Empty logs", logMessages.isEmpty());
             } catch (UnsupportedOperationException e) {
                 Log.w(TAG, scheme.toString() + ": no LogMessage support", e);
-                return;
+                continue;
             }
 
             long end = System.currentTimeMillis();
