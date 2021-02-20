@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * A receiver that allows caller to wait for the broadcast synchronously. Notice that you should not
@@ -50,21 +51,36 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
     private final BlockingQueue<Intent> mBlockingQueue;
     private final List<String> mExpectedActions;
     private final Context mContext;
+    @Nullable
+    private final Function<Intent, Boolean> mChecker;
 
     public BlockingBroadcastReceiver(Context context, String expectedAction) {
-        this(context, List.of(expectedAction));
+        this(context, expectedAction, /* checker= */ null);
+    }
+
+    public BlockingBroadcastReceiver(Context context, String expectedAction,
+            Function<Intent, Boolean> checker) {
+        this(context, List.of(expectedAction), checker);
     }
 
     public BlockingBroadcastReceiver(Context context, List<String> expectedActions) {
+        this(context, expectedActions, /* checker= */ null);
+    }
+
+    public BlockingBroadcastReceiver(
+            Context context, List<String> expectedActions, Function<Intent, Boolean> checker) {
         mContext = context;
         mExpectedActions = expectedActions;
         mBlockingQueue = new ArrayBlockingQueue<>(1);
+        mChecker = checker;
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         if (mExpectedActions.contains(intent.getAction())) {
-            mBlockingQueue.add(intent);
+            if (mChecker == null || mChecker.apply(intent)) {
+                mBlockingQueue.add(intent);
+            }
         }
     }
 
@@ -75,11 +91,33 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
     }
 
     /**
+     * Wait until the broadcast.
+     *
+     * <p>If no matching broadcasts is received within 60 seconds an {@link AssertionError} will
+     * be thrown.
+     */
+    public void awaitForBroadcastOrFail() {
+        awaitForBroadcastOrFail(DEFAULT_TIMEOUT_SECONDS * 1000);
+    }
+
+    /**
      * Wait until the broadcast and return the received broadcast intent. {@code null} is returned
      * if no broadcast with expected action is received within 60 seconds.
      */
     public @Nullable Intent awaitForBroadcast() {
         return awaitForBroadcast(DEFAULT_TIMEOUT_SECONDS * 1000);
+    }
+
+    /**
+     * Wait until the broadcast.
+     *
+     * <p>If no matching broadcasts is received within the given timeout an {@link AssertionError}
+     * will be thrown.
+     */
+    public void awaitForBroadcastOrFail(long timeoutMillis) {
+        if (awaitForBroadcast(timeoutMillis) == null) {
+            throw new AssertionError("Did not receive matching broadcast");
+        }
     }
 
     /**
