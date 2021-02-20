@@ -41,6 +41,7 @@ android_test_helper_app {
     manifest: "AndroidManifest_isolated_jni.xml",
     jni_libs: ["libsplitappjni_isolated"],
     use_embedded_native_libs: false, // android:extractNativeLibs="true"
+    srcs: ["src/**/*.java"],
     test_suites: TARGET_TEST_SUITES,
 }
 
@@ -80,6 +81,7 @@ android_test_helper_app {
     manifest: "AndroidManifest_isolated_jni.xml",
     jni_libs: ["libsplitappjni_isolated"],
     use_embedded_native_libs: true, // android:extractNativeLibs="false"
+    srcs: ["src/**/*.java"],
     test_suites: TARGET_TEST_SUITES,
 }
 
