@@ -20,6 +20,7 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -351,6 +352,48 @@ public class SplitAppTest {
     @Test
     public void shouldNotFoundFeatureC() throws Exception {
         assertActivityDoNotExist(FEATURE_C_ACTIVITY);
+    }
+
+    @Test
+    public void testNativeJni_shouldBeLoaded() throws Exception {
+        assertThat(Native.add(7, 11), equalTo(18));
+    }
+
+    @Test
+    public void testNativeSplit_withoutExtractLibs_nativeLibraryCannotBeLoaded() throws Exception {
+        final Intent intent = new Intent();
+        intent.setClassName(PACKAGE, "com.android.cts.isolatedsplitapp.jni.JniActivity");
+        mActivityRule.launchActivity(intent);
+        mActivityRule.finishActivity();
+        Instrumentation.ActivityResult result = mActivityRule.getActivityResult();
+        final Intent resultData = result.getResultData();
+        final String errorMessage = resultData.getStringExtra(Intent.EXTRA_RETURN_RESULT);
+        assertThat(errorMessage, containsString("dlopen failed"));
+    }
+
+    @Test
+    public void testNative_getNumberADirectly_shouldBeSeven() throws Exception {
+        assertThat(Native.getNumberADirectly(), equalTo(7));
+    }
+
+    @Test
+    public void testNative_getNumberAViaProxy_shouldBeSeven() throws Exception {
+        assertThat(Native.getNumberAViaProxy(), equalTo(7));
+    }
+
+    @Test
+    public void testNative_getNumberBDirectly_shouldBeEleven() throws Exception {
+        assertThat(Native.getNumberBDirectly(), equalTo(11));
+    }
+
+    @Test
+    public void testNative_getNumberBViaProxy_shouldBeEleven() throws Exception {
+        assertThat(Native.getNumberBViaProxy(), equalTo(11));
+    }
+
+    @Test
+    public void testNative_cannotLoadSharedLibrary() throws Exception {
+        assertThat(Native.isLoadedLibrary(), equalTo(false));
     }
 
     private void assertActivityDoNotExist(ComponentName activity) {
