@@ -73,8 +73,18 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    public void testDevicePolicySafetyCheckerIntegration() throws Exception {
-        executeProfileOwnerTest("DevicePolicySafetyCheckerIntegrationTest");
+    public void testDevicePolicySafetyCheckerIntegration_allOperations() throws Exception {
+        executeDevicePolicySafetyCheckerIntegrationTest("testAllOperations");
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_isSafeOperation() throws Exception {
+        executeDevicePolicySafetyCheckerIntegrationTest("testIsSafeOperation");
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_unsafeStateException() throws Exception {
+        executeDevicePolicySafetyCheckerIntegrationTest("testUnsafeStateException");
     }
 
     @Override
@@ -94,5 +104,10 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     protected void executeProfileOwnerTestMethod(String className, String testName)
             throws Exception {
         runDeviceTestsAsUser(PROFILE_OWNER_PKG, className, testName, mUserId);
+    }
+
+    private void executeDevicePolicySafetyCheckerIntegrationTest(String testName) throws Exception {
+        executeProfileOwnerTestMethod(
+                PROFILE_OWNER_PKG + "." + "DevicePolicySafetyCheckerIntegrationTest", testName);
     }
 }
