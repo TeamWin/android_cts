@@ -28,16 +28,16 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.Surface;
 import android.view.ViewGroup.LayoutParams;
-import android.view.WindowManager;
 import android.widget.ImageView;
 
 import java.nio.ByteBuffer;
@@ -75,6 +75,9 @@ public class VirtualDisplayTest extends AndroidTestCase {
     private ImageListener mImageListener;
     private HandlerThread mCheckThread;
     private Handler mCheckHandler;
+
+    private static final int VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS = 1 << 9;
+    private static final int VIRTUAL_DISPLAY_FLAG_TRUSTED = 1 << 10;
 
     @Override
     protected void setUp() throws Exception {
@@ -116,6 +119,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it.
      */
+    @SecurityTest
     public void testPrivateVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface, 0);
@@ -139,6 +143,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private presentation virtual display and show
      * its own windows on it.
      */
+    @SecurityTest
     public void testPrivatePresentationVirtualDisplay() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, mSurface,
@@ -163,6 +168,7 @@ public class VirtualDisplayTest extends AndroidTestCase {
      * Ensures that an application can create a private virtual display and show
      * its own windows on it where the surface is attached or detached dynamically.
      */
+    @SecurityTest
     public void testPrivateVirtualDisplayWithDynamicSurface() throws Exception {
         VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
                 WIDTH, HEIGHT, DENSITY, null, 0);
@@ -188,6 +194,51 @@ public class VirtualDisplayTest extends AndroidTestCase {
             virtualDisplay.release();
         }
         assertDisplayUnregistered(display);
+    }
+
+    /**
+     * Ensures that {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS} will
+     * be clear if an application creates an virtual display without the
+     * flag {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_TRUSTED}.
+     */
+    @SecurityTest
+    public void testUntrustedSysDecorVirtualDisplay() throws Exception {
+        VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
+                WIDTH, HEIGHT, DENSITY, mSurface,
+                VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS);
+        assertNotNull("virtual display must not be null", virtualDisplay);
+
+        Display display = virtualDisplay.getDisplay();
+        try {
+            // Verify that the created virtual display doesn't have flags
+            // FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS.
+            assertDisplayRegistered(display, Display.FLAG_PRIVATE);
+            assertEquals(mSurface, virtualDisplay.getSurface());
+
+            // Show a private presentation on the display.
+            assertDisplayCanShowPresentation("private presentation window",
+                    display, BLUEISH, 0);
+        } finally {
+            virtualDisplay.release();
+        }
+        assertDisplayUnregistered(display);
+    }
+
+    /**
+     * Ensures that throws {@link SecurityException} when an application creates a trusted virtual
+     * display without holding the permission {@code ADD_TRUSTED_DISPLAY}.
+     */
+    @SecurityTest
+    public void testTrustedVirtualDisplay() throws Exception {
+        try {
+            VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(NAME,
+                    WIDTH, HEIGHT, DENSITY, mSurface, VIRTUAL_DISPLAY_FLAG_TRUSTED);
+        } catch (SecurityException e) {
+            // Expected.
+            return;
+        }
+        fail("SecurityException must be thrown if a trusted virtual display is created without"
+                + "holding the permission ADD_TRUSTED_DISPLAY.");
     }
 
     private void assertDisplayRegistered(Display display, int flags) {

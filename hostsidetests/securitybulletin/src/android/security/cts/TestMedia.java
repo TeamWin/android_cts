@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 import junit.framework.Assert;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -43,6 +44,209 @@ public class TestMedia extends SecurityTestCase {
      * To prevent merge conflicts, add tests for O below this comment, before any
      * existing test methods
      ******************************************************************************/
+
+    /**
+     * b/37239013
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-07")
+    @Test
+    public void testPocCVE_2017_0697() throws Exception {
+        String inputFiles[] = {"cve_2017_0697.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0697",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/127702368
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2126() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2126", null, getDevice());
+    }
+
+    /**
+     * b/66969349
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_13180() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13180", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/111210196
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2019-12")
+    @Test
+    public void testPocCVE_2019_2228() throws Exception {
+        String inputFiles[] = {"cve_2019_2228_ipp.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2228",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/157650336
+     * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0450() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0450", null, getDevice());
+    }
+
+    /**
+     * b/156997193
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0409() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0409";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/156999009
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0408() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0408";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/161894517
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0421() throws Exception {
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        String binaryName = "CVE-2020-0421";
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
+     * b/132082342
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2133() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
+    }
+
+    /**
+     * b/132083376
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-08")
+    @Test
+    public void testPocCVE_2019_2134() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
+    }
+
+    /**
+     * b/31470908
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2017-04")
+    @Test
+    public void testPocCVE_2016_10244() throws Exception {
+        String inputFiles[] = {"cve_2016_10244"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-10244",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/27793367
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2016-06")
+    @Test
+    public void testPocCVE_2016_2485() throws Exception {
+        String inputFiles[] = {"cve_2016_2485.raw"};
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2016-2485",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/141890807
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-01")
+    @Test
+    public void testPocCVE_2020_0007() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0007", null, getDevice());
+    }
+
+    /**
+     * b/118372692
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-02")
+    @Test
+    public void testPocCVE_2019_1988() throws Exception {
+        String inputFiles[] = {"cve_2019_1988.mp4"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-1988",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/63522430
+     * Vulnerability Behaviour: SIGSEGV in media.codec
+     */
+    @SecurityTest(minPatchLevel = "2018-01")
+    @Test
+    public void testPocCVE_2017_0817() throws Exception {
+        String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0817", null, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
+     * b/36104177
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2017-09")
+    @Test
+    public void testPocCVE_2017_0670() throws Exception {
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0670", null, getDevice());
+    }
+
+    /**
+     * b/68159767
+     * Vulnerability Behaviour: EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2018-02")
+    @Test
+    public void testPocCVE_2017_13234() throws Exception {
+        String inputFiles[] = { "cve_2017_13234.xmf" };
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13234",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
 
     /**
      * b/74122779
@@ -162,6 +366,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2017-11")
     @Test
     public void testPocCVE_2017_0840() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-0840", null, getDevice(),
                 processPatternStrings);
@@ -174,6 +379,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2018-02")
     @Test
     public void testPocCVE_2017_13241() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13241", null, getDevice(),
                 processPatternStrings);
@@ -279,6 +485,26 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/158762825
+     * Vulnerability Behaviour: SIGABRT in self
+     */
+    @SecurityTest(minPatchLevel = "2020-11")
+    @Test
+    public void testPocCVE_2020_0451() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
+        String inputFiles[] = {"cve_2020_0451.aac"};
+        String binaryName = "CVE-2020-0451";
+        String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
+        AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
+        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        testConfig.config.setSignals(signals);
+        testConfig.arguments = AdbUtils.TMP_PATH + inputFiles[0];
+        testConfig.inputFiles = Arrays.asList(inputFiles);
+        testConfig.inputFilesDestination = AdbUtils.TMP_PATH;
+        AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
+    }
+
+    /**
      * b/112891564
      * Vulnerability Behaviour: SIGSEGV in self (Android P),
      *                          SIGABRT in self (Android Q onward)
@@ -300,12 +526,40 @@ public class TestMedia extends SecurityTestCase {
      ******************************************************************************/
 
     /**
+     * b/143464314
+     * Vulnerability Behaviour: SIGSEGV in self / EXIT_VULNERABLE (113)
+     */
+    @SecurityTest(minPatchLevel = "2020-10")
+    @Test
+    public void testPocCVE_2020_0213() throws Exception {
+        assumeFalse(moduleIsPlayManaged("com.google.android.media.swcodec"));
+        String inputFiles[] = {"cve_2020_0213.hevc", "cve_2020_0213_info.txt"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0213",
+            AdbUtils.TMP_PATH + inputFiles[0] + " " + AdbUtils.TMP_PATH + inputFiles[1],
+            inputFiles, AdbUtils.TMP_PATH, getDevice());
+    }
+
+    /**
+     * b/166268541
+     * Vulnerability Behaviour: SIGSEGV in media.swcodec
+     */
+    @SecurityTest(minPatchLevel = "2020-12")
+    @Test
+    public void testPocCVE_2020_0470() throws Exception {
+        String inputFiles[] = {"cve_2020_0470.mp4"};
+        String processPatternStrings[] = {"media\\.swcodec"};
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0470",
+                AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice(),
+                processPatternStrings);
+    }
+
+    /**
      * b/120426980
      * Vulnerability Behaviour: SIGABRT in self
      */
     @SecurityTest(minPatchLevel = "2019-09")
     @Test
-        public void testPocCVE_2019_9362() throws Exception {
+    public void testPocCVE_2019_9362() throws Exception {
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         String binaryName = "CVE-2019-9362";
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
@@ -355,6 +609,7 @@ public class TestMedia extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-09")
     @Test
     public void testPocCVE_2019_9347() throws Exception {
+        pocPusher.only32();
         String processPatternStrings[] = {"media\\.codec", "omx@\\d+?\\.\\d+?-service"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-9347", null, getDevice(),
                 processPatternStrings);

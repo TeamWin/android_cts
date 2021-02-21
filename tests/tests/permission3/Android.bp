@@ -31,8 +31,6 @@ android_test {
         "ctstestrunner-axt",
     ],
     data: [
-        ":CtsPermissionEscalationAppNonRuntime",
-        ":CtsPermissionEscalationAppRuntime",
         ":CtsPermissionPolicyApp25",
         ":CtsUsePermissionApp22",
         ":CtsUsePermissionApp22CalendarOnly",
