@@ -706,9 +706,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         }
 
         // When the lock screen is removed, the ShowWhenLocked activity will be dismissed using the
-        // back button, which should send it to the stopped state.
-        waitAndAssertActivityStates(state(showWhenLockedActivity, ON_STOP));
-        LifecycleVerifier.assertResumeToStopSequence(
+        // back button, which should finish the activity.
+        waitAndAssertActivityStates(state(showWhenLockedActivity, ON_DESTROY));
+        LifecycleVerifier.assertResumeToDestroySequence(
                 ShowWhenLockedCallbackTrackingActivity.class, getLifecycleLog());
     }
 
