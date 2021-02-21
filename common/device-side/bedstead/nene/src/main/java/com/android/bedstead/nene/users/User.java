@@ -30,6 +30,9 @@ public final class User extends UserReference {
 
     private static final String LOG_TAG = "User";
 
+    /* From UserInfo */
+    static final int FLAG_MANAGED_PROFILE = 0x00000020;
+
     public enum UserState {
         NOT_RUNNING,
         RUNNING_LOCKED,
@@ -61,6 +64,8 @@ public final class User extends UserReference {
         @Nullable Boolean mIsPrimary;
         @Nullable UserState mState;
         @Nullable Boolean mIsRemoving;
+        @Nullable Integer mFlags;
+        @Nullable UserReference mParent;
     }
 
     final MutableUser mMutableUser;
@@ -107,6 +112,23 @@ public final class User extends UserReference {
      */
     public Boolean isPrimary() {
         return mMutableUser.mIsPrimary;
+    }
+
+    boolean hasFlag(int flag) {
+        if (mMutableUser.mFlags == null) {
+            return false;
+        }
+        return (mMutableUser.mFlags & flag) != 0;
+    }
+
+    /**
+     * Return the parent of this profile.
+     *
+     * <p>Returns {@code null} if this user is not a profile.
+     */
+    @Nullable
+    public UserReference parent() {
+        return mMutableUser.mParent;
     }
 
     @Override
