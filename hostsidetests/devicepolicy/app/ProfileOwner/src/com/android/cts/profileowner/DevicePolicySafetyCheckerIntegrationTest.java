@@ -15,6 +15,8 @@
  */
 package com.android.cts.profileowner;
 
+import android.app.admin.DevicePolicyManager;
+
 import com.android.cts.devicepolicy.DevicePolicySafetyCheckerIntegrationTester;
 
 // TODO(b/174859111): move to automotive-only section
@@ -32,5 +34,19 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseProfileO
      */
     public void testAllOperations() {
         mTester.testAllOperations(mDevicePolicyManager, getWho());
+    }
+
+    /**
+     * Tests {@link DevicePolicyManager#isSafeOperation(int)}.
+     */
+    public void testIsSafeOperation() {
+        mTester.testIsSafeOperation(mDevicePolicyManager);
+    }
+
+    /**
+     * Tests {@link android.app.admin.UnsafeStateException} properties.
+     */
+    public void testUnsafeStateException() {
+        mTester.testUnsafeStateException(mDevicePolicyManager, getWho());
     }
 }
