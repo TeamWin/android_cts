@@ -25,6 +25,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileNotFoundException;
+
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class IsolatedSplitsTests extends BaseAppSecurityTest {
     private static final String PKG = "com.android.cts.isolatedsplitapp";
@@ -45,6 +47,27 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     private static final String APK_FEATURE_C = "CtsIsolatedSplitAppFeatureC.apk";
     private static final String APK_FEATURE_C_pl = "CtsIsolatedSplitAppFeatureC_pl.apk";
     private static final String APK_FEATURE_A_DiffRev = "CtsIsolatedSplitAppFeatureADiffRev.apk";
+
+    private static final String APK_BASE_WITHOUT_EXTRACTING = APK_BASE;
+    private static final String APK_FEATURE_JNI_WITHOUT_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsFalseJni.apk";
+    private static final String APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsFalseNumberProviderA.apk";
+    private static final String APK_FEATURE_PROVIDER_B_WITHOUT_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsFalseNumberProviderB.apk";
+    private static final String APK_FEATURE_PROXY_WITHOUT_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsFalseNumberProxy.apk";
+
+    private static final String APK_BASE_WITH_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsTrue.apk";
+    private static final String APK_FEATURE_JNI_WITH_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsTrueJni.apk";
+    private static final String APK_FEATURE_PROVIDER_A_WITH_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsTrueNumberProviderA.apk";
+    private static final String APK_FEATURE_PROVIDER_B_WITH_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsTrueNumberProviderB.apk";
+    private static final String APK_FEATURE_PROXY_WITH_EXTRACTING =
+            "CtsIsolatedSplitAppExtractNativeLibsTrueNumberProxy.apk";
 
     @Before
     public void setUp() throws Exception {
@@ -292,5 +315,154 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
         new InstallMultiple(instant).inheritFrom(PKG).removeSplit("feature_c").run();
         Utils.runDeviceTestsAsCurrentUser(getDevice(), PKG, TEST_CLASS,
                 "shouldNotFoundFeatureC");
+    }
+
+    private InstallMultiple configureInstallMultiple(boolean instant, String...apks)
+            throws FileNotFoundException {
+        InstallMultiple installMultiple = new InstallMultiple(instant);
+        for (String apk : apks) {
+            installMultiple.addFile(apk);
+        }
+        return installMultiple;
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseFalse_splitTrue_full()
+            throws Exception {
+        configureInstallMultiple(false, APK_BASE_WITHOUT_EXTRACTING,
+                APK_FEATURE_JNI_WITH_EXTRACTING, APK_FEATURE_PROXY_WITH_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITH_EXTRACTING).runExpectingFailure(
+                "INSTALL_FAILED_INVALID_APK");
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseFalse_splitTrue_instant()
+            throws Exception {
+        configureInstallMultiple(true, APK_BASE_WITHOUT_EXTRACTING, APK_FEATURE_JNI_WITH_EXTRACTING,
+                APK_FEATURE_PROXY_WITH_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITH_EXTRACTING).runExpectingFailure(
+                "INSTALL_FAILED_INVALID_APK");
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseFalse_splitFalse_full()
+            throws Exception {
+        configureInstallMultiple(false, APK_BASE_WITHOUT_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseFalse_splitFalse_instant()
+            throws Exception {
+        configureInstallMultiple(true, APK_BASE_WITHOUT_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseTrue_splitTrue_full()
+            throws Exception {
+        configureInstallMultiple(false, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITH_EXTRACTING,
+                APK_FEATURE_PROXY_WITH_EXTRACTING, APK_FEATURE_PROVIDER_A_WITH_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseTrue_splitTrue_instant()
+            throws Exception {
+        configureInstallMultiple(true, APK_BASE_WITH_EXTRACTING, APK_FEATURE_JNI_WITH_EXTRACTING,
+                APK_FEATURE_PROXY_WITH_EXTRACTING, APK_FEATURE_PROVIDER_A_WITH_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseTrue_splitFalse_full()
+            throws Exception {
+        configureInstallMultiple(false, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testNativeInstallable_extractNativeLibs_baseTrue_splitFalse_instant()
+            throws Exception {
+        configureInstallMultiple(true, APK_BASE_WITH_EXTRACTING, APK_FEATURE_JNI_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROXY_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING).run();
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testAccessNativeSymbol_bothBaseAndSplitExtracting_full() throws Exception {
+        testAccessNativeSymbol(false, true, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITH_EXTRACTING, APK_FEATURE_PROVIDER_A_WITH_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITH_EXTRACTING, APK_FEATURE_PROXY_WITH_EXTRACTING);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testAccessNativeSymbol_bothBaseAndSplitExtracting_instant() throws Exception {
+        testAccessNativeSymbol(true, true, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITH_EXTRACTING, APK_FEATURE_PROVIDER_A_WITH_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITH_EXTRACTING, APK_FEATURE_PROXY_WITH_EXTRACTING);
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testAccessNativeSymbol_onlyBaseExtracting_full() throws Exception {
+        testAccessNativeSymbol(false, true, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testAccessNativeSymbol_onlyBaseExtracting_instant() throws Exception {
+        testAccessNativeSymbol(true, true, APK_BASE_WITH_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING);
+    }
+
+    @Test
+    @AppModeFull(reason = "'full' portion of the hostside test")
+    public void testAccessNativeSymbol_neitherBaseNorSplitExtracting_full() throws Exception {
+        testAccessNativeSymbol(false, false, APK_BASE_WITHOUT_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING);
+    }
+
+    @Test
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
+    public void testAccessNativeSymbol_neitherBaseNorSplitExtracting_instant() throws Exception {
+        testAccessNativeSymbol(true, false, APK_BASE_WITHOUT_EXTRACTING,
+                APK_FEATURE_JNI_WITHOUT_EXTRACTING, APK_FEATURE_PROVIDER_A_WITHOUT_EXTRACTING,
+                APK_FEATURE_PROVIDER_B_WITHOUT_EXTRACTING, APK_FEATURE_PROXY_WITHOUT_EXTRACTING);
+    }
+
+    private void testAccessNativeSymbol(boolean instant, boolean expectedLoadedLibrary,
+            String baseApk, String jniApk, String providerAApk, String providerBApk,
+            String providerProxyApk) throws Exception {
+        configureInstallMultiple(instant, baseApk, jniApk, providerAApk, providerBApk,
+                providerProxyApk).run();
+        if (expectedLoadedLibrary) {
+            runDeviceTests(PKG, TEST_CLASS, "testNative_getNumberAViaProxy_shouldBeSeven");
+            runDeviceTests(PKG, TEST_CLASS, "testNative_getNumberBDirectly_shouldBeEleven");
+            runDeviceTests(PKG, TEST_CLASS, "testNative_getNumberADirectly_shouldBeSeven");
+            runDeviceTests(PKG, TEST_CLASS, "testNative_getNumberBViaProxy_shouldBeEleven");
+        } else {
+            runDeviceTests(PKG, TEST_CLASS, "testNative_cannotLoadSharedLibrary");
+            runDeviceTests(
+                    PKG,
+                    TEST_CLASS,
+                    "testNativeSplit_withoutExtractLibs_nativeLibraryCannotBeLoaded");
+        }
     }
 }
