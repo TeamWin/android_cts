@@ -869,6 +869,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    public void testDevicePolicySafetyCheckerIntegration_onOperationSafetyStateChanged()
+            throws Exception {
+        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest",
+                "testOnOperationSafetyStateChanged");
+    }
+
+    @Test
     public void testListForegroundAffiliatedUsers_notDeviceOwner() throws Exception {
         if (!removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
             fail("Failed to remove device owner for user " + mDeviceOwnerUserId);

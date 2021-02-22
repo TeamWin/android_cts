@@ -25,6 +25,8 @@ import android.util.Log;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
+import com.android.cts.devicepolicy.OperationSafetyChangedCallback;
+import com.android.cts.devicepolicy.OperationSafetyChangedEvent;
 
 public class BasicAdminReceiver extends DeviceAdminReceiver {
 
@@ -47,11 +49,10 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        Log.d(TAG, "onReceive(userId=" + context.getUserId() + "): " + action);
-
         if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
 
+        String action = intent.getAction();
+        Log.d(TAG, "onReceive(userId=" + context.getUserId() + "): " + action);
         super.onReceive(context, intent);
     }
 
@@ -88,13 +89,24 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
     @Override
     public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
             int networkLogsCount) {
-        Log.d(TAG, "onNetworkLogsAvailable(): token=" + batchToken + ", count=" + networkLogsCount);
+        Log.d(TAG, "onNetworkLogsAvailable() on user " + context.getUserId()
+                + ": token=" + batchToken + ", count=" + networkLogsCount);
         super.onNetworkLogsAvailable(context, intent, batchToken, networkLogsCount);
         // send the broadcast, the rest of the test happens in NetworkLoggingTest
         Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
         batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
 
         DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, batchIntent);
+    }
+
+    @Override
+    public void onOperationSafetyStateChanged(Context context, int reason, boolean isSafe) {
+        OperationSafetyChangedEvent event = new OperationSafetyChangedEvent(reason, isSafe);
+        Log.d(TAG, "onOperationSafetyStateChanged() on user " + context.getUserId() + ": " + event);
+
+        Intent intent = OperationSafetyChangedCallback.intentFor(event);
+
+        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, intent);
     }
 
     private void sendUserBroadcast(Context context, String action, UserHandle userHandle) {

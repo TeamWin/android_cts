@@ -20,6 +20,7 @@ import static com.android.bedstead.dpmwrapper.Utils.isCurrentUserOnHeadlessSyste
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -27,6 +28,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
  * Helper class used by the test apps.
  */
 public final class TestAppHelper {
+
+    private static final String TAG = TestAppHelper.class.getSimpleName();
 
     /**
      * Called by test case to register a {@link BrodcastReceiver} to receive intents sent by the
@@ -38,6 +41,8 @@ public final class TestAppHelper {
             TestAppCallbacksReceiver.registerReceiver(context, receiver, filter);
             return;
         }
+        Log.d(TAG, "Registering " + receiver + " to receive " + Utils.toString(filter)
+                + " locally on user " + context.getUserId());
         LocalBroadcastManager.getInstance(context).registerReceiver(receiver, filter);
     }
 
@@ -50,6 +55,7 @@ public final class TestAppHelper {
             TestAppCallbacksReceiver.unregisterReceiver(context, receiver);
             return;
         }
+        Log.d(TAG, "Unegistering " + receiver + " locally on user " + context.getUserId());
         LocalBroadcastManager.getInstance(context).unregisterReceiver(receiver);
     }
 

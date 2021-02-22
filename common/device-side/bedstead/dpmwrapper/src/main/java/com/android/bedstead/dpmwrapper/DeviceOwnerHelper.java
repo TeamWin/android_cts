@@ -118,6 +118,8 @@ public final class DeviceOwnerHelper {
             TestAppCallbacksReceiver.sendBroadcast(context, intent);
             return;
         }
+        Log.d(TAG, "Broadcasting " + intent.getAction() + " locally on user "
+                + context.getUserId());
         LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 
