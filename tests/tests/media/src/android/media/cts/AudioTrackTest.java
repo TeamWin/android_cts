@@ -2918,6 +2918,22 @@ public class AudioTrackTest {
             audioTrack.getAudioDescriptionMixLeveldB(), 0.f /*delta*/);
     }
 
+    @Test
+    public void testSetLogSessionId() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        AudioTrack audioTrack = null;
+        try {
+            audioTrack = new AudioTrack.Builder().build();
+            audioTrack.setLogSessionId("Hello World"); // for now, any string will do.
+        } finally {
+            if (audioTrack != null) {
+                audioTrack.release();
+            }
+        }
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
