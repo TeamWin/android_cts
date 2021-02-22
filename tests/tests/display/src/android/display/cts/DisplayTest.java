@@ -18,8 +18,14 @@ package android.display.cts;
 
 import static android.view.Display.DEFAULT_DISPLAY;
 
-import static org.junit.Assert.*;
-import static org.junit.Assume.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.Activity;
@@ -33,6 +39,7 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.hardware.display.DeviceProductInfo;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
 import android.os.Bundle;
@@ -69,9 +76,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(AndroidJUnit4.class)
 public class DisplayTest {
@@ -658,6 +665,36 @@ public class DisplayTest {
                 && mSupportedWideGamuts.length > 0;
         final boolean supportsP3 = list.contains(displayP3) || list.contains(dciP3);
         assertEquals(supportsWideGamut, supportsP3);
+    }
+
+    @Test
+    public void testGetDeviceProductInfo() {
+        DeviceProductInfo deviceProductInfo = mDefaultDisplay.getDeviceProductInfo();
+        assumeNotNull(deviceProductInfo);
+
+        assertNotNull(deviceProductInfo.getManufacturerPnpId());
+
+        assertNotNull(deviceProductInfo.getProductId());
+
+        final boolean isYearPresent = (deviceProductInfo.getModelYear() != -1) ||
+                (deviceProductInfo.getManufactureYear() != -1);
+        assertTrue(isYearPresent);
+        int year = deviceProductInfo.getModelYear() != -1 ?
+                deviceProductInfo.getModelYear() : deviceProductInfo.getManufactureYear();
+        // Verify if the model year or manufacture year is greater than or equal to 1990.
+        // This assumption is based on Section of 3.4.4 - Week and Year of Manufacture or Model Year
+        // of VESA EDID STANDARD Version 1, Revision 4
+        assertTrue(year >= 1990);
+
+        List<Integer> allowedConnectionToSinkValues = List.of(
+                DeviceProductInfo.CONNECTION_TO_SINK_UNKNOWN,
+                DeviceProductInfo.CONNECTION_TO_SINK_BUILT_IN,
+                DeviceProductInfo.CONNECTION_TO_SINK_DIRECT,
+                DeviceProductInfo.CONNECTION_TO_SINK_TRANSITIVE
+        );
+        assertTrue(
+                allowedConnectionToSinkValues.contains(
+                        deviceProductInfo.getConnectionToSinkType()));
     }
 
     /**
