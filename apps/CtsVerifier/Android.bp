@@ -6,6 +6,7 @@ filegroup {
 android_test {
     name: "CtsVerifier",
     defaults: ["cts_error_prone_rules_tests"],
+    additional_manifests: ["AndroidManifest-common.xml"],
 
     compile_multilib: "both",
 
