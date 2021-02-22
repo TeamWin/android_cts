@@ -145,6 +145,12 @@ final class DevicePolicyManagerWrapper
             // Used by ListForegroundAffiliatedUsersTest
             doAnswer(answer).when(spy).listForegroundAffiliatedUsers();
 
+            // Used by UserSessionTest
+            doAnswer(answer).when(spy).getStartUserSessionMessage(any());
+            doAnswer(answer).when(spy).setStartUserSessionMessage(any(), any());
+            doAnswer(answer).when(spy).getEndUserSessionMessage(any());
+            doAnswer(answer).when(spy).setEndUserSessionMessage(any(), any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
