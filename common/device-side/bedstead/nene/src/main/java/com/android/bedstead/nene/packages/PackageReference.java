@@ -22,7 +22,6 @@ import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
-import com.android.bedstead.nene.utils.ShellCommandUtils;
 
 import java.io.File;
 
@@ -83,6 +82,8 @@ public abstract class PackageReference {
      *
      * <p>If this is the last user which has this package installed, then the package will no
      * longer {@link #resolve()}.
+     *
+     * <p>If the package is not installed for the given user, nothing will happen.
      */
     public PackageReference uninstall(UserReference user) {
         if (user == null) {
@@ -92,7 +93,10 @@ public abstract class PackageReference {
             // Expected output "Success"
             ShellCommand.builderForUser(user, "pm uninstall")
                     .addOperand(mPackageName)
-                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .validate((output) -> {
+                        output = output.toUpperCase();
+                        return output.startsWith("SUCCESS") || output.contains("NOT INSTALLED FOR");
+                    })
                     .execute();
             return this;
         } catch (AdbException e) {
@@ -113,5 +117,13 @@ public abstract class PackageReference {
 
         PackageReference other = (PackageReference) obj;
         return other.mPackageName.equals(mPackageName);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder("PackageReference{");
+        stringBuilder.append("packageName=" + mPackageName);
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 }
