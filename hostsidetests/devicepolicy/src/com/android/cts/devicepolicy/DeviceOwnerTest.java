@@ -853,8 +853,19 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    public void testDevicePolicySafetyCheckerIntegration() throws Exception {
+    public void testDevicePolicySafetyCheckerIntegration_allOperations() throws Exception {
         executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testAllOperations");
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_isSafeOperation() throws Exception {
+        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest", "testIsSafeOperation");
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_unsafeStateException() throws Exception {
+        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest",
+                "testUnsafeStateException");
     }
 
     @Test

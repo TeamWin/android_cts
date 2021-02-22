@@ -29,7 +29,10 @@ import static android.app.admin.DevicePolicyManager.OPERATION_SET_USER_RESTRICTI
 import static android.app.admin.DevicePolicyManager.operationSafetyReasonToString;
 import static android.app.admin.DevicePolicyManager.operationToString;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.fail;
+import static org.testng.Assert.expectThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.UnsafeStateException;
@@ -75,6 +78,7 @@ public class DevicePolicySafetyCheckerIntegrationTester {
      * Tests that all safety-aware operations are properly implemented.
      */
     public final void testAllOperations(DevicePolicyManager dpm, ComponentName admin) {
+        Log.d(TAG, "testAllOperations: dpm=" + dpm + ", admin=" + admin);
         Objects.requireNonNull(dpm);
 
         List<String> failures = new ArrayList<>();
@@ -97,6 +101,52 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         if (!failures.isEmpty()) {
             fail(failures.size() + " operations failed: " + failures);
         }
+    }
+
+    /**
+     * Tests {@link DevicePolicyManager#isSafeOperation(int)}.
+     */
+    public void testIsSafeOperation(DevicePolicyManager dpm) {
+        // Currently there's just one reason...
+        int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+        Log.d(TAG, "testIsSafeOperation(): dpm=" + dpm + ", reason="
+                + operationSafetyReasonToString(reason));
+        Objects.requireNonNull(dpm);
+        assertOperationSafety(dpm, reason, /* isSafe= */ true);
+
+        setOperationUnsafe(dpm, OPERATION_LOCK_NOW, reason);
+
+        assertOperationSafety(dpm, reason, /* isSafe= */ false);
+    }
+
+    private void assertOperationSafety(DevicePolicyManager dpm, int reason, boolean isSafe) {
+        assertWithMessage("%s safety", operationSafetyReasonToString(reason))
+                .that(dpm.isSafeOperation(reason)).isEqualTo(isSafe);
+    }
+
+    /**
+     * Tests {@link UnsafeStateException} properties.
+     */
+    public void testUnsafeStateException(DevicePolicyManager dpm, ComponentName admin) {
+        // Currently there's just one reason...
+        int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+        Log.d(TAG, "testUnsafeStateException(): dpm=" + dpm + ", admin=" + admin + ", reason="
+                + operationSafetyReasonToString(reason));
+        // Operation doesn't really matter
+        int operation = OPERATION_LOCK_NOW;
+
+        setOperationUnsafe(dpm, operation, reason);
+        UnsafeStateException e = expectThrows(UnsafeStateException.class,
+                () -> runCommonOrSpecificOperation(dpm, admin, operation, /* overloaded= */ false));
+
+        int actualOperation = e.getOperation();
+        assertWithMessage("operation (%s)", operationToString(actualOperation))
+                .that(actualOperation).isEqualTo(operation);
+        List<Integer> actualReasons = e.getReasons();
+        assertWithMessage("reasons").that(actualReasons).hasSize(1);
+        int actualReason = actualReasons.get(0);
+        assertWithMessage("reason (%s)", operationSafetyReasonToString(actualReason))
+                .that(actualReason).isEqualTo(reason);
     }
 
     /**
@@ -150,35 +200,13 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         // Currently there's just one reason...
         int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
 
-        if (!dpm.isSafeOperation(reason)) {
-            failures.add("Operation " + name + " should be safe");
-            return;
-        }
         try {
             setOperationUnsafe(dpm, operation, reason);
-            if (dpm.isSafeOperation(reason)) {
-                failures.add("Operation " + name + " should be unsafe");
-                return;
-            }
             runCommonOrSpecificOperation(dpm, admin, operation, overloaded);
             Log.e(TAG, name + " didn't throw an UnsafeStateException");
             failures.add(name);
         } catch (UnsafeStateException e) {
             Log.d(TAG, name + " failed as expected: " + e);
-            List<Integer> actualReasons = e.getReasons();
-            if (actualReasons.size() != 1) {
-                failures.add(String.format("received invalid number of reasons (%s); expected just "
-                        + "1 (%d - %s)", actualReasons, reason,
-                        operationSafetyReasonToString(reason)));
-
-            } else {
-                int actualReason = actualReasons.get(0);
-                if (actualReason != reason) {
-                    failures.add(String.format("received exception with reason %s instead of %s",
-                            operationSafetyReasonToString(actualReason),
-                            operationSafetyReasonToString(reason)));
-                }
-            }
         } catch (Exception e) {
             Log.e(TAG, name + " threw unexpected exception", e);
             failures.add(name + "(" + e + ")");
