@@ -367,4 +367,13 @@ public class CompatChangeGatingTestCase extends DeviceTestCase implements IBuild
                 .collect(Collectors.toList());
     }
 
+    protected Change getOnDeviceChangeIdConfig(long changeId) throws Exception {
+        List<Change> changes = getOnDeviceCompatConfig();
+        for (Change change : changes) {
+            if (change.changeId == changeId) {
+                return change;
+            }
+        }
+        return null;
+    }
 }
