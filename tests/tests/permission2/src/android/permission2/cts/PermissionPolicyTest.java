@@ -377,9 +377,6 @@ public class PermissionPolicyTest {
                 case "textClassifier": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM_TEXT_CLASSIFIER;
                 } break;
-                case "wellbeing": {
-                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_WELLBEING;
-                } break;
                 case "configurator": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_CONFIGURATOR;
                 } break;
