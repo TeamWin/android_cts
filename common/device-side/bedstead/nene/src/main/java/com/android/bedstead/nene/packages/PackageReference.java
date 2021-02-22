@@ -69,8 +69,9 @@ public abstract class PackageReference {
             // Expected output "Package X installed for user: Y"
             ShellCommand.builderForUser(user, "pm install-existing")
                     .addOperand(mPackageName)
-                    .executeAndValidateOutput(
-                            (output) -> output.contains("installed for user"));
+                    .validate(
+                            (output) -> output.contains("installed for user"))
+                    .execute();
             return this;
         } catch (AdbException e) {
             throw new NeneException("Could not install-existing package " + this, e);
@@ -91,7 +92,8 @@ public abstract class PackageReference {
             // Expected output "Success"
             ShellCommand.builderForUser(user, "pm uninstall")
                     .addOperand(mPackageName)
-                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
             return this;
         } catch (AdbException e) {
             throw new NeneException("Could not uninstall package " + this, e);
