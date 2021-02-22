@@ -18,10 +18,13 @@ package com.android.cts.dexmetadata;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
@@ -68,23 +71,32 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     private static final String DM_FEATURE_A_WITH_VDEX
     = "CtsDexMetadataSplitAppFeatureAWithVdex.dm";
 
+    private static final String APK_VERITY_STANDARD_MODE = "2";
+    private static final String FSV_SIG_SUFFIX = ".fsv_sig";
+
     private File mTmpDir;
     private File mApkBaseFile = null;
     private File mApkFeatureAFile = null;
     private File mApkBaseFileWithVdex = null;
     private File mApkFeatureAFileWithVdex = null;
     private File mDmBaseFile = null;
+    private File mDmBaseFsvSigFile = null;
     private File mDmFeatureAFile = null;
+    private File mDmFeatureAFsvSigFile = null;
     private File mDmBaseFileWithVdex = null;
+    private File mDmBaseFileWithVdexFsvSig = null;
     private File mDmFeatureAFileWithVdex = null;
+    private File mDmFeatureAFileWithVdexFsvSig = null;
     private boolean mShouldRunTests;
+    private boolean mFsVerityRequiredForDm;
 
     /**
      * Setup the test.
      */
     @Before
     public void setUp() throws Exception {
-        getDevice().uninstallPackage(INSTALL_PACKAGE);
+        ITestDevice device = getDevice();
+        device.uninstallPackage(INSTALL_PACKAGE);
         mShouldRunTests = ApiLevelUtil.isAtLeast(getDevice(), 28)
                 || ApiLevelUtil.isAtLeast(getDevice(), "P")
                 || ApiLevelUtil.codenameEquals(getDevice(), "P");
@@ -92,15 +104,27 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         Assume.assumeTrue("Skip DexMetadata tests on releases before P.", mShouldRunTests);
 
         if (mShouldRunTests) {
+            boolean fsVeritySupported = device.getLaunchApiLevel() >= 30
+                    || APK_VERITY_STANDARD_MODE.equals(device.getProperty("ro.apk_verity.mode"));
+            boolean fsVerityRequired = "true".equals(
+                    device.getProperty("pm.dexopt.dm.require_fsverity"));
+            mFsVerityRequiredForDm = fsVeritySupported && fsVerityRequired;
+
             mTmpDir = FileUtil.createTempDir("InstallDexMetadataHostTest");
             mApkBaseFile = extractResource(APK_BASE, mTmpDir);
             mApkFeatureAFile = extractResource(APK_FEATURE_A, mTmpDir);
             mApkBaseFileWithVdex = extractResource(APK_BASE_WITH_VDEX, mTmpDir);
             mApkFeatureAFileWithVdex = extractResource(APK_FEATURE_A_WITH_VDEX, mTmpDir);
             mDmBaseFile = extractResource(DM_BASE, mTmpDir);
+            mDmBaseFsvSigFile = extractResource(DM_BASE + FSV_SIG_SUFFIX , mTmpDir);
             mDmFeatureAFile = extractResource(DM_FEATURE_A, mTmpDir);
+            mDmFeatureAFsvSigFile = extractResource(DM_FEATURE_A + FSV_SIG_SUFFIX, mTmpDir);
             mDmBaseFileWithVdex = extractResource(DM_BASE_WITH_VDEX, mTmpDir);
+            mDmBaseFileWithVdexFsvSig = extractResource(
+                    DM_BASE_WITH_VDEX + FSV_SIG_SUFFIX, mTmpDir);
             mDmFeatureAFileWithVdex = extractResource(DM_FEATURE_A_WITH_VDEX, mTmpDir);
+            mDmFeatureAFileWithVdexFsvSig = extractResource(
+                    DM_FEATURE_A_WITH_VDEX + FSV_SIG_SUFFIX, mTmpDir);
         }
     }
 
@@ -118,7 +142,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBase() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBase"));
@@ -129,8 +153,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseAndSplit() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
-                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, mDmFeatureAFsvSigFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
@@ -141,7 +165,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseButNoSplit() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile)
                 .addApk(mApkFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
@@ -154,7 +178,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     @Test
     public void testInstallDmForSplitButNoBase() throws Exception {
         new InstallMultiple().addApk(mApkBaseFile)
-                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, mDmFeatureAFsvSigFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForSplitButNoBase"));
@@ -165,8 +189,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUpdateDm() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
-                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, mDmFeatureAFsvSigFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
@@ -180,11 +204,12 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
 
         // Add only a split .dm file during update.
         new InstallMultiple().addArg("-r").addApk(mApkBaseFile)
-                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, mDmFeatureAFsvSigFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForSplitButNoBase"));
     }
+
     /**
      * Verify .dm installation for base but not for splits and with a .dm file that doesn't match
      * an apk.
@@ -194,8 +219,12 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         File nonMatchingDm = new File(mDmFeatureAFile.getAbsoluteFile().getAbsolutePath()
                 .replace(".dm", ".not.there.dm"));
         FileUtil.copyFile(mDmFeatureAFile, nonMatchingDm);
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
-                .addApk(mApkFeatureAFile).addDm(nonMatchingDm).run();
+        File nonMatchingDmFsvSig = new File(mDmFeatureAFsvSigFile.getAbsoluteFile()
+                .getAbsolutePath()
+                .replace(".dm" + FSV_SIG_SUFFIX, ".not.there.dm" + FSV_SIG_SUFFIX));
+        FileUtil.copyFile(mDmFeatureAFsvSigFile, nonMatchingDmFsvSig);
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile)
+                .addApk(mApkFeatureAFile).addDm(nonMatchingDm, nonMatchingDmFsvSig).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
@@ -228,7 +257,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assumeProfilesAreEnabled();
 
         // Install the app.
-        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile).run();
 
         // Take a snapshot of the installed profile.
         String snapshotCmd = "cmd package snapshot-profile " + INSTALL_PACKAGE;
@@ -248,7 +277,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseWithVdex() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFileWithVdex).addDm(mDmBaseFileWithVdex).run();
+        new InstallMultiple().addApk(mApkBaseFileWithVdex)
+                .addDm(mDmBaseFileWithVdex, mDmBaseFileWithVdexFsvSig).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBase"));
@@ -259,11 +289,59 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseAndSplitWithVdex() throws Exception {
-        new InstallMultiple().addApk(mApkBaseFileWithVdex).addDm(mDmBaseFileWithVdex)
-                .addApk(mApkFeatureAFileWithVdex).addDm(mDmFeatureAFileWithVdex).run();
+        new InstallMultiple().addApk(mApkBaseFileWithVdex)
+                .addDm(mDmBaseFileWithVdex, mDmBaseFileWithVdexFsvSig)
+                .addApk(mApkFeatureAFileWithVdex)
+                .addDm(mDmFeatureAFileWithVdex, mDmFeatureAFileWithVdexFsvSig).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
+    }
+
+    /** Verify .dm installation without .fsv_sig for base. */
+    @Test
+    public void testInstallDmFailedWithoutFsvSigForBase() throws Exception {
+        InstallMultiple installer = new InstallMultiple().addApk(mApkBaseFile)
+                .addDm(mDmBaseFile, null);
+        if (mFsVerityRequiredForDm) {
+            installer.runExpectingFailure();
+            assertNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
+        } else {
+            installer.run();
+            assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
+            assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBase"));
+        }
+    }
+
+    /** Verify .dm installation without .fsv_sig for split. */
+    @Test
+    public void testInstallDmWithoutFsvSigForSplit() throws Exception {
+        InstallMultiple installer = new InstallMultiple()
+                .addApk(mApkBaseFile)
+                .addDm(mDmBaseFile, mDmBaseFsvSigFile)
+                .addApk(mApkFeatureAFile)
+                .addDm(mDmFeatureAFile, null);
+        if (mFsVerityRequiredForDm) {
+            installer.runExpectingFailure();
+            assertNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
+        } else {
+            installer.run();
+            assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
+            assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
+        }
+    }
+
+    /** Verify .dm installation without .fsv_sig for split-only install. */
+    @Test
+    public void testInstallDmWithoutFsvSigForSplitOnlyInstall() throws Exception {
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile, mDmBaseFsvSigFile).run();
+        assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
+
+        new InstallMultiple()
+                .inheritFrom(TEST_PACKAGE)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile, null)
+                .runExpectingFailure();
+        assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
     }
 
     /** Verify that the use of profiles is enabled on the device. */
