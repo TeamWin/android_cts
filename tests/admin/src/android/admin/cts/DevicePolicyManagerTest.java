@@ -41,6 +41,8 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.io.ByteArrayInputStream;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -119,19 +121,27 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             Log.w(TAG, "Skipping SetGetNetworkSlicingEnabled");
             return;
         }
+
+
         try {
             mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
-        } catch (SecurityException se) {
+            assertThrows(SecurityException.class,
+                    () -> mDevicePolicyManager.setNetworkSlicingEnabled(true));
+
+            assertThrows(SecurityException.class,
+                    () -> mDevicePolicyManager.isNetworkSlicingEnabled());
+
+            assertThrows(SecurityException.class,
+                    () -> mDevicePolicyManager.isNetworkSlicingEnabledForUser(
+                            Process.myUserHandle()));
+        }  catch (SecurityException se) {
             Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
+        } finally {
+            SystemUtil.runShellCommand(
+                  "dpm set-profile-owner --user cur "
+                          + DeviceAdminInfoTest.getProfileOwnerComponent().flattenToString());
         }
-        assertThrows(SecurityException.class,
-                () -> mDevicePolicyManager.setNetworkSlicingEnabled(true));
 
-        assertThrows(SecurityException.class,
-                () -> mDevicePolicyManager.isNetworkSlicingEnabled());
-
-        assertThrows(SecurityException.class,
-                () -> mDevicePolicyManager.isNetworkSlicingEnabledForUser(Process.myUserHandle()));
     }
 
     public void testKeyguardDisabledFeatures() {
