@@ -43,10 +43,6 @@ public final class ShellCommandUtils {
     private static final int IN_DESCRIPTOR_INDEX = 1;
     private static final int ERR_DESCRIPTOR_INDEX = 2;
 
-    // 60 seconds
-    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
-    private static final long WAIT_UNTIL_DELAY_MILLIS = 100;
-
     private ShellCommandUtils() { }
 
     /**
@@ -60,7 +56,7 @@ public final class ShellCommandUtils {
      *
      * <p>Callers should be careful to check the command's output is valid.
      */
-    public static String executeCommand(String command) throws AdbException {
+    static String executeCommand(String command) throws AdbException {
         return executeCommand(command, /* allowEmptyOutput=*/ false, /* stdInBytes= */ null);
     }
 
@@ -122,7 +118,7 @@ public final class ShellCommandUtils {
      * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
      * command executed successfully.
      */
-    public static String executeCommandAndValidateOutput(
+    static String executeCommandAndValidateOutput(
             String command, Function<String, Boolean> outputSuccessChecker) throws AdbException {
         return executeCommandAndValidateOutput(command,
                 /* allowEmptyOutput= */ false,
@@ -140,34 +136,6 @@ public final class ShellCommandUtils {
             throw new AdbException("Command did not meet success criteria", command, output);
         }
         return output;
-    }
-
-    /**
-     * Execute an adb shell command and check that the output meets a given criteria. Run the
-     * command repeatedly until the output meets the criteria.
-     *
-     * <p>On S and above, any output printed to standard error will result in an exception and the
-     * {@code outputSuccessChecker} not being called. Empty output will still be processed.
-     *
-     * <p>Prior to S, if there is no output on standard out, regardless of if there is output on
-     * standard error, {@code outputSuccessChecker} will not be called.
-     *
-     * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
-     * command executed successfully.
-     */
-    public static String executeCommandUntilOutputValid(
-            String command, Function<String, Boolean> outputSuccessChecker)
-            throws AdbException, InterruptedException {
-        int attempts = 0;
-        while (attempts++ < MAX_WAIT_UNTIL_ATTEMPTS) {
-            try {
-                return executeCommandAndValidateOutput(command, outputSuccessChecker);
-            } catch (AdbException e) {
-                // ignore, will retry
-                Thread.sleep(WAIT_UNTIL_DELAY_MILLIS);
-            }
-        }
-        return executeCommandAndValidateOutput(command, outputSuccessChecker);
     }
 
     /**

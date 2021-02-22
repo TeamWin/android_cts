@@ -26,7 +26,7 @@ import android.os.Build;
 import android.os.UserHandle;
 
 import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.ShellCommand;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -251,8 +251,10 @@ public class UsersTest {
         // We do ADB calls directly to ensure we are actually changing the system state and not just
         //  internal nene state
         try {
-            String createUserOutput = ShellCommandUtils.executeCommand("pm create-user testuser");
-            return Integer.parseInt(createUserOutput.split("id ")[1].trim());
+            return ShellCommand.builder("pm create-user")
+                    .addOperand("testuser")
+                    .executeAndParseOutput(
+                            output -> Integer.parseInt(output.split("id ")[1].trim()));
         } catch (AdbException e) {
             throw new AssertionError("Error creating user", e);
         }
@@ -262,8 +264,10 @@ public class UsersTest {
         // We do ADB calls directly to ensure we are actually changing the system state and not just
         //  internal nene state
         try {
-            ShellCommandUtils.executeCommand("pm remove-user " + userId);
-            ShellCommandUtils.executeCommandUntilOutputValid("dumpsys user", (output) -> !output.contains("UserInfo{" + userId + ":"));
+            ShellCommand.builder("pm remove-user").addOperand(userId).execute();
+            ShellCommand.builder("dumpsys user").validate(
+                    (output) -> !output.contains("UserInfo{" + userId + ":"))
+            .executeUntilValid();
         } catch (AdbException e) {
             throw new AssertionError("Error removing user", e);
         }
