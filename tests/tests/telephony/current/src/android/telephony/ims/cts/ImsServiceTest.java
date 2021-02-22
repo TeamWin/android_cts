@@ -1081,7 +1081,14 @@ public class ImsServiceTest {
         sServiceConnector.getCarrierService().getRcsFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
 
-        // Verify that the publish is triggered and receive the publish state changed callback.
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
@@ -1095,9 +1102,6 @@ public class ImsServiceTest {
         } finally {
             automan.dropShellPermissionIdentity();
         }
-
-        CapabilityExchangeEventListener eventListener =
-                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
 
         // ImsService triggers to notify framework publish device's capabilities.
         eventListener.onRequestPublishCapabilities(
@@ -1204,7 +1208,14 @@ public class ImsServiceTest {
         sServiceConnector.getCarrierService().getRcsFeature()
                 .notifyCapabilitiesStatusChanged(capabilities);
 
-        // Framework should trigger the device capabilities publish when IMS is registered.
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // ImsService triggers to notify framework publish device's capabilities.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify the ImsService receive the publish request from framework.
         assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
                 TestImsService.LATCH_UCE_REQUEST_PUBLISH));
         assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
@@ -1226,9 +1237,6 @@ public class ImsServiceTest {
             listener.onPublish();
             cb.onNetworkResponse(networkResp, reason, reasonHeaderCause, reasonHeaderText);
         });
-
-        CapabilityExchangeEventListener eventListener =
-                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
 
         // ImsService triggers to notify framework publish device's capabilities.
         eventListener.onRequestPublishCapabilities(
