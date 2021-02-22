@@ -87,6 +87,12 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         executeDevicePolicySafetyCheckerIntegrationTest("testUnsafeStateException");
     }
 
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_onOperationSafetyStateChanged()
+            throws Exception {
+        executeDevicePolicySafetyCheckerIntegrationTest("testOnOperationSafetyStateChanged");
+    }
+
     @Override
     public void tearDown() throws Exception {
         assertTrue("Failed to remove profile owner.",
