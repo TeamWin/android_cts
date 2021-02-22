@@ -13,7 +13,7 @@
 # limitations under the License.
 
 TestBeds:
-  - Name: TEST_BED_TABLET_SCENES
+  - Name: TEST_BED_TABLET_SCENES  # Need 'tablet' in name for tablet scenes
     # Test configuration for scenes[0:4, 6, _change]
     Controllers:
         AndroidDevice:
@@ -29,7 +29,7 @@ TestBeds:
       camera: <camera-id>
       scene: <scene-name>  # if <scene-name> left as-is runs all scenes
 
-  - Name: TEST_BED_SENSOR_FUSION
+  - Name: TEST_BED_SENSOR_FUSION  # Need 'sensor_fusion' in name for SF tests
     # Test configuration for sensor_fusion/test_sensor_fusion.py
     Controllers:
         AndroidDevice:
