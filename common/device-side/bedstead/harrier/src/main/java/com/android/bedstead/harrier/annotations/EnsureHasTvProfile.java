@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util.enterprise.annotations;
+package com.android.bedstead.harrier.annotations;
 
-import static com.android.compatibility.common.util.enterprise.DeviceState.UserType.CURRENT_USER;
+import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
-import com.android.compatibility.common.util.enterprise.DeviceState;
+import com.android.bedstead.harrier.DeviceState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,21 +26,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on a user which has a work profile.
- *
- * <p>Use of this annotation implies
- * {@code RequireFeatures("android.software.managed_users", SKIP)}.
+ * Mark that a test method should run on a user which has a Tv profile.
  *
  * <p>Your test configuration may be configured so that this test is only run on a user which has
- * a work profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
+ * a Tv profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
  * the correct state for the method.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasWorkProfile {
-    /** Which user type the work profile should be attached to. */
+public @interface EnsureHasTvProfile {
+    /** Which user type the tv profile should be attached to. */
     DeviceState.UserType forUser() default CURRENT_USER;
 
-    /** Whether the test app should be installed in the work profile. */
+    /** Whether the test app should be installed in the tv profile. */
     boolean installTestApp() default true;
 }

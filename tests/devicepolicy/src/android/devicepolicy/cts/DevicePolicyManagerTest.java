@@ -40,9 +40,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.enterprise.DeviceState;
+import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 
 import org.junit.ClassRule;
 import org.junit.Rule;

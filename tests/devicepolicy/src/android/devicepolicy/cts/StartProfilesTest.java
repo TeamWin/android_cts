@@ -40,11 +40,11 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.enterprise.DeviceState;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 
 import org.junit.After;
 import org.junit.ClassRule;

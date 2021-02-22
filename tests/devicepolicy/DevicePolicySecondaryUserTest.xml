@@ -32,7 +32,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.devicepolicy.cts" />
-        <option name="include-annotation" value="com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser" />
+        <option name="include-annotation" value="com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser" />
         <!--        <option name="instrumentation-arg" key="skip-test-teardown" value="true" />-->
         <option name="hidden-api-checks" value="false" />
     </test>
