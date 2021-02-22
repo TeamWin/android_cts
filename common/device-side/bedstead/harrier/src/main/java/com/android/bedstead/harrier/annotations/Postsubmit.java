@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util.enterprise.annotations;
-
-import com.android.compatibility.common.util.enterprise.DeviceState;
+package com.android.bedstead.harrier.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,14 +22,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on the primary user.
+ * Marks that a test method should not be run as part of multi-user presubmit, as defined by
+ * tests using multi-user annotations that opt them into presubmit, like
+ * {@link RequireRunOnWorkProfile}.
  *
- * <p>Your test configuration should be such that this test is only run on the primary user
+ * <p>This annotation should be used on any new tests running in a multi-user module. Only after
+ * the test has been in postsubmit for some time, demonstrating it is fast and reliable, should the
+ * annotation be removed to allow it to run as part of presubmit.
  *
- * <p>Optionally, you can guarantee that these methods do not run outside of the primary
- * user by using {@link DeviceState}.
+ * <p>It can also be used for tests which don't meet the requirements to be part of multi-user
+ * presubmits.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireRunOnPrimaryUser {
+public @interface Postsubmit {
+    String reason();
 }

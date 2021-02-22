@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util.enterprise;
+package com.android.bedstead.harrier;
 
 import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
 
@@ -41,13 +41,13 @@ import androidx.test.core.app.ApplicationProvider;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasTvProfile;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnTvProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
