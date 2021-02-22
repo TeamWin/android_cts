@@ -242,4 +242,18 @@ public final class DevicePolicySafetyCheckerIntegrationTest extends BaseDeviceOw
     public void testAllOperations() {
         mTester.testAllOperations(mDevicePolicyManager, getWho());
     }
+
+    /**
+     * Tests {@link DevicePolicyManager#isSafeOperation(int)}.
+     */
+    public void testIsSafeOperation() {
+        mTester.testIsSafeOperation(mDevicePolicyManager);
+    }
+
+    /**
+     * Tests {@link android.app.admin.UnsafeStateException} properties.
+     */
+    public void testUnsafeStateException() {
+        mTester.testUnsafeStateException(mDevicePolicyManager, getWho());
+    }
 }
