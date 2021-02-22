@@ -80,6 +80,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.ArraySet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.util.SparseIntArray;
 
 import androidx.core.os.BuildCompat;
@@ -648,6 +649,26 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    public void testConvertBetweenChannelFrequencyMhz() throws Exception {
+        int[] testFrequency_2G = {2412, 2437, 2462, 2484};
+        int[] testFrequency_5G = {5180, 5220, 5540, 5745};
+        int[] testFrequency_6G = {5955, 6435, 6535, 7115};
+        int[] testFrequency_60G = {58320, 64800};
+        SparseArray<int[]> testData = new SparseArray<>() {{
+            put(ScanResult.WIFI_BAND_24_GHZ, testFrequency_2G);
+            put(ScanResult.WIFI_BAND_5_GHZ, testFrequency_5G);
+            put(ScanResult.WIFI_BAND_6_GHZ, testFrequency_6G);
+            put(ScanResult.WIFI_BAND_60_GHZ, testFrequency_60G);
+        }};
+
+        for (int i = 0; i < testData.size(); i++) {
+            for (int frequency : testData.valueAt(i)) {
+                assertEquals(frequency, ScanResult.convertChannelToFrequencyMhz(
+                      ScanResult.convertFrequencyMhzToChannel(frequency), testData.keyAt(i)));
+            }
+        }
+    }
+
     // Return true if location is enabled.
     private boolean isLocationEnabled() {
         return Settings.Secure.getInt(getContext().getContentResolver(),
@@ -924,12 +945,52 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    private List<Integer> getSupportedSoftApBand(SoftApCapability capability) {
+        List<Integer> supportedApBands = new ArrayList<>();
+        if (mWifiManager.is24GHzBandSupported() &&
+                capability.areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_BAND_24G_SUPPORTED)) {
+            supportedApBands.add(SoftApConfiguration.BAND_2GHZ);
+        }
+        if (mWifiManager.is5GHzBandSupported() &&
+                capability.areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_BAND_5G_SUPPORTED)) {
+            supportedApBands.add(SoftApConfiguration.BAND_5GHZ);
+        }
+        if (mWifiManager.is6GHzBandSupported() &&
+                capability.areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_BAND_6G_SUPPORTED)) {
+            supportedApBands.add(SoftApConfiguration.BAND_6GHZ);
+        }
+        if (mWifiManager.is60GHzBandSupported() &&
+                capability.areFeaturesSupported(
+                        SoftApCapability.SOFTAP_FEATURE_BAND_60G_SUPPORTED)) {
+            supportedApBands.add(SoftApConfiguration.BAND_60GHZ);
+        }
+        return supportedApBands;
+    }
+
     private TestLocalOnlyHotspotCallback startLocalOnlyHotspot() {
         // Location mode must be enabled for this test
         if (!isLocationEnabled()) {
             fail("Please enable location for this test");
         }
 
+        TestExecutor executor = new TestExecutor();
+        TestSoftApCallback capabilityCallback = new TestSoftApCallback(mLock);
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        List<Integer> supportedSoftApBands = new ArrayList<>();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            verifyRegisterSoftApCallback(executor, capabilityCallback);
+            supportedSoftApBands = getSupportedSoftApBand(
+                    capabilityCallback.getCurrentSoftApCapability());
+        } catch (Exception ex) {
+        } finally {
+            // clean up
+            mWifiManager.unregisterSoftApCallback(capabilityCallback);
+            uiAutomation.dropShellPermissionIdentity();
+        }
         TestLocalOnlyHotspotCallback callback = new TestLocalOnlyHotspotCallback(mLock);
         synchronized (mLock) {
             try {
@@ -945,16 +1006,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertNotNull(softApConfig);
             int securityType = softApConfig.getSecurityType();
             if (securityType == SoftApConfiguration.SECURITY_TYPE_OPEN
-                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK
-                || securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
+                    || securityType == SoftApConfiguration.SECURITY_TYPE_WPA2_PSK
+                    || securityType == SoftApConfiguration.SECURITY_TYPE_WPA3_SAE_TRANSITION) {
                 assertNotNull(softApConfig.toWifiConfiguration());
             } else {
                 assertNull(softApConfig.toWifiConfiguration());
             }
             if (!hasAutomotiveFeature()) {
-                // TODO: b/179557841 check the supported band to determine the assert band.
-                assertEquals(
-                        SoftApConfiguration.BAND_2GHZ,
+                assertEquals(supportedSoftApBands.size() > 0 ? supportedSoftApBands.get(0)
+                        : SoftApConfiguration.BAND_2GHZ,
                         callback.reservation.getSoftApConfiguration().getBand());
             }
             assertFalse(callback.onFailedCalled);
@@ -1678,6 +1738,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Bssid set dodesn't support for tethered hotspot
         SoftApConfiguration currentConfig = mWifiManager.getSoftApConfiguration();
         compareSoftApConfiguration(targetConfig, currentConfig);
+        assertTrue(currentConfig.isUserConfiguration());
     }
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
