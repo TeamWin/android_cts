@@ -364,7 +364,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testUserSession() throws Exception {
         executeDeviceOwnerTest("UserSessionTest");
     }
