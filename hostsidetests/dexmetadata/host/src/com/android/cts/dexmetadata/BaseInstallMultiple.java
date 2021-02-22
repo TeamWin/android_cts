@@ -57,8 +57,17 @@ import java.util.List;
         return (T) this;
     }
 
-    T addDm(File dma) {
+    T addDm(File dma, File sig) {
         mFilesToInstall.add(dma);
+        if (sig != null) {
+            mFilesToInstall.add(sig);
+        }
+        return (T) this;
+    }
+
+    T inheritFrom(String packageName) {
+        addArg("-r");
+        addArg("-p " + packageName);
         return (T) this;
     }
 
