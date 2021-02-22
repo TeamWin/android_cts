@@ -23,7 +23,9 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
+import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.HostSideTestUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -284,6 +286,145 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    private boolean isAtLeastSDevice() throws Exception {
+        // The following tests targets API level >= S.
+        return ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
+                || ApiLevelUtil.codenameEquals(getDevice(), "S");
+    }
+
+    @Test
+    public void resumeOnReboot_SingleUser_ServerBased_Success() throws Exception {
+        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+
+        int[] users = Utils.prepareSingleUser(getDevice());
+        int initialUser = users[0];
+
+        deviceSetupServerBasedParameter();
+
+        try {
+            installTestPackages();
+
+            deviceSetup(initialUser);
+            deviceRequestLskf();
+            deviceLock(initialUser);
+            deviceEnterLskf(initialUser);
+            deviceRebootAndApply();
+
+            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
+            runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
+        } finally {
+            try {
+                // Remove secure lock screens and tear down test app
+                runDeviceTestsAsUser("testTearDown", initialUser);
+
+                deviceClearLskf();
+            } finally {
+                removeTestPackages();
+                deviceCleanupServerBasedParameter();
+
+                getDevice().rebootUntilOnline();
+                getDevice().waitForDeviceAvailable();
+            }
+        }
+    }
+
+    @Test
+    public void resumeOnReboot_SingleUser_MultiClient_ClientASuccess() throws Exception {
+        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+
+        int[] users = Utils.prepareSingleUser(getDevice());
+        int initialUser = users[0];
+
+        deviceSetupServerBasedParameter();
+
+        final String clientA = "ClientA";
+        final String clientB = "ClientB";
+        try {
+            installTestPackages();
+
+            deviceSetup(initialUser);
+            deviceRequestLskf(clientA);
+            deviceRequestLskf(clientB);
+
+            deviceLock(initialUser);
+            deviceEnterLskf(initialUser);
+
+            // Client B's clear shouldn't affect client A's preparation.
+            deviceClearLskf(clientB);
+            deviceRebootAndApply(clientA);
+
+            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
+            runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
+        } finally {
+            try {
+                // Remove secure lock screens and tear down test app
+                runDeviceTestsAsUser("testTearDown", initialUser);
+
+                deviceClearLskf();
+            } finally {
+                removeTestPackages();
+                deviceCleanupServerBasedParameter();
+
+                getDevice().rebootUntilOnline();
+                getDevice().waitForDeviceAvailable();
+            }
+        }
+    }
+
+    @Test
+    public void resumeOnReboot_SingleUser_MultiClient_ClientBSuccess() throws Exception {
+        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+
+        int[] users = Utils.prepareSingleUser(getDevice());
+        int initialUser = users[0];
+
+        deviceSetupServerBasedParameter();
+
+        final String clientA = "ClientA";
+        final String clientB = "ClientB";
+        try {
+            installTestPackages();
+
+            deviceSetup(initialUser);
+            deviceRequestLskf(clientA);
+
+            deviceLock(initialUser);
+            deviceEnterLskf(initialUser);
+
+            // Both clients have prepared
+            deviceRequestLskf(clientB);
+            deviceRebootAndApply(clientB);
+
+            runDeviceTestsAsUser("testVerifyUnlockedAndDismiss", initialUser);
+            runDeviceTestsAsUser("testCheckServiceInteraction", initialUser);
+        } finally {
+            try {
+                // Remove secure lock screens and tear down test app
+                runDeviceTestsAsUser("testTearDown", initialUser);
+
+                deviceClearLskf();
+            } finally {
+                removeTestPackages();
+                deviceCleanupServerBasedParameter();
+
+                getDevice().rebootUntilOnline();
+                getDevice().waitForDeviceAvailable();
+            }
+        }
+    }
+
+    private void deviceSetupServerBasedParameter() throws Exception {
+        getDevice().executeShellCommand("device_config put ota server_based_ror_enabled true");
+        getDevice().executeShellCommand(
+                "cmd lock_settings set-resume-on-reboot-provider-package " + PKG);
+    }
+
+    private void deviceCleanupServerBasedParameter() throws Exception {
+        getDevice().executeShellCommand("device_config put ota server_based_ror_enabled false");
+        getDevice().executeShellCommand(
+                "cmd lock_settings set-resume-on-reboot-provider-package ");
+    }
+
     private void deviceSetup(int userId) throws Exception {
         // To receive boot broadcasts, kick our other app out of stopped state
         getDevice().executeShellCommand("am start -a android.intent.action.MAIN"
@@ -300,14 +441,22 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void deviceRequestLskf() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery request-lskf " + PKG);
+        deviceRequestLskf(PKG);
+    }
+
+    private void deviceRequestLskf(String clientName) throws Exception {
+        String res = getDevice().executeShellCommand("cmd recovery request-lskf " + clientName);
         if (res == null || !res.contains("success")) {
             fail("could not set up recovery request-lskf");
         }
     }
 
     private void deviceClearLskf() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery clear-lskf " + PKG);
+        deviceClearLskf(PKG);
+    }
+
+    private void deviceClearLskf(String clientName) throws Exception {
+        String res = getDevice().executeShellCommand("cmd recovery clear-lskf " + clientName);
         if (res == null || !res.contains("success")) {
             fail("could not clear-lskf");
         }
@@ -338,7 +487,11 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private void deviceRebootAndApply() throws Exception {
-        String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply " + PKG
+        deviceRebootAndApply(PKG);
+    }
+
+    private void deviceRebootAndApply(String clientName) throws Exception {
+        String res = getDevice().executeShellCommand("cmd recovery reboot-and-apply " + clientName
                 + " cts-test");
         if (res != null && res.contains("Reboot and apply status: failure")) {
             fail("could not call reboot-and-apply");
@@ -426,7 +579,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
     }
 
     private boolean isSupportedDevice() throws Exception {
-        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN) && getDevice().hasFeature(FEATURE_REBOOT_ESCROW);
+        return getDevice().hasFeature(FEATURE_DEVICE_ADMIN)
+                && getDevice().hasFeature(FEATURE_REBOOT_ESCROW);
     }
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {

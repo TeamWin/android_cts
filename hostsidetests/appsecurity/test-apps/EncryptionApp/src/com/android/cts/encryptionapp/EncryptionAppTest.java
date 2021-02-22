@@ -151,6 +151,18 @@ public class EncryptionAppTest extends InstrumentationTestCase {
                 thisCount > lastCount);
     }
 
+    public void testCheckServiceInteraction() {
+        boolean wrapCalled =
+                mDe.getSharedPreferences(RebootEscrowFakeService.SERVICE_PREFS, 0)
+                        .getBoolean("WRAP_CALLED", false);
+        assertTrue(wrapCalled);
+
+        boolean unwrapCalled =
+                mDe.getSharedPreferences(RebootEscrowFakeService.SERVICE_PREFS, 0)
+                        .getBoolean("UNWRAP_CALLED", false);
+        assertTrue(unwrapCalled);
+    }
+
     public void testVerifyUnlockedAndDismiss() throws Exception {
         doBootCountAfter();
         assertUnlocked();
