@@ -117,6 +117,7 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     private static final String ACTION_TRIGGER = "broadcast_action_trigger";
     private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
+    private static final String EXTRA_SHOW_SOFT_INPUT = "extra_show_soft_input";
     private static final int NEW_KEYBOARD_HEIGHT = 400;
 
     @Rule
@@ -659,6 +660,11 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
             try (AutoCloseable closable = launchRemoteActivitySync(TEST_ACTIVITY, instant, TIMEOUT,
                     Map.of(EXTRA_KEY_PRIVATE_IME_OPTIONS, marker))) {
                 expectEvent(stream, editorMatcher("onStartInput", marker), START_INPUT_TIMEOUT);
+                expectImeInvisible(TIMEOUT);
+
+                // Request showSoftInput, expect the request is valid and soft-keyboard visible.
+                triggerActionWithBroadcast(ACTION_TRIGGER, TEST_ACTIVITY.getPackageName(),
+                        EXTRA_SHOW_SOFT_INPUT);
                 expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
                 expectEvent(stream, editorMatcher("onStartInputView", marker), TIMEOUT);
                 expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",

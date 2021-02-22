@@ -30,12 +30,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-
-import com.android.compatibility.common.util.ImeAwareEditText;
 
 /**
  * A test {@link Activity} that automatically shows the input method.
@@ -48,9 +48,11 @@ public final class MainActivity extends Activity {
             "android.view.inputmethod.ctstestapp.EXTRA_KEY_SHOW_DIALOG";
 
     private static final String EXTRA_DISMISS_DIALOG = "extra_dismiss_dialog";
+    private static final String EXTRA_SHOW_SOFT_INPUT = "extra_show_soft_input";
 
     private static final String ACTION_TRIGGER = "broadcast_action_trigger";
     private AlertDialog mDialog;
+    private EditText mEditor;
     private final Handler mHandler = new Handler(Looper.myLooper());
 
     private BroadcastReceiver mBroadcastReceiver;
@@ -102,15 +104,14 @@ public final class MainActivity extends Activity {
             mDialog.getWindow().setSoftInputMode(SOFT_INPUT_ADJUST_PAN);
             mDialog.show();
         } else {
-            final ImeAwareEditText editText = new ImeAwareEditText(this);
-            editText.setHint("editText");
+            mEditor = new EditText(this);
+            mEditor.setHint("editText");
             final String privateImeOptions = getStringIntentExtra(EXTRA_KEY_PRIVATE_IME_OPTIONS);
             if (privateImeOptions != null) {
-                editText.setPrivateImeOptions(privateImeOptions);
+                mEditor.setPrivateImeOptions(privateImeOptions);
             }
-            editText.requestFocus();
-            editText.scheduleShowSoftInput();
-            layout.addView(editText);
+            mEditor.requestFocus();
+            layout.addView(mEditor);
         }
 
         setContentView(layout);
@@ -122,7 +123,16 @@ public final class MainActivity extends Activity {
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (intent.getBooleanExtra(EXTRA_DISMISS_DIALOG, false)) {
+                final Bundle extras = intent.getExtras();
+                if (extras == null) {
+                    return;
+                }
+
+                if (extras.containsKey(EXTRA_SHOW_SOFT_INPUT)) {
+                    getSystemService(InputMethodManager.class).showSoftInput(mEditor, 0);
+                }
+
+                if (extras.getBoolean(EXTRA_DISMISS_DIALOG, false)) {
                     if (mDialog != null) {
                         mDialog.dismiss();
                         mDialog = null;
