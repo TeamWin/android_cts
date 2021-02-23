@@ -258,12 +258,17 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         mActivityRule.runOnUiThread(() -> {
                 mVr.relayout(bigEdgeLength, bigEdgeLength);
         });
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
-            mEmbeddedView, null);
-        // We need to draw twice to make sure the first buffer actually
-        // arrives.
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
-            mEmbeddedView, null);
+        mInstrumentation.waitForIdleSync();
+
+        // We use frameCommitCallback because we need to ensure HWUI
+        // has actually queued the frame.
+        final CountDownLatch latch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            mEmbeddedView.getViewTreeObserver().registerFrameCommitCallback(
+                latch::countDown);
+            mEmbeddedView.invalidate();
+        });
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
 
         // But after the click should hit.
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
