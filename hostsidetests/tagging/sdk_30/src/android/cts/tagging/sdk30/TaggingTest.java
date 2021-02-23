@@ -17,6 +17,7 @@
 package android.cts.tagging.sdk30;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -71,10 +72,12 @@ public class TaggingTest {
         mContext.startActivity(intent);
 
         assertTrue(receiver.await());
+        assertTrue(Utils.mistaggedKernelUaccessFails());
     }
 
     @Test
     public void testMemoryTagChecksDisabled() {
         Utils.accessMistaggedPointer();
+        assertFalse(Utils.mistaggedKernelUaccessFails());
     }
 }
