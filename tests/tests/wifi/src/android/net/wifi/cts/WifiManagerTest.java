@@ -3498,14 +3498,16 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Tests {@link WifiManager#isWpa3ApValidationSupported()} does not crash.
+     * Tests {@link WifiManager#isWpa3SaePublicKeySupported()} does not crash.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
      */
-    public void testIsWpa3ApValidationSupported() throws Exception {
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsWpa3SaePublicKeySupported() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
         }
-        mWifiManager.isWpa3ApValidationSupported();
+        mWifiManager.isWpa3SaePublicKeySupported();
     }
 
     /**
