@@ -23,4 +23,5 @@ public class Utils {
     public static native boolean kernelSupportsTaggedPointers();
     public static native int nativeHeapPointerTag();
     public static native void accessMistaggedPointer();
+    public static native boolean mistaggedKernelUaccessFails();
 }
