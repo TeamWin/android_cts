@@ -18,6 +18,12 @@ package android.widget.cts;
 
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 import static android.util.TypedValue.COMPLEX_UNIT_PX;
+import static android.widget.RemoteViews.MARGIN_BOTTOM;
+import static android.widget.RemoteViews.MARGIN_END;
+import static android.widget.RemoteViews.MARGIN_LEFT;
+import static android.widget.RemoteViews.MARGIN_RIGHT;
+import static android.widget.RemoteViews.MARGIN_START;
+import static android.widget.RemoteViews.MARGIN_TOP;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -1022,6 +1028,182 @@ public class RemoteViewsTest {
     }
 
     @Test
+    public void testSetViewLayoutMargin() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_LEFT, 10, COMPLEX_UNIT_PX);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_TOP, 20, COMPLEX_UNIT_PX);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_RIGHT, 30, COMPLEX_UNIT_PX);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_BOTTOM, 40, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertMargins(textView, 10, 20, 30, 40);
+
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_LEFT, 10, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_TOP, 20, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_RIGHT, 30, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(R.id.remoteView_text, MARGIN_BOTTOM, 40, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
+        assertMargins(
+                textView,
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+    }
+
+    @Test
+    public void testSetViewLayoutMargin_layoutDirection() throws Throwable {
+        View textViewLtr = mResult.findViewById(R.id.remoteView_text_ltr);
+        mRemoteViews.setViewLayoutMargin(textViewLtr.getId(), MARGIN_START, 10, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewLtr.getId(), MARGIN_TOP, 20, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewLtr.getId(), MARGIN_END, 30, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewLtr.getId(), MARGIN_BOTTOM, 40, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
+        assertMargins(
+                textViewLtr,
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+
+        View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
+        mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_START, 10, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_TOP, 20, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_END, 30, COMPLEX_UNIT_DIP);
+        mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_BOTTOM, 40, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        displayMetrics = textViewRtl.getResources().getDisplayMetrics();
+        assertMargins(
+                textViewRtl,
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+    }
+
+    @Test
+    public void testSetViewLayoutMarginDimen() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text, MARGIN_LEFT, R.dimen.textview_padding_left);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text, MARGIN_TOP, R.dimen.textview_padding_top);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text, MARGIN_RIGHT, R.dimen.textview_padding_right);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text, MARGIN_BOTTOM, R.dimen.textview_padding_bottom);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertMargins(
+                textView,
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
+    }
+
+    @Test
+    public void testSetViewLayoutMarginDimen_layoutDirection() throws Throwable {
+        View textViewLtr = mResult.findViewById(R.id.remoteView_text_ltr);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_ltr, MARGIN_START, R.dimen.textview_padding_left);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_ltr, MARGIN_TOP, R.dimen.textview_padding_top);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_ltr, MARGIN_END, R.dimen.textview_padding_right);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_ltr, MARGIN_BOTTOM, R.dimen.textview_padding_bottom);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertMargins(
+                textViewLtr,
+                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
+                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
+                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
+                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
+
+        View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_rtl, MARGIN_START, R.dimen.textview_padding_left);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_rtl, MARGIN_TOP, R.dimen.textview_padding_top);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_rtl, MARGIN_END, R.dimen.textview_padding_right);
+        mRemoteViews.setViewLayoutMarginDimen(
+                R.id.remoteView_text_rtl, MARGIN_BOTTOM, R.dimen.textview_padding_bottom);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertMargins(
+                textViewRtl,
+                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
+                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
+                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
+                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
+
+    }
+
+    @Test
+    public void testSetViewLayoutWidth() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+        DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
+
+        mRemoteViews.setViewLayoutWidth(R.id.remoteView_text, 10, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(10, textView.getLayoutParams().width);
+
+        mRemoteViews.setViewLayoutWidth(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                textView.getLayoutParams().width);
+
+        mRemoteViews.setViewLayoutWidth(
+                R.id.remoteView_text, ViewGroup.LayoutParams.MATCH_PARENT, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, textView.getLayoutParams().width);
+    }
+
+    @Test
+    public void testSetViewLayoutWidthDimen() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+        mRemoteViews.setViewLayoutWidthDimen(R.id.remoteView_text, R.dimen.textview_fixed_width);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_width),
+                textView.getLayoutParams().width);
+    }
+
+    @Test
+    public void testSetViewLayoutHeight() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+        DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
+
+        mRemoteViews.setViewLayoutHeight(R.id.remoteView_text, 10, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(10, textView.getLayoutParams().height);
+
+        mRemoteViews.setViewLayoutHeight(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                textView.getLayoutParams().height);
+
+        mRemoteViews.setViewLayoutHeight(
+                R.id.remoteView_text, ViewGroup.LayoutParams.MATCH_PARENT, COMPLEX_UNIT_PX);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(ViewGroup.LayoutParams.MATCH_PARENT, textView.getLayoutParams().height);
+    }
+
+    @Test
+    public void testSetViewLayoutHeightDimen() throws Throwable {
+        View textView = mResult.findViewById(R.id.remoteView_text);
+        mRemoteViews.setViewLayoutHeightDimen(R.id.remoteView_text, R.dimen.textview_fixed_height);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_height),
+                textView.getLayoutParams().height);
+    }
+
+    @Test
     public void testSetIntDimen_fromResources() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
         int expectedValue = mContext.getResources().getDimensionPixelSize(R.dimen.popup_row_height);
@@ -1127,7 +1309,6 @@ public class RemoteViewsTest {
         mRemoteViews.reapply(mContext, mResult);
     }
 
-
     @Test
     public void testSetColor() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
@@ -1140,6 +1321,32 @@ public class RemoteViewsTest {
         mExpectedException.expect(ActionException.class);
         mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", R.dimen.popup_row_height);
         mRemoteViews.reapply(mContext, mResult);
+    }
+
+    @Test
+    public void testSetColorStateList() throws Throwable {
+        ProgressBar progressBar = mResult.findViewById(R.id.remoteView_progress);
+
+        ColorStateList tintList = new ColorStateList(
+                new int[][] {{android.R.attr.state_checked}, {}},
+                new int[] {Color.BLACK, Color.WHITE});
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList", tintList);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(tintList, progressBar.getProgressTintList());
+
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList", null);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertNull(progressBar.getProgressTintList());
+
+        TextView textView = mResult.findViewById(R.id.remoteView_text);
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor", tintList);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(tintList, textView.getTextColors());
+
+        ColorStateList solid = ColorStateList.valueOf(Color.RED);
+        mRemoteViews.setColorStateList(R.id.remoteView_text, "setBackgroundTintList", solid);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(solid, textView.getBackgroundTintList());
     }
 
     @Test
@@ -1324,6 +1531,19 @@ public class RemoteViewsTest {
         } finally {
             runShellCommand("cmd uimode night " + initialNightMode);
         }
+    }
+
+    private static void assertMargins(View view, int left, int top, int right, int bottom) {
+        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+        if (!(layoutParams instanceof ViewGroup.MarginLayoutParams)) {
+            fail("View doesn't have MarginLayoutParams");
+        }
+
+        ViewGroup.MarginLayoutParams margins = (ViewGroup.MarginLayoutParams) layoutParams;
+        assertEquals("[left margin]", left, margins.leftMargin);
+        assertEquals("[top margin]", top, margins.topMargin);
+        assertEquals("[right margin]", right, margins.rightMargin);
+        assertEquals("[bottom margin]", bottom, margins.bottomMargin);
     }
 
     private static final class MockBroadcastReceiver extends BroadcastReceiver {
