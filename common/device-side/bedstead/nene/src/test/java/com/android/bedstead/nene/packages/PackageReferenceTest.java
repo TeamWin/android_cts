@@ -90,13 +90,13 @@ public class PackageReferenceTest {
     }
 
     @Test
-    public void uninstall_packageNotInstalledForUser_throwsException() {
+    public void uninstall_packageNotInstalledForUser_doesNotThrowException() {
         UserReference otherUser = mTestApis.users().createUser().createAndStart();
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
         PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
-            assertThrows(NeneException.class, () -> packageReference.uninstall(otherUser));
+            packageReference.uninstall(otherUser);
         } finally {
             packageReference.uninstall(mUser);
             otherUser.remove();
@@ -104,9 +104,9 @@ public class PackageReferenceTest {
     }
 
     @Test
-    public void uninstall_packageDoesNotExist_throwsException() {
+    public void uninstall_packageDoesNotExist_doesNotThrowException() {
         PackageReference packageReference = mTestApis.packages().find(NON_EXISTING_PACKAGE_NAME);
 
-        assertThrows(NeneException.class, () -> packageReference.uninstall(mUser));
+        packageReference.uninstall(mUser);
     }
 }

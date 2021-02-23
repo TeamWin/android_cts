@@ -105,6 +105,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @LargeTest
     @Test
+    @Ignore
     public void testAppLinks_verificationStatus() throws Exception {
         // Disable all pre-existing browsers in the managed profile so they don't interfere with
         // intents resolution.
@@ -140,6 +141,7 @@ public class ManagedProfileTest extends BaseManagedProfileTest {
 
     @LargeTest
     @Test
+    @Ignore
     public void testAppLinks_enabledStatus() throws Exception {
         // Disable all pre-existing browsers in the managed profile so they don't interfere with
         // intents resolution.

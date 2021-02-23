@@ -16,39 +16,23 @@
 
 package android.net.wifi.cts;
 
-import static android.net.NetworkCapabilitiesProto.NET_CAPABILITY_INTERNET;
-import static android.net.NetworkCapabilitiesProto.TRANSPORT_WIFI;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
-import android.annotation.NonNull;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
-import android.net.MacAddress;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.net.wifi.WifiManager.NetworkRequestMatchCallback;
 import android.net.wifi.WifiNetworkSpecifier;
-import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
-import android.text.TextUtils;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
@@ -57,8 +41,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
-import com.android.compatibility.common.util.SystemUtil;
-
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -67,13 +49,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Tests multiple concurrent connection flow on devices that support multi STA concurrency
@@ -107,8 +83,9 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     private UiDevice mUiDevice;
     private WifiConfiguration mTestNetworkForPeerToPeer;
     private WifiConfiguration mTestNetworkForInternetConnection;
-    private TestNetworkCallback mNetworkCallback;
-    private TestNetworkCallback mNrNetworkCallback;
+    private ConnectivityManager.NetworkCallback mNetworkCallback;
+    private ConnectivityManager.NetworkCallback mNrNetworkCallback;
+    private TestHelper mTestHelper;
 
     private static final int DURATION = 10_000;
     private static final int DURATION_UI_INTERACTION = 25_000;
@@ -123,7 +100,7 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertNotNull(wifiManager);
+        assertThat(wifiManager).isNotNull();
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
@@ -139,7 +116,9 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         // enable Wifi
         sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.isWifiEnabled());
-        if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
+        if (!wifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+        }
         PollingCheck.check("Wifi not enabled", DURATION, () -> wifiManager.isWifiEnabled());
     }
 
@@ -149,7 +128,7 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertNotNull(wifiManager);
+        assertThat(wifiManager).isNotNull();
 
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
@@ -165,6 +144,7 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         mWifiManager = mContext.getSystemService(WifiManager.class);
         mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mTestHelper = new TestHelper(mContext, mUiDevice);
 
         // skip the test if WiFi is not supported
         assumeTrue(WifiFeature.isWifiSupported(mContext));
@@ -173,11 +153,12 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         // skip if multi STA not supported.
         assumeTrue(mWifiManager.isMultiStaConcurrencySupported());
 
-        assertTrue("Please enable location for this test!",
-                mContext.getSystemService(LocationManager.class).isLocationEnabled());
+        assertWithMessage("Please enable location for this test!")
+                .that(mContext.getSystemService(LocationManager.class).isLocationEnabled())
+                .isTrue();
 
         // turn screen on
-        turnScreenOn();
+        mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -189,9 +170,9 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
         List<WifiConfiguration> matchingNetworksWithBssid =
-                findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks);
-        assertTrue("Need at least 2 saved network bssids in range",
-                matchingNetworksWithBssid.size() >= 2);
+                TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks);
+        assertWithMessage("Need at least 2 saved network bssids in range")
+                .that(matchingNetworksWithBssid.size()).isAtLeast(2);
         // Pick any 2 bssid for test.
         mTestNetworkForPeerToPeer = matchingNetworksWithBssid.get(0);
         // Try to find a bssid for another saved network in range. If none exists, fallback
@@ -237,394 +218,19 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         // Clear any existing app state after each test.
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
-        turnScreenOff();
-    }
-
-    private static void setWifiEnabled(boolean enable) throws Exception {
-        // now trigger the change using shell commands.
-        SystemUtil.runShellCommand("svc wifi " + (enable ? "enable" : "disable"));
-    }
-
-    private void turnScreenOn() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        mUiDevice.executeShellCommand("wm dismiss-keyguard");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE);
-    }
-
-    private void turnScreenOff() throws Exception {
-        mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        // Since the screen on/off intent is ordered, they will not be sent right now.
-        Thread.sleep(DURATION_SCREEN_TOGGLE);
-    }
-
-    private static class TestScanResultsCallback extends WifiManager.ScanResultsCallback {
-        private final CountDownLatch mCountDownLatch;
-        public boolean onAvailableCalled = false;
-
-        TestScanResultsCallback(CountDownLatch countDownLatch) {
-            mCountDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onScanResultsAvailable() {
-            onAvailableCalled = true;
-            mCountDownLatch.countDown();
-        }
-    }
-
-    /**
-     * Loops through all the saved networks available in the scan results. Returns a list of
-     * WifiConfiguration with the matching bssid filled in {@link WifiConfiguration#BSSID}.
-     *
-     * Note:
-     * a) If there are more than 2 networks with the same SSID, but different credential type, then
-     * this matching may pick the wrong one.
-     */
-    private static List<WifiConfiguration> findMatchingSavedNetworksWithBssid(
-            @NonNull WifiManager wifiManager, @NonNull List<WifiConfiguration> savedNetworks) {
-        if (savedNetworks.isEmpty()) return Collections.emptyList();
-        List<WifiConfiguration> matchingNetworksWithBssids = new ArrayList<>();
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        for (int i = 0; i < SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID; i++) {
-            // Trigger a scan to get fresh scan results.
-            TestScanResultsCallback scanResultsCallback =
-                    new TestScanResultsCallback(countDownLatch);
-            try {
-                wifiManager.registerScanResultsCallback(
-                        Executors.newSingleThreadExecutor(), scanResultsCallback);
-                wifiManager.startScan(new WorkSource(myUid()));
-                // now wait for callback
-                assertTrue(countDownLatch.await(
-                        DURATION_NETWORK_CONNECTION, TimeUnit.MILLISECONDS));
-            } catch (InterruptedException e) {
-            } finally {
-                wifiManager.unregisterScanResultsCallback(scanResultsCallback);
-            }
-            List<ScanResult> scanResults = wifiManager.getScanResults();
-            if (scanResults == null || scanResults.isEmpty()) fail("No scan results available");
-            for (ScanResult scanResult : scanResults) {
-                WifiConfiguration matchingNetwork = savedNetworks.stream()
-                        .filter(network -> TextUtils.equals(
-                                scanResult.SSID, removeDoubleQuotes(network.SSID)))
-                        .findAny()
-                        .orElse(null);
-                if (matchingNetwork != null) {
-                    // make a copy in case we have 2 bssid's for the same network.
-                    WifiConfiguration matchingNetworkCopy = new WifiConfiguration(matchingNetwork);
-                    matchingNetworkCopy.BSSID = scanResult.BSSID;
-                    matchingNetworksWithBssids.add(matchingNetworkCopy);
-                }
-            }
-            if (!matchingNetworksWithBssids.isEmpty()) break;
-        }
-        return matchingNetworksWithBssids;
-    }
-
-    private void assertConnectionEquals(@NonNull WifiConfiguration network,
-            @NonNull WifiInfo wifiInfo) {
-        assertEquals(network.SSID, wifiInfo.getSSID());
-        assertEquals(network.BSSID, wifiInfo.getBSSID());
-    }
-
-    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
-        private final CountDownLatch mCountDownLatch;
-        public boolean onAvailableCalled = false;
-        public boolean onUnavailableCalled = false;
-        public NetworkCapabilities networkCapabilities;
-
-        TestNetworkCallback(CountDownLatch countDownLatch) {
-            mCountDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
-            onAvailableCalled = true;
-            this.networkCapabilities = networkCapabilities;
-            mCountDownLatch.countDown();
-        }
-
-        @Override
-        public void onUnavailable() {
-            onUnavailableCalled = true;
-            mCountDownLatch.countDown();
-        }
-    }
-
-    private static class TestNetworkRequestMatchCallback implements NetworkRequestMatchCallback {
-        private final Object mLock;
-
-        public boolean onRegistrationCalled = false;
-        public boolean onAbortCalled = false;
-        public boolean onMatchCalled = false;
-        public boolean onConnectSuccessCalled = false;
-        public boolean onConnectFailureCalled = false;
-        public WifiManager.NetworkRequestUserSelectionCallback userSelectionCallback = null;
-        public List<ScanResult> matchedScanResults = null;
-
-        TestNetworkRequestMatchCallback(Object lock) {
-            mLock = lock;
-        }
-
-        @Override
-        public void onUserSelectionCallbackRegistration(
-                WifiManager.NetworkRequestUserSelectionCallback userSelectionCallback) {
-            synchronized (mLock) {
-                onRegistrationCalled = true;
-                this.userSelectionCallback = userSelectionCallback;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onAbort() {
-            synchronized (mLock) {
-                onAbortCalled = true;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onMatch(List<ScanResult> scanResults) {
-            synchronized (mLock) {
-                // This can be invoked multiple times. So, ignore after the first one to avoid
-                // disturbing the rest of the test sequence.
-                if (onMatchCalled) return;
-                onMatchCalled = true;
-                matchedScanResults = scanResults;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onUserSelectionConnectSuccess(WifiConfiguration config) {
-            synchronized (mLock) {
-                onConnectSuccessCalled = true;
-                mLock.notify();
-            }
-        }
-
-        @Override
-        public void onUserSelectionConnectFailure(WifiConfiguration config) {
-            synchronized (mLock) {
-                onConnectFailureCalled = true;
-                mLock.notify();
-            }
-        }
-    }
-
-    private void handleUiInteractions(WifiConfiguration network, boolean shouldUserReject) {
-        // can't use CountDownLatch since there are many callbacks expected and CountDownLatch
-        // cannot be reset.
-        // TODO(b/177591382): Use ArrayBlockingQueue/LinkedBlockingQueue
-        Object uiLock = new Object();
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestNetworkRequestMatchCallback networkRequestMatchCallback =
-                new TestNetworkRequestMatchCallback(uiLock);
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-
-            // 1. Wait for registration callback.
-            synchronized (uiLock) {
-                try {
-                    mWifiManager.registerNetworkRequestMatchCallback(
-                            Executors.newSingleThreadExecutor(), networkRequestMatchCallback);
-                    uiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            assertTrue(networkRequestMatchCallback.onRegistrationCalled);
-            assertNotNull(networkRequestMatchCallback.userSelectionCallback);
-
-            // 2. Wait for matching scan results
-            synchronized (uiLock) {
-                try {
-                    uiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            assertTrue(networkRequestMatchCallback.onMatchCalled);
-            assertNotNull(networkRequestMatchCallback.matchedScanResults);
-            assertThat(networkRequestMatchCallback.matchedScanResults.size()).isAtLeast(1);
-
-            // 3. Trigger connection to one of the matched networks or reject the request.
-            if (shouldUserReject) {
-                networkRequestMatchCallback.userSelectionCallback.reject();
-            } else {
-                networkRequestMatchCallback.userSelectionCallback.select(network);
-            }
-
-            // 4. Wait for connection success or abort.
-            synchronized (uiLock) {
-                try {
-                    uiLock.wait(DURATION_UI_INTERACTION);
-                } catch (InterruptedException e) {
-                }
-            }
-            if (shouldUserReject) {
-                assertTrue(networkRequestMatchCallback.onAbortCalled);
-            } else {
-                assertTrue(networkRequestMatchCallback.onConnectSuccessCalled);
-            }
-        } finally {
-            mWifiManager.unregisterNetworkRequestMatchCallback(networkRequestMatchCallback);
-            uiAutomation.dropShellPermissionIdentity();
-        }
-    }
-
-
-    /**
-     * Tests the entire connection flow using the provided specifier.
-     *
-     * @param specifier Specifier to use for network request.
-     * @param shouldUserReject Whether to simulate user rejection or not.
-     */
-    private void testConnectionFlowWithSpecifier(
-            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject) {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        // Fork a thread to handle the UI interactions.
-        Thread uiThread = new Thread(() -> handleUiInteractions(network, shouldUserReject));
-
-        // File the network request & wait for the callback.
-        mNrNetworkCallback = new TestNetworkCallback(countDownLatch);
-        try {
-            // File a request for wifi network.
-            mConnectivityManager.requestNetwork(
-                    new NetworkRequest.Builder()
-                            .addTransportType(TRANSPORT_WIFI)
-                            .removeCapability(NET_CAPABILITY_INTERNET)
-                            .setNetworkSpecifier(specifier)
-                            .build(),
-                    mNrNetworkCallback);
-            // Wait for the request to reach the wifi stack before kick-starting the UI
-            // interactions.
-            Thread.sleep(100);
-            // Start the UI interactions.
-            uiThread.run();
-            // now wait for callback
-            assertTrue(countDownLatch.await(DURATION_NETWORK_CONNECTION, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-        }
-        if (shouldUserReject) {
-            assertTrue(mNrNetworkCallback.onUnavailableCalled);
-        } else {
-            assertTrue(mNrNetworkCallback.onAvailableCalled);
-            assertConnectionEquals(
-                    network, (WifiInfo) mNrNetworkCallback.networkCapabilities.getTransportInfo());
-        }
-
-        try {
-            // Ensure that the UI interaction thread has completed.
-            uiThread.join(DURATION_UI_INTERACTION);
-        } catch (InterruptedException e) {
-            fail("UI interaction interrupted");
-        }
+        mTestHelper.turnScreenOff();
     }
 
     private void testSuccessfulConnectionWithSpecifier(
             WifiConfiguration network, WifiNetworkSpecifier specifier) {
-        testConnectionFlowWithSpecifier(network, specifier, false);
+        mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
+                network, specifier, false);
     }
 
     private void testUserRejectionWithSpecifier(
             WifiConfiguration network, WifiNetworkSpecifier specifier) {
-        testConnectionFlowWithSpecifier(network, specifier, true);
-    }
-
-    private static String removeDoubleQuotes(String string) {
-        return WifiInfo.sanitizeSsid(string);
-    }
-
-    private static class TestActionListener implements WifiManager.ActionListener {
-        private final CountDownLatch mCountDownLatch;
-        public boolean onSuccessCalled = false;
-        public boolean onFailedCalled = false;
-        public int failureReason = -1;
-
-        TestActionListener(CountDownLatch countDownLatch) {
-            mCountDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onSuccess() {
-            onSuccessCalled = true;
-            mCountDownLatch.countDown();
-        }
-
-        @Override
-        public void onFailure(int reason) {
-            onFailedCalled = true;
-            mCountDownLatch.countDown();
-        }
-    }
-
-    /**
-     * Triggers connection to one of the saved networks using {@link WifiManager#connect(
-     * WifiConfiguration, WifiManager.ActionListener)}
-     */
-    private void testConnectionFlowWithConnect(@NonNull WifiConfiguration network) {
-        CountDownLatch countDownLatchAl = new CountDownLatch(1);
-        CountDownLatch countDownLatchNr = new CountDownLatch(1);
-        TestActionListener actionListener = new TestActionListener(countDownLatchAl);
-        mNetworkCallback = new TestNetworkCallback(countDownLatchNr);
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        try {
-            uiAutomation.adoptShellPermissionIdentity();
-            // File a callback for wifi network.
-            mConnectivityManager.registerNetworkCallback(
-                    new NetworkRequest.Builder()
-                            .addTransportType(TRANSPORT_WIFI)
-                            .addCapability(NET_CAPABILITY_INTERNET)
-                            .build(),
-                    mNetworkCallback);
-            // Trigger the connection.
-            mWifiManager.connect(network, actionListener);
-            // now wait for action listener callback
-            assertTrue(countDownLatchAl.await(DURATION_NETWORK_CONNECTION, TimeUnit.MILLISECONDS));
-            // check if we got the success callback
-            assertTrue(actionListener.onSuccessCalled);
-
-            // Wait for connection to complete & ensure we are connected to the saved network.
-            assertTrue(countDownLatchNr.await(DURATION_NETWORK_CONNECTION, TimeUnit.MILLISECONDS));
-            assertTrue(mNetworkCallback.onAvailableCalled);
-            assertConnectionEquals(
-                    network, (WifiInfo) mNetworkCallback.networkCapabilities.getTransportInfo());
-        } catch (InterruptedException e) {
-        } finally {
-            uiAutomation.dropShellPermissionIdentity();
-        }
-    }
-
-    private static WifiNetworkSpecifier.Builder
-            createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
-            @NonNull WifiConfiguration network) {
-        WifiNetworkSpecifier.Builder specifierBuilder = new WifiNetworkSpecifier.Builder()
-                .setSsid(removeDoubleQuotes(network.SSID))
-                .setBssid(MacAddress.fromString(network.BSSID));
-        if (network.preSharedKey != null) {
-            if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
-                specifierBuilder.setWpa2Passphrase(removeDoubleQuotes(network.preSharedKey));
-            } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
-                specifierBuilder.setWpa3Passphrase(removeDoubleQuotes(network.preSharedKey));
-            } else {
-                fail("Unsupported security type found in saved networks");
-            }
-        } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
-            specifierBuilder.setIsEnhancedOpen(true);
-        } else if (!network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
-            fail("Unsupported security type found in saved networks");
-        }
-        specifierBuilder.setIsHiddenSsid(network.hiddenSSID);
-        return specifierBuilder;
-    }
-
-    private long getNumWifiConnections() {
-        Network[] networks = mConnectivityManager.getAllNetworks();
-        return Arrays.stream(networks)
-                .filter(n ->
-                        mConnectivityManager.getNetworkCapabilities(n).hasTransport(TRANSPORT_WIFI))
-                .count();
+        mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
+                network, specifier, true);
     }
 
     /**
@@ -636,17 +242,18 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     @Test
     public void testConnectToPeerPeerNetworkWhenConnectedToInternetNetwork() throws Exception {
         // First trigger internet connectivity.
-        testConnectionFlowWithConnect(mTestNetworkForInternetConnection);
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
 
         // Now trigger peer to peer connectivity.
         WifiNetworkSpecifier specifier =
-                createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetworkForPeerToPeer)
                 .build();
         testSuccessfulConnectionWithSpecifier(mTestNetworkForPeerToPeer, specifier);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertEquals(2, getNumWifiConnections());
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -659,16 +266,17 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     public void testConnectToInternetNetworkWhenConnectedToPeerPeerNetwork() throws Exception {
         // First trigger peer to peer connectivity.
         WifiNetworkSpecifier specifier =
-                createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetworkForPeerToPeer)
                         .build();
         testSuccessfulConnectionWithSpecifier(mTestNetworkForPeerToPeer, specifier);
 
         // Now trigger internet connectivity.
-        testConnectionFlowWithConnect(mTestNetworkForInternetConnection);
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
 
         // Ensure that there are 2 wifi connections available for apps.
-        assertEquals(2, getNumWifiConnections());
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
     }
 
     /**
@@ -680,16 +288,17 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     @Test
     public void testPeerToPeerConnectionRejectWhenConnectedToInternetNetwork() throws Exception {
         // First trigger internet connectivity.
-        testConnectionFlowWithConnect(mTestNetworkForInternetConnection);
+        mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
+                mTestNetworkForInternetConnection);
 
         // Now trigger peer to peer connectivity.
         WifiNetworkSpecifier specifier =
-                createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetworkForPeerToPeer)
                         .build();
         testUserRejectionWithSpecifier(mTestNetworkForPeerToPeer, specifier);
 
         // Ensure that there is only 1 wifi connection available for apps.
-        assertEquals(1, getNumWifiConnections());
+        assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
     }
 }

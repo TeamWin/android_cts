@@ -20,19 +20,14 @@ import subprocess
 import sys
 import tempfile
 import time
-
 import yaml
-
 
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
-TEST_BED_TABLET_SCENES = 'TEST_BED_TABLET_SCENES'
-TEST_BED_SENSOR_FUSION = 'TEST_BED_SENSOR_FUSION'
-PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
-PROC_TIMEOUT_TIME = 900  # timeout in seconds for a process (15 minutes)
+TEST_KEY_TABLET = 'tablet'
+TEST_KEY_SENSOR_FUSION = 'sensor_fusion'
 LOAD_SCENE_DELAY = 1  # seconds
 ACTIVITY_START_WAIT = 1.5  # seconds
-
 
 RESULT_PASS = 'PASS'
 RESULT_FAIL = 'FAIL'
@@ -48,6 +43,7 @@ EXTRA_CAMERA_ID = 'camera.its.extra.CAMERA_ID'
 EXTRA_RESULTS = 'camera.its.extra.RESULTS'
 TIME_KEY_START = 'start'
 TIME_KEY_END = 'end'
+
 # All possible scenes
 # Notes on scene names:
 #   scene*_1/2/... are same scene split to load balance run times for scenes
@@ -283,10 +279,10 @@ def main():
   config_file_contents = get_config_file_contents()
   for i in config_file_contents['TestBeds']:
     if scenes == ['sensor_fusion']:
-      if i['Name'] != TEST_BED_SENSOR_FUSION:
+      if TEST_KEY_SENSOR_FUSION not in i['Name'].lower():
         config_file_contents['TestBeds'].remove(i)
     else:
-      if i['Name'] != TEST_BED_TABLET_SCENES:
+      if TEST_KEY_SENSOR_FUSION in i['Name'].lower():
         config_file_contents['TestBeds'].remove(i)
 
  # Get test parameters from config file
@@ -298,7 +294,7 @@ def main():
 
   device_id = get_device_serial_number('dut', config_file_contents)
 
-  if config_file_contents['TestBeds'][0]['Name'] == TEST_BED_TABLET_SCENES:
+  if TEST_KEY_TABLET in config_file_contents['TestBeds'][0]['Name'].lower():
     tablet_id = get_device_serial_number('tablet', config_file_contents)
   else:
     tablet_id = None

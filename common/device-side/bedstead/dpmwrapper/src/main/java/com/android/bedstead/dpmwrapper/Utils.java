@@ -16,6 +16,7 @@
 package com.android.bedstead.dpmwrapper;
 
 import android.app.ActivityManager;
+import android.content.IntentFilter;
 import android.os.UserHandle;
 import android.os.UserManager;
 
@@ -47,6 +48,13 @@ final class Utils {
         throw new IllegalStateException("Should only be called by current user ("
                 + ActivityManager.getCurrentUser() + ") on headless system user device, but was "
                         + "called by process from user " + MY_USER_ID);
+    }
+
+    static String toString(IntentFilter filter) {
+        StringBuilder builder = new StringBuilder("[");
+        filter.actionsIterator().forEachRemaining((s) -> builder.append(s).append(","));
+        builder.deleteCharAt(builder.length() - 1);
+        return builder.append(']').toString();
     }
 
     private Utils() {

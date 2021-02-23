@@ -28,6 +28,10 @@ import java.util.function.Function;
  */
 public final class ShellCommand {
 
+    // 60 seconds
+    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
+    private static final long WAIT_UNTIL_DELAY_MILLIS = 100;
+
     public static Builder builder(String command) {
         if (command == null) {
             throw new NullPointerException();
@@ -49,8 +53,12 @@ public final class ShellCommand {
 
     public static final class Builder {
         private final StringBuilder commandBuilder;
+        @Nullable
         private byte[] mStdInBytes = null;
+        @Nullable
         private boolean mAllowEmptyOutput = false;
+        @Nullable
+        private Function<String, Boolean> mOutputSuccessChecker = null;
 
         private Builder(String command) {
             commandBuilder = new StringBuilder(command);
@@ -95,6 +103,16 @@ public final class ShellCommand {
         }
 
         /**
+         * Validate the output when executing.
+         *
+         * <p>{@code outputSuccessChecker} should return {@code true} if the output is valid.
+         */
+        public Builder validate(Function<String, Boolean> outputSuccessChecker) {
+            mOutputSuccessChecker = outputSuccessChecker;
+            return this;
+        }
+
+        /**
          * Build the full command including all options and operands.
          */
         public String build() {
@@ -103,20 +121,56 @@ public final class ShellCommand {
 
         /** See {@link ShellCommandUtils#executeCommand(java.lang.String)}. */
         public String execute() throws AdbException {
+            if (mOutputSuccessChecker != null) {
+                return ShellCommandUtils.executeCommandAndValidateOutput(
+                        commandBuilder.toString(),
+                        /* allowEmptyOutput= */ mAllowEmptyOutput,
+                        mStdInBytes,
+                        mOutputSuccessChecker);
+            }
+
             return ShellCommandUtils.executeCommand(
                     commandBuilder.toString(),
                     /* allowEmptyOutput= */ mAllowEmptyOutput,
                     mStdInBytes);
         }
 
-        /** See {@link ShellCommandUtils#executeCommandAndValidateOutput(String, Function)}. */
-        public String executeAndValidateOutput(Function<String, Boolean> outputSuccessChecker)
-                throws AdbException {
-            return ShellCommandUtils.executeCommandAndValidateOutput(
-                    commandBuilder.toString(),
-                    /* allowEmptyOutput= */ mAllowEmptyOutput,
-                    mStdInBytes,
-                    outputSuccessChecker);
+        /**
+         * See {@link #execute} and then extract information from the output using
+         * {@code outputParser}.
+         *
+         * <p>If any {@link Exception} is thrown by {@code outputParser}, and {@link AdbException}
+         * will be thrown.
+         */
+        public <E> E executeAndParseOutput(Function<String, E> outputParser) throws AdbException {
+            String output = execute();
+
+            try {
+                return outputParser.apply(output);
+            } catch (RuntimeException e) {
+                throw new AdbException(
+                        "Could not parse output", commandBuilder.toString(), output, e);
+            }
+        }
+
+        /**
+         * Execute the command and check that the output meets a given criteria. Run the
+         * command repeatedly until the output meets the criteria.
+         *
+         * <p>{@code outputSuccessChecker} should return {@code true} if the output indicates the
+         * command executed successfully.
+         */
+        public String executeUntilValid() throws InterruptedException, AdbException {
+            int attempts = 0;
+            while (attempts++ < MAX_WAIT_UNTIL_ATTEMPTS) {
+                try {
+                    return execute();
+                } catch (AdbException e) {
+                    // ignore, will retry
+                    Thread.sleep(WAIT_UNTIL_DELAY_MILLIS);
+                }
+            }
+            return execute();
         }
     }
 }

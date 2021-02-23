@@ -111,7 +111,8 @@ public final class Packages {
             ShellCommand.builderForUser(user, "pm install")
                     .addOperand("-r") // Reinstall automatically
                     .addOperand(apkFile.getAbsolutePath())
-                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
         } catch (AdbException e) {
             throw new NeneException("Could not install " + apkFile + " for user " + user, e);
         }
@@ -137,7 +138,8 @@ public final class Packages {
                     .addOption("-S", apkFile.length)
                     .addOperand("-r")
                     .writeToStdIn(apkFile)
-                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
         } catch (AdbException e) {
             throw new NeneException("Could not install from bytes for user " + user, e);
         }
@@ -184,7 +186,7 @@ public final class Packages {
     private void fillCache() {
         try {
             // TODO: Replace use of adb on supported versions of Android
-            String packageDumpsysOutput = ShellCommandUtils.executeCommand("dumpsys package");
+            String packageDumpsysOutput = ShellCommand.builder("dumpsys package").execute();
             AdbPackageParser.ParseResult result = mParser.parse(packageDumpsysOutput);
 
             mCachedPackages = result.mPackages;
