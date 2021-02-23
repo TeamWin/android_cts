@@ -401,9 +401,9 @@ public class TunerTest {
         assertNotNull(f);
         assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
         if (TunerVersionChecker.isHigherOrEqualVersionTo(TunerVersionChecker.TUNER_VERSION_1_1)) {
-            assertNotEquals(Tuner.INVALID_FILTER_ID_64BIT, f.getId64Bit());
+            assertNotEquals(Tuner.INVALID_FILTER_ID_LONG, f.getIdLong());
         } else {
-            assertEquals(Tuner.INVALID_FILTER_ID_64BIT, f.getId64Bit());
+            assertEquals(Tuner.INVALID_FILTER_ID_LONG, f.getIdLong());
         }
 
         Settings settings = SectionSettingsWithTableInfo
