@@ -32,6 +32,7 @@ android_test {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     sdk_version: "test_current",
 }

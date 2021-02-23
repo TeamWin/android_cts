@@ -24,7 +24,9 @@ android_test {
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "platform-test-annotations",
+        "cts-wm-util",
     ],
+    resource_dirs: ["res"],
     srcs: ["src/**/*.java"],
     sdk_version: "test_current",
     // Tag this module as a cts test artifact
