@@ -22,8 +22,6 @@ import android.content.Intent;
 import android.os.UserHandle;
 import android.util.Log;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 import com.android.cts.devicepolicy.OperationSafetyChangedCallback;
 import com.android.cts.devicepolicy.OperationSafetyChangedEvent;
@@ -110,8 +108,9 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
     }
 
     private void sendUserBroadcast(Context context, String action, UserHandle userHandle) {
-        Intent intent = new Intent(action);
-        intent.putExtra(EXTRA_USER_HANDLE, userHandle);
-        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+        Log.d(TAG, "sendUserBroadcast(): action=" + action + ", user=" + userHandle);
+        Intent intent = new Intent(action).putExtra(EXTRA_USER_HANDLE, userHandle);
+
+        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, intent);
     }
 }
