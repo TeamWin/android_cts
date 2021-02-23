@@ -1,0 +1,94 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.bedstead.nene.packages;
+
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+
+/**
+ * Builder for a list of packages which will not be cleaned up by the system even if they are not
+ * installed on any user.
+ */
+@RequiresApi(Build.VERSION_CODES.S)
+public final class KeepUninstalledPackagesBuilder {
+
+    private final List<String> mPackages = new ArrayList<>();
+
+    KeepUninstalledPackagesBuilder() {
+    }
+
+    /**
+     * Commit the collection of packages which will not be cleaned up.
+     *
+     * <p>Packages previously in the list but not in the updated list may be removed at any time if
+     * they are not installed on any user.
+     */
+    public void commit() {
+        // TODO(scottjonathan): Investigate if we can make this backwards compatible by pulling the
+        //  APK files and keeping them (either as a file or in memory) until needed to resolve or
+        //  re-install
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        PackageManager packageManager = context.getPackageManager();
+
+        // TODO(scottjonathan): Once we support permissions in Nene, use that call here
+
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // Needs KEEP_UNINSTALLED_PACKAGES
+            packageManager.setKeepUninstalledPackages(mPackages);
+        });
+    }
+
+    /**
+     * Clear the list of packages which will not be cleaned up.
+     *
+     * <p>Packages previously in the list may be removed at any time if they are not installed on
+     * any user.
+     */
+    public void clear() {
+        mPackages.clear();
+        commit();
+    }
+
+    /**
+     * Add a package to the list of those which will not be cleaned up.
+     */
+    public KeepUninstalledPackagesBuilder add(PackageReference pkg) {
+        mPackages.add(pkg.packageName());
+        return this;
+    }
+
+    /**
+     * Add a collection of packages to the list of those which will not be cleaned up.
+     */
+    public KeepUninstalledPackagesBuilder add(Collection<PackageReference> packages) {
+        for (PackageReference pkg : packages) {
+            add(pkg);
+        }
+        return this;
+    }
+}
