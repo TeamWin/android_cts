@@ -18,9 +18,11 @@
  * Native implementation for the JniStaticTest parts.
  */
 
+#include <errno.h>
 #include <jni.h>
 #include <stdlib.h>
 #include <sys/prctl.h>
+#include <sys/utsname.h>
 
 extern "C" JNIEXPORT jboolean
 Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
@@ -54,4 +56,14 @@ Java_android_cts_tagging_Utils_accessMistaggedPointer(JNIEnv *) {
   volatile int load = *mistagged_p;
   (void)load;
   delete[] p;
+}
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_android_cts_tagging_Utils_mistaggedKernelUaccessFails(JNIEnv *) {
+  auto *p = new utsname;
+  utsname* mistagged_p = reinterpret_cast<utsname*>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
+  bool result = uname(mistagged_p) != 0 && errno == EFAULT;
+  delete p;
+  return result;
 }
