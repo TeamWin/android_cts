@@ -25,7 +25,6 @@ android_test {
         "ctstestrunner-axt",
         "truth-prebuilt",
     ],
-    sdk_version: "system_current",
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
     test_suites: [
