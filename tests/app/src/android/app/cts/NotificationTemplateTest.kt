@@ -314,14 +314,14 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setCustomContentView(customContent)
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .createContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -334,18 +334,18 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setCustomBigContentView(customContent)
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .createBigContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the app name text shows
-            val appNameView = requireViewByIdName<TextView>(activity, "app_name_text")
+            val appNameView = requireViewByIdName<TextView>("app_name_text")
             assertThat(appNameView.visibility).isEqualTo(View.VISIBLE)
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -357,15 +357,15 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomContentView(customContent)
                 .createContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
 
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -377,18 +377,18 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomBigContentView(customContent)
                 .createBigContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the app name text shows
-            val appNameView = requireViewByIdName<TextView>(activity, "app_name_text")
+            val appNameView = requireViewByIdName<TextView>("app_name_text")
             assertThat(appNameView.visibility).isEqualTo(View.VISIBLE)
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -400,14 +400,14 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomHeadsUpContentView(customContent)
                 .createHeadsUpContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -445,10 +445,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
         val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
         val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.requireViewWithText(declineText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.findViewWithText(hangUpText)).isNull()
+        checkViews(views) {
+            assertThat(requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
+            assertThat(requireViewWithText(declineText).visibility).isEqualTo(View.VISIBLE)
+            assertThat(findViewWithText(hangUpText)).isNull()
         }
     }
 
@@ -480,10 +480,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
         val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
         val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.findViewWithText(answerText)).isNull()
-            assertThat(activity.findViewWithText(declineText)).isNull()
-            assertThat(activity.requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
+        checkViews(views) {
+            assertThat(findViewWithText(answerText)).isNull()
+            assertThat(findViewWithText(declineText)).isNull()
+            assertThat(requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
         }
     }
 
@@ -520,10 +520,10 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
         val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
         val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.findViewWithText(declineText)).isNull()
-            assertThat(activity.requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
+        checkViews(views) {
+            assertThat(requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
+            assertThat(findViewWithText(declineText)).isNull()
+            assertThat(requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
         }
     }
 
@@ -540,11 +540,11 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         assertThat(extras.containsKey(Notification.EXTRA_VERIFICATION_ICON)).isFalse()
 
         val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            val textView = requireViewByIdName<TextView>(activity, "verification_text")
+        checkViews(views) {
+            val textView = requireViewByIdName<TextView>("verification_text")
             assertThat(textView.visibility).isEqualTo(View.GONE)
 
-            val iconView = requireViewByIdName<ImageView>(activity, "verification_icon")
+            val iconView = requireViewByIdName<ImageView>("verification_icon")
             assertThat(iconView.visibility).isEqualTo(View.GONE)
         }
     }
@@ -566,12 +566,12 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .isEqualTo(R.drawable.ic_info)
 
         val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            val textView = requireViewByIdName<TextView>(activity, "verification_text")
+        checkViews(views) {
+            val textView = requireViewByIdName<TextView>("verification_text")
             assertThat(textView.visibility).isEqualTo(View.VISIBLE)
             assertThat(textView.text).isEqualTo("Verified!")
 
-            val iconView = requireViewByIdName<ImageView>(activity, "verification_icon")
+            val iconView = requireViewByIdName<ImageView>("verification_icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -599,8 +599,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
         val views = builder.createBigContentView()
         checkViews(views) {
-            assertThat(it.requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isFalse()
-            assertThat(it.requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isFalse()
+            assertThat(requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isFalse()
+            assertThat(requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isFalse()
         }
     }
 
@@ -627,8 +627,8 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
         val views = builder.createBigContentView()
         checkViews(views) {
-            assertThat(it.requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isTrue()
-            assertThat(it.requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isTrue()
+            assertThat(requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isTrue()
+            assertThat(requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isTrue()
         }
     }
 
