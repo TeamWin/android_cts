@@ -44,7 +44,7 @@ public class SonyDualshock4ProBluetoothTest extends InputHidTestCase {
     }
 
     @Test
-    public void testVibrator() {
+    public void testVibrator() throws Exception {
         testInputVibratorEvents(R.raw.sony_dualshock4_bluetooth_vibratortests);
     }
 
