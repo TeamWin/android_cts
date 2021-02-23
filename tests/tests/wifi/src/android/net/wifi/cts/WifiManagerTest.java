@@ -3572,6 +3572,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#isWpa3SaeH2eSupported()} does not crash.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion?
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsWpa3SaeH2eSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isWpa3SaeH2eSupported();
+    }
+
+    /**
      * Tests {@link WifiManager#isP2pSupported()} returns true
      * if this device supports it, otherwise, ensure no crash.
      */
