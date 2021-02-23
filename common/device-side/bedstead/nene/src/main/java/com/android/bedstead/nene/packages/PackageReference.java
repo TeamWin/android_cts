@@ -31,7 +31,6 @@ import java.io.File;
  * <p>To resolve the package into a {@link Package}, see {@link #resolve()}.
  */
 public abstract class PackageReference {
-
     private final Packages mPackages;
     private final String mPackageName;
 
