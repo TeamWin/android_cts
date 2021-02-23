@@ -23,12 +23,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.LauncherApps;
 import android.os.Process;
-import android.os.UserHandle;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

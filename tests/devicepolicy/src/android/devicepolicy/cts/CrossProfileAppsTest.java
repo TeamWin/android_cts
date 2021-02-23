@@ -16,7 +16,7 @@
 
 package android.devicepolicy.cts;
 
-import static com.android.compatibility.common.util.enterprise.DeviceState.UserType.PRIMARY_USER;
+import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -39,13 +39,13 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
-import com.android.compatibility.common.util.enterprise.DeviceState;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
-import com.android.compatibility.common.util.enterprise.annotations.Postsubmit;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;

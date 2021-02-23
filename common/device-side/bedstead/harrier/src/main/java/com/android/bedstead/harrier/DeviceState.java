@@ -14,40 +14,38 @@
  * limitations under the License.
  */
 
-package com.android.compatibility.common.util.enterprise;
-
-import static android.app.UiAutomation.FLAG_DONT_USE_ACCESSIBILITY;
+package com.android.bedstead.harrier;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import androidx.test.core.app.ApplicationProvider;
-
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
+import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasTvProfile;
-import com.android.compatibility.common.util.enterprise.annotations.EnsureHasWorkProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnPrimaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnSecondaryUser;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnTvProfile;
-import com.android.compatibility.common.util.enterprise.annotations.RequireRunOnWorkProfile;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -56,8 +54,6 @@ import org.junit.runners.model.Statement;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,6 +73,7 @@ import java.util.regex.Pattern;
 public final class DeviceState implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
+    private final TestApis mTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
     private final boolean mSkipTestTeardown;
@@ -90,7 +87,8 @@ public final class DeviceState implements TestRule {
 
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
-        mSkipTestTeardown = Boolean.parseBoolean(arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
+        mSkipTestTeardown = Boolean.parseBoolean(
+                arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
     }
@@ -160,17 +158,20 @@ public final class DeviceState implements TestRule {
                     }
                 }
 
-                Log.d("DeviceState", "Finished preparing state for test " + description.getMethodName());
+                Log.d("DeviceState",
+                        "Finished preparing state for test " + description.getMethodName());
 
                 try {
                     base.evaluate();
                 } finally {
-                    Log.d("DeviceState", "Tearing down state for test " + description.getMethodName());
+                    Log.d("DeviceState",
+                            "Tearing down state for test " + description.getMethodName());
                     teardownNonShareableState();
                     if (!mSkipTestTeardown) {
                         teardownShareableState();
                     }
-                    Log.d("DeviceState", "Finished tearing down state for test " + description.getMethodName());
+                    Log.d("DeviceState",
+                            "Finished tearing down state for test " + description.getMethodName());
                 }
             }};
     }
@@ -181,17 +182,19 @@ public final class DeviceState implements TestRule {
 
     private void requireFeature(String feature, FailureMode failureMode) {
         if (failureMode.equals(FailureMode.FAIL)) {
-            assertThat(mContext.getPackageManager().hasSystemFeature(feature)).isTrue();
+            assertThat(mTestApis.packages().features().contains(feature)).isTrue();
         } else if (failureMode.equals(FailureMode.SKIP)) {
             assumeTrue("Device must have feature " + feature,
-                    mContext.getPackageManager().hasSystemFeature(feature));
+                    mTestApis.packages().features().contains(feature));
         } else {
             throw new IllegalStateException("Unknown failure mode: " + failureMode);
         }
     }
 
     private void requireUserSupported(String userType) {
-        assumeTrue("Device must support user type " + userType + " only supports: " + getSupportedProfileTypes(), getSupportedProfileTypes().contains(userType));
+        assumeTrue("Device must support user type " + userType
+                + " only supports: " + mTestApis.users().supportedTypes(),
+                mTestApis.users().supportedType(userType) != null);
     }
 
     public enum UserType {
@@ -387,7 +390,10 @@ public final class DeviceState implements TestRule {
         final boolean removing;
         final Set<String> flags;
 
-        UserInfo(int id, String type, int parent, boolean isPrimary, boolean removing, Set<String> flags) {
+        UserInfo(
+                int id, String type,
+                int parent,
+                boolean isPrimary, boolean removing, Set<String> flags) {
             this.id = id;
             this.type = type;
             this.parent = parent;
@@ -398,7 +404,15 @@ public final class DeviceState implements TestRule {
 
         @Override
         public String toString() {
-            return "UserInfo{id=" + id + ", type=" + type + ", parent=" + parent + ", isPrimary=" + isPrimary + ", flags=" + flags.toString();
+            return "UserInfo{id=" + id
+                    + ", type="
+                    + type
+                    + ", parent="
+                    + parent
+                    + ", isPrimary="
+                    + isPrimary
+                    + ", flags="
+                    + flags.toString();
         }
     }
 
@@ -414,8 +428,12 @@ public final class DeviceState implements TestRule {
 
 
     private Set<UserInfo> listUsers(boolean includeRemoving) {
-        String command = "dumpsys user";
-        String commandOutput = runCommandWithOutput(command);
+        String commandOutput = "";
+        try {
+            commandOutput = ShellCommand.builder("dumpsys user").execute();
+        } catch (AdbException e) {
+            throw new IllegalStateException("Error getting user list", e);
+        }
 
         String userArea = commandOutput.split("Users:.*\n")[1].split("\n\n")[0];
         Set<String> userStrings = new HashSet<>();
@@ -484,13 +502,13 @@ public final class DeviceState implements TestRule {
         int workProfileId = getWorkProfileId(forUser);
 
         // TODO(scottjonathan): Can make this quicker by checking if we're already running
-        runCommandWithOutput("am start-user -w " + workProfileId);
+        mTestApis.users().find(workProfileId).start();
         if (installTestApp) {
-            installInProfile(workProfileId,
-                    sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .install(mTestApis.users().find(workProfileId));
         } else {
-            uninstallFromProfile(workProfileId,
-                    sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .uninstall(mTestApis.users().find(workProfileId));
         }
     }
 
@@ -501,11 +519,11 @@ public final class DeviceState implements TestRule {
             createTvProfile(resolveUserTypeToUserId(forUser));
         }
         if (installTestApp) {
-            installInProfile(getTvProfileId(forUser),
-                    sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .install(mTestApis.users().find(getTvProfileId(forUser)));
         } else {
-            uninstallFromProfile(getTvProfileId(forUser),
-                    sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .uninstall(mTestApis.users().find(getTvProfileId(forUser)));
         }
     }
 
@@ -515,10 +533,11 @@ public final class DeviceState implements TestRule {
             createSecondaryUser();
         }
         if (installTestApp) {
-            installInProfile(getSecondaryUserId(), sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .install(mTestApis.users().find(getSecondaryUserId()));
         } else {
-            uninstallFromProfile(getSecondaryUserId(),
-                    sInstrumentation.getContext().getPackageName());
+            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+                    .uninstall(mTestApis.users().find(getSecondaryUserId()));
         }
     }
 
@@ -569,7 +588,7 @@ public final class DeviceState implements TestRule {
 
     private void teardownShareableState() {
         for (Integer userId : createdUserIds) {
-            runCommandWithOutput("pm remove-user " + userId);
+            mTestApis.users().find(userId).remove();
         }
 
         createdUserIds.clear();
@@ -577,111 +596,51 @@ public final class DeviceState implements TestRule {
 
     private void createWorkProfile(int parentUserId) {
         requireCanSupportAdditionalUser();
-        final String createUserOutput =
-                runCommandWithOutput(
-                        "pm create-user --profileOf " + parentUserId + " --managed work");
-        final int profileId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
-        createdUserIds.add(profileId);
+        try {
+            int profileId = ShellCommand.builder("pm create-user")
+                    .addOption("--profileOf", parentUserId)
+                    .addOperand("--managed")
+                    .addOperand("work")
+                    .executeAndParseOutput(
+                            output -> Integer.parseInt(output.split(" id ")[1].trim()));
+            mTestApis.users().find(profileId).start();
+            createdUserIds.add(profileId);
+        } catch (AdbException e) {
+            throw new IllegalStateException("Error creating work profile", e);
+        }
     }
 
     private void createTvProfile(int parentUserId) {
         requireCanSupportAdditionalUser();
-        final String createUserOutput =
-                runCommandWithOutput(
-                        "pm create-user --profileOf " + parentUserId + " --user-type "
-                                + TV_PROFILE_TYPE + " tv");
-        final int profileId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
-        runCommandWithOutput("am start-user -w " + profileId);
-        createdUserIds.add(profileId);
+        try {
+            int profileId = ShellCommand.builder("pm create-user")
+                    .addOption("--profileOf", parentUserId)
+                    .addOption("--user-type", TV_PROFILE_TYPE)
+                    .addOperand("--managed")
+                    .addOperand("tv")
+                    .executeAndParseOutput(
+                            output -> Integer.parseInt(output.split(" id ")[1].trim()));
+            mTestApis.users().find(profileId).start();
+            createdUserIds.add(profileId);
+        } catch (AdbException e) {
+            throw new IllegalStateException("Error creating work profile", e);
+        }
     }
 
     private void createSecondaryUser() {
         requireCanSupportAdditionalUser();
-        final String createUserOutput =
-                runCommandWithOutput("pm create-user secondary");
-        final int userId = Integer.parseInt(createUserOutput.split(" id ")[1].trim());
-        runCommandWithOutput("am start-user -w " + userId);
-        createdUserIds.add(userId);
-    }
-
-    private void installInProfile(int profileId, String packageName) {
-        runCommandWithOutput("pm install-existing --user " + profileId + " " + packageName);
-    }
-
-    private void uninstallFromProfile(int profileId, String packageName) {
-        runCommandWithOutput("pm uninstall --user " + profileId + " " + packageName);
-    }
-
-    private String runCommandWithOutput(String command) {
-        ParcelFileDescriptor p = runCommand(command);
-
-        try (Scanner scanner = new Scanner(new ParcelFileDescriptor.AutoCloseInputStream(p),
-                UTF_8.name())) {
-            String s = scanner.useDelimiter("\\A").next();
-            Log.d("DeviceState", "Running command " + command + " got output: " + s);
-            return s;
-        } catch (NoSuchElementException e) {
-            Log.d("DeviceState", "Running command " + command + " with no output", e);
-            return "";
-        }
-    }
-
-    private ParcelFileDescriptor runCommand(String command) {
-        Log.d("DeviceState", "Running command " + command);
-        return getAutomation()
-                .executeShellCommand(command);
-    }
-
-    private UiAutomation getAutomation() {
-        if (mUiAutomation != null) {
-            return mUiAutomation;
-        }
-
-        int retries = MAX_UI_AUTOMATION_RETRIES;
-        mUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
-        while (mUiAutomation == null && retries > 0) {
-            Log.e(LOG_TAG, "Failed to get UiAutomation");
-            retries--;
-            mUiAutomation = sInstrumentation.getUiAutomation(FLAG_DONT_USE_ACCESSIBILITY);
-        }
-
-        if (mUiAutomation == null) {
-            throw new AssertionError("Could not get UiAutomation");
-        }
-
-        return mUiAutomation;
+        UserReference user = mTestApis.users().createUser().createAndStart();
+        createdUserIds.add(user.id());
     }
 
     private int getMaxNumberOfUsersSupported() {
-        String command = "pm get-max-users";
-        String commandOutput = runCommandWithOutput(command);
         try {
-            return Integer.parseInt(commandOutput.substring(commandOutput.lastIndexOf(" ")).trim());
-        } catch (NumberFormatException e) {
+            return ShellCommand.builder("pm get-max-users")
+                    .validate((output) -> output.startsWith("Maximum supported users:"))
+                    .executeAndParseOutput(
+                            (output) -> Integer.parseInt(output.split(": ", 2)[1].trim()));
+        } catch (AdbException e) {
             throw new IllegalStateException("Invalid command output", e);
         }
-    }
-
-    private Set<String> mSupportedProfileTypesCache = null;
-    private static final Pattern USER_TYPE_PATTERN = Pattern.compile("mName: (.+)");
-
-    private Set<String> getSupportedProfileTypes() {
-        if (mSupportedProfileTypesCache != null) {
-            return mSupportedProfileTypesCache;
-        }
-
-        String command = "dumpsys user";
-        String commandOutput = runCommandWithOutput(command);
-
-        String userArea = commandOutput.split("User types \\(\\d+ types\\):")[1].split("\n\n")[0];
-        mSupportedProfileTypesCache = new HashSet<>();
-
-        Matcher matcher = USER_TYPE_PATTERN.matcher(userArea);
-
-        while(matcher.find()) {
-            mSupportedProfileTypesCache.add(matcher.group(1));
-        }
-
-        return mSupportedProfileTypesCache;
     }
 }

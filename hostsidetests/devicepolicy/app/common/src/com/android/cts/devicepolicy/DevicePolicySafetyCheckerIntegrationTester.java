@@ -32,11 +32,13 @@ import static android.app.admin.DevicePolicyManager.operationToString;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
+import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.UnsafeStateException;
 import android.content.ComponentName;
+import android.content.Context;
 import android.os.UserManager;
 import android.util.Log;
 
@@ -130,10 +132,11 @@ public class DevicePolicySafetyCheckerIntegrationTester {
     public void testUnsafeStateException(DevicePolicyManager dpm, ComponentName admin) {
         // Currently there's just one reason...
         int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
-        Log.d(TAG, "testUnsafeStateException(): dpm=" + dpm + ", admin=" + admin + ", reason="
-                + operationSafetyReasonToString(reason));
         // Operation doesn't really matter
         int operation = OPERATION_LOCK_NOW;
+        Log.d(TAG, "testUnsafeStateException(): dpm=" + dpm + ", admin=" + admin
+                + ", reason=" + operationSafetyReasonToString(reason)
+                + ", operation=" + operationToString(operation));
 
         setOperationUnsafe(dpm, operation, reason);
         UnsafeStateException e = expectThrows(UnsafeStateException.class,
@@ -147,6 +150,41 @@ public class DevicePolicySafetyCheckerIntegrationTester {
         int actualReason = actualReasons.get(0);
         assertWithMessage("reason (%s)", operationSafetyReasonToString(actualReason))
                 .that(actualReason).isEqualTo(reason);
+    }
+
+    /**
+     * Tests {@link android.app.admin.DeviceAdminReceiver#onOperationSafetyStateChanged()}.
+     */
+    public void testOnOperationSafetyStateChanged(Context context, DevicePolicyManager dpm) {
+        // Currently there's just one reason...
+        int reason = OPERATION_SAFETY_REASON_DRIVING_DISTRACTION;
+        // Operation doesn't really matter
+        int operation = OPERATION_LOCK_NOW;
+        Log.d(TAG, "testOnOperationSafetyStateChanged(): dpm=" + dpm
+                + ", reason=" + operationSafetyReasonToString(reason)
+                + ", operation=" + operationToString(operation));
+        OperationSafetyChangedCallback receiver = OperationSafetyChangedCallback.register(context);
+        try {
+            setOperationUnsafe(dpm, operation, reason);
+            // Must force OneTimeSafetyChecker to generate the event by calling the unsafe operation
+            assertThrows(UnsafeStateException.class, () -> dpm.lockNow());
+
+            assertNextEvent(receiver, reason, /* isSafe= */ false);
+
+            // OneTimeSafetyChecker automatically disables itself after one operation, which in turn
+            // triggers another event
+            assertNextEvent(receiver, reason, /* isSafe= */ true);
+        } finally {
+            receiver.unregister(context);
+        }
+    }
+
+    private void assertNextEvent(OperationSafetyChangedCallback receiver,
+            int reason, boolean isSafe) {
+        OperationSafetyChangedEvent event = receiver.getNextEvent();
+        Log.v(TAG, "Received event: " + event);
+        assertWithMessage("event (%s) reason", event).that(event.reason).isEqualTo(reason);
+        assertWithMessage("event (%s) safety state", event).that(event.isSafe).isEqualTo(isSafe);
     }
 
     /**

@@ -364,7 +364,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testUserSession() throws Exception {
         executeDeviceOwnerTest("UserSessionTest");
     }
@@ -866,6 +865,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testDevicePolicySafetyCheckerIntegration_unsafeStateException() throws Exception {
         executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest",
                 "testUnsafeStateException");
+    }
+
+    @Test
+    public void testDevicePolicySafetyCheckerIntegration_onOperationSafetyStateChanged()
+            throws Exception {
+        executeDeviceTestMethod(".DevicePolicySafetyCheckerIntegrationTest",
+                "testOnOperationSafetyStateChanged");
     }
 
     @Test

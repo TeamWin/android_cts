@@ -85,7 +85,8 @@ public abstract class UserReference {
             // Expected success string is "Success: removed user"
             ShellCommand.builder("pm remove-user")
                     .addOperand(mId)
-                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
             mUsers.waitForUserToNotExistOrMatch(this, User::isRemoving);
         } catch (AdbException e) {
             throw new NeneException("Could not remove user + " + this, e);
@@ -108,7 +109,8 @@ public abstract class UserReference {
             ShellCommand.builder("am start-user")
                     .addOperand(mId)
                     .addOperand("-w")
-                    .executeAndValidateOutput(ShellCommandUtils::startsWithSuccess);
+                    .validate(ShellCommandUtils::startsWithSuccess)
+                    .execute();
             User waitedUser = mUsers.waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.RUNNING_UNLOCKED);
             if (waitedUser == null) {
@@ -132,7 +134,8 @@ public abstract class UserReference {
             ShellCommand.builder("am stop-user")
                     .addOperand(mId)
                     .allowEmptyOutput(true)
-                    .executeAndValidateOutput(ShellCommandUtils::doesNotStartWithError);
+                    .validate(ShellCommandUtils::doesNotStartWithError)
+                    .execute();
             User waitedUser = mUsers.waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.NOT_RUNNING);
             if (waitedUser == null) {
@@ -164,7 +167,8 @@ public abstract class UserReference {
             ShellCommand.builder("am switch-user")
                     .addOperand(mId)
                     .allowEmptyOutput(true)
-                    .executeAndValidateOutput(String::isEmpty);
+                    .validate(String::isEmpty)
+                    .execute();
 
             broadcastReceiver.awaitForBroadcast();
         } catch (AdbException e) {

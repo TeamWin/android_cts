@@ -8,7 +8,7 @@ android_library {
     static_libs: [
         "compatibility-device-util-axt",
     ],
-    min_sdk_version: "26"
+    min_sdk_version: "27"
 }
 
 android_test {
@@ -30,7 +30,7 @@ android_test {
     ],
     data: [":NeneTestApp1"],
     manifest: "src/test/AndroidManifest.xml",
-    min_sdk_version: "26"
+    min_sdk_version: "27"
 }
 
 android_test_helper_app {
@@ -39,5 +39,5 @@ android_test_helper_app {
         "EventLib"
     ],
     manifest: "testapps/TestApp1.xml",
-    min_sdk_version: "26"
+    min_sdk_version: "27"
 }

@@ -140,10 +140,11 @@ public class ShellCommandTest {
     }
 
     @Test
-    public void executeAndValidateOutput_outputFilterMatched_returnsOutput() throws Exception {
+    public void execute_validate_outputFilterMatched_returnsOutput() throws Exception {
         assertThat(
-                ShellCommand.builder(LIST_USERS_COMMAND).
-                        executeAndValidateOutput(ALWAYS_PASS_OUTPUT_FILTER))
+                ShellCommand.builder(LIST_USERS_COMMAND)
+                        .validate(ALWAYS_PASS_OUTPUT_FILTER)
+                        .execute())
                 .isNotNull();
     }
 
@@ -151,7 +152,8 @@ public class ShellCommandTest {
     public void executeAndValidateOutput_outputFilterNotMatched_throwsException() {
         assertThrows(AdbException.class,
                 () -> ShellCommand.builder(LIST_USERS_COMMAND)
-                        .executeAndValidateOutput(ALWAYS_FAIL_OUTPUT_FILTER));
+                        .validate(ALWAYS_FAIL_OUTPUT_FILTER)
+                        .execute());
     }
 
     @Test
@@ -177,5 +179,20 @@ public class ShellCommandTest {
                 .allowEmptyOutput(true)
                 .execute())
                 .contains(LIST_USERS_EXPECTED_OUTPUT);
+    }
+
+    @Test
+    public void executeAndParse_parseSucceeds_returnsCorrectValue() throws Exception {
+        assertThat((Integer) ShellCommand.builder(LIST_USERS_COMMAND)
+                .executeAndParseOutput((output) -> 3)).isEqualTo(3);
+    }
+
+    @Test
+    public void executeAndParse_parseFails_throwsException() {
+        assertThrows(AdbException.class, () ->
+                ShellCommand.builder(LIST_USERS_COMMAND)
+                .executeAndParseOutput((output) -> {
+                    throw new IllegalStateException();
+                }));
     }
 }
