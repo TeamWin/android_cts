@@ -17,10 +17,11 @@
 <configuration description="Config for ActivityContext test cases">
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="ActivityContextTest.apk" />
+        <option name="test-file-name" value="EmptyTestApp.apk" />
+        <option name="test-file-name" value="ActivityContextInstrumentOtherAppTest.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.activitycontext.test" />
-        <option name="exclude-annotation" value="com.android.activitycontext.annotations.RunWhenInstrumentingOtherApp" />
+        <option name="include-annotation" value="com.android.activitycontext.annotations.RunWhenInstrumentingOtherApp" />
     </test>
 </configuration>

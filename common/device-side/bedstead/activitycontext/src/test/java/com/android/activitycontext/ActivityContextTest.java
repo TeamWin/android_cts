@@ -22,6 +22,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.Activity;
 
+import com.android.activitycontext.annotations.RunWhenInstrumentingOtherApp;
 import com.android.compatibility.common.util.BlockingCallback;
 
 import org.junit.Test;
@@ -190,6 +191,13 @@ public class ActivityContextTest {
         });
     }
 
+    @Test
+    @RunWhenInstrumentingOtherApp
+    public void getWithContext_notInstrumentingSelf_throwsException() {
+        assertThrows(IllegalStateException.class,
+                () -> ActivityContext.getWithContext(Objects::nonNull));
+    }
+
     private static final class BlockingActivityBiConsumerReturnsFirstArgument
             extends BlockingCallback<String> implements BiConsumer<Activity, String> {
         @Override
@@ -197,4 +205,5 @@ public class ActivityContextTest {
             callbackTriggered(s);
         }
     }
+
 }
