@@ -37,6 +37,8 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import android.app.AppOpsManager;
+import android.app.AppOpsManager.OnOpStartedListener;
+
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
@@ -76,7 +78,7 @@ import org.mockito.MockitoAnnotations;
 public class MusicRecognitionManagerTest {
     private static final String TAG = MusicRecognitionManagerTest.class.getSimpleName();
     private static final long VERIFY_TIMEOUT_MS = 40_000;
-    private static final long VERIFY_APPOP_CHANGE_TIMEOUT_MS = 2000;
+    private static final long VERIFY_APPOP_CHANGE_TIMEOUT_MS = 10000;
 
     @Rule public TestName mTestName = new TestName();
     @Rule
@@ -187,16 +189,26 @@ public class MusicRecognitionManagerTest {
         final String packageName = CtsMusicRecognitionService.SERVICE_PACKAGE;
         final int uid = Process.myUid();
 
-        final AppOpsManager appOpsManager = getInstrumentation().getContext()
-                .getSystemService(AppOpsManager.class);
+
+        final Context context = getInstrumentation().getContext();
+
+        final AppOpsManager appOpsManager = context.getSystemService(AppOpsManager.class);
         final AppOpsManager.OnOpActiveChangedListener listener = mock(
                 AppOpsManager.OnOpActiveChangedListener.class);
+
         // Assert the app op is not started
         assertFalse(appOpsManager.isOpActive(AppOpsManager.OPSTR_RECORD_AUDIO, uid, packageName));
 
         // Start watching for record audio op
         appOpsManager.startWatchingActive(new String[] { AppOpsManager.OPSTR_RECORD_AUDIO },
-                getInstrumentation().getContext().getMainExecutor(), listener);
+                context.getMainExecutor(), listener);
+
+        // Started listener used just for verifying attribution tag.
+        final AppOpsManager.OnOpStartedListener startedListener = mock(
+                AppOpsManager.OnOpStartedListener.class);
+
+        appOpsManager.startWatchingStarted(new int[] { AppOpsManager.OP_RECORD_AUDIO },
+                startedListener);
 
         // Invoke API
         RecognitionRequest request = invokeMusicRecognitionApi();
@@ -205,6 +217,11 @@ public class MusicRecognitionManagerTest {
         verify(listener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
                 .only()).onOpActiveChanged(eq(AppOpsManager.OPSTR_RECORD_AUDIO),
                 eq(uid), eq(packageName), eq(true));
+
+        String expectedAttributionTag = "CtsMusicRecognitionAttributionTag";
+        verify(startedListener, timeout(VERIFY_APPOP_CHANGE_TIMEOUT_MS)
+                .only()).onOpStarted(eq(AppOpsManager.OP_RECORD_AUDIO),
+                    eq(uid), eq(packageName), eq(expectedAttributionTag), anyInt(), anyInt());
 
         // Wait for streaming to finish.
         reset(listener);
@@ -234,6 +251,8 @@ public class MusicRecognitionManagerTest {
 
 
     private RecognitionRequest invokeMusicRecognitionApi() {
+        Log.d(TAG, "Invoking service.");
+
         AudioRecord record = new AudioRecord(MediaRecorder.AudioSource.MIC, 16_000,
                 AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, 256_000);
 
@@ -251,6 +270,7 @@ public class MusicRecognitionManagerTest {
                 request,
                 MoreExecutors.directExecutor(),
                 mCallback);
+        Log.d(TAG, "Invoking service done.");
         return request;
     }
 

@@ -27,6 +27,7 @@ import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.common.io.ByteStreams;
 
@@ -61,6 +62,11 @@ public class CtsMusicRecognitionService extends MusicRecognitionService {
             Log.i(TAG, "Reading audio done.");
             callback.onRecognitionSucceeded(sWatcher.result, sWatcher.resultExtras);
         }
+    }
+
+    @Override
+    public @Nullable String getAttributionTag() {
+        return "CtsMusicRecognitionAttributionTag";
     }
 
     private byte[] readStream(ParcelFileDescriptor stream) {
