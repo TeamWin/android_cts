@@ -61,16 +61,9 @@ class EffectsTest(its_base_test.ItsBaseTest):
       props = cam.override_with_hidden_physical_camera_props(props)
       mono_camera = camera_properties_utils.mono_camera(props)
 
-      # Calculate camera_fov which will determine the image to load on tablet.
-      camera_fov = cam.calc_camera_fov(props)
-      file_name = cam.get_file_name_to_load(self.chart_distance, camera_fov,
-                                            self.scene)
-      logging.debug('Displaying %s on the tablet', file_name)
-
-      # Display the scene on the tablet depending on camera_fov.
-      self.tablet.adb.shell(
-          'am start -a android.intent.action.VIEW -d file:/sdcard/Download/%s'%
-          file_name)
+      # Load chart for scene.
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance)
 
       # Determine available effects and run test(s)
       effects = props['android.control.availableEffects']
