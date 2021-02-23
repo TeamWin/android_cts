@@ -23,11 +23,9 @@ import static org.testng.Assert.expectThrows;
 import android.app.Service;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
@@ -39,16 +37,11 @@ import android.provider.Settings;
 import android.util.DebugUtils;
 import android.util.Log;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-import com.android.cts.deviceowner.CreateAndManageUserTest.LocalBroadcastReceiver;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -79,13 +72,13 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         super.tearDown();
     }
 
-    public void testCreateAndManageUser() {
+    public void testCreateAndManageUser() throws Exception {
         UserHandle userHandle = createAndManageUser();
 
         assertWithMessage("New user").that(userHandle).isNotNull();
     }
 
-    public void testCreateAndManageUser_LowStorage() {
+    public void testCreateAndManageUser_LowStorage() throws Exception {
         UserManager.UserOperationException e = expectThrows(
                 UserManager.UserOperationException.class, () -> createAndManageUser());
 
@@ -94,7 +87,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 "user creation on low storage");
     }
 
-    public void testCreateAndManageUser_MaxUsers() {
+    public void testCreateAndManageUser_MaxUsers() throws Exception {
         UserManager.UserOperationException e = expectThrows(
                 UserManager.UserOperationException.class, () -> createAndManageUser());
 
@@ -117,7 +110,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
-    public void testCreateAndManageUser_GetSecondaryUsers() {
+    public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         UserHandle userHandle = createAndManageUser();
 
         List<UserHandle> secondaryUsers = mDevicePolicyManager.getSecondaryUsers(getWho());
@@ -125,110 +118,57 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_SwitchUser() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
         UserHandle userHandle = createAndManageUser();
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_SWITCHED));
-        try {
-            switchUser(userHandle);
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-        }
+        switchUser(userHandle);
     }
 
     public void testCreateAndManageUser_CannotStopCurrentUser() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
-
         UserHandle userHandle = createAndManageUser();
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_SWITCHED));
-        try {
-            switchUser(userHandle);
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-            stopUser(userHandle, UserManager.USER_OPERATION_ERROR_CURRENT_USER);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-        }
+        switchUser(userHandle);
+        stopUserWithError(userHandle, UserManager.USER_OPERATION_ERROR_CURRENT_USER);
     }
 
     public void testCreateAndManageUser_StartInBackground() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
-
         UserHandle userHandle = createAndManageUser();
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_STARTED));
+        startUserInBackground(userHandle);
 
-        try {
-            // Start user in background and wait for onUserStarted
-            startUserInBackground(userHandle, UserManager.USER_OPERATION_SUCCESS);
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-        }
     }
 
-    public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() {
+    public void testCreateAndManageUser_StartInBackground_MaxRunningUsers() throws Exception {
         UserHandle userHandle = createAndManageUser();
 
         // Start user in background and should receive max running users error
-        assertEquals(UserManager.USER_OPERATION_ERROR_MAX_RUNNING_USERS,
-                mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
+        startUserInBackgroundWithError(userHandle,
+                UserManager.USER_OPERATION_ERROR_MAX_RUNNING_USERS);
     }
 
     public void testCreateAndManageUser_StopUser() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
-
         UserHandle userHandle = createAndManageUser();
 
-        assertEquals(UserManager.USER_OPERATION_SUCCESS,
-                mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
+        startUserInBackground(userHandle);
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
-
-        try {
-            stopUser(userHandle, UserManager.USER_OPERATION_SUCCESS);
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-        }
+        stopUser(userHandle);
     }
 
     public void testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
-
         // Set DISALLOW_REMOVE_USER restriction
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
 
         UserHandle userHandle = createAndManageUser(DevicePolicyManager.MAKE_USER_EPHEMERAL);
 
-        startUserInBackground(userHandle, UserManager.USER_OPERATION_SUCCESS);
+        startUserInBackground(userHandle);
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
-
-        try {
-            stopUser(userHandle, UserManager.USER_OPERATION_SUCCESS);
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-            // Clear DISALLOW_REMOVE_USER restriction
-            mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
-        }
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_STOPPED, BasicAdminReceiver.ACTION_USER_REMOVED);
+        callback.runAndUnregisterSelf(
+                // it's running just one operation (which issues a ACTION_USER_STOPPED), but as the
+                // user is ephemeral, it will be automatically removed (which issues a
+                // ACTION_USER_REMOVED).
+                () -> stopUserWithError(userHandle, UserManager.USER_OPERATION_SUCCESS),
+                userHandle, userHandle);
     }
 
     @SuppressWarnings("unused")
@@ -239,20 +179,14 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_LogoutUser() throws Exception {
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
 
-        LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
-        localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
-
-        try {
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_STOPPED);
+        callback.runAndUnregisterSelf(() -> {
             UserHandle userHandle = runCrossUserVerification(
                     /* createAndManageUserFlags */ 0, "logoutUser");
-            waitForUserBroadcast(userHandle, broadcastReceiver);
-        } finally {
-            localBroadcastManager.unregisterReceiver(broadcastReceiver);
-        }
+            callback.waitForBroadcasts(userHandle);
+        });
     }
 
     @SuppressWarnings("unused")
@@ -306,7 +240,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
-    private UserHandle runCrossUserVerification(int createAndManageUserFlags, String methodName) {
+    private UserHandle runCrossUserVerification(int createAndManageUserFlags, String methodName)
+            throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         // Set affiliation id to allow communication.
@@ -323,80 +258,79 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 SecondaryUserAdminReceiver.getComponentName(getContext()),
                 bundle,
                 createAndManageUserFlags);
-        Log.d(TAG, "User create: " + userHandle);
-        assertEquals(UserManager.USER_OPERATION_SUCCESS,
-                mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
-
+        Log.d(TAG, "User created: " + userHandle);
+        assertWithMessage("user with name %s", testUserName).that(userHandle).isNotNull();
+        startUserInBackground(userHandle);
         return userHandle;
     }
 
     // createAndManageUser should circumvent the DISALLOW_ADD_USER restriction
-    public void testCreateAndManageUser_AddRestrictionSet() {
+    public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
 
-        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User",
-                getWho(), null, 0);
-        assertNotNull(userHandle);
+        createAndManageUser();
     }
 
-    public void testCreateAndManageUser_RemoveRestrictionSet() {
+    public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
         mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
 
-        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User",
-                getWho(), null, 0);
-        assertNotNull(userHandle);
+        UserHandle userHandle = createAndManageUser();
 
-        boolean removed = mDevicePolicyManager.removeUser(getWho(), userHandle);
         // When the device owner itself has set the user restriction, it should still be allowed
         // to remove a user.
-        assertTrue(removed);
+        removeUser(userHandle);
     }
 
-    public void testUserAddedOrRemovedBroadcasts() throws InterruptedException {
-        LocalBroadcastReceiver receiver = new LocalBroadcastReceiver();
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(
-                getContext());
-        localBroadcastManager.registerReceiver(receiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_ADDED));
-        UserHandle userHandle;
-        try {
-            userHandle = mDevicePolicyManager.createAndManageUser(getWho(), "Test User", getWho(),
-                    null, 0);
-            assertNotNull(userHandle);
-            assertEquals(userHandle, receiver.waitForBroadcastReceived());
-        } finally {
-            localBroadcastManager.unregisterReceiver(receiver);
-        }
-        localBroadcastManager.registerReceiver(receiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
-        try {
-            assertTrue(mDevicePolicyManager.removeUser(getWho(), userHandle));
-            assertEquals(userHandle, receiver.waitForBroadcastReceived());
-        } finally {
-            localBroadcastManager.unregisterReceiver(receiver);
-        }
+    public void testUserAddedOrRemovedBroadcasts() throws Exception {
+        UserHandle userHandle = createAndManageUser();
+
+        removeUser(userHandle);
     }
 
-    private UserHandle createAndManageUser() {
+    private UserHandle createAndManageUser() throws Exception {
         return createAndManageUser(/* flags= */ 0);
     }
 
-    private UserHandle createAndManageUser(int flags) {
+    private UserHandle createAndManageUser(int flags) throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
-        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
-                getWho(),
-                testUserName,
-                getWho(),
-                /* adminExtras= */ null,
-                flags);
-        Log.d(TAG, "User '" + testUserName + "' created: " + userHandle);
 
-        return userHandle;
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_ADDED);
+
+        return callback.callAndUnregisterSelf(() -> {
+            UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
+                    /* admin= */ getWho(),
+                    testUserName,
+                    /* profileOwner= */ getWho(),
+                    /* adminExtras= */ null,
+                    flags);
+            Log.d(TAG, "User '" + testUserName + "' created: " + userHandle);
+
+            callback.waitForBroadcasts(userHandle);
+            return userHandle;
+        });
     }
 
-    private void switchUser(UserHandle userHandle) {
-        boolean switched = mDevicePolicyManager.switchUser(getWho(), userHandle);
-        assertWithMessage("switched to user %s", userHandle).that(switched).isTrue();
+    private void switchUser(UserHandle userHandle) throws Exception {
+        Log.d(TAG, "Switching to user " + userHandle);
+
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_STARTED, BasicAdminReceiver.ACTION_USER_SWITCHED);
+
+        callback.runAndUnregisterSelf(() -> {
+            boolean switched = mDevicePolicyManager.switchUser(getWho(), userHandle);
+            assertWithMessage("switched to user %s", userHandle).that(switched).isTrue();
+        }, userHandle, userHandle);
+    }
+
+    private void removeUser(UserHandle userHandle) throws Exception {
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_REMOVED);
+
+        callback.runAndUnregisterSelf(() -> {
+            boolean removed = mDevicePolicyManager.removeUser(getWho(), userHandle);
+            assertWithMessage("removed user %s", userHandle).that(removed).isTrue();
+        }, userHandle);
     }
 
     private static String userOperationResultToString(int result) {
@@ -412,38 +346,30 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                         .that(actualResult).isEqualTo(expectedResult);
     }
 
-    private void startUserInBackground(UserHandle userHandle, int expectedError) {
+    private void startUserInBackgroundWithError(UserHandle userHandle, int expectedError) {
         int actualError = mDevicePolicyManager.startUserInBackground(getWho(), userHandle);
         assertUserOperationResult(actualError, expectedError, "starting user %s in background",
                 userHandle);
     }
 
-    private void stopUser(UserHandle userHandle, int expectedError) {
+    private void startUserInBackground(UserHandle userHandle) throws Exception {
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_STARTED);
+        callback.runAndUnregisterSelf(() -> startUserInBackgroundWithError(userHandle,
+                UserManager.USER_OPERATION_SUCCESS), userHandle);
+    }
+
+    private void stopUserWithError(UserHandle userHandle, int expectedError) {
         int actualError = mDevicePolicyManager.stopUser(getWho(), userHandle);
         assertUserOperationResult(actualError, expectedError, "stopping user %s", userHandle);
     }
 
-    private void waitForUserBroadcast(UserHandle userHandle,
-            LocalBroadcastReceiver broadcastReceiver) throws InterruptedException {
-        assertWithMessage("user on broadcast intent")
-                .that(broadcastReceiver.waitForBroadcastReceived()).isEqualTo(userHandle);
-    }
-
-    static final class LocalBroadcastReceiver extends BroadcastReceiver {
-        private LinkedBlockingQueue<UserHandle> mQueue = new LinkedBlockingQueue<>(1);
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            UserHandle userHandle = intent.getParcelableExtra(BasicAdminReceiver.EXTRA_USER_HANDLE);
-            Log.d(TAG, "broadcast receiver received " + intent + " with userHandle "
-                    + userHandle);
-            mQueue.offer(userHandle);
-
-        }
-
-        UserHandle waitForBroadcastReceived() throws InterruptedException {
-            return mQueue.poll(BROADCAST_TIMEOUT, TimeUnit.MILLISECONDS);
-        }
+    private void stopUser(UserHandle userHandle) throws Exception {
+        UserActionCallback callback = UserActionCallback.register(getContext(),
+                BasicAdminReceiver.ACTION_USER_STOPPED);
+        callback.runAndUnregisterSelf(
+                () -> stopUserWithError(userHandle, UserManager.USER_OPERATION_SUCCESS),
+                userHandle);
     }
 
     public static final class PrimaryUserService extends Service {
