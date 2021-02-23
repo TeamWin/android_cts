@@ -24,11 +24,10 @@ import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.junit.Ignore;
 
-@Ignore("TODO(b/177266929): Enable this test once schema migration is implemented")
-public class AppSearchSchemaMigrationCtsTest extends AppSearchSchemaMigrationCtsTestBase {
-    @Override
+// TODO(b/177266929): Enable this test once schema migration is implemented
+public class AppSearchSchemaMigrationCtsTest /* extends AppSearchSchemaMigrationCtsTestBase */ {
+    // @Override
     protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName) {
         return AppSearchSessionShimImpl.createSearchSession(
                 new AppSearchManager.SearchContext.Builder().setDatabaseName(dbName).build());
