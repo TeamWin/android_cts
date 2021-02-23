@@ -175,6 +175,27 @@ public class ScopedStorageTest {
         }
     }
 
+    /**
+     * Test that Installer packages cannot access app's private directories in Android/data
+     */
+    @Test
+    public void testCheckInstallerAppCannotAccessDataDirs() throws Exception {
+        File[] dataDirs = getContext().getExternalFilesDirs(null);
+        for (File dataDir : dataDirs) {
+            final File otherAppExternalDataDir = new File(dataDir.getPath().replace(
+                    THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
+            final File file = new File(otherAppExternalDataDir, NONMEDIA_FILE_NAME);
+            try {
+                assertThat(file.exists()).isFalse();
+
+                assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
+                assertCannotReadOrWrite(file);
+            } finally {
+                deleteFileAsNoThrow(APP_B_NO_PERMS, file.getAbsolutePath());
+            }
+        }
+    }
+
     @Test
     public void testManageExternalStorageCanCreateFilesAnywhere() throws Exception {
         pollForManageExternalStorageAllowed();
