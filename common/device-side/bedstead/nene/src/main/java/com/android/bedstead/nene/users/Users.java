@@ -28,11 +28,13 @@ import androidx.annotation.RequiresApi;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -42,6 +44,7 @@ public final class Users {
 
     private Map<Integer, User> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
+    private Set<UserType> mCachedUserTypeValues = null;
     private final AdbUserParser parser = AdbUserParser.get(this, SDK_INT);
 
     /** Get all {@link User}s on the device. */
@@ -83,15 +86,15 @@ public final class Users {
     /** Get all supported {@link UserType}s. */
     @RequiresApi(Build.VERSION_CODES.R)
     @Nullable
-    public Collection<UserType> supportedTypes() {
+    public Set<UserType> supportedTypes() {
         if (SDK_INT < Build.VERSION_CODES.R) {
             return null;
         }
-        if (mCachedUserTypes == null) {
+        if (mCachedUserTypeValues == null) {
             // supportedTypes cannot change so we don't need to refill the cache
             fillCache();
         }
-        return mCachedUserTypes.values();
+        return mCachedUserTypeValues;
     }
 
     /** Get a {@link UserType} with the given {@code typeName}, or {@code null} */
@@ -118,7 +121,7 @@ public final class Users {
     private void fillCache() {
         try {
             // TODO: Replace use of adb on supported versions of Android
-            String userDumpsysOutput = ShellCommandUtils.executeCommand("dumpsys user");
+            String userDumpsysOutput = ShellCommand.builder("dumpsys user").execute();
             AdbUserParser.ParseResult result = parser.parse(userDumpsysOutput);
 
             mCachedUsers = result.mUsers;
@@ -127,6 +130,9 @@ public final class Users {
             // We don't expose users who are currently being removed
             mCachedUsers.entrySet().removeIf(
                     integerUserEntry -> integerUserEntry.getValue().isRemoving());
+
+            mCachedUserTypeValues = new HashSet<>();
+            mCachedUserTypeValues.addAll(mCachedUserTypes.values());
 
         } catch (AdbException | AdbParseException e) {
             throw new RuntimeException("Error filling cache", e);

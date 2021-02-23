@@ -24,6 +24,7 @@ java_library {
             "ctstestrunner-axt",
             "androidx.test.rules",
             "ub-uiautomator",
-            "testng"// TODO: remove once Android migrates to JUnit 4.13, which provide assertThrows
+            "testng", // TODO: remove once Android migrates to JUnit 4.13, which has assertThrows
+            "DpmWrapper",
     ],
 }
