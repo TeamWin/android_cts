@@ -19,7 +19,6 @@ package com.android.cts.deviceandprofileowner;
 import static com.android.cts.deviceandprofileowner.vpn.VpnTestHelper.TEST_ADDRESS;
 import static com.android.cts.deviceandprofileowner.vpn.VpnTestHelper.VPN_PACKAGE;
 
-import android.net.VpnService;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.util.Log;
@@ -49,6 +48,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
     private static final String RESTRICTION_DONT_ESTABLISH = "vpn.dont_establish";
     private static final String CONNECTIVITY_CHECK_HOST = "connectivitycheck.gstatic.com";
     private static final int VPN_ON_START_TIMEOUT_MS = 5_000;
+    private static final long CONNECTIVITY_WAIT_TIME_NS = 30_000_000_000L;
 
     private String mPackageName;
 
@@ -112,7 +112,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
     // Tests that changes to lockdown allowlist are applied correctly.
     public void testVpnLockdownUpdateAllowlist() throws Exception {
-        assertConnectivity(true, "VPN is off");
+        waitForConnectivity("VPN is off");
 
         // VPN won't start.
         final Bundle restrictions = new Bundle();
@@ -149,7 +149,7 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
     // Tests that when VPN comes up, allowlisted app switches over to it.
     public void testVpnLockdownAllowlistVpnComesUp() throws Exception {
-        assertConnectivity(true, "VPN is off");
+        waitForConnectivity("VPN is off");
 
         // VPN won't start initially.
         final Bundle restrictions = new Bundle();
@@ -189,6 +189,23 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
             // success
         }
         assertNull(mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
+    }
+
+    private void waitForConnectivity(String message) throws InterruptedException {
+        long deadline = System.nanoTime() + CONNECTIVITY_WAIT_TIME_NS;
+        while (System.nanoTime() < deadline) {
+            try {
+                new Socket(CONNECTIVITY_CHECK_HOST, 80);
+                // Domain resolved, we have connectivity.
+                return;
+            } catch (IOException e) {
+                // Log.e(String, String, Throwable) will swallow UnknownHostException,
+                // so manually print it out here.
+                Log.e(TAG, "No connectivity yet: " + e.toString());
+                Thread.sleep(2000);
+            }
+        }
+        fail("Connectivity isn't available: " + message);
     }
 
     private void assertConnectivity(boolean shouldHaveConnectivity, String message) {
