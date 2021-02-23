@@ -15,7 +15,7 @@
 java_test_host {
     name: "CtsInstalledLoadingProgressHostTests",
     defaults: ["cts_defaults"],
-    srcs:  ["src/**/*.java"],
+    srcs:  ["hostside/src/**/*.java"],
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -28,4 +28,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
