@@ -136,8 +136,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     String.valueOf(Long.MAX_VALUE));
 
             // The next createAndManageUser should return USER_OPERATION_ERROR_LOW_STORAGE.
-            executeDeviceTestMethod(".CreateAndManageUserTest",
-                    "testCreateAndManageUser_LowStorage");
+            executeCreateAndManageUserTest("testCreateAndManageUser_LowStorage");
         } finally {
             getDevice().executeShellCommand(
                     "settings delete global sys_storage_threshold_percentage");
@@ -153,12 +152,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         int maxUsers = getDevice().getMaxNumberOfUsersSupported();
         // Primary user is already there, so we can create up to maxUsers -1.
         for (int i = 0; i < maxUsers - 1; i++) {
-            executeDeviceTestMethod(".CreateAndManageUserTest",
-                    "testCreateAndManageUser");
+            executeCreateAndManageUserTest("testCreateAndManageUser");
         }
         // The next createAndManageUser should return USER_OPERATION_ERROR_MAX_USERS.
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_MaxUsers");
+        executeCreateAndManageUserTest("testCreateAndManageUser_MaxUsers");
     }
 
     /**
@@ -169,8 +166,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_GetSecondaryUsers");
+        executeCreateAndManageUserTest("testCreateAndManageUser_GetSecondaryUsers");
     }
 
     /**
@@ -183,8 +179,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_SwitchUser() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_SwitchUser");
+        executeCreateAndManageUserTest("testCreateAndManageUser_SwitchUser");
     }
 
     /**
@@ -196,8 +191,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_CannotStopCurrentUser() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_CannotStopCurrentUser");
+        executeCreateAndManageUserTest("testCreateAndManageUser_CannotStopCurrentUser");
     }
 
     /**
@@ -209,8 +203,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_StartInBackground() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_StartInBackground");
+        executeCreateAndManageUserTest("testCreateAndManageUser_StartInBackground");
     }
 
     /**
@@ -228,17 +221,16 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         // Primary user is already running, so we can create and start up to minimum of above - 1.
         int usersToCreateAndStart = Math.min(maxUsers, maxRunningUsers) - 1;
         for (int i = 0; i < usersToCreateAndStart; i++) {
-            executeDeviceTestMethod(".CreateAndManageUserTest",
-                    "testCreateAndManageUser_StartInBackground");
+            executeCreateAndManageUserTest("testCreateAndManageUser_StartInBackground");
         }
 
         if (maxUsers > maxRunningUsers) {
             // The next startUserInBackground should return USER_OPERATION_ERROR_MAX_RUNNING_USERS.
-            executeDeviceTestMethod(".CreateAndManageUserTest",
+            executeCreateAndManageUserTest(
                     "testCreateAndManageUser_StartInBackground_MaxRunningUsers");
         } else {
             // The next createAndManageUser should return USER_OPERATION_ERROR_MAX_USERS.
-            executeDeviceTestMethod(".CreateAndManageUserTest", "testCreateAndManageUser_MaxUsers");
+            executeCreateAndManageUserTest("testCreateAndManageUser_MaxUsers");
         }
     }
 
@@ -251,8 +243,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_StopUser() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_StopUser");
+        executeCreateAndManageUserTest("testCreateAndManageUser_StopUser");
         assertNewUserStopped();
     }
 
@@ -265,7 +256,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
+        executeCreateAndManageUserTest(
                 "testCreateAndManageUser_StopEphemeralUser_DisallowRemoveUser");
         assertEquals(0, getUsersCreatedByTests().size());
     }
@@ -279,8 +270,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_LogoutUser() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_LogoutUser");
+        executeCreateAndManageUserTest("testCreateAndManageUser_LogoutUser");
         assertNewUserStopped();
     }
 
@@ -293,8 +283,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_Affiliated() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_Affiliated");
+        executeCreateAndManageUserTest("testCreateAndManageUser_Affiliated");
     }
 
     /**
@@ -306,8 +295,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_Ephemeral() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_Ephemeral");
+        executeCreateAndManageUserTest("testCreateAndManageUser_Ephemeral");
 
         List<Integer> newUsers = getUsersCreatedByTests();
         assertEquals(1, newUsers.size());
@@ -327,32 +315,28 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
         assumeCanStartNewUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_LeaveAllSystemApps");
+        executeCreateAndManageUserTest("testCreateAndManageUser_LeaveAllSystemApps");
     }
 
     @Test
     public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_SkipSetupWizard");
+        executeCreateAndManageUserTest("testCreateAndManageUser_SkipSetupWizard");
     }
 
     @Test
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_AddRestrictionSet");
+        executeCreateAndManageUserTest("testCreateAndManageUser_AddRestrictionSet");
     }
 
     @Test
     public void testCreateAndManageUser_RemoveRestrictionSet() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_RemoveRestrictionSet");
+        executeCreateAndManageUserTest("testCreateAndManageUser_RemoveRestrictionSet");
     }
 
     @FlakyTest(bugId = 126955083)
@@ -360,7 +344,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     public void testUserAddedOrRemovedBroadcasts() throws Exception {
         assumeCanCreateOneManagedUser();
 
-        executeDeviceTestMethod(".CreateAndManageUserTest", "testUserAddedOrRemovedBroadcasts");
+        executeCreateAndManageUserTest("testUserAddedOrRemovedBroadcasts");
     }
 
     @Test
@@ -942,6 +926,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             Map<String, String> params) throws Exception {
         runDeviceTestsAsUser(DEVICE_OWNER_PKG, className, testName,
                 /* deviceOwnerUserId */ mPrimaryUserId, params);
+    }
+
+    private void executeCreateAndManageUserTest(String testMethod) throws Exception {
+        executeDeviceTestMethod(".CreateAndManageUserTest", testMethod);
     }
 
     private void assertNewUserStopped() throws Exception {
