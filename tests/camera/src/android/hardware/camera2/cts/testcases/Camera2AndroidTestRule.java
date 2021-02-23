@@ -100,6 +100,10 @@ public class Camera2AndroidTestRule extends ExternalResource {
         mContext = context;
     }
 
+    public String getDebugFileNameBase() {
+        return mDebugFileNameBase;
+    }
+
     public Context getContext() {
         return mContext;
     }

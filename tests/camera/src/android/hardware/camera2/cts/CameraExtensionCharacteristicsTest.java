@@ -91,6 +91,26 @@ public class CameraExtensionCharacteristicsTest {
         }
     }
 
+    private void verifySupportedSizes(CameraExtensionCharacteristics chars, String cameraId,
+            Integer extension, int format) throws Exception {
+        List<Size> extensionSizes = chars.getExtensionSupportedSizes(extension, format);
+        assertFalse(String.format("No available sizes for extension %d on camera id: %s " +
+                "using format: %x", extension, cameraId, format), extensionSizes.isEmpty());
+        try {
+            openDevice(cameraId);
+            List<Size> cameraSizes = Arrays.asList(
+                    mTestRule.getStaticInfo().getAvailableSizesForFormatChecked(format,
+                            StaticMetadata.StreamDirection.Output));
+            for (Size extensionSize : extensionSizes) {
+                assertTrue(String.format("Supported extension %d on camera id: %s advertises " +
+                                " resolution %s unsupported by camera", extension, cameraId,
+                        extensionSize), cameraSizes.contains(extensionSize));
+            }
+        } finally {
+            mTestRule.closeDevice(cameraId);
+        }
+    }
+
     private <T> void verifyUnsupportedExtension(CameraExtensionCharacteristics chars,
             Integer extension, Class<T> klass) {
         try {
@@ -138,6 +158,7 @@ public class CameraExtensionCharacteristicsTest {
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
                 verifySupportedSizes(extensionChars, id, extension, SurfaceTexture.class);
+                verifySupportedSizes(extensionChars, id, extension, ImageFormat.JPEG);
             }
         }
     }
