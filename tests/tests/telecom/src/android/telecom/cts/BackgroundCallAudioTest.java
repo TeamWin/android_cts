@@ -69,8 +69,6 @@ public class BackgroundCallAudioTest extends BaseTelecomTestWithMockServices {
     protected void tearDown() throws Exception {
         if (mShouldTestTelecom && !TextUtils.isEmpty(mPreviousDefaultDialer)) {
             TestUtils.setDefaultDialer(getInstrumentation(), mPreviousDefaultDialer);
-            mTelecomManager.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
-            CtsConnectionService.tearDown();
             MockCallScreeningService.disableService(mContext);
         }
         super.tearDown();
