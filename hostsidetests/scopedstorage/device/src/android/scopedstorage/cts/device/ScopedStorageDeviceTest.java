@@ -217,7 +217,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Parameter(0)
     public String mVolumeName;
 
-    @Parameters
+    /** Parameters data. */
+    @Parameters(name = "volume={0}")
     public static Iterable<? extends Object> data() {
         return ScopedStorageDeviceTest.getTestParameters();
     }
