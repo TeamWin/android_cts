@@ -21,8 +21,11 @@ java_test_host {
 
     srcs: ["src/**/*.java"],
 
-    libs: [
+    static_libs: [
         "compatibility-manifest-generator",
         "junit",
     ],
+    test_options: {
+        unit_test: true,
+    },
 }
