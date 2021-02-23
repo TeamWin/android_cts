@@ -136,7 +136,7 @@ class ItsBaseTest(base_test.BaseTestClass):
     time.sleep(WAIT_TIME_SEC)
 
   def setup_tablet(self):
-    self.tablet.adb.shell(['input', 'keyevent ', 'KEYCODE_WAKEUP'])
+    self.tablet.adb.shell(['input', 'keyevent', 'KEYCODE_WAKEUP'])
     # Turn off the adaptive brightness on tablet.
     self.tablet.adb.shell(
         ['settings', 'put', 'system', 'screen_brightness_mode',
