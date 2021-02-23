@@ -153,7 +153,7 @@ public class SettingsSession<T> implements AutoCloseable {
         return getter.get(getContentResolver(), uri.getLastPathSegment());
     }
 
-    protected static void delete(final Uri uri) {
+    public static void delete(final Uri uri) {
         final List<String> segments = uri.getPathSegments();
         if (segments.size() != 2) {
             Log.w(TAG, "Unsupported uri for deletion: " + uri, new Throwable());
