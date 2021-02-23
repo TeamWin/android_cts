@@ -124,6 +124,10 @@ public final class PackageVisibilityTest extends EndToEndImeTestBase {
             long timeout) {
         final String command;
         if (instant) {
+            // Override app-links domain verification.
+            runShellCommand(
+                    String.format("pm set-app-links-user-selection --user cur --package %s true %s",
+                            TEST_ACTIVITY.getPackageName(), TEST_ACTIVITY_URI.getHost()));
             final Uri uri = formatStringIntentParam(
                     TEST_ACTIVITY_URI, EXTRA_KEY_PRIVATE_IME_OPTIONS, privateImeOptions);
             command = String.format("am start -a %s -c %s %s",
@@ -147,7 +151,6 @@ public final class PackageVisibilityTest extends EndToEndImeTestBase {
         testTargetPackageIsVisibleFromIme(false /* instant */);
     }
 
-    @Ignore("b/179983398")
     @AppModeInstant
     @Test
     public void testTargetPackageIsVisibleFromImeInstant() throws Exception {
