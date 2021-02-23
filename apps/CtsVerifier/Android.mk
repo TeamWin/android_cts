@@ -27,6 +27,8 @@ $(sort $(patsubst ./%,%, \
 endef
 
 LOCAL_MODULE := cts-verifier-framework
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0 SPDX-license-identifier-BSD SPDX-license-identifier-CC-BY
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_AAPT_FLAGS := --auto-add-overlay --extra-packages android.support.v4
 LOCAL_SDK_VERSION := current
 LOCAL_MIN_SDK_VERSION := 19

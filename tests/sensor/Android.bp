@@ -15,6 +15,10 @@
 //
 // Reusable Sensor test classes and helpers
 //
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_library {
     name: "cts-sensors-tests",
     defaults: ["cts_error_prone_rules_tests"],

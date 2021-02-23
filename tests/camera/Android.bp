@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // Reusable Camera performance test classes and helpers
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_library {
     name: "cts-camera-performance-tests",
 

@@ -1,6 +1,10 @@
 //////////////////////////////////////////////////////////////////
 // Signed Package
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test_import {
     name: "signed-CtsSecureElementAccessControlTestCases2",
     apk: "apk/signed-CtsSecureElementAccessControlTestCases2.apk",
