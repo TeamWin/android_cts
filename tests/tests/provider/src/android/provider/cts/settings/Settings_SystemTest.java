@@ -27,6 +27,7 @@ import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.SystemClock;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.Settings;
 import android.provider.Settings.SettingNotFoundException;
 import android.provider.Settings.System;
@@ -43,6 +44,7 @@ import org.junit.runner.RunWith;
 public class Settings_SystemTest {
     private static final String INT_FIELD = System.END_BUTTON_BEHAVIOR;
     private static final String LONG_FIELD = System.SCREEN_OFF_TIMEOUT;
+    private static final String FLOAT_FIELD = System.FONT_SCALE;
     private static final String STRING_FIELD = System.NEXT_ALARM_FORMATTED;
 
     @BeforeClass
@@ -138,6 +140,10 @@ public class Settings_SystemTest {
         }
     }
 
+    /**
+     * Verifies that the invalid values for the font scale setting are rejected.
+     */
+    @SecurityTest(minPatchLevel = "2021-02")
     @Test
     public void testSystemSettingsRejectInvalidFontSizeScale() throws SettingNotFoundException {
         final ContentResolver cr = InstrumentationRegistry.getTargetContext().getContentResolver();
