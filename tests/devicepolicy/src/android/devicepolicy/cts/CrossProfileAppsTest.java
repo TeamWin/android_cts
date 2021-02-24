@@ -76,7 +76,7 @@ public final class CrossProfileAppsTest {
     public void getTargetUserProfiles_callingFromPrimaryUser_doesNotContainPrimaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
-        assertThat(targetProfiles).doesNotContain(sDeviceState.getPrimaryUser());
+        assertThat(targetProfiles).doesNotContain(sDeviceState.primaryUser().userHandle());
     }
     @Test
     @RequireRunOnPrimaryUser
@@ -85,7 +85,7 @@ public final class CrossProfileAppsTest {
     public void getTargetUserProfiles_callingFromPrimaryUser_doesNotContainSecondaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
-        assertThat(targetProfiles).doesNotContain(sDeviceState.getSecondaryUser());
+        assertThat(targetProfiles).doesNotContain(sDeviceState.secondaryUser().userHandle());
     }
 
     @Test
@@ -94,7 +94,7 @@ public final class CrossProfileAppsTest {
     public void getTargetUserProfiles_callingFromWorkProfile_containsPrimaryUser() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
-        assertThat(targetProfiles).contains(sDeviceState.getPrimaryUser());
+        assertThat(targetProfiles).contains(sDeviceState.primaryUser().userHandle());
     }
 
     @Test
@@ -104,7 +104,7 @@ public final class CrossProfileAppsTest {
     public void getTargetUserProfiles_callingFromPrimaryUser_containsWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
-        assertThat(targetProfiles).contains(sDeviceState.getWorkProfile());
+        assertThat(targetProfiles).contains(sDeviceState.workProfile().userHandle());
     }
 
     @Test
@@ -114,7 +114,7 @@ public final class CrossProfileAppsTest {
     public void getTargetUserProfiles_callingFromPrimaryUser_appNotInstalledInWorkProfile_doesNotContainWorkProfile() {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
-        assertThat(targetProfiles).doesNotContain(sDeviceState.getWorkProfile());
+        assertThat(targetProfiles).doesNotContain(sDeviceState.workProfile().userHandle());
     }
 
     @Test
@@ -125,7 +125,7 @@ public final class CrossProfileAppsTest {
         List<UserHandle> targetProfiles = sCrossProfileApps.getTargetUserProfiles();
 
         assertThat(targetProfiles).doesNotContain(
-                sDeviceState.getWorkProfile(/* forUser= */ PRIMARY_USER));
+                sDeviceState.workProfile(/* forUser= */ PRIMARY_USER).userHandle());
     }
 
     @Test
@@ -134,9 +134,10 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void startMainActivity_callingFromWorkProfile_targetIsPrimaryUser_launches() {
         sCrossProfileApps.startMainActivity(
-                new ComponentName(sContext, MainActivity.class), sDeviceState.getPrimaryUser());
+                new ComponentName(sContext, MainActivity.class),
+                sDeviceState.workProfile().userHandle());
 
-        assertMainActivityLaunchedForUser(sDeviceState.getPrimaryUser());
+        assertMainActivityLaunchedForUser(sDeviceState.primaryUser().userHandle());
     }
 
     @Test
@@ -146,9 +147,10 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void startMainActivity_callingFromPrimaryUser_targetIsWorkProfile_launches() {
         sCrossProfileApps.startMainActivity(
-                new ComponentName(sContext, MainActivity.class), sDeviceState.getWorkProfile());
+                new ComponentName(sContext, MainActivity.class),
+                sDeviceState.workProfile().userHandle());
 
-        assertMainActivityLaunchedForUser(sDeviceState.getWorkProfile());
+        assertMainActivityLaunchedForUser(sDeviceState.workProfile().userHandle());
     }
 
     private void assertMainActivityLaunchedForUser(UserHandle user) {
@@ -171,7 +173,7 @@ public final class CrossProfileAppsTest {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
                     new ComponentName(sContext, NonExportedActivity.class),
-                    sDeviceState.getPrimaryUser());
+                    sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -181,7 +183,7 @@ public final class CrossProfileAppsTest {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
                     new ComponentName(sContext, NonMainActivity.class),
-                    sDeviceState.getPrimaryUser());
+                    sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -201,7 +203,8 @@ public final class CrossProfileAppsTest {
             startMainActivity_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
-                    new ComponentName(sContext, MainActivity.class), sDeviceState.getPrimaryUser());
+                    new ComponentName(sContext, MainActivity.class),
+                    sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -214,7 +217,7 @@ public final class CrossProfileAppsTest {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
                     new ComponentName(sContext, MainActivity.class),
-                    sDeviceState.getSecondaryUser());
+                    sDeviceState.secondaryUser().userHandle());
         });
     }
 
@@ -227,7 +230,7 @@ public final class CrossProfileAppsTest {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.startMainActivity(
                     new ComponentName(sContext, MainActivity.class),
-                    sDeviceState.getWorkProfile(/* forUser= */ PRIMARY_USER));
+                    sDeviceState.workProfile(/* forUser= */ PRIMARY_USER).userHandle());
         });
     }
 
@@ -236,7 +239,7 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
-            sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.getPrimaryUser());
+            sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -246,7 +249,7 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsSecondaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
-            sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.getPrimaryUser());
+            sCrossProfileApps.getProfileSwitchingLabel(sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -257,7 +260,7 @@ public final class CrossProfileAppsTest {
     public void getProfileSwitchingLabel_callingFromSecondaryUser_targetIsWorkProfile_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingLabel(
-                    sDeviceState.getWorkProfile(/* forUser= */ PRIMARY_USER));
+                    sDeviceState.workProfile(/* forUser= */ PRIMARY_USER).userHandle());
         });
     }
 
@@ -266,7 +269,7 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromWorProfile_targetIsPrimaryUser_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingLabel(
-                sDeviceState.getPrimaryUser())).isNotNull();
+                sDeviceState.primaryUser().userHandle())).isNotNull();
     }
 
     @Test
@@ -275,7 +278,7 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabel_callingFromPrimaryUser_targetIsWorkProfile_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingLabel(
-                sDeviceState.getWorkProfile())).isNotNull();
+                sDeviceState.workProfile().userHandle())).isNotNull();
     }
 
     @Test
@@ -283,7 +286,8 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabelIconDrawable_callingFromPrimaryUser_targetIsPrimaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
-            sCrossProfileApps.getProfileSwitchingIconDrawable(sDeviceState.getPrimaryUser());
+            sCrossProfileApps.getProfileSwitchingIconDrawable(
+                    sDeviceState.primaryUser().userHandle());
         });
     }
 
@@ -293,7 +297,8 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingLabelIconDrawable_callingFromPrimaryUser_targetIsSecondaryUser_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
-            sCrossProfileApps.getProfileSwitchingIconDrawable(sDeviceState.getSecondaryUser());
+            sCrossProfileApps.getProfileSwitchingIconDrawable(
+                    sDeviceState.secondaryUser().userHandle());
         });
     }
 
@@ -304,7 +309,7 @@ public final class CrossProfileAppsTest {
     public void getProfileSwitchingLabelIconDrawable_callingFromSecondaryUser_targetIsWorkProfile_throwsSecurityException() {
         assertThrows(SecurityException.class, () -> {
             sCrossProfileApps.getProfileSwitchingIconDrawable(
-                    sDeviceState.getWorkProfile(/* forUser= */ PRIMARY_USER));
+                    sDeviceState.workProfile(/* forUser= */ PRIMARY_USER).userHandle());
         });
     }
 
@@ -313,7 +318,7 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingIconDrawable_callingFromWorkProfile_targetIsPrimaryUser_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingIconDrawable(
-                sDeviceState.getPrimaryUser())).isNotNull();
+                sDeviceState.primaryUser().userHandle())).isNotNull();
     }
 
     @Test
@@ -322,6 +327,6 @@ public final class CrossProfileAppsTest {
     @Postsubmit(reason="new test")
     public void getProfileSwitchingIconDrawable_callingFromPrimaryUser_targetIsWorkProfile_notNull() {
         assertThat(sCrossProfileApps.getProfileSwitchingIconDrawable(
-                sDeviceState.getWorkProfile())).isNotNull();
+                sDeviceState.workProfile().userHandle())).isNotNull();
     }
 }
