@@ -59,6 +59,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
+import android.widget.EdgeEffect;
 import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -1156,6 +1157,20 @@ public class ListViewTest {
         Assert.assertTrue(newItem.hasTransientState());
         Assert.assertEquals(oldText, newText);
         Assert.assertEquals(tag, newItem.getTag());
+    }
+
+    @Test
+    public void testEdgeEffectType() {
+        // Should default to "glow"
+        assertEquals(EdgeEffect.TYPE_GLOW, mListView.getEdgeEffectType());
+
+        // This one has "stretch" attribute
+        assertEquals(EdgeEffect.TYPE_STRETCH, mListViewStretch.getEdgeEffectType());
+
+        mListViewStretch.setEdgeEffectType(EdgeEffect.TYPE_GLOW);
+        assertEquals(EdgeEffect.TYPE_GLOW, mListViewStretch.getEdgeEffectType());
+        mListViewStretch.setEdgeEffectType(EdgeEffect.TYPE_STRETCH);
+        assertEquals(EdgeEffect.TYPE_STRETCH, mListViewStretch.getEdgeEffectType());
     }
 
     @Test
