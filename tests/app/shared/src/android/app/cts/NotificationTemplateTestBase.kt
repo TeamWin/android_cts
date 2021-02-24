@@ -20,22 +20,15 @@ import android.app.stubs.shared.NotificationHostActivity
 import android.content.Intent
 import android.test.AndroidTestCase
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.RemoteViews
-import android.widget.TextView
-import androidx.annotation.BoolRes
 import androidx.annotation.DimenRes
 import androidx.annotation.IdRes
-import androidx.annotation.StringRes
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
-import kotlin.reflect.KClass
+import androidx.test.core.app.ActivityScenario.ActivityAction
 
 open class NotificationTemplateTestBase : AndroidTestCase() {
-
-    // Used to give time to visually inspect or attach a debugger before the checkViews block
-    protected var waitBeforeCheckingViews: Long = 0
 
     protected fun checkIconView(views: RemoteViews, iconCheck: (ImageView) -> Unit) {
         checkViews(views) { activity ->
@@ -46,7 +39,7 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
     protected fun checkViews(
         views: RemoteViews,
         @DimenRes heightDimen: Int? = null,
-        checker: (NotificationHostActivity) -> Unit
+        activityAction: ActivityAction<NotificationHostActivity>
     ) {
         val activityIntent = Intent(context, NotificationHostActivity::class.java)
         activityIntent.putExtra(NotificationHostActivity.EXTRA_REMOTE_VIEWS, views)
@@ -54,14 +47,12 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
             activityIntent.putExtra(NotificationHostActivity.EXTRA_HEIGHT,
                     context.resources.getDimensionPixelSize(it))
         }
-        ActivityScenario.launch<NotificationHostActivity>(activityIntent).use { scenario ->
+        ActivityScenario.launch<NotificationHostActivity>(activityIntent).also { scenario ->
             scenario.moveToState(Lifecycle.State.RESUMED)
-            if (waitBeforeCheckingViews > 0) {
-                Thread.sleep(waitBeforeCheckingViews)
-            }
-            scenario.onActivity { activity ->
-                checker(activity)
-            }
+            scenario.moveToState(Lifecycle.State.STARTED)
+            scenario.moveToState(Lifecycle.State.CREATED)
+            scenario.onActivity(activityAction)
+            scenario.moveToState(Lifecycle.State.DESTROYED)
         }
     }
 
@@ -86,58 +77,7 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
         idName: String
     ): T? = activity.notificationRoot.findViewById<T>(getAndroidRId(idName))
 
-    /** [Sequence] that yields all of the direct children of this [ViewGroup] */
-    private val ViewGroup.children
-        get() = sequence { for (i in 0 until childCount) yield(getChildAt(i)) }
-
-    private fun <T : View> collectViews(
-        view: View,
-        type: KClass<T>,
-        mutableList: MutableList<T>,
-        requireVisible: Boolean = true,
-        predicate: (T) -> Boolean
-    ) {
-        if (requireVisible && view.visibility != View.VISIBLE) {
-            return
-        }
-        if (type.java.isInstance(view)) {
-            if (predicate(view as T)) {
-                mutableList.add(view)
-            }
-        }
-        if (view is ViewGroup) {
-            for (child in view.children) {
-                collectViews(child, type, mutableList, requireVisible, predicate)
-            }
-        }
-    }
-
-    protected fun NotificationHostActivity.requireViewWithText(
-        text: String
-    ): TextView = findViewWithText(text)
-            ?: throw RuntimeException("Unable to find view with text: $text")
-
-    protected fun NotificationHostActivity.findViewWithText(
-        text: String
-    ): TextView? {
-        val views: MutableList<TextView> = ArrayList()
-        collectViews(notificationRoot, TextView::class, views) { it.text?.toString() == text }
-        when (views.size) {
-            0 -> return null
-            1 -> return views[0]
-            else -> throw RuntimeException("Found multiple views with text: $text")
-        }
-    }
-
-    private fun getAndroidRes(resType: String, resName: String): Int =
-            mContext.resources.getIdentifier(resName, resType, "android")
-
     @IdRes
-    protected fun getAndroidRId(idName: String): Int = getAndroidRes("id", idName)
-
-    @StringRes
-    protected fun getAndroidRString(stringName: String): Int = getAndroidRes("string", stringName)
-
-    @BoolRes
-    protected fun getAndroidRBool(boolName: String): Int = getAndroidRes("bool", boolName)
+    protected fun getAndroidRId(idName: String): Int =
+            mContext.resources.getIdentifier(idName, "id", "android")
 }
