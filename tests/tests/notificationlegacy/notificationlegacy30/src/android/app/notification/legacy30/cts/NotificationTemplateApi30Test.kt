@@ -183,14 +183,14 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                 .setCustomContentView(customContent)
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .createContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -203,18 +203,18 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                 .setCustomBigContentView(customContent)
                 .setStyle(Notification.DecoratedCustomViewStyle())
                 .createBigContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the app name text shows
-            val appNameView = requireViewByIdName<TextView>(activity, "app_name_text")
+            val appNameView = requireViewByIdName<TextView>("app_name_text")
             assertThat(appNameView.visibility).isEqualTo(View.VISIBLE)
 
             // check that the icon shows
-            val iconView = requireViewByIdName<ImageView>(activity, "icon")
+            val iconView = requireViewByIdName<ImageView>("icon")
             assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
         }
     }
@@ -226,14 +226,14 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomContentView(customContent)
                 .createContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon is not present
-            val iconView = findViewByIdName<ImageView>(activity, "icon")
+            val iconView = findViewByIdName<ImageView>("icon")
             assertThat(iconView).isNull()
         }
     }
@@ -245,18 +245,18 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomBigContentView(customContent)
                 .createBigContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the app name text is not present
-            val appNameView = findViewByIdName<TextView>(activity, "app_name_text")
+            val appNameView = findViewByIdName<TextView>("app_name_text")
             assertThat(appNameView).isNull()
 
             // check that the icon is not present
-            val iconView = findViewByIdName<ImageView>(activity, "icon")
+            val iconView = findViewByIdName<ImageView>("icon")
             assertThat(iconView).isNull()
         }
     }
@@ -268,14 +268,14 @@ class NotificationTemplateApi30Test : NotificationTemplateTestBase() {
                 .setContentTitle("Title")
                 .setCustomHeadsUpContentView(customContent)
                 .createHeadsUpContentView()
-        checkViews(views) { activity ->
+        checkViews(views) {
             // first check that the custom view is actually shown
-            val customTextView = requireViewByIdName<TextView>(activity, "text1")
+            val customTextView = requireViewByIdName<TextView>("text1")
             assertThat(customTextView.visibility).isEqualTo(View.VISIBLE)
             assertThat(customTextView.text).isEqualTo("Example Text")
 
             // check that the icon is not present
-            val iconView = findViewByIdName<ImageView>(activity, "icon")
+            val iconView = findViewByIdName<ImageView>("icon")
             assertThat(iconView).isNull()
         }
     }
