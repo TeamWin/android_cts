@@ -175,6 +175,16 @@ public class UserTest {
         }
     }
 
+    @Test
+    public void parent_returnsParent() {
+        UserReference parentUser = new User(mTestApis.users(), createValidMutableUser());
+        User.MutableUser mutableUser = createValidMutableUser();
+        mutableUser.mParent = parentUser;
+        User user = new User(mTestApis.users(), mutableUser);
+
+        assertThat(user.parent()).isEqualTo(parentUser);
+    }
+
     private User.MutableUser createValidMutableUser() {
         User.MutableUser mutableUser = new User.MutableUser();
         mutableUser.mId = 1;

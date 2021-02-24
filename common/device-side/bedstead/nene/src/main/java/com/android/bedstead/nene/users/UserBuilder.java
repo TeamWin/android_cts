@@ -16,7 +16,9 @@
 
 package com.android.bedstead.nene.users;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.nene.users.Users.SYSTEM_USER_ID;
 
 import android.os.Build;
 
@@ -37,6 +39,7 @@ public class UserBuilder {
     private final Users mUsers;
     private String mName;
     private @Nullable UserType mType;
+    private @Nullable UserReference mParent;
 
     UserBuilder(Users users) {
         mUsers = users;
@@ -50,12 +53,28 @@ public class UserBuilder {
         return this;
     }
 
-    /** Set the {@link UserType}.
+    /**
+     * Set the {@link UserType}.
      *
      * <p>Defaults to android.os.usertype.full.SECONDARY
      */
     public UserBuilder type(UserType type) {
+        if (type == null) {
+            // We don't want to allow null to be passed in explicitly as that would cause subtle
+            // bugs when chaining with .supportedType() which can return null
+            throw new NullPointerException("Can not set type to null");
+        }
         mType = type;
+        return this;
+    }
+
+    /**
+     * Set the parent of the new user.
+     *
+     * <p>This should only be set if the {@link #type(UserType)} is a profile.
+     */
+    public UserBuilder parent(UserReference parent) {
+        mParent = parent;
         return this;
     }
 
@@ -73,9 +92,31 @@ public class UserBuilder {
                         "Can not create additional system users " + this);
             }
 
+            if (mType.baseType().contains(UserType.BaseType.PROFILE)) {
+                if (mParent == null) {
+                    throw new NeneException("When creating a profile, the parent user must be"
+                            + " specified");
+                }
+
+                commandBuilder.addOption("--profileOf", mParent.id());
+            } else if (mParent != null) {
+                throw new NeneException("A parent should only be specified when create profiles");
+            }
+
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                if (!mType.name().equals(SECONDARY_USER_TYPE_NAME)) {
-                    // TODO(scottjonathan): Support creating profiles (which need a parent)
+                if (mType.name().equals(MANAGED_PROFILE_TYPE_NAME)) {
+                    if (mParent.id() != SYSTEM_USER_ID) {
+                        // On R, this error will be thrown when we execute the command
+                        throw new NeneException(
+                                "Can not create managed profiles of users other than the "
+                                        + "system user"
+                        );
+                    }
+
+                    commandBuilder.addOperand("--managed");
+                } else if (!mType.name().equals(SECONDARY_USER_TYPE_NAME)) {
+                    // This shouldn't be reachable as before R we can't fetch a list of user types
+                    //  so the only supported ones are system/managed profile/secondary
                     throw new NeneException(
                             "Can not create users of type " + mType + " on this device");
                 }

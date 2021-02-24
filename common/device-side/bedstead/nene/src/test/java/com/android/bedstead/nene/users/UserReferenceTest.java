@@ -169,7 +169,7 @@ public class UserReferenceTest {
     }
 
     @Test
-    public void switchTo_userIsSwitched() throws Exception {
+    public void switchTo_userIsSwitched() {
         assumeTrue(
                 "Adopting Shell Permissions only works for Q+", SDK_INT >= Build.VERSION_CODES.Q);
         // TODO(scottjonathan): In this case we can probably grant the permission through adb?
@@ -200,6 +200,21 @@ public class UserReferenceTest {
         }
     }
 
-    // TODO(scottjonathan): Add test that stop() will stop a work profile even if the current user
-    //  is its parent
+    @Test
+    public void stop_isWorkProfileOfCurrentUser_stops() {
+        UserType managedProfileType =
+                mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME);
+        UserReference profileUser = mTestApis.users().createUser()
+                .type(managedProfileType)
+                .parent(mTestApis.users().instrumented())
+                .createAndStart();
+
+        try {
+            profileUser.stop();
+
+            assertThat(profileUser.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
+        } finally {
+            profileUser.remove();
+        }
+    }
 }
