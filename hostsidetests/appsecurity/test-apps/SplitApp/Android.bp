@@ -26,6 +26,7 @@ java_defaults {
         "androidx.test.rules",
         "truth-prebuilt",
         "hamcrest-library",
+        "compatibility-device-util-axt",
     ],
     libs: [
         "android.test.runner.stubs",
