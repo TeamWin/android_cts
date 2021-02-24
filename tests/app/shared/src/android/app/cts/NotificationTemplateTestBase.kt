@@ -38,15 +38,15 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
     protected var waitBeforeCheckingViews: Long = 0
 
     protected fun checkIconView(views: RemoteViews, iconCheck: (ImageView) -> Unit) {
-        checkViews(views) { activity ->
-            iconCheck(requireViewByIdName(activity, "right_icon"))
+        checkViews(views) {
+            iconCheck(requireViewByIdName("right_icon"))
         }
     }
 
     protected fun checkViews(
         views: RemoteViews,
         @DimenRes heightDimen: Int? = null,
-        checker: (NotificationHostActivity) -> Unit
+        checker: NotificationHostActivity.() -> Unit
     ) {
         val activityIntent = Intent(context, NotificationHostActivity::class.java)
         activityIntent.putExtra(NotificationHostActivity.EXTRA_REMOTE_VIEWS, views)
@@ -60,7 +60,7 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
                 Thread.sleep(waitBeforeCheckingViews)
             }
             scenario.onActivity { activity ->
-                checker(activity)
+                activity.checker()
             }
         }
     }
@@ -72,19 +72,14 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
         return customContent
     }
 
-    protected fun <T : View> requireViewByIdName(
-        activity: NotificationHostActivity,
-        idName: String
-    ): T {
+    protected fun <T : View> NotificationHostActivity.requireViewByIdName(idName: String): T {
         val viewId = getAndroidRId(idName)
-        return activity.notificationRoot.findViewById<T>(viewId)
+        return notificationRoot.findViewById<T>(viewId)
                 ?: throw NullPointerException("No view with id: android.R.id.$idName ($viewId)")
     }
 
-    protected fun <T : View> findViewByIdName(
-        activity: NotificationHostActivity,
-        idName: String
-    ): T? = activity.notificationRoot.findViewById<T>(getAndroidRId(idName))
+    protected fun <T : View> NotificationHostActivity.findViewByIdName(idName: String): T? =
+            notificationRoot.findViewById<T>(getAndroidRId(idName))
 
     /** [Sequence] that yields all of the direct children of this [ViewGroup] */
     private val ViewGroup.children
@@ -112,14 +107,10 @@ open class NotificationTemplateTestBase : AndroidTestCase() {
         }
     }
 
-    protected fun NotificationHostActivity.requireViewWithText(
-        text: String
-    ): TextView = findViewWithText(text)
-            ?: throw RuntimeException("Unable to find view with text: $text")
+    protected fun NotificationHostActivity.requireViewWithText(text: String): TextView =
+            findViewWithText(text) ?: throw RuntimeException("Unable to find view with text: $text")
 
-    protected fun NotificationHostActivity.findViewWithText(
-        text: String
-    ): TextView? {
+    protected fun NotificationHostActivity.findViewWithText(text: String): TextView? {
         val views: MutableList<TextView> = ArrayList()
         collectViews(notificationRoot, TextView::class, views) { it.text?.toString() == text }
         when (views.size) {
