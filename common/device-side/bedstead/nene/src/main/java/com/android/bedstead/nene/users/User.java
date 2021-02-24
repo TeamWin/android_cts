@@ -16,11 +16,9 @@
 
 package com.android.bedstead.nene.users;
 
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 /**
  * Representation of a user on an Android device.
@@ -65,7 +63,7 @@ public final class User extends UserReference {
         @Nullable Boolean mIsRemoving;
     }
 
-    private final MutableUser mMutableUser;
+    final MutableUser mMutableUser;
 
     User(Users users, MutableUser mutableUser) {
         super(users, mutableUser.mId);
@@ -94,10 +92,7 @@ public final class User extends UserReference {
 
     /**
      * Get the user type.
-     *
-     * <p>On Android versions < 11, this will return {@code null}.
      */
-    @RequiresApi(Build.VERSION_CODES.R)
     public UserType type() {
         return mMutableUser.mType;
     }
@@ -109,10 +104,7 @@ public final class User extends UserReference {
 
     /**
      * Return {@code true} if this is the primary user.
-     *
-     * <p>On Android versions < 11, this will return {@code null}.
      */
-    @RequiresApi(Build.VERSION_CODES.R)
     public Boolean isPrimary() {
         return mMutableUser.mIsPrimary;
     }
