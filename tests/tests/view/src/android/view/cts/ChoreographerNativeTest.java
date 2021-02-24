@@ -16,21 +16,32 @@
 
 package android.view.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Display;
+import android.view.Display.Mode;
+import android.view.Window;
+import android.view.WindowManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.annotation.UiThreadTest;
 import androidx.test.filters.FlakyTest;
 import androidx.test.filters.MediumTest;
 import androidx.test.filters.SmallTest;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,6 +53,18 @@ import java.util.Optional;
 @RunWith(AndroidJUnit4.class)
 public class ChoreographerNativeTest {
     private long mChoreographerPtr;
+
+    @Rule
+    public ActivityTestRule<CtsActivity> mTestActivityRule =
+            new ActivityTestRule<>(
+                CtsActivity.class);
+
+    @Rule
+    public final AdoptShellPermissionsRule mShellPermissionsRule =
+            new AdoptShellPermissionsRule(
+                    InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                    Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS,
+                    Manifest.permission.MODIFY_REFRESH_RATE_SWITCHING_TYPE);
 
     private static native long nativeGetChoreographer();
     private static native boolean nativePrepareChoreographerTests(long ptr, long[] refreshPeriods);
@@ -61,9 +84,12 @@ public class ChoreographerNativeTest {
     private static native void nativeTestAttemptToAddRefreshRateCallbackTwiceDoesNotAddTwice(
             long ptr);
     private static native void nativeTestRefreshRateCallbackMixedWithFrameCallbacks(long ptr);
+    private native void nativeTestRefreshRateCallbacksAreSyncedWithDisplayManager();
 
     private Context mContext;
     private DisplayManager mDisplayManager;
+    private Display mDefaultDisplay;
+    private long[] mSupportedPeriods;
 
     static {
         System.loadLibrary("ctsview_jni");
@@ -80,14 +106,14 @@ public class ChoreographerNativeTest {
                 .findFirst();
 
         assertTrue(defaultDisplayOpt.isPresent());
-        Display defaultDisplay = defaultDisplayOpt.get();
+        mDefaultDisplay = defaultDisplayOpt.get();
 
-        long[] supportedPeriods = Arrays.stream(defaultDisplay.getSupportedModes())
+        mSupportedPeriods = Arrays.stream(mDefaultDisplay.getSupportedModes())
                 .mapToLong(mode -> (long) (Duration.ofSeconds(1).toNanos() / mode.getRefreshRate()))
                 .toArray();
 
         mChoreographerPtr = nativeGetChoreographer();
-        if (!nativePrepareChoreographerTests(mChoreographerPtr, supportedPeriods)) {
+        if (!nativePrepareChoreographerTests(mChoreographerPtr, mSupportedPeriods)) {
             fail("Failed to setup choreographer tests");
         }
     }
@@ -158,5 +184,58 @@ public class ChoreographerNativeTest {
     public void testRefreshRateCallbackMixedWithFrameCallbacks() {
         nativeTestRefreshRateCallbackMixedWithFrameCallbacks(mChoreographerPtr);
     }
+
+    @SmallTest
+    @Test
+    public void testRefreshRateCallbacksIsSyncedWithDisplayManager() {
+        if (mSupportedPeriods.length <= 1) {
+            return;
+        }
+        int initialMatchContentFrameRate = 0;
+        try {
+
+            // Set-up just for this particular test:
+            // We must force the screen to be on for this window, and DisplayManager must be
+            // configured to always respect the app-requested refresh rate.
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> {
+                mTestActivityRule.getActivity().getWindow().addFlags(
+                        WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                                | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+                                | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            });
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
+            initialMatchContentFrameRate = mDisplayManager.getRefreshRateSwitchingType();
+            mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
+            nativeTestRefreshRateCallbacksAreSyncedWithDisplayManager();
+        } finally {
+            mDisplayManager.setRefreshRateSwitchingType(initialMatchContentFrameRate);
+            mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
+        }
+    }
+
+    // Called by jni in a refresh rate callback
+    private void checkRefreshRateIsCurrentAndSwitch(int refreshRate) {
+        assertEquals(Math.round(mDefaultDisplay.getRefreshRate()), refreshRate);
+
+        Optional<Mode> nextMode = Arrays.stream(mDefaultDisplay.getSupportedModes())
+                .sorted((left, right) ->
+                        Float.compare(right.getRefreshRate(), left.getRefreshRate()))
+                .filter(mode ->  Math.round(mode.getRefreshRate()) != refreshRate)
+                .findFirst();
+
+        assertTrue(nextMode.isPresent());
+
+        Mode mode = nextMode.get();
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> {
+            Window window = mTestActivityRule.getActivity().getWindow();
+            WindowManager.LayoutParams params = window.getAttributes();
+            params.preferredDisplayModeId = mode.getModeId();
+            window.setAttributes(params);
+        });
+    }
+
+
 
 }

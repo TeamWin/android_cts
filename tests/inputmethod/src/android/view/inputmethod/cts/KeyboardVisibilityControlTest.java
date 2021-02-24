@@ -559,7 +559,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityWhenImeTransitionBetweenActivities(false /* instant */);
     }
 
-    @Ignore("b/179491219")
     @AppModeInstant
     @Test
     public void testImeVisibilityWhenImeTransitionBetweenActivities_Instant() throws Exception {
@@ -572,7 +571,6 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityTestWhenForceStopPackage(false /* instant */);
     }
 
-    @Ignore("b/179491012")
     @AppModeInstant
     @Test
     public void testImeInvisibleWhenForceStopPkgProcess_Instant() throws Exception {
@@ -678,6 +676,10 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
              long timeout, Map<String, String> extras) {
         final StringBuilder commandBuilder = new StringBuilder();
         if (instant) {
+            // Override app-links domain verification.
+            runShellCommand(
+                    String.format("pm set-app-links-user-selection --user cur --package %s true %s",
+                            componentName.getPackageName(), TEST_ACTIVITY_URI.getHost()));
             final Uri uri = formatStringIntentParam(TEST_ACTIVITY_URI, extras);
             commandBuilder.append(String.format("am start -a %s -c %s %s",
                     Intent.ACTION_VIEW, Intent.CATEGORY_BROWSABLE, uri.toString()));
