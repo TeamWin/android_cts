@@ -24,12 +24,16 @@ import android.util.Pair;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-/** A {@link ProviderRequest.Listener} that automatically unregisters itself when closed. */
-public class ProviderRequestListenerCapture implements ProviderRequest.Listener, AutoCloseable {
+/**
+ * A {@link ProviderRequest.ChangedListener} that automatically unregisters itself
+ * when closed.
+ */
+public class ProviderRequestChangedListenerCapture implements
+        ProviderRequest.ChangedListener, AutoCloseable {
     private final LocationManager mLocationManager;
     private final LinkedBlockingQueue<Pair<String, ProviderRequest>> mProviderRequestChanges;
 
-    public ProviderRequestListenerCapture(Context context) {
+    public ProviderRequestChangedListenerCapture(Context context) {
         mLocationManager = context.getSystemService(LocationManager.class);
         mProviderRequestChanges = new LinkedBlockingQueue<>();
     }
@@ -46,6 +50,6 @@ public class ProviderRequestListenerCapture implements ProviderRequest.Listener,
 
     @Override
     public void close() throws Exception {
-        mLocationManager.unregisterProviderRequestListener(this);
+        mLocationManager.removeProviderRequestChangedListener(this);
     }
 }
