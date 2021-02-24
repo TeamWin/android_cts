@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // An app that contains helper procedures to run 'adb backup' / 'adb restore'
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test_helper_app {
     name: "AdbBackupApp",
     defaults: ["cts_defaults"],
