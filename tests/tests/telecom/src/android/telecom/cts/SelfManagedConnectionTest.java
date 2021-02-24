@@ -27,6 +27,7 @@ import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.os.RemoteException;
 import android.os.UserHandle;
 import android.telecom.cts.carmodetestapp.CtsCarModeInCallServiceControl;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
@@ -80,6 +81,8 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     private RoleManager mRoleManager;
     private String mDefaultDialer;
     private UiAutomation mUiAutomation;
+    private ICtsCarModeInCallServiceControl mCarModeIncallServiceControlOne;
+    private ICtsCarModeInCallServiceControl mCarModeIncallServiceControlTwo;
 
     private class TestServiceConnection implements ServiceConnection {
         private IBinder mService;
@@ -130,6 +133,12 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+
+        disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
+        disableAndVerifyCarMode(mCarModeIncallServiceControlTwo, Configuration.UI_MODE_TYPE_NORMAL);
+        disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+        disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
+
         CtsSelfManagedConnectionService connectionService =
                 CtsSelfManagedConnectionService.getConnectionService();
         if (connectionService != null) {
@@ -154,6 +163,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         assertTrue(connection.isTracked());
 
         connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mContext.unbindService(controlConn);
     }
 
@@ -177,6 +187,7 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         assertTrue(connection.isAlternativeUiShowing());
 
         connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mContext.unbindService(controlConn);
     }
 
@@ -196,55 +207,57 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
         assertFalse(control.checkBindStatus(true /* bindStatus */));
 
         connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mContext.unbindService(controlConn);
     }
 
     public void testEnterCarMode() throws Exception {
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL,
                 CAR_DIALER_1);
-        ICtsCarModeInCallServiceControl control = ICtsCarModeInCallServiceControl.Stub
+        mCarModeIncallServiceControlOne = ICtsCarModeInCallServiceControl.Stub
                 .asInterface(controlConn.getService());
-        control.reset();
+        mCarModeIncallServiceControlOne.reset();
 
         SelfManagedConnection connection = placeAndVerifySelfManagedCall();
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.ENTER_CAR_MODE_PRIORITIZED",
                 "android.permission.CONTROL_INCALL_EXPERIENCE");
-        control.enableCarMode(1000);
-        assertTrue(control.checkBindStatus(true /* bindStatus */));
-        control.disableCarMode();
+        mCarModeIncallServiceControlOne.enableCarMode(1000);
+        assertTrue(mCarModeIncallServiceControlOne.checkBindStatus(true /* bindStatus */));
+        mCarModeIncallServiceControlOne.disableCarMode();
         mUiAutomation.dropShellPermissionIdentity();
 
         connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mContext.unbindService(controlConn);
     }
 
     public void testChangeCarModeApp() throws Exception {
         TestServiceConnection controlConn1 = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);
         TestServiceConnection controlConn2 = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_2);
-        ICtsCarModeInCallServiceControl control1 = ICtsCarModeInCallServiceControl.Stub
+        mCarModeIncallServiceControlOne = ICtsCarModeInCallServiceControl.Stub
                 .asInterface(controlConn1.getService());
-        ICtsCarModeInCallServiceControl control2 = ICtsCarModeInCallServiceControl.Stub
+        mCarModeIncallServiceControlTwo = ICtsCarModeInCallServiceControl.Stub
                 .asInterface(controlConn2.getService());
-        control1.reset();
-        control2.reset();
+        mCarModeIncallServiceControlOne.reset();
+        mCarModeIncallServiceControlTwo.reset();
 
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.ENTER_CAR_MODE_PRIORITIZED",
                 "android.permission.CONTROL_INCALL_EXPERIENCE");
-        control1.enableCarMode(999);
+        mCarModeIncallServiceControlOne.enableCarMode(999);
 
         SelfManagedConnection connection = placeAndVerifySelfManagedCall();
-        assertTrue(control1.checkBindStatus(true /* bindStatus */));
-        control2.enableCarMode(1000);
-        assertTrue(control1.checkBindStatus(false /* bindStatus */));
-        assertTrue(control2.checkBindStatus(true /* bindStatus */));
+        assertTrue(mCarModeIncallServiceControlOne.checkBindStatus(true /* bindStatus */));
+        mCarModeIncallServiceControlTwo.enableCarMode(1000);
+        assertTrue(mCarModeIncallServiceControlOne.checkBindStatus(false /* bindStatus */));
+        assertTrue(mCarModeIncallServiceControlTwo.checkBindStatus(true /* bindStatus */));
 
-        control1.disableCarMode();
-        control2.disableCarMode();
-        // Make sure the UI mode has been set back
-        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+        mCarModeIncallServiceControlOne.disableCarMode();
+        mCarModeIncallServiceControlTwo.disableCarMode();
 
+        connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mUiAutomation.dropShellPermissionIdentity();
         mContext.unbindService(controlConn1);
         mContext.unbindService(controlConn2);
@@ -252,22 +265,23 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     public void testExitCarMode() throws Exception {
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);
-        ICtsCarModeInCallServiceControl control = ICtsCarModeInCallServiceControl.Stub
+        mCarModeIncallServiceControlOne = ICtsCarModeInCallServiceControl.Stub
                 .asInterface(controlConn.getService());
-        control.reset();
+        mCarModeIncallServiceControlOne.reset();
 
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.ENTER_CAR_MODE_PRIORITIZED",
                 "android.permission.CONTROL_INCALL_EXPERIENCE");
-        control.enableCarMode(1000);
+        mCarModeIncallServiceControlOne.enableCarMode(1000);
 
         SelfManagedConnection connection = placeAndVerifySelfManagedCall();
-        assertTrue(control.checkBindStatus(true /* bindStatus */));
-        control.disableCarMode();
-        assertTrue(control.checkBindStatus(false /* bindStatus */));
+        assertTrue(mCarModeIncallServiceControlOne.checkBindStatus(true /* bindStatus */));
+        mCarModeIncallServiceControlOne.disableCarMode();
+        assertTrue(mCarModeIncallServiceControlOne.checkBindStatus(false /* bindStatus */));
         mUiAutomation.dropShellPermissionIdentity();
 
         connection.disconnectAndDestroy();
+        assertIsInCall(false);
         mContext.unbindService(controlConn);
     }
 
