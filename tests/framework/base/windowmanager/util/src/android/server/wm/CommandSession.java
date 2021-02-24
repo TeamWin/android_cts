@@ -1078,6 +1078,10 @@ public final class CommandSession {
         public int smallestWidthDp;
         public int densityDpi;
         public int orientation;
+        public int windowWidth;
+        public int windowHeight;
+        public int windowAppWidth;
+        public int windowAppHeight;
 
         SizeInfo() {
         }
@@ -1097,6 +1101,10 @@ public final class CommandSession {
             smallestWidthDp = config.smallestScreenWidthDp;
             densityDpi = config.densityDpi;
             orientation = config.orientation;
+            windowWidth = config.windowConfiguration.getBounds().width();
+            windowHeight = config.windowConfiguration.getBounds().height();
+            windowAppWidth = config.windowConfiguration.getAppBounds().width();
+            windowAppHeight = config.windowConfiguration.getAppBounds().height();
         }
 
         @Override
@@ -1105,6 +1113,8 @@ public final class CommandSession {
                     + " displayWidth=" + displayWidth + " displayHeight=" + displayHeight
                     + " metricsWidth=" + metricsWidth + " metricsHeight=" + metricsHeight
                     + " smallestWidthDp=" + smallestWidthDp + " densityDpi=" + densityDpi
+                    + " windowWidth=" + windowWidth + " windowHeight=" + windowHeight
+                    + " windowAppWidth=" + windowAppWidth + " windowAppHeight=" + windowAppHeight
                     + " orientation=" + orientation + "}";
         }
 
@@ -1125,7 +1135,11 @@ public final class CommandSession {
                     && metricsHeight == that.metricsHeight
                     && smallestWidthDp == that.smallestWidthDp
                     && densityDpi == that.densityDpi
-                    && orientation == that.orientation;
+                    && orientation == that.orientation
+                    && windowWidth == that.windowWidth
+                    && windowHeight == that.windowHeight
+                    && windowAppWidth == that.windowAppWidth
+                    && windowAppHeight == that.windowAppHeight;
         }
 
         @Override
@@ -1140,6 +1154,10 @@ public final class CommandSession {
             result = 31 * result + smallestWidthDp;
             result = 31 * result + densityDpi;
             result = 31 * result + orientation;
+            result = 31 * result + windowWidth;
+            result = 31 * result + windowHeight;
+            result = 31 * result + windowAppWidth;
+            result = 31 * result + windowAppHeight;
             return result;
         }
 
@@ -1159,6 +1177,10 @@ public final class CommandSession {
             dest.writeInt(smallestWidthDp);
             dest.writeInt(densityDpi);
             dest.writeInt(orientation);
+            dest.writeInt(windowWidth);
+            dest.writeInt(windowHeight);
+            dest.writeInt(windowAppWidth);
+            dest.writeInt(windowAppHeight);
         }
 
         public void readFromParcel(Parcel in) {
@@ -1171,6 +1193,10 @@ public final class CommandSession {
             smallestWidthDp = in.readInt();
             densityDpi = in.readInt();
             orientation = in.readInt();
+            windowWidth = in.readInt();
+            windowHeight = in.readInt();
+            windowAppWidth = in.readInt();
+            windowAppHeight = in.readInt();
         }
 
         public static final Creator<SizeInfo> CREATOR = new Creator<SizeInfo>() {

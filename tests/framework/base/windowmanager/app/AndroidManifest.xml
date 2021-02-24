@@ -32,6 +32,10 @@
              android:resizeableActivity="true"
              android:supportsPictureInPicture="true"
              android:exported="true"/>
+        <activity android:name=".UiScalingTestActivity"
+             android:resizeableActivity="true"
+             android:supportsPictureInPicture="true"
+             android:exported="true"/>
         <activity android:name=".TestActivityWithSameAffinity"
              android:resizeableActivity="true"
              android:supportsPictureInPicture="true"

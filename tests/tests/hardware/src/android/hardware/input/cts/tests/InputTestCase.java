@@ -59,6 +59,8 @@ public abstract class InputTestCase {
     // Stores the name of the currently running test
     protected String mCurrentTestCase;
     private int mRegisterResourceId; // raw resource that contains json for registering a hid device
+    protected int mVid;
+    protected int mPid;
 
     // State used for motion events
     private int mLastButtonState;
@@ -79,6 +81,8 @@ public abstract class InputTestCase {
         mActivityRule.getActivity().clearUnhandleKeyCode();
         mDecorView = mActivityRule.getActivity().getWindow().getDecorView();
         mParser = new InputJsonParser(mInstrumentation.getTargetContext());
+        mVid = mParser.readVendorId(mRegisterResourceId);
+        mPid = mParser.readProductId(mRegisterResourceId);
         int deviceId = mParser.readDeviceId(mRegisterResourceId);
         String registerCommand = mParser.readRegisterCommand(mRegisterResourceId);
         setUpDevice(deviceId, mParser.readVendorId(mRegisterResourceId),

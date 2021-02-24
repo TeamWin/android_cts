@@ -17,6 +17,7 @@ package com.android.server.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.RequiresDevice;
 import android.service.GraphicsStatsHistogramBucketProto;
 import android.service.GraphicsStatsJankSummaryProto;
 import android.service.GraphicsStatsProto;
@@ -28,6 +29,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+// Although this test does not directly test performance, it does indirectly require consistent
+// performance for the "good" frames. Although pass-through GPU virtual devices should have
+// sufficient performance to pass OK, not all virtual devices do. So restrict this to physical
+// devices.
+@RequiresDevice
 public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
     private static final String TAG = "GraphicsStatsValidationTest";
 

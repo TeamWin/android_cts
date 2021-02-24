@@ -16,7 +16,6 @@
 
 package android.hardware.camera2.cts;
 
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyLong;
@@ -38,11 +37,14 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraExtensionCharacteristics;
 import android.hardware.camera2.CameraExtensionSession;
 import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
 import android.hardware.camera2.params.ExtensionSessionConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
+import android.media.ExifInterface;
 import android.media.Image;
 import android.media.ImageReader;
 import android.util.Size;
@@ -61,6 +63,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -467,6 +470,10 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
     @Test
     public void testMultiFrameCapture() throws Exception {
         final int IMAGE_COUNT = 10;
+        final int SUPPORTED_CAPTURE_OUTPUT_FORMATS[] = {
+                ImageFormat.YUV_420_888,
+                ImageFormat.JPEG
+        };
         for (String id : mCameraIdsUnderTest) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -478,85 +485,94 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
-                int captureFormat = ImageFormat.YUV_420_888;
-                List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
-                        captureFormat);
-                if (extensionSizes.isEmpty()) {
-                    captureFormat = ImageFormat.JPEG;
-                    extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
+                for (int captureFormat : SUPPORTED_CAPTURE_OUTPUT_FORMATS) {
+                    List<Size> extensionSizes = extensionChars.getExtensionSupportedSizes(extension,
                             captureFormat);
-                }
-                Size maxSize = CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
-                SimpleImageReaderListener imageListener = new SimpleImageReaderListener(false, 1);
-                ImageReader extensionImageReader = CameraTestUtils.makeImageReader(maxSize,
-                        captureFormat, /*maxImages*/ 1, imageListener,
-                        mTestRule.getHandler());
-                Surface imageReaderSurface = extensionImageReader.getSurface();
-                OutputConfiguration readerOutput = new OutputConfiguration(
-                        OutputConfiguration.SURFACE_GROUP_ID_NONE, imageReaderSurface);
-                List<OutputConfiguration> outputConfigs = new ArrayList<>();
-                outputConfigs.add(readerOutput);
-
-                BlockingExtensionSessionCallback sessionListener =
-                        new BlockingExtensionSessionCallback(mock(
-                                CameraExtensionSession.StateCallback.class));
-                ExtensionSessionConfiguration configuration =
-                        new ExtensionSessionConfiguration(extension, outputConfigs,
-                                new HandlerExecutor(mTestRule.getHandler()),
-                                sessionListener);
-
-                try {
-                    mTestRule.openDevice(id);
-                    CameraDevice camera = mTestRule.getCamera();
-                    camera.createExtensionSession(configuration);
-                    CameraExtensionSession extensionSession =
-                            sessionListener.waitAndGetSession(
-                                    SESSION_CONFIGURE_TIMEOUT_MS);
-                    assertNotNull(extensionSession);
-
-                    CaptureRequest.Builder captureBuilder =
-                            mTestRule.getCamera().createCaptureRequest(
-                                    android.hardware.camera2.CameraDevice.TEMPLATE_STILL_CAPTURE);
-                    captureBuilder.addTarget(imageReaderSurface);
-                    CameraExtensionSession.ExtensionCaptureCallback captureCallback =
-                            mock(CameraExtensionSession.ExtensionCaptureCallback.class);
-
-                    for (int i = 0; i < IMAGE_COUNT; i++) {
-                        CaptureRequest request = captureBuilder.build();
-                        int sequenceId = extensionSession.capture(request,
-                                new HandlerExecutor(mTestRule.getHandler()), captureCallback);
-
-                        Image img =
-                                imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
-                        validateImage(img, maxSize.getWidth(), maxSize.getHeight(),
-                                captureFormat, null);
-                        img.close();
-
-                        verify(captureCallback, times(1))
-                                .onCaptureStarted(eq(extensionSession), eq(request), anyLong());
-                        verify(captureCallback,
-                                timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
-                                .onCaptureProcessStarted(extensionSession, request);
-                        verify(captureCallback,
-                                timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
-                                .onCaptureSequenceCompleted(extensionSession, sequenceId);
+                    if (extensionSizes.isEmpty()) {
+                        continue;
                     }
+                    Size maxSize = CameraTestUtils.getMaxSize(extensionSizes.toArray(new Size[0]));
+                    SimpleImageReaderListener imageListener = new SimpleImageReaderListener(false,
+                            1);
+                    ImageReader extensionImageReader = CameraTestUtils.makeImageReader(maxSize,
+                            captureFormat, /*maxImages*/ 1, imageListener,
+                            mTestRule.getHandler());
+                    Surface imageReaderSurface = extensionImageReader.getSurface();
+                    OutputConfiguration readerOutput = new OutputConfiguration(
+                            OutputConfiguration.SURFACE_GROUP_ID_NONE, imageReaderSurface);
+                    List<OutputConfiguration> outputConfigs = new ArrayList<>();
+                    outputConfigs.add(readerOutput);
 
-                    verify(captureCallback, times(0))
-                            .onCaptureSequenceAborted(any(CameraExtensionSession.class),
-                                    anyInt());
-                    verify(captureCallback, times(0))
-                            .onCaptureFailed(any(CameraExtensionSession.class),
-                                    any(CaptureRequest.class));
+                    BlockingExtensionSessionCallback sessionListener =
+                            new BlockingExtensionSessionCallback(mock(
+                                    CameraExtensionSession.StateCallback.class));
+                    ExtensionSessionConfiguration configuration =
+                            new ExtensionSessionConfiguration(extension, outputConfigs,
+                                    new HandlerExecutor(mTestRule.getHandler()),
+                                    sessionListener);
 
-                    extensionSession.close();
+                    try {
+                        mTestRule.openDevice(id);
+                        CameraDevice camera = mTestRule.getCamera();
+                        camera.createExtensionSession(configuration);
+                        CameraExtensionSession extensionSession =
+                                sessionListener.waitAndGetSession(
+                                        SESSION_CONFIGURE_TIMEOUT_MS);
+                        assertNotNull(extensionSession);
 
-                    sessionListener.getStateWaiter().waitForState(
-                            BlockingExtensionSessionCallback.SESSION_CLOSED,
-                            SESSION_CLOSE_TIMEOUT_MS);
-                } finally {
-                    mTestRule.closeDevice(id);
-                    extensionImageReader.close();
+                        CaptureRequest.Builder captureBuilder =
+                                mTestRule.getCamera().createCaptureRequest(
+                                        CameraDevice.TEMPLATE_STILL_CAPTURE);
+                        captureBuilder.addTarget(imageReaderSurface);
+                        CameraExtensionSession.ExtensionCaptureCallback captureCallback =
+                                mock(CameraExtensionSession.ExtensionCaptureCallback.class);
+
+                        for (int i = 0; i < IMAGE_COUNT; i++) {
+                            int jpegOrientation = (i * 90) % 360; // degrees [0..270]
+                            if (captureFormat == ImageFormat.JPEG) {
+                                captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,
+                                        jpegOrientation);
+                            }
+                            CaptureRequest request = captureBuilder.build();
+                            int sequenceId = extensionSession.capture(request,
+                                    new HandlerExecutor(mTestRule.getHandler()), captureCallback);
+
+                            Image img =
+                                    imageListener.getImage(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS);
+                            if (captureFormat == ImageFormat.JPEG) {
+                                verifyJpegOrientation(img, maxSize, jpegOrientation);
+                            } else {
+                                validateImage(img, maxSize.getWidth(), maxSize.getHeight(),
+                                        captureFormat, null);
+                            }
+                            img.close();
+
+                            verify(captureCallback, times(1))
+                                    .onCaptureStarted(eq(extensionSession), eq(request), anyLong());
+                            verify(captureCallback,
+                                    timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                                    .onCaptureProcessStarted(extensionSession, request);
+                            verify(captureCallback,
+                                    timeout(MULTI_FRAME_CAPTURE_IMAGE_TIMEOUT_MS).times(1))
+                                    .onCaptureSequenceCompleted(extensionSession, sequenceId);
+                        }
+
+                        verify(captureCallback, times(0))
+                                .onCaptureSequenceAborted(any(CameraExtensionSession.class),
+                                        anyInt());
+                        verify(captureCallback, times(0))
+                                .onCaptureFailed(any(CameraExtensionSession.class),
+                                        any(CaptureRequest.class));
+
+                        extensionSession.close();
+
+                        sessionListener.getStateWaiter().waitForState(
+                                BlockingExtensionSessionCallback.SESSION_CLOSED,
+                                SESSION_CLOSE_TIMEOUT_MS);
+                    } finally {
+                        mTestRule.closeDevice(id);
+                        extensionImageReader.close();
+                    }
                 }
             }
         }
@@ -577,14 +593,10 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
             for (Integer extension : supportedExtensions) {
-                int captureFormat = ImageFormat.YUV_420_888;
+                int captureFormat = ImageFormat.JPEG;
                 List<Size> captureSizes = extensionChars.getExtensionSupportedSizes(extension,
                         captureFormat);
-                if (captureSizes.isEmpty()) {
-                    captureFormat = ImageFormat.JPEG;
-                    captureSizes = extensionChars.getExtensionSupportedSizes(extension,
-                            captureFormat);
-                }
+                assertFalse("No Jpeg output supported", captureSizes.isEmpty());
                 Size captureMaxSize =
                         CameraTestUtils.getMaxSize(captureSizes.toArray(new Size[0]));
 
@@ -734,6 +746,62 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                     extensionImageReader.close();
                 }
             }
+        }
+    }
+
+    private void verifyJpegOrientation(Image img, Size jpegSize, int requestedOrientation)
+            throws IOException {
+        byte[] blobBuffer = getDataFromImage(img);
+        String blobFilename = mTestRule.getDebugFileNameBase() + "/verifyJpegKeys.jpeg";
+        dumpFile(blobFilename, blobBuffer);
+        ExifInterface exif = new ExifInterface(blobFilename);
+        int exifWidth = exif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, /*defaultValue*/0);
+        int exifHeight = exif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, /*defaultValue*/0);
+        Size exifSize = new Size(exifWidth, exifHeight);
+        int exifOrientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                /*defaultValue*/ ExifInterface.ORIENTATION_UNDEFINED);
+        final int ORIENTATION_MIN = ExifInterface.ORIENTATION_UNDEFINED;
+        final int ORIENTATION_MAX = ExifInterface.ORIENTATION_ROTATE_270;
+        assertTrue(String.format("Exif orientation must be in range of [%d, %d]",
+                ORIENTATION_MIN, ORIENTATION_MAX),
+                exifOrientation >= ORIENTATION_MIN && exifOrientation <= ORIENTATION_MAX);
+
+        /**
+         * Device captured image doesn't respect the requested orientation,
+         * which means it rotates the image buffer physically. Then we
+         * should swap the exif width/height accordingly to compare.
+         */
+        boolean deviceRotatedImage = exifOrientation == ExifInterface.ORIENTATION_UNDEFINED;
+
+        if (deviceRotatedImage) {
+            // Case 1.
+            boolean needSwap = (requestedOrientation % 180 == 90);
+            if (needSwap) {
+                exifSize = new Size(exifHeight, exifWidth);
+            }
+        } else {
+            // Case 2.
+            assertEquals("Exif orientation should match requested orientation",
+                    requestedOrientation, getExifOrientationInDegree(exifOrientation));
+        }
+
+        assertEquals("Exif size should match jpeg capture size", jpegSize, exifSize);
+    }
+
+    private static int getExifOrientationInDegree(int exifOrientation) {
+        switch (exifOrientation) {
+            case ExifInterface.ORIENTATION_NORMAL:
+                return 0;
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                return 90;
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                return 180;
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                return 270;
+            default:
+                fail("It is impossible to get non 0, 90, 180, 270 degress exif" +
+                        "info based on the request orientation range");
+                return -1;
         }
     }
 

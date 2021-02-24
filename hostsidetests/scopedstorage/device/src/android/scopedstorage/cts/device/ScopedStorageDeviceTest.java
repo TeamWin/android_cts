@@ -217,7 +217,8 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Parameter(0)
     public String mVolumeName;
 
-    @Parameters
+    /** Parameters data. */
+    @Parameters(name = "volume={0}")
     public static Iterable<? extends Object> data() {
         return ScopedStorageDeviceTest.getTestParameters();
     }
@@ -1345,6 +1346,39 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             denyAppOpsToUid(uid, opstr);
         }
         assertThat(canOpenFileAs(app, file, forWrite)).isFalse();
+    }
+
+    @Test
+    public void testDisableOpResetForSystemGallery() throws Exception {
+        final File otherAppImageFile = new File(getDcimDir(), "other_" + IMAGE_FILE_NAME);
+        final File otherAppVideoFile = new File(getDcimDir(), "other_" + VIDEO_FILE_NAME);
+
+        try {
+            allowAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+
+            // Have another app create an image file
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppImageFile.getPath())).isTrue();
+            assertThat(otherAppImageFile.exists()).isTrue();
+
+            // Have another app create a video file
+            assertThat(createFileAs(APP_B_NO_PERMS, otherAppVideoFile.getPath())).isTrue();
+            assertThat(otherAppVideoFile.exists()).isTrue();
+
+            assertCanWriteAndRead(otherAppImageFile, BYTES_DATA1);
+            assertCanWriteAndRead(otherAppVideoFile, BYTES_DATA1);
+
+            // Reset app op should not reset System Gallery privileges
+            executeShellCommand("appops reset " + THIS_PACKAGE_NAME);
+
+            // Assert we can still write to images/videos
+            assertCanWriteAndRead(otherAppImageFile, BYTES_DATA2);
+            assertCanWriteAndRead(otherAppVideoFile, BYTES_DATA2);
+
+        } finally {
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppImageFile.getAbsolutePath());
+            deleteFileAsNoThrow(APP_B_NO_PERMS, otherAppVideoFile.getAbsolutePath());
+            denyAppOpsToUid(Process.myUid(), SYSTEM_GALERY_APPOPS);
+        }
     }
 
     @Test
@@ -2574,6 +2608,14 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             setAppOpsModeForUid(uid, AppOpsManager.MODE_ERRORED, SYSTEM_GALERY_APPOPS);
         }
+    }
+
+    private void assertCanWriteAndRead(File file, byte[] data) throws Exception {
+        // Assert we can write to images/videos
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            fos.write(data);
+        }
+        assertFileContent(file, data);
     }
 
     /**

@@ -49,7 +49,7 @@ public class SonyDualshock4UsbTest extends InputHidTestCase {
     }
 
     @Test
-    public void testVibrator() {
+    public void testVibrator() throws Exception {
         testInputVibratorEvents(R.raw.sony_dualshock4_usb_vibratortests);
     }
 }
