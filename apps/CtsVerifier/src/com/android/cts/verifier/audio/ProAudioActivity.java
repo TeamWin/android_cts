@@ -20,27 +20,21 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
-
 import android.os.Bundle;
-import android.os.Handler;
-
-import android.util.Log;
-
 import android.view.View;
-
 import android.widget.CheckBox;
 import android.widget.TextView;
 
-import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
+import com.android.cts.verifier.R;
+
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 public class ProAudioActivity
         extends PassFailButtons.Activity
@@ -69,6 +63,14 @@ public class ProAudioActivity
     private static final int INFO_DIALOG_ID = 1337;
     private static final String INFO_DIALOG_TITLE_ID = "infoDialogTitleId";
     private static final String INFO_DIALOG_MESSAGE_ID = "infoDialogMessageId";
+
+    // ReportLog Schema
+    private static final String KEY_CLAIMS_PRO = "claims_pro_audio";
+    private static final String KEY_CLAIMS_LOW_LATENCY = "claims_low_latency_audio";
+    private static final String KEY_CLAIMS_MIDI = "claims_midi";
+    private static final String KEY_CLAIMS_USB_HOST = "claims_usb_host";
+    private static final String KEY_CLAIMS_USB_PERIPHERAL = "claims_usb_peripheral";
+    private static final String KEY_CLAIMS_HDMI = "claims_hdmi";
 
     public ProAudioActivity() {
         super();
@@ -243,40 +245,45 @@ public class ProAudioActivity
     /**
      * Store test results in log
      */
+    @Override
+    public String getTestId() {
+        return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+    }
+
     protected void recordTestResults() {
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
-                "Claims Pro Audio",
+                KEY_CLAIMS_PRO,
                 mClaimsProAudio,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Claims Low-Latency Audio",
+                KEY_CLAIMS_LOW_LATENCY,
                 mClaimsLowLatencyAudio,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Claims MIDI",
+                KEY_CLAIMS_MIDI,
                 mClaimsMIDI,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Claims USB Host Mode",
+                KEY_CLAIMS_USB_HOST,
                 mClaimsUSBHostMode,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Claims USB Peripheral Mode",
+                KEY_CLAIMS_USB_PERIPHERAL,
                 mClaimsUSBPeripheralMode,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Claims HDMI",
+                KEY_CLAIMS_HDMI,
                 mClaimsHDMI,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);

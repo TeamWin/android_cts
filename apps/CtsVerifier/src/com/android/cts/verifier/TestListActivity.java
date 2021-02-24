@@ -16,11 +16,9 @@
 
 package com.android.cts.verifier;
 
-import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -44,7 +42,7 @@ public class TestListActivity extends AbstractTestListActivity implements View.O
     private static final String TAG = TestListActivity.class.getSimpleName();
     // Records the current display mode.
     // Default is unfolded mode, and it will be changed when clicking the switch button.
-    protected static String sCurrentDisplayMode = DisplayMode.UNFOLDED.toString();
+    public static String sCurrentDisplayMode = DisplayMode.UNFOLDED.toString();
     // Flag of launch app to fetch the unfolded/folded tests in main view from AndroidManifest.xml.
     protected static boolean sInitialLaunch;
 
