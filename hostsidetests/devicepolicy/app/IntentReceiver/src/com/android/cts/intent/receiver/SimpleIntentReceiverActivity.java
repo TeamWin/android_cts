@@ -40,8 +40,8 @@ public class SimpleIntentReceiverActivity extends Activity {
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         boolean inManagedProfile = dpm.isProfileOwnerApp("com.android.cts.managedprofile");
 
-        Log.i(TAG, "activity " + className + " started on user " + getUserId()
-                + ", is in managed profile: " + inManagedProfile);
+        Log.i(TAG, "activity " + className + " started, is in managed profile: "
+                + inManagedProfile);
         Intent result = new Intent();
         result.putExtra("extra_receiver_class", className);
         result.putExtra("extra_in_managed_profile", inManagedProfile);
