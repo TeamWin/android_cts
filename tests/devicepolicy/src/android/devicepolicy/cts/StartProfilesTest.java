@@ -19,19 +19,14 @@ package android.devicepolicy.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
 import android.app.UiAutomation;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.ArraySet;
@@ -43,8 +38,11 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.nene.TestApis;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.After;
 import org.junit.ClassRule;
@@ -52,213 +50,201 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
+import java.util.function.Function;
 
 @RunWith(AndroidJUnit4.class)
 public final class StartProfilesTest {
 
-    private static final int USER_START_TIMEOUT_MILLIS = 30 * 1000; // 30 seconds
+    // We set this to 30 seconds because if the total test time goes over 66 seconds then it causes
+    // infrastructure problems
+    private static final long PROFILE_ACCESSIBLE_BROADCAST_TIMEOUT = 30 * 1000;
 
-    private static final Context CONTEXT = ApplicationProvider.getApplicationContext();
-    private static final UserManager USER_MANAGER = CONTEXT.getSystemService(UserManager.class);
+    private static final Context sContext = ApplicationProvider.getApplicationContext();
+    private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
+    private static final ActivityManager sActivityManager =
+            sContext.getSystemService(ActivityManager.class);
 
-    private BroadcastReceiver mBroadcastReceiver;
     private UiAutomation mUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
-    private final Object mUserStartStopLock = new Object();
-    private boolean mBroadcastReceived = false;
+    private final TestApis mTestApis = new TestApis();
 
     @ClassRule @Rule
-    public static final DeviceState DEVICE_STATE = new DeviceState();
+    public static final DeviceState sDeviceState = new DeviceState();
 
     @After
     public void tearDown() {
         mUiAutomation.dropShellPermissionIdentity();
     }
 
-    //TODO: b/171565394 - use DEVICE_STATE.registerBroadcastReceiver when it supports extra
-    // filters (EXTRA_USER)
-    private void registerBroadcastReceiver(final UserHandle userHandle) {
-        mBroadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                switch (intent.getAction()) {
-                    case Intent.ACTION_PROFILE_ACCESSIBLE:
-                    case Intent.ACTION_PROFILE_INACCESSIBLE:
-                        if (userHandle.equals(intent.getParcelableExtra(Intent.EXTRA_USER))) {
-                            synchronized (mUserStartStopLock) {
-                                mBroadcastReceived = true;
-                                mUserStartStopLock.notifyAll();
-                            }
-                        }
-                        break;
-                }
-            }
-        };
-
-        IntentFilter filter = new IntentFilter(Intent.ACTION_PROFILE_ACCESSIBLE);
-        filter.addAction(Intent.ACTION_PROFILE_INACCESSIBLE);
-        CONTEXT.registerReceiver(mBroadcastReceiver, filter);
-    }
-
-    @Test
-    //TODO: b/171565394 - remove after infra. updates
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
-    @EnsureHasWorkProfile
-    public void testStartProfile() throws InterruptedException {
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
-
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
-        registerBroadcastReceiver(workProfile);
-
-        synchronized (mUserStartStopLock) {
-            mUiAutomation.executeShellCommand("am stop-user -f " + workProfile.getIdentifier());
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isFalse();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.startProfile(workProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
+    private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {
+        return (intent) -> userHandle.equals(intent.getParcelableExtra(Intent.EXTRA_USER));
     }
 
     @Test
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    public void testStopProfile() throws InterruptedException {
-        //TODO: b/171565394 - remove after infra supports shell permissions annotation
+    public void startProfile_returnsTrue() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).stop();
 
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
-        registerBroadcastReceiver(workProfile);
-
-        //TODO: b/171565394 - remove after infra. guarantees users are started
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.stopProfile(workProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isFalse();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
-
-        //TODO: b/171565394 - move/remove this when DeviceState impl. state restore (reusing users)
-        //restore started state
-        runCommandWithOutput("am start-user -w " + workProfile.getIdentifier());
+        assertThat(sActivityManager.startProfile(sDeviceState.getWorkProfile())).isTrue();
     }
 
     @Test
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    public void testStopAndRestartProfile() throws InterruptedException {
-        //TODO: b/171565394 - remove after infra supports shell permissions annotation
+    public void startProfile_broadcastIsReceived_profileIsStarted() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).stop();
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+        sActivityManager.startProfile(sDeviceState.getWorkProfile());
 
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
-        registerBroadcastReceiver(workProfile);
+        broadcastReceiver.awaitForBroadcastOrFail();
 
-        //TODO: b/171565394 - remove after infra. guarantees users are started
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.stopProfile(workProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-        // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
-        // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
-        mBroadcastReceived = false;
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.startProfile(workProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-
-        assertWithMessage("Expected to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
-                mBroadcastReceived).isTrue();
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
-
-        //TODO: b/171565394 - move/remove this when DeviceState impl. state restore (reusing users)
-        //restore started state
-        runCommandWithOutput("am start-user -w " + workProfile.getIdentifier());
+        assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
     }
 
     @Test
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    public void testStopAndRestartProfile_dontWaitForBroadcast() throws InterruptedException {
-        //TODO: b/171565394 - remove after infra supports shell permissions annotation
+    public void stopProfile_returnsTrue() {
+        // TODO(b/171565394): remove after infra supports shell permissions annotation
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
 
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
-        registerBroadcastReceiver(workProfile);
+        try {
+            assertThat(sActivityManager.stopProfile(sDeviceState.getWorkProfile())).isTrue();
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        }
+    }
 
-        //TODO: b/171565394 - remove after infra. guarantees users are started
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
+    @Test
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    public void stopProfile_profileIsStopped() {
+        // TODO(b/171565394): remove after infra supports shell permissions annotation
+        mUiAutomation.adoptShellPermissionIdentity(
+                "android.permission.INTERACT_ACROSS_USERS_FULL",
+                "android.permission.INTERACT_ACROSS_USERS",
+                "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
 
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
+        try {
+            sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+            broadcastReceiver.awaitForBroadcastOrFail();
+
+            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isFalse();
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        }
+    }
+
+    @Test
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    public void startUser_immediatelyAfterStopped_profileIsStarted() {
+        // TODO(b/171565394): remove after infra supports shell permissions annotation
+        mUiAutomation.adoptShellPermissionIdentity(
+                "android.permission.INTERACT_ACROSS_USERS_FULL",
+                "android.permission.INTERACT_ACROSS_USERS",
+                "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+
+        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+        broadcastReceiver.awaitForBroadcast();
+
+        try {
+            // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
+            // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
+            broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+            Intent broadcast = broadcastReceiver.awaitForBroadcast();
+
+            assertWithMessage("Expected to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
+                    broadcast).isNotNull();
+            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        }
+    }
+
+    @Test
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    public void startUser_userIsStopping_profileIsStarted() {
+        // TODO(b/171565394): remove after infra supports shell permissions annotation
+        mUiAutomation.adoptShellPermissionIdentity(
+                "android.permission.INTERACT_ACROSS_USERS_FULL",
+                "android.permission.INTERACT_ACROSS_USERS",
+                "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+
+        // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
+        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+        try {
+            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+
+            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        }
+    }
+
+    @Test
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    @Postsubmit(reason="Slow test due to validating a broadcast isn't received")
+    public void startUser_userIsStopping_noBroadcastIsReceived() {
+        // TODO(b/171565394): remove after infra supports shell permissions annotation
+        mUiAutomation.adoptShellPermissionIdentity(
+                "android.permission.INTERACT_ACROSS_USERS_FULL",
+                "android.permission.INTERACT_ACROSS_USERS",
+                "android.permission.CREATE_USERS");
+        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+
         // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
         // ACTION_PROFILE_ACCESSIBLE should not be received as profile was not fully stopped before
         // restarting
-        assertThat(activityManager.stopProfile(workProfile)).isTrue();
-        mBroadcastReceived = false;
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.startProfile(workProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
-        }
-
-        assertWithMessage("Should have not received ACTION_PROFILE_ACCESSIBLE broadcast").that(
-                mBroadcastReceived).isFalse();
-        assertThat(USER_MANAGER.isUserRunning(workProfile)).isTrue();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
-
-        //TODO: b/171565394 - move/remove this when DeviceState impl. state restore (reusing users)
-        //restore started state
-        runCommandWithOutput("am start-user -w " + workProfile.getIdentifier());
-    }
-
-    @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
-    @EnsureHasWorkProfile
-    public void testStartProfileWithoutPermission_throwsException() {
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
+        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
         try {
-            activityManager.startProfile(workProfile);
-            fail("Should have received an exception");
-        } catch (SecurityException expected) {
+            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+
+            Intent broadcast =
+                    broadcastReceiver.awaitForBroadcast(PROFILE_ACCESSIBLE_BROADCAST_TIMEOUT);
+            assertWithMessage("Expected not to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
+                    broadcast).isNull();
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
         }
     }
 
@@ -266,140 +252,112 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    public void testStopProfileWithoutPermission_throwsException() {
-        UserHandle workProfile = DEVICE_STATE.getWorkProfile();
+    public void startProfile_withoutPermission_throwsException() {
+        assertThrows(SecurityException.class,
+                () -> sActivityManager.startProfile(sDeviceState.getWorkProfile()));
+    }
 
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
+    @Test
+    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
+    @RequireRunOnPrimaryUser
+    @EnsureHasWorkProfile
+    public void stopProfile_withoutPermission_throwsException() {
         try {
-            activityManager.stopProfile(workProfile);
-            fail("Should have received an exception");
-        } catch (SecurityException expected) {
+            assertThrows(SecurityException.class,
+                    () -> sActivityManager.stopProfile(sDeviceState.getWorkProfile()));
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
         }
     }
 
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
-    public void testStartFullUserAsProfile_throwsException() {
+    public void startProfile_startingFullUser_throwsException() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
 
-        UserHandle secondaryUser = DEVICE_STATE.getSecondaryUser();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        try {
-            activityManager.startProfile(secondaryUser);
-            fail("Should have received an exception");
-        } catch (IllegalArgumentException expected) {
-        }
+        assertThrows(IllegalArgumentException.class,
+                () -> sActivityManager.startProfile(sDeviceState.getSecondaryUser()));
     }
 
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
-    public void testStopFullUserAsProfile_throwsException() {
+    public void stopProfile_stoppingFullUser_throwsException() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
 
-        UserHandle secondaryUser = DEVICE_STATE.getSecondaryUser();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
         try {
-            activityManager.stopProfile(secondaryUser);
-            fail("Should have received an exception");
-        } catch (IllegalArgumentException expected) {
+            assertThrows(IllegalArgumentException.class,
+                    () -> sActivityManager.stopProfile(sDeviceState.getSecondaryUser()));
+        } finally {
+            // TODO(b/171565394): Remove once teardown is done for us
+            mTestApis.users().find(sDeviceState.getSecondaryUser()).start();
         }
     }
 
     @Test
     @RequireRunOnPrimaryUser
-    public void testStartTvProfile() throws InterruptedException {
+    public void startProfile_tvProfile_profileIsStarted() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-
-        //TODO: b/171565394 - migrate to new test annotation for tv profile tests
-        UserHandle tvProfile = createCustomProfile("com.android.tv.profile", false);
+        // TODO(b/171565394): migrate to new test annotation for tv profile tests
+        UserHandle tvProfile = createCustomProfile("com.android.tv.profile");
         assumeTrue(tvProfile != null);
+        try {
+            assertThat(sUserManager.isUserRunning(tvProfile)).isFalse();
+            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(tvProfile));
 
-        registerBroadcastReceiver(tvProfile);
+            assertThat(sActivityManager.startProfile(tvProfile)).isTrue();
+            broadcastReceiver.awaitForBroadcast();
 
-        assertThat(USER_MANAGER.isUserRunning(tvProfile)).isFalse();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.startProfile(tvProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
+            assertThat(sUserManager.isUserRunning(tvProfile)).isTrue();
+        } finally {
+            mTestApis.users().find(tvProfile).remove();
         }
-
-        assertThat(USER_MANAGER.isUserRunning(tvProfile)).isTrue();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
-
-        cleanupCustomProfile(tvProfile);
     }
 
     @Test
     @RequireRunOnPrimaryUser
-    public void testStopTvProfile() throws InterruptedException {
+    public void stopProfile_tvProfile_profileIsStopped() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-
-        //TODO: b/171565394 - migrate to new test annotation for tv profile tests
-        UserHandle tvProfile = createCustomProfile("com.android.tv.profile", true);
+        // TODO(b/171565394): migrate to new test annotation for tv profile tests
+        UserHandle tvProfile = createCustomProfile("com.android.tv.profile");
         assumeTrue(tvProfile != null);
+        mTestApis.users().find(tvProfile).start();
+        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(tvProfile));
 
-        registerBroadcastReceiver(tvProfile);
+        try {
+            assertThat(sActivityManager.stopProfile(tvProfile)).isTrue();
+            broadcastReceiver.awaitForBroadcast();
 
-        assertThat(USER_MANAGER.isUserRunning(tvProfile)).isTrue();
-
-        final ActivityManager activityManager = CONTEXT.getSystemService(ActivityManager.class);
-        synchronized (mUserStartStopLock) {
-            assertThat(activityManager.stopProfile(tvProfile)).isTrue();
-            mUserStartStopLock.wait(USER_START_TIMEOUT_MILLIS);
+            assertThat(sUserManager.isUserRunning(tvProfile)).isFalse();
+        } finally {
+            mTestApis.users().find(tvProfile).remove();
         }
-
-        assertThat(USER_MANAGER.isUserRunning(tvProfile)).isFalse();
-
-        CONTEXT.unregisterReceiver(mBroadcastReceiver);
-
-        cleanupCustomProfile(tvProfile);
     }
 
-    private UserHandle createCustomProfile(String profileType, boolean startAfterCreation) {
+    private UserHandle createCustomProfile(String profileType) {
         UserHandle userHandle;
         try {
-            userHandle = CONTEXT.getSystemService(UserManager.class).createProfile(
+            userHandle = sContext.getSystemService(UserManager.class).createProfile(
                     "testProfile", profileType, new ArraySet<>());
-            if (startAfterCreation && userHandle != null) {
-                runCommandWithOutput("am start-user -w " + userHandle.getIdentifier());
-            }
         } catch (NullPointerException e) {
             userHandle = null;
         }
         return userHandle;
-    }
-
-    private void cleanupCustomProfile(UserHandle userHandle) {
-        runCommandWithOutput("pm remove-user " + userHandle.getIdentifier());
-    }
-
-    private String runCommandWithOutput(String command) {
-        ParcelFileDescriptor p =  mUiAutomation.executeShellCommand(command);
-
-        InputStream inputStream = new FileInputStream(p.getFileDescriptor());
-
-        try (Scanner scanner = new Scanner(inputStream, UTF_8.name())) {
-            return scanner.useDelimiter("\\A").next();
-        } catch (NoSuchElementException e) {
-            return "";
-        }
     }
 }
