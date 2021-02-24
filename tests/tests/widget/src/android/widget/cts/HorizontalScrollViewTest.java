@@ -819,6 +819,20 @@ public class HorizontalScrollViewTest {
     }
 
     @Test
+    public void testEdgeEffectType() {
+        // Should default to "glow"
+        assertEquals(EdgeEffect.TYPE_GLOW, mScrollViewRegular.getEdgeEffectType());
+
+        // This one has "stretch" attribute
+        assertEquals(EdgeEffect.TYPE_STRETCH, mScrollViewStretch.getEdgeEffectType());
+
+        mScrollViewStretch.setEdgeEffectType(EdgeEffect.TYPE_GLOW);
+        assertEquals(EdgeEffect.TYPE_GLOW, mScrollViewStretch.getEdgeEffectType());
+        mScrollViewStretch.setEdgeEffectType(EdgeEffect.TYPE_STRETCH);
+        assertEquals(EdgeEffect.TYPE_STRETCH, mScrollViewStretch.getEdgeEffectType());
+    }
+
+    @Test
     public void testStretchAtRight() throws Throwable {
         // Make sure that the scroll view we care about is on screen and at the left:
         showOnlyStretch();
