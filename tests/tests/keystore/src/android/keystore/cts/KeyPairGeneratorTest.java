@@ -22,6 +22,9 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
+import android.util.Log;
+
+import com.android.internal.util.HexDump;
 
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -1647,6 +1650,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
 
     private static void assertSelfSignedCertificateSignatureVerifies(Certificate certificate) {
         try {
+            Log.i("KeyPairGeneratorTest", HexDump.dumpHexString(certificate.getEncoded()));
             certificate.verify(certificate.getPublicKey());
         } catch (Exception e) {
             throw new RuntimeException("Failed to verify self-signed certificate signature", e);
@@ -1669,7 +1673,8 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         TestUtils.assertKeyStoreKeyPair(mKeyStore, alias, keyPair);
 
         X509Certificate cert = (X509Certificate) mKeyStore.getCertificate(alias);
-        assertEquals(keyPair.getPublic(), cert.getPublicKey());
+        assertTrue(Arrays.equals(keyPair.getPublic().getEncoded(),
+                cert.getPublicKey().getEncoded()));
         assertX509CertificateParameters(cert,
                 expectedCertSubject,
                 expectedCertSerialNumber,
