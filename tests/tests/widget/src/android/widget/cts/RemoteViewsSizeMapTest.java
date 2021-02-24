@@ -180,7 +180,7 @@ public class RemoteViewsSizeMapTest {
         applyRemoteView(new PointF(50, 50));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(50, 50)));
+                        new PointF(50, 50), null /* colorResources */));
 
         assertEquals("1", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
@@ -190,7 +190,7 @@ public class RemoteViewsSizeMapTest {
         applyRemoteView(new PointF(500, 500));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(500, 500)));
+                        new PointF(500, 500), null /* colorResources */));
 
         assertEquals(mResult.<TextView>findViewById(R.id.remoteView_text).getText(), "4");
     }
@@ -200,7 +200,7 @@ public class RemoteViewsSizeMapTest {
         applyRemoteView(new PointF(99.7f, 150));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(99.7f, 150)));
+                        new PointF(99.7f, 150), null /* colorResources */));
 
         assertEquals("2", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
@@ -210,7 +210,7 @@ public class RemoteViewsSizeMapTest {
         applyRemoteView(new PointF(160, 150));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(160, 150)));
+                        new PointF(160, 150), null /* colorResources */));
 
         assertEquals("3", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
