@@ -21,7 +21,6 @@ import static com.android.bedstead.dpmwrapper.TestAppHelper.unregisterTestCaseRe
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.annotation.Nullable;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -29,10 +28,8 @@ import android.content.IntentFilter;
 import android.os.UserHandle;
 import android.util.Log;
 
-import com.android.internal.util.Preconditions;
-
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -51,6 +48,7 @@ final class UserActionCallback {
     private final int mExpectedSize;
     private final List<String> mExpectedActions;
     private final List<String> mPendingActions;
+
     private final List<UserHandle> mReceivedUsers = new ArrayList<>();
     private final CountDownLatch mLatch;
     private final Context mContext;
@@ -95,11 +93,12 @@ final class UserActionCallback {
      * given context.
      *
      * @param context context to register for.
-     * @param actions expected actions (used on {@link #waitForBroadcasts(UserHandle...)}.
+     * @param actions expected actions.
      *
      * @return a new {@link UserActionCallback}.
      */
-    public static UserActionCallback register(Context context, String...actions) {
+    public static UserActionCallback getCallbackForBroadcastActions(Context context,
+            String... actions) {
         UserActionCallback callback = new UserActionCallback(context, actions);
 
         IntentFilter filter = new IntentFilter();
@@ -117,21 +116,23 @@ final class UserActionCallback {
      * unregistering itself at the end.
      *
      * @param runnable operation to run.
-     * @param expectedUsers users that are expected in the broadcasts resulting from the operation.
      *
      * @return operation result.
      */
-    public <V> V callAndUnregisterSelf(Callable<V> callable, @Nullable UserHandle... expectedUsers)
+    public <V> V callAndUnregisterSelf(Callable<V> callable)
             throws Exception {
         try {
-            V result = callable.call();
-            if (expectedUsers != null && expectedUsers.length > 0) {
-                waitForBroadcasts(expectedUsers);
-            }
-            return result;
+            return callable.call();
         } finally {
             unregisterSelf();
         }
+    }
+
+    /**
+     * Gets the list of {@link UserHandle} associated with the broadcasts received so far.
+     */
+    public List<UserHandle> getUsersOnReceivedBroadcasts() {
+        return Collections.unmodifiableList(new ArrayList<>(mReceivedUsers));
     }
 
     /**
@@ -139,20 +140,22 @@ final class UserActionCallback {
      * unregistering itself at the end.
      *
      * @param runnable operation to run.
-     * @param expectedUsers users that are expected in the broadcasts resulting from the operation.
+     *
+     * @return operation result.
      */
-    public void runAndUnregisterSelf(ThrowingRunnable runnable,
-            @Nullable UserHandle... expectedUsers) throws Exception {
-        callAndUnregisterSelf(() -> {
+    public void runAndUnregisterSelf(ThrowingRunnable runnable) throws Exception {
+        try {
             runnable.run();
-            return null;
-        }, expectedUsers);
+            waitForBroadcasts();
+        } finally {
+            unregisterSelf();
+        }
     }
 
     /**
      * Unregister itself as a {@link BroadcastReceiver} for user events.
      */
-    public void unregisterSelf() {
+    private void unregisterSelf() {
         unregisterTestCaseReceiver(mContext, mReceiver);
     }
 
@@ -163,23 +166,15 @@ final class UserActionCallback {
         void run() throws Exception;
     }
 
-    /**
-     * Waits until broadcasts for the given users are received, or fails if it timeouts.
-     */
-    public void waitForBroadcasts(UserHandle... expectedUsers) throws Exception {
+    private void waitForBroadcasts() throws Exception {
         Log.d(TAG, "Waiting up to " + BROADCAST_TIMEOUT + " to receive " + mExpectedSize
                 + " broadcasts");
-        Preconditions.checkArgument(expectedUsers.length == mExpectedSize,
-                "Should pass exactly %d users, but passed %s", mExpectedSize,
-                Arrays.toString(expectedUsers));
         boolean received = mLatch.await(BROADCAST_TIMEOUT, TimeUnit.MILLISECONDS);
 
         try {
             assertWithMessage("%s messages received in %s ms. Expected actions=%s, "
                 + "pending=%s", mExpectedSize, BROADCAST_TIMEOUT, mExpectedActions,
                 mPendingActions).that(received).isTrue();
-            assertWithMessage("wrong user handles received").that(mReceivedUsers)
-                    .containsExactlyElementsIn(expectedUsers);
         } catch (Exception | Error e) {
             Log.e(TAG, "waitForBroadcasts() failed: " + e);
             throw e;
