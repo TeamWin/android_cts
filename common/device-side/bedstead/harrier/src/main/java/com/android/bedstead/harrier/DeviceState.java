@@ -16,17 +16,18 @@
 
 package com.android.bedstead.harrier;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
+import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.UserHandle;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -44,6 +45,8 @@ import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
+import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -53,12 +56,8 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 /**
@@ -82,10 +81,7 @@ public final class DeviceState implements TestRule {
     private boolean mSkipTests;
     private String mSkipTestsReason;
 
-    private static final String MANAGED_PROFILE_TYPE = "android.os.usertype.profile.MANAGED";
-    private static final String TV_PROFILE_TYPE = "com.android.tv.profile";
-    private static final String SECONDARY_USER_TYPE = "android.os.usertype.full.SECONDARY";
-    private static final String MANAGED_PROFILE_FLAG = "MANAGED_PROFILE";
+    private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
     public DeviceState() {
         Bundle arguments = InstrumentationRegistry.getArguments();
@@ -109,7 +105,7 @@ public final class DeviceState implements TestRule {
     private Statement applyTest(final Statement base, final Description description) {
         return new Statement() {
             @Override public void evaluate() throws Throwable {
-                Log.d("DeviceState", "Preparing state for test " + description.getMethodName());
+                Log.d(LOG_TAG, "Preparing state for test " + description.getMethodName());
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
@@ -160,19 +156,19 @@ public final class DeviceState implements TestRule {
                     }
                 }
 
-                Log.d("DeviceState",
+                Log.d(LOG_TAG,
                         "Finished preparing state for test " + description.getMethodName());
 
                 try {
                     base.evaluate();
                 } finally {
-                    Log.d("DeviceState",
+                    Log.d(LOG_TAG,
                             "Tearing down state for test " + description.getMethodName());
                     teardownNonShareableState();
                     if (!mSkipTestTeardown) {
                         teardownShareableState();
                     }
-                    Log.d("DeviceState",
+                    Log.d(LOG_TAG,
                             "Finished tearing down state for test " + description.getMethodName());
                 }
             }};
@@ -212,146 +208,61 @@ public final class DeviceState implements TestRule {
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
 
-    /**
-     * Copied from {@link android.content.pm.UserInfo}.
-     */
-    private static final int FLAG_PRIMARY = 0x00000001;
-
-    /**
-     * Copied from {@link android.content.pm.UserInfo}.
-     */
-    private static final int FLAG_MANAGED_PROFILE = 0x00000020;
-
-    /**
-     * Copied from {@link android.content.pm.UserInfo}.
-     */
-    private static final int FLAG_FULL = 0x00000400;
-
-    private List<Integer> createdUserIds = new ArrayList<>();
-    private List<BlockingBroadcastReceiver> registeredBroadcastReceivers = new ArrayList<>();
-
-    private UiAutomation mUiAutomation;
-    private final int MAX_UI_AUTOMATION_RETRIES = 5;
+    private List<UserReference> mCreatedUsers = new ArrayList<>();
+    private List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
 
     @Nullable
-    public UserHandle getWorkProfile() {
-        return getWorkProfile(/* forUser= */ UserType.CURRENT_USER);
+    public UserReference workProfile() {
+        return workProfile(/* forUser= */ UserType.CURRENT_USER);
     }
 
     @Nullable
-    public UserHandle getWorkProfile(UserType forUser) {
-        Integer workProfileId = getWorkProfileId(forUser);
-        if (workProfileId == null) {
-            return null;
-        }
-        return UserHandle.of(workProfileId);
+    public UserReference workProfile(UserType forUser) {
+        return workProfile(resolveUserTypeToUser(forUser));
     }
 
     @Nullable
-    private Integer getWorkProfileId() {
-        return getWorkProfileId(/* forUser= */ UserType.CURRENT_USER);
-    }
-
-    @Nullable
-    private Integer getWorkProfileId(UserType forUser) {
-        int forUserId = resolveUserTypeToUserId(forUser);
-
-        for (UserInfo userInfo : listUsers()) {
-            if (userInfo.flags.contains(MANAGED_PROFILE_FLAG) && userInfo.parent == forUserId) {
-                return userInfo.id;
-            }
-        }
-
-        return null;
+    public UserReference workProfile(UserReference forUser) {
+        return mTestApis.users().all().stream()
+                .filter(u -> forUser.equals(u.parent())
+                        && u.type().name().equals(MANAGED_PROFILE_TYPE_NAME))
+                .findFirst().orElse(null);
     }
 
     public boolean isRunningOnWorkProfile() {
-        UserInfo currentUser = getUserInfoForId(UserHandle.myUserId());
-        return currentUser.flags.contains(MANAGED_PROFILE_FLAG);
+        return mTestApis.users().instrumented()
+                .resolve().type().name().equals(MANAGED_PROFILE_TYPE_NAME);
     }
 
     @Nullable
-    public UserHandle getTvProfile() {
-        return getTvProfile(/* forUser= */ UserType.CURRENT_USER);
+    public UserReference tvProfile() {
+        return tvProfile(/* forUser= */ UserType.CURRENT_USER);
     }
 
     @Nullable
-    public UserHandle getTvProfile(UserType forUser) {
-        Integer tvProfileId = getTvProfileId(forUser);
-        if (tvProfileId == null) {
-            return null;
-        }
-        return UserHandle.of(tvProfileId);
+    public UserReference tvProfile(UserType forUser) {
+        return tvProfile(resolveUserTypeToUser(forUser));
     }
 
     @Nullable
-    private Integer getTvProfileId() {
-        return getTvProfileId(/* forUser= */ UserType.CURRENT_USER);
-    }
-
-    @Nullable
-    private Integer getTvProfileId(UserType forUser) {
-        int forUserId = resolveUserTypeToUserId(forUser);
-
-        for (UserInfo userInfo : listUsers()) {
-            if (userInfo.type.equals(TV_PROFILE_TYPE) && userInfo.parent == forUserId) {
-                return userInfo.id;
-            }
-        }
-
-        return null;
+    public UserReference tvProfile(UserReference forUser) {
+        return mTestApis.users().all().stream()
+                .filter(u -> forUser.equals(u.parent()) && u.type().equals(TV_PROFILE_TYPE_NAME))
+                .findFirst().orElse(null);
     }
 
     public boolean isRunningOnTvProfile() {
-        UserInfo currentUser = getUserInfoForId(UserHandle.myUserId());
-        return currentUser.type.equals(TV_PROFILE_TYPE);
-    }
-
-    @Nullable
-    private UserInfo getUserInfoForId(int userId) {
-        for (UserInfo userInfo : listUsers()) {
-            if (userInfo.id == userId) {
-                return userInfo;
-            }
-        }
-
-        return null;
+        return mTestApis.users().instrumented().resolve()
+                .type().name().equals(TV_PROFILE_TYPE_NAME);
     }
 
     public boolean isRunningOnPrimaryUser() {
-        return android.os.UserHandle.myUserId() == getPrimaryUserId();
+        return mTestApis.users().instrumented().resolve().isPrimary();
     }
 
     public boolean isRunningOnSecondaryUser() {
-        return getUserInfoForId(UserHandle.myUserId()).type.equals(SECONDARY_USER_TYPE);
-    }
-
-    /**
-     * Get the first human user on the device.
-     *
-     * <p>Returns {@code null} if there is none present.
-     */
-    @Nullable
-    public UserHandle getPrimaryUser() {
-        Integer primaryUserId = getPrimaryUserId();
-        if (primaryUserId == null) {
-            return null;
-        }
-        return UserHandle.of(primaryUserId);
-    }
-
-    /**
-     * Get the first human user on the device other than the primary user.
-     *
-     * <p>Returns {@code null} if there is none present.
-     */
-    @Nullable
-    public UserHandle getSecondaryUser() {
-        Integer secondaryUserId = getSecondaryUserId();
-        if (secondaryUserId == null) {
-            return null;
-        }
-        return UserHandle.of(secondaryUserId);
+        return mTestApis.users().instrumented().resolve()
+                .type().name().equals(SECONDARY_USER_TYPE_NAME);
     }
 
     /**
@@ -360,13 +271,9 @@ public final class DeviceState implements TestRule {
      * <p>Returns {@code null} if there is none present.
      */
     @Nullable
-    private Integer getPrimaryUserId() {
-        for (UserInfo user : listUsers()) {
-            if (user.isPrimary) {
-                return user.id;
-            }
-        }
-        return null;
+    public UserReference primaryUser() {
+        return mTestApis.users().all()
+                .stream().filter(User::isPrimary).findFirst().orElse(null);
     }
 
     /**
@@ -375,177 +282,77 @@ public final class DeviceState implements TestRule {
      * <p>Returns {@code null} if there is none present.
      */
     @Nullable
-    private Integer getSecondaryUserId() {
-        for (UserInfo user : listUsers()) {
-            if (user.type.equals(SECONDARY_USER_TYPE)) {
-                return user.id;
-            }
-        }
-        return null;
-    }
-
-    private static class UserInfo {
-        final int id;
-        final String type;
-        final int parent;
-        final boolean isPrimary;
-        final boolean removing;
-        final Set<String> flags;
-
-        UserInfo(
-                int id, String type,
-                int parent,
-                boolean isPrimary, boolean removing, Set<String> flags) {
-            this.id = id;
-            this.type = type;
-            this.parent = parent;
-            this.isPrimary = isPrimary;
-            this.removing = removing;
-            this.flags = flags;
-        }
-
-        @Override
-        public String toString() {
-            return "UserInfo{id=" + id
-                    + ", type="
-                    + type
-                    + ", parent="
-                    + parent
-                    + ", isPrimary="
-                    + isPrimary
-                    + ", flags="
-                    + flags.toString();
-        }
-    }
-
-    private static final Pattern USERS_ID_PATTERN = Pattern.compile("UserInfo\\{(\\d+):");
-    private static final Pattern USERS_TYPE_PATTERN = Pattern.compile("Type: (.+)");
-    private static final Pattern USERS_PARENT_PATTERN = Pattern.compile("parentId=(\\d+)");
-    private static final Pattern USERS_FLAGS_PATTERN = Pattern.compile("Flags: \\d+ \\((.*)\\)");
-
-
-    private Set<UserInfo> listUsers() {
-        return listUsers(/* includeRemoving= */ false);
-    }
-
-
-    private Set<UserInfo> listUsers(boolean includeRemoving) {
-        String commandOutput = "";
-        try {
-            commandOutput = ShellCommand.builder("dumpsys user").execute();
-        } catch (AdbException e) {
-            throw new IllegalStateException("Error getting user list", e);
-        }
-
-        String userArea = commandOutput.split("Users:.*\n")[1].split("\n\n")[0];
-        Set<String> userStrings = new HashSet<>();
-        Set<UserInfo> listUsers = new HashSet<>();
-
-        StringBuilder builder = null;
-        for (String line : userArea.split("\n")) {
-            if (line.contains("UserInfo{")) {
-                // Starting a new line
-                if (builder != null ){
-                    userStrings.add(builder.toString());
-                }
-                builder = new StringBuilder(line).append("\n");
-            } else {
-                builder.append(line).append("\n");
-            }
-        }
-        if (builder != null) {
-            userStrings.add(builder.toString());
-        }
-
-        for (String userString : userStrings) {
-            Matcher userIdMatcher = USERS_ID_PATTERN.matcher(userString);
-            if (!userIdMatcher.find()) {
-                throw new IllegalStateException("Bad dumpsys user output: " + commandOutput);
-            }
-            int userId = Integer.parseInt(userIdMatcher.group(1));
-            Matcher userTypeMatcher = USERS_TYPE_PATTERN.matcher(userString);
-            if (!userTypeMatcher.find()) {
-                throw new IllegalStateException("Bad dumpsys user output: " + commandOutput);
-            }
-            String userType = userTypeMatcher.group(1);
-            Matcher userParentMatcher = USERS_PARENT_PATTERN.matcher(userString);
-            int userParent = -1;
-            if (userParentMatcher.find()) {
-                userParent = Integer.parseInt(userParentMatcher.group(1));
-            }
-            boolean isPrimary = userString.contains("isPrimary=true");
-            Matcher userFlagsMatcher = USERS_FLAGS_PATTERN.matcher(userString);
-            if (!userFlagsMatcher.find()) {
-                throw new IllegalStateException("Bad dumpsys user output: " + commandOutput);
-            }
-            boolean removing = userString.contains("<removing>");
-
-            Set<String> flagNames = new HashSet<>();
-            for (String flag : userFlagsMatcher.group(1).split("\\|")) {
-                flagNames.add(flag);
-            }
-
-            if (!removing || includeRemoving) {
-                listUsers.add(
-                        new UserInfo(userId, userType, userParent, isPrimary, removing, flagNames));
-            }
-        }
-
-        return listUsers;
+    public UserReference secondaryUser() {
+        return mTestApis.users().all()
+                .stream().filter(u -> u.type().name().equals(SECONDARY_USER_TYPE_NAME))
+                .findFirst().orElse(null);
     }
 
     public void ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
-        requireUserSupported(MANAGED_PROFILE_TYPE);
+        requireUserSupported(MANAGED_PROFILE_TYPE_NAME);
 
-        if (getWorkProfileId(forUser) == null) {
-            createWorkProfile(resolveUserTypeToUserId(forUser));
+        UserReference forUserReference = resolveUserTypeToUser(forUser);
+
+        UserReference workProfile = workProfile(forUserReference);
+        if (workProfile == null) {
+            workProfile = createWorkProfile(forUserReference);
         }
-        int workProfileId = getWorkProfileId(forUser);
 
-        // TODO(scottjonathan): Can make this quicker by checking if we're already running
-        mTestApis.users().find(workProfileId).start();
+        workProfile.start();
+
         if (installTestApp) {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .install(mTestApis.users().find(workProfileId));
+                    .install(workProfile);
         } else {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .uninstall(mTestApis.users().find(workProfileId));
+                    .uninstall(workProfile);
         }
     }
 
     public void ensureHasTvProfile(boolean installTestApp, UserType forUser) {
-        requireUserSupported(TV_PROFILE_TYPE);
+        requireUserSupported(TV_PROFILE_TYPE_NAME);
 
-        if (getTvProfileId(forUser) == null) {
-            createTvProfile(resolveUserTypeToUserId(forUser));
+        UserReference forUserReference = resolveUserTypeToUser(forUser);
+
+        UserReference tvProfile = tvProfile(forUserReference);
+        if (tvProfile == null) {
+            tvProfile = createTvProfile(forUserReference);
         }
+
+        tvProfile.start();
+
         if (installTestApp) {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .install(mTestApis.users().find(getTvProfileId(forUser)));
+                    .install(tvProfile);
         } else {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .uninstall(mTestApis.users().find(getTvProfileId(forUser)));
+                    .uninstall(tvProfile);
         }
     }
 
     public void ensureHasSecondaryUser(boolean installTestApp) {
-        requireUserSupported("android.os.usertype.full.SECONDARY");
-        if (getSecondaryUserId() == null) {
-            createSecondaryUser();
+        requireUserSupported(SECONDARY_USER_TYPE_NAME);
+
+        UserReference secondaryUser = secondaryUser();
+        if (secondaryUser == null) {
+            secondaryUser = createSecondaryUser();
         }
+
+        secondaryUser.start();
+
         if (installTestApp) {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .install(mTestApis.users().find(getSecondaryUserId()));
+                    .install(secondaryUser);
         } else {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
-                    .uninstall(mTestApis.users().find(getSecondaryUserId()));
+                    .uninstall(secondaryUser);
         }
     }
 
     public void requireCanSupportAdditionalUser() {
         int maxUsers = getMaxNumberOfUsersSupported();
-        int currentUsers = listUsers().size();
+        int currentUsers = mTestApis.users().all().size();
 
         assumeTrue("The device does not have space for an additional user (" + currentUsers +
                 " current users, " + maxUsers + " max users)", currentUsers + 1 <= maxUsers);
@@ -568,80 +375,81 @@ public final class DeviceState implements TestRule {
         BlockingBroadcastReceiver broadcastReceiver =
                 new BlockingBroadcastReceiver(mContext, action, checker);
         broadcastReceiver.register();
-        registeredBroadcastReceivers.add(broadcastReceiver);
+        mRegisteredBroadcastReceivers.add(broadcastReceiver);
 
         return broadcastReceiver;
     }
 
-    private int resolveUserTypeToUserId(UserType userType) {
+    private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
             case CURRENT_USER:
-                return android.os.UserHandle.myUserId();
+                return mTestApis.users().instrumented();
             case PRIMARY_USER:
-                return getPrimaryUserId();
+                return primaryUser();
             case SECONDARY_USER:
-                return getSecondaryUserId();
+                return secondaryUser();
             case WORK_PROFILE:
-                return getWorkProfileId();
+                return workProfile();
             case TV_PROFILE:
-                return getTvProfileId();
+                return tvProfile();
             default:
                 throw new IllegalArgumentException("Unknown user type " + userType);
         }
     }
 
     private void teardownNonShareableState() {
-        for (BlockingBroadcastReceiver broadcastReceiver : registeredBroadcastReceivers) {
+        for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
             broadcastReceiver.unregisterQuietly();
         }
-        registeredBroadcastReceivers.clear();
+        mRegisteredBroadcastReceivers.clear();
     }
 
     private void teardownShareableState() {
-        for (Integer userId : createdUserIds) {
-            mTestApis.users().find(userId).remove();
+        for (UserReference user : mCreatedUsers) {
+            user.remove();
         }
 
-        createdUserIds.clear();
+        mCreatedUsers.clear();
     }
 
-    private void createWorkProfile(int parentUserId) {
+    private UserReference createWorkProfile(UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
-            int profileId = ShellCommand.builder("pm create-user")
-                    .addOption("--profileOf", parentUserId)
-                    .addOperand("--managed")
-                    .addOperand("work")
-                    .executeAndParseOutput(
-                            output -> Integer.parseInt(output.split(" id ")[1].trim()));
-            mTestApis.users().find(profileId).start();
-            createdUserIds.add(profileId);
-        } catch (AdbException e) {
+            UserReference user = mTestApis.users().createUser()
+                    .parent(parent)
+                    .type(mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
+                    .createAndStart();
+            mCreatedUsers.add(user);
+            return user;
+        } catch (NeneException e) {
             throw new IllegalStateException("Error creating work profile", e);
         }
     }
 
-    private void createTvProfile(int parentUserId) {
+    private UserReference createTvProfile(UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
-            int profileId = ShellCommand.builder("pm create-user")
-                    .addOption("--profileOf", parentUserId)
-                    .addOption("--user-type", TV_PROFILE_TYPE)
-                    .addOperand("--managed")
-                    .addOperand("tv")
-                    .executeAndParseOutput(
-                            output -> Integer.parseInt(output.split(" id ")[1].trim()));
-            mTestApis.users().find(profileId).start();
-            createdUserIds.add(profileId);
-        } catch (AdbException e) {
-            throw new IllegalStateException("Error creating work profile", e);
+            UserReference user = mTestApis.users().createUser()
+                    .parent(parent)
+                    .type(mTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
+                    .createAndStart();
+            mCreatedUsers.add(user);
+            return user;
+        } catch (NeneException e) {
+            throw new IllegalStateException("Error creating tv profile", e);
         }
     }
 
-    private void createSecondaryUser() {
+    private UserReference createSecondaryUser() {
         requireCanSupportAdditionalUser();
-        UserReference user = mTestApis.users().createUser().createAndStart();
-        createdUserIds.add(user.id());
+        try {
+            UserReference user = mTestApis.users().createUser()
+                    .createAndStart();
+            mCreatedUsers.add(user);
+            return user;
+        } catch (NeneException e) {
+            throw new IllegalStateException("Error creating secondary user", e);
+        }
     }
 
     private int getMaxNumberOfUsersSupported() {
