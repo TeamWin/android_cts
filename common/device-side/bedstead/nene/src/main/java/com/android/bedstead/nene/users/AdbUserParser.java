@@ -32,6 +32,9 @@ import java.util.Map;
 interface AdbUserParser {
 
     static AdbUserParser get(Users users, int sdkVersion) {
+        if (sdkVersion >= 31) {
+            return new AdbUserParser31(users);
+        }
         if (sdkVersion >= 30) {
             return new AdbUserParser30(users);
         }

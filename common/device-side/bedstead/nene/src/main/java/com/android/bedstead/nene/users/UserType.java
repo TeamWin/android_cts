@@ -23,9 +23,9 @@ import java.util.Set;
  */
 public final class UserType {
 
-    static final String SECONDARY_USER_TYPE_NAME = "android.os.usertype.full.SECONDARY";
-    static final String SYSTEM_USER_TYPE_NAME = "android.os.usertype.full.SYSTEM";
-    static final String MANAGED_PROFILE_TYPE_NAME = "android.os.usertype.profile.MANAGED";
+    public static final String SECONDARY_USER_TYPE_NAME = "android.os.usertype.full.SECONDARY";
+    public static final String SYSTEM_USER_TYPE_NAME = "android.os.usertype.full.SYSTEM";
+    public static final String MANAGED_PROFILE_TYPE_NAME = "android.os.usertype.profile.MANAGED";
 
     public static final int UNLIMITED = -1;
 

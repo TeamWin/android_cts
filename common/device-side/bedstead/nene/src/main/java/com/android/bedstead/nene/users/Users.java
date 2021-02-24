@@ -45,6 +45,7 @@ import java.util.function.Function;
 
 public final class Users {
 
+    static final int SYSTEM_USER_ID = 0;
     private static final long WAIT_FOR_USER_TIMEOUT_MS = 1000 * 60;
 
     private Map<Integer, User> mCachedUsers = null;
@@ -177,15 +178,31 @@ public final class Users {
                 if (entry.getValue().isRemoving()) {
                     // We don't expose users who are currently being removed
                     iterator.remove();
-                } else if (SDK_INT < Build.VERSION_CODES.R) {
-                    if (entry.getValue().id() == 0) {
-                        entry.getValue().mMutableUser.mType = supportedType(SYSTEM_USER_TYPE_NAME);
-                        entry.getValue().mMutableUser.mIsPrimary = true;
+                    continue;
+                }
+
+                User.MutableUser mutableUser = entry.getValue().mMutableUser;
+
+                if (SDK_INT < Build.VERSION_CODES.R) {
+                    if (entry.getValue().id() == SYSTEM_USER_ID) {
+                        mutableUser.mType = supportedType(SYSTEM_USER_TYPE_NAME);
+                        mutableUser.mIsPrimary = true;
+                    } else if (entry.getValue().hasFlag(User.FLAG_MANAGED_PROFILE)) {
+                        mutableUser.mType =
+                                supportedType(MANAGED_PROFILE_TYPE_NAME);
+                        mutableUser.mIsPrimary = false;
                     } else {
-                        // TODO: Mark as profile when there is a parent
-                        entry.getValue().mMutableUser.mType =
+                        mutableUser.mType =
                                 supportedType(SECONDARY_USER_TYPE_NAME);
-                        entry.getValue().mMutableUser.mIsPrimary = false;
+                        mutableUser.mIsPrimary = false;
+                    }
+                }
+
+                if (SDK_INT < Build.VERSION_CODES.S) {
+                    if (mutableUser.mType.baseType()
+                            .contains(UserType.BaseType.PROFILE)) {
+                        // We assume that all profiles before S were on the System User
+                        mutableUser.mParent = find(SYSTEM_USER_ID);
                     }
                 }
             }
