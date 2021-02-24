@@ -37,11 +37,13 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.users.UserReference;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import org.junit.After;
@@ -76,8 +78,8 @@ public final class StartProfilesTest {
         mUiAutomation.dropShellPermissionIdentity();
     }
 
-    private Function<Intent, Boolean> userIsEqual(UserHandle userHandle) {
-        return (intent) -> userHandle.equals(intent.getParcelableExtra(Intent.EXTRA_USER));
+    private Function<Intent, Boolean> userIsEqual(UserReference user) {
+        return (intent) -> user.userHandle().equals(intent.getParcelableExtra(Intent.EXTRA_USER));
     }
 
     @Test
@@ -89,9 +91,9 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).stop();
+        sDeviceState.workProfile().stop();
 
-        assertThat(sActivityManager.startProfile(sDeviceState.getWorkProfile())).isTrue();
+        assertThat(sActivityManager.startProfile(sDeviceState.workProfile().userHandle())).isTrue();
     }
 
     @Test
@@ -103,14 +105,15 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).stop();
+        sDeviceState.workProfile().stop();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
-        sActivityManager.startProfile(sDeviceState.getWorkProfile());
+                Intent.ACTION_PROFILE_ACCESSIBLE,
+                userIsEqual(sDeviceState.workProfile()));
+        sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
         broadcastReceiver.awaitForBroadcastOrFail();
 
-        assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
+        assertThat(sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
     }
 
     @Test
@@ -123,13 +126,14 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        sDeviceState.workProfile().start();
 
         try {
-            assertThat(sActivityManager.stopProfile(sDeviceState.getWorkProfile())).isTrue();
+            assertThat(sActivityManager.stopProfile(
+                    sDeviceState.workProfile().userHandle())).isTrue();
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -143,18 +147,19 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        sDeviceState.workProfile().start();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
 
         try {
-            sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+            sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
             broadcastReceiver.awaitForBroadcastOrFail();
 
-            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isFalse();
+            assertThat(
+                    sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isFalse();
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -168,27 +173,28 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        sDeviceState.workProfile().start();
         BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
+                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
 
-        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
         broadcastReceiver.awaitForBroadcast();
 
         try {
             // start profile as soon as ACTION_PROFILE_INACCESSIBLE is received
             // verify that ACTION_PROFILE_ACCESSIBLE is received if profile is re-started
             broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
-            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
+            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
             Intent broadcast = broadcastReceiver.awaitForBroadcast();
 
             assertWithMessage("Expected to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
                     broadcast).isNotNull();
-            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
+            assertThat(
+                    sUserManager.isUserRunning(sDeviceState.workProfile().userHandle())).isTrue();
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -202,17 +208,18 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        sDeviceState.workProfile().start();
 
         // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
-        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
         try {
-            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
-            assertThat(sUserManager.isUserRunning(sDeviceState.getWorkProfile())).isTrue();
+            assertThat(sUserManager.isUserRunning(
+                    sDeviceState.workProfile().userHandle())).isTrue();
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -227,16 +234,16 @@ public final class StartProfilesTest {
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+        sDeviceState.workProfile().start();
 
         // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
         // ACTION_PROFILE_ACCESSIBLE should not be received as profile was not fully stopped before
         // restarting
-        sActivityManager.stopProfile(sDeviceState.getWorkProfile());
+        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
         try {
             BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.getWorkProfile()));
-            sActivityManager.startProfile(sDeviceState.getWorkProfile());
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
+            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
 
             Intent broadcast =
                     broadcastReceiver.awaitForBroadcast(PROFILE_ACCESSIBLE_BROADCAST_TIMEOUT);
@@ -244,7 +251,7 @@ public final class StartProfilesTest {
                     broadcast).isNull();
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -254,7 +261,7 @@ public final class StartProfilesTest {
     @EnsureHasWorkProfile
     public void startProfile_withoutPermission_throwsException() {
         assertThrows(SecurityException.class,
-                () -> sActivityManager.startProfile(sDeviceState.getWorkProfile()));
+                () -> sActivityManager.startProfile(sDeviceState.workProfile().userHandle()));
     }
 
     @Test
@@ -264,10 +271,10 @@ public final class StartProfilesTest {
     public void stopProfile_withoutPermission_throwsException() {
         try {
             assertThrows(SecurityException.class,
-                    () -> sActivityManager.stopProfile(sDeviceState.getWorkProfile()));
+                    () -> sActivityManager.stopProfile(sDeviceState.workProfile().userHandle()));
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getWorkProfile()).start();
+            sDeviceState.workProfile().start();
         }
     }
 
@@ -281,7 +288,7 @@ public final class StartProfilesTest {
                 "android.permission.CREATE_USERS");
 
         assertThrows(IllegalArgumentException.class,
-                () -> sActivityManager.startProfile(sDeviceState.getSecondaryUser()));
+                () -> sActivityManager.startProfile(sDeviceState.secondaryUser().userHandle()));
     }
 
     @Test
@@ -295,69 +302,59 @@ public final class StartProfilesTest {
 
         try {
             assertThrows(IllegalArgumentException.class,
-                    () -> sActivityManager.stopProfile(sDeviceState.getSecondaryUser()));
+                    () -> sActivityManager.stopProfile(sDeviceState.secondaryUser().userHandle()));
         } finally {
             // TODO(b/171565394): Remove once teardown is done for us
-            mTestApis.users().find(sDeviceState.getSecondaryUser()).start();
+            sDeviceState.secondaryUser().start();
         }
     }
 
     @Test
     @RequireRunOnPrimaryUser
+    @EnsureHasTvProfile
     public void startProfile_tvProfile_profileIsStarted() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        // TODO(b/171565394): migrate to new test annotation for tv profile tests
-        UserHandle tvProfile = createCustomProfile("com.android.tv.profile");
-        assumeTrue(tvProfile != null);
-        try {
-            assertThat(sUserManager.isUserRunning(tvProfile)).isFalse();
-            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(tvProfile));
+        sDeviceState.tvProfile().stop();
 
-            assertThat(sActivityManager.startProfile(tvProfile)).isTrue();
+        try {
+            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.tvProfile()));
+
+            assertThat(
+                    sActivityManager.startProfile(sDeviceState.tvProfile().userHandle())).isTrue();
             broadcastReceiver.awaitForBroadcast();
 
-            assertThat(sUserManager.isUserRunning(tvProfile)).isTrue();
+            assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isTrue();
         } finally {
-            mTestApis.users().find(tvProfile).remove();
+            // TODO(b/171565394): Remove once teardown is done for us
+            sDeviceState.tvProfile().start();
         }
     }
 
     @Test
     @RequireRunOnPrimaryUser
+    @EnsureHasTvProfile
     public void stopProfile_tvProfile_profileIsStopped() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
                 "android.permission.INTERACT_ACROSS_USERS",
                 "android.permission.CREATE_USERS");
-        // TODO(b/171565394): migrate to new test annotation for tv profile tests
-        UserHandle tvProfile = createCustomProfile("com.android.tv.profile");
-        assumeTrue(tvProfile != null);
-        mTestApis.users().find(tvProfile).start();
-        BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(tvProfile));
+        sDeviceState.tvProfile().start();
 
         try {
-            assertThat(sActivityManager.stopProfile(tvProfile)).isTrue();
+            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
+                    Intent.ACTION_PROFILE_INACCESSIBLE, userIsEqual(sDeviceState.tvProfile()));
+
+            assertThat(
+                    sActivityManager.stopProfile(sDeviceState.tvProfile().userHandle())).isTrue();
             broadcastReceiver.awaitForBroadcast();
 
-            assertThat(sUserManager.isUserRunning(tvProfile)).isFalse();
+            assertThat(sUserManager.isUserRunning(sDeviceState.tvProfile().userHandle())).isFalse();
         } finally {
-            mTestApis.users().find(tvProfile).remove();
+            sDeviceState.tvProfile().start();
         }
-    }
-
-    private UserHandle createCustomProfile(String profileType) {
-        UserHandle userHandle;
-        try {
-            userHandle = sContext.getSystemService(UserManager.class).createProfile(
-                    "testProfile", profileType, new ArraySet<>());
-        } catch (NullPointerException e) {
-            userHandle = null;
-        }
-        return userHandle;
     }
 }
