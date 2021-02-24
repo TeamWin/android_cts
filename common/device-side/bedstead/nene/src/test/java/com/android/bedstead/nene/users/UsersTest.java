@@ -16,16 +16,14 @@
 
 package com.android.bedstead.nene.users;
 
-import static android.os.Build.VERSION.SDK_INT;
-
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 
-import android.os.Build;
 import android.os.UserHandle;
 
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,7 +36,8 @@ public class UsersTest {
     private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
     private static final int MAX_SYSTEM_USERS_PER_PARENT = UserType.UNLIMITED;
     private static final String MANAGED_PROFILE_TYPE = "android.os.usertype.profile.MANAGED";
-    private static final String RESTRICTED_USER_TYPE = "android.os.usertype.full.RESTRICTED";
+    private static final String SECONDARY_USER_TYPE = "android.os.usertype.full.SECONDARY";
+    private static final String INVALID_TYPE_NAME = "invalidTypeName";
     private static final int MAX_MANAGED_PROFILES = UserType.UNLIMITED;
     private static final int MAX_MANAGED_PROFILES_PER_PARENT = 1;
     private static final int NON_EXISTING_USER_ID = 10000;
@@ -52,10 +51,6 @@ public class UsersTest {
 
     @Test
     public void supportedTypes_containsManagedProfile() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
         UserType managedProfileUserType =
                 mTestApis.users().supportedTypes().stream().filter(
                         (ut) -> ut.name().equals(MANAGED_PROFILE_TYPE)).findFirst().get();
@@ -69,10 +64,6 @@ public class UsersTest {
 
     @Test
     public void supportedTypes_containsSystemUser() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
         UserType systemUserType =
                 mTestApis.users().supportedTypes().stream().filter(
                         (ut) -> ut.name().equals(SYSTEM_USER_TYPE)).findFirst().get();
@@ -85,18 +76,7 @@ public class UsersTest {
     }
 
     @Test
-    public void supportedTypes_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mTestApis.users().supportedTypes()).isNull();
-    }
-
-    @Test
     public void supportedType_validType_returnsType() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
         UserType managedProfileUserType = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE);
 
         assertThat(managedProfileUserType.baseType()).containsExactly(UserType.BaseType.PROFILE);
@@ -107,17 +87,8 @@ public class UsersTest {
     }
 
     @Test
-    public void supportedType_invalidType_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mTestApis.users().supportedType(MANAGED_PROFILE_TYPE)).isNull();
-    }
-
-    @Test
-    public void supportedType_validType_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mTestApis.users().supportedType(MANAGED_PROFILE_TYPE)).isNull();
+    public void supportedType_invalidType_returnsNull() {
+        assertThat(mTestApis.users().supportedType(INVALID_TYPE_NAME)).isNull();
     }
 
     @Test
@@ -180,6 +151,14 @@ public class UsersTest {
     }
 
     @Test
+    public void createUser_additionalSystemUser_throwsException()  {
+        assertThrows(NeneException.class, () ->
+                mTestApis.users().createUser()
+                        .type(mTestApis.users().supportedType(SYSTEM_USER_TYPE))
+                        .create());
+    }
+
+    @Test
     public void createUser_userIsCreated()  {
         UserReference user = mTestApis.users().createUser().create();
 
@@ -205,9 +184,7 @@ public class UsersTest {
 
     @Test
     public void createUser_createdUserHasCorrectTypeName() {
-        assumeTrue("types are supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        UserType type = mTestApis.users().supportedType(RESTRICTED_USER_TYPE);
+        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE);
         UserReference userReference = mTestApis.users().createUser()
                 .type(type)
                 .create();
@@ -236,5 +213,11 @@ public class UsersTest {
     @Test
     public void system_hasId0() {
         assertThat(mTestApis.users().system().id()).isEqualTo(0);
+    }
+
+    @Test
+    public void instrumented_hasCurrentProccessId() {
+        assertThat(mTestApis.users().instrumented().id())
+                .isEqualTo(android.os.Process.myUserHandle().getIdentifier());
     }
 }
