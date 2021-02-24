@@ -24,6 +24,9 @@ import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.test.MoreAsserts;
+
+import com.android.internal.util.HexDump;
+
 import junit.framework.Assert;
 
 import java.io.ByteArrayOutputStream;
@@ -58,6 +61,7 @@ import java.security.spec.EllipticCurve;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -180,7 +184,10 @@ abstract class TestUtils extends Assert {
         PrivateKey keystorePrivateKey = privEntry.getPrivateKey();
         PublicKey keystorePublicKey = cert.getPublicKey();
         assertEquals(keyPair.getPrivate(), keystorePrivateKey);
-        assertEquals(keyPair.getPublic(), keystorePublicKey);
+        assertTrue("Key1:\n" + HexDump.dumpHexString(keyPair.getPublic().getEncoded())
+                + "\nKey2:\n" + HexDump.dumpHexString(keystorePublicKey.getEncoded()) + "\n",
+                Arrays.equals(keyPair.getPublic().getEncoded(), keystorePublicKey.getEncoded()));
+
 
         assertEquals(
                 "Public key used to sign certificate should have the same algorithm as in KeyPair",
