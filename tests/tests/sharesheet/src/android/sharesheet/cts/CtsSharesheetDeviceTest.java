@@ -41,6 +41,7 @@ import android.os.Bundle;
 import android.service.chooser.ChooserTarget;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.StaleObjectException;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
@@ -507,7 +508,13 @@ public class CtsSharesheetDeviceTest {
 
     private boolean isSharesheetVisible() {
         // This method intentionally does not wait, looks to see if visible on method call
-        return mDevice.findObject(By.pkg(mSharesheetPkg).depth(0)) != null;
+        try {
+            return mDevice.findObject(By.pkg(mSharesheetPkg).depth(0)) != null;
+        } catch (StaleObjectException e) {
+            // If we get a StaleObjectException, it means that the underlying View has
+            // already been destroyed, meaning the sharesheet is no longer visible.
+            return false;
+        }
     }
 
     private Intent createMatchingIntent() {
