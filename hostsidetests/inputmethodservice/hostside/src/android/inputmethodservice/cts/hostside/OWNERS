@@ -1,1 +1,1 @@
-per-file *InlineSuggestion* = file:/core/java/android/service/autofill/OWNERS
+per-file *InlineSuggestion* = file:platform/frameworks/base:/core/java/android/service/autofill/OWNERS
