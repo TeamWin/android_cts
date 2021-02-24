@@ -907,6 +907,15 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode
+    @Test
+    public void testWifiNetworkConfigurationWithoutFineLocationPermission() throws Exception {
+        getDevice().executeShellCommand(String.format(
+                "pm revoke %s android.permission.ACCESS_FINE_LOCATION", DEVICE_OWNER_PKG));
+
+        executeDeviceOwnerTest("WifiNetworkConfigurationWithoutFineLocationPermissionTest");
+    }
+
     private int createAffiliatedSecondaryUser() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
