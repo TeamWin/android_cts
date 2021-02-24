@@ -21,6 +21,8 @@ LOCAL_PATH := $(call my-dir)
 define build_xml_api_file
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-$(subst .,-,$(1))
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_STEM := $(1)
 LOCAL_MODULE_CLASS := ETC
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests sts

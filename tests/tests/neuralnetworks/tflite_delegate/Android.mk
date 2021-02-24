@@ -17,6 +17,8 @@ my_dir := $(call my-dir)
 LOCAL_PATH:= external/tensorflow/
 include $(CLEAR_VARS)
 LOCAL_MODULE := CtsTfliteNnapiDelegateTests_static
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SRC_FILES := \
     tensorflow/lite/delegates/nnapi/nnapi_delegate_test.cc \
     tensorflow/lite/kernels/test_util.cc \
@@ -54,6 +56,8 @@ LOCAL_PATH:= $(my_dir)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := CtsTfliteNnapiDelegateTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA)/nativetest
 LOCAL_MULTILIB := both
 LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32

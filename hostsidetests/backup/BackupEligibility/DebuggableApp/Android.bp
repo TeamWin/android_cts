@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // An app used to verify 'adb backup' is enabled for debuggable apps.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test_helper_app {
     name: "DebuggableApp",
     defaults: ["cts_defaults"],
