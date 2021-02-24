@@ -1694,9 +1694,14 @@ public class WindowManagerState {
         private Rect mContainingFrame;
         private Rect mParentFrame;
         private Rect mFrame;
+        private Rect mCompatFrame;
         private Rect mSurfaceInsets = new Rect();
         private Rect mGivenContentInsets = new Rect();
         private Rect mCrop = new Rect();
+        private boolean mInSizeCompatMode;
+        private float mGlobalScale;
+        private int mRequestedWidth;
+        private int mRequestedHeight;
 
         WindowState(WindowStateProto proto) {
             super(proto.windowContainer);
@@ -1720,6 +1725,7 @@ public class WindowManagerState {
                 mFrame = extract(windowFramesProto.frame);
                 mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
+                mCompatFrame = extract(windowFramesProto.compatFrame);
             }
             mSurfaceInsets = extract(proto.surfaceInsets);
             if (mName.startsWith(STARTING_WINDOW_PREFIX)) {
@@ -1735,6 +1741,10 @@ public class WindowManagerState {
                 mWindowType = 0;
             }
             collectDescendantsOfType(WindowState.class, this, mSubWindows);
+            mInSizeCompatMode = proto.inSizeCompatMode;
+            mGlobalScale = proto.globalScale;
+            mRequestedWidth = proto.requestedWidth;
+            mRequestedHeight = proto.requestedHeight;
         }
 
         boolean isStartingWindow() {
@@ -1777,6 +1787,10 @@ public class WindowManagerState {
             return mParentFrame;
         }
 
+        public Rect getCompatFrame() {
+            return mCompatFrame;
+        }
+
         Rect getCrop() {
             return mCrop;
         }
@@ -1787,6 +1801,22 @@ public class WindowManagerState {
 
         public int getType() {
             return mType;
+        }
+
+        public boolean isInSizeCompatMode() {
+            return mInSizeCompatMode;
+        }
+
+        public float getGlobalScale() {
+            return mGlobalScale;
+        }
+
+        public int getRequestedWidth() {
+            return mRequestedWidth;
+        }
+
+        public int getRequestedHeight() {
+            return mRequestedHeight;
         }
 
         private String getWindowTypeSuffix(int windowType) {

@@ -30,6 +30,7 @@ import static junit.framework.Assert.fail;
 import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
 import android.app.BroadcastOptions;
+import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Instrumentation;
 import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
@@ -1002,18 +1003,18 @@ public class ActivityManagerFgsBgStartTest {
 
     // At Context.startForegroundService() or Service.startForeground() calls, if the FGS is
     // restricted by background restriction and the app's targetSdkVersion is at least S, the
-    // framework throws a IllegalStateException with error message.
+    // framework throws a ForegroundServiceStartNotAllowedException with error message.
     @Test
     @Ignore("The instrumentation is allowed to star FGS, it does not throw the exception")
     public void testFgsStartFromBGException() throws Exception {
-        IllegalStateException expectedException = null;
+        ForegroundServiceStartNotAllowedException expectedException = null;
         final Intent intent = new Intent().setClassName(
                 PACKAGE_NAME_APP1, "android.app.stubs.LocalForegroundService");
         try {
             allowBgActivityStart("android.app.stubs", false);
             enableFgsRestriction(true, true, null);
             mContext.startForegroundService(intent);
-        } catch (IllegalStateException e) {
+        } catch (ForegroundServiceStartNotAllowedException e) {
             expectedException = e;
         } finally {
             mContext.stopService(intent);

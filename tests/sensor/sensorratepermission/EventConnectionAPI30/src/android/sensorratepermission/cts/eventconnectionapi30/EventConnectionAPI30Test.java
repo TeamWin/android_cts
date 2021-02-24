@@ -20,7 +20,6 @@ import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
-import android.hardware.cts.helpers.SensorRatePermissionDirectReportTestHelper;
 import android.hardware.cts.helpers.SensorRatePermissionEventConnectionTestHelper;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.TestSensorEvent;
@@ -174,7 +173,7 @@ public class EventConnectionAPI30Test {
                         Long.MIN_VALUE, Long.MAX_VALUE);
         Assert.assertTrue(mEventConnectionTestHelper.errorWhenExceedCappedRate(),
                 rateWhenMicToggleOn
-                        <= SensorRatePermissionDirectReportTestHelper.CAPPED_SAMPLE_RATE_HZ);
+                        <= SensorRatePermissionEventConnectionTestHelper.CAPPED_SAMPLE_RATE_HZ);
 
         // Flip the mic toggle off, clear all the events so far.
         mEventConnectionTestHelper.flipAndAssertMicToggleOff(mUserID, mSensorPrivacyManager);
@@ -188,7 +187,7 @@ public class EventConnectionAPI30Test {
                 events, Long.MIN_VALUE, Long.MAX_VALUE);
         Assert.assertTrue(mEventConnectionTestHelper.errorWhenBelowExpectedRate(),
                 rateWhenMicToggleOff
-                        > SensorRatePermissionDirectReportTestHelper.CAPPED_SAMPLE_RATE_HZ);
+                        > SensorRatePermissionEventConnectionTestHelper.CAPPED_SAMPLE_RATE_HZ);
 
         listener.clearEvents();
         testSensorManager.unregisterListener();

@@ -38,6 +38,8 @@ public class PackageReferenceTest {
     private static final String NON_EXISTING_PACKAGE_NAME = "com.package.does.not.exist";
     private static final String PACKAGE_NAME = NON_EXISTING_PACKAGE_NAME;
     private static final String EXISTING_PACKAGE_NAME = "com.android.providers.telephony";
+    private final PackageReference mTestAppReference =
+            mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
     // Controlled by AndroidTest.xml
     private static final String TEST_APP_PACKAGE_NAME =
@@ -80,25 +82,44 @@ public class PackageReferenceTest {
     }
 
     @Test
+    public void uninstall_packageIsInstalledForDifferentUser_isUninstalledForUser() {
+        UserReference otherUser = mTestApis.users().createUser().createAndStart();
+
+        try {
+            mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+            mTestApis.packages().install(otherUser, TEST_APP_APK_FILE);
+
+            mTestAppReference.uninstall(mUser);
+
+            assertThat(mTestAppReference.resolve().installedOnUsers()).containsExactly(otherUser);
+        } finally {
+            otherUser.remove();
+        }
+    }
+
+    @Test
     public void uninstall_packageIsUninstalled() {
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
-        packageReference.uninstall(mUser);
+        mTestAppReference.uninstall(mUser);
 
-        assertThat(packageReference.resolve()).isNull();
+        // Depending on when Android cleans up the users, this may either no longer resolve or
+        // just have an empty user list
+        Package pkg = mTestAppReference.resolve();
+        if (pkg != null) {
+            assertThat(pkg.installedOnUsers()).isEmpty();
+        }
     }
 
     @Test
     public void uninstall_packageNotInstalledForUser_doesNotThrowException() {
         UserReference otherUser = mTestApis.users().createUser().createAndStart();
         mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
-            packageReference.uninstall(otherUser);
+            mTestAppReference.uninstall(otherUser);
         } finally {
-            packageReference.uninstall(mUser);
+            mTestAppReference.uninstall(mUser);
             otherUser.remove();
         }
     }

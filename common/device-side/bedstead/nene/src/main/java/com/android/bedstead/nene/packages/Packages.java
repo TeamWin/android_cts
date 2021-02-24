@@ -20,7 +20,10 @@ import static android.os.Build.VERSION.SDK_INT;
 
 import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 
+import android.os.Build;
+
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -30,6 +33,7 @@ import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.Versions;
 
 import java.io.File;
 import java.util.Collection;
@@ -156,18 +160,26 @@ public final class Packages {
         }
     }
 
+    /**
+     * Set packages which will not be cleaned up by the system even if they are not installed on
+     * any user.
+     *
+     * <p>This will ensure they can still be resolved and re-installed without needing the APK
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    public KeepUninstalledPackagesBuilder keepUninstalledPackages() {
+        Versions.requireS();
+
+        return new KeepUninstalledPackagesBuilder();
+    }
+
     @Nullable
     Package fetchPackage(String packageName) {
         // TODO(scottjonathan): fillCache probably does more than we need here -
         //  can we make it more efficient?
         fillCache();
 
-        Package pkg = mCachedPackages.get(packageName);
-        if (pkg == null || pkg.installedOnUsers().isEmpty()) {
-            return null; // Treat it as uninstalled once all users are removed/removing
-        }
-
-        return pkg;
+        return mCachedPackages.get(packageName);
     }
 
     /**
