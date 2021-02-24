@@ -231,6 +231,7 @@ public class TestHelper {
         public NetworkCapabilities networkCapabilities;
 
         TestNetworkCallback(CountDownLatch countDownLatch) {
+            super(ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO);
             mCountDownLatch = countDownLatch;
         }
 
