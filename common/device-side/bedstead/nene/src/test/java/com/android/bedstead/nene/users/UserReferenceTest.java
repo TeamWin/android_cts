@@ -198,4 +198,7 @@ public class UserReferenceTest {
             user.remove();
         }
     }
+
+    // TODO(scottjonathan): Add test that stop() will stop a work profile even if the current user
+    //  is its parent
 }

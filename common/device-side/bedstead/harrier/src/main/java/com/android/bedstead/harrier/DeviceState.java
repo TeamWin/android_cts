@@ -24,6 +24,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.UserHandle;
 import android.util.Log;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -554,8 +556,17 @@ public final class DeviceState implements TestRule {
      * test has run.
      */
     public BlockingBroadcastReceiver registerBroadcastReceiver(String action) {
+        return registerBroadcastReceiver(action, /* checker= */ null);
+    }
+
+    /**
+     * Create and register a {@link BlockingBroadcastReceiver} which will be unregistered after the
+     * test has run.
+     */
+    public BlockingBroadcastReceiver registerBroadcastReceiver(
+            String action, Function<Intent, Boolean> checker) {
         BlockingBroadcastReceiver broadcastReceiver =
-                new BlockingBroadcastReceiver(mContext, action);
+                new BlockingBroadcastReceiver(mContext, action, checker);
         broadcastReceiver.register();
         registeredBroadcastReceivers.add(broadcastReceiver);
 
