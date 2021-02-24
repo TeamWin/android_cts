@@ -141,6 +141,7 @@ public final class User extends UserReference {
         stringBuilder.append(", hasProfileOwner" + mMutableUser.mHasProfileOwner);
         stringBuilder.append(", isPrimary=" + mMutableUser.mIsPrimary);
         stringBuilder.append(", state=" + mMutableUser.mState);
+        stringBuilder.append(", parent=" + mMutableUser.mParent);
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
