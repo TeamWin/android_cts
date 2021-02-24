@@ -31,7 +31,6 @@ public class NonUiInCallServiceTest extends BaseTelecomTestWithMockServices {
     protected void tearDown() throws Exception {
         if (mShouldTestTelecom) {
             mTelecomManager.unregisterPhoneAccount(TEST_PHONE_ACCOUNT_HANDLE);
-            CtsConnectionService.tearDown();
         }
         super.tearDown();
         waitOnAllHandlers(getInstrumentation());
