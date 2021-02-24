@@ -22,16 +22,11 @@ import android.app.Person
 import android.app.cts.CtsAppTestUtils.platformNull
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.drawable.Icon
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.ColorInt
 import androidx.test.filters.SmallTest
 import com.google.common.truth.Truth.assertThat
-import org.junit.Assume
 import kotlin.test.assertFailsWith
 
 class NotificationTemplateTest : NotificationTemplateTestBase() {
@@ -434,24 +429,6 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .build()
     }
 
-    fun testCallStyle_forIncomingCall_hasCorrectActions() {
-        val namedPerson = Person.Builder().setName("Named Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setStyle(Notification.CallStyle
-                        .forIncomingCall(namedPerson, pendingIntent, pendingIntent))
-        assertThat(builder.build()).isNotNull()
-        val answerText = mContext.getString(getAndroidRString("call_notification_answer_action"))
-        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
-        val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
-        val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.requireViewWithText(declineText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.findViewWithText(hangUpText)).isNull()
-        }
-    }
-
     @SmallTest
     fun testCallStyle_forOngoingCall_validatesArguments() {
         val namedPerson = Person.Builder().setName("Named Person").build()
@@ -468,23 +445,6 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setStyle(Notification.CallStyle.forOngoingCall(namedPerson, pendingIntent))
                 .build()
-    }
-
-    fun testCallStyle_forOngoingCall_hasCorrectActions() {
-        val namedPerson = Person.Builder().setName("Named Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setStyle(Notification.CallStyle.forOngoingCall(namedPerson, pendingIntent))
-        assertThat(builder.build()).isNotNull()
-        val answerText = mContext.getString(getAndroidRString("call_notification_answer_action"))
-        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
-        val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
-        val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.findViewWithText(answerText)).isNull()
-            assertThat(activity.findViewWithText(declineText)).isNull()
-            assertThat(activity.requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
-        }
     }
 
     @SmallTest
@@ -507,145 +467,6 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                 .setStyle(Notification.CallStyle
                         .forScreeningCall(namedPerson, pendingIntent, pendingIntent))
                 .build()
-    }
-
-    fun testCallStyle_forScreeningCall_hasCorrectActions() {
-        val namedPerson = Person.Builder().setName("Named Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setStyle(Notification.CallStyle
-                        .forScreeningCall(namedPerson, pendingIntent, pendingIntent))
-        assertThat(builder.build()).isNotNull()
-        val answerText = mContext.getString(getAndroidRString("call_notification_answer_action"))
-        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
-        val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
-        val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            assertThat(activity.requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
-            assertThat(activity.findViewWithText(declineText)).isNull()
-            assertThat(activity.requireViewWithText(hangUpText).visibility).isEqualTo(View.VISIBLE)
-        }
-    }
-
-    fun testCallStyle_hidesVerification_whenNotProvided() {
-        val person = Person.Builder().setName("Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setStyle(Notification.CallStyle
-                        .forIncomingCall(person, pendingIntent, pendingIntent))
-
-        val notification = builder.build()
-        val extras = notification.extras
-        assertThat(extras.containsKey(Notification.EXTRA_VERIFICATION_TEXT)).isFalse()
-        assertThat(extras.containsKey(Notification.EXTRA_VERIFICATION_ICON)).isFalse()
-
-        val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            val textView = requireViewByIdName<TextView>(activity, "verification_text")
-            assertThat(textView.visibility).isEqualTo(View.GONE)
-
-            val iconView = requireViewByIdName<ImageView>(activity, "verification_icon")
-            assertThat(iconView.visibility).isEqualTo(View.GONE)
-        }
-    }
-
-    fun testCallStyle_showsVerification_whenProvided() {
-        val person = Person.Builder().setName("Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setStyle(Notification.CallStyle
-                        .forIncomingCall(person, pendingIntent, pendingIntent)
-                        .setVerificationIcon(Icon.createWithResource(mContext, R.drawable.ic_info))
-                        .setVerificationText("Verified!"))
-
-        val notification = builder.build()
-        val extras = notification.extras
-        assertThat(extras.getCharSequence(Notification.EXTRA_VERIFICATION_TEXT))
-                .isEqualTo("Verified!")
-        assertThat(extras.getParcelable<Icon>(Notification.EXTRA_VERIFICATION_ICON)?.resId)
-                .isEqualTo(R.drawable.ic_info)
-
-        val views = builder.createBigContentView()
-        checkViews(views) { activity ->
-            val textView = requireViewByIdName<TextView>(activity, "verification_text")
-            assertThat(textView.visibility).isEqualTo(View.VISIBLE)
-            assertThat(textView.text).isEqualTo("Verified!")
-
-            val iconView = requireViewByIdName<ImageView>(activity, "verification_icon")
-            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
-        }
-    }
-
-    fun testCallStyle_ignoresCustomColors_whenNotColorized() {
-        Assume.assumeTrue("Test will not run when config disabled",
-                mContext.resources.getBoolean(getAndroidRBool(
-                        "config_callNotificationActionColorsRequireColorized")))
-        val person = Person.Builder().setName("Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setColor(Color.WHITE)
-                .setStyle(Notification.CallStyle
-                        .forIncomingCall(person, pendingIntent, pendingIntent)
-                        .setAnswerButtonColorHint(Color.BLUE)
-                        .setDeclineButtonColorHint(Color.MAGENTA))
-
-        val notification = builder.build()
-        assertThat(notification.extras.getInt(Notification.EXTRA_ANSWER_COLOR, -1))
-                .isEqualTo(Color.BLUE)
-        assertThat(notification.extras.getInt(Notification.EXTRA_DECLINE_COLOR, -1))
-                .isEqualTo(Color.MAGENTA)
-
-        val answerText = mContext.getString(getAndroidRString("call_notification_answer_action"))
-        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
-        val views = builder.createBigContentView()
-        checkViews(views) {
-            assertThat(requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isFalse()
-            assertThat(requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isFalse()
-        }
-    }
-
-    fun testCallStyle_usesCustomColors_whenColorized() {
-        val person = Person.Builder().setName("Person").build()
-        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_media_play)
-                .setColorized(true)
-                .setColor(Color.WHITE)
-                .setStyle(Notification.CallStyle
-                        .forIncomingCall(person, pendingIntent, pendingIntent)
-                        .setAnswerButtonColorHint(Color.BLUE)
-                        .setDeclineButtonColorHint(Color.MAGENTA))
-
-        val notification = builder.build()
-        assertThat(notification.extras.getInt(Notification.EXTRA_ANSWER_COLOR, -1))
-                .isEqualTo(Color.BLUE)
-        assertThat(notification.extras.getInt(Notification.EXTRA_DECLINE_COLOR, -1))
-                .isEqualTo(Color.MAGENTA)
-
-        // Setting this flag ensures that createBigContentView allows colorization.
-        notification.flags = notification.flags or Notification.FLAG_FOREGROUND_SERVICE
-        val answerText = mContext.getString(getAndroidRString("call_notification_answer_action"))
-        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
-        val views = builder.createBigContentView()
-        checkViews(views) {
-            assertThat(requireViewWithText(answerText).bgContainsColor(Color.BLUE)).isTrue()
-            assertThat(requireViewWithText(declineText).bgContainsColor(Color.MAGENTA)).isTrue()
-        }
-    }
-
-    private fun View.bgContainsColor(@ColorInt color: Int): Boolean {
-        val background = background ?: return false
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        background.draw(canvas)
-        val maskedColor = color and 0x00ffffff
-        for (x in 0 until bitmap.width) {
-            for (y in 0 until bitmap.height) {
-                if (bitmap.getPixel(x, y) and 0x00ffffff == maskedColor) {
-                    return true
-                }
-            }
-        }
-        return false
     }
 
     private val pendingIntent by lazy {
