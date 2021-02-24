@@ -22,7 +22,6 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.ACTIVITY_RECOGNITION
 import android.Manifest.permission.ADD_VOICEMAIL
 import android.Manifest.permission.ANSWER_PHONE_CALLS
-import android.Manifest.permission.BACKGROUND_CAMERA
 import android.Manifest.permission.BODY_SENSORS
 import android.Manifest.permission.CALL_PHONE
 import android.Manifest.permission.CAMERA
@@ -41,7 +40,6 @@ import android.Manifest.permission.RECEIVE_MMS
 import android.Manifest.permission.RECEIVE_SMS
 import android.Manifest.permission.RECEIVE_WAP_PUSH
 import android.Manifest.permission.RECORD_AUDIO
-import android.Manifest.permission.RECORD_BACKGROUND_AUDIO
 import android.Manifest.permission.SEND_SMS
 import android.Manifest.permission.USE_SIP
 import android.Manifest.permission.WRITE_CALENDAR
@@ -144,9 +142,6 @@ class RuntimePermissionProperties {
         // Add runtime permission added in Q which were _not_ split from a previously existing
         // runtime permission
         expectedPerms.add(ACTIVITY_RECOGNITION)
-        // Added in S
-        expectedPerms.add(RECORD_BACKGROUND_AUDIO)
-        expectedPerms.add(BACKGROUND_CAMERA)
 
         assertThat(expectedPerms).containsExactlyElementsIn(platformRuntimePerms.map { it.name })
     }
