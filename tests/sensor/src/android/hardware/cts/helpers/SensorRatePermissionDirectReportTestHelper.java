@@ -133,8 +133,8 @@ public class SensorRatePermissionDirectReportTestHelper {
     public void flipAndAssertMicToggleOff(int userID, SensorPrivacyManager spm) {
         ShellUtils.runShellCommand("cmd sensor_privacy disable " + userID + " microphone");
         Assert.assertTrue("Failed to switch the mic toggle off!",
-                !spm.isIndividualSensorPrivacyEnabled(
-                        SensorPrivacyManager.INDIVIDUAL_SENSOR_MICROPHONE));
+                !spm.isSensorPrivacyEnabled(
+                        SensorPrivacyManager.Sensors.MICROPHONE));
     }
 
     /**
@@ -143,8 +143,8 @@ public class SensorRatePermissionDirectReportTestHelper {
     public void flipAndAssertMicToggleOn(int userID, SensorPrivacyManager spm) {
         ShellUtils.runShellCommand("cmd sensor_privacy enable " + userID + " microphone");
         Assert.assertTrue("Failed to switch the mic toggle on!",
-                spm.isIndividualSensorPrivacyEnabled(
-                        SensorPrivacyManager.INDIVIDUAL_SENSOR_MICROPHONE));
+                spm.isSensorPrivacyEnabled(
+                        SensorPrivacyManager.Sensors.MICROPHONE));
     }
 
     /**
