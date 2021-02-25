@@ -20,6 +20,7 @@ import static android.app.admin.DevicePolicyManager.INSTALLKEY_SET_USER_SELECTAB
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import static org.testng.Assert.assertThrows;
@@ -63,7 +64,9 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -246,6 +249,47 @@ public class CredentialManagementAppTest {
         }
     }
 
+    @Postsubmit
+    @Test
+    public void isCredentialManagementApp_isNotCredentialManagementApp_returnFalse()
+            throws Exception {
+        removeCredentialManagementApp();
+        assertFalse(KeyChain.isCredentialManagementApp(CONTEXT));
+    }
+
+    @Postsubmit
+    @Test
+    public void isCredentialManagementApp_isCredentialManagementApp_returnTrue() throws Exception {
+        setCredentialManagementApp();
+        try {
+            assertTrue(KeyChain.isCredentialManagementApp(CONTEXT));
+        } finally {
+            removeCredentialManagementApp();
+        }
+    }
+
+    @Postsubmit
+    @Test
+    public void getCredentialManagementAppPolicy_isNotCredentialManagementApp_throwException()
+            throws Exception {
+        removeCredentialManagementApp();
+        assertThrows(SecurityException.class,
+                () -> KeyChain.getCredentialManagementAppPolicy(CONTEXT));
+    }
+
+    @Postsubmit
+    @Test
+    public void getCredentialManagementAppPolicy_isCredentialManagementApp_returnPolicy()
+            throws Exception {
+        setCredentialManagementApp();
+        try {
+            assertAuthenticationPoliciesEqual(
+                    KeyChain.getCredentialManagementAppPolicy(CONTEXT), AUTHENTICATION_POLICY);
+        } finally {
+            removeCredentialManagementApp();
+        }
+    }
+
     // TODO(scottjonathan): Using either code generation or reflection we could remove the need for
     //  these boilerplate classes
     private static class KeyChainAliasCallback extends BlockingCallback<String> implements
@@ -349,5 +393,37 @@ public class CredentialManagementAppTest {
                         KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
                 .setIsStrongBoxBacked(useStrongBox)
                 .build();
+    }
+
+    private void assertAuthenticationPoliciesEqual(AppUriAuthenticationPolicy actual,
+            AppUriAuthenticationPolicy expected) {
+        assertThat(actual).isNotNull();;
+
+        Iterator<Map.Entry<String, Map<Uri, String>>> actualIter =
+                actual.getAppAndUriMappings().entrySet().iterator();
+        Iterator<Map.Entry<String, Map<Uri, String>>> expectedIter =
+                expected.getAppAndUriMappings().entrySet().iterator();
+
+        assertThat(actual.getAppAndUriMappings().size())
+                .isEqualTo(expected.getAppAndUriMappings().size());
+        while (actualIter.hasNext()) {
+            Map.Entry<String, Map<Uri, String>> actualAppToUri = actualIter.next();
+            Map.Entry<String, Map<Uri, String>> expectedAppToUri = expectedIter.next();
+            assertThat(actualAppToUri.getKey()).isEqualTo(expectedAppToUri.getKey());
+            assertUrisToAliasesEqual(actualAppToUri.getValue(), expectedAppToUri.getValue());
+        }
+    }
+
+    private void assertUrisToAliasesEqual(Map<Uri, String> actual, Map<Uri, String> expected) {
+        Iterator<Map.Entry<Uri, String>> actualIter = actual.entrySet().iterator();
+        Iterator<Map.Entry<Uri, String>> expectedIter = expected.entrySet().iterator();
+
+        assertThat(actual.size()).isEqualTo(expected.size());
+        while (actualIter.hasNext()) {
+            Map.Entry<Uri, String> actualUriToAlias = actualIter.next();
+            Map.Entry<Uri, String> expectedUriToAlias = expectedIter.next();
+            assertThat(actualUriToAlias.getKey()).isEqualTo(expectedUriToAlias.getKey());
+            assertThat(actualUriToAlias.getValue()).isEqualTo(expectedUriToAlias.getValue());
+        }
     }
 }
