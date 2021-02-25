@@ -34,9 +34,11 @@ import android.media.tv.tuner.dvr.DvrPlayback;
 import android.media.tv.tuner.dvr.DvrRecorder;
 import android.media.tv.tuner.dvr.OnPlaybackStatusChangedListener;
 import android.media.tv.tuner.dvr.OnRecordStatusChangedListener;
+import android.media.tv.tuner.filter.AlpFilterConfiguration;
 import android.media.tv.tuner.filter.AudioDescriptor;
 import android.media.tv.tuner.filter.AvSettings;
 import android.media.tv.tuner.filter.DownloadEvent;
+import android.media.tv.tuner.filter.DownloadSettings;
 import android.media.tv.tuner.filter.Filter;
 import android.media.tv.tuner.filter.FilterCallback;
 import android.media.tv.tuner.filter.FilterConfiguration;
@@ -45,15 +47,20 @@ import android.media.tv.tuner.filter.IpCidChangeEvent;
 import android.media.tv.tuner.filter.IpFilterConfiguration;
 import android.media.tv.tuner.filter.IpPayloadEvent;
 import android.media.tv.tuner.filter.MediaEvent;
+import android.media.tv.tuner.filter.MmtpFilterConfiguration;
 import android.media.tv.tuner.filter.MmtpRecordEvent;
 import android.media.tv.tuner.filter.PesEvent;
+import android.media.tv.tuner.filter.PesSettings;
+import android.media.tv.tuner.filter.RecordSettings;
 import android.media.tv.tuner.filter.RestartEvent;
 import android.media.tv.tuner.filter.ScramblingStatusEvent;
 import android.media.tv.tuner.filter.SectionEvent;
+import android.media.tv.tuner.filter.SectionSettingsWithSectionBits;
 import android.media.tv.tuner.filter.SectionSettingsWithTableInfo;
 import android.media.tv.tuner.filter.Settings;
 import android.media.tv.tuner.filter.TemiEvent;
 import android.media.tv.tuner.filter.TimeFilter;
+import android.media.tv.tuner.filter.TlvFilterConfiguration;
 import android.media.tv.tuner.filter.TsFilterConfiguration;
 import android.media.tv.tuner.filter.TsRecordEvent;
 import android.media.tv.tuner.frontend.AnalogFrontendCapabilities;
@@ -531,6 +538,148 @@ public class TunerTest {
 
         res = mTuner.cancelTuning();
         assertEquals(Tuner.RESULT_SUCCESS, res);
+    }
+
+    @Test
+    public void testAlpSectionFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_ALP, Filter.SUBTYPE_SECTION, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        SectionSettingsWithSectionBits settings =
+                SectionSettingsWithSectionBits
+                        .builder(Filter.TYPE_TS)
+                        .setCrcEnabled(true)
+                        .setRepeat(false)
+                        .setRaw(false)
+                        .setFilter(new byte[]{2, 3, 4})
+                        .setMask(new byte[]{7, 6, 5, 4})
+                        .setMode(new byte[]{22, 55, 33})
+                        .build();
+        AlpFilterConfiguration config =
+                AlpFilterConfiguration
+                        .builder()
+                        .setPacketType(AlpFilterConfiguration.PACKET_TYPE_COMPRESSED)
+                        .setLengthType(AlpFilterConfiguration.LENGTH_TYPE_WITH_ADDITIONAL_HEADER)
+                        .setSettings(settings)
+                        .build();
+        f.configure(config);
+        f.close();
+    }
+
+    @Test
+    public void testMmtpPesFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_MMTP, Filter.SUBTYPE_PES, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        PesSettings settings =
+                PesSettings
+                        .builder(Filter.TYPE_TS)
+                        .setStreamId(3)
+                        .setRaw(false)
+                        .build();
+        MmtpFilterConfiguration config =
+                MmtpFilterConfiguration
+                        .builder()
+                        .setMmtpPacketId(3)
+                        .setSettings(settings)
+                        .build();
+        f.configure(config);
+        f.close();
+    }
+
+    @Test
+    public void testMmtpDownloadFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_MMTP, Filter.SUBTYPE_DOWNLOAD,
+                1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        DownloadSettings settings =
+                DownloadSettings
+                        .builder(Filter.TYPE_MMTP)
+                        .setDownloadId(2)
+                        .build();
+        MmtpFilterConfiguration config =
+                MmtpFilterConfiguration
+                        .builder()
+                        .setMmtpPacketId(3)
+                        .setSettings(settings)
+                        .build();
+        f.configure(config);
+        f.close();
+    }
+
+    @Test
+    public void testTsAvFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_AUDIO, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        AvSettings settings =
+                AvSettings
+                        .builder(Filter.TYPE_TS, true) // is Audio
+                        .setPassthrough(false)
+                        .setAudioStreamType(AvSettings.AUDIO_STREAM_TYPE_MPEG1)
+                        .build();
+        TsFilterConfiguration config =
+                TsFilterConfiguration
+                        .builder()
+                        .setTpid(521)
+                        .setSettings(settings)
+                        .build();
+        f.configure(config);
+        f.close();
+    }
+
+    @Test
+    public void testTsRecordFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TS, Filter.SUBTYPE_RECORD, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        RecordSettings settings =
+                RecordSettings
+                        .builder(Filter.TYPE_TS)
+                        .setTsIndexMask(
+                                RecordSettings.TS_INDEX_FIRST_PACKET
+                                        | RecordSettings.TS_INDEX_PRIVATE_DATA)
+                        .setScIndexType(RecordSettings.INDEX_TYPE_SC)
+                        .setScIndexMask(RecordSettings.SC_INDEX_B_SLICE)
+                        .build();
+        TsFilterConfiguration config =
+                TsFilterConfiguration
+                        .builder()
+                        .setTpid(521)
+                        .setSettings(settings)
+                        .build();
+        f.configure(config);
+        f.close();
+    }
+
+    @Test
+    public void testTlvTlvFilterConfig() throws Exception {
+        Filter f = mTuner.openFilter(
+                Filter.TYPE_TLV, Filter.SUBTYPE_TLV, 1000, getExecutor(), getFilterCallback());
+        assertNotNull(f);
+        assertNotEquals(Tuner.INVALID_FILTER_ID, f.getId());
+
+        TlvFilterConfiguration config =
+                TlvFilterConfiguration
+                        .builder()
+                        .setPacketType(TlvFilterConfiguration.PACKET_TYPE_IPV4)
+                        .setCompressedIpPacket(true)
+                        .setPassthrough(false)
+                        .setSettings(null)
+                        .build();
+        f.configure(config);
+        f.close();
     }
 
     @Test
