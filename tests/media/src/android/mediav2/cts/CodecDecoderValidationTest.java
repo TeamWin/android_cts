@@ -107,6 +107,20 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         ".webm"}, null, -1.0f, 156928091L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{"bbb_1280x720_2000kbps_30fps_vp9" +
                         ".webm"}, null, -1.0f, 3902485256L, CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG2, new String[]{
+                        "bbb_642x642_2mbps_30fps_mpeg2.mp4"}, null, -1.0f, -1L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_AVC, new String[]{
+                        "bbb_642x642_1mbps_30fps_avc.mp4"}, null, -1.0f, 3947092788L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_VP8, new String[]{
+                        "bbb_642x642_1mbps_30fps_vp8.webm"}, null, -1.0f, 516982978L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_HEVC, new String[]{
+                        "bbb_642x642_768kbps_30fps_hevc.mp4"}, null, -1.0f, 3018465268L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{
+                        "bbb_642x642_768kbps_30fps_vp9.webm"}, null, -1.0f, 4032809269L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_AV1, new String[]{
+                        "bbb_642x642_768kbps_30fps_av1.mp4"}, null, -1.0f, 3684481474L, CODEC_ANY},
+                {MediaFormat.MIMETYPE_VIDEO_MPEG4, new String[]{
+                        "bbb_130x130_192kbps_15fps_mpeg4.mp4"}, null, -1.0f, -1L, CODEC_ANY},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
