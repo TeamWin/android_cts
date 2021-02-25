@@ -68,13 +68,13 @@ public class CorrelationVectorTest {
             CorrelationVector correlationVector) {
         assertEquals(30d, correlationVector.getSamplingWidthMeters(), PRECISION);
         assertEquals(10d, correlationVector.getSamplingStartMeters(), PRECISION);
-        assertEquals(10, correlationVector.getFrequencyOffsetMetersPerSecond());
+        assertEquals(10d, correlationVector.getFrequencyOffsetMetersPerSecond(), PRECISION);
         assertArrayEquals(MAGNITUDE_ARRAY, correlationVector.getMagnitude());
     }
 
     private static CorrelationVector createTestCorrelationVector(
             double samplingWidthMeters, double samplingStartMeters,
-                    int frequencyOffsetMetersPerSecond, int[] magnitude) {
+                    double frequencyOffsetMetersPerSecond, int[] magnitude) {
         return new CorrelationVector.Builder()
                 .setSamplingWidthMeters(samplingWidthMeters)
                 .setSamplingStartMeters(samplingStartMeters)
