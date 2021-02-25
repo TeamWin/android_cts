@@ -34,6 +34,7 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.GET_NIGHT_
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_DURATION;
 import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_ANIMATION_START;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_BACKGROUND_COLOR;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REPLACE_ICON_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
@@ -191,6 +192,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
                 () -> expectResult == journal.extras.getBoolean(RECEIVE_SPLASH_SCREEN_EXIT));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_CENTER_VIEW));
         assertEquals(expectResult, journal.extras.getBoolean(CONTAINS_BRANDING_VIEW));
+        assertEquals(expectResult ? Color.BLUE : Color.TRANSPARENT,
+                journal.extras.getInt(ICON_BACKGROUND_COLOR));
     }
 
     @Test
