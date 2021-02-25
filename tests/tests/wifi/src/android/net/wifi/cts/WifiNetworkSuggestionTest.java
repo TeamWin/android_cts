@@ -174,8 +174,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        }
 
         // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
@@ -217,8 +219,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         }
         mExecutorService.shutdownNow();
         // Clear any existing app state after each test.
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        if (BuildCompat.isAtLeastS()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+        }
         mTestHelper.turnScreenOff();
     }
 
@@ -825,7 +829,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithWpa3EnterpriseWithStandardApi() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = createEnterpriseConfig();
@@ -912,7 +919,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithWpa3Enterprise192bitWithSuiteBEccCerts() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
@@ -996,7 +1006,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithCarrierMergedNetwork() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
@@ -1017,7 +1030,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with non enterprise
      * network will fail.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithCarrierMergedNetworkWithNonEnterpriseNetwork() throws Exception {
         try {
@@ -1035,7 +1051,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     /**
      * Tests {@link android.net.wifi.WifiNetworkSuggestion.Builder} class with unmetered network
      * will fail.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testBuilderWithCarrierMergedNetworkWithUnmeteredNetwork() throws Exception {
         WifiEnterpriseConfig enterpriseConfig = new WifiEnterpriseConfig();
@@ -1059,7 +1078,10 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
 
     /**
      * Connect to a network using suggestion API.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToSuggestion() throws Exception {
         WifiNetworkSuggestion suggestion =
