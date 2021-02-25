@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.SensorTestCase;
+import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.SensorRatePermissionEventConnectionTestHelper;
 import android.hardware.cts.helpers.SensorStats;
 import android.hardware.cts.helpers.TestSensorEnvironment;
@@ -53,7 +54,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Test cases: Two apps register sensor listeners at the same time.
  * - An app targets API 31 w/o HIGH_SAMPLING_RATE_SENSORS, hence being capped.
- * - The other app targets API 25, hence not being capped
+ * - The other app targets API 30, hence not being capped
  *
  * Expected behaviors:
  * - The one that should be capped is capped
@@ -90,9 +91,9 @@ public class ResamplingTest extends SensorTestCase {
         // Start an app that registers a listener with high sampling rate
         Intent intent = new Intent();
         intent.setComponent(new ComponentName(
-                "android.sensorratepermission.cts.mictoggleoffapi25",
-                "android.sensorratepermission.cts.mictoggleoffapi25.MainService"));
-        mContext.startService(intent);
+                "android.sensorratepermission.cts.mictoggleoffapi30",
+                "android.sensorratepermission.cts.mictoggleoffapi30.MainService"));
+        mContext.startForegroundService(intent);
 
         // At the same time, register a listener and obtain its sampling rate.
         List<TestSensorEvent> events = mEventConnectionTestHelper.getSensorEvents(
@@ -100,7 +101,6 @@ public class ResamplingTest extends SensorTestCase {
                 NUM_EVENTS_COUNT);
         double obtainedRate = SensorRatePermissionEventConnectionTestHelper.computeAvgRate(events,
                 Long.MIN_VALUE, Long.MAX_VALUE);
-
         Assert.assertTrue(mEventConnectionTestHelper.errorWhenExceedCappedRate(),
                 obtainedRate
                         <= SensorRatePermissionEventConnectionTestHelper.CAPPED_SAMPLE_RATE_HZ);
@@ -110,6 +110,9 @@ public class ResamplingTest extends SensorTestCase {
         if (mTestEnvironment == null) {
             return;
         }
+        // Sleep to avoid pollution of sensor data from other tests causing default
+        // verification failures.
+        SensorCtsHelper.sleep(3, TimeUnit.SECONDS);
         TestSensorOperation op = TestSensorOperation.createOperation(
                 mTestEnvironment,
                 NUM_EVENTS_COUNT);
@@ -125,9 +128,9 @@ public class ResamplingTest extends SensorTestCase {
             // Start an app that registers a listener with high sampling rate
             Intent intent = new Intent();
             intent.setComponent(new ComponentName(
-                    "android.sensorratepermission.cts.mictoggleoffapi25",
-                    "android.sensorratepermission.cts.mictoggleoffapi25.MainService"));
-            mContext.startService(intent);
+                    "android.sensorratepermission.cts.mictoggleoffapi30",
+                    "android.sensorratepermission.cts.mictoggleoffapi30.MainService"));
+            mContext.startForegroundService(intent);
             op.execute(getCurrentTestNode());
         } finally {
             SensorStats stats = op.getStats();
