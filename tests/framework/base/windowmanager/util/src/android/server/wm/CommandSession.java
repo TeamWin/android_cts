@@ -732,6 +732,7 @@ public final class CommandSession {
         private static final StaticHostStorage<ActivityCallback> sCallbackStorage =
                 new StaticHostStorage<>();
 
+        private final String mTag = getClass().getSimpleName();
         protected boolean mPrintCallbackLog;
 
         @Override
@@ -941,7 +942,7 @@ public final class CommandSession {
         }
 
         protected String getTag() {
-            return getClass().getSimpleName();
+            return mTag;
         }
 
         /** Get configuration and display info. It should be called only after resumed. */
