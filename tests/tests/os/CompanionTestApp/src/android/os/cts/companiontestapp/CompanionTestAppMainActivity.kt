@@ -23,6 +23,7 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanResult
 import android.companion.AssociationRequest
+import android.companion.AssociationRequest.DEVICE_PROFILE_WATCH
 import android.companion.BluetoothDeviceFilter
 import android.companion.CompanionDeviceManager
 import android.content.ComponentName
@@ -37,6 +38,8 @@ import android.os.Parcelable
 import android.os.Process
 import android.util.Log
 import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.TextView
@@ -49,6 +52,10 @@ class CompanionTestAppMainActivity : Activity() {
     val permissionStatus by lazy { TextView(this) }
     val notificationsStatus by lazy { TextView(this) }
     val bypassStatus by lazy { TextView(this) }
+
+    val nameFilter by lazy { EditText(this).apply { hint = "Name Filter" } }
+    val singleCheckbox by lazy { CheckBox(this).apply { text = "Single Device" } }
+    val watchCheckbox by lazy { CheckBox(this).apply { text = "Watch" } }
 
     val cdm: CompanionDeviceManager by lazy { val java = CompanionDeviceManager::class.java
         getSystemService(java)!! }
@@ -75,24 +82,24 @@ class CompanionTestAppMainActivity : Activity() {
                 setOnClickListener { refresh() }
             })
 
-            addView(cdmButton("Associate BT") {
-                addDeviceFilter(BluetoothDeviceFilter.Builder().build())
+            addView(nameFilter)
+            addView(singleCheckbox)
+            addView(watchCheckbox)
+
+            addView(cdmButton("Associate") {
+                if (singleCheckbox.isChecked) {
+                    setSingleDevice(true)
+                }
+                if (watchCheckbox.isChecked) {
+                    setDeviceProfile(DEVICE_PROFILE_WATCH)
+                }
+                addDeviceFilter(BluetoothDeviceFilter.Builder().apply {
+                    if (!nameFilter.text.isEmpty()) {
+                        setNamePattern(Pattern.compile(".*${nameFilter.text}.*"))
+                    }
+                }.build())
             })
-            addView(cdmButton("Associate Watch") {
-                addDeviceFilter(BluetoothDeviceFilter.Builder().build())
-                setDeviceProfile("android.app.role.COMPANION_DEVICE_WATCH")
-            })
-            addView(cdmButton("Associate 1 Watch") {
-                addDeviceFilter(BluetoothDeviceFilter.Builder().build())
-                setSingleDevice(true)
-                setDeviceProfile("android.app.role.COMPANION_DEVICE_WATCH")
-            })
-            addView(cdmButton("Associate 1") {
-                addDeviceFilter(BluetoothDeviceFilter.Builder()
-                        .setNamePattern(Pattern.compile(".* WATCH .*"))
-                        .build())
-                setSingleDevice(true)
-            })
+
             addView(Button(ctx).apply {
                 text = "Request notifications"
                 setOnClickListener {
