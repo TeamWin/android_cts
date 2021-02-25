@@ -128,7 +128,7 @@ public abstract class AppWidgetTestCase {
                 assertEquals(android.appwidget.cts.R.id.first_auto_advance_view_id,
                         provider.autoAdvanceViewId);
                 assertEquals(android.appwidget.cts.R.string.widget_description,
-                        provider.descriptionResource);
+                        provider.descriptionRes);
                 assertEquals(android.appwidget.cts.R.layout.preview_layout,
                         provider.previewLayout);
                 firstProviderVerified = true;

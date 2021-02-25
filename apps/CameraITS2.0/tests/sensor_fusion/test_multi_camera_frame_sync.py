@@ -101,7 +101,11 @@ def _mask_angles_near_extremes(frame_pairs_angles):
   masked_pairs_angles = [[i, j] for i, j in frame_pairs_angles
                          if _ANGLE_90_MASK <= abs(i) <= 90-_ANGLE_90_MASK and
                          _ANGLE_90_MASK <= abs(j) <= 90-_ANGLE_90_MASK]
-  return masked_pairs_angles
+  if masked_pairs_angles:
+    return masked_pairs_angles
+  else:
+    raise AssertionError('Not enough phone movement! All angle pairs masked '
+                         'out by 0/90 angle removal.')
 
 
 def _plot_frame_pairs_angles(frame_pairs_angles, ids, log_path):

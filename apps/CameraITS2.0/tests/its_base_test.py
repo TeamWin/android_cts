@@ -24,7 +24,8 @@ from mobly.controllers import android_device
 import its_session_utils
 
 ADAPTIVE_BRIGHTNESS_OFF = '0'
-DISPLAY_TIMEOUT = 1800000  # ms
+TABLET_CMD_DELAY_SEC = 0.5  # found empirically
+TABLET_DIMMER_TIMEOUT_MS = 1800000  # this is max setting possible
 CTS_VERIFIER_PKG = 'com.android.cts.verifier'
 MBS_PKG_TXT = 'mbs'
 MBS_PKG = 'com.google.android.mobly.snippet.bundled'
@@ -136,7 +137,11 @@ class ItsBaseTest(base_test.BaseTestClass):
     time.sleep(WAIT_TIME_SEC)
 
   def setup_tablet(self):
+    # KEYCODE_POWER to reset dimmer timer. KEYCODE_WAKEUP no effect if ON.
+    self.tablet.adb.shell(['input', 'keyevent', 'KEYCODE_POWER'])
+    time.sleep(TABLET_CMD_DELAY_SEC)
     self.tablet.adb.shell(['input', 'keyevent', 'KEYCODE_WAKEUP'])
+    time.sleep(TABLET_CMD_DELAY_SEC)
     # Turn off the adaptive brightness on tablet.
     self.tablet.adb.shell(
         ['settings', 'put', 'system', 'screen_brightness_mode',
@@ -148,7 +153,7 @@ class ItsBaseTest(base_test.BaseTestClass):
     logging.debug('Tablet brightness set to: %s',
                   format(self.tablet_screen_brightness))
     self.tablet.adb.shell('settings put system screen_off_timeout {}'.format(
-        DISPLAY_TIMEOUT))
+        TABLET_DIMMER_TIMEOUT_MS))
     self.tablet.adb.shell('am force-stop com.google.android.apps.docs')
 
   def parse_hidden_camera_id(self):

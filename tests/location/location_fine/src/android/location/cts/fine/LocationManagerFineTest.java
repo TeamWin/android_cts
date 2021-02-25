@@ -62,7 +62,7 @@ import android.location.cts.common.BroadcastCapture;
 import android.location.cts.common.GetCurrentLocationCapture;
 import android.location.cts.common.LocationListenerCapture;
 import android.location.cts.common.LocationPendingIntentCapture;
-import android.location.cts.common.ProviderRequestListenerCapture;
+import android.location.cts.common.ProviderRequestChangedListenerCapture;
 import android.location.cts.common.gnss.GnssAntennaInfoCapture;
 import android.location.cts.common.gnss.GnssMeasurementsCapture;
 import android.location.cts.common.gnss.GnssNavigationMessageCapture;
@@ -809,14 +809,14 @@ public class LocationManagerFineTest {
     }
 
     @Test
-    public void testRegisterProviderRequestListener() throws Exception {
+    public void testAddProviderRequestListener() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity(Manifest.permission.LOCATION_HARDWARE);
 
-        try (ProviderRequestListenerCapture requestlistener = new ProviderRequestListenerCapture(
-                mContext);
+        try (ProviderRequestChangedListenerCapture requestlistener =
+                     new ProviderRequestChangedListenerCapture(mContext);
              LocationListenerCapture locationListener = new LocationListenerCapture(mContext)) {
-            mManager.registerProviderRequestListener(Executors.newSingleThreadExecutor(),
+            mManager.addProviderRequestChangedListener(Executors.newSingleThreadExecutor(),
                     requestlistener);
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
                     Executors.newSingleThreadExecutor(), locationListener);

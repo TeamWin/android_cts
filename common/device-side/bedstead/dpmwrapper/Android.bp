@@ -17,6 +17,10 @@
 // Mockito spy to implement the IPC between users (so tests running on current user can call the
 // device owner running on system user), but before S is shipped it should be replaced by using the
 // connected apps SDK or the new CTS infrastructure.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_library {
     name: "DpmWrapper",
     platform_apis: true,

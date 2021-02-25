@@ -23,6 +23,8 @@ LOCAL_JAVA_LIBRARIES := compatibility-host-util cts-tradefed tradefed
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := compatibility-host-vm-targetprep
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts general-tests

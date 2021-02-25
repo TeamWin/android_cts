@@ -20,6 +20,8 @@ cert_dir := cts/hostsidetests/appsecurity/certs/pkgsigverify
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts_signature_query_service
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SRC_FILES += $(call all-Iaidl-files-under, src)
 LOCAL_SDK_VERSION := current
@@ -66,4 +68,3 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=
 include $(call all-makefiles-under,$(LOCAL_PATH))
-

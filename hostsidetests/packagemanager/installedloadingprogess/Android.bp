@@ -12,10 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_test_host {
     name: "CtsInstalledLoadingProgressHostTests",
     defaults: ["cts_defaults"],
-    srcs:  ["src/**/*.java"],
+    srcs:  ["hostside/src/**/*.java"],
     libs: [
         "cts-tradefed",
         "tradefed",
@@ -28,4 +32,3 @@ java_test_host {
         "general-tests",
     ],
 }
-
