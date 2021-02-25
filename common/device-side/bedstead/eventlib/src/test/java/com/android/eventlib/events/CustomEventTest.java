@@ -35,7 +35,8 @@ public final class CustomEventTest {
     // TODO: We need a standard pattern for testing that events log correctly cross-process
     // (when within the process serialization never happens)
 
-    private static final Context CONTEXT = InstrumentationRegistry.getInstrumentation().getContext();
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TAG_1 = "TAG_1";
     private static final String TAG_2 = "TAG_2";
     private static final String DATA_1 = "DATA_1";
@@ -48,11 +49,11 @@ public final class CustomEventTest {
 
     @Test
     public void whereTag_works() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TAG_1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TAG_1);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TAG_1);
@@ -60,14 +61,14 @@ public final class CustomEventTest {
 
     @Test
     public void whereTag_skipsNonMatching() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TAG_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TAG_2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TAG_2);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TAG_2);
@@ -75,11 +76,11 @@ public final class CustomEventTest {
 
     @Test
     public void whereData_works() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereData().isEqualTo(DATA_1);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_1);
@@ -87,14 +88,14 @@ public final class CustomEventTest {
 
     @Test
     public void whereData_skipsNonMatching() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereData().isEqualTo(DATA_2);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_2);

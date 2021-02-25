@@ -56,8 +56,8 @@ public class ClassInfo implements Serializable {
 
     @Override
     public String toString() {
-        return "Class{" +
-                "className=" + className() +
-                "}";
+        return "Class{"
+                + "className=" + className()
+                + "}";
     }
 }

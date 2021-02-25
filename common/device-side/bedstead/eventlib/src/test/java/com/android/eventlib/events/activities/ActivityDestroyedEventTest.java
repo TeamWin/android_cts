@@ -33,7 +33,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class ActivityDestroyedEventTest {
 
-    private static final Context CONTEXT =
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
     private static final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
@@ -53,7 +53,7 @@ public final class ActivityDestroyedEventTest {
                         .log());
 
         EventLogs<ActivityDestroyedEvent> eventLogs =
-                ActivityDestroyedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityDestroyedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
@@ -71,7 +71,7 @@ public final class ActivityDestroyedEventTest {
         });
 
         EventLogs<ActivityDestroyedEvent> eventLogs =
-                ActivityDestroyedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityDestroyedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
@@ -84,7 +84,7 @@ public final class ActivityDestroyedEventTest {
                         .log());
 
         EventLogs<ActivityDestroyedEvent> eventLogs =
-                ActivityDestroyedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityDestroyedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
@@ -101,7 +101,7 @@ public final class ActivityDestroyedEventTest {
         });
 
         EventLogs<ActivityDestroyedEvent> eventLogs =
-                ActivityDestroyedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityDestroyedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);

@@ -33,6 +33,7 @@ import android.os.RemoteException;
 import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
@@ -48,7 +49,7 @@ public class
 
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String LOG_TAG = "RemoteEventQuerier";
-    private static final Context CONTEXT =
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
     private final String mPackageName;
@@ -164,11 +165,11 @@ public class
 
         boolean didBind;
         if (mEventLogsQuery.getUserHandle() != null) {
-            didBind = CONTEXT.bindServiceAsUser(
+            didBind = sContext.bindServiceAsUser(
                     intent, connection, /* flags= */ BIND_AUTO_CREATE,
                     mEventLogsQuery.getUserHandle());
         } else {
-            didBind = CONTEXT.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE);
+            didBind = sContext.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE);
         }
 
         if (didBind) {
