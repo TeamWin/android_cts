@@ -288,6 +288,10 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityName(activityName) + " -f 0x18000000";
     }
 
+    protected static String getAmStartCmdWithData(final ComponentName activityName, String data) {
+        return "am start -n " + getActivityName(activityName) + " -d " + data;
+    }
+
     protected static String getAmStartCmdOverHome(final ComponentName activityName) {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
@@ -715,6 +719,11 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityInNewTask(final ComponentName activityName) {
         executeShellCommand(getAmStartCmdInNewTask(activityName));
+        mWmState.waitForValidState(activityName);
+    }
+
+    protected void launchActivityWithData(final ComponentName activityName, String data) {
+        executeShellCommand(getAmStartCmdWithData(activityName, data));
         mWmState.waitForValidState(activityName);
     }
 

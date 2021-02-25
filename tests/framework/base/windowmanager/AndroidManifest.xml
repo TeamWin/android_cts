@@ -211,6 +211,15 @@
              android:launchMode="singleTask"
              android:exported="true"/>
 
+        <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$DocumentIntoExistingActivity"
+                  android:documentLaunchMode="intoExisting"
+                  android:exported="true"/>
+        <activity-alias
+            android:name="android.server.wm.lifecycle.ActivityStarterTests$DocumentIntoExistingAliasActivity"
+            android:targetActivity="android.server.wm.lifecycle.ActivityStarterTests$DocumentIntoExistingActivity"
+            android:exported="true">
+        </activity-alias>
+
         <activity android:name="android.server.wm.lifecycle.ActivityStarterTests$TestLaunchingActivity"
              android:taskAffinity="nobody.but.LaunchingActivity"
              android:exported="true"/>
