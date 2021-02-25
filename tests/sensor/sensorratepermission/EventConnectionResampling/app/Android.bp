@@ -15,7 +15,7 @@
 //
 
 android_test_helper_app {
-    name: "CtsSensorRatePermissionMicToggleOffAPI25",
+    name: "CtsSensorRatePermissionMicToggleOffAPI30",
     defaults: ["cts_support_defaults"],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact

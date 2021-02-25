@@ -16,15 +16,15 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.sensorratepermission.cts.mictoggleoffapi25">
+          package="android.sensorratepermission.cts.mictoggleoffapi30">
 
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <!--
         - Targets an SDK < 31 so that it can have high sampling rate.
-        - Targets SDK 25 so that the service can still be run while the app is in background
+        - Targets SDK 30 so that the service can still be run while the app is in background
     -->
-    <uses-sdk android:minSdkVersion="25" android:targetSdkVersion="25"/>
+    <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="30"/>
 
     <application
         android:allowBackup="true"
