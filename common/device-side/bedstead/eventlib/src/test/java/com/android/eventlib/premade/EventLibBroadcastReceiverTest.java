@@ -18,30 +18,28 @@ package com.android.eventlib.premade;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.ComponentName;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.eventlib.EventLogs;
-import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
-/**
- * This test assumes that EventLibAppComponentFactory is in the AndroidManifest.xml of the
- * instrumented test process.
- */
 @RunWith(JUnit4.class)
-public class EventLibAppComponentFactoryTest {
+public class EventLibBroadcastReceiverTest {
 
-    // This must exist as an <activity> in AndroidManifest.xml
-    private static final String DECLARED_ACTIVITY_WITH_NO_CLASS
-            = "com.android.generatedEventLibActivity";
+    // We expect that AndroidManifest.xml contains a <receiver> for
+    // com.android.eventlib.premade.EventLibBroadcastReceiver which receives the
+    // com.android.eventlib.DEFAULT_BROADCAST_RECEIVER action
+    private static final String DEFAULT_BROADCAST_RECEIVER_ACTION =
+            "com.android.eventlib.DEFAULT_BROADCAST_RECEIVER";
 
     // This must exist as an <receiver> in AndroidManifest.xml which receives the
     // com.android.eventlib.GENERATED_BROADCAST_RECEIVER action
@@ -50,24 +48,30 @@ public class EventLibAppComponentFactoryTest {
     private static final String GENERATED_BROADCAST_RECEIVER_ACTION =
             "com.android.eventlib.GENERATED_BROADCAST_RECEIVER";
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final Instrumentation sInstrumentation =
+            InstrumentationRegistry.getInstrumentation();
+    private static final Context sContext = sInstrumentation.getContext();
+
+    @Before
+    public void setUp() {
+        EventLogs.resetLogs();
+    }
 
     @Test
-    public void startActivity_activityDoesNotExist_startsLoggingActivity() {
-        Intent intent = new Intent();
-        intent.setComponent(new ComponentName(sContext.getPackageName(),
-                DECLARED_ACTIVITY_WITH_NO_CLASS));
-        sContext.startActivity(intent);
+    public void receiveBroadcast_logsBroadcastReceivedEvent() {
+        Intent intent = new Intent(DEFAULT_BROADCAST_RECEIVER_ACTION);
+        intent.setPackage(sContext.getPackageName());
 
-        EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                .whereActivity().className().isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
+        sContext.sendBroadcast(intent);
+
+        EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereBroadcastReceiver().isSameClassAs(EventLibBroadcastReceiver.class);
         assertThat(eventLogs.poll()).isNotNull();
     }
 
     @Test
-    public void sendBroadcast_receiverDoesNotExist_launchesBroadcastReceiver() {
+    public void receiveBroadcast_withGeneratedBroadcastReceiverClass_logsBroadcastReceivedEventWithCorrectClassName() {
         Intent intent = new Intent(GENERATED_BROADCAST_RECEIVER_ACTION);
         intent.setPackage(sContext.getPackageName());
 
@@ -79,4 +83,16 @@ public class EventLibAppComponentFactoryTest {
         assertThat(eventLogs.poll()).isNotNull();
     }
 
+    @Test
+    public void receiveBroadcast_logsIntent() {
+        Intent intent = new Intent(GENERATED_BROADCAST_RECEIVER_ACTION);
+        intent.setPackage(sContext.getPackageName());
+
+        sContext.sendBroadcast(intent);
+
+        EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereIntent().action().isEqualTo(GENERATED_BROADCAST_RECEIVER_ACTION);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
 }
