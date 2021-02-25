@@ -565,6 +565,8 @@ public class TunerTest {
                         .setSettings(settings)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -588,6 +590,8 @@ public class TunerTest {
                         .setSettings(settings)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -611,6 +615,8 @@ public class TunerTest {
                         .setSettings(settings)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -634,6 +640,8 @@ public class TunerTest {
                         .setSettings(settings)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -660,6 +668,8 @@ public class TunerTest {
                         .setSettings(settings)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
@@ -679,6 +689,8 @@ public class TunerTest {
                         .setSettings(null)
                         .build();
         f.configure(config);
+        f.start();
+        f.stop();
         f.close();
     }
 
