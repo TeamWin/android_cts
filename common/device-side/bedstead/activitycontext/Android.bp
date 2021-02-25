@@ -32,3 +32,23 @@ android_test {
     ],
     manifest: "src/test/AndroidManifest.xml",
 }
+
+android_test {
+    name: "ActivityContextInstrumentOtherAppTest",
+    srcs: [
+        "src/test/java/**/*.java"
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "ActivityContext",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "truth-prebuilt",
+        "testng", // Used for assertThrows
+    ],
+    manifest: "src/test/AndroidManifestInstrumentEmptyTestApp.xml",
+    data: [":EmptyTestApp"],
+    test_config: "ActivityContextInstrumentOtherAppTest.xml"
+}
