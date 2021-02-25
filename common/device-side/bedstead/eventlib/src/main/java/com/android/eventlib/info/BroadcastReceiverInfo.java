@@ -16,32 +16,31 @@
 
 package com.android.eventlib.info;
 
-import android.app.Activity;
+import android.content.BroadcastReceiver;
 
 /**
- * Wrapper for information about an {@link Activity}.
+ * Wrapper for information about an {@link BroadcastReceiver}.
  *
- * <p>This is used instead of {@link Activity} so that it can be easily serialized.
+ * <p>This is used instead of {@link BroadcastReceiver} so that it can be easily serialized.
  */
-public class ActivityInfo extends ClassInfo {
+public class BroadcastReceiverInfo extends ClassInfo {
 
-    public ActivityInfo(Activity activity) {
-        this(activity.getClass());
+    public BroadcastReceiverInfo(BroadcastReceiver broadcastReceiver) {
+        this(broadcastReceiver.getClass());
     }
 
-    public ActivityInfo(Class<? extends Activity> activityClass) {
-        this(activityClass.getName());
+    public BroadcastReceiverInfo(Class<? extends BroadcastReceiver> broadcastReceiverClass) {
+        this(broadcastReceiverClass.getName());
     }
 
-    public ActivityInfo(String activityClassName) {
-        super(activityClassName);
-        // TODO(scottjonathan): Add more information about the activity (e.g. parse the
-        //  manifest)
+    public BroadcastReceiverInfo(String broadcastReceiverClassName) {
+        super(broadcastReceiverClassName);
+        // TODO(scottjonathan): Add more information about the broadcast receiver
     }
 
     @Override
     public String toString() {
-        return "Activity{"
+        return "BroadcastReceiver{"
                 + "class=" + super.toString()
                 + "}";
     }

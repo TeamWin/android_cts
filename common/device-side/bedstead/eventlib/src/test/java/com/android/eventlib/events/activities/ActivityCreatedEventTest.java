@@ -35,7 +35,7 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class ActivityCreatedEventTest {
 
-    private static final Context CONTEXT =
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
     private static final String STRING_KEY = "Key";
     private static final String STRING_VALUE = "Value";
@@ -61,7 +61,7 @@ public final class ActivityCreatedEventTest {
                         .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereSavedInstanceState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
@@ -82,7 +82,7 @@ public final class ActivityCreatedEventTest {
         });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereSavedInstanceState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
@@ -98,7 +98,7 @@ public final class ActivityCreatedEventTest {
                         .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .wherePersistentState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
@@ -120,7 +120,7 @@ public final class ActivityCreatedEventTest {
         });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .wherePersistentState()
                             .key(STRING_KEY).stringValue().isEqualTo(STRING_VALUE);
 
@@ -135,7 +135,7 @@ public final class ActivityCreatedEventTest {
                         .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                 .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
@@ -153,7 +153,7 @@ public final class ActivityCreatedEventTest {
         });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(CUSTOM_ACTIVITY_CLASS_NAME);
@@ -166,7 +166,7 @@ public final class ActivityCreatedEventTest {
                         .log());
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
@@ -183,7 +183,7 @@ public final class ActivityCreatedEventTest {
         });
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                         .whereActivity().className().isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
 
         assertThat(eventLogs.get().activity().className()).isEqualTo(DEFAULT_ACTIVITY_CLASS_NAME);
