@@ -19,6 +19,7 @@
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="EventLibTest.apk" />
         <option name="test-file-name" value="EventLibTestApp.apk" />
+        <option name="install-arg" value="-t" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.eventlib.test" />
