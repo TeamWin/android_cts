@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
@@ -14,13 +15,14 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-<configuration description="Config for ActivityContext test cases">
-    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="ActivityContextTest.apk" />
-    </target_preparer>
-    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.android.activitycontext.test" />
-        <option name="exclude-annotation" value="com.android.activitycontext.annotations.RunWhenInstrumentingOtherApp" />
-    </test>
-</configuration>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.android.activitycontext.test">
+    <application
+        android:label="ActivityContext Tests">
+        <uses-library android:name="android.test.runner" />
+    </application>
+    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="android.EmptyTestApp"
+                     android:label="Activity Context Tests" />
+</manifest>
