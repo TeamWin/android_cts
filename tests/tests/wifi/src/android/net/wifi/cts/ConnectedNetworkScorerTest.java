@@ -36,6 +36,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -45,6 +46,8 @@ import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+
+import com.google.common.collect.Range;
 
 import org.junit.After;
 import org.junit.Before;
@@ -210,6 +213,10 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 assertThat(statsEntry.getProbeElapsedTimeSinceLastUpdateMillis()).isAtLeast(-1);
                 assertThat(statsEntry.getProbeMcsRateSinceLastUpdate()).isAtLeast(-1);
                 assertThat(statsEntry.getRxLinkSpeedMbps()).isAtLeast(-1);
+                if (BuildCompat.isAtLeastS()) {
+                    assertThat(statsEntry.getTimeSliceDutyCycleInPercent())
+                            .isIn(Range.closed(0, 100));
+                }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())
                         .isAnyOf(TelephonyManager.NETWORK_TYPE_UNKNOWN,
