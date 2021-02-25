@@ -246,6 +246,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
             int flags) throws Exception {
+        Log.i(TAG, "Setting up mock connection service");
         if (connectionService != null) {
             this.connectionService = connectionService;
         } else {
@@ -276,6 +277,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     protected void tearDownConnectionService(PhoneAccountHandle accountHandle) throws Exception {
+        Log.i(TAG, "Tearing down mock connection service");
         if (this.connectionService != null) {
             assertNumConnections(this.connectionService, 0);
         }

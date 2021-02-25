@@ -315,10 +315,13 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             Object[] callFilteringCompleteInvocations =
                     connection.getInvokeCounter(MockConnection.ON_CALL_FILTERING_COMPLETED)
                             .getArgs(0);
-            assertFalse((boolean) callFilteringCompleteInvocations[0]);
-            assertFalse((boolean) callFilteringCompleteInvocations[1]);
-            assertEquals(response, callFilteringCompleteInvocations[2]);
-            assertFalse((boolean) callFilteringCompleteInvocations[3]);
+            Connection.CallFilteringCompletionInfo completionInfo =
+                    (Connection.CallFilteringCompletionInfo) callFilteringCompleteInvocations[0];
+
+            assertFalse(completionInfo.isBlocked());
+            assertFalse(completionInfo.isInContacts());
+            assertEquals(response, completionInfo.getCallResponse());
+            assertEquals(PACKAGE, completionInfo.getCallScreeningComponent().getPackageName());
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
@@ -335,7 +338,6 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         Uri testNumber = createTestNumber();
         Uri contactUri = TestUtils.insertContact(mContext.getContentResolver(),
                 testNumber.getSchemeSpecificPart());
-        TestUtils.setSystemDialerOverride(getInstrumentation());
         MockCallScreeningService.enableService(mContext);
         try {
             CallScreeningService.CallResponse response =
@@ -359,16 +361,18 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
             Object[] callFilteringCompleteInvocations =
                     connection.getInvokeCounter(MockConnection.ON_CALL_FILTERING_COMPLETED)
                             .getArgs(0);
-            assertFalse((boolean) callFilteringCompleteInvocations[0]);
-            assertTrue((boolean) callFilteringCompleteInvocations[1]);
-            assertEquals(response, callFilteringCompleteInvocations[2]);
-            assertTrue((boolean) callFilteringCompleteInvocations[3]);
+            Connection.CallFilteringCompletionInfo completionInfo =
+                    (Connection.CallFilteringCompletionInfo) callFilteringCompleteInvocations[0];
+
+            assertFalse(completionInfo.isBlocked());
+            assertTrue(completionInfo.isInContacts());
+            assertEquals(response, completionInfo.getCallResponse());
+            assertEquals(PACKAGE, completionInfo.getCallScreeningComponent().getPackageName());
         } finally {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
             TestUtils.deleteContact(mContext.getContentResolver(), contactUri);
             MockCallScreeningService.disableService(mContext);
-            TestUtils.clearSystemDialerOverride(getInstrumentation());
         }
     }
 

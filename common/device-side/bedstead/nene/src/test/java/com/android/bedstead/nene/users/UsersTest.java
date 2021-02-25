@@ -18,15 +18,20 @@ package com.android.bedstead.nene.users;
 
 import static android.os.Build.VERSION.SDK_INT;
 
+import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
+import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
+import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
+import static org.testng.Assert.assertThrows;
 
 import android.os.Build;
 import android.os.UserHandle;
 
-import com.android.bedstead.nene.exceptions.AdbException;
-import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.exceptions.NeneException;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,31 +40,25 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class UsersTest {
 
-    private static final String SYSTEM_USER_TYPE = "android.os.usertype.full.SYSTEM";
     private static final int MAX_SYSTEM_USERS = UserType.UNLIMITED;
     private static final int MAX_SYSTEM_USERS_PER_PARENT = UserType.UNLIMITED;
-    private static final String MANAGED_PROFILE_TYPE = "android.os.usertype.profile.MANAGED";
-    private static final String RESTRICTED_USER_TYPE = "android.os.usertype.full.RESTRICTED";
+    private static final String INVALID_TYPE_NAME = "invalidTypeName";
     private static final int MAX_MANAGED_PROFILES = UserType.UNLIMITED;
     private static final int MAX_MANAGED_PROFILES_PER_PARENT = 1;
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
     private static final String USER_NAME = "userName";
 
-    private final Users mUsers = new Users();
+    private final TestApis mTestApis = new TestApis();
 
     // We don't want to test the exact list of any specific device, so we check that it returns
     // some known types which will exist on the emulators (used for presubmit tests).
 
     @Test
     public void supportedTypes_containsManagedProfile() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
         UserType managedProfileUserType =
-                mUsers.supportedTypes().stream().filter(
-                        (ut) -> ut.name().equals(MANAGED_PROFILE_TYPE)).findFirst().get();
+                mTestApis.users().supportedTypes().stream().filter(
+                        (ut) -> ut.name().equals(MANAGED_PROFILE_TYPE_NAME)).findFirst().get();
 
         assertThat(managedProfileUserType.baseType()).containsExactly(UserType.BaseType.PROFILE);
         assertThat(managedProfileUserType.enabled()).isTrue();
@@ -70,13 +69,9 @@ public class UsersTest {
 
     @Test
     public void supportedTypes_containsSystemUser() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
         UserType systemUserType =
-                mUsers.supportedTypes().stream().filter(
-                        (ut) -> ut.name().equals(SYSTEM_USER_TYPE)).findFirst().get();
+                mTestApis.users().supportedTypes().stream().filter(
+                        (ut) -> ut.name().equals(SYSTEM_USER_TYPE_NAME)).findFirst().get();
 
         assertThat(systemUserType.baseType()).containsExactly(
                 UserType.BaseType.SYSTEM, UserType.BaseType.FULL);
@@ -86,19 +81,9 @@ public class UsersTest {
     }
 
     @Test
-    public void supportedTypes_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mUsers.supportedTypes()).isNull();
-    }
-
-    @Test
     public void supportedType_validType_returnsType() {
-        assumeTrue(
-                "supportedTypes is only supported on Android 11+",
-                SDK_INT >= Build.VERSION_CODES.R);
-
-        UserType managedProfileUserType = mUsers.supportedType(MANAGED_PROFILE_TYPE);
+        UserType managedProfileUserType =
+                mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
 
         assertThat(managedProfileUserType.baseType()).containsExactly(UserType.BaseType.PROFILE);
         assertThat(managedProfileUserType.enabled()).isTrue();
@@ -108,101 +93,92 @@ public class UsersTest {
     }
 
     @Test
-    public void supportedType_invalidType_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mUsers.supportedType(MANAGED_PROFILE_TYPE)).isNull();
+    public void supportedType_invalidType_returnsNull() {
+        assertThat(mTestApis.users().supportedType(INVALID_TYPE_NAME)).isNull();
     }
 
     @Test
-    public void supportedType_validType_androidVersionLessThan11_returnsNull() {
-        assumeTrue("supportedTypes is supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        assertThat(mUsers.supportedType(MANAGED_PROFILE_TYPE)).isNull();
-    }
-
-    @Test
-    public void all_containsCreatedUser() throws Exception {
-        int userId = createUser();
+    public void all_containsCreatedUser() {
+        UserReference user = mTestApis.users().createUser().create();
 
         try {
-            User foundUser = mUsers.all().stream().filter(
-                    u -> u.id() == userId).findFirst().get();
-
-            assertThat(foundUser).isNotNull();
+            assertThat(mTestApis.users().all()).contains(user);
         } finally {
-            removeUser(userId);
+            user.remove();
         }
     }
 
     @Test
-    public void all_userAddedSinceLastCallToUsers_containsNewUser() throws Exception {
-        int userId = createUser();
-        mUsers.all();
-        int userId2 = createUser();
+    public void all_userAddedSinceLastCallToUsers_containsNewUser() {
+        UserReference user = mTestApis.users().createUser().create();
+        mTestApis.users().all();
+        UserReference user2 = mTestApis.users().createUser().create();
 
         try {
-            User foundUser = mUsers.all().stream().filter(
-                    u -> u.id() == userId).findFirst().get();
-
-            assertThat(foundUser).isNotNull();
+            assertThat(mTestApis.users().all()).contains(user2);
         } finally {
-            removeUser(userId);
-            removeUser(userId2);
+            user.remove();
+            user2.remove();
         }
     }
 
     @Test
-    public void all_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() throws Exception {
-        int userId = createUser();
-        mUsers.all();
-        removeUser(userId);
+    public void all_userRemovedSinceLastCallToUsers_doesNotContainRemovedUser() {
+        UserReference user = mTestApis.users().createUser().create();
+        mTestApis.users().all();
+        user.remove();
 
-        assertThat(mUsers.all().stream().anyMatch(u -> u.id() == userId)).isFalse();
+        assertThat(mTestApis.users().all()).doesNotContain(user);
     }
 
     @Test
-    public void find_userExists_returnsUserReference() throws Exception {
-        int userId = createUser();
+    public void find_userExists_returnsUserReference() {
+        UserReference user = mTestApis.users().createUser().create();
         try {
-            assertThat(mUsers.find(userId)).isNotNull();
+            assertThat(mTestApis.users().find(user.id())).isEqualTo(user);
         } finally {
-            removeUser(userId);
+            user.remove();
         }
     }
 
     @Test
     public void find_userDoesNotExist_returnsUserReference() {
-        assertThat(mUsers.find(NON_EXISTING_USER_ID)).isNotNull();
+        assertThat(mTestApis.users().find(NON_EXISTING_USER_ID)).isNotNull();
     }
 
     @Test
     public void find_fromUserHandle_referencesCorrectId() {
-        assertThat(mUsers.find(UserHandle.of(USER_ID)).id()).isEqualTo(USER_ID);
+        assertThat(mTestApis.users().find(UserHandle.of(USER_ID)).id()).isEqualTo(USER_ID);
     }
 
     @Test
     public void find_constructedReferenceReferencesCorrectId() {
-        assertThat(mUsers.find(USER_ID).id()).isEqualTo(USER_ID);
+        assertThat(mTestApis.users().find(USER_ID).id()).isEqualTo(USER_ID);
+    }
+
+    @Test
+    public void createUser_additionalSystemUser_throwsException()  {
+        assertThrows(NeneException.class, () ->
+                mTestApis.users().createUser()
+                        .type(mTestApis.users().supportedType(SYSTEM_USER_TYPE_NAME))
+                        .create());
     }
 
     @Test
     public void createUser_userIsCreated()  {
-        UserReference userReference = mUsers.createUser()
-                .create();
+        UserReference user = mTestApis.users().createUser().create();
 
         try {
-            assertThat(
-                    mUsers.all().stream().anyMatch((u -> u.id() == userReference.id()))).isTrue();
+            assertThat(mTestApis.users().all()).contains(user);
         } finally {
-            userReference.remove();
+            user.remove();
         }
     }
 
     @Test
     public void createUser_createdUserHasCorrectName() {
-        UserReference userReference = mUsers.createUser()
-                .name(USER_NAME) // required
+        UserReference userReference = mTestApis.users().createUser()
+                .name(USER_NAME)
                 .create();
 
         try {
@@ -214,10 +190,8 @@ public class UsersTest {
 
     @Test
     public void createUser_createdUserHasCorrectTypeName() {
-        assumeTrue("types are supported on Android 11+", SDK_INT < Build.VERSION_CODES.R);
-
-        UserType type = mUsers.supportedType(RESTRICTED_USER_TYPE);
-        UserReference userReference = mUsers.createUser()
+        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
+        UserReference userReference = mTestApis.users().createUser()
                 .type(type)
                 .create();
 
@@ -229,11 +203,102 @@ public class UsersTest {
     }
 
     @Test
+    public void createUser_specifiesNullUserType_throwsException() {
+        UserBuilder userBuilder = mTestApis.users().createUser();
+
+        assertThrows(NullPointerException.class, () -> userBuilder.type(null));
+    }
+
+    @Test
+    public void createUser_specifiesSystemUserType_throwsException() {
+        UserType type = mTestApis.users().supportedType(SYSTEM_USER_TYPE_NAME);
+        UserBuilder userBuilder = mTestApis.users().createUser()
+                .type(type);
+
+        assertThrows(NeneException.class, userBuilder::create);
+    }
+
+    @Test
+    public void createUser_specifiesSecondaryUserType_createsUser() {
+        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
+        UserReference user = mTestApis.users().createUser().type(type).create();
+
+        try {
+            assertThat(user.resolve()).isNotNull();
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void createUser_specifiesManagedProfileUserType_createsUser() {
+        UserReference systemUser = mTestApis.users().system();
+        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+        UserReference user = mTestApis.users().createUser().type(type).parent(systemUser).create();
+
+        try {
+            assertThat(user.resolve()).isNotNull();
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void createUser_createsProfile_parentIsSet() {
+        UserReference systemUser = mTestApis.users().system();
+        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+        UserReference user = mTestApis.users().createUser().type(type).parent(systemUser).create();
+
+        try {
+            assertThat(user.resolve().parent()).isEqualTo(mTestApis.users().system());
+        } finally {
+            user.remove();
+        }
+    }
+
+    @Test
+    public void createUser_specifiesParentOnNonProfileType_throwsException() {
+        UserReference systemUser = mTestApis.users().system();
+        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
+        UserBuilder userBuilder = mTestApis.users().createUser().type(type).parent(systemUser);
+
+        assertThrows(NeneException.class, userBuilder::create);
+    }
+
+    @Test
+    public void createUser_specifiesProfileTypeWithoutParent_throwsException() {
+        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+        UserBuilder userBuilder = mTestApis.users().createUser()
+                .type(type);
+
+        assertThrows(NeneException.class, userBuilder::create);
+    }
+
+    @Test
+    public void createUser_androidLessThanS_createsManagedProfileNotOnSystemUser_throwsException() {
+        assumeTrue("After Android S, managed profiles may be a profile of a non-system user",
+                SDK_INT < Build.VERSION_CODES.S);
+
+        UserReference nonSystemUser = mTestApis.users().createUser().create();
+
+        try {
+            UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+            UserBuilder userBuilder = mTestApis.users().createUser()
+                    .type(type)
+                    .parent(nonSystemUser);
+
+            assertThrows(NeneException.class, userBuilder::create);
+        } finally {
+            nonSystemUser.remove();
+        }
+    }
+
+    @Test
     public void createAndStart_isStarted() {
         User user = null;
 
         try {
-            user = mUsers.createUser().name(USER_NAME).createAndStart().resolve();
+            user = mTestApis.users().createUser().name(USER_NAME).createAndStart().resolve();
             assertThat(user.state()).isEqualTo(User.UserState.RUNNING_UNLOCKED);
         } finally {
             if (user != null) {
@@ -244,32 +309,12 @@ public class UsersTest {
 
     @Test
     public void system_hasId0() {
-        assertThat(mUsers.system().id()).isEqualTo(0);
+        assertThat(mTestApis.users().system().id()).isEqualTo(0);
     }
 
-    private int createUser() {
-        // We do ADB calls directly to ensure we are actually changing the system state and not just
-        //  internal nene state
-        try {
-            return ShellCommand.builder("pm create-user")
-                    .addOperand("testuser")
-                    .executeAndParseOutput(
-                            output -> Integer.parseInt(output.split("id ")[1].trim()));
-        } catch (AdbException e) {
-            throw new AssertionError("Error creating user", e);
-        }
-    }
-
-    private void removeUser(int userId) throws InterruptedException {
-        // We do ADB calls directly to ensure we are actually changing the system state and not just
-        //  internal nene state
-        try {
-            ShellCommand.builder("pm remove-user").addOperand(userId).execute();
-            ShellCommand.builder("dumpsys user").validate(
-                    (output) -> !output.contains("UserInfo{" + userId + ":"))
-            .executeUntilValid();
-        } catch (AdbException e) {
-            throw new AssertionError("Error removing user", e);
-        }
+    @Test
+    public void instrumented_hasCurrentProccessId() {
+        assertThat(mTestApis.users().instrumented().id())
+                .isEqualTo(android.os.Process.myUserHandle().getIdentifier());
     }
 }

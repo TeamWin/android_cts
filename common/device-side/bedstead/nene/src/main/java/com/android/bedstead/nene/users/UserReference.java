@@ -130,11 +130,12 @@ public abstract class UserReference {
      */
     public UserReference stop() {
         try {
-            // Expects no output on success or failure
+            // Expects no output on success or failure - stderr output on failure
             ShellCommand.builder("am stop-user")
+                    .addOperand("-f") // Force stop
                     .addOperand(mId)
                     .allowEmptyOutput(true)
-                    .validate(ShellCommandUtils::doesNotStartWithError)
+                    .validate(String::isEmpty)
                     .execute();
             User waitedUser = mUsers.waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.NOT_RUNNING);

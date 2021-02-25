@@ -88,7 +88,7 @@ import java.util.Set;
 public class AdbUserParser26 implements AdbUserParser {
     static final int USER_LIST_BASE_INDENTATION = 2;
 
-    private final Users mUsers;
+    final Users mUsers;
 
     AdbUserParser26(Users users) {
         if (users == null) {
@@ -132,6 +132,7 @@ public class AdbUserParser26 implements AdbUserParser {
             String userInfo[] = userString.split("UserInfo\\{", 2)[1].split("\\}", 2)[0].split(":");
             User.MutableUser user = new User.MutableUser();
             user.mName = userInfo[1];
+            user.mFlags = Integer.parseInt(userInfo[2], 16);
             user.mId = Integer.parseInt(userInfo[0]);
             user.mSerialNo = Integer.parseInt(
                     userString.split("serialNo=", 2)[1].split("[ \n]", 2)[0]);

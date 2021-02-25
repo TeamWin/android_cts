@@ -16,11 +16,9 @@
 
 package com.android.bedstead.nene.users;
 
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 
 /**
  * Representation of a user on an Android device.
@@ -31,6 +29,9 @@ import androidx.annotation.RequiresApi;
 public final class User extends UserReference {
 
     private static final String LOG_TAG = "User";
+
+    /* From UserInfo */
+    static final int FLAG_MANAGED_PROFILE = 0x00000020;
 
     public enum UserState {
         NOT_RUNNING,
@@ -63,9 +64,11 @@ public final class User extends UserReference {
         @Nullable Boolean mIsPrimary;
         @Nullable UserState mState;
         @Nullable Boolean mIsRemoving;
+        @Nullable Integer mFlags;
+        @Nullable UserReference mParent;
     }
 
-    private final MutableUser mMutableUser;
+    final MutableUser mMutableUser;
 
     User(Users users, MutableUser mutableUser) {
         super(users, mutableUser.mId);
@@ -94,10 +97,7 @@ public final class User extends UserReference {
 
     /**
      * Get the user type.
-     *
-     * <p>On Android versions < 11, this will return {@code null}.
      */
-    @RequiresApi(Build.VERSION_CODES.R)
     public UserType type() {
         return mMutableUser.mType;
     }
@@ -109,12 +109,26 @@ public final class User extends UserReference {
 
     /**
      * Return {@code true} if this is the primary user.
-     *
-     * <p>On Android versions < 11, this will return {@code null}.
      */
-    @RequiresApi(Build.VERSION_CODES.R)
     public Boolean isPrimary() {
         return mMutableUser.mIsPrimary;
+    }
+
+    boolean hasFlag(int flag) {
+        if (mMutableUser.mFlags == null) {
+            return false;
+        }
+        return (mMutableUser.mFlags & flag) != 0;
+    }
+
+    /**
+     * Return the parent of this profile.
+     *
+     * <p>Returns {@code null} if this user is not a profile.
+     */
+    @Nullable
+    public UserReference parent() {
+        return mMutableUser.mParent;
     }
 
     @Override
@@ -127,6 +141,7 @@ public final class User extends UserReference {
         stringBuilder.append(", hasProfileOwner" + mMutableUser.mHasProfileOwner);
         stringBuilder.append(", isPrimary=" + mMutableUser.mIsPrimary);
         stringBuilder.append(", state=" + mMutableUser.mState);
+        stringBuilder.append(", parent=" + mMutableUser.mParent);
         stringBuilder.append("}");
         return stringBuilder.toString();
     }

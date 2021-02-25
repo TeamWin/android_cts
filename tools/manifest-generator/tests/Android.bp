@@ -12,13 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 java_test_host {
     name: "compatibility-manifest-generator-tests",
 
     srcs: ["src/**/*.java"],
 
-    libs: [
+    static_libs: [
         "compatibility-manifest-generator",
         "junit",
     ],
+    test_options: {
+        unit_test: true,
+    },
 }

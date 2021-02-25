@@ -119,28 +119,33 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.security.cts.CVE_2021_0327.IntroActivity">
+        <activity android:name="android.security.cts.CVE_2021_0327.IntroActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name="android.security.cts.CVE_2021_0327.OtherUserActivity">
+        <activity android:name="android.security.cts.CVE_2021_0327.OtherUserActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name="android.security.cts.CVE_2021_0327.TestActivity">
+        <activity android:name="android.security.cts.CVE_2021_0327.TestActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name="android.security.cts.CVE_2021_0327.workprofilesetup.ProvisionedActivity">
+        <activity
+             android:name="android.security.cts.CVE_2021_0327.workprofilesetup.ProvisionedActivity"
+             android:exported="true">
             <intent-filter>
                 <action android:name="android.app.action.PROVISIONING_SUCCESSFUL" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -149,7 +154,8 @@
 
         <receiver
             android:name="android.security.cts.CVE_2021_0327.workprofilesetup.AdminReceiver"
-            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            android:permission="android.permission.BIND_DEVICE_ADMIN"
+            android:exported="true">
             <meta-data
                 android:name="android.app.device_admin"
                 android:resource="@xml/device_admin" />

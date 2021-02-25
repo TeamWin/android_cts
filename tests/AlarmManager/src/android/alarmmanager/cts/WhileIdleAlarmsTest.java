@@ -17,6 +17,7 @@
 package android.alarmmanager.cts;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.app.AlarmManager;
@@ -24,11 +25,14 @@ import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.PowerWhitelistManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -333,4 +337,19 @@ public class WhileIdleAlarmsTest {
                 DEFAULT_WAIT_FOR_SUCCESS));
         assertTempWhitelistState(true);
     }
+
+    @Test
+    public void activityToRequestPermissionExists() {
+        final Intent request = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM);
+        final PackageManager pm = sContext.getPackageManager();
+
+        assertNotNull("No activity found for " + Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM,
+                pm.resolveActivity(request, 0));
+
+        request.setData(Uri.fromParts("package", sContext.getOpPackageName(), null));
+
+        assertNotNull("No app specific activity found for "
+                + Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, pm.resolveActivity(request, 0));
+    }
+
 }

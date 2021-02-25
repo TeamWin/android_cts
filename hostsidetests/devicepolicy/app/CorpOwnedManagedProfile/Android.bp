@@ -18,6 +18,10 @@
 
 // === App 1 ===
 
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 android_test_helper_app {
     name: "CtsCorpOwnedManagedProfile",
     defaults: ["cts_defaults"],
