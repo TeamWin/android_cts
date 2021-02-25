@@ -16,19 +16,16 @@
 
 package com.android.bedstead.nene.users;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import java.util.Set;
 
 /**
  * Represents information about an Android User type.
- *
- * <p>Only supported on Android 11 and above.
  */
-@RequiresApi(Build.VERSION_CODES.R)
 public final class UserType {
+
+    public static final String SECONDARY_USER_TYPE_NAME = "android.os.usertype.full.SECONDARY";
+    public static final String SYSTEM_USER_TYPE_NAME = "android.os.usertype.full.SYSTEM";
+    public static final String MANAGED_PROFILE_TYPE_NAME = "android.os.usertype.profile.MANAGED";
 
     public static final int UNLIMITED = -1;
 

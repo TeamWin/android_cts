@@ -63,6 +63,8 @@ import android.media.tv.tuner.frontend.Atsc3FrontendSettings;
 import android.media.tv.tuner.frontend.Atsc3PlpInfo;
 import android.media.tv.tuner.frontend.AtscFrontendCapabilities;
 import android.media.tv.tuner.frontend.AtscFrontendSettings;
+import android.media.tv.tuner.frontend.DtmbFrontendCapabilities;
+import android.media.tv.tuner.frontend.DtmbFrontendSettings;
 import android.media.tv.tuner.frontend.DvbcFrontendCapabilities;
 import android.media.tv.tuner.frontend.DvbcFrontendSettings;
 import android.media.tv.tuner.frontend.DvbsFrontendCapabilities;
@@ -185,135 +187,142 @@ public class TunerTest {
         List<Integer> ids = mTuner.getFrontendIds();
         assertFalse(ids.isEmpty());
 
-        FrontendInfo info = mTuner.getFrontendInfoById(ids.get(0));
-        int res = mTuner.tune(createFrontendSettings(info));
-
-        int[] statusCapabilities = info.getStatusCapabilities();
-        assertNotNull(statusCapabilities);
-        FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
-        assertNotNull(status);
-
-        for (int i = 0; i < statusCapabilities.length; i++) {
-            switch (statusCapabilities[i]) {
-                case FrontendStatus.FRONTEND_STATUS_TYPE_DEMOD_LOCK:
-                    status.isDemodLocked();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_SNR:
-                    status.getSnr();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_BER:
-                    status.getBer();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_PER:
-                    status.getPer();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_PRE_BER:
-                    status.getPerBer();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_QUALITY:
-                    status.getSignalQuality();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_STRENGTH:
-                    status.getSignalStrength();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_SYMBOL_RATE:
-                    status.getSymbolRate();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_FEC:
-                    status.getInnerFec();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION:
-                    status.getModulation();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL:
-                    status.getSpectralInversion();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_LNB_VOLTAGE:
-                    status.getLnbVoltage();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_PLP_ID:
-                    status.getPlpId();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_EWBS:
-                    status.isEwbs();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_AGC:
-                    status.getAgc();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_LNA:
-                    status.isLnaOn();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR:
-                    status.getLayerErrors();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_MER:
-                    status.getMer();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET:
-                    status.getFreqOffset();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY:
-                    status.getHierarchy();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK:
-                    status.isRfLocked();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO:
-                    Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
-                    if (tuningInfos != null) {
-                        for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
-                            tuningInfo.getPlpId();
-                            tuningInfo.isLocked();
-                            tuningInfo.getUec();
-                        }
-                    }
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_BERS:
-                    status.getBers();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_CODERATES:
-                    status.getCodeRates();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_BANDWIDTH:
-                    status.getBandwidth();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_GUARD_INTERVAL:
-                    status.getGuardInterval();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_TRANSMISSION_MODE:
-                    status.getTransmissionMode();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_UEC:
-                    status.getUec();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_T2_SYSTEM_ID:
-                    status.getSystemId();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_INTERLEAVINGS:
-                    status.getInterleaving();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_SEGMENTS:
-                    status.getIsdbtSegment();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_TS_DATA_RATES:
-                    status.getTsDataRate();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATIONS_EXT:
-                    status.getExtendedModulations();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_ROLL_OFF:
-                    status.getRollOff();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_IS_MISO:
-                    status.isMisoEnabled();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_IS_LINEAR:
-                    status.isLinear();
-                    break;
-                case FrontendStatus.FRONTEND_STATUS_TYPE_IS_SHORT_FRAMES:
-                    status.isShortFramesEnabled();
-                    break;
+        for (int id : ids) {
+            if (mTuner == null) {
+                mTuner = new Tuner(mContext, null, 100);
             }
+            FrontendInfo info = mTuner.getFrontendInfoById(id);
+            int res = mTuner.tune(createFrontendSettings(info));
+
+            int[] statusCapabilities = info.getStatusCapabilities();
+            assertNotNull(statusCapabilities);
+            FrontendStatus status = mTuner.getFrontendStatus(statusCapabilities);
+            assertNotNull(status);
+
+            for (int i = 0; i < statusCapabilities.length; i++) {
+                switch (statusCapabilities[i]) {
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_DEMOD_LOCK:
+                        status.isDemodLocked();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_SNR:
+                        status.getSnr();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_BER:
+                        status.getBer();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_PER:
+                        status.getPer();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_PRE_BER:
+                        status.getPerBer();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_QUALITY:
+                        status.getSignalQuality();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_SIGNAL_STRENGTH:
+                        status.getSignalStrength();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_SYMBOL_RATE:
+                        status.getSymbolRate();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_FEC:
+                        status.getInnerFec();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATION:
+                        status.getModulation();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_SPECTRAL:
+                        status.getSpectralInversion();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_LNB_VOLTAGE:
+                        status.getLnbVoltage();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_PLP_ID:
+                        status.getPlpId();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_EWBS:
+                        status.isEwbs();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_AGC:
+                        status.getAgc();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_LNA:
+                        status.isLnaOn();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_LAYER_ERROR:
+                        status.getLayerErrors();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_MER:
+                        status.getMer();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_FREQ_OFFSET:
+                        status.getFreqOffset();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_HIERARCHY:
+                        status.getHierarchy();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_RF_LOCK:
+                        status.isRfLocked();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ATSC3_PLP_INFO:
+                        Atsc3PlpTuningInfo[] tuningInfos = status.getAtsc3PlpTuningInfo();
+                        if (tuningInfos != null) {
+                            for (Atsc3PlpTuningInfo tuningInfo : tuningInfos) {
+                                tuningInfo.getPlpId();
+                                tuningInfo.isLocked();
+                                tuningInfo.getUec();
+                            }
+                        }
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_BERS:
+                        status.getBers();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_CODERATES:
+                        status.getCodeRates();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_BANDWIDTH:
+                        status.getBandwidth();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_GUARD_INTERVAL:
+                        status.getGuardInterval();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_TRANSMISSION_MODE:
+                        status.getTransmissionMode();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_UEC:
+                        status.getUec();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_T2_SYSTEM_ID:
+                        status.getSystemId();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_INTERLEAVINGS:
+                        status.getInterleaving();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ISDBT_SEGMENTS:
+                        status.getIsdbtSegment();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_TS_DATA_RATES:
+                        status.getTsDataRate();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_MODULATIONS_EXT:
+                        status.getExtendedModulations();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_ROLL_OFF:
+                        status.getRollOff();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_MISO:
+                        status.isMisoEnabled();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_LINEAR:
+                        status.isLinear();
+                        break;
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_SHORT_FRAMES:
+                        status.isShortFramesEnabled();
+                        break;
+                }
+            }
+            mTuner.close();
+            mTuner = null;
         }
     }
 
@@ -918,6 +927,27 @@ public class TunerTest {
                             .setMode(mode)
                             .setCodeRate(codeRate)
                             .setGuardInterval(guardInterval)
+                            .build();
+                }
+                case FrontendSettings.TYPE_DTMB: {
+                    DtmbFrontendCapabilities dtmbCaps = (DtmbFrontendCapabilities) caps;
+                    int modulation = getFirstCapable(dtmbCaps.getModulationCapability());
+                    int transmissionMode = getFirstCapable(
+                            dtmbCaps.getTransmissionModeCapability());
+                    int guardInterval = getFirstCapable(dtmbCaps.getGuardIntervalCapability());
+                    int timeInterleaveMode = getFirstCapable(
+                            dtmbCaps.getTimeInterleaveModeCapability());
+                    int codeRate = getFirstCapable(dtmbCaps.getCodeRateCapability());
+                    int bandwidth = getFirstCapable(dtmbCaps.getBandwidthCapability());
+                    return DtmbFrontendSettings
+                            .builder()
+                            .setFrequency(minFreq)
+                            .setModulation(modulation)
+                            .setTransmissionMode(transmissionMode)
+                            .setBandwidth(bandwidth)
+                            .setCodeRate(codeRate)
+                            .setGuardInterval(guardInterval)
+                            .setTimeInterleaveMode(timeInterleaveMode)
                             .build();
                 }
                 default:

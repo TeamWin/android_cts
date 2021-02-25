@@ -391,15 +391,13 @@ def find_circle(img, img_name, min_area, color):
 
   if num_circles == 0:
     image_processing_utils.write_image(img/255, img_name, True)
-    logging.error('No black circle detected. '
-                  'Please take pictures according to instruction carefully!')
-    assert num_circles == 1
+    raise AssertionError('No black circle detected. '
+                         'Please take pictures according to instructions.')
 
   if num_circles > 1:
     image_processing_utils.write_image(img/255, img_name, True)
-    logging.debug('More than 1 black circle detected. '
-                  'Background of scene may be too complex.')
-    assert num_circles == 1
+    raise AssertionError('More than 1 black circle detected. '
+                         'Background of scene may be too complex.')
 
   return circle
 

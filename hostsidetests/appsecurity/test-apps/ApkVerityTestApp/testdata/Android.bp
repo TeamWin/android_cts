@@ -13,6 +13,10 @@
 // limitations under the License.
 
 // A rule to collect apps for debugging purpose. See ApkVerityTestAppPrebuilt/README.md.
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
 genrule {
     name: "CtsApkVerityTestDebugFiles",
     srcs: [

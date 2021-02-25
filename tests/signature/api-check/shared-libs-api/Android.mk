@@ -28,6 +28,8 @@ all_shared_libs_files := $(addprefix $(COMPATIBILITY_TESTCASES_OUT_cts)/,$(all_s
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-shared-libs-all.api
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MODULE_STEM := shared-libs-all.api.zip
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
@@ -49,6 +51,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := cts-api-signature-multilib-test
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 LOCAL_SDK_VERSION := test_current
 

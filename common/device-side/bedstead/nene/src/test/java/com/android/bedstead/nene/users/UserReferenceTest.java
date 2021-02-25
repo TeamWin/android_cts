@@ -51,26 +51,25 @@ public class UserReferenceTest {
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
 
     private final TestApis mTestApis = new TestApis();
-    private final Users mUsers = mTestApis.users();
 
     @Test
     public void id_returnsId() {
-        assertThat(mUsers.find(USER_ID).id()).isEqualTo(USER_ID);
+        assertThat(mTestApis.users().find(USER_ID).id()).isEqualTo(USER_ID);
     }
 
     @Test
     public void userHandle_referencesId() {
-        assertThat(mUsers.find(USER_ID).userHandle().getIdentifier()).isEqualTo(USER_ID);
+        assertThat(mTestApis.users().find(USER_ID).userHandle().getIdentifier()).isEqualTo(USER_ID);
     }
 
     @Test
     public void resolve_doesNotExist_returnsNull() {
-        assertThat(mUsers.find(NON_EXISTING_USER_ID).resolve()).isNull();
+        assertThat(mTestApis.users().find(NON_EXISTING_USER_ID).resolve()).isNull();
     }
 
     @Test
     public void resolve_doesExist_returnsUser() {
-        UserReference userReference = mUsers.createUser().create();
+        UserReference userReference = mTestApis.users().createUser().create();
 
         try {
             assertThat(userReference.resolve()).isNotNull();
@@ -81,7 +80,7 @@ public class UserReferenceTest {
 
     @Test
     public void resolve_doesExist_userHasCorrectDetails() {
-        UserReference userReference = mUsers.createUser().name(USER_NAME).create();
+        UserReference userReference = mTestApis.users().createUser().name(USER_NAME).create();
 
         try {
             User user = userReference.resolve();
@@ -93,26 +92,27 @@ public class UserReferenceTest {
 
     @Test
     public void remove_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class, () -> mUsers.find(USER_ID).remove());
+        assertThrows(NeneException.class, () -> mTestApis.users().find(USER_ID).remove());
     }
 
     @Test
     public void remove_userExists_removesUser() {
-        UserReference user = mUsers.createUser().create();
+        UserReference user = mTestApis.users().createUser().create();
 
         user.remove();
 
-        assertThat(mUsers.all().stream().anyMatch(u -> u.id() == user.id())).isFalse();
+        assertThat(mTestApis.users().all()).doesNotContain(user);
     }
 
     @Test
     public void start_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class, () -> mUsers.find(NON_EXISTING_USER_ID).start());
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().find(NON_EXISTING_USER_ID).start());
     }
 
     @Test
     public void start_userNotStarted_userIsStarted() {
-        UserReference user = mUsers.createUser().create().stop();
+        UserReference user = mTestApis.users().createUser().create().stop();
 
         user.start();
 
@@ -125,7 +125,7 @@ public class UserReferenceTest {
 
     @Test
     public void start_userAlreadyStarted_doesNothing() {
-        UserReference user = mUsers.createUser().createAndStart();
+        UserReference user = mTestApis.users().createUser().createAndStart();
 
         user.start();
 
@@ -138,12 +138,13 @@ public class UserReferenceTest {
 
     @Test
     public void stop_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class, () -> mUsers.find(NON_EXISTING_USER_ID).stop());
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().find(NON_EXISTING_USER_ID).stop());
     }
 
     @Test
     public void stop_userStarted_userIsStopped() {
-        UserReference user = mUsers.createUser().createAndStart();
+        UserReference user = mTestApis.users().createUser().createAndStart();
 
         user.stop();
 
@@ -156,7 +157,7 @@ public class UserReferenceTest {
 
     @Test
     public void stop_userNotStarted_doesNothing() {
-        UserReference user = mUsers.createUser().create().stop();
+        UserReference user = mTestApis.users().createUser().create().stop();
 
         user.stop();
 
@@ -168,12 +169,12 @@ public class UserReferenceTest {
     }
 
     @Test
-    public void switchTo_userIsSwitched() throws Exception {
+    public void switchTo_userIsSwitched() {
         assumeTrue(
                 "Adopting Shell Permissions only works for Q+", SDK_INT >= Build.VERSION_CODES.Q);
         // TODO(scottjonathan): In this case we can probably grant the permission through adb?
 
-        UserReference user = mUsers.createUser().createAndStart();
+        UserReference user = mTestApis.users().createUser().createAndStart();
         try {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 // for INTERACT_ACROSS_USERS
@@ -194,8 +195,26 @@ public class UserReferenceTest {
                 assertThat(logs.poll()).isNotNull();
             });
         } finally {
-            mUsers.system().switchTo();
+            mTestApis.users().system().switchTo();
             user.remove();
+        }
+    }
+
+    @Test
+    public void stop_isWorkProfileOfCurrentUser_stops() {
+        UserType managedProfileType =
+                mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME);
+        UserReference profileUser = mTestApis.users().createUser()
+                .type(managedProfileType)
+                .parent(mTestApis.users().instrumented())
+                .createAndStart();
+
+        try {
+            profileUser.stop();
+
+            assertThat(profileUser.resolve().state()).isEqualTo(User.UserState.NOT_RUNNING);
+        } finally {
+            profileUser.remove();
         }
     }
 }
