@@ -34,7 +34,7 @@ import androidx.test.filters.SmallTest;
 import org.junit.Test;
 
 /**
- * Test for {@link Context#isUiContext(Context)}.
+ * Test for {@link Context#isUiContext}.
  * <p>Test context type listed below:</p>
  * <ul>
  *     <li>{@link android.app.Application} - returns {@code false}</li>
@@ -59,81 +59,81 @@ import org.junit.Test;
 public class ContextIsUiContextTest extends ContextTestBase {
     @Test
     public void testIsUiContextOnApplication() {
-        assertThat(Context.isUiContext(mApplicationContext)).isFalse();
+        assertThat(mApplicationContext.isUiContext()).isFalse();
     }
 
     @Test
     public void testIsUiContextOnService() throws Exception {
-        assertThat(Context.isUiContext(createTestService())).isFalse();
+        assertThat(createTestService().isUiContext()).isFalse();
     }
 
     @Test
     public void testIsUiContextOnActivity() throws Throwable {
-        assertThat(Context.isUiContext(getTestActivity())).isTrue();
+        assertThat(getTestActivity().isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnWindowContext() {
-        assertThat(Context.isUiContext(createWindowContext())).isTrue();
+        assertThat(createWindowContext().isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnWindowContextWithDisplay() {
         final Context windowContext = mApplicationContext.createWindowContext(getDefaultDisplay(),
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY, null /* options */);
-        assertThat(Context.isUiContext(windowContext)).isTrue();
+        assertThat(windowContext.isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnInputMethodService() {
-        assertThat(Context.isUiContext(new InputMethodService())).isTrue();
+        assertThat(new InputMethodService().isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnDefaultDisplayContext() {
         final Context defaultDisplayContext =
                 mApplicationContext.createDisplayContext(getDefaultDisplay());
-        assertThat(Context.isUiContext(defaultDisplayContext)).isFalse();
+        assertThat(defaultDisplayContext.isUiContext()).isFalse();
 
         final Context defaultDisplayDerivedContext = defaultDisplayContext
                 .createAttributionContext(null /* attributionTag */);
-        assertThat(Context.isUiContext(defaultDisplayDerivedContext)).isFalse();
+        assertThat(defaultDisplayDerivedContext.isUiContext()).isFalse();
     }
 
     @Test
     public void testIsUiContextOnSecondaryDisplayContext() {
         final Context secondaryDisplayContext =
                 mApplicationContext.createDisplayContext(getSecondaryDisplay());
-        assertThat(Context.isUiContext(secondaryDisplayContext)).isFalse();
+        assertThat(secondaryDisplayContext.isUiContext()).isFalse();
 
         final Context secondaryDisplayDerivedContext = secondaryDisplayContext
                 .createAttributionContext(null /* attributionTag */);
-        assertThat(Context.isUiContext(secondaryDisplayDerivedContext)).isFalse();
+        assertThat(secondaryDisplayDerivedContext.isUiContext()).isFalse();
     }
 
     @Test
     public void testIsUiContextOnUiDerivedContext() {
         final Context uiDerivedContext = createWindowContext()
                 .createAttributionContext(null /* attributionTag */);
-        assertThat(Context.isUiContext(uiDerivedContext)).isTrue();
+        assertThat(uiDerivedContext.isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnUiDerivedDisplayContext() {
         final Context uiDerivedDisplayContext = createWindowContext()
                 .createDisplayContext(getSecondaryDisplay());
-        assertThat(Context.isUiContext(uiDerivedDisplayContext)).isFalse();
+        assertThat(uiDerivedDisplayContext.isUiContext()).isFalse();
     }
 
     @Test
     public void testIsUiContextOnUiContextWrapper() {
         final Context uiContextWrapper = new ContextWrapper(createWindowContext());
-        assertThat(Context.isUiContext(uiContextWrapper)).isTrue();
+        assertThat(uiContextWrapper.isUiContext()).isTrue();
     }
 
     @Test
     public void testIsUiContextOnNonUiContextWrapper() {
         final Context uiContextWrapper = new ContextWrapper(mApplicationContext);
-        assertThat(Context.isUiContext(uiContextWrapper)).isFalse();
+        assertThat(uiContextWrapper.isUiContext()).isFalse();
     }
 }
