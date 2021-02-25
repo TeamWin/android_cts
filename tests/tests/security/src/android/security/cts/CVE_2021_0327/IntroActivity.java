@@ -12,7 +12,7 @@ import android.view.View;
 import android.util.Log;
 import android.os.SystemClock;
 
-import android.support.test.InstrumentationRegistry;
+import androidx.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.By;
