@@ -34,6 +34,8 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -43,17 +45,51 @@ import java.util.stream.Collectors;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
 
-    private static final ImmutableList<CecOperand> necessaryMessages =
-            new ImmutableList.Builder<CecOperand>()
-                    .add(CecOperand.REPORT_PHYSICAL_ADDRESS)
-                    .add(CecOperand.REPORT_FEATURES)
-                    .build();
     @Rule
     public RuleChain ruleChain =
             RuleChain
                     .outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
                     .around(hdmiCecClient);
+
+    /**
+     * Tests that the device sends all the messages that should be sent on startup. It also ensures
+     * that only the device only sends messages which are allowed by the spec.
+     */
+    @Test
+    public void cectVerifyStartupMessages() throws Exception {
+        ITestDevice device = getDevice();
+
+        List<CecOperand> expectedMessages = Collections.singletonList(
+                CecOperand.REPORT_PHYSICAL_ADDRESS);
+        List<CecOperand> allowedMessages = Arrays.asList(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
+                CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME, CecOperand.CEC_VERSION,
+                CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
+                CecOperand.GET_MENU_LANGUAGE);
+
+        device.executeShellCommand("reboot");
+        device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        /* Monitor CEC messages for 20s after reboot */
+        final List<CecOperand> messagesReceived =
+                hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
+
+        List<CecOperand> notPermittedMessages = messagesReceived.stream()
+                .filter(message -> !allowedMessages.contains(message))
+                .collect(Collectors.toList());
+
+        List<CecOperand> requiredMessages = messagesReceived.stream()
+                .filter(expectedMessages::contains)
+                .collect(Collectors.toList());
+
+        assertWithMessage("Unexpected messages sent by the device").that(
+                notPermittedMessages).isEmpty();
+        assertWithMessage("Some necessary messages are missing").that(requiredMessages).hasSize(
+                expectedMessages.size());
+        assertWithMessage("Expected <Report Features> first").that(
+                requiredMessages.get(0)).isEqualTo(CecOperand.REPORT_FEATURES);
+        assertWithMessage("Expected <Report Physical Address> last").that(
+                requiredMessages.get(1)).isEqualTo(CecOperand.REPORT_PHYSICAL_ADDRESS);
+    }
 
     /**
      * CEC 2.0 CTS 7.5.
@@ -63,9 +99,12 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
      * Verifies that both messages are sent in the given order.
      */
     @Test
-    public void cectVerifyStartupMessages() throws Exception {
+    public void hf_7_5_verifyStartupMessages() throws Exception {
         ITestDevice device = getDevice();
         setCec20();
+
+        List<CecOperand> expectedMessages = Arrays.asList(CecOperand.REPORT_PHYSICAL_ADDRESS,
+                CecOperand.REPORT_FEATURES);
 
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
@@ -74,14 +113,15 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                 hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
 
         List<CecOperand> requiredMessages = messagesReceived.stream()
-                .filter(necessaryMessages::contains)
+                .filter(expectedMessages::contains)
                 .collect(Collectors.toList());
 
         assertWithMessage("Some necessary messages are missing").that(requiredMessages).hasSize(
-                necessaryMessages.size());
+                expectedMessages.size());
         assertWithMessage("Expected <Report Features> first").that(
                 requiredMessages.get(0)).isEqualTo(CecOperand.REPORT_FEATURES);
         assertWithMessage("Expected <Report Physical Address> last").that(
                 requiredMessages.get(1)).isEqualTo(CecOperand.REPORT_PHYSICAL_ADDRESS);
     }
+
 }
