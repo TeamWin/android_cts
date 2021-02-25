@@ -19,6 +19,7 @@ package android.app.cts;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_ALL_IMPLICIT;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_FOREGROUND_LOCATION;
+import static android.app.ActivityManager.PROCESS_CAPABILITY_NETWORK;
 import static android.app.ActivityManager.PROCESS_CAPABILITY_NONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
@@ -1815,7 +1816,7 @@ public class ActivityManagerProcessStateTest {
 
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                    new Integer(PROCESS_CAPABILITY_NETWORK | PROCESS_CAPABILITY_FOREGROUND_LOCATION
                             | PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Bind App 0 -> App 1, verify doesn't include capability.
@@ -1824,7 +1825,7 @@ public class ActivityManagerProcessStateTest {
             // Verify app1 does NOT have capability.
             mWatchers[1].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
+                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT | PROCESS_CAPABILITY_NETWORK));
 
             // Bind App 0 -> App 2, include capability.
             bundle = new Bundle();
@@ -1834,7 +1835,7 @@ public class ActivityManagerProcessStateTest {
             // Verify app2 has FOREGROUND_LOCATION capability.
             mWatchers[2].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION
+                    new Integer(PROCESS_CAPABILITY_FOREGROUND_LOCATION | PROCESS_CAPABILITY_NETWORK
                             | PROCESS_CAPABILITY_ALL_IMPLICIT));
 
             // Back down to foreground service
@@ -1844,7 +1845,7 @@ public class ActivityManagerProcessStateTest {
             // Verify app0 does NOT have FOREGROUND_LOCATION capability.
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT));
+                    new Integer(PROCESS_CAPABILITY_ALL_IMPLICIT | PROCESS_CAPABILITY_NETWORK));
 
             // Remove foreground service as well
             CommandReceiver.sendCommand(mContext,
@@ -1883,7 +1884,7 @@ public class ActivityManagerProcessStateTest {
             CommandReceiver.sendCommand(mContext, CommandReceiver.COMMAND_BIND_SERVICE,
                     STUB_PACKAGE_NAME, mAppInfo[0].packageName, 0, null);
             mWatchers[0].waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_BOUND_TOP,
-                    new Integer(PROCESS_CAPABILITY_NONE));
+                    new Integer(PROCESS_CAPABILITY_NETWORK));
 
             // Bind Stub -> App 1, include capability (TOP)
             Bundle bundle = new Bundle();
