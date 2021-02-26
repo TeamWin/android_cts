@@ -22,6 +22,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
 
 /**
@@ -37,6 +38,8 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
     public static final String EXTRA_REQUIRE_NETWORK_ANY = PACKAGE_NAME
             + ".extra.REQUIRE_NETWORK_ANY";
     public static final String EXTRA_AS_EXPEDITED = PACKAGE_NAME + ".extra.AS_EXPEDITED";
+    public static final String EXTRA_REQUEST_JOB_UID_STATE =
+            PACKAGE_NAME + ".extra.REQUEST_JOB_UID_STATE";
     public static final String ACTION_SCHEDULE_JOB = PACKAGE_NAME + ".action.SCHEDULE_JOB";
     public static final String ACTION_CANCEL_JOBS = PACKAGE_NAME + ".action.CANCEL_JOBS";
     public static final int JOB_INITIAL_BACKOFF = 10_000;
@@ -55,8 +58,13 @@ public class TestJobSchedulerReceiver extends BroadcastReceiver {
                 final boolean allowInIdle = intent.getBooleanExtra(EXTRA_ALLOW_IN_IDLE, false);
                 final boolean network = intent.getBooleanExtra(EXTRA_REQUIRE_NETWORK_ANY, false);
                 final boolean expedited = intent.getBooleanExtra(EXTRA_AS_EXPEDITED, false);
+                final boolean requestJobUidState = intent.getBooleanExtra(
+                        EXTRA_REQUEST_JOB_UID_STATE, false);
+                final Bundle extras = new Bundle();
+                extras.putBoolean(EXTRA_REQUEST_JOB_UID_STATE, requestJobUidState);
                 JobInfo.Builder jobBuilder = new JobInfo.Builder(jobId, jobServiceComponent)
                         .setBackoffCriteria(JOB_INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_LINEAR)
+                        .setTransientExtras(extras)
                         .setImportantWhileForeground(allowInIdle);
                 if (expedited) {
                     jobBuilder.setExpedited(expedited);
