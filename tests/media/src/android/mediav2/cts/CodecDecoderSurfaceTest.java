@@ -296,7 +296,6 @@ public class CodecDecoderSurfaceTest extends CodecDecoderTestBase {
      * Tests reconfigure when codec is in sync and async mode with surface. In these scenarios,
      * Timestamp and the ordering is verified.
      */
-    @Ignore("TODO(b/148523403)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
