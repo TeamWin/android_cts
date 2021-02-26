@@ -23,6 +23,7 @@ import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.OutcomeReceiver;
@@ -100,6 +101,12 @@ public class CallLogTest extends InstrumentationTestCase {
 
     public void testLocationStorageAndRetrieval() {
         Context context = getInstrumentation().getContext();
+
+        if (!context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            // This is tied to default-dialer, so don't test if the device doesn't have telephony.
+            return;
+        }
+
         UserHandle currentUser = UserHandle.of(
                 ShellIdentityUtils.invokeStaticMethodWithShellPermissions(
                         () -> ActivityManager.getCurrentUser()));
