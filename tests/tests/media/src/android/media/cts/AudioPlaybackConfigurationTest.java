@@ -25,6 +25,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioAttributes.CapturePolicy;
 import android.media.AudioManager;
+import android.media.AudioPlaybackConfiguration;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
 import android.net.Uri;
@@ -33,15 +34,14 @@ import android.os.HandlerThread;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-import android.media.AudioPlaybackConfiguration;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 @AppModeFull(reason = "Instant apps cannot access the SD card")
@@ -419,13 +419,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private @Nullable MediaPlayer createPreparedMediaPlayer(
             Uri uri, AudioAttributes aa, int session) throws Exception {
         final TestUtils.Monitor onPreparedCalled = new TestUtils.Monitor();
-        final MediaPlayer mp = MediaPlayer.create(getContext(), uri, null, aa, session);
-        mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                onPreparedCalled.signal();
-            }
-        });
+        final MediaPlayer mp = createPlayer(uri, aa, session);
+        mp.setOnPreparedListener(mp1 -> onPreparedCalled.signal());
+        mp.prepare();
         onPreparedCalled.waitForSignal(MEDIAPLAYER_PREPARE_TIMEOUT_MS);
         assertTrue(
                 "MediaPlayer wasn't prepared in under " + MEDIAPLAYER_PREPARE_TIMEOUT_MS + " ms",
@@ -433,14 +429,22 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         return mp;
     }
 
+    private MediaPlayer createPlayer(
+            Uri uri, AudioAttributes aa, int session) throws IOException {
+        MediaPlayer mp = new MediaPlayer();
+        mp.setAudioAttributes(aa);
+        mp.setAudioSessionId(session);
+        mp.setDataSource(getContext(), uri);
+        return mp;
+    }
+
     private void assertPlayerStartAndCallbackWithPlayerAttributes(
             MediaPlayer mp, MyAudioPlaybackCallback callback,
             int activePlayerCount, AudioAttributes aa) throws Exception{
         mp.start();
-        Thread.sleep(TEST_TIMING_TOLERANCE_MS);
 
-        assertTrue("onPlaybackConfigChanged call count should have increased after start",
-                callback.getCbInvocationNumber() > 0); //one or more calls (start, device)
+        assertTrue("onPlaybackConfigChanged play and device called expected "
+                , callback.waitForCallbacks(2));
         assertEquals("number of active players not expected",
                 // one more player active
                 activePlayerCount/*expected*/, callback.getNbConfigs());
@@ -453,6 +457,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         private int mCalled;
         @GuardedBy("mCbLock")
         private List<AudioPlaybackConfiguration> mConfigs;
+
+        final TestUtils.Monitor mOnCalledMonitor = new TestUtils.Monitor();
 
         void reset() {
             synchronized (mCbLock) {
@@ -487,6 +493,14 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 mCalled++;
                 mConfigs = configs;
             }
+            mOnCalledMonitor.signal();
+        }
+
+        public boolean waitForCallbacks(int calledCount) throws InterruptedException {
+            int signalsCounted =
+                    mOnCalledMonitor.waitForCountedSignals(calledCount,
+                            calledCount*TEST_TIMING_TOLERANCE_MS);
+            return (signalsCounted == calledCount);
         }
     }
 
@@ -510,9 +524,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                     && apc.getAudioAttributes().getFlags() == aa.getFlags()
                     && anonymizeCapturePolicy(apc.getAudioAttributes().getAllowedCapturePolicy())
                             == aa.getAllowedCapturePolicy()
-                    // FIXME see b/179218630
-                    //&& apc.getAudioDeviceInfo() != null
-            ) {
+                    && apc.getAudioDeviceInfo() != null) {
                 return true;
             }
         }
