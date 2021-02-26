@@ -53,7 +53,7 @@ import java.util.List;
 
 /**
  * Tests multiple concurrent connection flow on devices that support multi STA concurrency
- * (indicated via {@link WifiManager#isMultiStaConcurrencySupported()}.
+ * (indicated via {@link WifiManager#isStaConcurrencyForLocalOnlyConnectionsSupported()}.
  *
  * Tests the entire connection flow using {@link WifiNetworkSpecifier} embedded in a
  * {@link NetworkRequest} & passed into {@link ConnectivityManager#requestNetwork(NetworkRequest,
@@ -151,7 +151,7 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
         // skip the test if location is not supported
         assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
         // skip if multi STA not supported.
-        assumeTrue(mWifiManager.isMultiStaConcurrencySupported());
+        assumeTrue(mWifiManager.isStaConcurrencyForLocalOnlyConnectionsSupported());
 
         assertWithMessage("Please enable location for this test!")
                 .that(mContext.getSystemService(LocationManager.class).isLocationEnabled())
