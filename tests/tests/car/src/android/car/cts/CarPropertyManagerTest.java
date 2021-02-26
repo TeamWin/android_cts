@@ -59,7 +59,6 @@ public class CarPropertyManagerTest extends CarApiTestBase {
     private static final long WAIT_CALLBACK = 1500L;
     private static final int NO_EVENTS = 0;
     private static final int ONCHANGE_RATE_EVENT_COUNTER = 1;
-    private static final int UI_RATE_EVENT_COUNTER = 5;
     private static final int FAST_OR_FASTEST_EVENT_COUNTER = 10;
     private CarPropertyManager mCarPropertyManager;
     /** contains property Ids for the properties required by CDD*/
@@ -347,24 +346,15 @@ public class CarPropertyManagerTest extends CarApiTestBase {
         // Test for continuous properties
         int vehicleSpeed = VehiclePropertyIds.PERF_VEHICLE_SPEED;
         CarPropertyEventCounter speedListenerUI = new CarPropertyEventCounter();
-        CarPropertyEventCounter speedListenerFast = new CarPropertyEventCounter();
-
+        // Before registering, the listener should not get any event and error.
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
         assertThat(speedListenerUI.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
-        assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isEqualTo(NO_EVENTS);
-        assertThat(speedListenerFast.receivedError(vehicleSpeed)).isEqualTo(NO_EVENTS);
 
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_UI);
-        mCarPropertyManager.registerCallback(speedListenerFast, vehicleSpeed,
-                CarPropertyManager.SENSOR_RATE_FASTEST);
-        speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+        speedListenerUI.resetCountDownLatch(1);
         speedListenerUI.assertOnChangeEventCalled();
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isGreaterThan(NO_EVENTS);
-        assertThat(speedListenerFast.receivedEvent(vehicleSpeed)).isGreaterThan(
-                speedListenerUI.receivedEvent(vehicleSpeed));
-
-        mCarPropertyManager.unregisterCallback(speedListenerFast);
         mCarPropertyManager.unregisterCallback(speedListenerUI);
 
         // Test for on_change properties
@@ -397,59 +387,24 @@ public class CarPropertyManagerTest extends CarApiTestBase {
 
         mCarPropertyManager.registerCallback(speedListenerUI, vehicleSpeed,
                 CarPropertyManager.SENSOR_RATE_UI);
-        speedListenerUI.resetCountDownLatch(UI_RATE_EVENT_COUNTER);
+        speedListenerUI.resetCountDownLatch(1);
         speedListenerUI.assertOnChangeEventCalled();
         mCarPropertyManager.unregisterCallback(speedListenerNormal, vehicleSpeed);
 
         int currentEventNormal = speedListenerNormal.receivedEvent(vehicleSpeed);
         int currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
         speedListenerNormal.assertOnChangeEventNotCalled();
-
+        // speedListenerNormal is unregistered, it should not get more events.
         assertThat(speedListenerNormal.receivedEvent(vehicleSpeed)).isEqualTo(currentEventNormal);
+        // speedListenerUI should get more events
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isNotEqualTo(currentEventUI);
 
         mCarPropertyManager.unregisterCallback(speedListenerUI);
         speedListenerUI.assertOnChangeEventNotCalled();
-
         currentEventUI = speedListenerUI.receivedEvent(vehicleSpeed);
+        // After unregistered, speedListenerUI should not get any events.
         assertThat(speedListenerUI.receivedEvent(vehicleSpeed)).isEqualTo(currentEventUI);
     }
-
-    @Test
-    public void testUnregisterWithPropertyId() throws Exception {
-        // Ignores the test if wheel_tick property does not exist in the car.
-        Assume.assumeTrue("WheelTick is not available, skip unregisterCallback test",
-                mCarPropertyManager.isPropertyAvailable(
-                        VehiclePropertyIds.WHEEL_TICK, VehicleAreaType.VEHICLE_AREA_TYPE_GLOBAL));
-
-        CarPropertyEventCounter speedAndWheelTicksListener = new CarPropertyEventCounter();
-        mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
-                VehiclePropertyIds.PERF_VEHICLE_SPEED, CarPropertyManager.SENSOR_RATE_FASTEST);
-        mCarPropertyManager.registerCallback(speedAndWheelTicksListener,
-                VehiclePropertyIds.WHEEL_TICK, CarPropertyManager.SENSOR_RATE_FASTEST);
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
-        speedAndWheelTicksListener.assertOnChangeEventCalled();
-
-        mCarPropertyManager.unregisterCallback(speedAndWheelTicksListener,
-                VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
-        speedAndWheelTicksListener.assertOnChangeEventCalled();
-        int currentSpeedEvents = speedAndWheelTicksListener.receivedEvent(
-                VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        int currentWheelTickEvents = speedAndWheelTicksListener.receivedEvent(
-                VehiclePropertyIds.WHEEL_TICK);
-
-        speedAndWheelTicksListener.resetCountDownLatch(FAST_OR_FASTEST_EVENT_COUNTER);
-        speedAndWheelTicksListener.assertOnChangeEventCalled();
-        int speedEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
-                VehiclePropertyIds.PERF_VEHICLE_SPEED);
-        int wheelTicksEventsAfterUnregister = speedAndWheelTicksListener.receivedEvent(
-                VehiclePropertyIds.WHEEL_TICK);
-
-        assertThat(currentSpeedEvents).isEqualTo(speedEventsAfterUnregister);
-        assertThat(wheelTicksEventsAfterUnregister).isGreaterThan(currentWheelTickEvents);
-    }
-
 
     // Returns {0} if the property is global property, otherwise query areaId for CarPropertyConfig
     private int[] getAreaIdsHelper(CarPropertyConfig config) {
