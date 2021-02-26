@@ -27,6 +27,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.SimPhonebookContract;
@@ -37,9 +38,13 @@ import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 
 import java.util.Objects;
@@ -52,6 +57,10 @@ public class SimPhonebookContract_SimRecordsNoSimTest {
     private static final int MISSING_SIM_SUBSCRIPTION_ID = 9043;
     private static final String MISSING_SIM_EXCEPTION_MESSAGE =
             "No active SIM with subscription ID " + MISSING_SIM_SUBSCRIPTION_ID;
+
+    @Rule
+    public final TestRule telephonyRequirementRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY);
 
     private Context mContext;
     private ContentResolver mResolver;
