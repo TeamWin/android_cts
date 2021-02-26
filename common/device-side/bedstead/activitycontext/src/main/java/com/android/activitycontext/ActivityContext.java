@@ -20,6 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
@@ -65,6 +66,14 @@ public class ActivityContext extends EventLibActivity {
         if (runnable == null) {
             throw new NullPointerException();
         }
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+
+        if (!instrumentation.getContext().getPackageName().equals(
+                instrumentation.getTargetContext().getPackageName())) {
+            throw new IllegalStateException("ActivityContext can only be used in test apps which"
+                    + " instrument themselves. Consider ActivityScenario for this case.");
+        }
+
         synchronized (ActivityContext.class) {
             sRunnable = runnable;
 

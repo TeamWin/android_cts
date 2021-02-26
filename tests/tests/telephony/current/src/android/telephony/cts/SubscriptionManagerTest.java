@@ -32,6 +32,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.Nullable;
+import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
@@ -86,6 +87,7 @@ import java.util.stream.Collectors;
 
 public class SubscriptionManagerTest {
     private static final String TAG = "SubscriptionManagerTest";
+    private static final String MODIFY_PHONE_STATE = "android.permission.MODIFY_PHONE_STATE";
     private SubscriptionManager mSm;
 
     private int mSubId;
@@ -904,6 +906,21 @@ public class SubscriptionManagerTest {
         } catch (SecurityException e) {
             // expected
         }
+    }
+
+    @Test
+    public void testSetAndGetD2DStatusSharing() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
+        int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharing(mSubId);
+        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL_CONTACTS, mSubId);
+        assertEquals(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
+                mSm.getDeviceToDeviceStatusSharing(mSubId));
+        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL, mSubId);
+        assertEquals(SubscriptionManager.D2D_SHARING_ALL,
+                mSm.getDeviceToDeviceStatusSharing(mSubId));
+        mSm.setDeviceToDeviceStatusSharing(originalD2DStatusSharing, mSubId);
+        uiAutomation.dropShellPermissionIdentity();
     }
 
     @Nullable

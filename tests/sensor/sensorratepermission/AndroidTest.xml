@@ -27,7 +27,7 @@
         <option name="test-file-name" value="CtsSensorRatePermissionReturnedRateInfo.apk"/>
         <option name="test-file-name" value="CtsSensorRatePermissionEventConnectionResampling.apk"/>
         <!-- This APK is a helper app to test the resampling of SensorEventConnections -->
-        <option name="test-file-name" value="CtsSensorRatePermissionMicToggleOffAPI25.apk"/>
+        <option name="test-file-name" value="CtsSensorRatePermissionMicToggleOffAPI30.apk"/>
         <option name="test-file-name" value="CtsSensorRatePermissionDirectReportAPI30.apk"/>
         <option name="test-file-name" value="CtsSensorRatePermissionDirectReportAPI31.apk"/>
         <option name="test-file-name" value="CtsSensorRatePermissionEventConnectionAPI30.apk"/>

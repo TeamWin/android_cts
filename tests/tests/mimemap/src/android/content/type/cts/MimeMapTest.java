@@ -173,10 +173,6 @@ public class MimeMapTest {
         assertMimeTypeFromExtension("audio/mpeg", "m4r");
     }
 
-    @Test public void bug136096979_ota() {
-        assertMimeTypeFromExtension("application/vnd.android.ota", "ota");
-    }
-
     @Test public void bug154667531_consistent() {
         // Verify that if developers start from a strongly-typed MIME type, that
         // sending it through a file extension doesn't lose that fidelity. We're

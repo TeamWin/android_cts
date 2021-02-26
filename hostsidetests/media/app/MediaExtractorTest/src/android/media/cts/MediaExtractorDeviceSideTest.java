@@ -15,12 +15,16 @@
  */
 package android.media.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.MediaExtractor;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.google.common.truth.Truth;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +53,9 @@ public class MediaExtractorDeviceSideTest {
                 InstrumentationRegistry.getInstrumentation().getContext().getAssets();
         try (AssetFileDescriptor fileDescriptor = assetManager.openFd(SAMPLE_PATH)) {
             mediaExtractor.setDataSource(fileDescriptor);
+        } finally {
+            mediaExtractor.release();
         }
-        mediaExtractor.release();
     }
 
     @Test
@@ -61,6 +66,21 @@ public class MediaExtractorDeviceSideTest {
     @Test
     public void testEntryPointNdkWithJvm() {
         extractUsingNdkMediaExtractor(mAssetManager, SAMPLE_PATH, /* withAttachedJvm= */ true);
+    }
+
+    @Test
+    public void testPlaybackId() throws Exception {
+        MediaExtractor mediaExtractor = new MediaExtractor();
+        AssetManager assetManager =
+                InstrumentationRegistry.getInstrumentation().getContext().getAssets();
+        try (AssetFileDescriptor fileDescriptor = assetManager.openFd(SAMPLE_PATH)) {
+            mediaExtractor.setDataSource(fileDescriptor);
+            assertThat(mediaExtractor.getPlaybackId()).isEqualTo("");
+            mediaExtractor.setPlaybackId("FakePlaybackId");
+            assertThat(mediaExtractor.getPlaybackId()).isEqualTo("FakePlaybackId");
+        } finally {
+            mediaExtractor.release();
+        }
     }
 
     private native void extractUsingNdkMediaExtractor(
