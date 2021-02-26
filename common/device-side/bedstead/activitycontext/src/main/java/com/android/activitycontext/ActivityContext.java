@@ -29,7 +29,6 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils.QuadFunction;
 import com.android.compatibility.common.util.ShellIdentityUtils.TriFunction;
-import com.android.eventlib.premade.EventLibActivity;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.function.BiConsumer;
@@ -39,7 +38,10 @@ import java.util.function.Function;
 
 import javax.annotation.Nullable;
 
-public class ActivityContext extends EventLibActivity {
+/**
+ * Activity used for tests which need an actual {@link Context}.
+ */
+public class ActivityContext extends Activity {
 
     private static final String LOG_TAG = "ActivityContext";
     private static final Context sContext =
