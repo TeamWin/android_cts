@@ -26,5 +26,5 @@ android_test_helper_app {
         "general-tests",
         "mts",
     ],
-    sdk_version: "current",
+    sdk_version: "test_current",
 }
