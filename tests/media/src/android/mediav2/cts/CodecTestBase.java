@@ -430,9 +430,10 @@ class OutputManager {
 
     float getRmsError(short[] refData) {
         long totalErrorSquared = 0;
-        assertTrue(0 == (memory.length & 1));
-        short[] shortData = new short[memory.length / 2];
-        ByteBuffer.wrap(memory).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortData);
+        assertTrue(0 == (memIndex & 1));
+        short[] shortData = new short[memIndex / 2];
+        ByteBuffer.wrap(memory, 0, memIndex).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
+                .get(shortData);
         if (refData.length != shortData.length) return Float.MAX_VALUE;
         for (int i = 0; i < shortData.length; i++) {
             int d = shortData[i] - refData[i];
