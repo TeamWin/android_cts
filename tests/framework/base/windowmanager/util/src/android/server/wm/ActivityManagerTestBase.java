@@ -212,6 +212,9 @@ public abstract class ActivityManagerTestBase {
     protected static final String MSG_NO_MOCK_IME =
             "MockIme cannot be used for devices that do not support installable IMEs";
 
+    private static final String AM_BROADCAST_CLOSE_SYSTEM_DIALOGS =
+            "am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS";
+
     protected static final String LOCK_CREDENTIAL = "1234";
 
     private static final int UI_MODE_TYPE_MASK = 0x0f;
@@ -762,6 +765,8 @@ public abstract class ActivityManagerTestBase {
      * (which will trigger stop-app-switches), it is the recommended method to go home.
      */
     protected static void launchHomeActivityNoWait() {
+        // dismiss all system dialogs before launch home.
+        executeShellCommand(AM_BROADCAST_CLOSE_SYSTEM_DIALOGS);
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
     }
 

@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class EventLogsTest {
-    private static final Context CONTEXT =
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TEST_APP_PACKAGE_NAME = "com.android.eventlib.tests.testapp";
     private static final String INCORRECT_PACKAGE_NAME = "com.android.eventlib.tests.notapackage";
@@ -80,7 +80,7 @@ public class EventLogsTest {
     public void teardown() {
         if (hasScheduledEvents) {
             // Clear the queue
-            CustomEvent.queryPackage(CONTEXT.getPackageName()).poll();
+            CustomEvent.queryPackage(sContext.getPackageName()).poll();
         }
         if (hasScheduledEventsOnTestApp) {
             // Clear the queue
@@ -90,13 +90,13 @@ public class EventLogsTest {
 
     @Test
     public void resetLogs_get_doesNotReturnLogs() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
         EventLogs.resetLogs();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         assertThat(eventLogs.get()).isNull();
     }
 
@@ -112,13 +112,13 @@ public class EventLogsTest {
 
     @Test
     public void resetLogs_next_doesNotReturnLogs() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
         EventLogs.resetLogs();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         assertThat(eventLogs.next()).isNull();
     }
 
@@ -134,13 +134,13 @@ public class EventLogsTest {
 
     @Test
     public void resetLogs_poll_doesNotReturnLogs() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
         EventLogs.resetLogs();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
     }
 
@@ -156,7 +156,7 @@ public class EventLogsTest {
 
     @Test
     public void get_nothingLogged_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get()).isNull();
@@ -172,7 +172,7 @@ public class EventLogsTest {
 
     @Test
     public void next_nothingLogged_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next()).isNull();
@@ -188,7 +188,7 @@ public class EventLogsTest {
 
     @Test
     public void poll_nothingLogged_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll(VERY_SHORT_POLL_WAIT)).isNull();
@@ -196,7 +196,7 @@ public class EventLogsTest {
 
     @Test
     public void poll_loggedAfter_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecond();
 
@@ -223,9 +223,9 @@ public class EventLogsTest {
     @Test
     public void get_loggedOnTwoPackages_returnsEventFromQueriedPackage() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
-        CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
+        CustomEvent.logger(sContext).setTag(TEST_TAG1).setData(DATA_2).log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_2);
@@ -234,9 +234,9 @@ public class EventLogsTest {
     @Test
     public void next_loggedOnTwoPackages_returnsEventFromQueriedPackage() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
-        CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
+        CustomEvent.logger(sContext).setTag(TEST_TAG1).setData(DATA_2).log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_2);
@@ -245,9 +245,9 @@ public class EventLogsTest {
     @Test
     public void poll_loggedOnTwoPackages_returnsEventFromQueriedPackage() {
         logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ DATA_1);
-        CustomEvent.logger(CONTEXT).setTag(TEST_TAG1).setData(DATA_2).log();
+        CustomEvent.logger(sContext).setTag(TEST_TAG1).setData(DATA_2).log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_2);
@@ -255,11 +255,11 @@ public class EventLogsTest {
 
     @Test
     public void get_alreadyLogged_returnsEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get()).isNotNull();
@@ -276,16 +276,16 @@ public class EventLogsTest {
 
     @Test
     public void next_alreadyLogged_returnsFirstEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().data()).isEqualTo(DATA_1);
@@ -304,16 +304,16 @@ public class EventLogsTest {
 
     @Test
     public void poll_alreadyLogged_returnsFirstEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().data()).isEqualTo(DATA_1);
@@ -332,10 +332,10 @@ public class EventLogsTest {
 
     @Test
     public void next_hasReturnedAllEvents_returnsNull() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
@@ -354,10 +354,10 @@ public class EventLogsTest {
 
     @Test
     public void poll_hasReturnedAllEvents_returnsNull() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
@@ -376,15 +376,15 @@ public class EventLogsTest {
 
     @Test
     public void next_previouslyCalledNext_returnsNextUnseenEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
@@ -404,15 +404,15 @@ public class EventLogsTest {
 
     @Test
     public void next_previouslyPolled_returnsNextUnseenEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
@@ -432,15 +432,15 @@ public class EventLogsTest {
 
     @Test
     public void poll_previouslyCalledNext_returnsNextUnseenEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.next();
 
@@ -460,15 +460,15 @@ public class EventLogsTest {
 
     @Test
     public void poll_returnsNextUnseenEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .setData(DATA_2)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         eventLogs.poll();
 
@@ -488,14 +488,14 @@ public class EventLogsTest {
 
     @Test
     public void get_loggedPreviouslyWithDifferentData_returnsCorrectEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
@@ -514,14 +514,14 @@ public class EventLogsTest {
 
     @Test
     public void next_loggedPreviouslyWithDifferentData_returnsCorrectEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG1);
@@ -540,14 +540,14 @@ public class EventLogsTest {
 
     @Test
     public void poll_loggedPreviouslyWithDifferentData_returnsCorrectEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG1);
@@ -565,14 +565,14 @@ public class EventLogsTest {
 
     @Test
     public void get_multipleLoggedEvents_returnsFirstEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_1);
     }
@@ -589,13 +589,13 @@ public class EventLogsTest {
 
     @Test
     public void get_multipleCalls_alwaysReturnsFirstEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_2)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         eventLogs.get();
 
         assertThat(eventLogs.get().data()).isEqualTo(DATA_1);
@@ -613,7 +613,7 @@ public class EventLogsTest {
 
     @Test
     public void get_loggedAfter_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
 
         scheduleCustomEventInOneSecond();
 
@@ -631,7 +631,7 @@ public class EventLogsTest {
 
     @Test
     public void next_loggedAfter_returnsNull() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
 
         scheduleCustomEventInOneSecond();
 
@@ -649,13 +649,13 @@ public class EventLogsTest {
 
     @Test
     public void poll_loggedAfter_returnsEvent() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
         mScheduledExecutorService.schedule(() -> {
-            CustomEvent.logger(CONTEXT)
+            CustomEvent.logger(sContext)
                     .setTag(TEST_TAG1)
                     .log();
         }, 1, TimeUnit.SECONDS);
@@ -679,12 +679,12 @@ public class EventLogsTest {
 
     @Test
     public void next_loggedAfterPreviousCallToNext_returnsNewEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         eventLogs.next();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_2)
                 .log();
 
@@ -703,12 +703,12 @@ public class EventLogsTest {
 
     @Test
     public void poll_loggedAfterPreviousCallToPoll_returnsNewEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName());
         eventLogs.poll();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_2)
                 .log();
 
@@ -727,11 +727,11 @@ public class EventLogsTest {
 
     @Test
     public void next_calledOnSeparateQuery_returnsFromStartsAgain() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        EventLogs<CustomEvent> eventLogs1 = CustomEvent.queryPackage(CONTEXT.getPackageName());
-        EventLogs<CustomEvent> eventLogs2 = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs1 = CustomEvent.queryPackage(sContext.getPackageName());
+        EventLogs<CustomEvent> eventLogs2 = CustomEvent.queryPackage(sContext.getPackageName());
 
         assertThat(eventLogs1.next()).isNotNull();
         assertThat(eventLogs2.next()).isNotNull();
@@ -749,11 +749,11 @@ public class EventLogsTest {
 
     @Test
     public void poll_calledOnSeparateQuery_returnsFromStartsAgain() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setData(DATA_1)
                 .log();
-        EventLogs<CustomEvent> eventLogs1 = CustomEvent.queryPackage(CONTEXT.getPackageName());
-        EventLogs<CustomEvent> eventLogs2 = CustomEvent.queryPackage(CONTEXT.getPackageName());
+        EventLogs<CustomEvent> eventLogs1 = CustomEvent.queryPackage(sContext.getPackageName());
+        EventLogs<CustomEvent> eventLogs2 = CustomEvent.queryPackage(sContext.getPackageName());
 
         assertThat(eventLogs1.next()).isNotNull();
         assertThat(eventLogs2.next()).isNotNull();
@@ -771,14 +771,14 @@ public class EventLogsTest {
 
     @Test
     public void get_obeysLambdaFilter() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()));
 
         assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG2);
@@ -797,14 +797,14 @@ public class EventLogsTest {
 
     @Test
     public void poll_obeysLambdaFilter() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()));
 
         assertThat(eventLogs.poll().tag()).isEqualTo(TEST_TAG2);
@@ -825,14 +825,14 @@ public class EventLogsTest {
 
     @Test
     public void next_obeysLambdaFilter() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()));
 
         assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
@@ -853,18 +853,18 @@ public class EventLogsTest {
 
     @Test
     public void get_obeysMultipleLambdaFilters() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .setData(DATA_1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -890,18 +890,18 @@ public class EventLogsTest {
 
     @Test
     public void poll_obeysMultipleLambdaFilters() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .setData(DATA_1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -929,18 +929,18 @@ public class EventLogsTest {
 
     @Test
     public void next_obeysMultipleLambdaFilters() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .log();
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG2)
                 .setData(DATA_1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .filter(e -> TEST_TAG2.equals(e.tag()))
                 .filter(e -> DATA_1.equals(e.data()));
 
@@ -968,11 +968,11 @@ public class EventLogsTest {
 
     @Test
     public void pollOrFail_hasEvent_returnsEvent() {
-        CustomEvent.logger(CONTEXT)
+        CustomEvent.logger(sContext)
                 .setTag(TEST_TAG1)
                 .log();
 
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThat(eventLogs.pollOrFail().tag()).isEqualTo(TEST_TAG1);
@@ -990,7 +990,7 @@ public class EventLogsTest {
 
     @Test
     public void pollOrFail_noEvent_throwsException() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         assertThrows(AssertionError.class, () -> eventLogs.pollOrFail(VERY_SHORT_POLL_WAIT));
@@ -998,7 +998,7 @@ public class EventLogsTest {
 
     @Test
     public void pollOrFail_loggedAfter_throwsException() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
         scheduleCustomEventInOneSecond();
 
@@ -1024,13 +1024,13 @@ public class EventLogsTest {
 
     @Test
     public void pollOrFail_loggedAfter_returnsEvent() {
-        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(CONTEXT.getPackageName())
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(sContext.getPackageName())
                 .whereTag().isEqualTo(TEST_TAG1);
 
         // We don't use scheduleCustomEventInOneSecond(); because we don't need any special teardown
         // as we're blocking for the event in this method
         mScheduledExecutorService.schedule(() -> {
-            CustomEvent.logger(CONTEXT)
+            CustomEvent.logger(sContext)
                     .setTag(TEST_TAG1)
                     .log();
         }, 1, TimeUnit.SECONDS);
@@ -1177,7 +1177,7 @@ public class EventLogsTest {
     }
 
     private UserHandle createProfile() {
-        UserManager userManager = CONTEXT.getSystemService(UserManager.class);
+        UserManager userManager = sContext.getSystemService(UserManager.class);
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().adoptShellPermissionIdentity();
         UserHandle userHandle = userManager.createProfile("profile",
@@ -1190,7 +1190,7 @@ public class EventLogsTest {
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().adoptShellPermissionIdentity();
         try {
-            CONTEXT.getPackageManager().installExistingPackageAsUser(
+            sContext.getPackageManager().installExistingPackageAsUser(
                     TEST_APP_PACKAGE_NAME, userHandle.getIdentifier());
 
         } catch (PackageManager.NameNotFoundException e) {
@@ -1201,14 +1201,14 @@ public class EventLogsTest {
     private void removeUser(UserHandle userHandle) {
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().adoptShellPermissionIdentity();
-        CONTEXT.getSystemService(UserManager.class).removeUser(userHandle);
+        sContext.getSystemService(UserManager.class).removeUser(userHandle);
     }
 
     private void scheduleCustomEventInOneSecond() {
         hasScheduledEvents = true;
 
         mScheduledExecutorService.schedule(() -> {
-            CustomEvent.logger(CONTEXT)
+            CustomEvent.logger(sContext)
                     .log();
         }, 1, TimeUnit.SECONDS);
     }
@@ -1223,7 +1223,7 @@ public class EventLogsTest {
 
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().adoptShellPermissionIdentity();
-        CONTEXT.startActivityAsUser(intent, userHandle);
+        sContext.startActivityAsUser(intent, userHandle);
 
         CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(tag)
@@ -1250,7 +1250,7 @@ public class EventLogsTest {
     private void killTestApp() {
         InstrumentationRegistry.getInstrumentation()
                 .getUiAutomation().adoptShellPermissionIdentity();
-        CONTEXT.getSystemService(ActivityManager.class).forceStopPackage(TEST_APP_PACKAGE_NAME);
+        sContext.getSystemService(ActivityManager.class).forceStopPackage(TEST_APP_PACKAGE_NAME);
     }
 
     // TODO: Ensure tests work on O+

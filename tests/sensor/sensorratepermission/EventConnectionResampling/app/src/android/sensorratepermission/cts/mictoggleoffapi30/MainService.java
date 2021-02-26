@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.sensorratepermission.cts.mictoggleoffapi25;
+package android.sensorratepermission.cts.mictoggleoffapi30;
 
 import android.app.Service;
 import android.content.Context;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Helper app to test the cases where two apps register listeners at the same time.
- * It targets API 25 and therefore can have high sampling rates.
+ * It targets API 30 and therefore can have high sampling rates.
  */
 public class MainService extends Service {
     @Override
@@ -56,6 +56,7 @@ public class MainService extends Service {
         } catch (InterruptedException e) {
 
         }
+        stopForeground(true);
         stopSelf();
         return START_STICKY;
     }
