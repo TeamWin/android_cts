@@ -23,6 +23,7 @@ LOCAL_SRC_FILES := \
     tensorflow/lite/delegates/nnapi/nnapi_delegate_test.cc \
     tensorflow/lite/kernels/test_util.cc \
     tensorflow/core/platform/default/logging.cc \
+    tensorflow/core/platform/default/env_time.cc \
     tensorflow/lite/kernels/acceleration_test_util.cc \
     tensorflow/lite/kernels/acceleration_test_util_internal.cc \
     tensorflow/lite/delegates/nnapi/acceleration_test_list.cc \
@@ -31,6 +32,7 @@ LOCAL_CPP_EXTENSION := .cc
 
 LOCAL_C_INCLUDES += external/flatbuffers/include
 LOCAL_C_INCLUDES += external/tensorflow
+LOCAL_C_INCLUDES += external/ruy
 
 LOCAL_CFLAGS :=  \
     -DPLATFORM_POSIX_ANDROID \
@@ -44,7 +46,7 @@ LOCAL_CFLAGS :=  \
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
 LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgmock_ndk libtflite_static
-LOCAL_HEADER_LIBRARIES := libeigen gemmlowp_headers
+LOCAL_HEADER_LIBRARIES := libeigen gemmlowp_headers libtflite_schema_headers
 LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
 include $(BUILD_STATIC_LIBRARY)
