@@ -34,7 +34,6 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
-import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
 import com.android.cts.devicepolicy.PermissionBroadcastReceiver;
@@ -407,7 +406,6 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         assertCanRequestPermissionFromActivity(READ_CONTACTS);
     }
 
-    @Suppress // Flakey.
     public void testPermissionPrompts() throws Exception {
         // register a crash watcher
         mDevice.registerWatcher(CRASH_WATCHER_ID, () -> {
