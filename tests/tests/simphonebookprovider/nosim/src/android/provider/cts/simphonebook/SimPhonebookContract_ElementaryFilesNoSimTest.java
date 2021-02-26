@@ -21,18 +21,23 @@ import static com.android.internal.telephony.testing.TelephonyAssertions.assertT
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.hamcrest.Matchers.equalTo;
+
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.SimPhonebookContract.ElementaryFiles;
+import android.telephony.SubscriptionManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.RequiresDevice;
 
+import org.junit.Assume;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -84,11 +89,23 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
                 ElementaryFiles.CONTENT_URI.buildUpon().appendPath("invalid").build())).isNull();
     }
 
-    // The emulator fakes a SIM card that only kind of works. The power off rule does not disable
-    // it and it has EF_FDN so this test will fail.
-    @RequiresDevice
     @Test
     public void query_returnsEmptyCursor() {
+        SubscriptionManager subscriptionManager = ApplicationProvider.getApplicationContext()
+                .getSystemService(SubscriptionManager.class);
+        int subscriptionCount = 0;
+        if (subscriptionManager != null) {
+            subscriptionCount = SystemUtil.runWithShellPermissionIdentity(
+                    subscriptionManager::getActiveSubscriptionInfoCount,
+                    Manifest.permission.READ_PHONE_STATE);
+        }
+        // The SIM_OFF_RULE is supposed to prevent this from happening but it doesn't work on
+        // emulators so we also have this assumption to prevent the test from running if there
+        // is an active SIM.
+        Assume.assumeThat(
+                "No SIMs should be active but some were detected.",
+                subscriptionCount, equalTo(0));
+
         try (Cursor cursor = query(null)) {
             assertThat(cursor).hasCount(0);
         }
