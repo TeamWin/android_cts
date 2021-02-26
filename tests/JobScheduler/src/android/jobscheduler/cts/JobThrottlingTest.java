@@ -640,7 +640,11 @@ public class JobThrottlingTest {
         mUiDevice.executeShellCommand("am make-uid-idle --user current " + TEST_APP_PACKAGE);
     }
 
-    private void setTestPackageStandbyBucket(Bucket bucket) throws Exception {
+    void setTestPackageStandbyBucket(Bucket bucket) throws Exception {
+        setTestPackageStandbyBucket(mUiDevice, bucket);
+    }
+
+    static void setTestPackageStandbyBucket(UiDevice uiDevice, Bucket bucket) throws Exception {
         final String bucketName;
         switch (bucket) {
             case ACTIVE:
@@ -664,7 +668,7 @@ public class JobThrottlingTest {
             default:
                 throw new IllegalArgumentException("Requested unknown bucket " + bucket);
         }
-        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE
+        uiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE
                 + " " + bucketName);
     }
 
