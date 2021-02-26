@@ -123,10 +123,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         if (!wifiManager.isWifiEnabled()) setWifiEnabled(true);
         PollingCheck.check("Wifi not enabled", DURATION, () -> wifiManager.isWifiEnabled());
 
-        // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.getPrivilegedConfiguredNetworks());
-        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
 
         // Disconnect & disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
@@ -173,6 +171,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
 
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
                 () -> mWifiManager.getPrivilegedConfiguredNetworks());
+        // check we have >= 1 saved network
+        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
         // Pick the last saved network on the device (assumes that it is in range)
         mTestNetwork = savedNetworks.get(savedNetworks.size()  - 1);
 
