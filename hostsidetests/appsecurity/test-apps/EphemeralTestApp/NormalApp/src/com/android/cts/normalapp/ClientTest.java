@@ -73,6 +73,9 @@ public class ClientTest {
     /** Action to start ephemeral test activities */
     private static final String ACTION_START_EPHEMERAL_ACTIVITY =
             "com.android.cts.ephemeraltest.START_EPHEMERAL";
+    /** Action to start ephemeral test activities */
+    private static final String ACTION_START_OTHER_EPHEMERAL_ACTIVITY =
+            "com.android.cts.ephemeraltest.START_OTHER_EPHEMERAL";
     /** Action to query for test activities */
     private static final String ACTION_QUERY =
             "com.android.cts.ephemeraltest.QUERY";
@@ -82,6 +85,7 @@ public class ClientTest {
             "com.android.cts.ephemeraltest.EXTRA_ACTIVITY_RESULT";
 
     private static final String EPHEMERAL_1_PKG = "com.android.cts.ephemeralapp1";
+    private static final String EPHEMERAL_2_PKG = "com.android.cts.ephemeralapp2";
     private static final String INSTALLED_INSTANT_APP_MIN_CACHE_PERIOD =
             "installed_instant_app_min_cache_period";
 
@@ -378,7 +382,7 @@ public class ClientTest {
     public void testStartEphemeral() throws Exception {
         // start the ephemeral activity; no EXTERNAL flag
         try {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+            final Intent startEphemeralIntent = new Intent(ACTION_START_OTHER_EPHEMERAL_ACTIVITY)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             InstrumentationRegistry.getContext().startActivity(
                     startEphemeralIntent, null /*options*/);
@@ -389,13 +393,13 @@ public class ClientTest {
 
         // start the ephemeral activity; EXTERNAL flag
         {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+            final Intent startEphemeralIntent = new Intent(ACTION_START_OTHER_EPHEMERAL_ACTIVITY)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
             InstrumentationRegistry.getContext().startActivity(
                     startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
-            assertThat(EPHEMERAL_1_PKG, is(testResult.getPackageName()));
-            assertThat(ACTION_START_EPHEMERAL_ACTIVITY, is(testResult.getIntent().getAction()));
+            assertThat(EPHEMERAL_2_PKG, is(testResult.getPackageName()));
+            assertThat(ACTION_START_OTHER_EPHEMERAL_ACTIVITY, is(testResult.getIntent().getAction()));
         }
 
 
