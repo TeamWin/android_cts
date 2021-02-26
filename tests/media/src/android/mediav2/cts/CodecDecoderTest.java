@@ -206,6 +206,20 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     private native boolean nativeTestSimpleDecode(String decoder, Surface surface, String mime,
             String testFile, String refFile, float rmsError, long checksum);
 
+    private void verify() throws IOException {
+        if (mRmsError >= 0) {
+            assertTrue(mRefFile != null);
+            short[] refData = setUpAudioReference();
+            float currError = mOutputBuff.getRmsError(refData);
+            float errMargin = mRmsError * RMS_ERROR_TOLERANCE;
+            assertTrue(String.format("%s rms error too high exp/got %f/%f", mTestFile,
+                    errMargin, currError), currError <= errMargin);
+        } else if (mRefCRC >= 0) {
+            assertEquals(String.format("%s checksum mismatch", mTestFile), mRefCRC,
+                    mOutputBuff.getCheckSumImage());
+        }
+    }
+
     /**
      * Tests decoder for combinations:
      * 1. Codec Sync Mode, Signal Eos with Last frame
@@ -289,19 +303,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 }
             }
             mCodec.release();
-            if (mSaveToMem) {
-                if (mRmsError >= 0) {
-                    assertTrue(mRefFile != null);
-                    short[] refData = setUpAudioReference();
-                    float currError = ref.getRmsError(refData);
-                    float errMargin = mRmsError * RMS_ERROR_TOLERANCE;
-                    assertTrue(String.format("%s rms error too high exp/got %f/%f", mTestFile,
-                            errMargin, currError), currError <= errMargin);
-                } else if (mRefCRC >= 0) {
-                    assertEquals(String.format("%s checksum mismatch", mTestFile), mRefCRC,
-                            ref.getCheckSumImage());
-                }
-            }
+            if (mSaveToMem) verify();
             assertTrue(nativeTestSimpleDecode(decoder, null, mMime, mInpPrefix + mTestFile,
                     mInpPrefix + mRefFile, mRmsError * RMS_ERROR_TOLERANCE,
                     ref.getCheckSumBuffer()));
@@ -446,7 +448,6 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
      * Tests reconfigure when codec is in sync and async mode. In these scenarios, Timestamp
      * ordering is verified. The output has to be consistent (not flaky) in all runs
      */
-    @Ignore("TODO(b/148523403)")
     @LargeTest
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testReconfigure() throws IOException, InterruptedException {
@@ -458,14 +459,15 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
         if (listOfDecoders.isEmpty()) {
             fail("no suitable codecs found for mime: " + mMime);
         }
-        final long pts = 500000;
+        final long startTs = 0;
+        final long seekTs = 500000;
         final int mode = MediaExtractor.SEEK_TO_CLOSEST_SYNC;
         boolean[] boolStates = {true, false};
         OutputManager test = new OutputManager();
         for (String decoder : listOfDecoders) {
-            decodeToMemory(mTestFile, decoder, pts, mode, Integer.MAX_VALUE);
+            decodeToMemory(mTestFile, decoder, startTs, mode, Integer.MAX_VALUE);
             OutputManager ref = mOutputBuff;
-            decodeToMemory(mReconfigFile, decoder, pts, mode, Integer.MAX_VALUE);
+            decodeToMemory(mReconfigFile, decoder, seekTs, mode, Integer.MAX_VALUE);
             OutputManager configRef = mOutputBuff;
             if (mIsAudio) {
                 assertTrue("reference output pts is not strictly increasing",
@@ -484,7 +486,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 setUpSource(mTestFile);
                 String log = String.format("decoder: %s, input file: %s, mode: %s:: ", decoder,
                         mTestFile, (isAsync ? "async" : "sync"));
-                mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                mExtractor.seekTo(startTs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
                 configureCodec(format, isAsync, true, false);
                 MediaFormat defFormat = mCodec.getOutputFormat();
                 boolean validateFormat = true;
@@ -522,10 +524,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 mCodec.start();
                 mSaveToMem = true;
                 test.reset();
-                mExtractor.seekTo(pts, mode);
+                mExtractor.seekTo(startTs, mode);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
+                if (mSaveToMem) verify();
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -547,10 +550,11 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 reConfigureCodec(format, !isAsync, false, false);
                 mCodec.start();
                 test.reset();
-                mExtractor.seekTo(pts, mode);
+                mExtractor.seekTo(startTs, mode);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
+                if (mSaveToMem) verify();
                 /* TODO(b/147348711) */
                 if (false) mCodec.stop();
                 else mCodec.reset();
@@ -582,7 +586,7 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
                 }
                 mCodec.start();
                 test.reset();
-                mExtractor.seekTo(pts, mode);
+                mExtractor.seekTo(seekTs, mode);
                 doWork(Integer.MAX_VALUE);
                 queueEOS();
                 waitForAllOutputs();
@@ -680,7 +684,10 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeQueueCSD() throws IOException, InterruptedException {
         MediaFormat format = setUpSource(mTestFile);
-        Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
+        if (!hasCSD(format)) {
+            mExtractor.release();
+            return;
+        }
         ArrayList<MediaFormat> formats = new ArrayList<>();
         formats.add(format);
         formats.add(new MediaFormat(format));
@@ -770,7 +777,10 @@ public class CodecDecoderTest extends CodecDecoderTestBase {
     @Test(timeout = PER_TEST_TIMEOUT_LARGE_TEST_MS)
     public void testSimpleDecodeQueueCSDNative() throws IOException {
         MediaFormat format = setUpSource(mTestFile);
-        Assume.assumeTrue("Format has no CSD, ignoring test for mime:" + mMime, hasCSD(format));
+        if (!hasCSD(format)) {
+            mExtractor.release();
+            return;
+        }
         ArrayList<String> listOfDecoders = selectCodecs(mMime, null, null, false);
         if (listOfDecoders.isEmpty()) {
             fail("no suitable codecs found for mime: " + mMime);
