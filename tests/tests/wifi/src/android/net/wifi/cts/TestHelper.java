@@ -71,7 +71,7 @@ public class TestHelper {
     private final UiDevice mUiDevice;
 
     private static final int DURATION_MILLIS = 10_000;
-    private static final int DURATION_NETWORK_CONNECTION_MILLIS = 60_000;
+    private static final int DURATION_NETWORK_CONNECTION_MILLIS = 40_000;
     private static final int DURATION_SCREEN_TOGGLE_MILLIS = 2000;
     private static final int DURATION_UI_INTERACTION_MILLIS = 25_000;
     private static final int SCAN_RETRY_CNT_TO_FIND_MATCHING_BSSID = 3;
@@ -136,8 +136,7 @@ public class TestHelper {
                         Executors.newSingleThreadExecutor(), scanResultsCallback);
                 wifiManager.startScan(new WorkSource(myUid()));
                 // now wait for callback
-                assertThat(countDownLatch.await(
-                        DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+                assertThat(countDownLatch.await(DURATION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
             } catch (InterruptedException e) {
             } finally {
                 wifiManager.unregisterScanResultsCallback(scanResultsCallback);
