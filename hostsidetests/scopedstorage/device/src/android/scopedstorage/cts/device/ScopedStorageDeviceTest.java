@@ -1158,15 +1158,15 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         try {
             assertThat(create.createNewFile()).isTrue();
             // Wait for the kernel to update the dentry cache.
-            Thread.sleep(10);
+            Thread.sleep(100);
 
             assertThat(delete.delete()).isTrue();
             // Wait for the kernel to clean up the dentry cache.
-            Thread.sleep(10);
+            Thread.sleep(100);
 
             assertThat(create.createNewFile()).isTrue();
             // Wait for the kernel to update the dentry cache.
-            Thread.sleep(10);
+            Thread.sleep(100);
         } finally {
             create.delete();
             delete.delete();
