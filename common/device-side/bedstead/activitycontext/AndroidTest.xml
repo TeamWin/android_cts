@@ -21,5 +21,6 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="com.android.activitycontext.test" />
+        <option name="exclude-annotation" value="com.android.activitycontext.annotations.RunWhenInstrumentingOtherApp" />
     </test>
 </configuration>

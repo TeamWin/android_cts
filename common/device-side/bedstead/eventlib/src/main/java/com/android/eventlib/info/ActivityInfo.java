@@ -41,8 +41,8 @@ public class ActivityInfo extends ClassInfo {
 
     @Override
     public String toString() {
-        return "Activity{" +
-                "class=" + super.toString() +
-                "}";
+        return "Activity{"
+                + "class=" + super.toString()
+                + "}";
     }
 }

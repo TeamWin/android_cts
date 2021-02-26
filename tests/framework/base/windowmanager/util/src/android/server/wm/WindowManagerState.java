@@ -64,7 +64,7 @@ import com.android.server.wm.nano.DisplayFramesProto;
 import com.android.server.wm.nano.DisplayRotationProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.KeyguardControllerProto;
-import com.android.server.wm.nano.PinnedStackControllerProto;
+import com.android.server.wm.nano.PinnedTaskControllerProto;
 import com.android.server.wm.nano.RootWindowContainerProto;
 import com.android.server.wm.nano.TaskProto;
 import com.android.server.wm.nano.WindowContainerChildProto;
@@ -1133,10 +1133,10 @@ public class WindowManagerState {
             mAppTransitionState = appStateToString(appState);
             mLastTransition = appTransitionToString(lastTransition);
 
-            PinnedStackControllerProto pinnedStackProto = proto.pinnedStackController;
-            if (pinnedStackProto != null) {
-                mDefaultPinnedStackBounds = extract(pinnedStackProto.defaultBounds);
-                mPinnedStackMovementBounds = extract(pinnedStackProto.movementBounds);
+            PinnedTaskControllerProto pinnedTaskProto = proto.pinnedTaskController;
+            if (pinnedTaskProto != null) {
+                mDefaultPinnedStackBounds = extract(pinnedTaskProto.defaultBounds);
+                mPinnedStackMovementBounds = extract(pinnedTaskProto.movementBounds);
             }
 
             final DisplayRotationProto rotationProto = proto.displayRotation;

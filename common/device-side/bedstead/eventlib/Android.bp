@@ -34,6 +34,7 @@ android_test {
         "mockito-target-minus-junit4", // TODO(scottjonathan): Remove once we can get rid of mocks
         "compatibility-device-util-axt", // used for SystemUtil.runShellCommandOrThrow
     ],
+    resource_dirs: ["src/test/res"],
     data: [":EventLibTestApp"],
     manifest: "src/test/AndroidManifest.xml",
     min_sdk_version: "27"

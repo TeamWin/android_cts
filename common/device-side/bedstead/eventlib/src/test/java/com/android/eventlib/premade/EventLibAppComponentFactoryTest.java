@@ -26,6 +26,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
+import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,19 +43,39 @@ public class EventLibAppComponentFactoryTest {
     private static final String DECLARED_ACTIVITY_WITH_NO_CLASS
             = "com.android.generatedEventLibActivity";
 
-    private static final Context CONTEXT =
+    // This must exist as an <receiver> in AndroidManifest.xml which receives the
+    // com.android.eventlib.GENERATED_BROADCAST_RECEIVER action
+    private static final String GENERATED_RECEIVER_CLASS_NAME =
+            "com.android.generatedEventLibBroadcastReceiver";
+    private static final String GENERATED_BROADCAST_RECEIVER_ACTION =
+            "com.android.eventlib.GENERATED_BROADCAST_RECEIVER";
+
+    private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
     @Test
     public void startActivity_activityDoesNotExist_startsLoggingActivity() {
         Intent intent = new Intent();
-        intent.setComponent(new ComponentName(CONTEXT.getPackageName(),
+        intent.setComponent(new ComponentName(sContext.getPackageName(),
                 DECLARED_ACTIVITY_WITH_NO_CLASS));
-        CONTEXT.startActivity(intent);
+        sContext.startActivity(intent);
 
         EventLogs<ActivityCreatedEvent> eventLogs =
-                ActivityCreatedEvent.queryPackage(CONTEXT.getPackageName())
+                ActivityCreatedEvent.queryPackage(sContext.getPackageName())
                 .whereActivity().className().isEqualTo(DECLARED_ACTIVITY_WITH_NO_CLASS);
+        assertThat(eventLogs.poll()).isNotNull();
+    }
+
+    @Test
+    public void sendBroadcast_receiverDoesNotExist_launchesBroadcastReceiver() {
+        Intent intent = new Intent(GENERATED_BROADCAST_RECEIVER_ACTION);
+        intent.setPackage(sContext.getPackageName());
+
+        sContext.sendBroadcast(intent);
+
+        EventLogs<BroadcastReceivedEvent> eventLogs = BroadcastReceivedEvent
+                .queryPackage(sContext.getPackageName())
+                .whereBroadcastReceiver().className().isEqualTo(GENERATED_RECEIVER_CLASS_NAME);
         assertThat(eventLogs.poll()).isNotNull();
     }
 

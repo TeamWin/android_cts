@@ -116,6 +116,7 @@ public class WhileIdleAlarmsTest {
         mDeviceConfigHelper.set("allow_while_idle_compat_quota",
                 String.valueOf(ALLOW_WHILE_IDLE_COMPAT_QUOTA));
         mDeviceConfigHelper.set("allow_while_idle_window", String.valueOf(ALLOW_WHILE_IDLE_WINDOW));
+        mDeviceConfigHelper.set("crash_non_clock_apps", "true");
     }
 
     @Before

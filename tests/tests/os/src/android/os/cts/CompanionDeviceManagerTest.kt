@@ -139,7 +139,8 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
         startApp(packageName)
 
-        click("Associate Watch")
+        click("Watch")
+        click("Associate")
         val device = waitFindNode(hasIdThat(containsString("device_list")))
                 .children
                 .find { it.className == TextView::class.java.name }
