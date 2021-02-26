@@ -167,6 +167,19 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         }
     }
 
+    private void waitUntilEmbeddedViewDrawn() throws Throwable {
+        // We use frameCommitCallback because we need to ensure HWUI
+        // has actually queued the frame.
+        final CountDownLatch latch = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            mEmbeddedView.getViewTreeObserver().registerFrameCommitCallback(
+                latch::countDown);
+            mEmbeddedView.invalidate();
+        });
+        assertTrue(latch.await(1, TimeUnit.SECONDS));
+
+    }
+
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         addViewToSurfaceView(mSurfaceView, mEmbeddedView,
@@ -191,6 +204,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
 
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
         mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
 
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
         assertTrue(mClicked);
@@ -259,16 +273,7 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
                 mVr.relayout(bigEdgeLength, bigEdgeLength);
         });
         mInstrumentation.waitForIdleSync();
-
-        // We use frameCommitCallback because we need to ensure HWUI
-        // has actually queued the frame.
-        final CountDownLatch latch = new CountDownLatch(1);
-        mActivityRule.runOnUiThread(() -> {
-            mEmbeddedView.getViewTreeObserver().registerFrameCommitCallback(
-                latch::countDown);
-            mEmbeddedView.invalidate();
-        });
-        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        waitUntilEmbeddedViewDrawn();
 
         // But after the click should hit.
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
@@ -335,6 +340,8 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
     public void testFocusable() throws Throwable {
         mEmbeddedView = new Button(mActivity);
         addSurfaceView(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT);
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
 
         // When surface view is focused, it should transfer focus to the embedded view.
         requestSurfaceViewFocus();
@@ -360,6 +367,8 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
             mEmbeddedLayoutParams.flags |= FLAG_NOT_FOCUSABLE;
             mVr.relayout(mEmbeddedLayoutParams);
         });
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
 
         // When surface view is focused, nothing should happen since the embedded view is not
         // focusable.
