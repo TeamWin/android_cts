@@ -22,6 +22,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -30,8 +31,10 @@ import android.util.Log;
 import androidx.test.core.app.ApplicationProvider;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 
@@ -73,9 +76,15 @@ class SimsPowerRule extends ExternalResource {
 
     @Override
     protected void before() {
-        SystemUtil.runWithShellPermissionIdentity(() -> mInitiallyActiveSubscriptions =
-                        mSubscriptionManager.getActiveSubscriptionInfoList(),
+        if (!RequiredFeatureRule.hasFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        mInitiallyActiveSubscriptions = SystemUtil.runWithShellPermissionIdentity(
+                mSubscriptionManager::getAccessibleSubscriptionInfoList,
                 Manifest.permission.READ_PHONE_STATE);
+        if (mInitiallyActiveSubscriptions == null) {
+            mInitiallyActiveSubscriptions = ImmutableList.of();
+        }
         if (mInitiallyOn) {
             return;
         }
