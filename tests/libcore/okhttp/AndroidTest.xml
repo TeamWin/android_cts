@@ -48,4 +48,8 @@
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
         <option name="screenshot-on-failure" value="false" />
     </object>
+
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <option name="mainline-module-package-name" value="com.google.android.conscrypt" />
+    </object>
 </configuration>
