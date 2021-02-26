@@ -124,6 +124,8 @@ public class WindowManagerState {
     private static final int TYPE_NAVIGATION_BAR = 2019;
     /** @see WindowManager.LayoutParams */
     private static final int TYPE_NAVIGATION_BAR_PANEL = 2024;
+    /** @see WindowManager.LayoutParams */
+    private static final int TYPE_NOTIFICATION_SHADE = 2040;
 
     // Default minimal size of resizable task, used if none is set explicitly.
     // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
@@ -926,6 +928,11 @@ public class WindowManagerState {
                 (ws.getName().equals(packageName) || ws.getName().startsWith(packageName + "/"))
                         && Arrays.stream(restrictToTypes).anyMatch(type -> type == ws.getType()))
                 .collect(Collectors.toList());
+    }
+
+    public boolean hasNotificationShade() {
+        computeState();
+        return !getMatchingWindowType(TYPE_NOTIFICATION_SHADE).isEmpty();
     }
 
     List<WindowState> getWindows() {
