@@ -55,6 +55,11 @@ public class TestImsConfig extends ImsConfigImplBase {
     }
 
     @Override
+    public void notifyRcsAutoConfigurationRemoved() {
+        TestAcsClient.getInstance().onConfigRemoved();
+    }
+
+    @Override
     public void setRcsClientConfiguration(RcsClientConfiguration rcc) {
         TestAcsClient.getInstance().onSetRcsClientConfiguration(rcc);
     }
