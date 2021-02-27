@@ -90,7 +90,7 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
         return mDevice.executeShellCommand(String.join(" ", command));
     }
 
-    protected boolean isHeadlessSystemUserMode() {
+    protected static boolean isHeadlessSystemUserMode() {
         return UserManager.isHeadlessSystemUserMode();
     }
 
