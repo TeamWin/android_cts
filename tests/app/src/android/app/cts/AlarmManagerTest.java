@@ -176,7 +176,7 @@ public class AlarmManagerTest extends AndroidTestCase {
         mMockAlarmReceiver.setAlarmedFalse();
         mWakeupTime = -1000;
         mAm.set(AlarmManager.RTC, mWakeupTime, mSender);
-        new PollingCheck(TIME_DELAY) {
+        new PollingCheck(2 * TIME_DELAY) {
             @Override
             protected boolean check() {
                 return mMockAlarmReceiver.alarmed;
