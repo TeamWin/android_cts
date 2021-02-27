@@ -36,7 +36,7 @@
              android:theme="@android:style/Theme.NoDisplay"
              android:exported="true">
             <!-- TEST: normal app can start w/o knowing about this activity -->
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
@@ -68,7 +68,7 @@
              android:theme="@android:style/Theme.NoDisplay"
              android:exported="true">
             <!-- TEST: allow sending results from other instant apps -->
-            <intent-filter>
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
