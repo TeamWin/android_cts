@@ -272,20 +272,6 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testNotifySession2Created() throws Exception {
-        final Context context = getInstrumentation().getTargetContext();
-        Session2Token token = new Session2Token(context,
-                new ComponentName(context, this.getClass()));
-
-        try {
-            mSessionManager.notifySession2Created(token);
-            fail("Expected IllegalArgumentException for a call to notifySession2Created with " +
-                    "TYPE_SESSION_SERVICE token");
-        } catch (IllegalArgumentException e) {
-            // Expected
-        }
-    }
-
     public void testGetSession2Tokens() throws Exception {
         final Context context = getInstrumentation().getTargetContext();
         Handler handler = createHandler();
