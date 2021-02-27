@@ -3003,7 +3003,9 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
             <meta-data android:name="android.service.notification.default_filter_types"
-                       android:value="1,2,4" />
+                       android:value="2,4" />
+            <meta-data android:name="android.service.notification.disabled_filter_types"
+                       android:value="8" />
         </service>
 
         <service android:name=".notifications.MockAssistant"
