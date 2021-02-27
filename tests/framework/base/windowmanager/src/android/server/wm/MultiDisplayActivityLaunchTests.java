@@ -41,6 +41,7 @@ import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.wm.app.Components.SINGLE_TOP_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.VIRTUAL_DISPLAY_ACTIVITY;
@@ -963,6 +964,34 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     @Test
     public void testLaunchActivitySingleTop() {
         assertBroughtExistingTaskToAnotherDisplay(FLAG_ACTIVITY_SINGLE_TOP, TEST_ACTIVITY);
+    }
+
+    @Test
+    public void testLaunchActivitySingleTopOnNewDisplay() {
+        launchActivity(SINGLE_TOP_ACTIVITY);
+        waitAndAssertTopResumedActivity(SINGLE_TOP_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity launched on primary display and on top");
+        final int taskId = mWmState.getTaskByActivity(SINGLE_TOP_ACTIVITY).getTaskId();
+
+        // Create new virtual display.
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true)
+                .createDisplay();
+
+        // Launch activity on new secondary display.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(SINGLE_TOP_ACTIVITY)
+                .allowMultipleInstances(false)
+                .setDisplayId(newDisplay.mId).execute();
+
+        waitAndAssertTopResumedActivity(SINGLE_TOP_ACTIVITY, newDisplay.mId,
+                "Activity launched on secondary display must be on top");
+
+        final int taskId2 = mWmState.getTaskByActivity(SINGLE_TOP_ACTIVITY).getTaskId();
+        assertEquals("Activity must be in the same task.", taskId, taskId2);
+        assertEquals("Activity is the only member of its task", 1,
+                mWmState.getActivityCountInTask(taskId2, null));
     }
 
     private void assertBroughtExistingTaskToAnotherDisplay(int flags, ComponentName topActivity) {
