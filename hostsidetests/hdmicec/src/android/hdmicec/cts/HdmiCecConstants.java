@@ -25,6 +25,9 @@ public final class HdmiCecConstants {
     public static final int TIMEOUT_CEC_REINIT_SECONDS = 5;
     public static final int TIMEOUT_SAFETY_MS = 500;
 
+    public static final int POWER_STATUS_WAIT_TIME_SECONDS = 5;
+    public static final int MAX_SLEEP_TIME_SECONDS = 8;
+
     public static final int DEFAULT_PHYSICAL_ADDRESS = 0x1000;
     public static final int TV_PHYSICAL_ADDRESS = 0x0000;
     public static final int PHYSICAL_ADDRESS_LENGTH = 4; /* Num nibbles in CEC message */

@@ -315,9 +315,6 @@ public class PermissionPolicyTest {
                 case "softRestricted": {
                     protectionFlags |= PermissionInfo.FLAG_SOFT_RESTRICTED;
                 } break;
-                case "installerExemptIgnored": {
-                    protectionFlags |= PermissionInfo.FLAG_INSTALLER_EXEMPT_IGNORED;
-                } break;
             }
         }
         return protectionFlags;
