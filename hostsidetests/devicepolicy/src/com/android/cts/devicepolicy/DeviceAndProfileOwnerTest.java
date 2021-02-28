@@ -593,15 +593,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testPermissionGrantStateDenied_otherPermissionIsGranted");
     }
 
-    // Test flakey; suppressed.
-//    @Test
-//    public void testPermissionPrompts() throws Exception {
-//        if (!mHasFeature) {
-//            return;
-//        }
-//        installAppPermissionAppAsUser();
-//        executeDeviceTestMethod(".PermissionsTest", "testPermissionPrompts");
-//    }
+    @Test
+    public void testPermissionPrompts() throws Exception {
+        installAppPermissionAppAsUser();
+        executeDeviceTestMethod(".PermissionsTest", "testPermissionPrompts");
+    }
 
     @Test
     public void testPermissionAppUpdate() throws Exception {
