@@ -19,7 +19,6 @@ package com.android.cts.tagging;
 import com.google.common.collect.ImmutableSet;
 
 public class TaggingManifestEnabledSdk30Test extends TaggingBaseTest {
-
     protected static final String TEST_APK = "CtsHostsideTaggingManifestEnabledSdk30App.apk";
     protected static final String TEST_PKG = "android.cts.tagging.sdk30.manifest_enabled";
 
@@ -32,12 +31,11 @@ public class TaggingManifestEnabledSdk30Test extends TaggingBaseTest {
     @Override
     protected void tearDown() throws Exception {
         uninstallPackage(TEST_PKG, true);
+        super.tearDown();
     }
 
-    public void testDefault() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureDefault() throws Exception {
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -45,10 +43,8 @@ public class TaggingManifestEnabledSdk30Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testCompatFeatureEnabled() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
@@ -56,34 +52,15 @@ public class TaggingManifestEnabledSdk30Test extends TaggingBaseTest {
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testCompatFeatureDisabledUserdebugBuild() throws Exception {
-        // Userdebug build - check that we can force disable the compat feature at runtime.
-        if (!getDevice().getBuildFlavor().contains("userdebug")) {
-            return;
-        }
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
-                DEVICE_TAGGING_DISABLED_TEST_NAME,
-                /*enabledChanges*/ ImmutableSet.of(),
-                /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*reportedEnabledChanges*/ ImmutableSet.of(),
-                /*reportedDisabledChanges*/ reportedChangeSet);
-    }
-
-    public void testCompatFeatureDisabledUserBuild() throws Exception {
-        // Non-userdebug build - we're not allowed to disable compat features. Check to ensure that
-        // even if we try that we still get pointer tagging.
-        if (getDevice().getBuildFlavor().contains("userdebug")) {
-            return;
-        }
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureDisabled() throws Exception {
+        // We're not allowed to disable compat features (see
+        // force_non_debuggable_final_build_for_compat in TaggingBaseTest for more info). Check to
+        // ensure that even if we try that we still get pointer tagging.
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 testForWhenSoftwareWantsTagging,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
-                /*reportedEnabledChanges*/ reportedChangeSet,
+                /*reportedEnabledChanges*/ ImmutableSet.of(),
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 }
