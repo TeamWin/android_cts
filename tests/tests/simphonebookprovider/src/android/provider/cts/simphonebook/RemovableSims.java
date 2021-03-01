@@ -18,12 +18,14 @@ package android.provider.cts.simphonebook;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.telephony.UiccCardInfo;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
@@ -53,13 +55,14 @@ class RemovableSims {
         mRemovableSubscriptionInfos = new ArrayList<>();
         mRemovableSimSlotCount = 0;
 
-        // Wait for the eSIM state to be loaded before continuing. Otherwise, the card info
-        // we load later may indicate that they are not eSIM when they actually are. This works
-        // on phones without eSIM because it will return TelephonyManager.UNSUPPORTED_CARD_ID
-        PollingCheck.waitFor(30_000, () ->
-                mTelephonyManager.getCardIdForDefaultEuicc() !=
-                        TelephonyManager.UNINITIALIZED_CARD_ID
-        );
+        if (RequiredFeatureRule.hasFeature(PackageManager.FEATURE_TELEPHONY_EUICC)) {
+            // Wait for the eSIM state to be loaded before continuing. Otherwise, the card info
+            // we load later may indicate that they are not eSIM when they actually are.
+            PollingCheck.waitFor(30_000, () ->
+                    mTelephonyManager.getCardIdForDefaultEuicc() !=
+                            TelephonyManager.UNINITIALIZED_CARD_ID
+            );
+        }
 
         List<UiccCardInfo> uiccCards = SystemUtil.runWithShellPermissionIdentity(
                 mTelephonyManager::getUiccCardsInfo,
