@@ -196,6 +196,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     public void provisionFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
             throws ProvisioningException {
@@ -215,6 +216,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     public void provisionFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
             throws ProvisioningException {
