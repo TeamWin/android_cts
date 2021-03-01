@@ -30,7 +30,6 @@ import androidx.test.filters.SmallTest;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Iterator;
 import java.util.Map;
 
 @SmallTest
@@ -125,7 +124,7 @@ public final class AppUriAuthenticationPolicyTest {
                     parcel.readParcelable(/* classLoader = */null);
 
             assertThat(createdPolicy).isNotNull();
-            assertAuthenticationPoliciesEqual(createdPolicy, AUTHENTICATION_POLICY);
+            assertThat(createdPolicy).isEqualTo(AUTHENTICATION_POLICY);
         } finally {
             if (parcel != null) {
                 parcel.recycle();
@@ -133,33 +132,23 @@ public final class AppUriAuthenticationPolicyTest {
         }
     }
 
-    private void assertAuthenticationPoliciesEqual(AppUriAuthenticationPolicy actual,
-            AppUriAuthenticationPolicy expected) {
-        Iterator<Map.Entry<String, Map<Uri, String>>> actualIter =
-                actual.getAppAndUriMappings().entrySet().iterator();
-        Iterator<Map.Entry<String, Map<Uri, String>>> expectedIter =
-                expected.getAppAndUriMappings().entrySet().iterator();
+    @Test
+    public void equals_sameAuthenticationPolicy_equal() {
+        AppUriAuthenticationPolicy authenticationPolicy =
+                new AppUriAuthenticationPolicy.Builder()
+                        .addAppAndUriMapping(PACKAGE_NAME, URI, ALIAS)
+                        .build();
 
-        assertThat(actual.getAppAndUriMappings().size())
-                .isEqualTo(expected.getAppAndUriMappings().size());
-        while (actualIter.hasNext()) {
-            Map.Entry<String, Map<Uri, String>> actualAppToUri = actualIter.next();
-            Map.Entry<String, Map<Uri, String>> expectedAppToUri = expectedIter.next();
-            assertThat(actualAppToUri.getKey()).isEqualTo(expectedAppToUri.getKey());
-            assertUriToAliasesEqual(actualAppToUri.getValue(), expectedAppToUri.getValue());
-        }
+        assertThat(authenticationPolicy).isEqualTo(AUTHENTICATION_POLICY);
     }
 
-    private void assertUriToAliasesEqual(Map<Uri, String> actual, Map<Uri, String> expected) {
-        Iterator<Map.Entry<Uri, String>> actualIter = actual.entrySet().iterator();
-        Iterator<Map.Entry<Uri, String>> expectedIter = expected.entrySet().iterator();
+    @Test
+    public void equals_differentAuthenticationPolicy_notEqual() {
+        AppUriAuthenticationPolicy authenticationPolicy =
+                new AppUriAuthenticationPolicy.Builder()
+                        .addAppAndUriMapping(PACKAGE_NAME, URI2, ALIAS)
+                        .build();
 
-        assertThat(actual.size()).isEqualTo(expected.size());
-        while (actualIter.hasNext()) {
-            Map.Entry<Uri, String> actualUriToAlias = actualIter.next();
-            Map.Entry<Uri, String> expectedUriToAlias = expectedIter.next();
-            assertThat(actualUriToAlias.getKey()).isEqualTo(expectedUriToAlias.getKey());
-            assertThat(actualUriToAlias.getValue()).isEqualTo(expectedUriToAlias.getValue());
-        }
+        assertThat(authenticationPolicy).isNotEqualTo(AUTHENTICATION_POLICY);
     }
 }
