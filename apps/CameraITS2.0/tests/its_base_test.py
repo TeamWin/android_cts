@@ -64,6 +64,7 @@ class ItsBaseTest(base_test.BaseTestClass):
   These systems consist of either:
     1. a device under test (dut) and an external rotation controller
     2. a device under test (dut) and one screen device(tablet)
+    3. a device under test (dut) and manual charts
 
   Attributes:
     dut: android_device.AndroidDevice, the device under test.
@@ -79,6 +80,10 @@ class ItsBaseTest(base_test.BaseTestClass):
     if self.user_params.get('chart_distance'):
       self.chart_distance = float(self.user_params['chart_distance'])
       logging.debug('Chart distance: %s cm', self.chart_distance)
+    if self.user_params.get('chart_loc_arg'):
+      self.chart_loc_arg = self.user_params['chart_loc_arg']
+    else:
+      self.chart_loc_arg = ""
     if self.user_params.get('debug_mode'):
       self.debug_mode = True if self.user_params[
           'debug_mode'] == 'True' else False
@@ -99,7 +104,6 @@ class ItsBaseTest(base_test.BaseTestClass):
         self.tablet = devices[1]
         self.tablet.load_snippet(MBS_PKG_TXT, MBS_PKG)
         self.tablet_screen_brightness = self.user_params['brightness']
-        self.chart_loc_arg = self.user_params['chart_loc_arg']
       except KeyError:
         logging.debug('Not all tablet arguments set.')
     else:  # sensor_fusion or manual run
@@ -112,6 +116,7 @@ class ItsBaseTest(base_test.BaseTestClass):
         self.rotator_cntl = self.user_params['rotator_cntl']
         self.rotator_ch = self.user_params['rotator_ch']
       except KeyError:
+        self.tablet = None
         logging.debug('Not all arguments set. Manual run.')
 
     self._setup_devices(num_devices)

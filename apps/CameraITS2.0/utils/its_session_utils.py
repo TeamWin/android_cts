@@ -1114,6 +1114,9 @@ def load_scene(cam, props, scene, tablet, chart_distance):
     tablet: tablet to load scene on
     chart_distance: distance to tablet
   """
+  if not tablet:
+    logging.info('Manual run: no tablet to load scene on.')
+    return
   # Calculate camera_fov which will determine the image to load on tablet.
   camera_fov = cam.calc_camera_fov(props)
   file_name = cam.get_file_name_to_load(chart_distance, camera_fov, scene)
