@@ -121,8 +121,8 @@ class MicIndicatorTest : TvTestBase() {
         // The indicator should stay on, since the MR is still running.
         assertIndicatorWindowVisible()
 
-        // Give it 5s, and make sure indicator is still there.
-        Thread.sleep(5_000)
+        // Give it 7s, and make sure indicator is still there.
+        Thread.sleep(7_000)
         assertIndicatorWindowVisible()
 
         startForegroundService(MEDIA_RECORDER_API_SERVICE, ACTION_STOP)
@@ -138,6 +138,8 @@ class MicIndicatorTest : TvTestBase() {
     }
 
     private fun assertIndicatorWindowGone() {
+        // The indicator stays visible for 5s after the access is stopped.
+        Thread.sleep(6_000)
         wmState.waitFor("Waiting for the mic indicator window to disappear") {
             !it.containsWindow(MIC_INDICATOR_WINDOW_TITLE)
         } || error("Mic indicator window is present (should be gone).")
