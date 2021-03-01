@@ -14,12 +14,15 @@
 
 TestBeds:
   - Name: TEST_BED_TABLET_SCENES  # Need 'tablet' in name for tablet scenes
+    # Use TEST_BED_MANUAL for manual testing and remove below lines:
+    #     - serial <tablet_id>
+    #       label: tablet
     # Test configuration for scenes[0:4, 6, _change]
     Controllers:
         AndroidDevice:
-          - serial: <device-id>
+          - serial: <device_id>
             label: dut
-          - serial: <tablet-id>
+          - serial: <tablet_id>
             label: tablet
     TestParams:
       brightness: 96
