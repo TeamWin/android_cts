@@ -20,6 +20,9 @@ import static android.provider.SimPhonebookContract.ElementaryFiles.EF_ADN;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeThat;
+
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -30,6 +33,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
@@ -37,7 +42,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SystemUtil;
 
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -65,6 +72,7 @@ public class SimPhonebookContract_ContentNotificationsTest {
             .around(mSimCleanupRule);
 
     private int mSubId;
+    private SubscriptionInfo mSubscriptionInfo;
     private ContentResolver mResolver;
     private RecordingContentObserver mObserver;
 
@@ -79,7 +87,13 @@ public class SimPhonebookContract_ContentNotificationsTest {
         // Make sure the provider has been created.
         mResolver.getType(SimPhonebookContract.SimRecords.getContentUri(1, EF_ADN));
 
+        SubscriptionManager subscriptionManager = context.getSystemService(SubscriptionManager.class);
+        assumeThat(subscriptionManager, Matchers.notNullValue());
         mSubId = new RemovableSims(context).getDefaultSubscriptionId();
+
+        mSubscriptionInfo = SystemUtil.runWithShellPermissionIdentity(
+                () -> subscriptionManager.getActiveSubscriptionInfo(mSubId),
+                Manifest.permission.READ_PHONE_STATE);
     }
 
     @After
@@ -135,9 +149,10 @@ public class SimPhonebookContract_ContentNotificationsTest {
 
     @Test
     public void subscriptionsChange_notifiesObserver() throws Exception {
+        assumeThat(mSubscriptionInfo, Matchers.notNullValue());
         try {
             // Mimic removal or insertion of a SIM by powering off the slot.
-            SIMS_POWER_RULE.powerOff(0);
+            SIMS_POWER_RULE.powerOff(mSubscriptionInfo);
 
             PollingCheck.check(
                     "No content notifications observed for SIM removal",
@@ -148,7 +163,7 @@ public class SimPhonebookContract_ContentNotificationsTest {
             Thread.sleep(DEFAULT_TIMEOUT);
             mObserver.observed.clear();
         } finally {
-            SIMS_POWER_RULE.powerOn(0);
+            SIMS_POWER_RULE.powerOn(mSubscriptionInfo);
         }
         PollingCheck.check(
                 "No content notifications observed for SIM insertion",
