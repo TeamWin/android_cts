@@ -2925,8 +2925,23 @@ public class AudioTrackTest {
         }
         AudioTrack audioTrack = null;
         try {
-            audioTrack = new AudioTrack.Builder().build();
-            audioTrack.setLogSessionId("Hello World"); // for now, any string will do.
+            audioTrack = new AudioTrack.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                    .build();
+            audioTrack.setLogSessionId(null);               // should not throw.
+            audioTrack.setLogSessionId("0123456789abcdef"); // 16 char Base64Url id.
+
+            // write some data to generate a log entry.
+            short data[] = new short[audioTrack.getSampleRate() / 2];
+            audioTrack.play();
+            audioTrack.write(data, 0 /* offsetInShorts */, data.length);
+            audioTrack.stop();
+            Thread.sleep(500 /* millis */); // drain
+
+            // Also can check the mediametrics dumpsys to validate logs generated.
         } finally {
             if (audioTrack != null) {
                 audioTrack.release();
