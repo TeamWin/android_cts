@@ -125,7 +125,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137071121)
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testCreateAndManageUser_LowStorage() throws Exception {
         assumeCanCreateOneManagedUser();
 
@@ -150,8 +149,19 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         assumeCanCreateOneManagedUser();
 
         int maxUsers = getDevice().getMaxNumberOfUsersSupported();
-        // Primary user is already there, so we can create up to maxUsers -1.
-        for (int i = 0; i < maxUsers - 1; i++) {
+
+        // System user is already there, so we can create up to maxUsers - 1.
+        int existingUsers = 1;
+
+        // On headless user mode, current user is also there
+        if (isHeadlessSystemUserMode()) {
+            existingUsers++;
+        }
+
+        CLog.d("testCreateAndManageUser_MaxUsers(): maxUxers=%d, existingUsers=%d", maxUsers,
+                existingUsers);
+
+        for (int i = 0; i < maxUsers - existingUsers; i++) {
             executeCreateAndManageUserTest("testCreateAndManageUser");
         }
         // The next createAndManageUser should return USER_OPERATION_ERROR_MAX_USERS.
@@ -220,6 +230,15 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
         // Primary user is already running, so we can create and start up to minimum of above - 1.
         int usersToCreateAndStart = Math.min(maxUsers, maxRunningUsers) - 1;
+
+        // On headless user mode, system user is also running
+        if (isHeadlessSystemUserMode()) {
+            usersToCreateAndStart--;
+        }
+
+        CLog.d("testCreateAndManageUser_StartInBackground_MaxRunningUsers(): maxUxers=%d, "
+                + "maxRunningUsers=%d, usersToCreateAndStart=%d", maxUsers, maxRunningUsers,
+                usersToCreateAndStart);
         for (int i = 0; i < usersToCreateAndStart; i++) {
             executeCreateAndManageUserTest("testCreateAndManageUser_StartInBackground");
         }
@@ -312,7 +331,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#LEAVE_ALL_SYSTEM_APPS_ENABLED} is tested.
      */
     @Test
-    public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
+    // TODO(b/181059137): failing because some system apps are missing (probably due to the
+    // allowlist mechanism)
+    @TemporaryIgnoreOnHeadlessSystemUserMode
+   public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
         assumeCanStartNewUser();
 
         executeCreateAndManageUserTest("testCreateAndManageUser_LeaveAllSystemApps");
@@ -938,7 +960,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     private void executeCreateAndManageUserTest(String testMethod) throws Exception {
-        executeDeviceTestMethod(".CreateAndManageUserTest", testMethod);
+        // These test must be run on device owner user, as it's the only user that's guaranteed  to
+        // be always running (otherwise, the test case would crash on headless system user mode if
+        // the current user is switched out)
+        executeDeviceOwnerTestMethod(".CreateAndManageUserTest", testMethod);
     }
 
     private void assertNewUserStopped() throws Exception {
