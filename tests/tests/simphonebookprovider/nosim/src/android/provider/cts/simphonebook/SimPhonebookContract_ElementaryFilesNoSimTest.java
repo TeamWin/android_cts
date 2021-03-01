@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 
@@ -31,8 +32,11 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.RequiresDevice;
 
+import com.android.compatibility.common.util.RequiredFeatureRule;
+
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
@@ -47,6 +51,10 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
 
     @ClassRule
     public static final TestRule SIM_OFF_RULE = SimsPowerRule.off();
+
+    @Rule
+    public final TestRule telephonyRequirementRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY);
 
     private ContentResolver mResolver;
 
