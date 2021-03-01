@@ -331,9 +331,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
      * {@link android.app.admin.DevicePolicyManager#LEAVE_ALL_SYSTEM_APPS_ENABLED} is tested.
      */
     @Test
-    // TODO(b/181059137): failing because some system apps are missing (probably due to the
-    // allowlist mechanism)
-    @TemporaryIgnoreOnHeadlessSystemUserMode
    public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
         assumeCanStartNewUser();
 
