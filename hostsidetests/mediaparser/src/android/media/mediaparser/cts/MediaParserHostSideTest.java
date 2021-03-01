@@ -85,6 +85,12 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
 
     // Tests.
 
+    public void testLogSessionId() throws Exception {
+        runDeviceTest("testLogSessionId");
+        assertThat(getSingleMediaParserReportedEvent().getLogSessionId())
+                .isEqualTo("FakeLogSessionId");
+    }
+
     public void testCreationByNameMetrics() throws Exception {
         String[] expectedParserNames = {
             "android.media.mediaparser.MatroskaParser",
@@ -153,7 +159,7 @@ public class MediaParserHostSideTest extends DeviceTestCase implements IBuildRec
         assertThat(mediaParserReportedEvents).hasSize(2);
         for (MediametricsMediaParserReported event : mediaParserReportedEvents) {
             assertThat(event.getLastException())
-                .isEqualTo("android.media.MediaParser$UnrecognizedInputFormatException");
+                    .isEqualTo("android.media.MediaParser$UnrecognizedInputFormatException");
         }
     }
 
