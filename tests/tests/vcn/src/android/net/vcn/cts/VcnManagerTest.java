@@ -28,6 +28,8 @@ import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
+import android.net.NetworkCapabilities;
 import android.net.ipsec.ike.ChildSaProposal;
 import android.net.ipsec.ike.IkeFqdnIdentification;
 import android.net.ipsec.ike.IkeSaProposal;
@@ -52,11 +54,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
 public class VcnManagerTest {
     private static final String TAG = VcnManagerTest.class.getSimpleName();
+
+    private static final int TIMEOUT_MS = 500;
+
+    private static final Executor INLINE_EXECUTOR = Runnable::run;
 
     private final Context mContext;
     private final VcnManager mVcnManager;
@@ -173,5 +181,46 @@ public class VcnManagerTest {
                 mVcnManager.clearVcnConfig(subGrp);
             });
         });
+    }
+
+    /** Test implementation of VcnNetworkPolicyListener for verification purposes. */
+    private static class TestVcnNetworkPolicyListener
+            implements VcnManager.VcnNetworkPolicyListener {
+        private final CompletableFuture<Void> mFutureOnPolicyChanged = new CompletableFuture<>();
+
+        @Override
+        public void onPolicyChanged() {
+            mFutureOnPolicyChanged.complete(null /* unused */);
+        }
+
+        public void awaitOnPolicyChanged() throws Exception {
+            mFutureOnPolicyChanged.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testAddVcnNetworkPolicyListener_noNetworkFactoryPermission() throws Exception {
+        final TestVcnNetworkPolicyListener listener = new TestVcnNetworkPolicyListener();
+
+        try {
+            mVcnManager.addVcnNetworkPolicyListener(INLINE_EXECUTOR, listener);
+        } finally {
+            mVcnManager.removeVcnNetworkPolicyListener(listener);
+        }
+    }
+
+    @Test
+    public void testRemoveVcnNetworkPolicyListener() {
+        final TestVcnNetworkPolicyListener listener = new TestVcnNetworkPolicyListener();
+
+        mVcnManager.removeVcnNetworkPolicyListener(listener);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testApplyVcnNetworkPolicy_noNetworkFactoryPermission() throws Exception {
+        final NetworkCapabilities nc = new NetworkCapabilities.Builder().build();
+        final LinkProperties lp = new LinkProperties();
+
+        mVcnManager.applyVcnNetworkPolicy(nc, lp);
     }
 }
