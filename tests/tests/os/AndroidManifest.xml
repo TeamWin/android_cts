@@ -83,7 +83,7 @@
         <activity android:name="android.os.cts.SimpleTestActivity"/>
 
         <activity android:name="android.os.cts.IntentLaunchActivity"
-             android:exported="true" />
+             android:exported="false" />
 
         <service android:name="android.os.cts.ParcelFileDescriptorPeer$Red"
              android:process=":red"

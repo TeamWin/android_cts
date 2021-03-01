@@ -829,7 +829,7 @@ public class StrictModeTest {
                         .penaltyLog()
                         .build());
         Context context = getContext();
-        Intent intent = IntentLaunchActivity.getTestIntent(context);
+        Intent intent = IntentLaunchActivity.getUnsafeIntentLaunchTestIntent(context);
 
         assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
     }
@@ -845,7 +845,7 @@ public class StrictModeTest {
                         .penaltyLog()
                         .build());
         Context context = getContext();
-        Intent intent = IntentLaunchActivity.getTestIntent(context);
+        Intent intent = IntentLaunchActivity.getUnsafeIntentLaunchTestIntent(context);
 
         assertNoViolation(() -> context.startActivity(intent));
     }
@@ -923,6 +923,56 @@ public class StrictModeTest {
         intent.putExtra(IntentLaunchReceiver.INNER_INTENT_KEY, innerIntent);
 
         assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.sendBroadcast(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_ParceledIntentDataCopy_ThrowsViolation() throws Exception {
+        // This test verifies a violation is reported when data is copied from a parceled Intent
+        // without sanitation or validation to a new Intent that is being created to launch a new
+        // component.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchActivity.getUnsafeDataCopyFromIntentTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_UnsafeDataCopy_ThrowsViolation() throws Exception {
+        // This test verifies a violation is reported when data is copied from unparceled extras
+        // without sanitation or validation to a new Intent that is being created to launch a new
+        // component.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent = IntentLaunchActivity.getUnsafeDataCopyFromExtrasTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_DataCopyFromIntentDeliveredToProtectedComponent_NoViolation()
+        throws Exception {
+        // This test verifies a violation is not reported when data is copied from the Intent
+        // delivered to a protected component.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent =
+                IntentLaunchActivity.getDataCopyFromDeliveredIntentWithUnparceledExtrasTestIntent(
+                        context);
+
+        assertNoViolation(() -> context.startActivity(intent));
     }
 
     private Context createWindowContext() {
