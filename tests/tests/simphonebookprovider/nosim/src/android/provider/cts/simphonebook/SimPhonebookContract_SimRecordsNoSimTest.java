@@ -41,7 +41,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -52,8 +51,6 @@ import java.util.Objects;
 /** Tests of {@link SimRecords} that validate the behavior when no SIM is present. */
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_SimRecordsNoSimTest {
-    @ClassRule
-    public static final SimsPowerRule SIM_OFF_RULE = SimsPowerRule.off();
     private static final int MISSING_SIM_SUBSCRIPTION_ID = 9043;
     private static final String MISSING_SIM_EXCEPTION_MESSAGE =
             "No active SIM with subscription ID " + MISSING_SIM_SUBSCRIPTION_ID;
