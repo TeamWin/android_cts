@@ -24,6 +24,8 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.UnsafeStateException;
 
+import com.android.bedstead.harrier.annotations.Postsubmit;
+
 import org.junit.Test;
 
 // TODO(b/174859111): move to automotive-specific section
@@ -32,16 +34,19 @@ public final class UnsafeStateExceptionTest {
     private static final int VALID_OPERATION = Integer.MAX_VALUE; // Value doesn't really matter...
 
     @Test
+    @Postsubmit(reason="b/181207615 flaky")
     public void testValidReason_drivingDistraction() {
         assertExceptionWithValidReason(OPERATION_SAFETY_REASON_DRIVING_DISTRACTION);
     }
 
     @Test
+    @Postsubmit(reason="b/181207615 flaky")
     public void testInvalidReason_none() {
         assertExceptionWithInvalidReason(OPERATION_SAFETY_REASON_NONE);
     }
 
     @Test
+    @Postsubmit(reason="b/181207615 flaky")
     public void testInvalidReason_arbitrary() {
         assertExceptionWithInvalidReason(0);
         assertExceptionWithInvalidReason(42);

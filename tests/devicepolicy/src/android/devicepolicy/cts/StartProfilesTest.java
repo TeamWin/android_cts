@@ -120,6 +120,7 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="b/181207615 flaky")
     public void stopProfile_returnsTrue() {
         // TODO(b/171565394): remove after infra supports shell permissions annotation
         mUiAutomation.adoptShellPermissionIdentity(
@@ -141,6 +142,7 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="b/181207615 flaky")
     public void stopProfile_profileIsStopped() {
         // TODO(b/171565394): remove after infra supports shell permissions annotation
         mUiAutomation.adoptShellPermissionIdentity(
@@ -167,6 +169,7 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="b/181207615 flaky")
     public void startUser_immediatelyAfterStopped_profileIsStarted() {
         // TODO(b/171565394): remove after infra supports shell permissions annotation
         mUiAutomation.adoptShellPermissionIdentity(
@@ -202,6 +205,7 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="b/181207615 flaky")
     public void startUser_userIsStopping_profileIsStarted() {
         // TODO(b/171565394): remove after infra supports shell permissions annotation
         mUiAutomation.adoptShellPermissionIdentity(
@@ -259,6 +263,7 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
+    @Postsubmit(reason="b/181207615 flaky")
     public void startProfile_withoutPermission_throwsException() {
         assertThrows(SecurityException.class,
                 () -> sActivityManager.startProfile(sDeviceState.workProfile().userHandle()));
@@ -281,6 +286,7 @@ public final class StartProfilesTest {
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasSecondaryUser
+    @Postsubmit(reason="b/181207615 flaky")
     public void startProfile_startingFullUser_throwsException() {
         mUiAutomation.adoptShellPermissionIdentity(
                 "android.permission.INTERACT_ACROSS_USERS_FULL",
