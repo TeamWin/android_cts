@@ -1,4 +1,4 @@
-// Copyright (C) 2017 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package {
-    default_applicable_licenses: ["Android-Apache-2.0"],
-}
-
-java_library {
-    name: "CtsFullBackupRulesLib",
-    srcs: ["src/**/*.java"],
+android_test_helper_app {
+    name: "CtsDataExtractionRulesApplicabilityApp",
+    defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.rules",
         "platform-test-annotations",
-        "truth-prebuilt",
+        "CtsFullBackupRulesLib",
+    ],
+    srcs: ["src/**/*.java"],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "arcts",
+        "cts",
+        "general-tests",
     ],
     sdk_version: "current",
 }
