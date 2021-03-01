@@ -61,11 +61,6 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     private static final long ON_ENABLED_TIMEOUT_SECONDS = 120;
 
     @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @Override
     protected void tearDown() throws Exception {
         mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_ADD_USER);
         mDevicePolicyManager.clearUserRestriction(getWho(), UserManager.DISALLOW_REMOVE_USER);
@@ -112,11 +107,16 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
-        UserHandle userHandle = createAndManageUser();
+        UserHandle newUserHandle = createAndManageUser();
 
         List<UserHandle> secondaryUsers = mDevicePolicyManager.getSecondaryUsers(getWho());
-
-        assertWithMessage("wrong secondary users").that(secondaryUsers).containsExactly(userHandle);
+        if (isHeadlessSystemUserMode()) {
+            assertWithMessage("secondary users").that(secondaryUsers)
+                .containsExactly(getCurrentUser(), newUserHandle);
+        } else {
+            assertWithMessage("secondary users").that(secondaryUsers)
+                    .containsExactly(newUserHandle);
+        }
     }
 
     public void testCreateAndManageUser_SwitchUser() throws Exception {
@@ -207,7 +207,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_Affiliated() throws Exception {
-        runCrossUserVerification(/* createAndManageUserFlags */ 0, "assertAffiliatedUser");
+        runCrossUserVerification(/* createAndManageUserFlags= */ 0, "assertAffiliatedUser");
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
@@ -258,24 +258,23 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     private UserHandle runCrossUserVerification(UserActionCallback callback,
             int createAndManageUserFlags, String methodName) throws Exception {
+        Log.d(TAG, "runCrossUserVerification(): flags=" + createAndManageUserFlags
+                + ", method=" + methodName);
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         // Set affiliation id to allow communication.
         mDevicePolicyManager.setAffiliationIds(getWho(), Collections.singleton(AFFILIATION_ID));
+
+        ComponentName profileOwner = SecondaryUserAdminReceiver.getComponentName(getContext());
 
         // Pack the affiliation id in a bundle so the secondary user can get it.
         PersistableBundle bundle = new PersistableBundle();
         bundle.putString(EXTRA_AFFILIATION_ID, AFFILIATION_ID);
         bundle.putString(EXTRA_METHOD_NAME, methodName);
 
-        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
-                getWho(),
-                testUserName,
-                SecondaryUserAdminReceiver.getComponentName(getContext()),
-                bundle,
-                createAndManageUserFlags);
-        Log.d(TAG, "User created: " + userHandle);
-        assertWithMessage("user with name %s", testUserName).that(userHandle).isNotNull();
+        Log.d(TAG, "creating user with PO " + profileOwner);
+
+        UserHandle userHandle = createAndManageUser(profileOwner, bundle, createAndManageUserFlags);
         if (callback != null) {
             startUserInBackgroundAndWaitForBroadcasts(callback, userHandle);
         } else {
@@ -316,6 +315,11 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     private UserHandle createAndManageUser(int flags) throws Exception {
+        return createAndManageUser(/* profileOwner= */ getWho(), /* adminExtras= */ null, flags);
+    }
+
+    private UserHandle createAndManageUser(ComponentName profileOwner,
+            PersistableBundle adminExtras, int flags) throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         UserActionCallback callback = UserActionCallback.getCallbackForBroadcastActions(
@@ -325,11 +329,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 mDevicePolicyManager.createAndManageUser(
                         /* admin= */ getWho(),
                         testUserName,
-                        /* profileOwner= */ getWho(),
-                        /* adminExtras= */ null,
+                        profileOwner,
+                        adminExtras,
                         flags));
         Log.d(TAG, "User '" + testUserName + "' created: " + userHandle);
-
         return userHandle;
     }
 
@@ -437,7 +440,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
             public void onEnabledCalled(String error) {
-                Log.d(TAG, "onEnabledCalled on primary user");
+                Log.d(TAG, "PrimaryUserService.onEnabledCalled() on user "
+                        + getApplicationContext().getUserId() + " with error " + error);
                 sError = error;
                 sSemaphore.release();
             }
@@ -445,27 +449,36 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         @Override
         public IBinder onBind(Intent intent) {
+            Log.d(TAG, "PrimaryUserService.onBind() on user "
+                    + getApplicationContext().getUserId() + ": " + intent);
             return mBinder;
         }
 
         static void assertCrossUserCallArrived() throws Exception {
-            assertTrue(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            assertWithMessage("cross-user call arrived in %ss", ON_ENABLED_TIMEOUT_SECONDS)
+                    .that(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isTrue();
             if (sError != null) {
+                Log.e(TAG, "assertCrossUserCallArrived() had error: " + sError);
                 throw new Exception(sError);
             }
         }
     }
 
     public static final class SecondaryUserAdminReceiver extends DeviceAdminReceiver {
+
         @Override
         public void onEnabled(Context context, Intent intent) {
-            Log.d(TAG, "onEnabled called");
+            Log.d(TAG, "SecondaryUserAdminReceiver.onEnabled() called on user "
+                    + context.getUserId());
+
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
             ComponentName who = getComponentName(context);
 
             // Set affiliation ids
-            dpm.setAffiliationIds(
-                    who, Collections.singleton(intent.getStringExtra(EXTRA_AFFILIATION_ID)));
+            Set<String> ids = Collections.singleton(intent.getStringExtra(EXTRA_AFFILIATION_ID));
+            Log.d(TAG, "setting affiliation ids as " + ids);
+            dpm.setAffiliationIds(who, ids);
 
             String error = null;
             try {
@@ -482,17 +495,18 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
             // Call all affiliated users
             final List<UserHandle> targetUsers = dpm.getBindDeviceAdminTargetUsers(who);
-            assertEquals(1, targetUsers.size());
+            assertWithMessage("target users").that(targetUsers).hasSize(1);
+
             pingTargetUser(context, dpm, targetUsers.get(0), error);
         }
 
-        private void pingTargetUser(Context context, DevicePolicyManager dpm, UserHandle target,
-                String error) {
-            Log.d(TAG, "Pinging target: " + target);
+        private void pingTargetUser(Context context, DevicePolicyManager dpm,
+                UserHandle target, String error) {
+            Log.d(TAG, "Pinging target " + target + " with error " + error);
             final ServiceConnection serviceConnection = new ServiceConnection() {
                 @Override
                 public void onServiceConnected(ComponentName name, IBinder service) {
-                    Log.d(TAG, "onServiceConnected is called in " + Thread.currentThread().getName());
+                    Log.d(TAG, "onServiceConnected() is called in " + Thread.currentThread());
                     ICrossUserService crossUserService = ICrossUserService
                             .Stub.asInterface(service);
                     try {
@@ -505,16 +519,18 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
                 @Override
                 public void onServiceDisconnected(ComponentName name) {
-                    Log.d(TAG, "onServiceDisconnected is called");
+                    Log.d(TAG, "onServiceDisconnected() is called");
                 }
             };
-            final Intent serviceIntent = new Intent(context, PrimaryUserService.class);
-            assertTrue(dpm.bindDeviceAdminServiceAsUser(
+            Intent serviceIntent = new Intent(context, PrimaryUserService.class);
+            boolean bound = dpm.bindDeviceAdminServiceAsUser(
                     getComponentName(context),
                     serviceIntent,
                     serviceConnection,
                     Context.BIND_AUTO_CREATE,
-                    target));
+                    target);
+            assertWithMessage("bound to user %s using intent %s", target, serviceIntent).that(bound)
+                    .isTrue();
         }
 
         public static ComponentName getComponentName(Context context) {

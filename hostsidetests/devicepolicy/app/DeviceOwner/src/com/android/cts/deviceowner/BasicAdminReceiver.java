@@ -22,6 +22,8 @@ import android.content.Intent;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
 import com.android.cts.devicepolicy.OperationSafetyChangedCallback;
 import com.android.cts.devicepolicy.OperationSafetyChangedEvent;
@@ -56,31 +58,26 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onUserAdded(Context context, Intent intent, UserHandle userHandle) {
-        super.onUserAdded(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_ADDED, userHandle);
     }
 
     @Override
     public void onUserRemoved(Context context, Intent intent, UserHandle userHandle) {
-        super.onUserRemoved(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_REMOVED, userHandle);
     }
 
     @Override
     public void onUserStarted(Context context, Intent intent, UserHandle userHandle) {
-        super.onUserStarted(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_STARTED, userHandle);
     }
 
     @Override
     public void onUserStopped(Context context, Intent intent, UserHandle userHandle) {
-        super.onUserStopped(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_STOPPED, userHandle);
     }
 
     @Override
     public void onUserSwitched(Context context, Intent intent, UserHandle userHandle) {
-        super.onUserSwitched(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_SWITCHED, userHandle);
     }
 
@@ -111,6 +108,8 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
         Log.d(TAG, "sendUserBroadcast(): action=" + action + ", user=" + userHandle);
         Intent intent = new Intent(action).putExtra(EXTRA_USER_HANDLE, userHandle);
 
-        DeviceOwnerHelper.sendBroadcastToTestCaseReceiver(context, intent);
+        // NOTE: broadcast locally as user-related tests on headless system user always run on
+        // system user, as current user is stopped on switch.
+        LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
     }
 }
