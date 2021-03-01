@@ -34,6 +34,9 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -47,6 +50,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.User;
+import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
@@ -56,8 +60,10 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /**
@@ -133,6 +139,13 @@ public final class DeviceState implements TestRule {
                             /* forUser= */ ensureHasWorkAnnotation.forUser()
                     );
                 }
+                EnsureHasNoWorkProfile ensureHasNoWorkAnnotation =
+                        description.getAnnotation(EnsureHasNoWorkProfile.class);
+                if (ensureHasNoWorkAnnotation != null) {
+                    ensureHasNoWorkProfile(
+                            /* forUser= */ ensureHasNoWorkAnnotation.forUser()
+                    );
+                }
                 EnsureHasTvProfile ensureHasTvProfileAnnotation =
                         description.getAnnotation(EnsureHasTvProfile.class);
                 if (ensureHasTvProfileAnnotation != null) {
@@ -141,12 +154,24 @@ public final class DeviceState implements TestRule {
                             /* forUser= */ ensureHasTvProfileAnnotation.forUser()
                     );
                 }
+                EnsureHasNoTvProfile ensureHasNoTvProfileAnnotation =
+                        description.getAnnotation(EnsureHasNoTvProfile.class);
+                if (ensureHasNoTvProfileAnnotation != null) {
+                    ensureHasNoTvProfile(
+                            /* forUser= */ ensureHasNoTvProfileAnnotation.forUser()
+                    );
+                }
                 EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
                         description.getAnnotation(EnsureHasSecondaryUser.class);
                 if (ensureHasSecondaryUserAnnotation != null) {
                     ensureHasSecondaryUser(
                             /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
                     );
+                }
+                EnsureHasNoSecondaryUser ensureHasNoSecondaryUserAnnotation =
+                        description.getAnnotation(EnsureHasNoSecondaryUser.class);
+                if (ensureHasNoSecondaryUserAnnotation != null) {
+                    ensureHasNoSecondaryUser();
                 }
                 RequireFeatures requireFeaturesAnnotation =
                         description.getAnnotation(RequireFeatures.class);
@@ -209,6 +234,7 @@ public final class DeviceState implements TestRule {
             InstrumentationRegistry.getInstrumentation();
 
     private List<UserReference> mCreatedUsers = new ArrayList<>();
+    private List<UserBuilder> mRemovedUsers = new ArrayList<>();
     private List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
 
     @Nullable
@@ -283,9 +309,17 @@ public final class DeviceState implements TestRule {
      */
     @Nullable
     public UserReference secondaryUser() {
+        Collection<UserReference> secondaryUsers = secondaryUsers();
+        if (secondaryUsers.isEmpty()) {
+            return null;
+        }
+        return secondaryUsers.iterator().next();
+    }
+
+    private Collection<UserReference> secondaryUsers() {
         return mTestApis.users().all()
                 .stream().filter(u -> u.type().name().equals(SECONDARY_USER_TYPE_NAME))
-                .findFirst().orElse(null);
+                .collect(Collectors.toSet());
     }
 
     public void ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
@@ -310,6 +344,20 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    /**
+     * Ensure that there is no work profile.
+     */
+    public void ensureHasNoWorkProfile(UserType forUser) {
+        requireFeature("android.software.managed_users", FailureMode.SKIP);
+
+        UserReference forUserReference = resolveUserTypeToUser(forUser);
+
+        UserReference workProfile = workProfile(forUserReference);
+        if (workProfile != null) {
+            removeAndRecordUser(workProfile.resolve());
+        }
+    }
+
     public void ensureHasTvProfile(boolean installTestApp, UserType forUser) {
         requireUserSupported(TV_PROFILE_TYPE_NAME);
 
@@ -331,6 +379,20 @@ public final class DeviceState implements TestRule {
         }
     }
 
+    /**
+     * Ensure that there is no TV profile.
+     */
+    public void ensureHasNoTvProfile(UserType forUser) {
+        requireFeature("android.software.managed_users", FailureMode.SKIP);
+
+        UserReference forUserReference = resolveUserTypeToUser(forUser);
+
+        UserReference tvProfile = tvProfile(forUserReference);
+        if (tvProfile != null) {
+            removeAndRecordUser(tvProfile.resolve());
+        }
+    }
+
     public void ensureHasSecondaryUser(boolean installTestApp) {
         requireUserSupported(SECONDARY_USER_TYPE_NAME);
 
@@ -348,6 +410,30 @@ public final class DeviceState implements TestRule {
             mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
                     .uninstall(secondaryUser);
         }
+    }
+
+    /**
+     * Ensure that there is no secondary user.
+     */
+    public void ensureHasNoSecondaryUser() {
+        requireUserSupported(SECONDARY_USER_TYPE_NAME);
+
+        for (UserReference secondaryUser : secondaryUsers()) {
+            removeAndRecordUser(secondaryUser.resolve());
+        }
+    }
+
+    private void removeAndRecordUser(User user) {
+        if (user == null) {
+            return; // Nothing to remove
+        }
+
+        mRemovedUsers.add(mTestApis.users().createUser()
+                .name(user.name())
+                .type(user.type())
+                .parent(user.parent()));
+
+        user.remove();
     }
 
     public void requireCanSupportAdditionalUser() {
@@ -410,6 +496,12 @@ public final class DeviceState implements TestRule {
         }
 
         mCreatedUsers.clear();
+
+        for (UserBuilder userBuilder : mRemovedUsers) {
+            userBuilder.create();
+        }
+
+        mRemovedUsers.clear();
     }
 
     private UserReference createWorkProfile(UserReference parent) {
