@@ -19,7 +19,6 @@ package com.android.cts.tagging;
 import com.google.common.collect.ImmutableSet;
 
 public class TaggingManifestDisabledTest extends TaggingBaseTest {
-
     protected static final String TEST_APK = "CtsHostsideTaggingManifestDisabledApp.apk";
     protected static final String TEST_PKG = "android.cts.tagging.disabled";
 
@@ -32,33 +31,30 @@ public class TaggingManifestDisabledTest extends TaggingBaseTest {
     @Override
     protected void tearDown() throws Exception {
         uninstallPackage(TEST_PKG, true);
+        super.tearDown();
     }
 
-    public void testDefault() throws Exception {
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+    public void testHeapTaggingCompatFeatureDefault() throws Exception {
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 DEVICE_TAGGING_DISABLED_TEST_NAME,
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of(),
                 /*reportedEnabledChanges*/ ImmutableSet.of(),
-                // No statsd report for manifest-disabled apps, see truth table in
-                // /cts/tagging/Android.bp for more information.
+                // No statsd report for manifest-disabled apps because the platform compat is never
+                // probed - see `reportedChangeSet` in TaggingBaseTest for more info.
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 
-    public void testCompatFeatureEnabled() throws Exception {
+    public void testHeapTaggingCompatFeatureEnabled() throws Exception {
         // Trying to force the compat feature on should fail if the manifest specifically turns the
         // feature off.
-        runDeviceCompatTestReported(
-                TEST_PKG,
-                DEVICE_TEST_CLASS_NAME,
+        runDeviceCompatTestReported(TEST_PKG, DEVICE_TEST_CLASS_NAME,
                 DEVICE_TAGGING_DISABLED_TEST_NAME,
                 /*enabledChanges*/ ImmutableSet.of(NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID),
                 /*disabledChanges*/ ImmutableSet.of(),
                 /*reportedEnabledChanges*/ ImmutableSet.of(),
-                // No statsd report for manifest-disabled apps, see truth table in
-                // /cts/tagging/Android.bp for more information.
+                // No statsd report for manifest-disabled apps because the platform compat is never
+                // probed - see `reportedChangeSet` in TaggingBaseTest for more info.
                 /*reportedDisabledChanges*/ ImmutableSet.of());
     }
 }
