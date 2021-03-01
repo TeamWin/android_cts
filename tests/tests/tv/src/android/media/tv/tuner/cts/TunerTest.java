@@ -173,7 +173,7 @@ public class TunerTest {
         assertFalse(ids.isEmpty());
         for (int id : ids) {
             FrontendInfo info = mTuner.getFrontendInfoById(id);
-            if (info != null && info.getType() == FrontendSettings.TYPE_ATSC) {
+            if (info != null) {
                 mLockLatch = new CountDownLatch(1);
                 int res = mTuner.scan(
                         createFrontendSettings(info),
@@ -972,6 +972,7 @@ public class TunerTest {
     private FrontendSettings createFrontendSettings(FrontendInfo info) {
             FrontendCapabilities caps = info.getFrontendCapabilities();
             int minFreq = info.getFrequencyRange().getLower();
+            int maxFreq = info.getFrequencyRange().getUpper();
             FrontendCapabilities feCaps = info.getFrontendCapabilities();
             switch(info.getType()) {
                 case FrontendSettings.TYPE_ANALOG: {
@@ -989,12 +990,15 @@ public class TunerTest {
                     Atsc3FrontendCapabilities atsc3Caps = (Atsc3FrontendCapabilities) caps;
                     int bandwidth = getFirstCapable(atsc3Caps.getBandwidthCapability());
                     int demod = getFirstCapable(atsc3Caps.getDemodOutputFormatCapability());
-                    return Atsc3FrontendSettings
-                            .builder()
-                            .setFrequency(minFreq)
-                            .setBandwidth(bandwidth)
-                            .setDemodOutputFormat(demod)
-                            .build();
+                    Atsc3FrontendSettings settings =
+                            Atsc3FrontendSettings
+                                    .builder()
+                                    .setFrequency(minFreq)
+                                    .setBandwidth(bandwidth)
+                                    .setDemodOutputFormat(demod)
+                                    .build();
+                    settings.setEndFrequency(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_ATSC: {
                     AtscFrontendCapabilities atscCaps = (AtscFrontendCapabilities) caps;
@@ -1010,24 +1014,30 @@ public class TunerTest {
                     int modulation = getFirstCapable(dvbcCaps.getModulationCapability());
                     int fec = getFirstCapable(dvbcCaps.getFecCapability());
                     int annex = getFirstCapable(dvbcCaps.getAnnexCapability());
-                    return DvbcFrontendSettings
-                            .builder()
-                            .setFrequency(minFreq)
-                            .setModulation(modulation)
-                            .setInnerFec(fec)
-                            .setAnnex(annex)
-                            .build();
+                    DvbcFrontendSettings settings =
+                            DvbcFrontendSettings
+                                    .builder()
+                                    .setFrequency(minFreq)
+                                    .setModulation(modulation)
+                                    .setInnerFec(fec)
+                                    .setAnnex(annex)
+                                    .build();
+                    settings.setEndFrequency(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_DVBS: {
                     DvbsFrontendCapabilities dvbsCaps = (DvbsFrontendCapabilities) caps;
                     int modulation = getFirstCapable(dvbsCaps.getModulationCapability());
                     int standard = getFirstCapable(dvbsCaps.getStandardCapability());
-                    return DvbsFrontendSettings
-                            .builder()
-                            .setFrequency(minFreq)
-                            .setModulation(modulation)
-                            .setStandard(standard)
-                            .build();
+                    DvbsFrontendSettings settings =
+                            DvbsFrontendSettings
+                                    .builder()
+                                    .setFrequency(minFreq)
+                                    .setModulation(modulation)
+                                    .setStandard(standard)
+                                    .build();
+                    settings.setEndFrequency(maxFreq);
+                    return settings;
                 }
                 case FrontendSettings.TYPE_DVBT: {
                     DvbtFrontendCapabilities dvbtCaps = (DvbtFrontendCapabilities) caps;
@@ -1100,16 +1110,19 @@ public class TunerTest {
                             dtmbCaps.getTimeInterleaveModeCapability());
                     int codeRate = getFirstCapable(dtmbCaps.getCodeRateCapability());
                     int bandwidth = getFirstCapable(dtmbCaps.getBandwidthCapability());
-                    return DtmbFrontendSettings
-                            .builder()
-                            .setFrequency(minFreq)
-                            .setModulation(modulation)
-                            .setTransmissionMode(transmissionMode)
-                            .setBandwidth(bandwidth)
-                            .setCodeRate(codeRate)
-                            .setGuardInterval(guardInterval)
-                            .setTimeInterleaveMode(timeInterleaveMode)
-                            .build();
+                    DtmbFrontendSettings settings =
+                            DtmbFrontendSettings
+                                    .builder()
+                                    .setFrequency(minFreq)
+                                    .setModulation(modulation)
+                                    .setTransmissionMode(transmissionMode)
+                                    .setBandwidth(bandwidth)
+                                    .setCodeRate(codeRate)
+                                    .setGuardInterval(guardInterval)
+                                    .setTimeInterleaveMode(timeInterleaveMode)
+                                    .build();
+                    settings.setEndFrequency(maxFreq);
+                    return settings;
                 }
                 default:
                     break;
