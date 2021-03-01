@@ -21,26 +21,19 @@ import static com.android.internal.telephony.testing.TelephonyAssertions.assertT
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.hamcrest.Matchers.equalTo;
-
-import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.SimPhonebookContract.ElementaryFiles;
-import android.telephony.SubscriptionManager;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
-import org.junit.Assume;
 import com.android.compatibility.common.util.RequiredFeatureRule;
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -53,9 +46,6 @@ import java.util.Objects;
 /** Tests of {@link ElementaryFiles} that validate the behavior when no SIM is present. */
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_ElementaryFilesNoSimTest {
-
-    @ClassRule
-    public static final TestRule SIM_OFF_RULE = SimsPowerRule.off();
 
     @Rule
     public final TestRule telephonyRequirementRule =
@@ -87,28 +77,6 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     public void getType_invalidUri_returnsNull() {
         assertThat(mResolver.getType(
                 ElementaryFiles.CONTENT_URI.buildUpon().appendPath("invalid").build())).isNull();
-    }
-
-    @Test
-    public void query_returnsEmptyCursor() {
-        SubscriptionManager subscriptionManager = ApplicationProvider.getApplicationContext()
-                .getSystemService(SubscriptionManager.class);
-        int subscriptionCount = 0;
-        if (subscriptionManager != null) {
-            subscriptionCount = SystemUtil.runWithShellPermissionIdentity(
-                    subscriptionManager::getActiveSubscriptionInfoCount,
-                    Manifest.permission.READ_PHONE_STATE);
-        }
-        // The SIM_OFF_RULE is supposed to prevent this from happening but it doesn't work on
-        // emulators so we also have this assumption to prevent the test from running if there
-        // is an active SIM.
-        Assume.assumeThat(
-                "No SIMs should be active but some were detected.",
-                subscriptionCount, equalTo(0));
-
-        try (Cursor cursor = query(null)) {
-            assertThat(cursor).hasCount(0);
-        }
     }
 
     @Test
