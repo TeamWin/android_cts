@@ -75,7 +75,8 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                     LogicalAddress.TV,
                     LogicalAddress.BROADCAST,
                     CecOperand.SET_STREAM_PATH,
-                    CecMessage.formatParams(getDumpsysPhysicalAddress(), 2));
+                    CecMessage.formatParams(getDumpsysPhysicalAddress(),
+                            HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
 
             TimeUnit.SECONDS.sleep(HdmiCecConstants.POWER_STATUS_WAIT_TIME_SECONDS);
             String wakeStateAfter = device.executeShellCommand(
