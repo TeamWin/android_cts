@@ -16,9 +16,6 @@
 
 package com.android.cts.deviceowner;
 
-import static com.android.bedstead.dpmwrapper.TestAppHelper.registerTestCaseReceiver;
-import static com.android.bedstead.dpmwrapper.TestAppHelper.unregisterTestCaseReceiver;
-
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.BroadcastReceiver;
@@ -28,7 +25,10 @@ import android.content.IntentFilter;
 import android.os.UserHandle;
 import android.util.Log;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -71,12 +71,16 @@ final class UserActionCallback {
                 Log.e(TAG, "Unexpected action " + action + "; what's left is " + mPendingActions);
                 return;
             }
-            Log.d(TAG, "Counting down latch (current count is " + mLatch.getCount() + ")");
+            Log.d(TAG, "Counting down latch (id " + System.identityHashCode(mLatch)
+                    + ", current count " + mLatch.getCount() + ") on thread "
+                    + Thread.currentThread());
             mLatch.countDown();
         }
     };
 
     private UserActionCallback(Context context, String... actions) {
+        Log.d(TAG, "Constructed UserActionCallback for " + Arrays.toString(actions) + " on user "
+                + context.getUserId());
         mContext = context;
         mExpectedSize = actions.length;
         mExpectedActions = new ArrayList<>(mExpectedSize);
@@ -106,7 +110,7 @@ final class UserActionCallback {
             filter.addAction(action);
         }
 
-        registerTestCaseReceiver(context, callback.mReceiver, filter);
+        LocalBroadcastManager.getInstance(context).registerReceiver(callback.mReceiver, filter);
 
         return callback;
     }
@@ -155,8 +159,8 @@ final class UserActionCallback {
     /**
      * Unregister itself as a {@link BroadcastReceiver} for user events.
      */
-    private void unregisterSelf() {
-        unregisterTestCaseReceiver(mContext, mReceiver);
+    public void unregisterSelf() {
+        LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mReceiver);
     }
 
     /**
@@ -170,7 +174,6 @@ final class UserActionCallback {
         Log.d(TAG, "Waiting up to " + BROADCAST_TIMEOUT + " to receive " + mExpectedSize
                 + " broadcasts");
         boolean received = mLatch.await(BROADCAST_TIMEOUT, TimeUnit.MILLISECONDS);
-
         try {
             assertWithMessage("%s messages received in %s ms. Expected actions=%s, "
                 + "pending=%s", mExpectedSize, BROADCAST_TIMEOUT, mExpectedActions,
@@ -179,5 +182,6 @@ final class UserActionCallback {
             Log.e(TAG, "waitForBroadcasts() failed: " + e);
             throw e;
         }
+        Log.d(TAG, "All broadcasts accounted for. Thank you and come again!");
     }
 }

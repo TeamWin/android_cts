@@ -18,11 +18,13 @@ package com.android.cts.deviceowner;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.annotation.UserIdInt;
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
+import android.os.UserManager;
 import android.support.test.uiautomator.UiDevice;
 import android.test.AndroidTestCase;
 
@@ -86,5 +88,13 @@ public abstract class BaseDeviceOwnerTest extends AndroidTestCase {
 
     protected String executeShellCommand(String... command) throws Exception {
         return mDevice.executeShellCommand(String.join(" ", command));
+    }
+
+    protected boolean isHeadlessSystemUserMode() {
+        return UserManager.isHeadlessSystemUserMode();
+    }
+
+    protected UserHandle getCurrentUser() {
+        return UserHandle.of(ActivityManager.getCurrentUser());
     }
 }
