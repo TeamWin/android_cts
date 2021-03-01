@@ -29,6 +29,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.SecurityTest;
 import android.test.InstrumentationTestCase;
 
 public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
@@ -335,7 +336,7 @@ public class ActivityManagerFgsBgStartTest extends InstrumentationTestCase {
         }
     }
 
-
+    @SecurityTest(minPatchLevel = "2021-03")
     public void testFgsLocationStartFromBGWithBind() throws Exception {
         ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
                 PACKAGE_NAME_APP1, 0);
