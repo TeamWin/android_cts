@@ -80,7 +80,7 @@ class SimsPowerRule extends ExternalResource {
             return;
         }
         mInitiallyActiveSubscriptions = SystemUtil.runWithShellPermissionIdentity(
-                mSubscriptionManager::getAccessibleSubscriptionInfoList,
+                () -> mSubscriptionManager.getActiveSubscriptionInfoList(),
                 Manifest.permission.READ_PHONE_STATE);
         if (mInitiallyActiveSubscriptions == null) {
             mInitiallyActiveSubscriptions = ImmutableList.of();
