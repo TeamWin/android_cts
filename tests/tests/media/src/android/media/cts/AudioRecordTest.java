@@ -1808,4 +1808,34 @@ public class AudioRecordTest {
         assertTrue(record.isPrivacySensitive());
         record.release();
     }
+
+    @Test
+    public void testSetLogSessionId() throws Exception {
+        if (!hasMicrophone()) {
+            return;
+        }
+        AudioRecord audioRecord = null;
+        try {
+            audioRecord = new AudioRecord.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                            .build())
+                    .build();
+            audioRecord.setLogSessionId(null);               // should not throw.
+            audioRecord.setLogSessionId("0123456789abcdef"); // 16 char Base64Url id.
+
+            // record some data to generate a log entry.
+            short data[] = new short[audioRecord.getSampleRate() / 2];
+            audioRecord.startRecording();
+            audioRecord.read(data, 0 /* offsetInShorts */, data.length);
+            audioRecord.stop();
+
+            // Also can check the mediametrics dumpsys to validate logs generated.
+        } finally {
+            if (audioRecord != null) {
+                audioRecord.release();
+            }
+        }
+    }
 }
