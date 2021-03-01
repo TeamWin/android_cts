@@ -25,6 +25,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
+        "sts",
     ],
     libs: [
         "android.test.runner",
