@@ -115,8 +115,8 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int veryJankyDelta = countFramesAbove(statsAfter, 60) - countFramesAbove(statsBefore, 60);
         // The 1st frame could be >40ms, but nothing after that should be
         assertThat(veryJankyDelta).isAtMost(2);
-        int noGPUJank = countGPUFramesAbove(statsAfter, 25) - countGPUFramesAbove(statsBefore, 25);
-        assertThat(noGPUJank).isEqualTo(0);
+        int GPUJank = countGPUFramesAbove(statsAfter, 25) - countGPUFramesAbove(statsBefore, 25);
+        assertThat(GPUJank).isAtMost(2);
     }
 
     public void testDaveyDrawFrame() throws Exception {
