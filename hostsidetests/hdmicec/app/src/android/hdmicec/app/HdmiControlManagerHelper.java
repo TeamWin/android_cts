@@ -19,55 +19,99 @@ package android.hdmicec.app;
 import android.app.Activity;
 import android.hardware.hdmi.HdmiControlManager;
 import android.hardware.hdmi.HdmiPlaybackClient;
+import android.hardware.hdmi.HdmiTvClient;
 import android.os.Bundle;
 import android.util.Log;
 
 /**
- * A simple activity that can be used to trigger actions using the HdmiControlManager.
- * The action supported is:
+ * A simple activity that can be used to trigger actions using the HdmiControlManager. The actions
+ * supported are:
  *
- * 1. android.hdmicec.app.OTP: Triggers the OTP
- *    Usage: START_COMMAND -a android.hdmicec.app.OTP
+ * <p>
  *
- * where START_COMMAND is
- * adb shell am start -n "android.hdmicec.app/android.hdmicec.app.HdmiCecControlManagerHelper"
+ * <p>1. android.hdmicec.app.OTP: Triggers the OTP
+ *
+ * <p>Usage: <code>START_COMMAND -a android.hdmicec.app.OTP</code>
+ *
+ * <p>
+ *
+ * <p>2. android.hdmicec.app.SELECT_DEVICE: Selects a device to be the active source. The logical
+ * address of the device that has to be made the active source has to passed as a parameter.
+ *
+ * <p>Usage: <code>START_COMMAND -a android.hdmicec.app.DEVICE_SELECT --ei "la" [LOGICAL_ADDRESS]
+ * </code>
+ *
+ * <p>
+ *
+ * <p>where START_COMMAND is
+ *
+ * <p><code>
+ * adb shell am start -n "android.hdmicec.app/android.hdmicec.app.HdmiControlManagerHelper"
+ * </code>
  */
 public class HdmiControlManagerHelper extends Activity {
 
     private static final String TAG = HdmiControlManagerHelper.class.getSimpleName();
+    HdmiControlManager mHdmiControlManager;
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
-        HdmiControlManager hdmiControlManager = getSystemService(HdmiControlManager.class);
-        if (hdmiControlManager == null) {
+        mHdmiControlManager = getSystemService(HdmiControlManager.class);
+        if (mHdmiControlManager == null) {
             Log.i(TAG, "Failed to get HdmiControlManager");
             return;
         }
 
         switch (getIntent().getAction()) {
             case "android.hdmicec.app.OTP":
-                initiateOtp(hdmiControlManager);
+                initiateOtp();
                 break;
+            case "android.hdmicec.app.DEVICE_SELECT":
+                int logicalAddress = getIntent().getIntExtra("la", 50);
+                deviceSelect(logicalAddress);
             default:
                 Log.w(TAG, "Unknown intent!");
         }
     }
 
-    private void initiateOtp(HdmiControlManager hdmiControlManager) {
-        HdmiPlaybackClient client = hdmiControlManager.getPlaybackClient();
+    private void deviceSelect(int logicalAddress) {
+        HdmiTvClient client = mHdmiControlManager.getTvClient();
+        if (client == null) {
+            Log.e(TAG, "Failed to get the TV client");
+            return;
+        }
+
+        client.deviceSelect(
+                logicalAddress,
+                (result) -> {
+                    if (result == HdmiControlManager.RESULT_SUCCESS) {
+                        Log.i(TAG, "Selected device with logical address " + logicalAddress);
+                    } else {
+                        Log.i(
+                                TAG,
+                                "Could not select device with logical address " + logicalAddress);
+                    }
+                    finishAndRemoveTask();
+                });
+    }
+
+    private void initiateOtp() {
+        HdmiPlaybackClient client = mHdmiControlManager.getPlaybackClient();
         if (client == null) {
             Log.i(TAG, "Failed to get HdmiPlaybackClient");
             return;
         }
 
-        client.oneTouchPlay((result) -> {
-            if (result == HdmiControlManager.RESULT_SUCCESS) {
-                Log.i(TAG, "OTP successful");
-            } else {
-                Log.i(TAG, "OTP failed");
-            }
-        });
+        client.oneTouchPlay(
+                (result) -> {
+                    if (result == HdmiControlManager.RESULT_SUCCESS) {
+                        Log.i(TAG, "OTP successful");
+                    } else {
+                        Log.i(TAG, "OTP failed");
+                    }
+                    finishAndRemoveTask();
+                });
     }
 }
