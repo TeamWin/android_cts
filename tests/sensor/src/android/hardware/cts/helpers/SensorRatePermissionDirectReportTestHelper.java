@@ -25,6 +25,7 @@ import android.hardware.SensorPrivacyManager;
 import android.hardware.cts.SensorDirectReportTest;
 
 import com.android.compatibility.common.util.ShellUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -132,9 +133,10 @@ public class SensorRatePermissionDirectReportTestHelper {
      */
     public void flipAndAssertMicToggleOff(int userID, SensorPrivacyManager spm) {
         ShellUtils.runShellCommand("cmd sensor_privacy disable " + userID + " microphone");
-        Assert.assertTrue("Failed to switch the mic toggle off!",
-                !spm.isSensorPrivacyEnabled(
-                        SensorPrivacyManager.Sensors.MICROPHONE));
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Assert.assertTrue("Failed to switch the mic toggle off!",
+                    !spm.isSensorPrivacyEnabled(SensorPrivacyManager.Sensors.MICROPHONE));
+        });
     }
 
     /**
@@ -142,9 +144,10 @@ public class SensorRatePermissionDirectReportTestHelper {
      */
     public void flipAndAssertMicToggleOn(int userID, SensorPrivacyManager spm) {
         ShellUtils.runShellCommand("cmd sensor_privacy enable " + userID + " microphone");
-        Assert.assertTrue("Failed to switch the mic toggle on!",
-                spm.isSensorPrivacyEnabled(
-                        SensorPrivacyManager.Sensors.MICROPHONE));
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Assert.assertTrue("Failed to switch the mic toggle on!",
+                    spm.isSensorPrivacyEnabled(SensorPrivacyManager.Sensors.MICROPHONE));
+        });
     }
 
     /**
