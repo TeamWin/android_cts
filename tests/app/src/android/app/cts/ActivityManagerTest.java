@@ -40,6 +40,7 @@ import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.ActivityManagerRecentOneActivity;
 import android.app.stubs.ActivityManagerRecentTwoActivity;
 import android.app.stubs.CommandReceiver;
+import android.app.stubs.LocalForegroundService;
 import android.app.stubs.MockApplicationActivity;
 import android.app.stubs.MockService;
 import android.app.stubs.ScreenOnActivity;
@@ -54,7 +55,11 @@ import android.content.pm.ConfigurationInfo;
 import android.content.res.Resources;
 import android.os.Binder;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.Parcel;
 import android.os.RemoteException;
 import android.os.SystemClock;
@@ -1505,6 +1510,119 @@ public class ActivityManagerTest extends InstrumentationTestCase {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
             });
+        }
+    }
+
+    public void testServiceDoneLRUPosition() throws Exception {
+        ApplicationInfo ai = mTargetContext.getPackageManager()
+                .getApplicationInfo(PACKAGE_NAME_APP1, 0);
+        final WatchUidRunner watcher1 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
+        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP2, 0);
+        final WatchUidRunner watcher2 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
+        ai = mTargetContext.getPackageManager().getApplicationInfo(PACKAGE_NAME_APP3, 0);
+        final WatchUidRunner watcher3 = new WatchUidRunner(mInstrumentation, ai.uid, WAITFOR_MSEC);
+        final HandlerThread handlerThread = new HandlerThread("worker");
+        final Messenger[] controllerHolder = new Messenger[1];
+        final CountDownLatch[] countDownLatchHolder = new CountDownLatch[1];
+        handlerThread.start();
+        final Messenger messenger = new Messenger(new Handler(handlerThread.getLooper(), msg -> {
+            final Bundle bundle = (Bundle) msg.obj;
+            final IBinder binder = bundle.getBinder(CommandReceiver.EXTRA_MESSENGER);
+            if (binder != null) {
+                controllerHolder[0] = new Messenger(binder);
+                countDownLatchHolder[0].countDown();
+            }
+            return true;
+        }));
+
+        try {
+            // Make sure we could start activity from background
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP1);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP2);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist +" + PACKAGE_NAME_APP3);
+
+            // Start a FGS in app1
+            final Bundle extras = new Bundle();
+            countDownLatchHolder[0] = new CountDownLatch(1);
+            extras.putBinder(CommandReceiver.EXTRA_MESSENGER, messenger.getBinder());
+            CommandReceiver.sendCommand(mTargetContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
+
+            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE, null);
+
+            assertTrue("Failed to get the controller interface",
+                    countDownLatchHolder[0].await(WAITFOR_MSEC, TimeUnit.MILLISECONDS));
+
+            // Start an activity in another package
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+
+            watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Start another activity in another package
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_START_ACTIVITY,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+
+            watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP, null);
+
+            // Stop both of these activities
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+            watcher2.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
+            CommandReceiver.sendCommand(mTargetContext, CommandReceiver.COMMAND_STOP_ACTIVITY,
+                    PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
+            watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
+
+            // Now stop the foreground service, we'd have to do via the controller interface
+            final Message msg = Message.obtain();
+            try {
+                msg.what = LocalForegroundService.COMMAND_STOP_SELF;
+                controllerHolder[0].send(msg);
+            } catch (RemoteException e) {
+                fail("Unable to stop test package");
+            }
+            msg.recycle();
+            watcher1.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
+
+            final List<String> lru = getCachedAppsLru();
+
+            assertTrue("Failed to get cached app list", lru.size() > 0);
+            final int app1LruPos = lru.indexOf(PACKAGE_NAME_APP1);
+            final int app2LruPos = lru.indexOf(PACKAGE_NAME_APP2);
+            final int app3LruPos = lru.indexOf(PACKAGE_NAME_APP3);
+            if (app1LruPos != -1) {
+                assertTrue(PACKAGE_NAME_APP1 + " should be newer than " + PACKAGE_NAME_APP2,
+                        app1LruPos > app2LruPos);
+                assertTrue(PACKAGE_NAME_APP1 + " should be newer than " + PACKAGE_NAME_APP3,
+                        app1LruPos > app3LruPos);
+            } else {
+                assertEquals(PACKAGE_NAME_APP2 + " should have gone", -1, app2LruPos);
+                assertEquals(PACKAGE_NAME_APP3 + " should have gone", -1, app3LruPos);
+            }
+        } finally {
+            handlerThread.quitSafely();
+
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP1);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP2);
+            SystemUtil.runShellCommand(mInstrumentation,
+                    "cmd deviceidle whitelist -" + PACKAGE_NAME_APP3);
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                // force stop test package, where the whole test process group will be killed.
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP1);
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP2);
+                mActivityManager.forceStopPackage(PACKAGE_NAME_APP3);
+            });
+
+            watcher1.finish();
+            watcher2.finish();
+            watcher3.finish();
         }
     }
 
