@@ -22,6 +22,10 @@ import tempfile
 import time
 import yaml
 
+import capture_request_utils
+import image_processing_utils
+import its_session_utils
+
 YAML_FILE_DIR = os.environ['CAMERA_ITS_TOP']
 CONFIG_FILE = os.path.join(YAML_FILE_DIR, 'config.yml')
 TEST_KEY_TABLET = 'tablet'
@@ -85,6 +89,32 @@ _REPEATED_TESTS = {
     'sensor_fusion': [],
     'scene_change': []
 }
+
+# Scene requirements for manual testing.
+_SCENE_REQ = {
+    'scene0': None,
+    'scene1_1': 'A grey card covering at least the middle 30% of the scene',
+    'scene1_2': 'A grey card covering at least the middle 30% of the scene',
+    'scene2_a': 'The picture with 3 faces in tests/scene2_a/scene2_a.pdf',
+    'scene2_b': 'The picture with 3 faces in tests/scene2_b/scene2_b.pdf',
+    'scene2_c': 'The picture with 3 faces in tests/scene2_c/scene2_c.pdf',
+    'scene2_d': 'The picture with 3 faces in tests/scene2_d/scene2_d.pdf',
+    'scene2_e': 'The picture with 3 faces in tests/scene2_e/scene2_e.pdf',
+    'scene3': 'The ISO12233 chart',
+    'scene4': 'A test chart of a circle covering at least the middle 50% of '
+              'the scene. See tests/scene4/scene4.pdf',
+    'scene5': 'Capture images with a diffuser attached to the camera. '
+              'See CameraITS.pdf section 2.3.4 for more details',
+    'scene6': 'A grid of black circles on a white background. '
+              'See tests/scene6/scene6.pdf',
+    'sensor_fusion': 'A checkerboard pattern for phone to rotate in front of '
+                     'in tests/sensor_fusion/checkerboard.pdf\n'
+                     'See tests/sensor_fusion/SensorFusion.pdf for detailed '
+                     'instructions.\nNote that this test will be skipped '
+                     'on devices not supporting REALTIME camera timestamp.',
+    'scene_change': 'The picture with 3 faces in tests/scene2_e/scene2_e.pdf',
+}
+
 
 _DST_SCENE_DIR = '/mnt/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
@@ -151,6 +181,38 @@ def load_scenes_on_tablet(scene, tablet_id):
       subprocess.Popen(cmd.split())
   time.sleep(LOAD_SCENE_DELAY)
   logging.info('Finished copying files to tablet.')
+
+
+def check_manual_scenes(device_id, camera_id, scene, out_path):
+  """Halt run to change scenes.
+
+  Args:
+    device_id: id of device
+    camera_id: id of camera
+    scene: Name of the scene to copy image files.
+    out_path: output file location
+  """
+  logging.info('No chart tablet defined. Manual testing.')
+  with its_session_utils.ItsSession(
+      device_id=device_id,
+      camera_id=camera_id) as cam:
+    props = cam.get_camera_properties()
+
+    while True:
+      input(f'\n Press <ENTER> after positioning camera {camera_id} with '
+            f'{scene}.\n The scene setup should be: \n  {_SCENE_REQ[scene]}\n')
+      # Converge 3A prior to capture.
+      cam.do_3a()
+      req, fmt = capture_request_utils.get_fastest_auto_capture_settings(props)
+      logging.info('Capturing an image to check the test scene')
+      cap = cam.do_capture(req, fmt)
+      img = image_processing_utils.convert_capture_to_rgb_image(cap)
+      img_name = os.path.join(out_path, f'test_{scene}.jpg')
+      logging.info('Please check scene setup in %s', img_name)
+      image_processing_utils.write_image(img, img_name)
+      choice = input('Is the image okay for ITS {scene}? (Y/N)').lower()
+      if choice == 'y':
+        break
 
 
 def get_config_file_contents():
@@ -285,7 +347,7 @@ def main():
       if TEST_KEY_SENSOR_FUSION in i['Name'].lower():
         config_file_contents['TestBeds'].remove(i)
 
- # Get test parameters from config file
+  # Get test parameters from config file
   test_params_content = get_test_params(config_file_contents)
   if not camera_id_combos:
     camera_id_combos = str(test_params_content['camera']).split(',')
@@ -348,9 +410,15 @@ def main():
       scene_test_summary = f'Cam{camera_id} {s}' + '\n'
       mobly_scene_output_logs_path = os.path.join(mobly_output_logs_path, s)
 
-      # Copy scene images onto the tablet.
-      if s not in ['scene0', 'sensor_fusion']:
-        load_scenes_on_tablet(s, tablet_id)
+      if auto_scene_switch:
+        # Copy scene images onto the tablet
+        if s not in ['scene0', 'sensor_fusion']:
+          load_scenes_on_tablet(s, tablet_id)
+      else:
+        # Check manual scens for correctness
+        if s not in ['scene0']:
+          check_manual_scenes(device_id, camera_id, s, mobly_output_logs_path)
+
       scene_test_list = []
       config_file_contents['TestBeds'][0]['TestParams'] = test_params_content
       # Add the MoblyParams to config.yml file with the path to store camera_id

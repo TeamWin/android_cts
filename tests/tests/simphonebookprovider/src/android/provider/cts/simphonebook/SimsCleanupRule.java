@@ -24,6 +24,7 @@ import android.os.Bundle;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 import android.telephony.SubscriptionInfo;
+import android.util.Log;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -79,6 +80,10 @@ class SimsCleanupRule extends ExternalResource {
                         SimPhonebookContract.SimRecords.getItemUri(subscriptionId, mEfType,
                                 cursor.getInt(0)), mExtras);
             }
+        } catch (Exception e) {
+            // Swallow this so that the exception in the rule doesn't overwrite the failure in the
+            // test.
+            Log.e(TAG, "Failure cleaning up SIM", e);
         }
     }
 }

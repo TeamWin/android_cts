@@ -23,16 +23,18 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.provider.SimPhonebookContract.ElementaryFiles;
 
 import androidx.annotation.NonNull;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.RequiresDevice;
+
+import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Before;
-import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
@@ -45,8 +47,9 @@ import java.util.Objects;
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_ElementaryFilesNoSimTest {
 
-    @ClassRule
-    public static final TestRule SIM_OFF_RULE = SimsPowerRule.off();
+    @Rule
+    public final TestRule telephonyRequirementRule =
+            new RequiredFeatureRule(PackageManager.FEATURE_TELEPHONY);
 
     private ContentResolver mResolver;
 
@@ -74,16 +77,6 @@ public class SimPhonebookContract_ElementaryFilesNoSimTest {
     public void getType_invalidUri_returnsNull() {
         assertThat(mResolver.getType(
                 ElementaryFiles.CONTENT_URI.buildUpon().appendPath("invalid").build())).isNull();
-    }
-
-    // The emulator fakes a SIM card that only kind of works. The power off rule does not disable
-    // it and it has EF_FDN so this test will fail.
-    @RequiresDevice
-    @Test
-    public void query_returnsEmptyCursor() {
-        try (Cursor cursor = query(null)) {
-            assertThat(cursor).hasCount(0);
-        }
     }
 
     @Test

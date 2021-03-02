@@ -8,7 +8,6 @@ filegroup {
         "src/android/provider/cts/simphonebook/RemovableSims.java",
         "src/android/provider/cts/simphonebook/SimsCleanupRule.java",
         "src/android/provider/cts/simphonebook/SimPhonebookRequirementsRule.java",
-        "src/android/provider/cts/simphonebook/SimsPowerRule.java",
     ],
 }
 

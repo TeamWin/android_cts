@@ -59,7 +59,8 @@
     <uses-permission android:name="android.os.cts.permission.TEST_GRANTED"/>
 
     <application android:usesCleartextTraffic="true"
-         android:requestLegacyExternalStorage="true">
+                 android:requestLegacyExternalStorage="true"
+                 android:manageSpaceActivity="android.os.cts.SimpleTestActivity">
         <activity android:name="android.os.cts.LaunchpadActivity"
              android:configChanges="keyboardHidden|orientation|screenSize"
              android:multiprocess="true">
@@ -82,7 +83,7 @@
         <activity android:name="android.os.cts.SimpleTestActivity"/>
 
         <activity android:name="android.os.cts.IntentLaunchActivity"
-             android:exported="true" />
+             android:exported="false" />
 
         <service android:name="android.os.cts.ParcelFileDescriptorPeer$Red"
              android:process=":red"
