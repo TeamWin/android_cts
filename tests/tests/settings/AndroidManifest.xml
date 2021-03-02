@@ -19,6 +19,7 @@
      package="android.settings.cts">
 
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
 
     <application>
         <uses-library android:name="android.test.runner"/>
