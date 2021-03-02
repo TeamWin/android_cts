@@ -42,6 +42,12 @@ public class DelegateTestUtils {
         void run() throws Exception;
     }
 
+    /**
+     * A receiver for listening for network logs.
+     *
+     * To use this the sBatchCountDown must be assigned before generating logs.
+     * The receiver will ignore events until sBatchCountDown is assigned.
+     */
     public static class NetworkLogsReceiver extends DelegatedAdminReceiver {
 
         private static final long TIMEOUT_MIN = 1;
@@ -52,6 +58,12 @@ public class DelegateTestUtils {
         @Override
         public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
                 int networkLogsCount) {
+            if (sBatchCountDown == null) {
+                // If the latch is not set then nothing will be using the receiver to examine
+                // the logs. Leave the logs unread.
+                return;
+            }
+
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
             final List<NetworkEvent> events = dpm.retrieveNetworkLogs(null, batchToken);
             if (events == null || events.size() == 0) {
