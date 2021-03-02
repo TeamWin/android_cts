@@ -17,6 +17,7 @@
 package android.hdmicec.cts.tv;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
@@ -34,6 +35,9 @@ import org.junit.runner.RunWith;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /** HDMI CEC test to check Remote Control Pass Through behaviour (Sections 11.1.13) */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -49,7 +53,7 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                     .around(hdmiCecClient);
 
     public HdmiCecRemoteControlPassThroughTest() {
-        super(LogicalAddress.TV, "-t", "r", "-t", "p", "-t", "t");
+        super(LogicalAddress.TV, "-t", "r", "-t", "p", "-t", "t", "-t", "a");
         mapRemoteControlKeys();
     }
 
@@ -113,6 +117,33 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
         validateKeyeventToUserControlPress(LogicalAddress.TUNER_1);
     }
 
+    /**
+     * Test 11.1.13-4
+     *
+     * <p>Tests that the DUT sends the appropriate messages for remote control pass through to an
+     * Audio System.
+     */
+    @Test
+    public void cect_11_1_13_4_RemoteControlMessagesToAudioSystem() throws Exception {
+        hdmiCecClient.broadcastActiveSource(
+                LogicalAddress.AUDIO_SYSTEM, hdmiCecClient.getPhysicalAddress());
+        validateKeyeventToUserControlPress(LogicalAddress.AUDIO_SYSTEM);
+    }
+
+    /**
+     * Test 11.1.13-5
+     *
+     * <p>Tests that the DUT behaves sensibly when the remote control pass through feature is
+     * invoked in a system with multiple devices of the same type.
+     */
+    @Test
+    public void cect_11_1_13_5_RemoteControlPassthroughWithMultipleDevices() throws Exception {
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.RECORDER_1);
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.RECORDER_2, 0x2100);
+        validateMultipleKeyeventToUserControlPress(
+                LogicalAddress.RECORDER_1, LogicalAddress.RECORDER_2);
+    }
+
     private void mapRemoteControlKeys() {
         remoteControlKeys.put("DPAD_UP", HdmiCecConstants.CEC_CONTROL_UP);
         remoteControlKeys.put("DPAD_DOWN", HdmiCecConstants.CEC_CONTROL_DOWN);
@@ -128,6 +159,26 @@ public final class HdmiCecRemoteControlPassThroughTest extends BaseHdmiCecCtsTes
                     hdmiCecClient.checkExpectedOutput(toDevice, CecOperand.USER_CONTROL_PRESSED);
             assertThat(CecMessage.getParams(message)).isEqualTo(remoteControlKeys.get(remoteKey));
             hdmiCecClient.checkExpectedOutput(toDevice, CecOperand.USER_CONTROL_RELEASED);
+        }
+    }
+
+    private void validateMultipleKeyeventToUserControlPress(
+            LogicalAddress device1, LogicalAddress device2) throws Exception {
+        ITestDevice device = getDevice();
+        for (String remoteKey : remoteControlKeys.keySet()) {
+            List<LogicalAddress> destinationAddresses = new ArrayList<>();
+            device.executeShellCommand("input keyevent KEYCODE_" + remoteKey);
+            destinationAddresses =
+                    hdmiCecClient.getAllDestLogicalAddresses(
+                            CecOperand.USER_CONTROL_PRESSED,
+                            CecMessage.formatParams(remoteControlKeys.get(remoteKey)),
+                            4);
+            assertWithMessage("UCP message forwarded to more than one device.")
+                    .that(destinationAddresses.containsAll(Arrays.asList(device1, device2)))
+                    .isFalse();
+            assertWithMessage("UCP message was not forwarded to any of the device.")
+                    .that(destinationAddresses)
+                    .containsAnyIn(Arrays.asList(device1, device2));
         }
     }
 }
