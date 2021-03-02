@@ -244,10 +244,4 @@ public class NetworkRegistrationInfoTest {
         NetworkRegistrationInfo newNrs = NetworkRegistrationInfo.CREATOR.createFromParcel(p);
         assertEquals(nri, newNrs);
     }
-
-    @Test
-    public void testGetNrState() {
-        final NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder().build();
-        assertEquals(nri.getNrState(), NetworkRegistrationInfo.NR_STATE_NONE);
-    }
 }
