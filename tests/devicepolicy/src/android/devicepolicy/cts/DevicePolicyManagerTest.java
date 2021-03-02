@@ -40,6 +40,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.Postsubmit;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
@@ -92,6 +93,7 @@ public final class DevicePolicyManagerTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
     @RequireFeatures({
             PackageManager.FEATURE_DEVICE_ADMIN,
             PackageManager.FEATURE_MANAGED_USERS
@@ -118,6 +120,7 @@ public final class DevicePolicyManagerTest {
     }
 
     @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
     @RequireFeatures({
             PackageManager.FEATURE_DEVICE_ADMIN,
             PackageManager.FEATURE_MANAGED_USERS
