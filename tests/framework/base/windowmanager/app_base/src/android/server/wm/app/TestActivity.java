@@ -33,6 +33,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Looper;
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
 import android.widget.ProgressBar;
@@ -61,12 +62,12 @@ public class TestActivity extends AbstractLifecycleLogActivity {
         }
 
         if (getIntent().hasExtra(EXTRA_NO_IDLE)) {
-            preventAcitivtyIdle();
+            preventActivityIdle();
         }
     }
 
     /** Starts a repeated animation on main thread to make its message queue non-empty. */
-    private void preventAcitivtyIdle() {
+    private void preventActivityIdle() {
         final ProgressBar progressBar = new ProgressBar(this);
         progressBar.setIndeterminate(true);
         setContentView(progressBar);
@@ -112,7 +113,13 @@ public class TestActivity extends AbstractLifecycleLogActivity {
                 startActivities(Arrays.copyOf(intents, intents.length, Intent[].class));
                 break;
             case COMMAND_NAVIGATE_UP_TO:
-                navigateUpTo(data.getParcelable(EXTRA_INTENT));
+                final Intent intent = data.getParcelable(EXTRA_INTENT);
+                try {
+                    navigateUpTo(intent);
+                } catch (Exception e) {
+                    // Expected if the target activity in not exported with different uid.
+                    Log.w(getTag(), "Failed to navigateUpTo: " + intent, e);
+                }
                 break;
             default:
                 super.handleCommand(command, data);

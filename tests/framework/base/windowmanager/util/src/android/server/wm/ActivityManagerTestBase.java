@@ -558,8 +558,7 @@ public abstract class ActivityManagerTestBase {
 
         runWithShellPermission(() -> {
             // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
-            mTaskOrganizer = new TestTaskOrganizer(
-                    mContext.createDisplayContext(mDm.getDisplay(DEFAULT_DISPLAY)));
+            mTaskOrganizer = new TestTaskOrganizer(mContext);
             // Clear launch params for all test packages to make sure each test is run in a clean
             // state.
             mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
