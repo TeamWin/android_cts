@@ -98,7 +98,7 @@ android_test {
     srcs: ["src/**/*.java"],
     static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
     compile_multilib: "both",
-    test_suites: ["general-tests", "mts", "cts"],
+    test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
     java_resources: [
         ":CtsScopedStorageTestAppA",
@@ -113,7 +113,7 @@ android_test {
     srcs: ["legacy/src/**/*.java"],
     static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
     compile_multilib: "both",
-    test_suites: ["general-tests", "mts", "cts"],
+    test_suites: ["general-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
     target_sdk_version: "29",
     java_resources: [
@@ -148,7 +148,7 @@ java_test_host {
     name: "CtsScopedStoragePublicVolumeHostTest",
     srcs: ["host/src/**/*.java"],
     libs: ["cts-tradefed", "tradefed", "testng"],
-    test_suites: ["general-tests", "mts"],
+    test_suites: ["general-tests", "mts-mediaprovider"],
     test_config: "PublicVolumeTest.xml",
 }
 
@@ -159,7 +159,7 @@ android_test {
     srcs: ["device/**/*.java"],
     static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
     compile_multilib: "both",
-    test_suites: ["device-tests", "mts", "cts"],
+    test_suites: ["device-tests", "mts-mediaprovider", "cts"],
     sdk_version: "test_current",
     libs: ["android.test.base", "android.test.mock", "android.test.runner",],
     java_resources: [
