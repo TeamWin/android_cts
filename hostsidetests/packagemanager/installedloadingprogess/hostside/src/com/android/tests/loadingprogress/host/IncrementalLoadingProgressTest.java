@@ -16,9 +16,12 @@
 
 package com.android.tests.loadingprogress.host;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
@@ -26,6 +29,7 @@ import android.platform.test.annotations.LargeTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.incfs.install.IncrementalInstallSession;
 import com.android.incfs.install.adb.ddmlib.DeviceConnection;
+import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.RunUtil;
@@ -39,6 +43,8 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -54,10 +60,12 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
     private static final String IDSIG_SUFFIX = ".idsig";
     private static final int WAIT_FOR_LOADING_PROGRESS_UPDATE_MS = 2000;
     private IncrementalInstallSession mSession;
+    private static final int PACKAGE_SETTING_WRITE_SLEEP_MS = 10000;
 
     @Before
     public void setUp() throws Exception {
         assumeTrue(getDevice().hasFeature("android.software.incremental_delivery"));
+        getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File apk = buildHelper.getTestFile(TEST_APK);
         assertNotNull(apk);
@@ -112,5 +120,53 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
     public void testOnPackageLoadingProgressChangedCalledWithFullyLoaded() throws Exception {
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testOnPackageLoadingProgressChangedCalledWithFullyLoaded"));
+    }
+
+    @LargeTest
+    @Test
+    public void testLoadingProgressPersistsAfterReboot() throws Exception {
+        // Wait for loading progress to update
+        RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
+        // Check that "loadingProgress" is shown in the dumpsys of on a partially loaded app
+        final String loadingPercentageString = getLoadingProgressFromDumpsys();
+        assertNotNull(loadingPercentageString);
+        final int loadingPercentage = Integer.parseInt(loadingPercentageString);
+        assertTrue(loadingPercentage > 0 && loadingPercentage < 100);
+        getDevice().reboot();
+        final String loadingPercentageStringAfterReboot = getLoadingProgressFromDumpsys();
+        assertNotNull(loadingPercentageStringAfterReboot);
+        final int loadingPercentageAfterReboot =
+                Integer.parseInt(loadingPercentageStringAfterReboot);
+        // Can't guarantee that the values are the same, but should still be partially loaded
+        assertTrue(loadingPercentageAfterReboot > 0 && loadingPercentageAfterReboot < 100);
+    }
+
+    @LargeTest
+    @Test
+    public void testLoadingProgressNotShownWhenFullyLoaded() throws Exception {
+        // Trigger full download
+        assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
+                "testReadAllBytes"));
+        // Wait for loading progress to update
+        RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);
+        // Check that no more showing of "loadingProgress" in dumpsys for this package
+        assertNull(getLoadingProgressFromDumpsys());
+        // Wait a bit before reboot, allowing the package setting info to be written to disk.
+        RunUtil.getDefault().sleep(PACKAGE_SETTING_WRITE_SLEEP_MS);
+        getDevice().reboot();
+        assertNull(getLoadingProgressFromDumpsys());
+    }
+
+    private String getLoadingProgressFromDumpsys() throws Exception {
+        final CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        getDevice().executeShellCommand("dumpsys package " + TEST_APP_PACKAGE_NAME,
+                receiver);
+        final String output = receiver.getOutput();
+        // Expecting output like "loadingProgress=50%"
+        final Matcher matcher = Pattern.compile("loadingProgress=(\\d+)%").matcher(output);
+        if (!matcher.find() || matcher.groupCount() < 1) {
+            return null;
+        }
+        return matcher.group(1);
     }
 }
