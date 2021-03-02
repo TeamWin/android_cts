@@ -16,14 +16,13 @@
 
 package android.hdmicec.cts.playback;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecMessage;
 import android.hdmicec.cts.CecOperand;
-import android.hdmicec.cts.HdmiCecClientWrapper;
 import android.hdmicec.cts.HdmiCecConstants;
 import android.hdmicec.cts.LogicalAddress;
-import android.hdmicec.cts.RequiredPropertyRule;
-import android.hdmicec.cts.RequiredFeatureRule;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -52,6 +51,36 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
             .around(CecRules.requiresLeanback(this))
             .around(CecRules.requiresDeviceType(this, LogicalAddress.PLAYBACK_1))
             .around(hdmiCecClient);
+
+    /**
+     * Test 11.1.2-2, HF4-7-2
+     *
+     * Tests that the device does not respond to a {@code <Request Active Source>} message
+     * when it is not the current active source.
+     */
+    @Test
+    public void cect_11_1_2_2_RequestActiveSource() throws Exception {
+        ITestDevice device = getDevice();
+
+        hdmiCecClient.sendCecMessage(
+                LogicalAddress.TV,
+                LogicalAddress.BROADCAST,
+                CecOperand.ACTIVE_SOURCE,
+                CecMessage.formatParams(HdmiCecConstants.TV_PHYSICAL_ADDRESS,
+                        HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
+
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
+        String isActiveSource = device.executeShellCommand(
+                "dumpsys hdmi_control | grep \"isActiveSource()\"");
+        assertThat(isActiveSource.trim()).isEqualTo("isActiveSource(): false");
+
+        hdmiCecClient.sendCecMessage(LogicalAddress.TV, LogicalAddress.BROADCAST,
+                CecOperand.REQUEST_ACTIVE_SOURCE);
+
+        hdmiCecClient.checkOutputDoesNotContainMessage(
+                LogicalAddress.BROADCAST, CecOperand.ACTIVE_SOURCE);
+    }
 
     /**
      * Test 11.2.2-1

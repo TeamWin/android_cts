@@ -78,7 +78,7 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
                     CecMessage.formatParams(getDumpsysPhysicalAddress(),
                             HdmiCecConstants.PHYSICAL_ADDRESS_LENGTH));
 
-            TimeUnit.SECONDS.sleep(HdmiCecConstants.POWER_STATUS_WAIT_TIME_SECONDS);
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             String wakeStateAfter = device.executeShellCommand(
                     "dumpsys power | grep mWakefulness=");
             assertWithMessage("Device should wake up on <Set Stream Path>")
