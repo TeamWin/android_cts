@@ -30,6 +30,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java"],
     resource_dirs: ["res"],

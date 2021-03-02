@@ -61,7 +61,6 @@ public class SensorAdditionalInfoTest extends SensorTestCase {
                     s.getType() != Sensor.TYPE_MAGNETIC_FIELD) {
                 continue;
             }
-
             if (!s.isAdditionalInfoSupported()) {
                 // check SensorAdditionalInfo is supported for Automotive sensors.
                 if (getContext().getPackageManager().hasSystemFeature(
