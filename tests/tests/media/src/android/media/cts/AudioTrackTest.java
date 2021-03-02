@@ -2781,7 +2781,7 @@ public class AudioTrackTest {
             IllegalArgumentException.class,
             () -> {
                 final AudioTrack.TunerConfiguration badConfig =
-                    new AudioTrack.TunerConfiguration(0 /* contentId */, 1 /* syncId */);
+                    new AudioTrack.TunerConfiguration(-1 /* contentId */, 1 /* syncId */);
             });
 
         assertThrows(
@@ -2809,22 +2809,34 @@ public class AudioTrackTest {
             });
 
         // this should work.
-        final AudioTrack.TunerConfiguration tunerConfiguration =
-                new AudioTrack.TunerConfiguration(1 /* contentId */, 2 /* syncId */);
+        int[][] contentSyncPairs = {
+            {1, 2},
+            {AudioTrack.TunerConfiguration.CONTENT_ID_NONE, 42},
+        };
+        for (int[] pair : contentSyncPairs) {
+            final int contentId = pair[0];
+            final int syncId = pair[1];
+            final AudioTrack.TunerConfiguration tunerConfiguration =
+                    new AudioTrack.TunerConfiguration(contentId, syncId);
 
-        assertEquals("contentId must be set", 1, tunerConfiguration.getContentId());
-        assertEquals("syncId must be set", 2, tunerConfiguration.getSyncId());
+            assertEquals("contentId must be set", contentId, tunerConfiguration.getContentId());
+            assertEquals("syncId must be set", syncId, tunerConfiguration.getSyncId());
 
-        // this may fail on creation, not in any setters.
-        try {
-            final AudioTrack track = new AudioTrack.Builder()
-                .setEncapsulationMode(AudioTrack.ENCAPSULATION_MODE_NONE)
-                .setTunerConfiguration(tunerConfiguration)
-                .build();
-            track.release();
-        } catch (UnsupportedOperationException e) {
-            ; // creation failure is OK as TunerConfiguration requires HW support,
-              // however other exception failures are not OK.
+            // this may fail on creation, not in any setters.
+            AudioTrack track = null;
+            try {
+                track = new AudioTrack.Builder()
+                        .setEncapsulationMode(AudioTrack.ENCAPSULATION_MODE_NONE)
+                        .setTunerConfiguration(tunerConfiguration)
+                        .build();
+            } catch (UnsupportedOperationException e) {
+                ; // creation failure is OK as TunerConfiguration requires HW support,
+                // however other exception failures are not OK.
+            } finally {
+                if (track != null) {
+                    track.release();
+                }
+            }
         }
     }
 
