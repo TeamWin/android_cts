@@ -28,6 +28,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.SystemClock;
@@ -64,7 +65,7 @@ class TestTaskOrganizer extends TaskOrganizer {
     private final ArraySet<Integer> mSecondaryChildrenTaskIds = new ArraySet<>();
     private final Rect mPrimaryBounds = new Rect();
     private final Rect mSecondaryBounds = new Rect();
-    private final Context mDisplayContext;
+    private final Context mContext;
 
     private static final int[] CONTROLLED_ACTIVITY_TYPES = {
             ACTIVITY_TYPE_STANDARD,
@@ -78,14 +79,16 @@ class TestTaskOrganizer extends TaskOrganizer {
             WINDOWING_MODE_UNDEFINED
     };
 
-    TestTaskOrganizer(Context displayContext) {
+    TestTaskOrganizer(Context context) {
         super();
-        mDisplayContext = displayContext;
+        mContext = context;
     }
 
     @Override
     public List<TaskAppearedInfo> registerOrganizer() {
-        Rect bounds = mDisplayContext.getSystemService(WindowManager.class)
+        final Rect bounds = mContext.createDisplayContext(
+                mContext.getSystemService(DisplayManager.class)
+                        .getDisplay(DEFAULT_DISPLAY)).getSystemService(WindowManager.class)
                 .getCurrentWindowMetrics()
                 .getBounds();
         final boolean isLandscape = bounds.width() > bounds.height();
@@ -94,6 +97,8 @@ class TestTaskOrganizer extends TaskOrganizer {
         } else {
             bounds.splitHorizontally(mPrimaryBounds, mSecondaryBounds);
         }
+        Log.i(TAG, "registerOrganizer with PrimaryBounds=" + mPrimaryBounds
+                + " SecondaryBounds=" + mSecondaryBounds);
 
         synchronized (this) {
             final List<TaskAppearedInfo> taskInfos = super.registerOrganizer();
