@@ -274,7 +274,8 @@ public class MediaSessionTest extends AndroidTestCase {
 
             // test setSessionActivity
             Intent intent = new Intent("cts.MEDIA_SESSION_ACTION");
-            PendingIntent pi = PendingIntent.getActivity(getContext(), 555, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+            PendingIntent pi = PendingIntent.getActivity(getContext(), 555, intent,
+                    PendingIntent.FLAG_MUTABLE_UNAUDITED);
             mSession.setSessionActivity(pi);
             assertEquals(pi, controller.getSessionActivity());
 
@@ -310,7 +311,8 @@ public class MediaSessionTest extends AndroidTestCase {
     public void testSetMediaButtonReceiver_broadcastReceiver() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonBroadcastReceiver.class);
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -354,7 +356,8 @@ public class MediaSessionTest extends AndroidTestCase {
     public void testSetMediaButtonReceiver_service() throws Exception {
         Intent intent = new Intent(mContext.getApplicationContext(),
                 MediaButtonReceiverService.class);
-        PendingIntent pi = PendingIntent.getService(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pi = PendingIntent.getService(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
@@ -393,25 +396,29 @@ public class MediaSessionTest extends AndroidTestCase {
     }
 
     /**
-     * Test whether {@link IllegalArgumentException} is thrown when calling
+     * Test whether system doesn't crash by
      * {@link MediaSession#setMediaButtonReceiver(PendingIntent)} with implicit intent.
      */
     public void testSetMediaButtonReceiver_implicitIntent() throws Exception {
         // Note: No such broadcast receiver exists.
         Intent intent = new Intent("android.media.cts.ACTION_MEDIA_TEST");
-        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pi = PendingIntent.getBroadcast(mContext, 0, intent,
+                PendingIntent.FLAG_MUTABLE_UNAUDITED);
 
         // Play a sound so this session can get the priority.
         Utils.assertMediaPlaybackStarted(getContext());
 
-        // Sets the media button receiver. Framework won't save this since it is an invalid implicit
-        // intent and throw an IAE instead.
-        try {
-            mSession.setMediaButtonReceiver(pi);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+        // Sets the media button receiver. Framework would try to keep the pending intent in the
+        // persistent store.
+        mSession.setMediaButtonReceiver(pi);
+
+        // Call explicit release, so change in the media key event session can be notified with the
+        // pending intent.
+        mSession.release();
+
+        // Also try to dispatch media key event. System would try to send key event via pending
+        // intent, but it would no-op because there's no receiver.
+        simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
     }
 
     /**
