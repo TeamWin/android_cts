@@ -403,6 +403,43 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return receivedOperands;
     }
 
+    /**
+     * Gets the list of logical addresses which receives messages with operand expectedMessage
+     * during a period of duration seconds.
+     */
+    public List<LogicalAddress> getAllDestLogicalAddresses(CecOperand expectedMessage, int duration)
+            throws Exception {
+        return getAllDestLogicalAddresses(expectedMessage, "", duration);
+    }
+
+    /**
+     * Gets the list of logical addresses which receives messages with operand expectedMessage and
+     * params during a period of duration seconds.
+     */
+    public List<LogicalAddress> getAllDestLogicalAddresses(
+            CecOperand expectedMessage, String params, int duration) throws Exception {
+        List<LogicalAddress> destinationAddresses = new ArrayList<>();
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime;
+        Pattern pattern =
+                Pattern.compile(
+                        "(.*>>)(.*?)" + ":(" + expectedMessage + params + ")(.*)",
+                        Pattern.CASE_INSENSITIVE);
+
+        while ((endTime - startTime <= (duration * 1000))) {
+            if (mInputConsole.ready()) {
+                String line = mInputConsole.readLine();
+                if (pattern.matcher(line).matches()) {
+                    LogicalAddress destination = CecMessage.getDestination(line);
+                    if (!destinationAddresses.contains(destination)) {
+                        destinationAddresses.add(destination);
+                    }
+                }
+            }
+            endTime = System.currentTimeMillis();
+        }
+        return destinationAddresses;
+    }
 
     /**
      * Looks for the CEC expectedMessage broadcast on the cec-client communication channel and
