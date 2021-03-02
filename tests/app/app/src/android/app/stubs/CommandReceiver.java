@@ -66,6 +66,7 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final String EXTRA_CALLBACK = "android.app.stubs.extra.callback";
     public static final String EXTRA_CHILD_CMDLINE = "android.app.stubs.extra.child_cmdline";
     public static final String EXTRA_TIMEOUT = "android.app.stubs.extra.child_cmdline";
+    public static final String EXTRA_MESSENGER = "android.app.stubs.extra.EXTRA_MESSENGER";
 
     public static final String SERVICE_NAME = "android.app.stubs.LocalService";
     public static final String FG_SERVICE_NAME = "android.app.stubs.LocalForegroundService";
@@ -172,6 +173,7 @@ public class CommandReceiver extends BroadcastReceiver {
     private void doStartForegroundService(Context context, Intent commandIntent) {
         String targetPackage = getTargetPackage(commandIntent);
         Intent fgsIntent = new Intent();
+        fgsIntent.putExtras(commandIntent);
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_SERVICE_NAME));
         int command = LocalForegroundService.COMMAND_START_FOREGROUND;
         fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));

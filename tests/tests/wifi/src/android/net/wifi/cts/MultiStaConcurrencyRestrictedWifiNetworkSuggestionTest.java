@@ -56,20 +56,14 @@ import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Tests multiple concurrent connection flow on devices that support multi STA concurrency
- * (indicated via {@link WifiManager#isMultiStaConcurrencySupported()}.
+ * (indicated via {@link WifiManager#isStaConcurrencyForRestrictedConnectionsSupported()}.
  *
  * Tests the entire connection flow using {@link WifiNetworkSuggestion} which has
  * {@link WifiNetworkSuggestion.Builder#setOemPaid(boolean)} or
  * {@link WifiNetworkSuggestion.Builder#setOemPrivate(boolean)} set along with a concurrent internet
  * connection using {@link WifiManager#connect(int, WifiManager.ActionListener)}.
  *
- * Note: This feature is only applicable on automotive platforms. So, the test is skipped for
- * non-automotive platforms.
- *
  * Assumes that all the saved networks is either open/WPA1/WPA2/WPA3 authenticated network.
- *
- * TODO(b/177591382): Refactor some of the utilities to a separate file that are copied over from
- * WifiManagerTest & WifiNetworkSpecifierTest.
  *
  * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
  */
@@ -96,16 +90,12 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
 
     private static final int DURATION_MILLIS = 10_000;
 
-    private static boolean hasAutomotiveFeature(Context ctx) {
-        return ctx.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
-    }
-
     @BeforeClass
     public static void setUpClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported or not automotive platform.
         // Don't use assumeTrue in @BeforeClass
-        if (!WifiFeature.isWifiSupported(context) || !hasAutomotiveFeature(context)) return;
+        if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertThat(wifiManager).isNotNull();
@@ -133,7 +123,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
     @AfterClass
     public static void tearDownClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!WifiFeature.isWifiSupported(context) || !hasAutomotiveFeature(context)) return;
+        if (!WifiFeature.isWifiSupported(context)) return;
 
         WifiManager wifiManager = context.getSystemService(WifiManager.class);
         assertThat(wifiManager).isNotNull();
@@ -157,11 +147,10 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
 
         // skip the test if WiFi is not supported or not automitve platform.
         assumeTrue(WifiFeature.isWifiSupported(mContext));
-        assumeTrue(hasAutomotiveFeature(mContext));
         // skip the test if location is not supported
         assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
         // skip if multi STA not supported.
-        assumeTrue(mWifiManager.isMultiStaConcurrencySupported());
+        assumeTrue(mWifiManager.isStaConcurrencyForRestrictedConnectionsSupported());
 
         assertWithMessage("Please enable location for this test!").that(
                 mContext.getSystemService(LocationManager.class).isLocationEnabled()).isTrue();

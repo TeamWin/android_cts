@@ -56,6 +56,10 @@ public enum LogicalAddress {
         return Integer.toString(getDeviceType());
     }
 
+    public int getLogicalAddressAsInt() {
+        return this.address;
+    }
+
     public int getDeviceType() {
         switch (this) {
             case PLAYBACK_1:

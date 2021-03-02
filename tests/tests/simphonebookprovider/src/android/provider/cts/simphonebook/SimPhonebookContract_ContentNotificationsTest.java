@@ -20,6 +20,11 @@ import static android.provider.SimPhonebookContract.ElementaryFiles.EF_ADN;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeThat;
+
+import static java.util.concurrent.TimeUnit.SECONDS;
+
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -30,6 +35,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.provider.SimPhonebookContract;
 import android.provider.SimPhonebookContract.ElementaryFiles;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
@@ -37,10 +46,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+
+import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -52,11 +65,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 @RunWith(AndroidJUnit4.class)
 public class SimPhonebookContract_ContentNotificationsTest {
+    private static final String TAG =
+            SimPhonebookContract_ContentNotificationsTest.class.getSimpleName();
 
     private static final int DEFAULT_TIMEOUT = 5000;
 
-    @ClassRule
-    public static final SimsPowerRule SIMS_POWER_RULE = SimsPowerRule.on();
     private final SimsCleanupRule mSimCleanupRule = new SimsCleanupRule(ElementaryFiles.EF_ADN);
     @Rule
     public final TestRule mRule = RuleChain
@@ -65,6 +78,7 @@ public class SimPhonebookContract_ContentNotificationsTest {
             .around(mSimCleanupRule);
 
     private int mSubId;
+    private SubscriptionInfo mSubscriptionInfo;
     private ContentResolver mResolver;
     private RecordingContentObserver mObserver;
 
@@ -79,7 +93,13 @@ public class SimPhonebookContract_ContentNotificationsTest {
         // Make sure the provider has been created.
         mResolver.getType(SimPhonebookContract.SimRecords.getContentUri(1, EF_ADN));
 
+        SubscriptionManager subscriptionManager = context.getSystemService(SubscriptionManager.class);
+        assumeThat(subscriptionManager, Matchers.notNullValue());
         mSubId = new RemovableSims(context).getDefaultSubscriptionId();
+
+        mSubscriptionInfo = SystemUtil.runWithShellPermissionIdentity(
+                () -> subscriptionManager.getActiveSubscriptionInfo(mSubId),
+                Manifest.permission.READ_PHONE_STATE);
     }
 
     @After
@@ -135,9 +155,9 @@ public class SimPhonebookContract_ContentNotificationsTest {
 
     @Test
     public void subscriptionsChange_notifiesObserver() throws Exception {
+        assumeThat(mSubscriptionInfo, Matchers.notNullValue());
         try {
-            // Mimic removal or insertion of a SIM by powering off the slot.
-            SIMS_POWER_RULE.powerOff(0);
+            setSimPower(0);
 
             PollingCheck.check(
                     "No content notifications observed for SIM removal",
@@ -148,11 +168,29 @@ public class SimPhonebookContract_ContentNotificationsTest {
             Thread.sleep(DEFAULT_TIMEOUT);
             mObserver.observed.clear();
         } finally {
-            SIMS_POWER_RULE.powerOn(0);
+            setSimPower(1);
         }
         PollingCheck.check(
                 "No content notifications observed for SIM insertion",
                 DEFAULT_TIMEOUT, () -> mObserver.observed.size() >= 1);
+    }
+
+    private void setSimPower(int powerState) throws Exception {
+        TelephonyManager telephonyManager = ApplicationProvider.getApplicationContext()
+                .getSystemService(TelephonyManager.class);
+        int slotIndex = mSubscriptionInfo.getSimSlotIndex();
+        SettableFuture<Integer> resultFuture = SettableFuture.create();
+        SystemUtil.runWithShellPermissionIdentity(() -> telephonyManager.setSimPowerStateForSlot(
+                mSubscriptionInfo.getSimSlotIndex(), powerState,
+                MoreExecutors.directExecutor(), resultFuture::set),
+                Manifest.permission.MODIFY_PHONE_STATE, Manifest.permission.READ_PHONE_STATE);
+
+        int result = resultFuture.get(30, SECONDS);
+        if (result != TelephonyManager.SET_SIM_POWER_STATE_ALREADY_IN_STATE &&
+                result != TelephonyManager.SET_SIM_POWER_STATE_SUCCESS) {
+            Log.w(TAG, "setSimPowerStateForSlot failed for slot=" + slotIndex + " result="
+                    + result);
+        }
     }
 
     private static class RecordingContentObserver extends ContentObserver {

@@ -23,7 +23,11 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.util.Log;
 
 import com.android.compatibility.common.util.IBinderParcelable;
@@ -43,6 +47,9 @@ public class LocalForegroundService extends LocalService {
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS = 5;
     public static final int COMMAND_START_NO_FOREGROUND = 6;
     public static final int COMMAND_START_FOREGROUND_DEFER_NOTIFICATION = 7;
+    public static final int COMMAND_STOP_SELF = 8;
+
+    private final Messenger mMessenger = new Messenger(new IncomingHandler());
 
     private int mNotificationId = 0;
 
@@ -73,6 +80,7 @@ public class LocalForegroundService extends LocalService {
         switch (command) {
             case COMMAND_START_FOREGROUND:
             case COMMAND_START_FOREGROUND_DEFER_NOTIFICATION: {
+                handleIncomingMessengerIfNeeded(intent);
                 mNotificationId ++;
                 final boolean showNow = (command == COMMAND_START_FOREGROUND);
                 Log.d(TAG, "Starting foreground using notification " + mNotificationId);
@@ -131,5 +139,43 @@ public class LocalForegroundService extends LocalService {
 
     public static String getNotificationTitle(int id) {
         return "I AM FOREGROOT #" + id;
+    }
+
+    /**
+     * Check if the given {@code intent} has embodied a messenger object which is to receive
+     * the messenger interface based controller, if so, send our {@link #mMessenger} to it.
+     */
+    private void handleIncomingMessengerIfNeeded(final Intent intent) {
+        final Bundle extras = intent.getExtras();
+        if (extras != null) {
+            final IBinder binder = extras.getBinder(CommandReceiver.EXTRA_MESSENGER);
+            if (binder != null) {
+                final Messenger messenger = new Messenger(binder);
+                final Bundle reply = new Bundle();
+                final Message msg = Message.obtain();
+                msg.obj = reply;
+                reply.putBinder(CommandReceiver.EXTRA_MESSENGER, mMessenger.getBinder());
+                try {
+                    messenger.send(msg);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "Unable to send back the messenger controller interface");
+                }
+                msg.recycle();
+            }
+        }
+    }
+
+    private class IncomingHandler extends Handler {
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case COMMAND_STOP_SELF:
+                    Log.d(TAG, "Stopping self");
+                    stopSelf();
+                    break;
+                default:
+                    Log.e(TAG, "Unsupported command via messenger interface: " + msg.what);
+                    break;
+            }
+        }
     }
 }
