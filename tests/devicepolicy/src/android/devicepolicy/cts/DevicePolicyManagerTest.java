@@ -39,6 +39,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
@@ -96,6 +97,7 @@ public final class DevicePolicyManagerTest {
             PackageManager.FEATURE_MANAGED_USERS
     })
     @Test
+    @Postsubmit(reason="b/181207615 flaky")
     public void testCreateAndProvisionManagedProfile_setsProfileOwner() throws Exception {
         UserHandle profile = null;
         try {
@@ -121,6 +123,7 @@ public final class DevicePolicyManagerTest {
             PackageManager.FEATURE_MANAGED_USERS
     })
     @Test
+    @Postsubmit(reason="b/181207615 flaky")
     public void testCreateAndProvisionManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
         try {

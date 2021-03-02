@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.expectThrows;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
@@ -40,6 +41,8 @@ import android.util.Log;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
@@ -57,13 +60,9 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     private static final String AFFILIATION_ID = "affiliation.id";
     private static final String EXTRA_AFFILIATION_ID = "affiliationIdExtra";
+    private static final String EXTRA_CURRENT_USER_PACKAGES = "currentUserPackages";
     private static final String EXTRA_METHOD_NAME = "methodName";
     private static final long ON_ENABLED_TIMEOUT_SECONDS = 120;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
 
     @Override
     protected void tearDown() throws Exception {
@@ -112,11 +111,16 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
-        UserHandle userHandle = createAndManageUser();
+        UserHandle newUserHandle = createAndManageUser();
 
         List<UserHandle> secondaryUsers = mDevicePolicyManager.getSecondaryUsers(getWho());
-
-        assertWithMessage("wrong secondary users").that(secondaryUsers).containsExactly(userHandle);
+        if (isHeadlessSystemUserMode()) {
+            assertWithMessage("secondary users").that(secondaryUsers)
+                .containsExactly(getCurrentUser(), newUserHandle);
+        } else {
+            assertWithMessage("secondary users").that(secondaryUsers)
+                    .containsExactly(newUserHandle);
+        }
     }
 
     public void testCreateAndManageUser_SwitchUser() throws Exception {
@@ -194,7 +198,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 BasicAdminReceiver.ACTION_USER_STARTED, BasicAdminReceiver.ACTION_USER_STOPPED);
 
         UserHandle userHandle = runCrossUserVerification(callback,
-                /* createAndManageUserFlags= */ 0, "logoutUser");
+                /* createAndManageUserFlags= */ 0, "logoutUser", /* currentUserPackages= */ null);
 
         assertWithMessage("user on broadcasts").that(callback.getUsersOnReceivedBroadcasts())
                 .containsExactly(userHandle, userHandle);
@@ -207,7 +211,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     public void testCreateAndManageUser_Affiliated() throws Exception {
-        runCrossUserVerification(/* createAndManageUserFlags */ 0, "assertAffiliatedUser");
+        runCrossUserVerification(/* createAndManageUserFlags= */ 0, "assertAffiliatedUser");
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
@@ -225,11 +229,13 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
     @SuppressWarnings("unused")
     private static void assertAllSystemAppsInstalled(Context context,
-            DevicePolicyManager devicePolicyManager, ComponentName componentName) {
+            DevicePolicyManager devicePolicyManager, ComponentName componentName,
+            Set<String> currentUserPackages) {
+        Log.d(TAG, "assertAllSystemAppsInstalled(): checking apps for user " + context.getUserId());
         PackageManager packageManager = context.getPackageManager();
         // First get a set of installed package names
         Set<String> installedPackageNames = packageManager
-                .getInstalledApplications(/* flags */ 0)
+                .getInstalledApplications(/* flags= */ 0)
                 .stream()
                 .map(applicationInfo -> applicationInfo.packageName)
                 .collect(Collectors.toSet());
@@ -240,42 +246,83 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 .map(applicationInfo -> applicationInfo.packageName)
                 .filter(((Predicate<String>) installedPackageNames::contains).negate())
                 .collect(Collectors.toSet());
-        // Assert that all apps are installed
-        assertTrue("system apps not installed: " + uninstalledPackageNames,
-                uninstalledPackageNames.isEmpty());
+
+        if (isHeadlessSystemUserMode()) {
+            // Finally, filter out packages that are not installed for users of type FULL
+            Iterator<String> iterator = uninstalledPackageNames.iterator();
+            while (iterator.hasNext()) {
+                String pkg = iterator.next();
+                if (!currentUserPackages.contains(pkg)) {
+                    Log.d(TAG, "assertAllSystemAppsInstalled(): ignoring package " + pkg
+                            + " as it's not installed on current user");
+                    iterator.remove();
+                }
+            }
+        }
+
+        // Assert that all expected apps are installed
+        assertWithMessage("uninstalled system apps").that(uninstalledPackageNames).isEmpty();
     }
 
     public void testCreateAndManageUser_LeaveAllSystemApps() throws Exception {
-        runCrossUserVerification(
-                DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED, "assertAllSystemAppsInstalled");
+
+        Set<String> installedPackagesOnCurrentUser = null;
+        if (isHeadlessSystemUserMode()) {
+            // On headless system user mode some packages might not be installed due to the userType
+            // allowlist (which defines which packages are installed for users of type FULL or
+            // SYSTEM). As there is no API to get these packages, we need to query all packages
+            // installed for current user here, and pass it around in the bundle (as the receiver
+            // in the new user doesn't have INTERACT_ACROSS_USER to query).
+
+            int currentUserId = ActivityManager.getCurrentUser();
+            installedPackagesOnCurrentUser = mContext.getPackageManager()
+                    .getInstalledApplicationsAsUser(/* flags= */ 0, currentUserId)
+                    .stream()
+                    .map(applicationInfo -> applicationInfo.packageName)
+                    .collect(Collectors.toSet());
+            Log.d(TAG, "installed apps for current user (" + currentUserId + "): "
+                    + installedPackagesOnCurrentUser);
+        } else {
+            installedPackagesOnCurrentUser = Collections.emptySet();
+        }
+
+        runCrossUserVerification(/* callback= */ null,
+                DevicePolicyManager.LEAVE_ALL_SYSTEM_APPS_ENABLED, "assertAllSystemAppsInstalled",
+                installedPackagesOnCurrentUser);
         PrimaryUserService.assertCrossUserCallArrived();
     }
 
     private UserHandle runCrossUserVerification(int createAndManageUserFlags, String methodName)
             throws Exception {
-        return runCrossUserVerification(/* callback= */ null, createAndManageUserFlags, methodName);
+        return runCrossUserVerification(/* callback= */ null, createAndManageUserFlags, methodName,
+                /* currentUserPackages= */ null);
     }
 
     private UserHandle runCrossUserVerification(UserActionCallback callback,
-            int createAndManageUserFlags, String methodName) throws Exception {
+            int createAndManageUserFlags, String methodName,
+            Set<String> currentUserPackages) throws Exception {
+        Log.d(TAG, "runCrossUserVerification(): flags=" + createAndManageUserFlags
+                + ", method=" + methodName);
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         // Set affiliation id to allow communication.
         mDevicePolicyManager.setAffiliationIds(getWho(), Collections.singleton(AFFILIATION_ID));
 
+        ComponentName profileOwner = SecondaryUserAdminReceiver.getComponentName(getContext());
+
         // Pack the affiliation id in a bundle so the secondary user can get it.
         PersistableBundle bundle = new PersistableBundle();
         bundle.putString(EXTRA_AFFILIATION_ID, AFFILIATION_ID);
         bundle.putString(EXTRA_METHOD_NAME, methodName);
+        if (currentUserPackages != null) {
+            String[] array = new String[currentUserPackages.size()];
+            currentUserPackages.toArray(array);
+            bundle.putStringArray(EXTRA_CURRENT_USER_PACKAGES, array);
+        }
 
-        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
-                getWho(),
-                testUserName,
-                SecondaryUserAdminReceiver.getComponentName(getContext()),
-                bundle,
-                createAndManageUserFlags);
-        Log.d(TAG, "User created: " + userHandle);
-        assertWithMessage("user with name %s", testUserName).that(userHandle).isNotNull();
+        Log.d(TAG, "creating user with PO " + profileOwner);
+
+        UserHandle userHandle = createAndManageUser(profileOwner, bundle, createAndManageUserFlags);
         if (callback != null) {
             startUserInBackgroundAndWaitForBroadcasts(callback, userHandle);
         } else {
@@ -316,6 +363,11 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     }
 
     private UserHandle createAndManageUser(int flags) throws Exception {
+        return createAndManageUser(/* profileOwner= */ getWho(), /* adminExtras= */ null, flags);
+    }
+
+    private UserHandle createAndManageUser(ComponentName profileOwner,
+            PersistableBundle adminExtras, int flags) throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
         UserActionCallback callback = UserActionCallback.getCallbackForBroadcastActions(
@@ -325,11 +377,10 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 mDevicePolicyManager.createAndManageUser(
                         /* admin= */ getWho(),
                         testUserName,
-                        /* profileOwner= */ getWho(),
-                        /* adminExtras= */ null,
+                        profileOwner,
+                        adminExtras,
                         flags));
         Log.d(TAG, "User '" + testUserName + "' created: " + userHandle);
-
         return userHandle;
     }
 
@@ -437,7 +488,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         private final ICrossUserService.Stub mBinder = new ICrossUserService.Stub() {
             public void onEnabledCalled(String error) {
-                Log.d(TAG, "onEnabledCalled on primary user");
+                Log.d(TAG, "PrimaryUserService.onEnabledCalled() on user "
+                        + getApplicationContext().getUserId() + " with error " + error);
                 sError = error;
                 sSemaphore.release();
             }
@@ -445,35 +497,61 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         @Override
         public IBinder onBind(Intent intent) {
+            Log.d(TAG, "PrimaryUserService.onBind() on user "
+                    + getApplicationContext().getUserId() + ": " + intent);
             return mBinder;
         }
 
         static void assertCrossUserCallArrived() throws Exception {
-            assertTrue(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS));
+            assertWithMessage("cross-user call arrived in %ss", ON_ENABLED_TIMEOUT_SECONDS)
+                    .that(sSemaphore.tryAcquire(ON_ENABLED_TIMEOUT_SECONDS, TimeUnit.SECONDS))
+                    .isTrue();
             if (sError != null) {
+                Log.e(TAG, "assertCrossUserCallArrived() had error: " + sError);
                 throw new Exception(sError);
             }
         }
     }
 
     public static final class SecondaryUserAdminReceiver extends DeviceAdminReceiver {
+
         @Override
         public void onEnabled(Context context, Intent intent) {
-            Log.d(TAG, "onEnabled called");
+            Log.d(TAG, "SecondaryUserAdminReceiver.onEnabled() called on user "
+                    + context.getUserId());
+
             DevicePolicyManager dpm = context.getSystemService(DevicePolicyManager.class);
             ComponentName who = getComponentName(context);
 
             // Set affiliation ids
-            dpm.setAffiliationIds(
-                    who, Collections.singleton(intent.getStringExtra(EXTRA_AFFILIATION_ID)));
+            Set<String> ids = Collections.singleton(intent.getStringExtra(EXTRA_AFFILIATION_ID));
+            Log.d(TAG, "setting affiliation ids as " + ids);
+            dpm.setAffiliationIds(who, ids);
 
             String error = null;
             try {
-                Method method = CreateAndManageUserTest.class.getDeclaredMethod(
-                        intent.getStringExtra(EXTRA_METHOD_NAME), Context.class,
-                        DevicePolicyManager.class, ComponentName.class);
+                Method method;
+                if (intent.hasExtra(EXTRA_CURRENT_USER_PACKAGES)) {
+                    method = CreateAndManageUserTest.class.getDeclaredMethod(
+                            intent.getStringExtra(EXTRA_METHOD_NAME), Context.class,
+                            DevicePolicyManager.class, ComponentName.class, Set.class);
+                } else {
+                    method = CreateAndManageUserTest.class.getDeclaredMethod(
+                            intent.getStringExtra(EXTRA_METHOD_NAME), Context.class,
+                            DevicePolicyManager.class, ComponentName.class);
+                }
                 method.setAccessible(true);
-                method.invoke(null, context, dpm, who);
+                Log.d(TAG, "Calling method " + method);
+                if (intent.hasExtra(EXTRA_CURRENT_USER_PACKAGES)) {
+                    String[] pkgsArray = intent.getStringArrayExtra(EXTRA_CURRENT_USER_PACKAGES);
+                    Set<String> pkgs = new HashSet<>(pkgsArray.length);
+                    for (String pkg : pkgsArray) {
+                        pkgs.add(pkg);
+                    }
+                    method.invoke(null, context, dpm, who, pkgs);
+                } else {
+                    method.invoke(null, context, dpm, who);
+                }
             } catch (NoSuchMethodException | IllegalAccessException e) {
                 error = e.toString();
             } catch (InvocationTargetException e) {
@@ -482,17 +560,18 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
             // Call all affiliated users
             final List<UserHandle> targetUsers = dpm.getBindDeviceAdminTargetUsers(who);
-            assertEquals(1, targetUsers.size());
+            assertWithMessage("target users").that(targetUsers).hasSize(1);
+
             pingTargetUser(context, dpm, targetUsers.get(0), error);
         }
 
-        private void pingTargetUser(Context context, DevicePolicyManager dpm, UserHandle target,
-                String error) {
-            Log.d(TAG, "Pinging target: " + target);
+        private void pingTargetUser(Context context, DevicePolicyManager dpm,
+                UserHandle target, String error) {
+            Log.d(TAG, "Pinging target " + target + " with error " + error);
             final ServiceConnection serviceConnection = new ServiceConnection() {
                 @Override
                 public void onServiceConnected(ComponentName name, IBinder service) {
-                    Log.d(TAG, "onServiceConnected is called in " + Thread.currentThread().getName());
+                    Log.d(TAG, "onServiceConnected() is called in " + Thread.currentThread());
                     ICrossUserService crossUserService = ICrossUserService
                             .Stub.asInterface(service);
                     try {
@@ -505,16 +584,18 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
                 @Override
                 public void onServiceDisconnected(ComponentName name) {
-                    Log.d(TAG, "onServiceDisconnected is called");
+                    Log.d(TAG, "onServiceDisconnected() is called");
                 }
             };
-            final Intent serviceIntent = new Intent(context, PrimaryUserService.class);
-            assertTrue(dpm.bindDeviceAdminServiceAsUser(
+            Intent serviceIntent = new Intent(context, PrimaryUserService.class);
+            boolean bound = dpm.bindDeviceAdminServiceAsUser(
                     getComponentName(context),
                     serviceIntent,
                     serviceConnection,
                     Context.BIND_AUTO_CREATE,
-                    target));
+                    target);
+            assertWithMessage("bound to user %s using intent %s", target, serviceIntent).that(bound)
+                    .isTrue();
         }
 
         public static ComponentName getComponentName(Context context) {

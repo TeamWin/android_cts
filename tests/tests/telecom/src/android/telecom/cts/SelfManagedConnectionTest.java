@@ -115,6 +115,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void setUp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         super.setUp();
         NewOutgoingCallBroadcastReceiver.reset();
         mContext = getInstrumentation().getContext();
@@ -129,6 +132,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         super.tearDown();
         CtsSelfManagedConnectionService connectionService =
                 CtsSelfManagedConnectionService.getConnectionService();
@@ -143,6 +149,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      * Test bind to non-UI in call services that support self-managed connections
      */
     public void testBindToSupportNonUiInCallService() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn = setUpControl(THIRD_PTY_CONTROL,
                 NON_UI_INCALLSERVICE);
         ICtsThirdPartyInCallServiceControl control = ICtsThirdPartyInCallServiceControl.Stub
@@ -162,6 +171,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      * mode
      */
     public void testBindToSupportDefaultDialerNoCarMode() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn = setUpControl(THIRD_PTY_CONTROL,
                 DEFAULT_DIALER_INCALLSERVICE_2);
         ICtsThirdPartyInCallServiceControl control = ICtsThirdPartyInCallServiceControl.Stub
@@ -185,6 +197,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
      * in car mode
      */
     public void testNoBindToUnsupportDefaultDialerNoCarMode() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn = setUpControl(THIRD_PTY_CONTROL,
                 DEFAULT_DIALER_INCALLSERVICE_1);
         ICtsThirdPartyInCallServiceControl control = ICtsThirdPartyInCallServiceControl.Stub
@@ -200,6 +215,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testEnterCarMode() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL,
                 CAR_DIALER_1);
         ICtsCarModeInCallServiceControl control = ICtsCarModeInCallServiceControl.Stub
@@ -220,6 +238,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testChangeCarModeApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn1 = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);
         TestServiceConnection controlConn2 = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_2);
         ICtsCarModeInCallServiceControl control1 = ICtsCarModeInCallServiceControl.Stub
@@ -251,6 +272,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
     }
 
     public void testExitCarMode() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
         TestServiceConnection controlConn = setUpControl(CAR_MODE_CONTROL, CAR_DIALER_1);
         ICtsCarModeInCallServiceControl control = ICtsCarModeInCallServiceControl.Stub
                 .asInterface(controlConn.getService());

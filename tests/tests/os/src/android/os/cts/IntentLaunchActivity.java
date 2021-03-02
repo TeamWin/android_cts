@@ -28,12 +28,79 @@ import android.os.Bundle;
 public class IntentLaunchActivity extends Activity {
     private static final String INNER_INTENT_KEY = "inner-intent";
 
+    private static final String ACTION_UNSAFE_INTENT_LAUNCH = "android.os.cts.UNSAFE_INTENT_LAUNCH";
+    private static final String ACTION_UNSAFE_DATA_COPY_FROM_INTENT =
+            "android.os.cts.UNSAFE_DATA_COPY_FROM_INTENT";
+    private static final String ACTION_DATA_COPY_FROM_DELIVERED_INTENT_WITH_UNPARCELED_EXTRAS =
+            "android.os.cts.DATA_COPY_FROM_DELIVERED_INTENT_WITH_UNPARCELED_EXTRAS";
+    private static final String ACTION_UNSAFE_DATA_COPY_FROM_EXTRAS =
+            "android.os.cts.UNSAFE_DATA_COPY_FROM_EXTRAS";
+
+    private static final String EXTRA_TEST_KEY = "android.os.cts.TEST_KEY";
+
     /**
      * Returns an Intent containing a parceled inner Intent that can be used to start this Activity
-     * and verify the StrictMode UnsafeIntentLaunch check is reported as expected.
+     * and verify the StrictMode UnsafeIntentLaunch violation is reported as expected.
      */
-    public static Intent getTestIntent(Context context) {
+    public static Intent getUnsafeIntentLaunchTestIntent(Context context) {
+        return getTestIntent(context, ACTION_UNSAFE_INTENT_LAUNCH);
+    }
+
+    /**
+     * Returns an Intent containing a parceled Intent with data in the extras; the returned Intent
+     * can be used to start this Activity and verify the StrictMode UnsafeIntentLaunch violation
+     * is reported as expected when copying data from an unparceled Intent.
+     */
+    public static Intent getUnsafeDataCopyFromIntentTestIntent(Context context) {
+        return getTestIntentWithExtrasInParceledIntent(context,
+                ACTION_UNSAFE_DATA_COPY_FROM_INTENT);
+    }
+
+    /**
+     * Returns an Intent containing a parceled Intent with data in the extras; the returned Intent
+     * can be used to start this Activity and verify the StrictMode UnsafeIntentLaunch violation is
+     * reported as expected when copying data from an Intent's extras without sanitation /
+     * validation.
+     */
+    public static Intent getUnsafeDataCopyFromExtrasTestIntent(Context context) {
+        return getTestIntentWithExtrasInParceledIntent(context,
+                ACTION_UNSAFE_DATA_COPY_FROM_EXTRAS);
+    }
+
+    /**
+     * Returns an Intent containing data in the extras; the returned Intent can be used to start
+     * this Activity and verify the StrictMode UnsafeIntentLaunch violation is not reported since
+     * the extras of the Intent delivered to a protected component are considered safe.
+     */
+    public static Intent getDataCopyFromDeliveredIntentWithUnparceledExtrasTestIntent(
+            Context context) {
+        // When an Intent is delivered to a protected component this delivered Intent's extras
+        // can be copied unfiltered to another Intent since only a trusted component could send
+        // this Intent. If the sending component were to attempt an unfiltered copy of extras from
+        // an unparceled Intent or Bundle the violation would be triggered by that call.
+        return getTestIntent(context,
+                ACTION_DATA_COPY_FROM_DELIVERED_INTENT_WITH_UNPARCELED_EXTRAS);
+    }
+
+    /**
+     * Returns an Intent with the specified {@code action} set and a parceled Intent with data in
+     * the extras.
+     */
+    private static Intent getTestIntentWithExtrasInParceledIntent(Context context, String action) {
+        Intent intent = getTestIntent(context, action);
+        Intent innerIntent = intent.getParcelableExtra(INNER_INTENT_KEY);
+        // Add an extra to the Intent so that it contains the extras Bundle; the data itself is not
+        // important, just the fact that there is data to be copied without sanitation / validation.
+        innerIntent.putExtra(EXTRA_TEST_KEY, "TEST_VALUE");
+        return intent;
+    }
+
+    /**
+     * Returns an Intent with the specified {@code action} set and a parceled Intent.
+     */
+    private static Intent getTestIntent(Context context, String action) {
         Intent intent = new Intent(context, IntentLaunchActivity.class);
+        intent.setAction(action);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Intent innerIntent = new Intent(context, SimpleTestActivity.class);
         intent.putExtra(INNER_INTENT_KEY, innerIntent);
@@ -43,9 +110,43 @@ public class IntentLaunchActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Intent innerIntent = getIntent().getParcelableExtra(INNER_INTENT_KEY);
-        if (innerIntent != null) {
-            startActivity(innerIntent);
+        Intent deliveredIntent = getIntent();
+        Intent innerIntent = deliveredIntent.getParcelableExtra(INNER_INTENT_KEY);
+        switch (deliveredIntent.getAction()) {
+            case ACTION_UNSAFE_INTENT_LAUNCH: {
+                if (innerIntent != null) {
+                    startActivity(innerIntent);
+                }
+                break;
+            }
+            case ACTION_UNSAFE_DATA_COPY_FROM_INTENT: {
+                if (innerIntent != null) {
+                    // Instantiate a new Intent to be used as the target of the unfiltered data
+                    // copy.
+                    Intent intent = new Intent(getApplicationContext(), SimpleTestActivity.class);
+                    intent.putExtras(innerIntent);
+                    startActivity(intent);
+                }
+                break;
+            }
+            case ACTION_UNSAFE_DATA_COPY_FROM_EXTRAS: {
+                if (innerIntent != null) {
+                    Intent intent = new Intent(getApplicationContext(), SimpleTestActivity.class);
+                    intent.putExtras(innerIntent.getExtras());
+                    startActivity(intent);
+                }
+                break;
+            }
+            case ACTION_DATA_COPY_FROM_DELIVERED_INTENT_WITH_UNPARCELED_EXTRAS: {
+                Intent intent = new Intent(getApplicationContext(), SimpleTestActivity.class);
+                intent.putExtras(deliveredIntent);
+                startActivity(intent);
+                break;
+            }
+            default:
+                throw new IllegalArgumentException(
+                        "An unexpected action of " + deliveredIntent.getAction()
+                                + " was specified");
         }
         finish();
     }
