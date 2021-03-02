@@ -24,6 +24,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.SystemUtil
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
+import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
+import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -69,10 +71,10 @@ abstract class SensorPrivacyBaseTest(
     @Test
     fun testSetSensor() {
         setSensor(true)
-        assertTrue(spm.isSensorPrivacyEnabled(sensor))
+        assertTrue(isSensorPrivacyEnabled())
 
         setSensor(false)
-        assertFalse(spm.isSensorPrivacyEnabled(sensor))
+        assertFalse(isSensorPrivacyEnabled())
     }
 
     @Test
@@ -85,7 +87,7 @@ abstract class SensorPrivacyBaseTest(
         context.startActivity(intent)
         UiAutomatorUtils.waitFindObject(By.text("Turn on")).click()
         SystemUtil.eventually {
-            assertFalse(spm.isSensorPrivacyEnabled(sensor))
+            assertFalse(isSensorPrivacyEnabled())
         }
         context.sendBroadcast(Intent(FINISH_MIC_CAM_ACTIVITY_ACTION))
     }
@@ -95,7 +97,7 @@ abstract class SensorPrivacyBaseTest(
         val executor = Executors.newSingleThreadExecutor()
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
-        SystemUtil.runWithShellPermissionIdentity {
+        runWithShellPermissionIdentity {
             spm.addSensorPrivacyListener(sensor, executor, OnSensorPrivacyChangedListener {
                 if (it) {
                     latchEnabled.countDown()
@@ -106,7 +108,7 @@ abstract class SensorPrivacyBaseTest(
         latchEnabled.await(100, TimeUnit.MILLISECONDS)
 
         val latchDisabled = CountDownLatch(1)
-        SystemUtil.runWithShellPermissionIdentity {
+        runWithShellPermissionIdentity {
             spm.addSensorPrivacyListener(sensor, executor, OnSensorPrivacyChangedListener {
                 if (!it) {
                     latchDisabled.countDown()
@@ -118,8 +120,14 @@ abstract class SensorPrivacyBaseTest(
     }
 
     fun setSensor(enable: Boolean) {
-        SystemUtil.runWithShellPermissionIdentity {
+        runWithShellPermissionIdentity {
             spm.setSensorPrivacy(sensor, enable)
         }
+    }
+
+    fun isSensorPrivacyEnabled(): Boolean {
+        return runWithShellPermissionIdentity(ThrowingSupplier {
+            spm.isSensorPrivacyEnabled(sensor)
+        })
     }
 }
