@@ -31,7 +31,6 @@ import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -141,8 +140,6 @@ public class SystemPalette {
     }
 
     @Test
-    @Ignore
-    // TODO(b/181330774): L50/L100 color pair doesn't hit 4.5 contrast
     public void testContrastRatio() {
         final Context context = getInstrumentation().getTargetContext();
 
