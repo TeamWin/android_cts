@@ -3848,4 +3848,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
     }
+
+    /**
+     * Tests {@link WifiManager#isPasspointTermsAndConditionsSupported)} does not crash.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsPasspointTermsAndConditionsSupported() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        mWifiManager.isPasspointTermsAndConditionsSupported();
+    }
 }
