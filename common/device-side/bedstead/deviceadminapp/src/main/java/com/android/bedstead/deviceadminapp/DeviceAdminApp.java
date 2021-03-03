@@ -14,7 +14,22 @@
  * limitations under the License.
  */
 
-package android.devicepolicy.cts;
+package com.android.bedstead.deviceadminapp;
 
-public class CtsDeviceAdminProfileOwner {
+import android.app.admin.DeviceAdminReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+
+import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
+
+/**
+ * Entry point for Device Admin App.
+ */
+public class DeviceAdminApp {
+
+    /** Get the {@link ComponentName} for the {@link DeviceAdminReceiver} subclass. */
+    public static ComponentName deviceAdminComponentName(Context context) {
+        return new ComponentName(
+                context.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
+    }
 }

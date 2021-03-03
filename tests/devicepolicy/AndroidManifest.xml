@@ -48,17 +48,6 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
-
-        <!-- TODO(177657337): Use AOSP target to mark the app as DeviceAdmin once ready-->
-        <receiver android:name="android.devicepolicy.cts.CtsDeviceAdminReceiver"
-                  android:permission="android.permission.BIND_DEVICE_ADMIN"
-                  android:exported="true">
-            <meta-data android:name="android.app.device_admin"
-                       android:resource="@xml/device_admin"/>
-            <intent-filter>
-                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
-            </intent-filter>
-        </receiver>
     </application>
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.devicepolicy.cts"
