@@ -29,7 +29,8 @@ android_test {
         "androidx.test.uiautomator_uiautomator",
         "EventLib",
         "ActivityContext",
-        "Harrier"
+        "Harrier",
+        "DeviceAdminApp"
     ],
     srcs: ["src/**/*.java"],
     test_suites: [
