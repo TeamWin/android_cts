@@ -23,6 +23,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.IBinder;
@@ -241,6 +242,9 @@ public class SelfManagedConnectionTest extends BaseTelecomTestWithMockServices {
 
         control1.disableCarMode();
         control2.disableCarMode();
+        // Make sure the UI mode has been set back
+        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
         mUiAutomation.dropShellPermissionIdentity();
         mContext.unbindService(controlConn1);
         mContext.unbindService(controlConn2);
