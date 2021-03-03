@@ -20,10 +20,6 @@ import static android.app.AppOpsManager.MODE_ALLOWED;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertTrue;
-
-import static junit.framework.Assert.fail;
-
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AppOpsManager;
@@ -31,7 +27,6 @@ import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
 import android.app.admin.ManagedProfileProvisioningParams;
-import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -39,6 +34,7 @@ import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.provider.Settings;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -88,6 +84,7 @@ public final class DevicePolicyManagerTest {
     private static final String ACCOUNT_TYPE = "com.android.cts.test";
     private static final Account TEST_ACCOUNT = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
 
+    private static final String USER_SETUP_COMPLETE_KEY = "user_setup_complete";
 
     private static final String KEY_PRE_PROVISIONING_SYSTEM_APPS = "pre_provisioning_system_apps";
     private static final String KEY_PRE_PROVISIONING_NON_SYSTEM_APPS =
@@ -99,14 +96,11 @@ public final class DevicePolicyManagerTest {
             "dpm set-device-owner --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
     private static final String REMOVE_ACTIVE_ADMIN_COMMAND =
             "dpm remove-active-admin --user cur " + DEVICE_ADMIN_COMPONENT_NAME.flattenToString();
-    private static final String SET_USER_SETUP_COMPLETE_COMMAND =
-            "settings put secure --user 0 user_setup_complete 1";
-    private static final String CLEAR_USER_SETUP_COMPLETE_COMMAND =
-            "settings put secure --user 0 user_setup_complete 0";
 
     @ClassRule
     @Rule
     public static final DeviceState sDeviceState = new DeviceState();
+
 
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
@@ -456,20 +450,18 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
-    public void testProvisionFullyManagedDevice_setsDeviceOwner() throws Exception {
+    public void newlyProvisionedFullyManagedDevice_setsDeviceOwner() throws Exception {
         try {
             sUiAutomation.adoptShellPermissionIdentity();
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
-            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams();
-
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
-            assertTrue(
-                    "Device owner not set",
-                    sDevicePolicyManager.isDeviceOwnerApp(sContext.getPackageName()));
+            assertThat(sDevicePolicyManager.isDeviceOwnerApp(sContext.getPackageName())).isTrue();
         } finally {
-            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
-            setUserSetupCompletedFlag();
+            sDevicePolicyManager.forceRemoveActiveAdmin(
+                    DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
             sUiAutomation.dropShellPermissionIdentity();
         }
@@ -478,20 +470,17 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
-    public void testProvisionFullyManagedDevice_doesNotThrowException() {
+    public void newlyProvisionedFullyManagedDevice_doesNotThrowException() throws Exception {
         try {
             sUiAutomation.adoptShellPermissionIdentity();
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
-            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
 
-            try {
-                sDevicePolicyManager.provisionFullyManagedDevice(params);
-
-            } catch (ProvisioningException e) {
-                fail("Should not throw exception: " + e);
-            }
         } finally {
-            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
+            sDevicePolicyManager.forceRemoveActiveAdmin(
+                    DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
             sUiAutomation.dropShellPermissionIdentity();
         }
@@ -500,18 +489,19 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
-    public void provisionFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
-            throws ProvisioningException {
+    public void newlyProvisionedFullyManagedDevice_canControlSensorPermissionGrantsByDefault()
+            throws Exception {
         try {
             sUiAutomation.adoptShellPermissionIdentity();
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder().build();
             resetUserSetupCompletedFlag();
-
-            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams();
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
             assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isTrue();
         } finally {
-            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
+            sDevicePolicyManager.forceRemoveActiveAdmin(
+                    DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
             sUiAutomation.dropShellPermissionIdentity();
         }
@@ -520,19 +510,47 @@ public final class DevicePolicyManagerTest {
     @RequireRunOnPrimaryUser
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
-    public void provisionFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
-            throws ProvisioningException {
+    public void newlyProvisionedFullyManagedDevice_canOptOutOfControllingSensorPermissionGrants()
+            throws Exception {
         try {
             sUiAutomation.adoptShellPermissionIdentity();
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder()
+                            .setDeviceOwnerCanGrantSensorsPermissions(false)
+                            .build();
             resetUserSetupCompletedFlag();
-
-            FullyManagedDeviceProvisioningParams params = createManagedDeviceProvisioningParams(
-                    /* canControlPermissionGrant= */ false);
             sDevicePolicyManager.provisionFullyManagedDevice(params);
 
             assertThat(sDevicePolicyManager.canAdminGrantSensorsPermissions()).isFalse();
         } finally {
-            SystemUtil.runShellCommand(REMOVE_ACTIVE_ADMIN_COMMAND);
+            sDevicePolicyManager.forceRemoveActiveAdmin(
+                    DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
+            setUserSetupCompletedFlag();
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @Test
+    @Postsubmit(reason="new test")
+    public void newlyProvisionedFullyManagedDevice_leavesAllSystemAppsEnabledWhenRequested()
+            throws Exception {
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            FullyManagedDeviceProvisioningParams params =
+                    createDefaultManagedDeviceProvisioningParamsBuilder()
+                            .setLeaveAllSystemAppsEnabled(true)
+                            .build();
+            resetUserSetupCompletedFlag();
+            sDevicePolicyManager.provisionFullyManagedDevice(params);
+            Set<String> systemAppsBeforeProvisioning = findSystemApps();
+
+            Set<String> systemAppsAfterProvisioning = findSystemApps();
+            assertThat(systemAppsAfterProvisioning).isEqualTo(systemAppsBeforeProvisioning);
+        } finally {
+            sDevicePolicyManager.forceRemoveActiveAdmin(
+                    DEVICE_ADMIN_COMPONENT_NAME, sContext.getUserId());
             setUserSetupCompletedFlag();
             sUiAutomation.dropShellPermissionIdentity();
         }
@@ -548,27 +566,22 @@ public final class DevicePolicyManagerTest {
                 .setLeaveAllSystemAppsEnabled(true);
     }
 
-    FullyManagedDeviceProvisioningParams createManagedDeviceProvisioningParams() {
-        return createDefaultManagedDeviceProvisioningParamsBuilder().build();
-    }
-
-    FullyManagedDeviceProvisioningParams createManagedDeviceProvisioningParams(
-            boolean canControlPermissionGrants) {
-        return createDefaultManagedDeviceProvisioningParamsBuilder()
-                .setDeviceOwnerCanGrantSensorsPermissions(canControlPermissionGrants)
-                .build();
-    }
-
     private void resetUserSetupCompletedFlag() {
-        SystemUtil.runShellCommand(CLEAR_USER_SETUP_COMPLETE_COMMAND);
+        Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 0);
         sDevicePolicyManager.forceUpdateUserSetupComplete();
     }
 
     private void setUserSetupCompletedFlag() {
-        SystemUtil.runShellCommand(SET_USER_SETUP_COMPLETE_COMMAND);
+        Settings.Secure.putInt(sContext.getContentResolver(), USER_SETUP_COMPLETE_KEY, 1);
         sDevicePolicyManager.forceUpdateUserSetupComplete();
     }
 
+    private Set<String> findSystemApps() {
+        return sPackageManager.getInstalledApplications(PackageManager.MATCH_SYSTEM_ONLY)
+                .stream()
+                .map(applicationInfo -> applicationInfo.packageName)
+                .collect(Collectors.toSet());
+    }
 
     // TODO(b/175380793): Add remaining cts test for DPM#provisionManagedDevice and
     //  DPM#createAndProvisionManagedProfile.
@@ -638,13 +651,6 @@ public final class DevicePolicyManagerTest {
             sDevicePolicyManager.installExistingPackage(
                     DEVICE_ADMIN_COMPONENT_NAME, preProvisioningNonSystemApp);
         }
-    }
-
-    private Set<String> findSystemApps() {
-        return sPackageManager.getInstalledApplications(PackageManager.MATCH_SYSTEM_ONLY)
-                .stream()
-                .map(applicationInfo -> applicationInfo.packageName)
-                .collect(Collectors.toSet());
     }
 
     private Set<String> findNonSystemApps(Set<String> systemApps) {
