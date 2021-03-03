@@ -488,34 +488,6 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Verify the car mode ICS has an expected call count.
-     * @param expected
-     */
-    private void assertCarModeCallCount(ICtsCarModeInCallServiceControl control,  int expected) {
-        waitUntilConditionIsTrueOrTimeout(
-                new Condition() {
-                    @Override
-                    public Object expected() {
-                        return expected;
-                    }
-
-                    @Override
-                    public Object actual() {
-                        int callCount = 0;
-                        try {
-                            callCount = control.getCallCount();
-                        } catch (RemoteException re) {
-                            fail("Bee-boop; can't control the incall service");
-                        }
-                        return callCount;
-                    }
-                },
-                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Expected " + expected + " calls."
-        );
-    }
-
-    /**
      * Verifies that we bound to the car-mode ICS.
      */
     private void verifyCarModeBound(ICtsCarModeInCallServiceControl control) {
@@ -583,20 +555,6 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
     }
 
     /**
-     * Uses the control interface to disable car mode.
-     * @param expectedUiMode
-     */
-    private void disableAndVerifyCarMode(ICtsCarModeInCallServiceControl control,
-            int expectedUiMode) {
-        try {
-            control.disableCarMode();
-        } catch (RemoteException re) {
-            fail("Bee-boop; can't control the incall service");
-        }
-        assertUiMode(expectedUiMode);
-    }
-
-    /**
      * Uses the control interface to request automotive projection assert success or failure.
      * @param expectedSuccess whether or not we expect the operation to succeed.
      */
@@ -622,15 +580,6 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         } catch (RemoteException re) {
             fail("Bee-boop; can't control the incall service");
         }
-    }
-
-    private void disconnectAllCallsAndVerify(ICtsCarModeInCallServiceControl controlBinder) {
-        try {
-            controlBinder.disconnectCalls();
-        } catch (RemoteException re) {
-            fail("Bee-boop; can't control the incall service");
-        }
-        assertCarModeCallCount(controlBinder, 0);
     }
 
     /**

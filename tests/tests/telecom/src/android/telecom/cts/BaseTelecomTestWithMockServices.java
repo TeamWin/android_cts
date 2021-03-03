@@ -37,6 +37,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.RemoteException;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -49,6 +50,7 @@ import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
+import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
@@ -120,6 +122,63 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     Handler mPhoneStateListenerHandler;
     TestPhoneStateListener mPhoneStateListener;
     Handler mHandler;
+
+    /**
+     * Uses the control interface to disable car mode.
+     * @param expectedUiMode
+     */
+    protected void disableAndVerifyCarMode(ICtsCarModeInCallServiceControl control,
+            int expectedUiMode) {
+        if (control == null) {
+            return;
+        }
+        try {
+            control.disableCarMode();
+        } catch (RemoteException re) {
+            fail("Bee-boop; can't control the incall service");
+        }
+        assertUiMode(expectedUiMode);
+    }
+
+    protected void disconnectAllCallsAndVerify(ICtsCarModeInCallServiceControl controlBinder) {
+        if (controlBinder == null) {
+            return;
+        }
+        try {
+            controlBinder.disconnectCalls();
+        } catch (RemoteException re) {
+            fail("Bee-boop; can't control the incall service");
+        }
+        assertCarModeCallCount(controlBinder, 0);
+    }
+
+    /**
+     * Verify the car mode ICS has an expected call count.
+     * @param expected
+     */
+    protected void assertCarModeCallCount(ICtsCarModeInCallServiceControl control, int expected) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return expected;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        int callCount = 0;
+                        try {
+                            callCount = control.getCallCount();
+                        } catch (RemoteException re) {
+                            fail("Bee-boop; can't control the incall service");
+                        }
+                        return callCount;
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected " + expected + " calls."
+        );
+    }
 
     static class TestPhoneStateListener extends PhoneStateListener {
         /** Semaphore released for every callback invocation. */
