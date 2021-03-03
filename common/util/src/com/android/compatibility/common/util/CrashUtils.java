@@ -17,12 +17,15 @@
 package com.android.compatibility.common.util;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,6 +48,7 @@ public class CrashUtils {
     public static final Pattern sNewTestPattern =
             Pattern.compile(NEW_TEST_ALERT + "(\\w+?)\\(.*?\\)");
     public static final String SIGNAL = "signal";
+    public static final String ABORT_MESSAGE = "abortmessage";
     public static final String NAME = "name";
     public static final String PROCESS = "process";
     public static final String PID = "pid";
@@ -61,9 +65,9 @@ public class CrashUtils {
             Pattern.compile(
                     "\\w+? \\d+? \\((.*?)\\), code -*?\\d+? \\(.*?\\), fault addr "
                             + "(?:0x(\\p{XDigit}+)|-+)");
-    // Matches the abort message line if it contains CHECK_
-    private static Pattern sAbortMessageCheckPattern =
-            Pattern.compile("(?i)Abort message.*?CHECK_");
+    // Matches the abort message line
+    private static Pattern sAbortMessagePattern =
+            Pattern.compile("(?i)Abort message: (.*)");
 
     public static final String SIGSEGV = "SIGSEGV";
     public static final String SIGBUS = "SIGBUS";
@@ -125,6 +129,24 @@ public class CrashUtils {
                     continue;
                 }
 
+                if (crash.has(ABORT_MESSAGE)) {
+                    String crashAbortMessage = crash.getString(ABORT_MESSAGE);
+                    if (!config.abortMessageIncludes.isEmpty()) {
+                        if (!config.abortMessageIncludes.stream()
+                                .filter(p -> p.matcher(crashAbortMessage).find())
+                                .findFirst()
+                                .isPresent()) {
+                            continue;
+                        }
+                    }
+                    if (config.abortMessageExcludes.stream()
+                            .filter(p -> p.matcher(crashAbortMessage).find())
+                            .findFirst()
+                            .isPresent()) {
+                        continue;
+                    }
+                }
+
                 // if check specified, reject crash if address is unlikely to be security-related
                 if (config.checkMinAddress) {
                     BigInteger faultAddress = getBigInteger(crash, FAULT_ADDRESS);
@@ -162,6 +184,7 @@ public class CrashUtils {
             String name = null;
             String process = null;
             String signal = null;
+            String abortMessage = null;
 
             Matcher pidtidNameMatcher = sPidtidNamePattern.matcher(crashStr);
             if (pidtidNameMatcher.find()) {
@@ -185,28 +208,44 @@ public class CrashUtils {
                     } catch (NumberFormatException e) {}
                 }
             }
-            if (!sAbortMessageCheckPattern.matcher(crashStr).find()) {
-                try {
-                    JSONObject crash = new JSONObject();
-                    crash.put(PID, pid);
-                    crash.put(TID, tid);
-                    crash.put(NAME, name);
-                    crash.put(PROCESS, process);
-                    crash.put(FAULT_ADDRESS,
-                            faultAddress == null ? null : faultAddress.toString(16));
-                    crash.put(SIGNAL, signal);
-                    crashes.put(crash);
-                } catch (JSONException e) {}
+
+            Matcher abortMessageMatcher = sAbortMessagePattern.matcher(crashStr);
+            if (abortMessageMatcher.find()) {
+                abortMessage = abortMessageMatcher.group(1);
             }
+
+            try {
+                JSONObject crash = new JSONObject();
+                crash.put(PID, pid);
+                crash.put(TID, tid);
+                crash.put(NAME, name);
+                crash.put(PROCESS, process);
+                crash.put(FAULT_ADDRESS,
+                        faultAddress == null ? null : faultAddress.toString(16));
+                crash.put(SIGNAL, signal);
+                crash.put(ABORT_MESSAGE, abortMessage);
+                crashes.put(crash);
+            } catch (JSONException e) {}
         }
         return crashes;
     }
 
     public static class Config {
-        private boolean checkMinAddress = true;
-        private BigInteger minCrashAddress = MIN_CRASH_ADDR;
-        private List<String> signals = Arrays.asList(SIGSEGV, SIGBUS);
-        private List<Pattern> processPatterns = Collections.emptyList();
+        private boolean checkMinAddress;
+        private BigInteger minCrashAddress;
+        private List<String> signals;
+        private List<Pattern> processPatterns;
+        private List<Pattern> abortMessageIncludes;
+        private List<Pattern> abortMessageExcludes;
+
+        public Config() {
+            checkMinAddress = true;
+            minCrashAddress = MIN_CRASH_ADDR;
+            setSignals(SIGSEGV, SIGBUS);
+            abortMessageIncludes = new ArrayList<>();
+            setAbortMessageExcludes("CHECK_");
+            processPatterns = new ArrayList();
+        }
 
         public Config setMinAddress(BigInteger minCrashAddress) {
             this.minCrashAddress = minCrashAddress;
@@ -219,7 +258,7 @@ public class CrashUtils {
         }
 
         public Config setSignals(String... signals) {
-            this.signals = Arrays.asList(signals);
+            this.signals = new ArrayList(Arrays.asList(signals));
             return this;
         }
 
@@ -228,16 +267,54 @@ public class CrashUtils {
             return this;
         }
 
+        public Config setAbortMessageIncludes(String... abortMessages) {
+            this.abortMessageIncludes = new ArrayList<>(toPatterns(abortMessages));
+            return this;
+        }
+
+        public Config setAbortMessageIncludes(Pattern... abortMessages) {
+            this.abortMessageIncludes = new ArrayList<>(Arrays.asList(abortMessages));
+            return this;
+        }
+
+        public Config appendAbortMessageIncludes(String... abortMessages) {
+            this.abortMessageIncludes.addAll(toPatterns(abortMessages));
+            return this;
+        }
+
+        public Config appendAbortMessageIncludes(Pattern... abortMessages) {
+            Collections.addAll(this.abortMessageIncludes, abortMessages);
+            return this;
+        }
+
+        public Config setAbortMessageExcludes(String... abortMessages) {
+            this.abortMessageExcludes = new ArrayList<>(toPatterns(abortMessages));
+            return this;
+        }
+
+        public Config setAbortMessageExcludes(Pattern... abortMessages) {
+            this.abortMessageExcludes = new ArrayList<>(Arrays.asList(abortMessages));
+            return this;
+        }
+
+        public Config appendAbortMessageExcludes(String... abortMessages) {
+            this.abortMessageExcludes.addAll(toPatterns(abortMessages));
+            return this;
+        }
+
+        public Config appendAbortMessageExcludes(Pattern... abortMessages) {
+            Collections.addAll(this.abortMessageExcludes, abortMessages);
+            return this;
+        }
+
+
         public Config setProcessPatterns(String... processPatternStrings) {
-            Pattern[] processPatterns = new Pattern[processPatternStrings.length];
-            for (int i = 0; i < processPatternStrings.length; i++) {
-                processPatterns[i] = Pattern.compile(processPatternStrings[i]);
-            }
-            return setProcessPatterns(processPatterns);
+            this.processPatterns = new ArrayList<>(toPatterns(processPatternStrings));
+            return this;
         }
 
         public Config setProcessPatterns(Pattern... processPatterns) {
-            this.processPatterns = Arrays.asList(processPatterns);
+            this.processPatterns = new ArrayList(Arrays.asList(processPatterns));
             return this;
         }
 
@@ -245,9 +322,18 @@ public class CrashUtils {
             return Collections.unmodifiableList(processPatterns);
         }
 
+        public Config appendProcessPatterns(String... processPatternStrings) {
+            this.processPatterns.addAll(toPatterns(processPatternStrings));
+            return this;
+        }
+
         public Config appendProcessPatterns(Pattern... processPatterns) {
             Collections.addAll(this.processPatterns, processPatterns);
             return this;
         }
+    }
+
+    private static List<Pattern> toPatterns(String... patternStrings) {
+        return Stream.of(patternStrings).map(Pattern::compile).collect(Collectors.toList());
     }
 }
