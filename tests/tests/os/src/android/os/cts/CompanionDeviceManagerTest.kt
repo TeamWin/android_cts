@@ -36,7 +36,8 @@ import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import com.android.compatibility.common.util.children
 import com.android.compatibility.common.util.click
 import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.not
 import org.junit.Assert.assertThat
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -148,9 +149,9 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         device!!.click()
 
         eventually {
-            assertThat(getAssociatedDevices(packageName), hasSize(1))
+            assertThat(getAssociatedDevices(packageName), not(empty()))
         }
-        val deviceAddress = getAssociatedDevices(packageName)[0]
+        val deviceAddress = getAssociatedDevices(packageName).last()
 
         runShellCommandOrThrow("cmd companiondevice simulate_connect $deviceAddress")
         assertPermission(packageName, "android.permission.CALL_PHONE", PERMISSION_GRANTED)
