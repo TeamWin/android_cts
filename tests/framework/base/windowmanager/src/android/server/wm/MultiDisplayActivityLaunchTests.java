@@ -163,7 +163,9 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
     }
 
     /**
-     * Tests launching an existing activity from an activity that resided on secondary display.
+     * Tests launching an existing activity from an activity that resides on secondary display. An
+     * existing activity on a different display should be moved to the display of the launching
+     * activity.
      */
     @Test
     public void testLaunchActivityFromSecondaryDisplay() {
@@ -183,14 +185,14 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
                 "Activity should be resumed on secondary display");
 
         mBroadcastActionTrigger.launchActivityNewTask(getActivityName(TEST_ACTIVITY));
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
-                "Activity should be the top resumed on default display");
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplayId,
+                "Activity should be resumed on secondary display");
 
         getLaunchActivityBuilder().setUseInstrumentation()
                 .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
-                .setDisplayId(newDisplayId).execute();
-        waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                "Activity should be resumed on secondary display");
+                .setDisplayId(DEFAULT_DISPLAY).execute();
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                "Activity should be the top resumed on default display");
     }
 
     /**
