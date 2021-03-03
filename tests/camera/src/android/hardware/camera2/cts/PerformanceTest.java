@@ -1203,19 +1203,10 @@ public class PerformanceTest {
         // Update preview size.
         updatePreviewSurface(previewSz);
 
-        CameraCharacteristics ch = mTestRule.getStaticInfo().getCharacteristics();
-        StreamConfigurationMap config = ch.get(
-                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
         ImageReader[] readers = new ImageReader[captureSizes.length];
         List<Surface> outputSurfaces = new ArrayList<Surface>();
         outputSurfaces.add(mPreviewSurface);
-        long minFrameDuration = FRAME_DURATION_NS_30FPS;
         for (int i = 0; i < captureSizes.length; i++) {
-            long minFrameDurationForCapture =
-                    config.getOutputMinFrameDuration(formats[i], captureSizes[i]);
-            if (minFrameDurationForCapture > minFrameDuration) {
-                minFrameDuration = minFrameDurationForCapture;
-            }
             readers[i] = CameraTestUtils.makeImageReader(captureSizes[i], formats[i], maxNumImages,
                     imageListeners[i], mTestRule.getHandler());
             outputSurfaces.add(readers[i].getSurface());
@@ -1228,7 +1219,12 @@ public class PerformanceTest {
             stillBuilder.addTarget(readers[i].getSurface());
         }
 
-        // Update target fps based on min frame durations
+        // Update target fps based on the min frame duration of preview.
+        CameraCharacteristics ch = mTestRule.getStaticInfo().getCharacteristics();
+        StreamConfigurationMap config = ch.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        long minFrameDuration = Math.max(FRAME_DURATION_NS_30FPS, config.getOutputMinFrameDuration(
+                SurfaceTexture.class, previewSz));
         Range<Integer> targetRange =
                 CameraTestUtils.getSuitableFpsRangeForDuration(id,
                 minFrameDuration, mTestRule.getStaticInfo());
