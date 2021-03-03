@@ -41,6 +41,7 @@ import android.opengl.GLES11Ext;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.os.Parcel;
 import android.platform.test.annotations.SecurityTest;
 import android.util.Log;
 import android.view.Surface;
@@ -1258,6 +1259,61 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2021-01")
+    public void testStagefright_cve_2021_0312() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
+        doStagefrightTestExtractorSeek(R.raw.cve_2021_0312, 2, new CrashUtils.Config()
+                .setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT));
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2018-09")
+    public void testStagefright_cve_2018_9474() throws Exception {
+        MediaPlayer mp = new MediaPlayer();
+        RenderTarget renderTarget = RenderTarget.create();
+        Surface surface = renderTarget.getSurface();
+        mp.setSurface(surface);
+        AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                .openRawResourceFd(R.raw.cve_2018_9474);
+
+        mp.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        mp.prepare();
+
+        MediaPlayer.TrackInfo[] trackInfos = mp.getTrackInfo();
+        if (trackInfos == null || trackInfos.length == 0) {
+            return;
+        }
+
+        MediaPlayer.TrackInfo trackInfo = trackInfos[0];
+
+        int trackType = trackInfo.getTrackType();
+        MediaFormat format = trackInfo.getFormat();
+
+        Parcel data = Parcel.obtain();
+        trackInfo.writeToParcel(data, 0);
+
+        data.setDataPosition(0);
+        int trackTypeFromParcel = data.readInt();
+        String mimeTypeFromParcel = data.readString();
+        data.recycle();
+
+        if (trackType == trackTypeFromParcel) {
+            assertFalse("Device *IS* vulnerable to CVE-2018-9474",
+                        mimeTypeFromParcel.equals("und"));
+        }
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-09")
+    public void testStagefright_cve_2019_2108() throws Exception {
+        doStagefrightTestRawBlob(R.raw.cve_2019_2108_hevc, "video/hevc", 320, 240,
+            new CrashUtils.Config().setSignals(CrashUtils.SIGSEGV, CrashUtils.SIGBUS,
+                                               CrashUtils.SIGABRT));
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3880() throws Exception {
         Thread server = new Thread() {
@@ -1331,6 +1387,15 @@ public class StagefrightTest {
         t.stopLooper();
         t.join();
         server.join();
+    }
+
+    @Test
+    @SecurityTest(minPatchLevel = "2021-01")
+    public void testStagefright_bug170240631() throws Exception {
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA));
+        doStagefrightTest(R.raw.bug170240631_ts);
     }
 
     @Test
@@ -1674,6 +1739,11 @@ public class StagefrightTest {
     @Test
     @SecurityTest(minPatchLevel = "2019-12")
     public void testStagefright_cve_2019_2222() throws Exception {
+        // TODO(b/170987914): This also skips testing hw_codecs.
+        // Update doStagefrightTestRawBlob to skip just the sw_codec test.
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA_SOFTWARE_CODEC));
         int[] frameSizes = getFrameSizes(R.raw.cve_2019_2222_framelen);
         doStagefrightTestRawBlob(R.raw.cve_2019_2222_hevc, "video/hevc", 320, 240, frameSizes);
     }
@@ -1686,6 +1756,18 @@ public class StagefrightTest {
      to prevent merge conflicts, add Q tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @Test
+    @SecurityTest(minPatchLevel = "2019-12")
+    public void testStagefright_cve_2019_2223() throws Exception {
+        // TODO(b/170987914): This also skips testing hw_codecs.
+        // Update doStagefrightTestRawBlob to skip just the sw_codec test.
+        assumeFalse(ModuleDetector.moduleIsPlayManaged(
+            getInstrumentation().getContext().getPackageManager(),
+            MainlineModule.MEDIA_SOFTWARE_CODEC));
+        int[] frameSizes = getFrameSizes(R.raw.cve_2019_2223_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2019_2223_hevc, "video/hevc", 320, 240, frameSizes);
+    }
 
     @Test
     @SecurityTest(minPatchLevel = "2019-03")
@@ -2274,7 +2356,11 @@ public class StagefrightTest {
                     renderTarget.destroy();
                 }
             }
-            ex.unselectTrack(t);
+            try {
+                ex.unselectTrack(t);
+            } catch (IllegalArgumentException e) {
+                // since we're just cleaning up, we don't care if it fails
+            }
         }
         ex.release();
         String cve = rname.replace("_", "-").toUpperCase();

@@ -21,6 +21,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 
+import android.platform.test.annotations.SecurityTest
 import androidx.test.rule.ActivityTestRule
 import androidx.test.runner.AndroidJUnit4
 import org.junit.Before
@@ -61,6 +62,7 @@ class SliceProviderTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2019-11-01")
     fun testCallSliceUri_ValidAuthority() {
         assumeFalse(isSlicesDisabled)
 
@@ -68,6 +70,7 @@ class SliceProviderTest {
     }
 
     @Test(expected = SecurityException::class)
+    @SecurityTest(minPatchLevel = "2019-11-01")
     fun testCallSliceUri_ShadyAuthority() {
         assumeFalse(isSlicesDisabled)
 
