@@ -36,7 +36,7 @@ import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_M
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -73,7 +73,6 @@ import androidx.annotation.Nullable;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEventStream;
-import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Rule;
@@ -201,23 +200,20 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final Instrumentation instrumentation = getInstrumentation();
         assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
                 nullValue());
-        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
-                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
+        final MockImeSession imeSession = MockImeHelper.createManagedMockImeSession(this);
+        final ImeEventStream stream = imeSession.openEventStream();
+        final TestActivity activity = startActivity(TestActivity.class);
+        expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
 
-            final TestActivity activity = startActivity(TestActivity.class);
-            expectEvent(stream, editorMatcher("onStartInput", activity.mEditTextMarker), TIMEOUT);
-
-            final View rootView = activity.getWindow().getDecorView();
-            getInstrumentation().runOnMainSync(() -> {
-                rootView.getWindowInsetsController().show(ime());
-            });
-            PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
-            getInstrumentation().runOnMainSync(() -> {
-                rootView.getWindowInsetsController().hide(ime());
-            });
-            PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
-        }
+        final View rootView = activity.getWindow().getDecorView();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.getWindowInsetsController().show(ime());
+        });
+        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.getWindowInsetsController().hide(ime());
+        });
+        PollingCheck.waitFor(TIMEOUT, () -> !rootView.getRootWindowInsets().isVisible(ime()));
     }
 
     @Test
@@ -485,14 +481,11 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         final Instrumentation instrumentation = getInstrumentation();
         assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
                 nullValue());
-        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
-                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
-            final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
-            final View rootView = activity.getWindow().getDecorView();
-            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
-            PollingCheck.waitFor(TIMEOUT,
-                    () -> rootView.getRootWindowInsets().isVisible(ime()));
-        }
+        MockImeHelper.createManagedMockImeSession(this);
+        final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(ime()));
     }
 
     @Test
@@ -602,41 +595,39 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
         assumeThat(MockImeSession.getUnavailabilityReason(getInstrumentation().getContext()),
                 nullValue());
 
-        try (MockImeSession imeSession = MockImeSession.create(getInstrumentation().getContext(),
-                getInstrumentation().getUiAutomation(), new ImeSettings.Builder())) {
-            final TestActivity activity = startActivity(TestActivity.class);
-            final View rootView = activity.getWindow().getDecorView();
-            getInstrumentation().waitForIdleSync();
+        MockImeHelper.createManagedMockImeSession(this);
+        final TestActivity activity = startActivity(TestActivity.class);
+        final View rootView = activity.getWindow().getDecorView();
+        getInstrumentation().waitForIdleSync();
 
-            final int[] dispatchApplyWindowInsetsCount = {0};
-            rootView.setOnApplyWindowInsetsListener((v, insets) -> {
-                dispatchApplyWindowInsetsCount[0]++;
-                return v.onApplyWindowInsets(insets);
-            });
+        final int[] dispatchApplyWindowInsetsCount = {0};
+        rootView.setOnApplyWindowInsetsListener((v, insets) -> {
+            dispatchApplyWindowInsetsCount[0]++;
+            return v.onApplyWindowInsets(insets);
+        });
 
-            // One show-ime call...
-            ANIMATION_CALLBACK.reset();
-            getInstrumentation().runOnMainSync(() -> {
-                rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
-                rootView.getWindowInsetsController().show(ime());
-            });
-            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        // One show-ime call...
+        ANIMATION_CALLBACK.reset();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            rootView.getWindowInsetsController().show(ime());
+        });
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
 
-            // ... should only trigger one dispatchApplyWindowInsets
-            assertEquals(1, dispatchApplyWindowInsetsCount[0]);
+        // ... should only trigger one dispatchApplyWindowInsets
+        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
 
-            // One hide-ime call...
-            dispatchApplyWindowInsetsCount[0] = 0;
-            ANIMATION_CALLBACK.reset();
-            getInstrumentation().runOnMainSync(() -> {
-                rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
-                rootView.getWindowInsetsController().hide(ime());
-            });
-            ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
+        // One hide-ime call...
+        dispatchApplyWindowInsetsCount[0] = 0;
+        ANIMATION_CALLBACK.reset();
+        getInstrumentation().runOnMainSync(() -> {
+            rootView.setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
+            rootView.getWindowInsetsController().hide(ime());
+        });
+        ANIMATION_CALLBACK.waitForFinishing(TIMEOUT);
 
-            // ... should only trigger one dispatchApplyWindowInsets
-            assertEquals(1, dispatchApplyWindowInsetsCount[0]);
-        }
+        // ... should only trigger one dispatchApplyWindowInsets
+        assertEquals(1, dispatchApplyWindowInsetsCount[0]);
     }
 
     private static void broadcastCloseSystemDialogs() {

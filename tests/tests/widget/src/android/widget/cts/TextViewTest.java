@@ -69,9 +69,7 @@ import android.graphics.fonts.FontStyle;
 import android.icu.lang.UCharacter;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.LocaleList;
-import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
 import android.text.Editable;
@@ -204,7 +202,6 @@ public class TextViewTest {
             FontStyle.FONT_WEIGHT_BOLD - FontStyle.FONT_WEIGHT_NORMAL;
 
     private CharSequence mTransformedText;
-    private Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =
@@ -214,7 +211,7 @@ public class TextViewTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
-        PollingCheck.waitFor(mActivity::hasWindowFocus);
+        PollingCheck.waitFor(TIMEOUT, mActivity::hasWindowFocus);
     }
 
     /**

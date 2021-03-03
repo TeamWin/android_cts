@@ -195,7 +195,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
         if (!mSkipDeviceAdminFeatureCheck) {
             // TODO(b/177965931): STOPSHIP must integrate mSkipDeviceAdminFeatureCheck into
-            // DeviceAdminFeaturesCheckerRul
+            // DeviceAdminFeaturesCheckerRule
         }
 
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;

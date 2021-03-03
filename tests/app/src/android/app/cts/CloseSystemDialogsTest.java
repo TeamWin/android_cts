@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static junit.framework.Assert.assertTrue;
 
+import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -48,6 +49,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.ResultReceiver;
 import android.provider.Settings;
+import android.server.wm.WindowManagerStateHelper;
 import android.view.Display;
 import android.view.WindowManager;
 import android.view.WindowManager.LayoutParams;
@@ -101,6 +103,7 @@ public class CloseSystemDialogsTest {
     private volatile CompletableFuture<Void> mCloseSystemDialogsReceived;
     private volatile ConditionVariable mSentinelReceived;
     private volatile FakeView mFakeView;
+    private WindowManagerStateHelper mWindowState;
     private IntentReceiver mIntentReceiver;
     private Handler mMainHandler;
     private TestNotificationListener mNotificationListener;
@@ -120,6 +123,7 @@ public class CloseSystemDialogsTest {
         toggleListenerAccess(mContext, true);
         mNotificationListener = TestNotificationListener.getInstance();
         mNotificationHelper = new NotificationHelper(mContext, () -> mNotificationListener);
+        mWindowState = new WindowManagerStateHelper();
         enableUserFinal();
 
         // We need to test that a few hidden APIs are properly protected in the helper app. The
@@ -230,6 +234,8 @@ public class CloseSystemDialogsTest {
     @Test
     public void testCloseSystemDialogs_withWindowAboveShadeAndTargetSdk30_isSent()
             throws Exception {
+        // Test is only applicable to devices that have a notification shade.
+        assumeTrue(mWindowState.hasNotificationShade());
         mService = getService(APP_HELPER);
         setAccessibilityService(APP_HELPER, ACCESSIBILITY_SERVICE);
         assertTrue(mService.waitForAccessibilityServiceWindow(TIMEOUT_MS));

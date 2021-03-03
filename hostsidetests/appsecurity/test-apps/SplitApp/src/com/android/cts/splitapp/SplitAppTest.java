@@ -61,8 +61,11 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.splitapp.TestThemeHelper.ThemeColors;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -88,6 +91,7 @@ import java.util.stream.Collectors;
 public class SplitAppTest {
     private static final String TAG = "SplitAppTest";
     private static final String PKG = "com.android.cts.splitapp";
+    private static final String NORESTART_PKG = "com.android.cts.norestart";
 
     private static final long MB_IN_BYTES = 1 * 1024 * 1024;
 
@@ -103,10 +107,25 @@ public class SplitAppTest {
     private static final ComponentName FEATURE_WARM_EMPTY_SERVICE_NAME =
             ComponentName.createRelative(PKG, ".feature.warm.EmptyService");
 
+    private static final Uri INSTANT_APP_NORESTART_URI = Uri.parse(
+            "https://cts.android.com/norestart");
+
     @Rule
     public ActivityTestRule<Activity> mActivityRule =
             new ActivityTestRule<>(Activity.class, true /*initialTouchMode*/,
                     false /*launchActivity*/);
+
+    @Before
+    public void setUp() {
+        setAppLinksUserSelection(NORESTART_PKG, INSTANT_APP_NORESTART_URI.getHost(),
+                true /*enabled*/);
+    }
+
+    @After
+    public void tearDown() {
+        setAppLinksUserSelection(NORESTART_PKG, INSTANT_APP_NORESTART_URI.getHost(),
+                false /*enabled*/);
+    }
 
     @Test
     public void testNothing() throws Exception {
@@ -423,7 +442,7 @@ public class SplitAppTest {
         if (isInstant) {
             final Intent i = new Intent(Intent.ACTION_VIEW);
             i.addCategory(Intent.CATEGORY_BROWSABLE);
-            i.setData(Uri.parse("https://cts.android.com/norestart"));
+            i.setData(INSTANT_APP_NORESTART_URI);
             i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             return i;
         } else {
@@ -1011,5 +1030,12 @@ public class SplitAppTest {
             throw new AssertionError("Missing ComponentInfo in the ResolveInfo!");
         }
         return new ComponentName(componentInfo.packageName, componentInfo.name);
+    }
+
+    private static void setAppLinksUserSelection(String packageName, String uriHostName,
+            boolean enabled) {
+        final String cmd = String.format("pm set-app-links-user-selection --user cur --package "
+                + "%s %b %s", packageName, enabled, uriHostName);
+        SystemUtil.runShellCommand(cmd);
     }
 }

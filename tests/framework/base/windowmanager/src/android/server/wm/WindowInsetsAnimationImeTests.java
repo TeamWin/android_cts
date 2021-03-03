@@ -20,9 +20,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.graphics.Insets.NONE;
 import static android.view.WindowInsets.Type.ime;
 import static android.view.WindowInsets.Type.navigationBars;
-import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 
-import static androidx.test.InstrumentationRegistry.getInstrumentation;
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -34,16 +33,9 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 
-import android.app.Instrumentation;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.platform.test.annotations.Presubmit;
 import android.view.WindowInsets;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import com.android.cts.mockime.ImeSettings;
-import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -68,30 +60,21 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
                         PackageManager.FEATURE_INPUT_METHODS));
     }
 
-    private void initActivity(boolean useFloating) throws Exception {
-        initMockImeSession(useFloating);
+    private void initActivity(boolean useFloating) {
+        MockImeHelper.createManagedMockImeSession(this, KEYBOARD_HEIGHT, useFloating);
 
         mActivity = startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
         mRootView = mActivity.getWindow().getDecorView();
     }
 
-    private MockImeSession initMockImeSession(boolean useFloating) throws Exception {
-        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
-        return MockImeSession.create(
-                instrumentation.getContext(), instrumentation.getUiAutomation(),
-                useFloating ? getFloatingImeSettings()
-                        : new ImeSettings.Builder().setInputViewHeight(KEYBOARD_HEIGHT)
-                                .setDrawsBehindNavBar(true));
-    }
-
     @Test
-    public void testImeAnimationCallbacksShowAndHide() throws Exception {
+    public void testImeAnimationCallbacksShowAndHide() {
         initActivity(false /* useFloating */);
         testShowAndHide();
     }
 
     @Test
-    public void testAnimationCallbacks_overlapping_opposite() throws Exception {
+    public void testAnimationCallbacks_overlapping_opposite() {
         initActivity(false /* useFloating */);
         assumeTrue(hasWindowInsets(mRootView, navigationBars()));
 
@@ -159,7 +142,7 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
     }
 
     @Test
-    public void testZeroInsetsImeAnimates() throws Exception {
+    public void testZeroInsetsImeAnimates() {
         initActivity(true /* useFloating */);
         testShowAndHide();
     }
@@ -181,15 +164,5 @@ public class WindowInsetsAnimationImeTests extends WindowInsetsAnimationTestBase
         waitForOrFail("Waiting until animation done", () -> mActivity.mCallback.animationDone);
 
         commonAnimationAssertions(mActivity, before, false /* show */, ime());
-    }
-
-    private static ImeSettings.Builder getFloatingImeSettings() {
-        final ImeSettings.Builder builder = new ImeSettings.Builder();
-        builder.setWindowFlags(0, FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        // As documented, Window#setNavigationBarColor() is actually ignored when the IME window
-        // does not have FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS.  We are calling setNavigationBarColor()
-        // to ensure it.
-        builder.setNavigationBarColor(Color.BLACK);
-        return builder;
     }
 }
