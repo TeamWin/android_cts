@@ -173,15 +173,6 @@ public class CtsConfigLoadingTest {
     private static final Set<String> ALLOWLIST_MODULE_PARAMETERS = new HashSet<>();
 
     static {
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsAccessibilityServiceTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsCarrierApiTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsMediaTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsMediaV2TestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsOpenGlPerfTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsOsTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsPermission2TestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsPermissionTestCases.config");
-        ALLOWLIST_MODULE_PARAMETERS.add("CtsProviderUiTestCases.config");
     }
 
     /**
