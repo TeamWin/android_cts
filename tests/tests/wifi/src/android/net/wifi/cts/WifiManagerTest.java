@@ -79,6 +79,7 @@ import com.android.net.module.util.MacAddressUtils;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 
 import java.io.BufferedReader;
@@ -1457,6 +1458,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * @throws Exception
      */
     public void testScreenOffDoesNotTurnOffWifiScanningWhenWifiDisabled() throws Exception {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+            // TV and auto do not support the setting options of WIFI scanning and Bluetooth
+            // scanning
+            return;
+        }
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -1486,6 +1492,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
      * @throws Exception
      */
     public void testScreenOffDoesNotTurnOffWifiScanningWhenWifiEnabled() throws Exception {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive()) {
+            // TV and auto do not support the setting options of WIFI scanning and Bluetooth
+            // scanning
+            return;
+        }
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
