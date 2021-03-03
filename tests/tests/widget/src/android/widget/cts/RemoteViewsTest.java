@@ -1097,10 +1097,10 @@ public class RemoteViewsTest {
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertMargins(
                 textView,
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_padding_left),
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_padding_top),
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_padding_right),
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_padding_bottom));
     }
 
     @Test
@@ -1117,10 +1117,11 @@ public class RemoteViewsTest {
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertMargins(
                 textViewLtr,
-                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
-                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
-                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
-                textViewLtr.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
+                textViewLtr.getResources().getDimensionPixelOffset(R.dimen.textview_padding_left),
+                textViewLtr.getResources().getDimensionPixelOffset(R.dimen.textview_padding_top),
+                textViewLtr.getResources().getDimensionPixelOffset(R.dimen.textview_padding_right),
+                textViewLtr.getResources().getDimensionPixelOffset(
+                        R.dimen.textview_padding_bottom));
 
         View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
         mRemoteViews.setViewLayoutMarginDimen(
@@ -1134,11 +1135,11 @@ public class RemoteViewsTest {
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertMargins(
                 textViewRtl,
-                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_right),
-                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_top),
-                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_left),
-                textViewRtl.getResources().getDimensionPixelSize(R.dimen.textview_padding_bottom));
-
+                textViewRtl.getResources().getDimensionPixelOffset(R.dimen.textview_padding_right),
+                textViewRtl.getResources().getDimensionPixelOffset(R.dimen.textview_padding_top),
+                textViewRtl.getResources().getDimensionPixelOffset(R.dimen.textview_padding_left),
+                textViewRtl.getResources().getDimensionPixelOffset(
+                        R.dimen.textview_padding_bottom));
     }
 
     @Test
@@ -1168,7 +1169,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutWidthDimen(R.id.remoteView_text, R.dimen.textview_fixed_width);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_width),
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_fixed_width),
                 textView.getLayoutParams().width);
     }
 
@@ -1199,7 +1200,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutHeightDimen(R.id.remoteView_text, R.dimen.textview_fixed_height);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_height),
+                textView.getResources().getDimensionPixelOffset(R.dimen.textview_fixed_height),
                 textView.getLayoutParams().height);
     }
 
