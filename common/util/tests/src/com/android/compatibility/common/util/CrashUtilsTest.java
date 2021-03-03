@@ -54,29 +54,40 @@ public class CrashUtilsTest {
     public void testGetAllCrashes() throws Exception {
         JSONArray expectedResults = new JSONArray();
         expectedResults.put(createCrashJson(
-                11071, 11189, "AudioOut_D", "/system/bin/audioserver", "e9380000", "SIGSEGV"));
+                11071, 11189, "AudioOut_D", "/system/bin/audioserver", "e9380000", "SIGSEGV", null));
         expectedResults.put(createCrashJson(
-                12736, 12761, "Binder:12736_2", "/system/bin/audioserver", "0", "SIGSEGV"));
+                12736, 12761, "Binder:12736_2", "/system/bin/audioserver", "0", "SIGSEGV", null));
         expectedResults.put(createCrashJson(
-                26201, 26227, "Binder:26201_3", "/system/bin/audioserver", "0", "SIGSEGV"));
+                26201, 26227, "Binder:26201_3", "/system/bin/audioserver", "0", "SIGSEGV", null));
         expectedResults.put(createCrashJson(
-                26246, 26282, "Binder:26246_5", "/system/bin/audioserver", "0", "SIGSEGV"));
+                26246, 26282, "Binder:26246_5", "/system/bin/audioserver", "0", "SIGSEGV", null));
         expectedResults.put(createCrashJson(
-                245, 245, "installd", "/system/bin/installd", null, "SIGABRT"));
+                245, 245, "installd", "/system/bin/installd", null, "SIGABRT",
+                "'utils.cpp:67] Check failed: is_valid_package_name(package_name) == 0 '"));
         expectedResults.put(createCrashJson(
-                6371, 8072, "media.codec", "omx@1.0-service", "ed000000", "SIGSEGV"));
+                6371, 8072, "media.codec", "omx@1.0-service", "ed000000", "SIGSEGV", null));
         expectedResults.put(createCrashJson(
-                8373, 8414, "loo", "com.android.bluetooth", null, "SIGABRT"));
+                8373, 8414, "loo", "com.android.bluetooth", null, "SIGABRT",
+                "'[FATAL:allocation_tracker.cc(143)] Check failed: map_entry != allocations.end()."));
         expectedResults.put(createCrashJson(
-                11071, 11189, "synthetic_thread", "synthetic_process_0", "e9380000", "SIGSEGV"));
+                8080, 11665, "generic", "/system/bin/mediaserver", null, "SIGABRT",
+                "'frameworks/av/media/libstagefright/MPEG4Extractor.cpp:6853 CHECK_EQ( (unsigned)ptr[0],1u) failed: 129 vs. 1'"));
         expectedResults.put(createCrashJson(
-                12736, 12761, "synthetic_thread", "synthetic_process_1", "0", "SIGSEGV"));
+                11071, 11189, "synthetic_thread", "synthetic_process_0", "e9380000", "SIGSEGV", null));
+        expectedResults.put(createCrashJson(
+                12736, 12761, "synthetic_thread", "synthetic_process_1", "0", "SIGSEGV", null));
 
-        Assert.assertEquals(mCrashes.toString(), expectedResults.toString());
+        Assert.assertEquals(expectedResults.toString() + "\n" +  mCrashes.toString() + "\n", expectedResults.toString(), mCrashes.toString());
     }
 
     public JSONObject createCrashJson(
-            int pid, int tid, String name, String process, String faultaddress, String signal) {
+                int pid,
+                int tid,
+                String name,
+                String process,
+                String faultaddress,
+                String signal,
+                String abortMessage) {
         JSONObject json = new JSONObject();
         try {
             json.put(CrashUtils.PID, pid);
@@ -85,6 +96,7 @@ public class CrashUtilsTest {
             json.put(CrashUtils.PROCESS, process);
             json.put(CrashUtils.FAULT_ADDRESS, faultaddress);
             json.put(CrashUtils.SIGNAL, signal);
+            json.put(CrashUtils.ABORT_MESSAGE, abortMessage);
         } catch (JSONException e) {}
         return json;
     }
@@ -143,9 +155,41 @@ public class CrashUtilsTest {
     @Test
     public void testNullFaultAddress() throws Exception {
         JSONArray crashes = new JSONArray();
-        crashes.put(createCrashJson(8373, 8414, "loo", "com.android.bluetooth", null, "SIGSEGV"));
+        crashes.put(createCrashJson(8373, 8414, "loo", "com.android.bluetooth", null, "SIGSEGV", ""));
         Assert.assertTrue(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
                 .checkMinAddress(true)
+                .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
+    }
+
+    @Test
+    public void testAbortMessageInclude() throws Exception {
+        JSONArray crashes = new JSONArray();
+        crashes.put(createCrashJson(8373, 8414, "loo", "com.android.bluetooth", null, "SIGABRT",
+              "'[FATAL:allocation_tracker.cc(143)] Check failed: map_entry != allocations.end()."));
+        Assert.assertTrue(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .appendAbortMessageIncludes("Check failed:")
+                .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
+
+        Assert.assertFalse(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .appendAbortMessageIncludes("include not matches")
+                .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
+    }
+
+    @Test
+    public void testAbortMessageExclude() throws Exception {
+        JSONArray crashes = new JSONArray();
+        crashes.put(createCrashJson(8373, 8414, "loo", "com.android.bluetooth", null, "SIGABRT",
+              "'[FATAL:allocation_tracker.cc(143)] Check failed: map_entry != allocations.end()."));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .appendAbortMessageExcludes("Check failed:")
+                .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
+
+        Assert.assertTrue(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .appendAbortMessageExcludes("exclude not matches")
                 .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
     }
 }
