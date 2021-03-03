@@ -76,10 +76,13 @@ public class TestUtils {
     public static final String REMOTE_COMPONENT = "android.telecom.cts.CtsRemoteConnectionService";
     public static final String ACCOUNT_ID_1 = "xtstest_CALL_PROVIDER_ID_1";
     public static final String ACCOUNT_ID_2 = "xtstest_CALL_PROVIDER_ID_2";
+    public static final String ACCOUNT_ID_SIM = "sim_acct";
     public static final String ACCOUNT_ID_EMERGENCY = "xtstest_CALL_PROVIDER_EMERGENCY";
     public static final String EXTRA_PHONE_NUMBER = "android.telecom.cts.extra.PHONE_NUMBER";
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_1);
+    public static final PhoneAccountHandle TEST_SIM_PHONE_ACCOUNT_HANDLE =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_SIM);
     public static final PhoneAccountHandle TEST_PHONE_ACCOUNT_HANDLE_2 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, COMPONENT), ACCOUNT_ID_2);
     public static final PhoneAccountHandle TEST_EMERGENCY_PHONE_ACCOUNT_HANDLE =
@@ -116,6 +119,7 @@ public class TestUtils {
                     SELF_MANAGED_ACCOUNT_ID_4);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
+    public static final String SIM_ACCOUNT_LABEL = "CTSConnectionServiceSim";
     public static final PhoneAccount TEST_PHONE_ACCOUNT = PhoneAccount.builder(
             TEST_PHONE_ACCOUNT_HANDLE, ACCOUNT_LABEL)
             .setAddress(Uri.parse("tel:555-TEST"))
@@ -128,6 +132,18 @@ public class TestUtils {
                     PhoneAccount.CAPABILITY_ADHOC_CONFERENCE_CALLING)
             .setHighlightColor(Color.RED)
             .setShortDescription(ACCOUNT_LABEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
+            .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
+            .build();
+
+    public static final PhoneAccount TEST_SIM_PHONE_ACCOUNT = PhoneAccount.builder(
+            TEST_SIM_PHONE_ACCOUNT_HANDLE, SIM_ACCOUNT_LABEL)
+            .setAddress(Uri.parse("tel:555-TEST"))
+            .setSubscriptionAddress(Uri.parse("tel:555-TEST"))
+            .setCapabilities(PhoneAccount.CAPABILITY_CALL_PROVIDER |
+                    PhoneAccount.CAPABILITY_SIM_SUBSCRIPTION)
+            .setHighlightColor(Color.RED)
+            .setShortDescription(SIM_ACCOUNT_LABEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_TEL)
             .addSupportedUriScheme(PhoneAccount.SCHEME_VOICEMAIL)
             .build();
@@ -254,6 +270,9 @@ public class TestUtils {
             .setExtras(SELF_MANAGED_ACCOUNT_4_EXTRAS)
             .build();
 
+    private static final String COMMAND_SET_CALL_DIAGNOSTIC_SERVICE =
+            "telecom set-call-diagnostic-service ";
+
     private static final String COMMAND_SET_DEFAULT_DIALER = "telecom set-default-dialer ";
 
     private static final String COMMAND_GET_DEFAULT_DIALER = "telecom get-default-dialer";
@@ -296,6 +315,13 @@ public class TestUtils {
         final PackageManager pm = context.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
                 pm.hasSystemFeature(PackageManager.FEATURE_CONNECTION_SERVICE);
+    }
+
+    public static String setCallDiagnosticService(Instrumentation instrumentation,
+            String packageName)
+            throws Exception {
+        return executeShellCommand(instrumentation, COMMAND_SET_CALL_DIAGNOSTIC_SERVICE
+                + packageName);
     }
 
     public static String setDefaultDialer(Instrumentation instrumentation, String packageName)
