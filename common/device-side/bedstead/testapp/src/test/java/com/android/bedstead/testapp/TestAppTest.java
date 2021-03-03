@@ -27,6 +27,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -42,7 +43,12 @@ public class TestAppTest {
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
 
-    private final TestAppProvider mTestAppProvider = new TestAppProvider();
+    private TestAppProvider mTestAppProvider;
+
+    @Before
+    public void setup() {
+        mTestAppProvider = new TestAppProvider();
+    }
 
     @Test
     public void reference_returnsNeneReference() {
