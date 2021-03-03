@@ -16,24 +16,32 @@
 package android.view.inputmethod.cts
 
 import android.app.Instrumentation
+import android.app.UiAutomation
 import android.content.Context
 import android.provider.Settings
 import android.text.style.SuggestionSpan
 import android.text.style.SuggestionSpan.FLAG_GRAMMAR_ERROR
 import android.text.style.SuggestionSpan.FLAG_MISSPELLED
+import android.text.style.SuggestionSpan.SUGGESTIONS_MAX_SIZE
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+import android.view.inputmethod.InputMethodInfo
+import android.view.inputmethod.InputMethodManager
 import android.view.inputmethod.cts.util.EndToEndImeTestBase
 import android.view.inputmethod.cts.util.InputMethodVisibilityVerifier
 import android.view.inputmethod.cts.util.TestActivity
 import android.view.inputmethod.cts.util.TestUtils.runOnMainSync
 import android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil
 import android.view.inputmethod.cts.util.UnlockScreenRule
+import android.view.textservice.SentenceSuggestionsInfo
+import android.view.textservice.SpellCheckerSession
 import android.view.textservice.SpellCheckerSubtype
+import android.view.textservice.SuggestionsInfo
 import android.view.textservice.SuggestionsInfo.RESULT_ATTR_DONT_SHOW_UI_FOR_SUGGESTIONS
 import android.view.textservice.SuggestionsInfo.RESULT_ATTR_IN_THE_DICTIONARY
 import android.view.textservice.SuggestionsInfo.RESULT_ATTR_LOOKS_LIKE_GRAMMAR_ERROR
 import android.view.textservice.SuggestionsInfo.RESULT_ATTR_LOOKS_LIKE_TYPO
+import android.view.textservice.TextInfo
 import android.view.textservice.TextServicesManager
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -45,6 +53,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.CtsTouchUtils
+import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SettingsStateChangerRule
 import com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand
 import com.android.cts.mockime.MockImeSession
@@ -53,11 +62,13 @@ import com.android.cts.mockspellchecker.MockSpellCheckerClient
 import com.android.cts.mockspellchecker.MockSpellCheckerProto
 import com.android.cts.mockspellchecker.MockSpellCheckerProto.MockSpellCheckerConfiguration
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.fail
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
@@ -66,9 +77,12 @@ private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 @RunWith(AndroidJUnit4::class)
 class SpellCheckerTest : EndToEndImeTestBase() {
 
+    val SPELL_CHECKING_IME_ID = "com.android.cts.spellcheckingime/.SpellCheckingIme"
+
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.getTargetContext()
     private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
+    private val uiAutomation: UiAutomation = instrumentation.uiAutomation
 
     @Rule
     fun unlockScreenRule() = UnlockScreenRule()
@@ -238,6 +252,55 @@ class SpellCheckerTest : EndToEndImeTestBase() {
                         .contains("com.android.cts.mockspellchecker")
     }
 
+    @Test
+    fun suppressesSpellChecker() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        // SpellCheckingIme should have android:suppressesSpellChecker="true"
+        ImeSession(SPELL_CHECKING_IME_ID).use {
+            assertThat(getCurrentInputMethodInfo().suppressesSpellChecker()).isTrue()
+
+            MockSpellCheckerClient.create(context, configuration).use {
+                val (activity, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                val imm = activity.getSystemService(InputMethodManager::class.java)
+                assertThat(imm?.isInputMethodSuppressingSpellChecker).isTrue()
+
+                // SpellCheckerSession should return empty results if suppressed.
+                val tsm = activity.getSystemService(TextServicesManager::class.java)
+                val listener = FakeSpellCheckerSessionListener()
+                var session: SpellCheckerSession? = null
+                runOnMainSync {
+                    session = tsm?.newSpellCheckerSession(null, Locale.US, listener, false)
+                }
+                assertThat(session).isNotNull()
+                val suggestions: Array<SentenceSuggestionsInfo>? =
+                        getSentenceSuggestions(session!!, listener, "match")
+                assertThat(suggestions).isNotNull()
+                assertThat(suggestions!!.size).isEqualTo(0)
+            }
+        }
+    }
+
+    @Test
+    fun suppressesSpellChecker_false() {
+        MockImeSession.create(context).use {
+            assertThat(getCurrentInputMethodInfo().suppressesSpellChecker()).isFalse()
+
+            val (activity, editText) = startTestActivity()
+            CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+            waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+            val imm = activity.getSystemService(InputMethodManager::class.java)
+            assertThat(imm?.isInputMethodSuppressingSpellChecker).isFalse()
+        }
+    }
+
     private fun findSuggestionSpanWithFlags(editText: EditText, flags: Int): SuggestionSpan? =
             getSuggestionSpans(editText).find { (it.flags and flags) == flags }
 
@@ -271,5 +334,55 @@ class SpellCheckerTest : EndToEndImeTestBase() {
             layout
         }
         return Pair(activity, editText!!)
+    }
+
+    private fun getCurrentInputMethodInfo(): InputMethodInfo {
+        val curId = Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.DEFAULT_INPUT_METHOD)
+        val imm = context.getSystemService(InputMethodManager::class.java)
+        val info = imm?.inputMethodList?.find { it.id == curId }
+        assertThat(info).isNotNull()
+        return info!!
+    }
+
+    private fun getSentenceSuggestions(
+        session: SpellCheckerSession,
+        listener: FakeSpellCheckerSessionListener,
+        text: String
+    ): Array<SentenceSuggestionsInfo>? {
+        val prevSize = listener.getSentenceSuggestionsResults.size
+        session.getSentenceSuggestions(arrayOf(TextInfo(text)), SUGGESTIONS_MAX_SIZE)
+        waitOnMainUntil({
+            listener.getSentenceSuggestionsResults.size == prevSize + 1
+        }, TIMEOUT)
+        return listener.getSentenceSuggestionsResults[prevSize]
+    }
+
+    private inner class ImeSession(val imeId: String) : AutoCloseable {
+
+        init {
+            uiAutomation.executeShellCommand("ime enable $imeId")
+            uiAutomation.executeShellCommand("ime set $imeId")
+            PollingCheck.check("Make sure that $imeId is selected", TIMEOUT) {
+                getCurrentInputMethodInfo().id == imeId
+            }
+        }
+
+        override fun close() {
+            uiAutomation.executeShellCommand("ime reset")
+        }
+    }
+
+    private class FakeSpellCheckerSessionListener :
+            SpellCheckerSession.SpellCheckerSessionListener {
+        val getSentenceSuggestionsResults = ArrayList<Array<SentenceSuggestionsInfo>?>()
+
+        override fun onGetSuggestions(results: Array<SuggestionsInfo>?) {
+            fail("Not expected")
+        }
+
+        override fun onGetSentenceSuggestions(results: Array<SentenceSuggestionsInfo>?) {
+            getSentenceSuggestionsResults.add(results)
+        }
     }
 }
