@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -33,7 +34,12 @@ public class TestAppProviderTest {
     // Expects that this package name does not match an actual test app
     private static final String NOT_EXISTING_PACKAGENAME = "not.existing.test.app";
 
-    private final TestAppProvider mTestAppProvider = new TestAppProvider();
+    private TestAppProvider mTestAppProvider;
+
+    @Before
+    public void setup() {
+        mTestAppProvider = new TestAppProvider();
+    }
 
     @Test
     public void get_queryMatches_returnsTestApp() {
