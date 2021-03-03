@@ -406,7 +406,8 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
         // Swiping from top of display can show bars.
         dragFromTopToCenter(rootView);
-        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types));
+        PollingCheck.waitFor(TIMEOUT, () -> rootView.getRootWindowInsets().isVisible(types)
+            && rootView.getSystemUiVisibility() != targetFlags);
 
         // Use flags to hide status bar again.
         ANIMATION_CALLBACK.reset();
