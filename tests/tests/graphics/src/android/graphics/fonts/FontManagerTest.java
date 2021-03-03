@@ -23,6 +23,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
+import android.Manifest;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.text.FontConfig;
@@ -67,12 +69,23 @@ public class FontManagerTest {
         return fallbackNames;
     }
 
+    private FontConfig getFontConfig() {
+        UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+
+        ui.adoptShellPermissionIdentity(Manifest.permission.UPDATE_FONTS);
+        try {
+            FontManager fm = getContext().getSystemService(FontManager.class);
+            assertThat(fm).isNotNull();
+
+            return fm.getFontConfig();
+        } finally {
+            ui.dropShellPermissionIdentity();
+        }
+    }
+
     @Test
     public void fontManager_getFontConfig_checkFamilies() {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        FontConfig config = fm.getFontConfig();
+        FontConfig config = getFontConfig();
         // To expect name availability, collect all fallback names.
         Set<String> fallbackNames = getFallbackNameSet(config);
 
@@ -107,10 +120,7 @@ public class FontManagerTest {
 
     @Test
     public void fontManager_getFontConfig_checkAlias() {
-        FontManager fm = getContext().getSystemService(FontManager.class);
-        assertThat(fm).isNotNull();
-
-        FontConfig config = fm.getFontConfig();
+        FontConfig config = getFontConfig();
         assertThat(config).isNotNull();
         // To expect name availability, collect all fallback names.
         Set<String> fallbackNames = getFallbackNameSet(config);
