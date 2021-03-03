@@ -40,14 +40,14 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.deviceadminapp.DeviceAdminApp;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
-import com.android.bedstead.nene.packages.PackageReference;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.ClassRule;
@@ -74,8 +74,8 @@ public final class DevicePolicyManagerTest {
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
     private static final TestApis sTestApis = new TestApis();
 
-    private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME = new ComponentName(
-            sContext, CtsDeviceAdminReceiver.class);
+    private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME =
+            DeviceAdminApp.deviceAdminComponentName(sContext);
 
     private static final String PROFILE_OWNER_NAME = "testDeviceAdmin";
     private static final String DEVICE_OWNER_NAME = "testDeviceAdmin";
