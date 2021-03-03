@@ -843,7 +843,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
                 mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
                 waitForEnterPip(PIP_ACTIVITY);
                 assertPinnedStackDoesNotExist();
-                launchHomeActivity();
+                launchHomeActivityNoWait();
+                mWmState.computeState();
                 assertPinnedStackDoesNotExist();
             } finally {
                 mAtm.stopSystemLockTaskMode();
@@ -1075,7 +1076,11 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         launchActivity(LAUNCH_PIP_ON_PIP_ACTIVITY);
         // NOTE: moving to pinned stack will trigger the pip-on-pip activity to launch the
         // translucent activity.
-        enterPipAndAssertPinnedTaskExists(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+        enterPipAndAssertPinnedTaskExists(LAUNCH_PIP_ON_PIP_ACTIVITY);
+        mWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_PINNED)
+                        .build());
 
         assertPinnedStackIsOnTop();
         mWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
@@ -1111,14 +1116,14 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // affinity, and also launch another activity in the same task, while finishing itself. As
         // a result, the task will not have a component matching the same activity as what it was
         // started with
-        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
+        launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY,
                 extraString(EXTRA_START_ACTIVITY, getActivityName(TEST_ACTIVITY)),
                 extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
         mWmState.waitForValidState(new WaitForValidActivityState.Builder(TEST_ACTIVITY)
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .build());
-        launchActivity(PIP_ACTIVITY_WITH_SAME_AFFINITY);
+        launchActivityNoWait(PIP_ACTIVITY_WITH_SAME_AFFINITY);
         waitForEnterPip(PIP_ACTIVITY_WITH_SAME_AFFINITY);
         assertPinnedStackExists();
 
@@ -1126,7 +1131,8 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         int rootActivityTaskId = mWmState.getTaskByActivity(
                 TEST_ACTIVITY).mTaskId;
         launchHomeActivity();
-        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        mWmState.computeState();
 
         // ...and ensure that even while matching purely by task affinity, the root activity task is
         // found and reused, and that the pinned stack is unaffected
@@ -1139,7 +1145,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
     @Test
     public void testLaunchTaskByAffinityMatchSingleTask() throws Exception {
         // Launch an activity into the pinned stack with a fixed affinity
-        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
+        launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY,
                 extraString(EXTRA_ENTER_PIP, "true"),
                 extraString(EXTRA_START_ACTIVITY, getActivityName(PIP_ACTIVITY)),
                 extraString(EXTRA_FINISH_SELF_ON_RESUME, "true"));
@@ -1150,7 +1156,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         // fullscreen
         int activityTaskId = mWmState.getTaskByActivity(PIP_ACTIVITY).mTaskId;
         launchHomeActivity();
-        launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY);
+        launchActivityNoWait(TEST_ACTIVITY_WITH_SAME_AFFINITY);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
         assertEquals(activityTaskId, mWmState.getTaskByActivity(

@@ -35,7 +35,6 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.content.pm.PackageManager.FEATURE_AUTOMOTIVE;
-import static android.content.pm.PackageManager.FEATURE_CROSS_LAYER_BLUR;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_INPUT_METHODS;
@@ -133,6 +132,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
+import android.os.SystemProperties;
 import android.provider.Settings;
 import android.server.wm.CommandSession.ActivityCallback;
 import android.server.wm.CommandSession.ActivitySession;
@@ -558,8 +558,7 @@ public abstract class ActivityManagerTestBase {
 
         runWithShellPermission(() -> {
             // TaskOrganizer ctor requires MANAGE_ACTIVITY_TASKS permission
-            mTaskOrganizer = new TestTaskOrganizer(
-                    mContext.createDisplayContext(mDm.getDisplay(DEFAULT_DISPLAY)));
+            mTaskOrganizer = new TestTaskOrganizer(mContext);
             // Clear launch params for all test packages to make sure each test is run in a clean
             // state.
             mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
@@ -1008,7 +1007,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsBlur() {
-        return hasDeviceFeature(FEATURE_CROSS_LAYER_BLUR);
+            return SystemProperties.get("ro.surface_flinger.supports_background_blur", "default")
+                                   .equals("1");
     }
 
     protected boolean isWatch() {
