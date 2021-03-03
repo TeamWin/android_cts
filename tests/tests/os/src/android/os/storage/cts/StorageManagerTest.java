@@ -16,6 +16,11 @@
 
 package android.os.storage.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.testng.Assert.assertThrows;
+
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
@@ -30,8 +35,8 @@ import android.os.UserHandle;
 import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
-import android.os.storage.StorageVolume;
 import android.os.storage.StorageManager.StorageVolumeCallback;
+import android.os.storage.StorageVolume;
 import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -46,15 +51,13 @@ import com.android.compatibility.common.util.FileUtils;
 
 import junit.framework.AssertionFailedError;
 
-import org.junit.Assume;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.FileDescriptor;
 import java.io.SyncFailedException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -795,6 +798,39 @@ public class StorageManagerTest extends AndroidTestCase {
                 StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafa01234567")));
         assertEquals("DEAD-BEEF",
                 StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef")));
+    }
+
+    public void testGetManageSpaceActivityIntent() throws Exception {
+        String packageName = "android.os.cts";
+        int REQUEST_CODE = 1;
+        PendingIntent piActual = null;
+
+        // Without MANAGE_EXTERNAL_STORAGE permission, this call should fail.
+        assertThrows(
+                RuntimeException.class,
+                () -> mStorageManager.getManageSpaceActivityIntent(packageName, REQUEST_CODE));
+
+        // Adopt MANAGE_EXTERNAL_STORAGE permission and then try the API call. We launch
+        // the manageSpaceActivity in a new task.
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.MANAGE_EXTERNAL_STORAGE);
+
+        // Invalid packageName should throw an IllegalArgumentException
+        String invalidPackageName = "this.is.invalid";
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> mStorageManager.getManageSpaceActivityIntent(invalidPackageName,
+                        REQUEST_CODE));
+
+        piActual = mStorageManager.getManageSpaceActivityIntent(packageName,
+                REQUEST_CODE);
+        assertThat(piActual.isActivity()).isTrue();
+
+        // Nothing to assert, but call send to make sure it does not throw an exception
+        piActual.send();
+
+        // Drop MANAGE_EXTERNAL_STORAGE permission
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
     }
 
     private void assertStorageVolumesEquals(StorageVolume volume, StorageVolume clone)
