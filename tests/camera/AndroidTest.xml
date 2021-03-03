@@ -39,6 +39,7 @@
               single test class/method (device side) timeout value set by timeout
               annotation -->
         <option name="test-timeout" value="24000000" />
+        <option name="hidden-api-checks" value="false" />
         <option name="isolated-storage" value="false" />
     </test>
 </configuration>

@@ -74,6 +74,7 @@ final class DevicePolicyManagerWrapper
             // Used by DeviceOwnerProvisioningTest
             doAnswer(answer).when(spy).enableSystemApp(any(), any(String.class));
             doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
+            doAnswer(answer).when(spy).canAdminGrantSensorsPermissions();
 
             // Used by HeadlessSystemUserTest
             doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());

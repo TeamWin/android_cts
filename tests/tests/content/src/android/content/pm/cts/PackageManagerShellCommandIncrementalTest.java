@@ -107,13 +107,13 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private void checkIncrementalDeliveryFeature() throws Exception {
         Assume.assumeTrue(getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION));
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY));
     }
 
     private void checkIncrementalDeliveryV2Feature() throws Exception {
         checkIncrementalDeliveryFeature();
         Assume.assumeTrue(getContext().getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION, 2));
+                PackageManager.FEATURE_INCREMENTAL_DELIVERY, 2));
     }
 
     @Test
@@ -121,7 +121,7 @@ public class PackageManagerShellCommandIncrementalTest {
         final boolean v2Required = (SystemProperties.getInt("ro.product.first_api_level", 0) > 30);
         if (v2Required) {
             Assert.assertTrue(getContext().getPackageManager().hasSystemFeature(
-                    PackageManager.FEATURE_INCREMENTAL_DELIVERY_VERSION, 2));
+                    PackageManager.FEATURE_INCREMENTAL_DELIVERY, 2));
         }
     }
 
