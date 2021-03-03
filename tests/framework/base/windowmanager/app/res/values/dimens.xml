@@ -14,8 +14,8 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License
   -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="50dp"
-    android:layout_height="50dp">
-</FrameLayout>
+
+<resources>
+    <dimen name="test_background_blur_radius">50dp</dimen>
+    <dimen name="test_blur_behind_radius">25dp</dimen>
+</resources>
