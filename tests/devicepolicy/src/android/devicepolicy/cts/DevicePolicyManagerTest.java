@@ -16,13 +16,17 @@
 
 package android.devicepolicy.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import static junit.framework.Assert.fail;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.app.AppOpsManager;
 import android.app.UiAutomation;
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FullyManagedDeviceProvisioningParams;
@@ -31,6 +35,7 @@ import android.app.admin.ProvisioningException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.CrossProfileApps;
 import android.content.pm.PackageManager;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -39,14 +44,18 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
-import com.android.compatibility.common.util.SystemUtil;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.packages.Package;
+import com.android.bedstead.nene.packages.PackageReference;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.ClassRule;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,14 +73,21 @@ public final class DevicePolicyManagerTest {
     private static final UiAutomation sUiAutomation =
             InstrumentationRegistry.getInstrumentation().getUiAutomation();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
+    private static final UserManager sUserManager = sContext.getSystemService(UserManager.class);
     private static final SharedPreferences sSharedPreferences =
             sContext.getSharedPreferences("required-apps.txt", Context.MODE_PRIVATE);
+    private static final TestApis sTestApis = new TestApis();
 
     private static final ComponentName DEVICE_ADMIN_COMPONENT_NAME = new ComponentName(
             sContext, CtsDeviceAdminReceiver.class);
 
     private static final String PROFILE_OWNER_NAME = "testDeviceAdmin";
     private static final String DEVICE_OWNER_NAME = "testDeviceAdmin";
+
+    private static final String ACCOUNT_NAME = "CTS";
+    private static final String ACCOUNT_TYPE = "com.android.cts.test";
+    private static final Account TEST_ACCOUNT = new Account(ACCOUNT_NAME, ACCOUNT_TYPE);
+
 
     private static final String KEY_PRE_PROVISIONING_SYSTEM_APPS = "pre_provisioning_system_apps";
     private static final String KEY_PRE_PROVISIONING_NON_SYSTEM_APPS =
@@ -100,20 +116,19 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
-    public void testCreateAndProvisionManagedProfile_setsProfileOwner() throws Exception {
+    public void newlyProvisionedManagedProfile_createsProfile() throws Exception {
         UserHandle profile = null;
         try {
             sUiAutomation.adoptShellPermissionIdentity();
-            ManagedProfileProvisioningParams params = createManagedProfileProvisioningParams();
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
 
-            profile = sDevicePolicyManager.createAndProvisionManagedProfile(params);
+            assertThat(profile).isNotNull();
 
-            final DevicePolicyManager profileDpm = getDpmForProfile(profile);
-            assertTrue("Profile owner not set", profileDpm.isProfileOwnerApp(
-                                    sContext.getPackageName()));
         } finally {
             if (profile != null) {
-                sContext.getSystemService(UserManager.class).removeUser(profile);
+                sTestApis.users().find(profile).remove();
             }
             sUiAutomation.dropShellPermissionIdentity();
         }
@@ -127,34 +142,315 @@ public final class DevicePolicyManagerTest {
     })
     @Test
     @Postsubmit(reason="b/181207615 flaky")
-    public void testCreateAndProvisionManagedProfile_createsProfile() throws Exception {
+    public void newlyProvisionedManagedProfile_createsManagedProfile() throws Exception {
         UserHandle profile = null;
         try {
             sUiAutomation.adoptShellPermissionIdentity();
-            final ManagedProfileProvisioningParams params =
-                    createManagedProfileProvisioningParams();
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
 
-            profile = sDevicePolicyManager.createAndProvisionManagedProfile(params);
+            assertThat(sUserManager.isManagedProfile(profile.getIdentifier())).isTrue();
 
-            assertNotNull(profile);
         } finally {
             if (profile != null) {
-                sContext.getSystemService(UserManager.class).removeUser(profile);
+                sTestApis.users().find(profile).remove();
             }
             sUiAutomation.dropShellPermissionIdentity();
         }
     }
 
-    private ManagedProfileProvisioningParams createManagedProfileProvisioningParams() {
-        return new ManagedProfileProvisioningParams.Builder(
-                        DEVICE_ADMIN_COMPONENT_NAME,
-                        PROFILE_OWNER_NAME)
-                        .build();
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="b/181207615 flaky")
+    public void newlyProvisionedManagedProfile_setsActiveAdmin() throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
+
+            assertThat(getDpmForUser(profile).getActiveAdmins()).hasSize(1);
+            assertThat(getDpmForUser(profile).getActiveAdmins().get(0))
+                    .isEqualTo(DEVICE_ADMIN_COMPONENT_NAME);
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
     }
 
-    private DevicePolicyManager getDpmForProfile(UserHandle profile) {
-        return sContext.createContextAsUser(profile, /* flags= */ 0).getSystemService(
-                DevicePolicyManager.class);
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="b/181207615 flaky")
+    public void newlyProvisionedManagedProfile_setsProfileOwner() throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
+
+            DevicePolicyManager profileDpm = getDpmForUser(profile);
+            assertThat(profileDpm.isProfileOwnerApp(sContext.getPackageName())).isTrue();
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="new test")
+    @Ignore
+    public void newlyProvisionedManagedProfile_copiesAccountToProfile() throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            // TODO(kholoudm): Add account to account manager once the API is ready in Nene
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder()
+                            .setAccountToMigrate(TEST_ACCOUNT)
+                            .build();
+            profile = provisionManagedProfile(params);
+
+            assertThat(hasTestAccount(profile)).isTrue();
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="new test")
+    public void newlyProvisionedManagedProfile_removesAccountFromParentByDefault()
+            throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            // TODO(kholoudm): Add account to account manager once the API is ready in Nene
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder()
+                            .setAccountToMigrate(TEST_ACCOUNT)
+                            .build();
+            profile = provisionManagedProfile(params);
+
+            assertThat(hasTestAccount(sContext.getUser())).isFalse();
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Ignore
+    @Postsubmit(reason="new test")
+    public void newlyProvisionedManagedProfile_keepsAccountInParentIfRequested() throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            // TODO(kholoudm): Add account to account manager once the API is ready in Nene
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder()
+                            .setAccountToMigrate(TEST_ACCOUNT)
+                            .setKeepAccountMigrated(true)
+                            .build();
+            profile = provisionManagedProfile(params);
+
+            assertThat(hasTestAccount(sContext.getUser())).isTrue();
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="new test")
+    public void newlyProvisionedManagedProfile_removesNonRequiredAppsFromProfile()
+            throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            Set<String> nonRequiredApps = sDevicePolicyManager.getDisallowedSystemApps(
+                    DEVICE_ADMIN_COMPONENT_NAME,
+                    sContext.getUserId(),
+                    DevicePolicyManager.ACTION_PROVISION_MANAGED_PROFILE);
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
+
+            assertThat(getInstalledPackagesOnUser(nonRequiredApps, profile)).isEmpty();
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    @RequireRunOnPrimaryUser
+    @EnsureHasNoWorkProfile
+    @RequireFeatures({
+            PackageManager.FEATURE_DEVICE_ADMIN,
+            PackageManager.FEATURE_MANAGED_USERS
+    })
+    @Test
+    @Postsubmit(reason="new test")
+    public void newlyProvisionedManagedProfile_setsCrossProfilePackages()
+            throws Exception {
+        UserHandle profile = null;
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            ManagedProfileProvisioningParams params =
+                    createManagedProfileProvisioningParamsBuilder().build();
+            profile = provisionManagedProfile(params);
+
+            Set<String> crossProfilePackages = getConfigurableDefaultCrossProfilePackages();
+            for(String crossProfilePackage : crossProfilePackages) {
+                assertIsCrossProfilePackageIfInstalled(crossProfilePackage);
+            }
+
+        } finally {
+            if (profile != null) {
+                sTestApis.users().find(profile).remove();
+            }
+            sUiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    private void assertIsCrossProfilePackageIfInstalled(String packageName) throws Exception {
+        if (!isPackageInstalledOnCurrentUser(packageName)) {
+            return;
+        }
+        for (UserHandle profile : sUserManager.getUserProfiles()) {
+            assertThat(isCrossProfilePackage(packageName, profile)).isTrue();
+        }
+    }
+
+    private boolean isCrossProfilePackage(String packageName, UserHandle profile)
+            throws Exception {
+        return getCrossProfileAppOp(packageName, profile) == MODE_ALLOWED;
+    }
+
+    private int getCrossProfileAppOp(String packageName, UserHandle userHandle) throws Exception {
+        return sContext.getSystemService(AppOpsManager.class).unsafeCheckOpNoThrow(
+                AppOpsManager.permissionToOp(android.Manifest.permission.INTERACT_ACROSS_PROFILES),
+                getUidForPackageName(packageName, userHandle),
+                packageName);
+    }
+
+    private int getUidForPackageName(String packageName, UserHandle userHandle) throws Exception {
+        return sContext.createContextAsUser(userHandle, /* flags= */ 0)
+                .getPackageManager()
+                .getPackageUid(packageName, /* flags= */ 0);
+    }
+
+    private UserHandle provisionManagedProfile(ManagedProfileProvisioningParams params)
+            throws Exception {
+        return sDevicePolicyManager.createAndProvisionManagedProfile(params);
+    }
+
+    private ManagedProfileProvisioningParams.Builder
+    createManagedProfileProvisioningParamsBuilder() {
+        return new ManagedProfileProvisioningParams.Builder(
+                        DEVICE_ADMIN_COMPONENT_NAME,
+                        PROFILE_OWNER_NAME);
+    }
+
+    private boolean hasTestAccount(UserHandle user) {
+        AccountManager am = getContextForUser(user).getSystemService(AccountManager.class);
+        Account[] userAccounts = am.getAccountsByType(ACCOUNT_TYPE);
+        for (Account account : userAccounts) {
+            if (TEST_ACCOUNT.equals(account)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<String> getInstalledPackagesOnUser(Set<String> packages, UserHandle user) {
+        return packages.stream().filter(p -> isPackageInstalledOnUser(p, user))
+                .collect(Collectors.toSet());
+    }
+
+    private boolean isPackageInstalledOnCurrentUser(String packageName) {
+        return isPackageInstalledOnUser(packageName, sContext.getUser());
+    }
+
+    private boolean isPackageInstalledOnUser(String packageName, UserHandle user) {
+        Package resolvedPackage = sTestApis.packages().find(packageName).resolve();
+        if (resolvedPackage == null) {
+            return false;
+        }
+        return resolvedPackage.installedOnUsers().contains(sTestApis.users().find(user));
+    }
+
+    private Set<String> getConfigurableDefaultCrossProfilePackages() {
+        Set<String> defaultPackages = sDevicePolicyManager.getDefaultCrossProfilePackages();
+        CrossProfileApps crossProfileApps = sContext.getSystemService(CrossProfileApps.class);
+        return defaultPackages.stream().filter(
+                crossProfileApps::canConfigureInteractAcrossProfiles).collect(
+                Collectors.toSet());
+    }
+
+    private DevicePolicyManager getDpmForUser(UserHandle user) {
+        return getContextForUser(user).getSystemService(DevicePolicyManager.class);
+    }
+
+    private Context getContextForUser(UserHandle user) {
+        if (sContext.getUserId() == user.getIdentifier()) {
+            return sContext;
+        }
+        return sContext.createContextAsUser(user, /* flags= */ 0);
     }
 
     @RequireRunOnPrimaryUser
