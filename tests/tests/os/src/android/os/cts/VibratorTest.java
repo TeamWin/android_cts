@@ -17,9 +17,12 @@
 package android.os.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -36,21 +39,19 @@ import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
-import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 import java.util.concurrent.Executors;
 
 @RunWith(AndroidJUnit4.class)
-@LargeTest
 public class VibratorTest {
     @Rule
     public ActivityTestRule<SimpleTestActivity> mActivityRule = new ActivityTestRule<>(
@@ -71,36 +72,61 @@ public class VibratorTest {
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build();
     private static final long CALLBACK_TIMEOUT_MILLIS = 5000;
-    private static final long VIBRATION_TIMEOUT_MILLIS = 200;
+    private static final int[] PREDEFINED_EFFECTS = new int[]{
+            VibrationEffect.EFFECT_CLICK,
+            VibrationEffect.EFFECT_DOUBLE_CLICK,
+            VibrationEffect.EFFECT_TICK,
+            VibrationEffect.EFFECT_THUD,
+            VibrationEffect.EFFECT_POP,
+            VibrationEffect.EFFECT_HEAVY_CLICK,
+            VibrationEffect.EFFECT_TEXTURE_TICK,
+    };
+    private static final int[] PRIMITIVE_EFFECTS = new int[]{
+            VibrationEffect.Composition.PRIMITIVE_CLICK,
+            VibrationEffect.Composition.PRIMITIVE_TICK,
+            VibrationEffect.Composition.PRIMITIVE_LOW_TICK,
+            VibrationEffect.Composition.PRIMITIVE_QUICK_RISE,
+            VibrationEffect.Composition.PRIMITIVE_QUICK_FALL,
+            VibrationEffect.Composition.PRIMITIVE_SLOW_RISE,
+    };
 
     private Vibrator mVibrator;
-    @Mock private OnVibratorStateChangedListener mListener1;
-    @Mock private OnVibratorStateChangedListener mListener2;
+    @Mock private OnVibratorStateChangedListener mStateListener;
 
     @Before
     public void setUp() {
         mVibrator = InstrumentationRegistry.getInstrumentation().getContext().getSystemService(
                 Vibrator.class);
+
+        mVibrator.addVibratorStateListener(mStateListener);
+        reset(mStateListener);
+    }
+
+    @After
+    public void cleanUp() {
+        mVibrator.cancel();
     }
 
     @Test
     public void testVibratorCancel() {
-        mVibrator.vibrate(1000);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        mVibrator.vibrate(10_000);
+        assertStartsVibrating();
 
         mVibrator.cancel();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+        assertStopsVibrating();
     }
 
     @Test
     public void testVibratePattern() {
         long[] pattern = {100, 200, 400, 800, 1600};
         mVibrator.vibrate(pattern, 3);
+        assertStartsVibrating();
+
         try {
             mVibrator.vibrate(pattern, 10);
             fail("Should throw ArrayIndexOutOfBoundsException");
-        } catch (ArrayIndexOutOfBoundsException expected) { }
-        mVibrator.cancel();
+        } catch (ArrayIndexOutOfBoundsException expected) {
+        }
     }
 
     @Test
@@ -121,54 +147,73 @@ public class VibratorTest {
                 fail("MultiThread fail2");
             }
         }).start();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
-
-        SystemClock.sleep(1500);
-        assertTrue(isNotVibrating());
+        assertStartsVibrating();
     }
 
+    @LargeTest
     @Test
     public void testVibrateOneShot() {
         VibrationEffect oneShot =
                 VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE);
         mVibrator.vibrate(oneShot);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertStartsThenStopsVibrating(300);
 
-        SystemClock.sleep(350);
-        assertTrue(isNotVibrating());
-
-        oneShot = VibrationEffect.createOneShot(500, 255 /* Max amplitude */);
+        oneShot = VibrationEffect.createOneShot(10_000, 255 /* Max amplitude */);
         mVibrator.vibrate(oneShot);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertStartsVibrating();
 
         mVibrator.cancel();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+        assertStopsVibrating();
 
         oneShot = VibrationEffect.createOneShot(300, 1 /* Min amplitude */);
         mVibrator.vibrate(oneShot, AUDIO_ATTRIBUTES);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertStartsVibrating();
     }
 
+    @LargeTest
     @Test
     public void testVibrateWaveform() {
         final long[] timings = new long[] {100, 200, 300, 400, 500};
         final int[] amplitudes = new int[] {64, 128, 255, 128, 64};
         VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, -1);
         mVibrator.vibrate(waveform);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
-
-        SystemClock.sleep(1500);
-        assertTrue(isNotVibrating());
+        assertStartsThenStopsVibrating(1500);
 
         waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
         mVibrator.vibrate(waveform, AUDIO_ATTRIBUTES);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertStartsVibrating();
 
         SystemClock.sleep(2000);
-        assertTrue(isVibrating());
+        assertTrue(!mVibrator.hasVibrator() || mVibrator.isVibrating());
 
         mVibrator.cancel();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+        assertStopsVibrating();
+    }
+
+    @Test
+    public void testVibratePredefined() {
+        int[] supported = mVibrator.areEffectsSupported(PREDEFINED_EFFECTS);
+        for (int i = 0; i < PREDEFINED_EFFECTS.length; i++) {
+            mVibrator.vibrate(VibrationEffect.createPredefined(PREDEFINED_EFFECTS[i]));
+            if (supported[i] == Vibrator.VIBRATION_EFFECT_SUPPORT_YES) {
+                assertStartsVibrating();
+            }
+        }
+    }
+
+    @Test
+    public void testVibrateComposed() {
+        boolean[] supported = mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS);
+        for (int i = 0; i < PRIMITIVE_EFFECTS.length; i++) {
+            mVibrator.vibrate(VibrationEffect.startComposition()
+                    .addPrimitive(PRIMITIVE_EFFECTS[i])
+                    .addPrimitive(PRIMITIVE_EFFECTS[i], 0.5f)
+                    .addPrimitive(PRIMITIVE_EFFECTS[i], 0.8f, 10)
+                    .compose());
+            if (supported[i]) {
+                assertStartsVibrating();
+            }
+        }
     }
 
     @Test
@@ -195,10 +240,8 @@ public class VibratorTest {
     public void testVibratorEffectsAreSupported() {
         // Just make sure it doesn't crash when this is called and that it returns all queries;
         // We don't really have a way to test if the device supports each effect or not.
-        int[] result = mVibrator.areEffectsSupported(
-                VibrationEffect.EFFECT_TICK, VibrationEffect.EFFECT_CLICK);
-
-        assertEquals(2, result.length);
+        assertEquals(PREDEFINED_EFFECTS.length,
+                mVibrator.areEffectsSupported(PREDEFINED_EFFECTS).length);
         assertEquals(0, mVibrator.areEffectsSupported().length);
     }
 
@@ -206,12 +249,7 @@ public class VibratorTest {
     public void testVibratorAllEffectsAreSupported() {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
-        mVibrator.areAllEffectsSupported(
-                VibrationEffect.EFFECT_TICK,
-                VibrationEffect.EFFECT_CLICK,
-                VibrationEffect.EFFECT_DOUBLE_CLICK,
-                VibrationEffect.EFFECT_HEAVY_CLICK);
-
+        mVibrator.areAllEffectsSupported(PREDEFINED_EFFECTS);
         assertEquals(Vibrator.VIBRATION_EFFECT_SUPPORT_YES, mVibrator.areAllEffectsSupported());
     }
 
@@ -219,12 +257,8 @@ public class VibratorTest {
     public void testVibratorPrimitivesAreSupported() {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
-        boolean[] result = mVibrator.arePrimitivesSupported(
-                VibrationEffect.Composition.PRIMITIVE_CLICK,
-                VibrationEffect.Composition.PRIMITIVE_QUICK_RISE,
-                VibrationEffect.Composition.PRIMITIVE_TICK);
-
-        assertEquals(3, result.length);
+        assertEquals(PRIMITIVE_EFFECTS.length,
+                mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS).length);
         assertEquals(0, mVibrator.arePrimitivesSupported().length);
     }
 
@@ -232,82 +266,102 @@ public class VibratorTest {
     public void testVibratorAllPrimitivesAreSupported() {
         // Just make sure it doesn't crash when this is called;
         // We don't really have a way to test if the device supports each effect or not.
-        mVibrator.areAllPrimitivesSupported(
-                VibrationEffect.Composition.PRIMITIVE_TICK);
-
+        mVibrator.areAllPrimitivesSupported(PRIMITIVE_EFFECTS);
         assertTrue(mVibrator.areAllPrimitivesSupported());
     }
 
     @Test
     public void testVibratorIsVibrating() {
-        assertTrue(isNotVibrating());
+        if (!mVibrator.hasVibrator()) {
+            return;
+        }
 
-        mVibrator.vibrate(1000);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertFalse(mVibrator.isVibrating());
+
+        mVibrator.vibrate(5000);
+        assertStartsVibrating();
+        assertTrue(mVibrator.isVibrating());
 
         mVibrator.cancel();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+        assertStopsVibrating();
+        assertFalse(mVibrator.isVibrating());
     }
 
+    @LargeTest
     @Test
     public void testVibratorVibratesNoLongerThanDuration() {
-        assertTrue(isNotVibrating());
+        if (!mVibrator.hasVibrator()) {
+            return;
+        }
 
-        mVibrator.vibrate(300);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        mVibrator.vibrate(1000);
+        assertStartsVibrating();
 
-        SystemClock.sleep(350);
-        assertTrue(isNotVibrating());
+        SystemClock.sleep(1500);
+        assertFalse(mVibrator.isVibrating());
     }
 
+    @LargeTest
     @Test
     public void testVibratorStateCallback() {
+        if (!mVibrator.hasVibrator()) {
+            return;
+        }
+
+        OnVibratorStateChangedListener listener1 = mock(OnVibratorStateChangedListener.class);
+        OnVibratorStateChangedListener listener2 = mock(OnVibratorStateChangedListener.class);
         // Add listener1 on executor
-        mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), mListener1);
+        mVibrator.addVibratorStateListener(Executors.newSingleThreadExecutor(), listener1);
         // Add listener2 on main thread.
-        mVibrator.addVibratorStateListener(mListener2);
-        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(false);
-        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(false);
+        mVibrator.addVibratorStateListener(listener2);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(false);
 
         mVibrator.vibrate(1000);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
 
-        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(true);
-        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(true);
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(1)).onVibratorStateChanged(true);
 
-        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(false);
-        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS)
-                .times(1)).onVibratorStateChanged(false);
-
-        assertTrue(isVibrating());
         mVibrator.cancel();
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isNotVibrating);
+        assertStopsVibrating();
 
         // Remove listener1 & listener2
-        mVibrator.removeVibratorStateListener(mListener1);
-        mVibrator.removeVibratorStateListener(mListener2);
-        reset(mListener1);
-        reset(mListener2);
+        mVibrator.removeVibratorStateListener(listener1);
+        mVibrator.removeVibratorStateListener(listener2);
+        reset(listener1);
+        reset(listener2);
 
         mVibrator.vibrate(1000);
-        PollingCheck.waitFor(VIBRATION_TIMEOUT_MILLIS, this::isVibrating);
+        assertStartsVibrating();
 
-        verify(mListener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
+        verify(listener1, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
                 .onVibratorStateChanged(anyBoolean());
-        verify(mListener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
+        verify(listener2, timeout(CALLBACK_TIMEOUT_MILLIS).times(0))
                 .onVibratorStateChanged(anyBoolean());
     }
 
-    private boolean isVibrating() {
-        return !mVibrator.hasVibrator() || mVibrator.isVibrating();
+    private void assertStartsThenStopsVibrating(long duration) {
+        if (mVibrator.hasVibrator()) {
+            verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
+                    .onVibratorStateChanged(true);
+            SystemClock.sleep(duration);
+            assertVibratorState(false);
+        }
     }
 
-    private boolean isNotVibrating() {
-        return !mVibrator.hasVibrator() || !mVibrator.isVibrating();
+    private void assertStartsVibrating() {
+        assertVibratorState(true);
+    }
+
+    private void assertStopsVibrating() {
+        assertVibratorState(false);
+    }
+
+    private void assertVibratorState(boolean expected) {
+        if (mVibrator.hasVibrator()) {
+            verify(mStateListener, timeout(CALLBACK_TIMEOUT_MILLIS).atLeastOnce())
+                    .onVibratorStateChanged(eq(expected));
+            reset(mStateListener);
+        }
     }
 }
