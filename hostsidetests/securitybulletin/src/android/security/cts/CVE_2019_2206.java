@@ -14,7 +14,24 @@
  * limitations under the License.
  */
 
-package android.devicepolicy.cts;
+package android.security.cts;
 
-public class CtsDeviceAdminProfileOwner {
+import android.platform.test.annotations.SecurityTest;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class CVE_2019_2206 extends SecurityTestCase {
+
+    /**
+     * b/139188579
+     * Vulnerability Behaviour: SIGSEGV in self
+     */
+    @SecurityTest(minPatchLevel = "2019-11")
+    @Test
+    public void testPocCVE_2019_2206() throws Exception {
+        pocPusher.only64();
+        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2206", null, getDevice());
+    }
 }

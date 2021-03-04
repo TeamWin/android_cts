@@ -380,9 +380,10 @@ public class EabControllerTest {
                     adapter -> adapter.requestAvailability(contact, Runnable::run,
                             mCallback),
                     ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
         } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE."
+                 + e);
         } catch (ImsException e) {
             fail("requestCapabilities failed " + e);
         }
@@ -401,9 +402,10 @@ public class EabControllerTest {
                     uceAdapter,
                     adapter -> adapter.requestCapabilities(contact, Runnable::run, mCallback),
                     ImsException.class,
-                    "android.permission.READ_PRIVILEGED_PHONE_STATE");
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
         } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with READ_PRIVILEGED_PHONE_STATE.");
+            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE."
+                 + e);
         } catch (ImsException e) {
             fail("requestCapabilities failed " + e);
         }

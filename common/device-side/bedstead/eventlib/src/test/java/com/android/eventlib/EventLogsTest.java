@@ -22,19 +22,17 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
-import static org.testng.Assert.fail;
 
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.UserHandle;
-import android.os.UserManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
+import com.android.bedstead.nene.users.UserType;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.events.CustomEvent;
 
@@ -45,7 +43,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -1099,51 +1096,60 @@ public class EventLogsTest {
 
     @Test
     public void differentUser_queryWorks() {
-        UserHandle userHandle = createProfile();
+        UserReference profile = mTestApis.users().createUser()
+                .parent(mTestApis.users().instrumented())
+                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart();
+        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
-            installTestAppInUser(userHandle);
-            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG1, /* data= */ null);
+            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
 
             EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(userHandle);
+                    .onUser(profile);
 
             assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
         } finally {
-            removeUser(userHandle);
+            profile.remove();
         }
     }
 
     @Test
-    public void differentUserSpecifiedByUserReference_queryWorks() {
-        UserHandle userHandle = createProfile();
+    public void differentUserSpecifiedByUserHandle_queryWorks() {
+        UserReference profile = mTestApis.users().createUser()
+                .parent(mTestApis.users().instrumented())
+                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart();
+        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
-            installTestAppInUser(userHandle);
-            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG1, /* data= */ null);
+            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
 
             EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(mTestApis.users().find(userHandle.getIdentifier()));
+                    .onUser(profile.userHandle());
 
             assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
         } finally {
-            removeUser(userHandle);
+            profile.remove();
         }
     }
 
     @Test
     public void differentUser_doesntGetEventsFromWrongUser() {
-        UserHandle userHandle = createProfile();
+        UserReference profile = mTestApis.users().createUser()
+                .parent(mTestApis.users().instrumented())
+                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+                .createAndStart();
+        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
-            installTestAppInUser(userHandle);
             logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
-            logCustomEventOnTestApp(userHandle, /* tag= */ TEST_TAG2, /* data= */ null);
+            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG2, /* data= */ null);
 
             EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(userHandle);
+                    .onUser(profile);
 
             assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
             assertThat(eventLogs.next()).isNull();
         } finally {
-            removeUser(userHandle);
+            profile.remove();
         }
     }
 
@@ -1176,34 +1182,6 @@ public class EventLogsTest {
         assertThrows(AssertionError.class, eventLogs::get);
     }
 
-    private UserHandle createProfile() {
-        UserManager userManager = sContext.getSystemService(UserManager.class);
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity();
-        UserHandle userHandle = userManager.createProfile("profile",
-                UserManager.USER_TYPE_PROFILE_MANAGED, new HashSet<>());
-        SystemUtil.runShellCommandOrThrow("am start-user -w " + userHandle.getIdentifier());
-        return userHandle;
-    }
-
-    private void installTestAppInUser(UserHandle userHandle) {
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity();
-        try {
-            sContext.getPackageManager().installExistingPackageAsUser(
-                    TEST_APP_PACKAGE_NAME, userHandle.getIdentifier());
-
-        } catch (PackageManager.NameNotFoundException e) {
-            fail("Could not install test app in user", e);
-        }
-    }
-
-    private void removeUser(UserHandle userHandle) {
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity();
-        sContext.getSystemService(UserManager.class).removeUser(userHandle);
-    }
-
     private void scheduleCustomEventInOneSecond() {
         hasScheduledEvents = true;
 
@@ -1213,7 +1191,7 @@ public class EventLogsTest {
         }, 1, TimeUnit.SECONDS);
     }
 
-    private void logCustomEventOnTestApp(UserHandle userHandle, String tag, String data) {
+    private void logCustomEventOnTestApp(UserReference user, String tag, String data) {
         Intent intent = new Intent();
         intent.setPackage(TEST_APP_PACKAGE_NAME);
         intent.setClassName(TEST_APP_PACKAGE_NAME, TEST_APP_PACKAGE_NAME + ".EventLoggingActivity");
@@ -1221,19 +1199,21 @@ public class EventLogsTest {
         intent.putExtra("TAG", tag);
         intent.putExtra("DATA", data);
 
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity();
-        sContext.startActivityAsUser(intent, userHandle);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            InstrumentationRegistry.getInstrumentation()
+                    .getUiAutomation().adoptShellPermissionIdentity();
+            sContext.startActivityAsUser(intent, user.userHandle());
+        });
 
         CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
                 .whereTag().isEqualTo(tag)
                 .whereData().isEqualTo(data)
-                .onUser(userHandle)
+                .onUser(user)
                 .pollOrFail();
     }
 
     private void logCustomEventOnTestApp(String tag, String data) {
-        logCustomEventOnTestApp(UserHandle.CURRENT, tag, data);
+        logCustomEventOnTestApp(mTestApis.users().instrumented(), tag, data);
     }
 
     private void logCustomEventOnTestApp() {
@@ -1248,9 +1228,10 @@ public class EventLogsTest {
     }
 
     private void killTestApp() {
-        InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation().adoptShellPermissionIdentity();
-        sContext.getSystemService(ActivityManager.class).forceStopPackage(TEST_APP_PACKAGE_NAME);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            sContext.getSystemService(ActivityManager.class)
+                    .forceStopPackage(TEST_APP_PACKAGE_NAME);
+        });
     }
 
     // TODO: Ensure tests work on O+

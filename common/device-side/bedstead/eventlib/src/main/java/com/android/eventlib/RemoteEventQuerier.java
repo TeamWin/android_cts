@@ -34,11 +34,14 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -163,16 +166,18 @@ public class
         intent.setPackage(mPackageName);
         intent.setClassName(mPackageName, "com.android.eventlib.QueryService");
 
-        boolean didBind;
+        AtomicBoolean didBind = new AtomicBoolean(false);
         if (mEventLogsQuery.getUserHandle() != null) {
-            didBind = sContext.bindServiceAsUser(
-                    intent, connection, /* flags= */ BIND_AUTO_CREATE,
-                    mEventLogsQuery.getUserHandle());
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                didBind.set(sContext.bindServiceAsUser(
+                        intent, connection, /* flags= */ BIND_AUTO_CREATE,
+                        mEventLogsQuery.getUserHandle()));
+            });
         } else {
-            didBind = sContext.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE);
+            didBind.set(sContext.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE));
         }
 
-        if (didBind) {
+        if (didBind.get()) {
             try {
                 mConnectionCountdown.await(CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             } catch (InterruptedException e) {

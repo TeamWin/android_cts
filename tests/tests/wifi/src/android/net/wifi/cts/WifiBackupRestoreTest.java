@@ -41,6 +41,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -435,8 +436,13 @@ public class WifiBackupRestoreTest extends WifiJUnit4TestBase {
                 .that(actual.getIpConfiguration()).isEqualTo(expected.getIpConfiguration());
         assertWithMessage("Network: " + actual.toString())
                 .that(actual.meteredOverride).isEqualTo(expected.meteredOverride);
-        assertWithMessage("Network: " + actual.toString())
-                .that(actual.getProfileKey()).isEqualTo(expected.getProfileKey());
+        if (BuildCompat.isAtLeastS()) {
+            assertWithMessage("Network: " + actual.toString())
+                    .that(actual.getProfileKey()).isEqualTo(expected.getProfileKey());
+        } else {
+            assertWithMessage("Network: " + actual.toString())
+                    .that(actual.getKey()).isEqualTo(expected.getKey());
+        }
     }
 
     private void testRestoreFromBackupData(
