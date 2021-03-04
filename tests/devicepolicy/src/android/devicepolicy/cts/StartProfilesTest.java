@@ -231,38 +231,6 @@ public final class StartProfilesTest {
     @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
     @RequireRunOnPrimaryUser
     @EnsureHasWorkProfile
-    @Postsubmit(reason="Slow test due to validating a broadcast isn't received")
-    public void startUser_userIsStopping_noBroadcastIsReceived() {
-        // TODO(b/171565394): remove after infra supports shell permissions annotation
-        mUiAutomation.adoptShellPermissionIdentity(
-                "android.permission.INTERACT_ACROSS_USERS_FULL",
-                "android.permission.INTERACT_ACROSS_USERS",
-                "android.permission.CREATE_USERS");
-        sDeviceState.workProfile().start();
-
-        // stop and restart profile without waiting for ACTION_PROFILE_INACCESSIBLE broadcast
-        // ACTION_PROFILE_ACCESSIBLE should not be received as profile was not fully stopped before
-        // restarting
-        sActivityManager.stopProfile(sDeviceState.workProfile().userHandle());
-        try {
-            BlockingBroadcastReceiver broadcastReceiver = sDeviceState.registerBroadcastReceiver(
-                    Intent.ACTION_PROFILE_ACCESSIBLE, userIsEqual(sDeviceState.workProfile()));
-            sActivityManager.startProfile(sDeviceState.workProfile().userHandle());
-
-            Intent broadcast =
-                    broadcastReceiver.awaitForBroadcast(PROFILE_ACCESSIBLE_BROADCAST_TIMEOUT);
-            assertWithMessage("Expected not to receive ACTION_PROFILE_ACCESSIBLE broadcast").that(
-                    broadcast).isNull();
-        } finally {
-            // TODO(b/171565394): Remove once teardown is done for us
-            sDeviceState.workProfile().start();
-        }
-    }
-
-    @Test
-    @RequireFeatures(PackageManager.FEATURE_MANAGED_USERS)
-    @RequireRunOnPrimaryUser
-    @EnsureHasWorkProfile
     @Postsubmit(reason="b/181207615 flaky")
     public void startProfile_withoutPermission_throwsException() {
         assertThrows(SecurityException.class,
