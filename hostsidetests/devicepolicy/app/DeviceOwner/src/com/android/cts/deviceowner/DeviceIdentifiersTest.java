@@ -15,6 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
+import android.platform.test.annotations.SecurityTest;
 import android.content.Context;
 import android.os.Build;
 import android.telephony.SubscriptionInfo;
@@ -35,6 +36,7 @@ public class DeviceIdentifiersTest extends BaseDeviceOwnerTest {
             "A device owner that does not have the READ_PHONE_STATE permission must receive a "
                     + "SecurityException when invoking %s";
 
+    @SecurityTest(minPatchLevel = "2021-04")
     public void testDeviceOwnerCanGetDeviceIdentifiersWithPermission() throws Exception {
         // The device owner with the READ_PHONE_STATE permission should have access to all device
         // identifiers. However since the TelephonyManager methods can return null this method
