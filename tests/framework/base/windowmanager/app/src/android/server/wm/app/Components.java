@@ -80,6 +80,8 @@ public class Components extends ComponentsBase {
     public static final ComponentName PIP_ACTIVITY2 = component("PipActivity2");
     public static final ComponentName PIP_ACTIVITY_WITH_MINIMAL_SIZE = component(
             "PipActivityWithMinimalSize");
+    public static final ComponentName PIP_ACTIVITY_WITH_TINY_MINIMAL_SIZE = component(
+            "PipActivityWithTinyMinimalSize");
     public static final ComponentName PIP_ACTIVITY_WITH_SAME_AFFINITY =
             component("PipActivityWithSameAffinity");
     public static final ComponentName PIP_ON_STOP_ACTIVITY = component("PipOnStopActivity");
