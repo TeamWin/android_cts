@@ -89,14 +89,14 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         // state.
         launchActivity();
         mAppSizesNormal = getActivityReportedSizes();
-        mWindowStateNormal = getActivityWindowState();
+        mWindowStateNormal = getPackageWindowState();
 
         // Now launch the same activity with downscaling *enabled* and get the sizes it reports and
         // its Window state.
         enableDownscaling(mCompatChangeName);
         launchActivity();
         mAppSizesDownscaled = getActivityReportedSizes();
-        mWindowStateDownscaled = getActivityWindowState();
+        mWindowStateDownscaled = getPackageWindowState();
     }
 
     /**
@@ -222,12 +222,8 @@ public class CompatScaleTests extends ActivityManagerTestBase {
         return details;
     }
 
-    private WindowManagerState.WindowState getActivityWindowState() {
-        final int TYPE_BASE_APPLICATION = 1; // from WindowManager.java
-        final WindowManagerState.WindowState window =
-                mWmState.getWindowByPackageName(PACKAGE_UNDER_TEST, TYPE_BASE_APPLICATION);
-        assertNotNull(window);
-        return window;
+    private WindowManagerState.WindowState getPackageWindowState() {
+        return getPackageWindowState(PACKAGE_UNDER_TEST);
     }
 
     private static void enableDownscaling(String compatChangeName) {

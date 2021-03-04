@@ -98,6 +98,7 @@ import static android.server.wm.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 import static android.view.Surface.ROTATION_0;
+import static android.view.WindowManager.LayoutParams.TYPE_BASE_APPLICATION;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
@@ -142,6 +143,7 @@ import android.server.wm.CommandSession.LaunchInjector;
 import android.server.wm.CommandSession.LaunchProxy;
 import android.server.wm.CommandSession.SizeInfo;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
+import android.server.wm.WindowManagerState.WindowState;
 import android.server.wm.settings.SettingsSession;
 import android.util.DisplayMetrics;
 import android.util.EventLog;
@@ -2059,6 +2061,13 @@ public abstract class ActivityManagerTestBase {
         Condition.waitFor(counts.countWithRetry("waitForOnMultiWindowModeChanged", countSpec(
                 ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED, CountSpec.GREATER_THAN, 0)));
         return counts;
+    }
+
+    WindowState getPackageWindowState(String packageName) {
+        final WindowManagerState.WindowState window =
+                mWmState.getWindowByPackageName(packageName, TYPE_BASE_APPLICATION);
+        assertNotNull(window);
+        return window;
     }
 
     static class ActivityLifecycleCounts {
