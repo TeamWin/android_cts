@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static android.content.pm.ApplicationInfo.CATEGORY_ACCESSIBILITY;
 import static android.content.pm.ApplicationInfo.CATEGORY_MAPS;
 import static android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY;
 import static android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED;
@@ -209,6 +210,13 @@ public class ApplicationInfoTest {
         ApplicationInfo applicationInfo = getContext().getPackageManager().getApplicationInfo(
                 DIRECT_BOOT_UNAWARE_PACKAGE_NAME, 0);
         assertFalse(applicationInfo.isEncryptionAware());
+    }
+
+    @Test
+    public void testDirectBootUnawareAppCategoryIsAccessibility() throws Exception {
+        mApplicationInfo = getContext().getPackageManager().getApplicationInfo(
+                DIRECT_BOOT_UNAWARE_PACKAGE_NAME, 0);
+        assertEquals(CATEGORY_ACCESSIBILITY, mApplicationInfo.category);
     }
 
     @Test
