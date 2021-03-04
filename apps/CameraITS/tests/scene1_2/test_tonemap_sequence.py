@@ -12,74 +12,119 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+import logging
 import os.path
-import its.caps
-import its.device
-import its.image
-import its.objects
-import numpy
+from mobly import test_runner
+import numpy as np
 
-MAX_SAME_DELTA = 0.03  # match number in test_burst_sameness_manual
-MIN_DIFF_DELTA = 0.10
-NAME = os.path.basename(__file__).split(".")[0]
+import its_base_test
+import camera_properties_utils
+import capture_request_utils
+import image_processing_utils
+import its_session_utils
+
+_MAX_DELTA_SAME = 0.03  # match number in test_burst_sameness_manual
+_MIN_DELTA_DIFF = 0.10
+_NAME = os.path.splitext(os.path.basename(__file__))[0]
+_NUM_FRAMES = 3
+_PATCH_H = 0.1  # center 10%
+_PATCH_W = 0.1
+_PATCH_X = 0.5 - _PATCH_W/2
+_PATCH_Y = 0.5 - _PATCH_H/2
+_RGB_G_CH = 1
+_TMAP_NO_DELTA_FRAMES = list(range(_NUM_FRAMES-1)) + list(
+    range(_NUM_FRAMES, 2*_NUM_FRAMES-1))
 
 
-def main():
-    """Test a sequence of shots with different tonemap curves.
+def do_captures_and_extract_means(cam, req, fmt, tonemap, log_path):
+  """Do captures, save image and extract means from center patch.
 
-    There should be 3 identical frames followed by a different set of
-    3 identical frames.
-    """
+  Args:
+    cam: camera object.
+    req: camera request.
+    fmt: capture format.
+    tonemap: string to determine 'linear' or 'default' tonemap.
+    log_path: location to save images.
 
-    with its.device.ItsSession() as cam:
-        props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.manual_sensor(props) and
-                             its.caps.manual_post_proc(props) and
-                             its.caps.per_frame_control(props) and
-                             not its.caps.mono_camera(props))
+  Returns:
+    appended means list.
+  """
+  green_means = []
+  for i in range(_NUM_FRAMES):
+    cap = cam.do_capture(req, fmt)
+    img = image_processing_utils.convert_capture_to_rgb_image(cap)
+    image_processing_utils.write_image(
+        img, '%s_%s_%d.jpg' % (os.path.join(log_path, _NAME), tonemap, i))
+    patch = image_processing_utils.get_image_patch(
+        img, _PATCH_X, _PATCH_Y, _PATCH_W, _PATCH_H)
+    rgb_means = image_processing_utils.compute_image_means(patch)
+    logging.debug('%s frame %d means: %s', tonemap, i, str(rgb_means))
+    green_means.append(rgb_means[_RGB_G_CH])  # G, note python 2 version used R
+  return green_means
 
-        debug = its.caps.debug_mode()
-        largest_yuv = its.objects.get_largest_yuv_format(props)
-        if debug:
-            fmt = largest_yuv
-        else:
-            match_ar = (largest_yuv["width"], largest_yuv["height"])
-            fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
 
-        sens, exp_time, _, _, f_dist = cam.do_3a(do_af=True, get_results=True)
+class TonemapSequenceTest(its_base_test.ItsBaseTest):
+  """Tests a sequence of shots with different tonemap curves.
 
-        means = []
+  There should be _NUM_FRAMES with a linear tonemap followed by a second set of
+  _NUM_FRAMES with the default tonemap.
 
-        # Capture 3 manual shots with a linear tonemap.
-        req = its.objects.manual_capture_request(
-                sens, exp_time, f_dist, True, props)
-        for i in [0, 1, 2]:
-            cap = cam.do_capture(req, fmt)
-            img = its.image.convert_capture_to_rgb_image(cap)
-            its.image.write_image(img, "%s_i=%d.jpg" % (NAME, i))
-            tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
-            means.append(tile.mean(0).mean(0))
+  asserts the frames in each _NUM_FRAMES bunch are similar
+  asserts the frames in the 2 _NUM_FRAMES bunches are different by >10%
+  """
 
-        # Capture 3 manual shots with the default tonemap.
-        req = its.objects.manual_capture_request(sens, exp_time, f_dist, False)
-        for i in [3, 4, 5]:
-            cap = cam.do_capture(req, fmt)
-            img = its.image.convert_capture_to_rgb_image(cap)
-            its.image.write_image(img, "%s_i=%d.jpg" % (NAME, i))
-            tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
-            means.append(tile.mean(0).mean(0))
+  def test_tonemap_sequence(self):
+    logging.debug('Starting %s', _NAME)
+    with its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id,
+        hidden_physical_id=self.hidden_physical_id) as cam:
+      props = cam.get_camera_properties()
+      props = cam.override_with_hidden_physical_camera_props(props)
+      camera_properties_utils.skip_unless(
+          camera_properties_utils.manual_sensor(props) and
+          camera_properties_utils.manual_post_proc(props) and
+          camera_properties_utils.per_frame_control(props) and
+          not camera_properties_utils.mono_camera(props))
+      log_path = self.log_path
 
-        # Compute the delta between each consecutive frame pair.
-        deltas = [numpy.max(numpy.fabs(means[i+1]-means[i])) \
-                  for i in range(len(means)-1)]
-        print "Deltas between consecutive frames:", deltas
+      # Load chart for scene
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance)
 
-        msg = "deltas: %s, MAX_SAME_DELTA: %.2f" % (
-                str(deltas), MAX_SAME_DELTA)
-        assert all([abs(deltas[i]) < MAX_SAME_DELTA for i in [0, 1, 3, 4]]), msg
-        assert abs(deltas[2]) > MIN_DIFF_DELTA, "delta: %.5f, THRESH: %.2f" % (
-                abs(deltas[2]), MIN_DIFF_DELTA)
+      largest_yuv = capture_request_utils.get_largest_yuv_format(props)
+      match_ar = (largest_yuv['width'], largest_yuv['height'])
+      fmt = capture_request_utils.get_smallest_yuv_format(
+          props, match_ar=match_ar)
+      sens, exp, _, _, f_dist = cam.do_3a(do_af=True, get_results=True)
+      means = []
 
-if __name__ == "__main__":
-    main()
+      # linear tonemap req & captures
+      req = capture_request_utils.manual_capture_request(
+          sens, exp, f_dist, True, props)
+      means.extend(do_captures_and_extract_means(
+          cam, req, fmt, 'linear', log_path))
 
+      # default tonemap req & captures
+      req = capture_request_utils.manual_capture_request(
+          sens, exp, f_dist, False)
+      means.extend(do_captures_and_extract_means(
+          cam, req, fmt, 'default', log_path))
+
+      # Compute the delta between each consecutive frame pair
+      deltas = [np.fabs(means[i+1]-means[i]) for i in range(2*_NUM_FRAMES-1)]
+      logging.debug('Deltas between consecutive frames: %s', str(deltas))
+
+      # assert frames similar with same tonemap
+      if not all([deltas[i] < _MAX_DELTA_SAME for i in _TMAP_NO_DELTA_FRAMES]):
+        raise AssertionError(
+            f'deltas: {str(deltas)}, MAX_DELTA: {_MAX_DELTA_SAME}')
+
+      # assert frames different with tonemap change
+      if deltas[_NUM_FRAMES-1] <= _MIN_DELTA_DIFF:
+        raise AssertionError(f'delta: {deltas[_NUM_FRAMES-1]}.5f, '
+                             f'THRESH: {_MIN_DELTA_DIFF}')
+
+if __name__ == '__main__':
+  test_runner.main()

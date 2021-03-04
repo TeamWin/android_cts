@@ -12,57 +12,93 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.caps
-import its.device
-import its.target
 
+import logging
+import os.path
+from mobly import test_runner
 import numpy as np
 
-GAIN_LENGTH = 4
-TRANSFORM_LENGTH = 9
-GREEN_GAIN = 1.0
-GREEN_GAIN_TOL = 0.05
-SINGLE_A = {'ae': [True, False, True], 'af': [False, True, True],
-            'full_3a': [True, True, True]}  # note no AWB solo
+import its_base_test
+import camera_properties_utils
+import error_util
+import its_session_utils
+
+AWB_GAINS_LENGTH = 4
+AWB_XFORM_LENGTH = 9
+G_CHANNEL = 2
+G_GAIN = 1.0
+G_GAIN_TOL = 0.05
+NAME = os.path.splitext(os.path.basename(__file__))[0]
+THREE_A_STATES = {'AE': [True, False, True],
+                  'AF': [False, True, True],
+                  'FULL_3A': [True, True, True]}  # note no AWB solo
 
 
-def main():
-    """Basic test for bring-up of 3A.
+class SingleATest(its_base_test.ItsBaseTest):
+  """Test basic camera 3A behavior with AE and AF run individually.
 
-    To pass, 3A must converge. Check that the returned 3A values are legal.
-    """
+  To pass, 3A must converge. Check that returned 3A values are valid.
+  """
 
-    with its.device.ItsSession() as cam:
-        props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.read_3a(props))
-        mono_camera = its.caps.mono_camera(props)
+  def test_ae_af(self):
+    logging.debug('Starting %s', NAME)
+    with its_session_utils.ItsSession(
+        device_id=self.dut.serial,
+        camera_id=self.camera_id,
+        hidden_physical_id=self.hidden_physical_id) as cam:
+      props = cam.get_camera_properties()
+      props = cam.override_with_hidden_physical_camera_props(props)
+      camera_properties_utils.skip_unless(
+          camera_properties_utils.read_3a(props))
+      mono_camera = camera_properties_utils.mono_camera(props)
 
-        for k, v in sorted(SINGLE_A.items()):
-            print k
-            try:
-                s, e, gains, xform, fd = cam.do_3a(get_results=True,
-                                                   do_ae=v[0],
-                                                   do_af=v[1],
-                                                   do_awb=v[2],
-                                                   mono_camera=mono_camera)
-                print ' sensitivity', s, 'exposure', e
-                print ' gains', gains, 'transform', xform
-                print ' fd', fd
-                print ''
-            except its.error.Error:
-                print ' FAIL\n'
-            if k == 'full_3a':
-                assert s > 0
-                assert e > 0
-                assert len(gains) == 4
-                for g in gains:
-                    assert not np.isnan(g)
-                assert len(xform) == 9
-                for x in xform:
-                    assert not np.isnan(x)
-                assert fd >= 0
-                assert np.isclose(gains[2], GREEN_GAIN, GREEN_GAIN_TOL)
+      # Load chart for scene
+      its_session_utils.load_scene(
+          cam, props, self.scene, self.tablet, self.chart_distance)
+
+      # Do AE/AF/3A and evaluate outputs
+      for k, three_a_req in sorted(THREE_A_STATES.items()):
+        logging.debug('Trying %s', k)
+        try:
+          s, e, awb_gains, awb_xform, fd = cam.do_3a(get_results=True,
+                                                     do_ae=three_a_req[0],
+                                                     do_af=three_a_req[1],
+                                                     do_awb=three_a_req[2],
+                                                     mono_camera=mono_camera)
+
+        except error_util.CameraItsError:
+          logging.error('%s did not converge.', k)
+
+        logging.debug('AWB gains: %s, xform: %s', str(awb_gains),
+                      str(awb_xform))
+        if three_a_req[0]:  # can report None for AF only
+          assert e, 'No valid exposure time returned even though do_ae.'
+          assert s, 'No valid sensitivity returned even though do_ae.'
+          logging.debug('AE sensitivity: %d, exposure: %dns', s, e)
+        else:
+          logging.debug('AE sensitivity: None, exposure: None')
+        if three_a_req[1]:  # fd can report None for AE only
+          logging.debug('AF fd: %.3f', fd)
+        else:
+          logging.debug('AF fd: None')
+        # check AWB values
+        assert len(awb_gains) == AWB_GAINS_LENGTH
+        for g in awb_gains:
+          assert not np.isnan(g)
+        assert len(awb_xform) == AWB_XFORM_LENGTH
+        for x in awb_xform:
+          assert not np.isnan(x)
+        assert np.isclose(awb_gains[G_CHANNEL], G_GAIN, G_GAIN_TOL)
+
+        # check AE values
+        if k == 'full_3a' or k == 'ae':
+          assert s > 0
+          assert e > 0
+
+        # check AF values
+        if k == 'full_3a' or k == 'af':
+          assert fd >= 0
 
 if __name__ == '__main__':
-    main()
+  test_runner.main()
 
