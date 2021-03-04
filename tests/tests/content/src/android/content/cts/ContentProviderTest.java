@@ -16,11 +16,13 @@
 
 package android.content.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.content.ContentProvider;
+import android.content.ContentProvider.CallingIdentity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
-import android.content.ContentProvider.CallingIdentity;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
@@ -28,9 +30,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.ParcelFileDescriptor;
+import android.os.UserHandle;
 import android.test.AndroidTestCase;
-
-import android.content.cts.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -258,6 +259,31 @@ public class ContentProviderTest extends AndroidTestCase {
         final Uri uri = Uri.parse("content://test");
         assertEquals(PackageManager.PERMISSION_DENIED,
                 provider.checkUriPermission(uri, android.os.Process.myUid(), 0));
+    }
+
+    public void testCreateContentUriAsUser_nullUri_throwsNPE() {
+        assertThrows(
+                NullPointerException.class,
+                () -> ContentProvider.createContentUriAsUser(null, UserHandle.of(7)));
+    }
+
+    public void testCreateContentUriAsUser_nonContentUri_throwsIAE() {
+        final Uri uri = Uri.parse("notcontent://test");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
+    }
+
+    public void testCreateContentUriAsUser_UriWithDifferentUserID_throwsIAE() {
+        final Uri uri = Uri.parse("content://07@test");
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
+    }
+
+    public void testCreateContentUriAsUser_UriWithUserID_unchanged() {
+        final Uri uri = Uri.parse("content://7@test");
+        assertEquals(uri, ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
     }
 
     private class MockContentProvider extends ContentProvider {
