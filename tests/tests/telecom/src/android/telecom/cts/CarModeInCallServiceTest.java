@@ -34,6 +34,7 @@ import androidx.test.InstrumentationRegistry;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -74,24 +75,29 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
-        disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
-        disableAndVerifyCarMode(mCarModeIncallServiceControlTwo, Configuration.UI_MODE_TYPE_NORMAL);
-        disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
-        disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
+        try {
+            disableAndVerifyCarMode(mCarModeIncallServiceControlOne,
+                    Configuration.UI_MODE_TYPE_NORMAL);
+            disableAndVerifyCarMode(mCarModeIncallServiceControlTwo,
+                    Configuration.UI_MODE_TYPE_NORMAL);
+            disconnectAllCallsAndVerify(mCarModeIncallServiceControlOne);
+            disconnectAllCallsAndVerify(mCarModeIncallServiceControlTwo);
 
-        if (mCarModeIncallServiceControlOne != null) {
-            mCarModeIncallServiceControlOne.reset();
+            if (mCarModeIncallServiceControlOne != null) {
+                mCarModeIncallServiceControlOne.reset();
+            }
+
+            if (mCarModeIncallServiceControlTwo != null) {
+                mCarModeIncallServiceControlTwo.reset();
+            }
+
+            assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
+
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        } finally {
+            super.tearDown();
         }
-
-        if (mCarModeIncallServiceControlTwo != null) {
-            mCarModeIncallServiceControlTwo.reset();
-        }
-
-        assertUiMode(Configuration.UI_MODE_TYPE_NORMAL);
-
-        InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .dropShellPermissionIdentity();
-        super.tearDown();
     }
 
     /**
@@ -590,28 +596,28 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
      * @throws InterruptedException
      */
     private ICtsCarModeInCallServiceControl getControlBinder(String packageName)
-            throws InterruptedException {
+            throws Exception {
         Intent bindIntent = new Intent(
                 android.telecom.cts.carmodetestapp.CtsCarModeInCallServiceControl
                         .CONTROL_INTERFACE_ACTION);
         bindIntent.setPackage(packageName);
-        final LinkedBlockingQueue<ICtsCarModeInCallServiceControl> queue =
-                new LinkedBlockingQueue(1);
+        CompletableFuture<ICtsCarModeInCallServiceControl> future =
+                new CompletableFuture<>();
         boolean success = mContext.bindService(bindIntent, new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                queue.offer(android.telecom.cts.carmodetestapp
+                future.complete(android.telecom.cts.carmodetestapp
                         .ICtsCarModeInCallServiceControl.Stub.asInterface(service));
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                queue.offer(null);
+                future.complete(null);
             }
         }, Context.BIND_AUTO_CREATE);
         if (!success) {
             fail("Failed to get control interface -- bind error");
         }
-        return queue.poll(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+        return future.get(ASYNC_TIMEOUT, TimeUnit.MILLISECONDS);
     }
 }
