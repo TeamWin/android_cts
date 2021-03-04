@@ -67,6 +67,9 @@
         <option name="push" value="CtsInstallPermissionEscalatorApp.apk->/data/local/tmp/cts/permissions/CtsInstallPermissionEscalatorApp.apk" />
         <option name="push" value="CtsAppThatRequestsOneTimePermission.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsOneTimePermission.apk" />
         <option name="push" value="AppThatDefinesUndefinedPermissionGroupElement.apk->/data/local/tmp/cts/permissions/AppThatDefinesUndefinedPermissionGroupElement.apk" />
+        <option name="push" value="CtsStorageEscalationApp28.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp28.apk" />
+        <option name="push" value="CtsStorageEscalationApp29Full.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Full.apk" />
+        <option name="push" value="CtsStorageEscalationApp29Scoped.apk->/data/local/tmp/cts/permissions/CtsStorageEscalationApp29Scoped.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
