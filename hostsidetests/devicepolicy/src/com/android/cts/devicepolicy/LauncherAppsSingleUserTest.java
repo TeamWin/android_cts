@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
@@ -71,7 +70,8 @@ public class LauncherAppsSingleUserTest extends BaseLauncherAppsTest {
     //TODO(b/171574935): make sure to migrate this to the new test infra
     @Test
     public void testInstallAppMainUserIncremental() throws Exception {
-        assumeTrue(getDevice().hasFeature(FEATURE_INCREMENTAL_DELIVERY));
+        assumeTrue("true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery")));
         if (!mHasLauncherApps) {
             return;
         }
