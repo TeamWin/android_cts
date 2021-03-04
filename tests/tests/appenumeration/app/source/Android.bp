@@ -189,6 +189,28 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingUsesLibrary",
+    manifest: "AndroidManifest-queriesNothing-usesLibrary.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationQueriesNothingUsesOptionalLibrary",
+    manifest: "AndroidManifest-queriesNothing-usesOptionalLibrary.xml",
+    defaults: ["CtsAppEnumerationQueriesDefaults"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationQueriesNothingHasProvider",
     manifest: "AndroidManifest-queriesNothing-hasProvider.xml",
     defaults: ["CtsAppEnumerationQueriesDefaults"],

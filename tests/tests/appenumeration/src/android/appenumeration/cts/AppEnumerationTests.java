@@ -52,6 +52,8 @@ import static android.appenumeration.cts.Constants.QUERIES_NOTHING_RECEIVES_URI;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SEES_INSTALLER_APK;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_SHARED_USER;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_LIBRARY;
+import static android.appenumeration.cts.Constants.QUERIES_NOTHING_USES_OPTIONAL_LIBRARY;
 import static android.appenumeration.cts.Constants.QUERIES_PACKAGE;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_PROVIDER_AUTH;
@@ -77,6 +79,7 @@ import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE;
 import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE_NORMAL;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
+import static android.appenumeration.cts.Constants.TARGET_SHARED_LIBRARY_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
@@ -429,6 +432,26 @@ public class AppEnumerationTests {
         // and finally let's re-run the last check to make sure that the target can still see the
         // caller
         assertVisible(QUERIES_NOTHING, QUERIES_NOTHING_Q);
+    }
+
+    @Test
+    public void queriesNothing_cannotSeeLibraryPackage() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SHARED_LIBRARY_PACKAGE);
+    }
+
+    @Test
+    public void queriesNothingUsesLibrary_canSeeLibraryPackage() throws Exception {
+        assertVisible(QUERIES_NOTHING_USES_LIBRARY, TARGET_SHARED_LIBRARY_PACKAGE);
+    }
+
+    @Test
+    public void queriesNothing_cannotSeeOptionalLibraryPackage() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SHARED_LIBRARY_PACKAGE);
+    }
+
+    @Test
+    public void queriesNothingUsesOptionalLibrary_canSeeLibraryPackage() throws Exception {
+        assertVisible(QUERIES_NOTHING_USES_OPTIONAL_LIBRARY, TARGET_SHARED_LIBRARY_PACKAGE);
     }
 
     @Test

@@ -52,6 +52,8 @@
         <option name="test-file-name" value="CtsAppEnumerationQueriesPackage.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingTargetsQ.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingHasPermission.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingUsesLibrary.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationQueriesNothingUsesOptionalLibrary.apk" />
         <option name="test-file-name" value="CtsAppEnumerationQueriesNothingHasProvider.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardBrowsableActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardContactsActivitySource.apk" />
