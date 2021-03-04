@@ -301,6 +301,75 @@ class SpellCheckerTest : EndToEndImeTestBase() {
         }
     }
 
+    @Test
+    fun trailingPunctuation() {
+        // Set up a rule that matches the sentence "match?" and marks it as grammar error.
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .setMatchSentence(true)
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match?")
+                                .addSuggestions("suggestion.")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_GRAMMAR_ERROR)
+                ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use { client ->
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("match", 1)
+                // The trailing punctuation "?" is also sent in the next spell check, and the
+                // sentence "match?" will be marked as FLAG_GRAMMAR_ERROR according to the
+                // configuration.
+                session.callCommitText("?", 1)
+                waitOnMainUntil({
+                    findSuggestionSpanWithFlags(editText, FLAG_GRAMMAR_ERROR) != null
+                }, TIMEOUT)
+            }
+        }
+    }
+
+    @Test
+    fun respectSentenceBoundary() {
+        // Set up two rules:
+        // - Matches the sentence "Preceding text?" and marks it as grammar error.
+        // - Matches the sentence "match?" and marks it as misspelled.
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .setMatchSentence(true)
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("Preceding text?")
+                                .addSuggestions("suggestion.")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_GRAMMAR_ERROR)
+                ).addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match?")
+                                .addSuggestions("suggestion.")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use { client ->
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("Preceding text", 1)
+                session.callCommitText("?", 1)
+                waitOnMainUntil({
+                    findSuggestionSpanWithFlags(editText, FLAG_GRAMMAR_ERROR) != null
+                }, TIMEOUT)
+                // The next spell check only contains the text after "Preceding text?". According
+                // to our configuration, the sentence "match?" will be marked as FLAG_MISSPELLED.
+                session.callCommitText("match", 1)
+                session.callCommitText("?", 1)
+                waitOnMainUntil({
+                    findSuggestionSpanWithFlags(editText, FLAG_MISSPELLED) != null
+                }, TIMEOUT)
+            }
+        }
+    }
+
     private fun findSuggestionSpanWithFlags(editText: EditText, flags: Int): SuggestionSpan? =
             getSuggestionSpans(editText).find { (it.flags and flags) == flags }
 
