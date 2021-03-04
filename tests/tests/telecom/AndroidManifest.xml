@@ -44,7 +44,8 @@
         <uses-library android:name="android.test.runner" />
 
         <service android:name="android.telecom.cts.CtsCallDiagnosticService"
-            android:permission="android.permission.BIND_CALL_DIAGNOSTIC_SERVICE" >
+            android:permission="android.permission.BIND_CALL_DIAGNOSTIC_SERVICE"
+            android:exported="true" >
             <intent-filter>
                 <action android:name="android.telecom.CallDiagnosticService" />
             </intent-filter>
