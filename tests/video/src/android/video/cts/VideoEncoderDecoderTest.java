@@ -1078,8 +1078,8 @@ public class VideoEncoderDecoderTest extends CtsAndroidTestCase {
                 srcOffsetV += mBufferWidth / 2;
             }
         }
-        // submit till end of stride
-        int size = /* buffer.position(); */ mVideoStride * (mVideoVStride + mVideoHeight / 2);
+        // submit till end of the data
+        int size = buffer.position();
         long ptsUsec = computePresentationTime(frameCount);
 
         codec.queueInputBuffer(index, 0 /* offset */, size, ptsUsec /* timeUs */, flags);

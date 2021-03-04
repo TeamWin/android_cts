@@ -1,4 +1,4 @@
-<!--
+/*
  * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,24 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
 
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-policies>
-    </uses-policies>
-</device-admin>
+package com.android.bedstead.deviceadminapp;
 
+import android.app.admin.DeviceAdminReceiver;
+import android.content.ComponentName;
+import android.content.Context;
+
+import com.android.eventlib.premade.EventLibDeviceAdminReceiver;
+
+/**
+ * Entry point for Device Admin App.
+ */
+public class DeviceAdminApp {
+
+    /** Get the {@link ComponentName} for the {@link DeviceAdminReceiver} subclass. */
+    public static ComponentName deviceAdminComponentName(Context context) {
+        return new ComponentName(
+                context.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
+    }
+}

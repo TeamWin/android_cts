@@ -48,6 +48,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import java.util.ArrayList;
@@ -596,8 +597,14 @@ public class TestHelper {
             assertThat(testNetworkCallback.onUnavailableCalled).isTrue();
         } else {
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-            assertConnectionEquals(
-                    network, (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
+            final WifiInfo wifiInfo;
+            if (BuildCompat.isAtLeastS()) {
+                // WifiInfo in transport info, only available in S.
+                wifiInfo = (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo();
+            } else {
+                wifiInfo = mWifiManager.getConnectionInfo();
+            }
+            assertConnectionEquals(network, wifiInfo);
         }
         try {
             // Ensure that the UI interaction thread has completed.
