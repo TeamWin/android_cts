@@ -36,8 +36,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Set;
 
 /**
@@ -99,14 +97,6 @@ public class ValidateTestsAbi {
          */
         BINARY_EXCEPTIONS.add("sepolicy-analyze");
     }
-
-    private static final String BINARY_EXCEPTIONS_REGEX [] = {
-        /**
-         * This regular expression matches any binary of the form 'CVE-xxxx-yyyyyy'.
-         * Hence this can be used for tests that build for either 32 bit or 64 bit only.
-         */
-        "^CVE-\\d{4}-.+$"
-    };
 
     private static final String[] BINARY_SUFFIX_EXCEPTIONS = {
         /**
@@ -223,12 +213,6 @@ public class ValidateTestsAbi {
                 }
                 if (!file.canExecute()) {
                     return false;
-                }
-                for(String pattern: BINARY_EXCEPTIONS_REGEX) {
-                    Matcher matcher = Pattern.compile(pattern).matcher(name);
-                    if (matcher.matches()) {
-                        return false;
-                    }
                 }
                 return true;
             }

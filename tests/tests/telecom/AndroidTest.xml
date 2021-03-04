@@ -43,6 +43,8 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telecom.cts" />
         <option name="runtime-hint" value="10m20s" />
+        <option name="test-timeout" value="20m"/>
+        <option name="shell-timeout" value="22m"/>
     </test>
     <object type="module_controller"
             class="com.android.tradefed.testtype.suite.module.TestFailureModuleController">
