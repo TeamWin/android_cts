@@ -23,6 +23,7 @@ import android.content.pm.ResolveInfo;
 import android.os.UserManager;
 import android.provider.Settings;
 import android.provider.Telephony;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.ArrayMap;
 
@@ -237,6 +238,10 @@ public class UserRestrictions {
             case UserManager.DISALLOW_ADJUST_VOLUME:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
             case UserManager.DISALLOW_CONFIG_CELL_BROADCASTS:
+                final TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+                if (!tm.isSmsCapable()) {
+                    return false;
+                }
                 // Get com.android.internal.R.bool.config_cellBroadcastAppLinks
                 final int resId = context.getResources().getIdentifier(
                         "config_cellBroadcastAppLinks", "bool", "android");
