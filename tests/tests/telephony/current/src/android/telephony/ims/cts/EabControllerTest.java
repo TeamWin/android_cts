@@ -539,7 +539,7 @@ public class EabControllerTest {
         assertNotNull("Service capabilities should not be null!", capabilities);
 
         // Verify timestamp
-        assertNotNull("Timestamp should not be null!", presenceTuple.getTimestamp());
+        assertNotNull("Timestamp should not be null!", presenceTuple.getTime());
 
         // Verify service id
         assertEquals("service_id_01", presenceTuple.getServiceId());
