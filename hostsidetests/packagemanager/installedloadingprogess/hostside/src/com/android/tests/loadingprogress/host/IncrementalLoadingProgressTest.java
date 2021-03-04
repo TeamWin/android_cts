@@ -16,12 +16,10 @@
 
 package com.android.tests.loadingprogress.host;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.LargeTest;
@@ -36,6 +34,7 @@ import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -64,7 +63,8 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        assumeTrue(getDevice().hasFeature("android.software.incremental_delivery"));
+        assumeTrue("true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery")));
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         final File apk = buildHelper.getTestFile(TEST_APK);
@@ -110,6 +110,7 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @LargeTest
     @Test
+    @Ignore("b/181820354")
     public void testOnPackageLoadingProgressChangedCalledWithPartialLoaded() throws Exception {
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testOnPackageLoadingProgressChangedCalledWithPartialLoaded"));
@@ -124,6 +125,7 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @LargeTest
     @Test
+    @Ignore("b/181820354")
     public void testLoadingProgressPersistsAfterReboot() throws Exception {
         // Wait for loading progress to update
         RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);

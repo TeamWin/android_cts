@@ -408,7 +408,8 @@ public class IncrementalInstallTest extends BaseHostJUnit4Test {
     }
 
     private boolean hasIncrementalFeature() throws Exception {
-        return hasDeviceFeature(FEATURE_INCREMENTAL_DELIVERY);
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery"));
     }
 
     private boolean adbBinarySupportsIncremental() throws Exception {
