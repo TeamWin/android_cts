@@ -45,7 +45,7 @@ import java.util.concurrent.Executor;
 public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
     private static final String TEST_SSID = "\"testSsid\"";
     private static final String TEST_PASSPHRASE = "\"testPassword\"";
-    private static final int TEST_WAIT_DURATION_MS = 18_000; // Long delay is necessary, see below
+    private static final int TEST_WAIT_DURATION_MS = 22_000; // Long delay is necessary, see below
     private WifiManager mWifiManager;
     private static final String TEST_DPP_URI =
             "DPP:C:81/1,117/40;I:Easy_Connect_Demo;M:000102030405;"
