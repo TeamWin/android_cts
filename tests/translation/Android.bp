@@ -33,6 +33,7 @@ android_test {
         "truth-prebuilt",
         "androidx.test.ext.junit",
         "testng",
+        "androidx.test.uiautomator_uiautomator",
     ],
     srcs: [
         "src/**/*.java",
