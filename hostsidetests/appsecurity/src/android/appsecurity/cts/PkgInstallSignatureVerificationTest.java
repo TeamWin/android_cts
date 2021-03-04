@@ -1310,8 +1310,9 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "signatures do not match previously installed version");
     }
 
-    private boolean hasIncrementalFeature() throws DeviceNotAvailableException {
-        return getDevice().hasFeature("android.software.incremental_delivery");
+    private boolean hasIncrementalFeature() throws Exception {
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery"));
     }
 
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
