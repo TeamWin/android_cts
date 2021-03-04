@@ -16,17 +16,13 @@
 
 package android.dumpsys.cts;
 
-import static com.google.common.truth.Truth.assertThat;
-
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.log.LogUtil.CLog;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Test to check the format of the dumps of the gfxinfo.
@@ -84,11 +80,12 @@ public class GfxInfoDumpsysTest extends BaseDumpsysTest {
 
             assertNotNull(line);
             assertTrue("First line was not the expected header",
-                    line.startsWith("Flags,FrameTimelineVsyncId,IntendedVsync,Vsync" +
-                            ",OldestInputEvent,NewestInputEvent,HandleInputStart" +
-                            ",AnimationStart,PerformTraversalsStart,DrawStart,FrameDeadline" +
-                            ",SyncQueued,SyncStart,IssueDrawCommandsStart,SwapBuffers" +
-                            ",FrameCompleted"));
+                    line.startsWith("Flags,FrameTimelineVsyncId,IntendedVsync,Vsync"
+                            + ",InputEventId,HandleInputStart"
+                            + ",AnimationStart,PerformTraversalsStart,DrawStart,FrameDeadline"
+                            + ",SyncQueued,SyncStart,IssueDrawCommandsStart,SwapBuffers"
+                            + ",FrameCompleted,DequeueBufferDuration,QueueBufferDuration"
+                            + ",GpuCompleted,SwapBuffersCompleted,DisplayPresentTime"));
 
             long[] numparts = new long[TIMESTAMP_COUNT];
             while ((line = reader.readLine()) != null && !line.isEmpty()) {
@@ -98,40 +95,56 @@ public class GfxInfoDumpsysTest extends BaseDumpsysTest {
                 for (int i = 0; i < TIMESTAMP_COUNT; i++) {
                     numparts[i] = assertInteger(parts[i]);
                 }
+
+                final long flags = numparts[0];
                 // Flags = 1 just means the first frame of the window
-                if (numparts[0] != 0 && numparts[0] != 1) {
+                if (flags != 0 && flags != 1) {
                     continue;
                 }
+
+                final long timestampIntendedVsync = numparts[2];
+                final long timestampVsync = numparts[3];
+                // skip InputEventId, since it's a randomly assigned id
+                final long timestampHandleInputStart = numparts[5];
+                final long timestampAnimationStart = numparts[6];
+                final long timestampPerformTraversalsStart = numparts[7];
+                final long timestampDrawStart = numparts[8];
+                // skip FrameDeadline
+                final long timestampSyncQueued = numparts[10];
+                final long timestampSyncStart = numparts[11];
+                final long timestampIssueDrawCommandsStart = numparts[12];
+                final long timestampSwapBuffers = numparts[13];
+                final long timestampFrameCompleted = numparts[14];
 
                 // assert time is flowing forwards. we need to check each entry explicitly
                 // as some entries do not represent a flow of events.
                 assertTrue("VSYNC happened before INTENDED_VSYNC",
-                        numparts[3] >= numparts[2]);
+                        timestampVsync >= timestampIntendedVsync);
                 assertTrue("HandleInputStart happened before VSYNC",
-                        numparts[6] >= numparts[3]);
+                        timestampHandleInputStart >= timestampVsync);
                 assertTrue("AnimationStart happened before HandleInputStart",
-                        numparts[7] >= numparts[6]);
+                        timestampAnimationStart >= timestampHandleInputStart);
                 assertTrue("PerformTraversalsStart happened before AnimationStart",
-                        numparts[8] >= numparts[7]);
+                        timestampPerformTraversalsStart >= timestampAnimationStart);
                 assertTrue("DrawStart happened before PerformTraversalsStart",
-                        numparts[9] >= numparts[8]);
+                        timestampDrawStart >= timestampPerformTraversalsStart);
                 assertTrue("SyncQueued happened before DrawStart",
-                        numparts[11] >= numparts[9]);
+                        timestampSyncQueued >= timestampDrawStart);
                 assertTrue("SyncStart happened before SyncQueued",
-                        numparts[12] >= numparts[11]);
+                        timestampSyncStart >= timestampSyncQueued);
                 assertTrue("IssueDrawCommandsStart happened before SyncStart",
-                        numparts[13] >= numparts[12]);
+                        timestampIssueDrawCommandsStart >= timestampSyncStart);
                 assertTrue("SwapBuffers happened before IssueDrawCommandsStart",
-                        numparts[14] >= numparts[13]);
+                        timestampSwapBuffers >= timestampIssueDrawCommandsStart);
                 assertTrue("FrameCompleted happened before SwapBuffers",
-                        numparts[15] >= numparts[14]);
+                        timestampFrameCompleted >= timestampSwapBuffers);
 
                 // total duration is from IntendedVsync to FrameCompleted
-                long totalDuration = numparts[15] - numparts[2];
+                long totalDuration = timestampFrameCompleted - timestampIntendedVsync;
                 assertTrue("Frame did not take a positive amount of time to process",
                         totalDuration > 0);
                 assertTrue("Bogus frame duration, exceeds 100 seconds",
-                        totalDuration < 100000000000L);
+                        totalDuration < TimeUnit.SECONDS.toNanos(100));
                 foundAtLeastOneRow = true;
             }
         }
