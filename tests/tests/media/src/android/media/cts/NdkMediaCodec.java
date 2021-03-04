@@ -69,7 +69,10 @@ public class NdkMediaCodec implements MediaCodecWrapper {
             ByteBuffer csd1,
             int flags,
             int lowLatency,
-            Surface surface);
+            Surface surface,
+            int range,
+            int standard,
+            int transfer);
 
     private static native boolean AMediaCodecQueueInputBuffer(
             long ndkMediaCodec,
@@ -120,6 +123,9 @@ public class NdkMediaCodec implements MediaCodecWrapper {
         int frameRate = format.getInteger(MediaFormat.KEY_FRAME_RATE, -1);
         int iFrameInterval = format.getInteger(MediaFormat.KEY_I_FRAME_INTERVAL, -1);
         int lowLatency = format.getInteger(MediaFormat.KEY_LOW_LATENCY, -1);
+        int range = format.getInteger(MediaFormat.KEY_COLOR_RANGE, -1);
+        int standard = format.getInteger(MediaFormat.KEY_COLOR_STANDARD, -1);
+        int transfer = format.getInteger(MediaFormat.KEY_COLOR_TRANSFER, -1);
 
         ByteBuffer csd0BufCopy = null;
         if (format.containsKey(CSD_0)) {
@@ -155,7 +161,10 @@ public class NdkMediaCodec implements MediaCodecWrapper {
                 csd1BufCopy,
                 flags,
                 lowLatency,
-                surface);
+                surface,
+                range,
+                standard,
+                transfer);
     }
 
     @Override
