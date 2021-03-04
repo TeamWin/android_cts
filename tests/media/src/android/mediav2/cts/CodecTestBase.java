@@ -512,6 +512,9 @@ abstract class CodecTestBase {
     static final int PER_TEST_TIMEOUT_SMALL_TEST_MS = 60000;
     static final long Q_DEQ_TIMEOUT_US = 5000;
     static final int UNSPECIFIED = 0;
+    static final int CODEC_ALL = 0; // All codecs should support
+    static final int CODEC_ANY = 1; // Atleast one codec should support
+    static final int CODEC_OPTIONAL = 2; // Codec support is optional
     static final String mInpPrefix = WorkDir.getMediaDirString();
     static final PackageManager pm =
             InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
