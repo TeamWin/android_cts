@@ -183,14 +183,14 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     public void test_windowState_inCompatDownscalingMode() {
         // Check the "normal" window's state for disabled compat mode and appropriate global scale.
         assertFalse("The Window should not be in the size compat mode",
-                mWindowStateNormal.isInSizeCompatMode());
+                mWindowStateNormal.hasCompatScale());
         assertEquals("The window should not be scaled",
                 1f, mWindowStateNormal.getGlobalScale(), EPSILON_GLOBAL_SCALE);
 
         // Check the "downscaled" window's state for enabled compat mode and appropriate global
         // scale.
         assertTrue("The Window should be in the size compat mode",
-                mWindowStateDownscaled.isInSizeCompatMode());
+                mWindowStateDownscaled.hasCompatScale());
         assertEquals("The window should have global scale of " + mInvCompatScale,
                 mInvCompatScale, mWindowStateDownscaled.getGlobalScale(), EPSILON_GLOBAL_SCALE);
 
