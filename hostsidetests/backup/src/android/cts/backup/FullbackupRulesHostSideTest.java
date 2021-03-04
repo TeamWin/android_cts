@@ -58,6 +58,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     private static final String DATA_EXTRACTION_RULES_APP_APK = "CtsDataExtractionRulesApp.apk";
     private static final String DATA_EXTRACTION_RULES_APPLICABILITY_APP_APK
             = "CtsDataExtractionRulesApplicabilityApp.apk";
+    private static final String ENCRYPTION_ATTRIBUTE_APP_APK = "CtsEncryptionAttributeApp.apk";
 
     private static final String BACKUP_ELIGIBILITY_RULES_FEATURE_FLAG
             = "settings_use_new_backup_eligibility_rules";
@@ -173,6 +174,34 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
     }
 
     @Test
+    public void testDisableIfNoEncryptionCapabilities_encryptedTransport_doesBackUp()
+            throws Exception {
+        setLocalTransportParameters("is_encrypted=true");
+        installPackage(ENCRYPTION_ATTRIBUTE_APP_APK);
+
+        // Generate test data and run a backup and restore pass.
+        runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
+
+        // Check that the right files were restored.
+        checkFullBackupRulesDeviceTest(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
+                "checkRestoredFiles");
+    }
+
+    @Test
+    public void testDisableIfNoEncryptionCapabilities_unencryptedTransport_doesNotBackUp()
+            throws Exception {
+        setLocalTransportParameters("is_encrypted=false");
+        installPackage(ENCRYPTION_ATTRIBUTE_APP_APK);
+
+        // Generate test data and run a backup and restore pass.
+        runBackupAndRestoreOnTestData(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME);
+
+        // Check that no files were restored.
+        checkFullBackupRulesDeviceTest(INCLUDE_EXCLUDE_DEVICE_TEST_CLASS_NAME,
+                "checkNoFilesExist");
+    }
+
+    @Test
     public void testRequireFakeEncryptionFlag_includesFileIfFakeEncryptionEnabled()
             throws Exception {
         installPackage(FULL_BACKUP_CONTENT_APP_APK);
@@ -237,7 +266,7 @@ public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
         checkFullBackupRulesDeviceTest(deviceSideTestName, "createFiles");
 
         // Do a backup
-        getBackupUtils().backupNowAndAssertSuccess(INCLUDE_EXCLUDE_TESTS_APP_NAME);
+        getBackupUtils().backupNowSync(INCLUDE_EXCLUDE_TESTS_APP_NAME);
 
         // Delete the files
         checkFullBackupRulesDeviceTest(deviceSideTestName,
