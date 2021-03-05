@@ -275,7 +275,7 @@ public class ActivityManagerFgsBgStartTest {
             // Now APP2 gets location capability.
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_ALL));
             waiter.doWait(WAITFOR_MSEC);
 
             CommandReceiver.sendCommand(mContext,
@@ -393,7 +393,7 @@ public class ActivityManagerFgsBgStartTest {
             // APP2 now have location capability (because APP1 is TOP)
             uid2Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
                     WatchUidRunner.STATE_FG_SERVICE,
-                    new Integer(PROCESS_CAPABILITY_NETWORK));
+                    new Integer(PROCESS_CAPABILITY_ALL));
             waiter.doWait(WAITFOR_MSEC);
 
             // stop FGSL in APP2.
