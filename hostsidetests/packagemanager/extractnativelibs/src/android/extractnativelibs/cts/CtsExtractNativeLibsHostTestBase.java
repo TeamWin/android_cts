@@ -77,7 +77,8 @@ public class CtsExtractNativeLibsHostTestBase extends BaseHostJUnit4Test {
     }
 
     boolean isIncrementalInstallSupported() throws Exception {
-        return getDevice().hasFeature("android.software.incremental_delivery");
+        return "true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery"));
     }
 
     static String getTestApkName(boolean isExtractNativeLibs, String abiSuffix) {

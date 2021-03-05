@@ -136,6 +136,7 @@ class PermissionTest23 : BaseUsePermissionTest() {
         requestAppPermissionsAndAssertResult(android.Manifest.permission.WRITE_CONTACTS to false) {}
     }
 
+    @FlakyTest
     @Test
     fun testRevokeAffectsWholeGroup() {
         // Grant the group
