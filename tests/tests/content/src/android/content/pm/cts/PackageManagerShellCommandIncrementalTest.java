@@ -59,6 +59,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.Scanner;
@@ -220,33 +221,69 @@ public class PackageManagerShellCommandIncrementalTest {
 
     @LargeTest
     @Test
-    @Ignore("Pending fix in IncFs")
     public void testInstallWithIdSigNoMissingPages() throws Exception {
-        // Overall timeout of 3secs in 100ms intervals.
-        final int atraceDumpIterations = 30;
-        final int atraceDumpDelayMs = 100;
-        final String unexpected = "|missing_page_reads:";
+        final int installIterations = 1;
+        final int atraceDumpIterations = 3;
+        final int atraceDumpDelayMs = 1000;
+        final String missingPageReads = "|missing_page_reads: count=";
 
-        assertFalse(
-                "Missing page reads found (" + unexpected + ") in atrace dump",
-                checkSysTrace(
-                        atraceDumpIterations,
-                        atraceDumpDelayMs,
-                        () -> {
-                            // Install multiple splits so that digesters won't kick in.
-                            installPackage(TEST_APK);
-                            installSplit(TEST_APK_SPLIT0);
-                            installSplit(TEST_APK_SPLIT1);
-                            installSplit(TEST_APK_SPLIT2);
-                            // Now read splits as fast as we can.
-                            readSplitAndReportTime("split_config.mdpi.apk", 1000);
-                            readSplitAndReportTime("split_config.hdpi.apk", 1000);
-                            readSplitAndReportTime("split_config.xhdpi.apk", 1000);
-                            return null;
-                        },
-                        (stdout) -> stdout.contains(unexpected)));
+        final ArrayList<String> missingPages = new ArrayList<>();
+
+        checkSysTrace(
+                installIterations,
+                atraceDumpIterations,
+                atraceDumpDelayMs,
+                () -> {
+                    // Install multiple splits so that digesters won't kick in.
+                    installPackage(TEST_APK);
+                    installSplit(TEST_APK_SPLIT0);
+                    installSplit(TEST_APK_SPLIT1);
+                    installSplit(TEST_APK_SPLIT2);
+                    // Now read it as fast as we can.
+                    readSplitInChunks("base.apk");
+                    readSplitInChunks("split_config.mdpi.apk");
+                    readSplitInChunks("split_config.hdpi.apk");
+                    readSplitInChunks("split_config.xhdpi.apk");
+                    return null;
+                },
+                (stdout) -> {
+                    try (Scanner scanner = new Scanner(stdout)) {
+                        ReadLogEntry prevLogEntry = null;
+                        while (scanner.hasNextLine()) {
+                            final String line = scanner.nextLine();
+
+                            final ReadLogEntry readLogEntry = ReadLogEntry.parse(line);
+                            if (readLogEntry != null) {
+                                prevLogEntry = readLogEntry;
+                                continue;
+                            }
+
+                            int missingPageIdx = line.indexOf(missingPageReads);
+                            if (missingPageIdx == -1) {
+                                continue;
+                            }
+                            String missingBlocks = line.substring(
+                                    missingPageIdx + missingPageReads.length());
+
+                            int prvTimestamp = prevLogEntry != null ? extractTimestamp(
+                                    prevLogEntry.line) : -1;
+                            int curTimestamp = extractTimestamp(line);
+                            if (prvTimestamp == -1 || curTimestamp == -1) {
+                                missingPages.add("count=" + missingBlocks);
+                                continue;
+                            }
+
+                            int delta = curTimestamp - prvTimestamp;
+                            missingPages.add(
+                                    "count=" + missingBlocks + ", timestamp delta=" + delta + "ms");
+                        }
+                        return false;
+                    }
+                });
+
+        assertTrue("Missing page reads found in atrace dump: " + String.join("\n", missingPages),
+                missingPages.isEmpty());
     }
-
 
     static class ReadLogEntry {
         public final String line;
@@ -320,7 +357,6 @@ public class PackageManagerShellCommandIncrementalTest {
                     parseInt(line, userIdIdx, USER_ID_PREFIX.length(), -1));
         }
     }
-    ;
 
     @Test
     public void testReadLogParser() throws Exception {
@@ -355,6 +391,36 @@ public class PackageManagerShellCommandIncrementalTest {
                         .toString());
     }
 
+    static int extractTimestamp(String line) {
+        final String timestampEnd = ": tracing_mark_write:";
+        int timestampEndIdx = line.indexOf(timestampEnd);
+        if (timestampEndIdx == -1) {
+            return -1;
+        }
+
+        int timestampBegIdx = timestampEndIdx - 1;
+        for (; timestampBegIdx >= 0; --timestampBegIdx) {
+            char ch = line.charAt(timestampBegIdx);
+            if ('0' <= ch && ch <= '9' || ch == '.') {
+                continue;
+            }
+            break;
+        }
+        double timestamp = Double.parseDouble(line.substring(timestampBegIdx, timestampEndIdx));
+        return (int) (timestamp * 1000);
+    }
+
+    @Test
+    public void testExtractTimestamp() throws Exception {
+        assertEquals(-1, extractTimestamp("# tracer: nop\n"));
+        assertEquals(14255168, extractTimestamp(
+                "<...>-10355 ( 1636) [006] .... 14255.168694: tracing_mark_write: "
+                        + "B|1636|page_read: index=1 count=16 file=0 appid=10184 userid=0"));
+        assertEquals(2764243, extractTimestamp(
+                "<...>-2777  ( 1639) [006] ....  2764.243225: tracing_mark_write: "
+                        + "B|1639|missing_page_reads: count=132"));
+    }
+
     static class AppReads {
         public final String packageName;
         public final int reads;
@@ -370,6 +436,7 @@ public class PackageManagerShellCommandIncrementalTest {
     @Ignore("Pending fix in GMSCore")
     public void testInstallWithIdSigNoDigesting() throws Exception {
         // Overall timeout of 3secs in 100ms intervals.
+        final int installIterations = 1;
         final int atraceDumpIterations = 30;
         final int atraceDumpDelayMs = 100;
         final int blockSize = 4096;
@@ -381,7 +448,11 @@ public class PackageManagerShellCommandIncrementalTest {
         final ArrayMap<Integer, Integer> uids = new ArrayMap<>();
 
         final AtomicInteger totalTouchedBlocks = new AtomicInteger(0);
-        checkSysTrace(atraceDumpIterations, atraceDumpDelayMs, () -> installPackage(TEST_APK),
+        checkSysTrace(
+                installIterations,
+                atraceDumpIterations,
+                atraceDumpDelayMs,
+                () -> installPackage(TEST_APK),
                 (stdout) -> {
                     try (Scanner scanner = new Scanner(stdout)) {
                         while (scanner.hasNextLine()) {
@@ -485,7 +556,7 @@ public class PackageManagerShellCommandIncrementalTest {
             }
 
             // Try to read a split and see if we are throttled.
-            final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), "split_config.mdpi.apk");
+            final File apkToRead = getSplit("split_config.mdpi.apk");
             final long readTime0 = readAndReportTime(apkToRead, 1000);
 
             // Install another split, interrupt in the middle, and measure read time.
@@ -542,7 +613,7 @@ public class PackageManagerShellCommandIncrementalTest {
         Thread.currentThread().sleep(beforeReadDelayMs);
 
         // Try to read a split and see if we are throttled.
-        final long readTime = readSplitAndReportTime("split_config.mdpi.apk", 1000);
+        final long readTime = readAndReportTime(getSplit("split_config.mdpi.apk"), 1000);
         assertTrue("Must take less than " + EXPECTED_READ_TIME + "ms vs " + readTime + "ms",
                 readTime < EXPECTED_READ_TIME);
     }
@@ -593,7 +664,9 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private boolean checkSysTraceForSubstring(String testApk, final String expected,
             int atraceDumpIterations, int atraceDumpDelayMs) throws Exception {
+        final int installIterations = 3;
         return checkSysTrace(
+                installIterations,
                 atraceDumpIterations,
                 atraceDumpDelayMs,
                 () -> installPackage(testApk),
@@ -601,6 +674,7 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     private boolean checkSysTrace(
+            int installIterations,
             int atraceDumpIterations,
             int atraceDumpDelayMs,
             final Callable<Void> installer,
@@ -611,7 +685,7 @@ public class PackageManagerShellCommandIncrementalTest {
         final CompletableFuture<Boolean> result = new CompletableFuture<>();
         final Thread readFromProcess = new Thread(() -> {
             try {
-                executeShellCommand("atrace --async_start -b 1024 -c adb");
+                executeShellCommand("atrace --async_start -b 10240 -c adb");
                 try {
                     for (int i = 0; i < atraceDumpIterations; ++i) {
                         final String stdout = executeShellCommand("atrace --async_dump");
@@ -632,7 +706,7 @@ public class PackageManagerShellCommandIncrementalTest {
         });
         readFromProcess.start();
 
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < installIterations; ++i) {
             installer.call();
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
             Thread.currentThread().sleep(beforeReadDelayMs);
@@ -675,6 +749,10 @@ public class PackageManagerShellCommandIncrementalTest {
         return parsePackageDump(packageName, "    codePath=");
     }
 
+    private File getSplit(String splitName) throws Exception {
+        return new File(getCodePath(TEST_APP_PACKAGE), splitName);
+    }
+
     private String parsePackageDump(String packageName, String prefix) throws IOException {
         final String commandResult = executeShellCommand("pm dump " + packageName);
         final int prefixLength = prefix.length();
@@ -710,14 +788,36 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(stateListenerResult.await());
     }
 
-    private long readSplitAndReportTime(String split, long borderTime) throws Exception {
-        final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), split);
-        return readAndReportTime(apkToRead, 1000);
+    private void readSplitInChunks(String splitName) throws Exception {
+        final int chunks = 2;
+        final int waitBetweenChunksMs = 100;
+        final File file = getSplit(splitName);
+
+        assertTrue(file.toString(), file.exists());
+        final long totalSize = file.length();
+        final long chunkSize = totalSize / chunks;
+        try (InputStream baseApkStream = new FileInputStream(file)) {
+            final byte[] buffer = new byte[4 * 1024];
+            long readSoFar = 0;
+            long maxToRead = 0;
+            for (int i = 0; i < chunks; ++i) {
+                maxToRead += chunkSize;
+                int length;
+                while ((length = baseApkStream.read(buffer)) != -1) {
+                    readSoFar += length;
+                    if (readSoFar >= maxToRead) {
+                        break;
+                    }
+                }
+                if (readSoFar < totalSize) {
+                    Thread.currentThread().sleep(waitBetweenChunksMs);
+                }
+            }
+        }
     }
 
     private long readAndReportTime(File file, long borderTime) throws Exception {
         assertTrue(file.toString(), file.exists());
-
         final long startTime = SystemClock.uptimeMillis();
         long readTime = 0;
         try (InputStream baseApkStream = new FileInputStream(file)) {
