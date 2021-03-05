@@ -22,6 +22,7 @@ import static com.android.bedstead.nene.users.Users.SYSTEM_USER_ID;
 
 import android.os.Build;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -45,6 +46,10 @@ public class UserBuilder {
         mUsers = users;
     }
 
+    /**
+     * Set the user's name.
+     */
+    @CheckResult
     public UserBuilder name(String name) {
         if (name == null) {
             throw new NullPointerException();
@@ -58,6 +63,7 @@ public class UserBuilder {
      *
      * <p>Defaults to android.os.usertype.full.SECONDARY
      */
+    @CheckResult
     public UserBuilder type(UserType type) {
         if (type == null) {
             // We don't want to allow null to be passed in explicitly as that would cause subtle
@@ -73,6 +79,7 @@ public class UserBuilder {
      *
      * <p>This should only be set if the {@link #type(UserType)} is a profile.
      */
+    @CheckResult
     public UserBuilder parent(UserReference parent) {
         mParent = parent;
         return this;
