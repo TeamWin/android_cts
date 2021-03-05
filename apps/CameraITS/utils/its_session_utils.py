@@ -35,7 +35,6 @@ import image_processing_utils
 
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
-_G_CHANNEL = 1
 _VALIDATE_LIGHTING_PATCH_H = 0.05
 _VALIDATE_LIGHTING_PATCH_W = 0.05
 _VALIDATE_LIGHTING_REGIONS = {
@@ -1138,16 +1137,18 @@ def load_scene(cam, props, scene, tablet, chart_distance):
           cv2_image_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1) and
       float(camera_fov) > cv2_image_processing_utils.FOV_THRESH_WFOV)
   if rfov_camera_in_rfov_box or wfov_camera_in_wfov_box:
-    cap = cam.do_capture(capture_request_utils.auto_capture_request())
-    img = image_processing_utils.convert_capture_to_rgb_image(cap)
-    validate_lighting(img)
+    cam.do_3a()
+    cap = cam.do_capture(
+        capture_request_utils.auto_capture_request(), cam.CAP_YUV)
+    y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
+    validate_lighting(y_plane)
 
 
-def validate_lighting(img):
+def validate_lighting(y_plane):
   """Validates the lighting level in scene corners based on empirical values.
 
   Args:
-    img: rgb image
+    y_plane: Y plane of YUV image
   Returns:
     boolean True if lighting validated, else raise AssertionError
   """
@@ -1156,11 +1157,11 @@ def validate_lighting(img):
   # Test patches from each corner.
   for location, coordinates in _VALIDATE_LIGHTING_REGIONS.items():
     patch = image_processing_utils.get_image_patch(
-        img, coordinates[0], coordinates[1],
+        y_plane, coordinates[0], coordinates[1],
         _VALIDATE_LIGHTING_PATCH_W, _VALIDATE_LIGHTING_PATCH_H)
-    g_mean = image_processing_utils.compute_image_means(patch)[_G_CHANNEL]
-    logging.debug('%s corner G mean: %.3f', location, g_mean)
-    if g_mean > _VALIDATE_LIGHTING_THRESH:
+    y_mean = image_processing_utils.compute_image_means(patch)[0]
+    logging.debug('%s corner Y mean: %.3f', location, y_mean)
+    if y_mean > _VALIDATE_LIGHTING_THRESH:
       logging.debug('Lights ON in test rig.')
       return True
   raise AssertionError('Lights OFF in test rig. Please turn ON and retry.')
@@ -1201,15 +1202,15 @@ class ItsSessionUtilsTests(unittest.TestCase):
   _TEST_IMG_H = 480
 
   def _generate_test_image(self, brightness):
-    """Creates an RGB image array with pixel values of brightness.
+    """Creates a Y plane array with pixel values of brightness.
 
     Args:
       brightness: float between [0.0, 1.0]
 
     Returns:
-      RGB image array with elements of value brightness
+      Y plane array with elements of value brightness
     """
-    test_image = numpy.zeros((self._TEST_IMG_W, self._TEST_IMG_H, 3),
+    test_image = numpy.zeros((self._TEST_IMG_W, self._TEST_IMG_H, 1),
                              dtype=float)
     test_image.fill(brightness)
     return test_image
