@@ -1064,7 +1064,10 @@ extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecConfigure(
         jobject csd1,
         jint flags,
         jint lowLatency,
-        jobject surface) {
+        jobject surface,
+        jint range,
+        jint standard,
+        jint transfer) {
 
     AMediaFormat* format = AMediaFormat_new();
     if (format == NULL) {
@@ -1090,9 +1093,13 @@ extern "C" jboolean Java_android_media_cts_NdkMediaCodec_AMediaCodecConfigure(
             // need to specify the actual string, since this test needs
             // to run on API 29, where the symbol doesn't exist
             "low-latency", // AMEDIAFORMAT_KEY_LOW_LATENCY
+            AMEDIAFORMAT_KEY_COLOR_RANGE,
+            AMEDIAFORMAT_KEY_COLOR_STANDARD,
+            AMEDIAFORMAT_KEY_COLOR_TRANSFER,
     };
 
-    jint values[] = {width, height, colorFormat, bitRate, frameRate, iFrameInterval, lowLatency};
+    jint values[] = {width, height, colorFormat, bitRate, frameRate, iFrameInterval, lowLatency,
+                     range, standard, transfer};
     for (size_t i = 0; i < sizeof(values) / sizeof(values[0]); i++) {
         if (values[i] >= 0) {
             AMediaFormat_setInt32(format, keys[i], values[i]);

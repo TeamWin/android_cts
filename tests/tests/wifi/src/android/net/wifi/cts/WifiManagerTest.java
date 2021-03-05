@@ -183,6 +183,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     private static final String TYPE_WIFI_CONFIG = "application/x-wifi-config";
     private static final String TEST_PSK_CAP = "[RSN-PSK-CCMP]";
     private static final String TEST_BSSID = "00:01:02:03:04:05";
+    private static final String TEST_COUNTRY_CODE = "JP";
     public static final String TEST_DOM_SUBJECT_MATCH = "domSubjectMatch";
 
     private IntentFilter mIntentFilter;
@@ -3871,5 +3872,73 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         mWifiManager.isPasspointTermsAndConditionsSupported();
+    }
+
+    /**
+     * Test that {@link WifiManager#setOverrideCountryCode()},
+     * {@link WifiManager#clearOverrideCountryCode()} and
+     * {@link WifiManager#setDefaultCountryCode()}
+     * throws UnsupportedOperationException if the release is older than S.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization before changing
+    // to `maxSdkVersion = Build.VERSION_CODES.R`
+    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
+    public void testManageCountryCodeMethodsOnROrOlder() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        try {
+            mWifiManager.setOverrideCountryCode(TEST_COUNTRY_CODE);
+            fail("setOverrideCountryCode() Expected to fail - UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {}
+
+        try {
+            mWifiManager.clearOverrideCountryCode();
+            fail("clearOverrideCountryCode() Expected to fail - UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {}
+
+        try {
+            mWifiManager.setDefaultCountryCode(TEST_COUNTRY_CODE);
+            fail("setDefaultCountryCode() Expected to fail - UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {}
+    }
+
+    /**
+     * Test that call to {@link WifiManager#setOverrideCountryCode()},
+     * {@link WifiManager#clearOverrideCountryCode()} and
+     * {@link WifiManager#setDefaultCountryCode()} need privileged permission
+     * and the permission is not even given to shell user.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testManageCountryCodeMethodsFailWithoutPermissions() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+
+        ShellIdentityUtils.invokeWithShellPermissions(() -> {
+            try {
+                mWifiManager.setOverrideCountryCode(TEST_COUNTRY_CODE);
+                fail("setOverrideCountryCode() expected to fail - privileged call");
+            } catch (SecurityException e) {
+                // expected
+            }
+
+            try {
+                mWifiManager.clearOverrideCountryCode();
+                fail("clearOverrideCountryCode() expected to fail - privileged call");
+            } catch (SecurityException e) {
+                // expected
+            }
+
+            try {
+                mWifiManager.setDefaultCountryCode(TEST_COUNTRY_CODE);
+                fail("setDefaultCountryCode() expected to fail - privileged call");
+            } catch (SecurityException e) {
+                // expected
+            }
+        });
     }
 }

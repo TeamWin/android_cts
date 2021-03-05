@@ -21,6 +21,14 @@
     <application android:label="Translation TestCase">
         <uses-library android:name="android.test.runner"/>
 
+        <service android:name=".CtsTranslationService"
+                 android:label="CtsTranslationService"
+                 android:permission="android.permission.BIND_TRANSLATION_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.translation.TranslationService"/>
+            </intent-filter>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
