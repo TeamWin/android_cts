@@ -66,8 +66,8 @@ public class TvInputManagerServiceHostTest extends BaseHostJUnit4Test {
             TIF_TUNE_STATE_CHANGED_CORRESPONDENCE = CorrespondenceFieldChainBuilder
             .builder(AtomsProto.TifTuneStateChanged.class)
             .addField(AtomsProto.TifTuneStateChanged::getState, "state")
-            .addField(AtomsProto.TifTuneStateChanged::getHdmiPort, "hdmiPort")
-            .addField(AtomsProto.TifTuneStateChanged::getInputId, "inputId")
+            .addField(AtomsProto.TifTuneStateChanged::getHdmiPort, "hdmi_port")
+            .addField(AtomsProto.TifTuneStateChanged::getInputId, "input_id")
             .build();
 
     @Rule
