@@ -21,6 +21,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -32,9 +33,9 @@ import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisableRequestedEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordChangedEvent;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -51,6 +52,7 @@ public class EventLibDeviceAdminReceiverTest {
     private static final UserReference sUser = sTestApis.users().instrumented();
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);
+    private static final Intent sIntent = new Intent();
 
     @Before
     public void setUp() {
@@ -88,39 +90,48 @@ public class EventLibDeviceAdminReceiverTest {
     }
 
     @Test
-    @Ignore("It is not possible to trigger this through tests")
     public void disableProfileOwner_logsDisableRequestedEvent() {
-        ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
 
-        try {
-            // TODO: Trigger disable device admin
+        receiver.onDisableRequested(sContext, sIntent);
 
-            EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
-                    DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName());
-
-            assertThat(eventLogs.poll()).isNotNull();
-        } finally {
-            profileOwner.remove();
-        }
+        EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
+                DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
     }
 
     @Test
-    @Ignore("It is not possible to trigger this through tests")
     public void disableProfileOwner_logsDisabledEvent() {
-        ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
 
-        try {
-            // TODO: Trigger disable device admin
+        receiver.onDisabled(sContext, sIntent);
 
-            EventLogs<DeviceAdminDisabledEvent> eventLogs =
-                    DeviceAdminDisabledEvent.queryPackage(sContext.getPackageName());
+        EventLogs<DeviceAdminDisabledEvent> eventLogs =
+                DeviceAdminDisabledEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+    }
 
-            assertThat(eventLogs.poll()).isNotNull();
-        } finally {
-            profileOwner.remove();
-        }
+    @Test
+    public void changePassword_logsPasswordChangedEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordChanged(sContext, sIntent);
+
+        EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
+                DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+    }
+
+    @Test
+    public void changePasswordWithUserHandle_logsPasswordChangedEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordChanged(sContext, sIntent, sUser.userHandle());
+
+        EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
+                DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
     }
 
 }

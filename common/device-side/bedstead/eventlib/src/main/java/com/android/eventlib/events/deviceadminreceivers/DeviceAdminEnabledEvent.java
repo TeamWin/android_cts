@@ -32,7 +32,7 @@ import com.android.eventlib.queryhelpers.IntentQueryHelper;
 import com.android.eventlib.util.SerializableParcelWrapper;
 
 /**
- * Event logged when {@link DeviceAdminReceiver#onEnabled(Context, Intent)}.
+ * Event logged when {@link DeviceAdminReceiver#onEnabled(Context, Intent)} is called.
  */
 public final class DeviceAdminEnabledEvent extends Event {
 
