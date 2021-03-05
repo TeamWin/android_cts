@@ -80,20 +80,22 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
                 ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
                         manager, (m) -> m.createSipDelegate(delegateRequest, Runnable::run, this,
                                 this), ImsException.class,
-                        "android.permission.MODIFY_PHONE_STATE"));
+                        "android.permission.PERFORM_IMS_SINGLE_REGISTRATION"));
     }
 
     public void disconnect(SipDelegateManager manager, int reason) throws Exception {
         ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
                 manager, (m) -> m.destroySipDelegate(connection, reason),
-                ImsException.class, "android.permission.MODIFY_PHONE_STATE");
+                ImsException.class,
+                "android.permission.PERFORM_IMS_SINGLE_REGISTRATION");
     }
 
     public void triggerFullNetworkRegistration(SipDelegateManager manager, int sipCode,
             String sipReason) throws Exception {
         ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
                 manager, (m) -> m.triggerFullNetworkRegistration(connection, sipCode, sipReason),
-                ImsException.class, "android.permission.MODIFY_PHONE_STATE");
+                ImsException.class,
+                "android.permission.PERFORM_IMS_SINGLE_REGISTRATION");
     }
 
     @Override
