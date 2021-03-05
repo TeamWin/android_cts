@@ -2390,6 +2390,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="cacert_install_via_intent_title">This test attempts to install a CA certificate via an intent.</string>
     <string name="cacert_install_via_intent_info">Attempt installing a CA certificate via an intent, which should not be possible. Tapping Go should show a dialog telling the user that CA certificates can put their privacy at risk and must be installed via Settings. If a any other dialog comes up, the test failed.</string>
 
+    <!-- Strings for credential management test -->
+    <string name="credential_management_app_test">Credential Management App Test</string>
+    <string name="credential_management_app_info">This test requests to manage the user\'s KeyChain credentials and become the credential management app.</string>
+    <string name="request_manage_credentials">Request to manage credentials</string>
+    <string name="is_credential_management_app">Check is credential management app</string>
+    <string name="credential_management_app_policy">Check correct authentication policy is set</string>
+
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
     <string name="widget_framework_test_info">This test checks some basic features of the widget
