@@ -114,12 +114,16 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     /** Gets the physical address of the DUT by parsing the dumpsys hdmi_control. */
     public int getDumpsysPhysicalAddress() throws Exception {
+        return getDumpsysPhysicalAddress(getDevice());
+    }
+
+    /** Gets the physical address of the specified device by parsing the dumpsys hdmi_control. */
+    public static int getDumpsysPhysicalAddress(ITestDevice device) throws Exception {
         String line;
         String pattern = "(.*?)" + "(physical_address: )" + "(?<address>0x\\p{XDigit}{4})" +
                 "(.*?)";
         Pattern p = Pattern.compile(pattern);
         Matcher m;
-        ITestDevice device = getDevice();
         String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
         BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
         while ((line = reader.readLine()) != null) {
@@ -134,12 +138,16 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     /** Gets the logical address of the DUT by parsing the dumpsys hdmi_control. */
     public int getDumpsysLogicalAddress() throws Exception {
+        return getDumpsysLogicalAddress(getDevice());
+    }
+
+    /** Gets the logical address of the specified device by parsing the dumpsys hdmi_control. */
+    public static int getDumpsysLogicalAddress(ITestDevice device) throws Exception {
         String line;
         String pattern = "(.*?)" + "(mAddress: )" + "(?<address>\\d+)" +
                 "(.*?)";
         Pattern p = Pattern.compile(pattern);
         Matcher m;
-        ITestDevice device = getDevice();
         String dumpsys = device.executeShellCommand("dumpsys hdmi_control");
         BufferedReader reader = new BufferedReader(new StringReader(dumpsys));
         while ((line = reader.readLine()) != null) {
