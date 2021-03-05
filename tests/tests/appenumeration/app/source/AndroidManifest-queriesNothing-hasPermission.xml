@@ -20,7 +20,7 @@
     <permission android:name="android.appenumeration.queries.nothing.haspermission.READ" />
     <uses-permission android:name="android.appenumeration.queries.nothing.haspermission.READ" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
-    <application>
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.appenumeration.cts.query.TestActivity"
                   android:exported="true" />
