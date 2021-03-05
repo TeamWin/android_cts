@@ -22,10 +22,14 @@ android_test_helper_app {
     name: "CtsOutsideOfPackageActivity",
     defaults: ["cts_defaults"],
     sdk_version: "current",
+    static_libs: [
+        "androidx.annotation_annotation",
+        "OutOfPackageDataSharingServiceAidl",
+    ],
+    srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
         "general-tests",
     ],
-    srcs: ["src/**/*.java"],
 }
