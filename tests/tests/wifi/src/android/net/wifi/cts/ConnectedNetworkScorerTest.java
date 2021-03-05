@@ -47,6 +47,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
 import android.net.wifi.WifiNetworkSuggestion;
 import android.net.wifi.WifiUsabilityStatsEntry;
+import android.net.wifi.WifiConnectedSessionInfo;
 import android.os.Build;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiDevice;
@@ -318,23 +319,16 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         }
     }
 
-    private static class TestConnectedNetworkScorer implements
+    private static abstract class TestConnectedNetworkScorer implements
             WifiManager.WifiConnectedNetworkScorer {
-        private CountDownLatch mCountDownLatch;
+        protected CountDownLatch mCountDownLatch;
         public Integer startSessionId;
         public Integer stopSessionId;
         public WifiManager.ScoreUpdateObserver scoreUpdateObserver;
+        public boolean isUserSelected;
 
         TestConnectedNetworkScorer(CountDownLatch countDownLatch) {
             mCountDownLatch = countDownLatch;
-        }
-
-        @Override
-        public void onStart(int sessionId) {
-            synchronized (mCountDownLatch) {
-                this.startSessionId = sessionId;
-                mCountDownLatch.countDown();
-            }
         }
 
         @Override
@@ -347,7 +341,9 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
         @Override
         public void onSetScoreUpdateObserver(WifiManager.ScoreUpdateObserver observerImpl) {
-            this.scoreUpdateObserver = observerImpl;
+            synchronized (mCountDownLatch) {
+                this.scoreUpdateObserver = observerImpl;
+            }
         }
 
         public void resetCountDownLatch(CountDownLatch countDownLatch) {
@@ -357,22 +353,73 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         }
     }
 
+    private static class TestConnectedNetworkScorerWithSessionId extends
+            TestConnectedNetworkScorer {
+        TestConnectedNetworkScorerWithSessionId(CountDownLatch countDownLatch) {
+            super(countDownLatch);
+            isUserSelected = false;
+        }
+
+        @Override
+        public void onStart(int sessionId) {
+            synchronized (mCountDownLatch) {
+                this.startSessionId = sessionId;
+                mCountDownLatch.countDown();
+            }
+        }
+    }
+
+    private static class TestConnectedNetworkScorerWithSessionInfo extends
+            TestConnectedNetworkScorer {
+        TestConnectedNetworkScorerWithSessionInfo(CountDownLatch countDownLatch) {
+            super(countDownLatch);
+        }
+
+        @Override
+        public void onStart(WifiConnectedSessionInfo sessionInfo) {
+            synchronized (mCountDownLatch) {
+                this.startSessionId = sessionInfo.getSessionId();
+                this.isUserSelected = sessionInfo.isUserSelected();
+                mCountDownLatch.countDown();
+            }
+        }
+    }
+
     /**
-     * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer} interface.
-     *
+     * Tests the
+     * {@link android.net.wifi.WifiConnectedNetworkScorer#onStart(WifiConnectionSessionInfo)}.
+     */
+    @Test
+    public void testConnectedNetworkScorerWithSessionInfo() throws Exception {
+        CountDownLatch countDownLatchScorer = new CountDownLatch(1);
+        TestConnectedNetworkScorerWithSessionInfo connectedNetworkScorer =
+                new TestConnectedNetworkScorerWithSessionInfo(countDownLatchScorer);
+        testSetWifiConnectedNetworkScorer(connectedNetworkScorer, countDownLatchScorer);
+    }
+
+    /**
+     * Tests the {@link android.net.wifi.WifiConnectedNetworkScorer#onStart(int)}.
+     */
+    @Test
+    public void testConnectedNetworkScorerWithSessionId() throws Exception {
+        CountDownLatch countDownLatchScorer = new CountDownLatch(1);
+        TestConnectedNetworkScorerWithSessionId connectedNetworkScorer =
+                new TestConnectedNetworkScorerWithSessionId(countDownLatchScorer);
+        testSetWifiConnectedNetworkScorer(connectedNetworkScorer, countDownLatchScorer);
+    }
+
+    /**
      * Note: We could write more interesting test cases (if the device has a mobile connection), but
      * that would make the test flaky. The default network/route selection on the device is not just
      * controlled by the wifi scorer input, but also based on params which are controlled by
      * other parts of the platform (likely in connectivity service) and hence will behave
      * differently on OEM devices.
      */
-    @Test
-    public void testSetWifiConnectedNetworkScorer() throws Exception {
-        CountDownLatch countDownLatchScorer = new CountDownLatch(1);
+    private void testSetWifiConnectedNetworkScorer(
+            TestConnectedNetworkScorer connectedNetworkScorer,
+                    CountDownLatch countDownLatchScorer) throws Exception {
         CountDownLatch countDownLatchUsabilityStats = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestConnectedNetworkScorer connectedNetworkScorer =
-                new TestConnectedNetworkScorer(countDownLatchScorer);
         TestUsabilityStatsListener usabilityStatsListener =
                 new TestUsabilityStatsListener(countDownLatchUsabilityStats);
         boolean disconnected = false;
@@ -388,6 +435,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             assertThat(countDownLatchScorer.await(DURATION, TimeUnit.MILLISECONDS)).isTrue();
 
             assertThat(connectedNetworkScorer.startSessionId).isAtLeast(0);
+            assertThat(connectedNetworkScorer.isUserSelected).isEqualTo(false);
             assertThat(connectedNetworkScorer.scoreUpdateObserver).isNotNull();
             WifiManager.ScoreUpdateObserver scoreUpdateObserver =
                     connectedNetworkScorer.scoreUpdateObserver;
@@ -449,8 +497,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     public void testSetWifiConnectedNetworkScorerOnSubsystemRestart() throws Exception {
         CountDownLatch countDownLatchScorer = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestConnectedNetworkScorer connectedNetworkScorer =
-                new TestConnectedNetworkScorer(countDownLatchScorer);
+        TestConnectedNetworkScorerWithSessionInfo connectedNetworkScorer =
+                new TestConnectedNetworkScorerWithSessionInfo(countDownLatchScorer);
         try {
             uiAutomation.adoptShellPermissionIdentity();
             // Clear any external scorer already active on the device.
@@ -513,8 +561,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             @NonNull ConnectionInitiator connectionInitiator) throws Exception {
         CountDownLatch countDownLatchScorer = new CountDownLatch(1);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        TestConnectedNetworkScorer connectedNetworkScorer =
-                new TestConnectedNetworkScorer(countDownLatchScorer);
+        TestConnectedNetworkScorerWithSessionInfo connectedNetworkScorer =
+                new TestConnectedNetworkScorerWithSessionInfo(countDownLatchScorer);
         ConnectivityManager.NetworkCallback networkCallback = null;
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         List<WifiConfiguration> savedNetworks = null;
