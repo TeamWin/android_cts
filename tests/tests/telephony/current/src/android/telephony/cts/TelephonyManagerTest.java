@@ -215,6 +215,8 @@ public class TelephonyManagerTest {
     private int mTestSub;
     private TelephonyManagerTest.CarrierConfigReceiver mReceiver;
     private int mRadioVersion;
+    private boolean mIsAllowedNetworkTypeChanged;
+    private Map<Integer, Long> mAllowedNetworkTypesList = new HashMap<>();
 
     private static class CarrierConfigReceiver extends BroadcastReceiver {
         private CountDownLatch mLatch = new CountDownLatch(1);
@@ -263,6 +265,7 @@ public class TelephonyManagerTest {
         getContext().registerReceiver(mReceiver, filter);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .adoptShellPermissionIdentity("android.permission.READ_PHONE_STATE");
+        saveAllowedNetworkTypesForAllReasons();
     }
 
     @After
@@ -274,6 +277,53 @@ public class TelephonyManagerTest {
         if (mReceiver != null) {
             getContext().unregisterReceiver(mReceiver);
             mReceiver = null;
+        }
+        if (mIsAllowedNetworkTypeChanged) {
+            recoverAllowedNetworkType();
+        }
+    }
+
+    private void saveAllowedNetworkTypesForAllReasons() {
+        mIsAllowedNetworkTypeChanged = false;
+        if (mAllowedNetworkTypesList == null) {
+            mAllowedNetworkTypesList = new HashMap<>();
+        }
+        long allowedNetworkTypesUser = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                }
+        );
+        long allowedNetworkTypesPower = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                }
+        );
+        long allowedNetworkTypesCarrier = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> {
+                    return tm.getAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+                }
+        );
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                allowedNetworkTypesUser);
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                allowedNetworkTypesPower);
+        mAllowedNetworkTypesList.put(TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                allowedNetworkTypesCarrier);
+    }
+
+    private void recoverAllowedNetworkType() {
+        if (mAllowedNetworkTypesList == null) {
+            return;
+        }
+        for (Integer key : mAllowedNetworkTypesList.keySet()) {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            key,
+                            mAllowedNetworkTypesList.get(key)));
         }
     }
 
@@ -2756,6 +2806,102 @@ public class TelephonyManagerTest {
             assertEquals(preferredNetworkType, modemPreferredNetworkType);
         } catch (SecurityException se) {
             fail("testDisAllowedNetworkTypes: SecurityException not expected");
+        }
+    }
+
+    @Test
+    public void testSetAllowedNetworkTypesForReason() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // test without permission: verify SecurityException
+        long allowedNetworkTypes = TelephonyManager.NETWORK_TYPE_BITMASK_NR;
+        try {
+            mIsAllowedNetworkTypeChanged = true;
+            mTelephonyManager.setAllowedNetworkTypesForReason(
+                    TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER, allowedNetworkTypes);
+            fail("testSetPolicyDataEnabled: SecurityException expected");
+        } catch (SecurityException se) {
+            // expected
+        }
+
+        // test with permission
+        try {
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                            allowedNetworkTypes));
+
+            long deviceAllowedNetworkTypes = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                    }
+            );
+            assertEquals(allowedNetworkTypes, deviceAllowedNetworkTypes);
+        } catch (SecurityException se) {
+            fail("testSetAllowedNetworkTypes: SecurityException not expected");
+        }
+    }
+
+    @Test
+    public void testSetAllowedNetworkTypesForReason_moreReason() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        // test without permission: verify SecurityException
+        long allowedNetworkTypes1 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+        long allowedNetworkTypes2 = TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE_CA;
+        long allowedNetworkTypes3 = TelephonyManager.NETWORK_TYPE_BITMASK_NR
+                | TelephonyManager.NETWORK_TYPE_BITMASK_LTE
+                | TelephonyManager.NETWORK_TYPE_BITMASK_UMTS;
+
+        try {
+            mIsAllowedNetworkTypeChanged = true;
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER,
+                            allowedNetworkTypes1));
+
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
+                            allowedNetworkTypes2));
+            ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
+                    mTelephonyManager,
+                    (tm) -> tm.setAllowedNetworkTypesForReason(
+                            TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER,
+                            allowedNetworkTypes3));
+            long deviceAllowedNetworkTypes1 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_POWER);
+                    }
+            );
+            long deviceAllowedNetworkTypes2 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER);
+                    }
+            );
+            long deviceAllowedNetworkTypes3 = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                    mTelephonyManager, (tm) -> {
+                        return tm.getAllowedNetworkTypesForReason(
+                                TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_CARRIER);
+                    }
+            );
+            assertEquals(allowedNetworkTypes1, deviceAllowedNetworkTypes1);
+            assertEquals(allowedNetworkTypes2, deviceAllowedNetworkTypes2);
+            assertEquals(allowedNetworkTypes3, deviceAllowedNetworkTypes3);
+        } catch (SecurityException se) {
+            fail("testSetAllowedNetworkTypes: SecurityException not expected");
         }
     }
 
