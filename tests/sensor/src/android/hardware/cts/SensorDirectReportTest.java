@@ -935,6 +935,11 @@ public class SensorDirectReportTest extends SensorTestCase {
         if (samplingPeriodUs < s.getMinDelay()) {
             return;
         }
+
+        if (samplingPeriodUs > s.getMaxDelay()) {
+            samplingPeriodUs = s.getMaxDelay();
+        }
+
         resetEvent();
 
         mChannel = prepareDirectChannel(memType, false /* secondary */);
