@@ -659,15 +659,18 @@ public class TelephonyManagerTest {
             assertTrue((receivedForwardingInfo.get() != null) ^ (receivedErrorCode.get() != null));
             if (receivedForwardingInfo.get() != null) {
                 CallForwardingInfo info = receivedForwardingInfo.get();
-                assertTrue(callForwardingReasons.contains(info.getReason()));
+                assertTrue("Got reason not in expected set:" + info.getReason(),
+                        callForwardingReasons.contains(info.getReason()));
                 if (info.isEnabled()) {
                     assertNotNull(info.getNumber());
-                    assertTrue(info.getTimeoutSeconds() >= 0);
+                    assertTrue("Got negative timeoutSeconds=" + info.getTimeoutSeconds(),
+                            info.getTimeoutSeconds() >= 0);
                 }
             }
 
             if (receivedErrorCode.get() != null) {
-                assertTrue(callForwardingErrors.contains(receivedErrorCode.get()));
+                assertTrue("Got code not in expected set:" + receivedErrorCode.get(),
+                        callForwardingErrors.contains(receivedErrorCode.get()));
             }
         }
     }
