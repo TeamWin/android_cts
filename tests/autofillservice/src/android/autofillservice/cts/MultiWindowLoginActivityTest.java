@@ -34,12 +34,14 @@ import android.autofillservice.cts.commontests.AutoFillServiceTestCase;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
 import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.Helper;
-import android.content.Intent;
+import android.graphics.Rect;
 import android.platform.test.annotations.AppModeFull;
+import android.server.wm.TestTaskOrganizer;
 import android.view.View;
 
 import com.android.compatibility.common.util.AdoptShellPermissionsRule;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -52,7 +54,7 @@ public class MultiWindowLoginActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<MultiWindowLoginActivity> {
 
     private LoginActivity mActivity;
-    private ActivityTaskManager mAtm;
+    private TestTaskOrganizer mTaskOrganizer;
 
     @Override
     protected AutofillActivityTestRule<MultiWindowLoginActivity> getActivityRule() {
@@ -61,7 +63,7 @@ public class MultiWindowLoginActivityTest
             @Override
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
-                mAtm = mContext.getSystemService(ActivityTaskManager.class);
+                mTaskOrganizer = new TestTaskOrganizer(mContext);
             }
         };
     }
@@ -82,33 +84,32 @@ public class MultiWindowLoginActivityTest
                 ActivityTaskManager.supportsSplitScreenMultiWindow(mActivity));
     }
 
+    @After
+    public void tearDown() {
+        mTaskOrganizer.unregisterOrganizerIfNeeded();
+    }
+
     /**
-     * Touch a view and exepct autofill window change
+     * Touch a view and expect autofill window change
      */
     protected void tapViewAndExpectWindowEvent(View view) throws TimeoutException {
         mUiBot.waitForWindowChange(() -> tap(view));
     }
 
-    protected String runAmStartActivity(Class<? extends Activity> activityClass, int flags) {
-        return runAmStartActivity(activityClass.getName(), flags);
-    }
-
-    protected String runAmStartActivity(String activity, int flags) {
-        return runShellCommand("am start %s/%s -f 0x%s", mPackageName, activity,
-                Integer.toHexString(flags));
-    }
-
     /**
-     * Put activity in TOP, will be followed by amStartActivity()
+     * Touch specific position on device display and expect autofill window change.
      */
-    protected void splitWindow(Activity activity) {
-        mAtm.setTaskWindowingModeSplitScreenPrimary(activity.getTaskId(), true /* toTop */);
+    protected void tapPointAndExpectWindowEvent(int x, int y) {
+        mUiBot.waitForWindowChange(() -> runShellCommand("input touchscreen tap %d %d", x, y));
+    }
+
+    protected String runAmStartActivity(String activity) {
+        return runShellCommand("am start %s/%s", mPackageName, activity);
     }
 
     protected void amStartActivity(Class<? extends Activity> activity2) {
         // it doesn't work using startActivity(intent), have to go through shell command.
-        runAmStartActivity(activity2,
-                Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
+        runAmStartActivity(activity2.getName());
     }
 
     @Test
@@ -130,12 +131,13 @@ public class MultiWindowLoginActivityTest
         MultiWindowLoginActivity.expectNewInstance(false);
         MultiWindowEmptyActivity.expectNewInstance(true);
 
-        splitWindow(mActivity);
+        mTaskOrganizer.putTaskInSplitPrimary(mActivity.getTaskId());
         mUiBot.waitForIdleSync();
         MultiWindowLoginActivity loginActivity = MultiWindowLoginActivity.waitNewInstance();
 
         amStartActivity(MultiWindowEmptyActivity.class);
         MultiWindowEmptyActivity emptyActivity = MultiWindowEmptyActivity.waitNewInstance();
+        mTaskOrganizer.putTaskInSplitSecondary(emptyActivity.getTaskId());
 
         // Make sure both activities are showing
         mUiBot.assertShownByRelativeId(Helper.ID_USERNAME);  // MultiWindowLoginActivity
@@ -155,7 +157,10 @@ public class MultiWindowLoginActivityTest
         assertThat(emptyActivity.hasWindowFocus()).isFalse();
 
         // Tap on EmptyActivity and fill ui is gone.
-        tapViewAndExpectWindowEvent(emptyActivity.getEmptyView());
+        Rect emptyActivityBounds = mTaskOrganizer.getSecondaryTaskBounds();
+        // Because tap(View) will get wrong physical start position of view while in split screen
+        // and make bot cannot tap on emptyActivity, so use task bounds and tap its center.
+        tapPointAndExpectWindowEvent(emptyActivityBounds.centerX(), emptyActivityBounds.centerY());
         mUiBot.assertNoDatasetsEver();
         assertThat(emptyActivity.hasWindowFocus()).isTrue();
         // LoginActivity username field is still focused but window has no focus
