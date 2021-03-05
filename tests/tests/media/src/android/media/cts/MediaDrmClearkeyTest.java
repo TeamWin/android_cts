@@ -107,6 +107,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private Looper mLooper;
     private MediaDrm mDrm = null;
     private final Object mLock = new Object();
+    private boolean mExpirationUpdateReceived;
     private boolean mLostStateReceived;
 
     public MediaDrmClearkeyTest() {
@@ -293,10 +294,23 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                                     getKeys(mDrm, initDataType, mSessionId, mDrmInitData,
                                             keyType, clearKeyIds);
                                 } else {
-                                    Log.e(TAG, "Events not supported" + event);
+                                    Log.e(TAG, "Events not supported " + event);
                                 }
                             }
                         });
+                    mDrm.setOnExpirationUpdateListener(new MediaDrm.OnExpirationUpdateListener() {
+                            @Override
+                            public void onExpirationUpdate(MediaDrm md, byte[] sid, long expirationTime) {
+                                if (md != mDrm) {
+                                    Log.e(TAG, "onExpirationUpdate callback: drm object mismatch");
+                                } else if (!Arrays.equals(mSessionId, sid)) {
+                                    Log.e(TAG, "onExpirationUpdate callback: sessionId mismatch: |" +
+                                            Arrays.toString(mSessionId) + "| vs |" + Arrays.toString(sid) + "|");
+                                } else {
+                                    mExpirationUpdateReceived = true;
+                                }
+                            }
+                        }, null);
                     mDrm.setOnSessionLostStateListener(new MediaDrm.OnSessionLostStateListener() {
                             @Override
                             public void onSessionLostState(MediaDrm md, byte[] sid) {
@@ -330,7 +344,6 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                                 keyStatus = keyInformation.get(2);
                                 assertTrue(Arrays.equals(keyStatus.getKeyId(), new byte[] {0x0, 0x1, 0x2}));
                                 assertTrue(keyStatus.getStatusCode() == MediaDrm.KeyStatus.STATUS_USABLE_IN_FUTURE);
-
                             }
                         }, null);
 
@@ -402,7 +415,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
 
         if (!preparePlayback(videoMime, videoFeatures, audioUrl, audioEncrypted, videoUrl,
                 videoEncrypted, videoWidth, videoHeight, scrambled, mSessionId, getSurfaces())) {
-            return;
+            throw new Error("Fail to set up test");
         }
 
         if (hasDrm) {
@@ -1185,6 +1198,140 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
         if (!gotException) {
             throw new Error("Didn't receive expected MediaDrm.SessionException");
+        }
+    }
+
+    /**
+     * Test sendExpirationUpdate and onExpirationUpdateListener
+     *
+     * Expected behavior: the EXPIRATION_UPDATE event arrives
+     * at the onExpirationUpdateListener with the expiry time
+     */
+    @Presubmit
+    public void testOnExpirationUpdateListener() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = null;
+        mSessionId = null;
+        mExpirationUpdateReceived = false;
+
+        // provideKeyResponse calls sendExpirationUpdate method
+        // for testing purpose, we therefore start a license request
+        // which calls provideKeyResonpse
+        byte[][] clearKeyIds = new byte[][] { CLEAR_KEY_CENC };
+        int keyType = MediaDrm.KEY_TYPE_STREAMING;
+        String initDataType = new String("cenc");
+
+        drm = startDrm(clearKeyIds,  initDataType, CLEARKEY_SCHEME_UUID, keyType);
+        mSessionId = openSession(drm);
+        try {
+            if (!preparePlayback(
+                    MIME_VIDEO_AVC,
+                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
+                    Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
+                    mSessionId, getSurfaces())) {
+                closeSession(drm, mSessionId);
+                stopDrm(drm);
+                throw new Error("Failed test setup");
+            }
+        } catch (Exception e) {
+            throw new Error("Unexpected exception ", e);
+        }
+
+        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+        getKeys(drm, initDataType, mSessionId, mDrmInitData,
+                    keyType, clearKeyIds);
+
+        // wait for the event to arrive
+        try {
+            closeSession(drm, mSessionId);
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mExpirationUpdateReceived; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (!mExpirationUpdateReceived) {
+                throw new Error("EXPIRATION_UPDATE event was not received by the listener");
+            }
+          } catch (MediaDrmStateException e) {
+                throw new Error("Unexpected exception from closing session: ", e);
+        } finally {
+            stopDrm(drm);
+        }
+    }
+
+    /**
+     * Test that the onExpirationUpdateListener
+     * listener is not called after
+     * clearOnExpirationUpdateListener is called.
+     */
+    @Presubmit
+    public void testClearOnExpirationUpdateListener() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = null;
+        mSessionId = null;
+        mExpirationUpdateReceived = false;
+
+        // provideKeyResponse calls sendExpirationUpdate method
+        // for testing purpose, we therefore start a license request
+        // which calls provideKeyResonpse
+        byte[][] clearKeyIds = new byte[][] { CLEAR_KEY_CENC };
+        int keyType = MediaDrm.KEY_TYPE_STREAMING;
+        String initDataType = new String("cenc");
+
+        drm = startDrm(clearKeyIds,  initDataType, CLEARKEY_SCHEME_UUID, keyType);
+        mSessionId = openSession(drm);
+        try {
+            if (!preparePlayback(
+                    MIME_VIDEO_AVC,
+                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
+                    Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
+                    mSessionId, getSurfaces())) {
+                closeSession(drm, mSessionId);
+                stopDrm(drm);
+                throw new Error("Failed test setup");
+            }
+        } catch (Exception e) {
+            throw new Error("Unexpected exception ", e);
+        }
+
+        // clear the expiration update listener
+        drm.clearOnExpirationUpdateListener();
+        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+        getKeys(drm, initDataType, mSessionId, mDrmInitData,
+                    keyType, clearKeyIds);
+
+        // wait for the event, it should not arrive
+        // because the expiration update listener has been cleared
+        try {
+            closeSession(drm, mSessionId);
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mExpirationUpdateReceived; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (mExpirationUpdateReceived) {
+                throw new Error("onExpirationUpdateListener should not be called");
+            }
+        } catch (MediaDrmStateException e) {
+              throw new Error("Unexpected exception from closing session: ", e);
+        } finally {
+            stopDrm(drm);
         }
     }
 
