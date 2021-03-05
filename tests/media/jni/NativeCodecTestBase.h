@@ -119,7 +119,6 @@ class OutputManager {
 
 class CodecTestBase {
   protected:
-    const long kQDeQTimeOutUs = 5000;
     const char* mMime;
     bool mIsAudio;
     CodecAsyncHandler mAsyncHandle;
