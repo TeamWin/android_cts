@@ -809,9 +809,18 @@ public class SipDelegateManagerTest {
 
     @Test
     public void testParcelUnparcelSipMessage() {
+        String startLine =
+                "INVITE sip:12345678@[2607:fc20:3806:2a44:0:6:42ae:5b01]:49155 SIP/2.0\r\n";
+        String header = "Via: SIP/2.0/TCP [FD00:976A:C202:1808::1]:65529;"
+                + "branch=z9hG4bKg3Zqkv7iivdfzmfqu68sro3cuht97q846\r\n"
+                + "To: <sip:12345678;phone-context=xxx.com@xxx.com;user=phone>\r\n"
+                + "From: <sip:12345679@xxx.com>;tag=ABC\r\n"
+                + "Call-ID: 000050B04074-79e-fc9b8700-29df64-5f3e5811-26fa8\r\n";
+        String branch = "z9hG4bKg3Zqkv7iivdfzmfqu68sro3cuht97q846";
+        String callId = "000050B04074-79e-fc9b8700-29df64-5f3e5811-26fa8";
         byte[] bytes = new byte[1];
         bytes[0] = 'a';
-        SipMessage m = new SipMessage("A", "B", bytes);
+        SipMessage m = new SipMessage(startLine, header, bytes);
         Parcel p = Parcel.obtain();
         m.writeToParcel(p, 0);
         p.setDataPosition(0);
@@ -820,6 +829,10 @@ public class SipDelegateManagerTest {
         assertEquals(m.getStartLine(), unparcel.getStartLine());
         assertEquals(m.getHeaderSection(), unparcel.getHeaderSection());
         assertTrue(Arrays.equals(m.getContent(), unparcel.getContent()));
+        assertEquals(branch, m.getViaBranchParameter());
+        assertEquals(callId, m.getCallIdParameter());
+        assertEquals(m.getViaBranchParameter(), unparcel.getViaBranchParameter());
+        assertEquals(m.getCallIdParameter(), unparcel.getCallIdParameter());
     }
 
     @Test
