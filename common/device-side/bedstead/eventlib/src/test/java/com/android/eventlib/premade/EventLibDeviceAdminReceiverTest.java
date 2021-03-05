@@ -18,6 +18,7 @@ package com.android.eventlib.premade;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 
@@ -28,9 +29,12 @@ import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.eventlib.EventLogs;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisableRequestedEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -45,6 +49,8 @@ public class EventLibDeviceAdminReceiverTest {
                     sContext.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
     private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final DevicePolicyManager sDevicePolicyManager =
+            sContext.getSystemService(DevicePolicyManager.class);
 
     @Before
     public void setUp() {
@@ -74,6 +80,42 @@ public class EventLibDeviceAdminReceiverTest {
         try {
             EventLogs<DeviceAdminEnabledEvent> eventLogs =
                     DeviceAdminEnabledEvent.queryPackage(sContext.getPackageName());
+
+            assertThat(eventLogs.poll()).isNotNull();
+        } finally {
+            profileOwner.remove();
+        }
+    }
+
+    @Test
+    @Ignore("It is not possible to trigger this through tests")
+    public void disableProfileOwner_logsDisableRequestedEvent() {
+        ProfileOwner profileOwner =
+                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+
+        try {
+            // TODO: Trigger disable device admin
+
+            EventLogs<DeviceAdminDisableRequestedEvent> eventLogs =
+                    DeviceAdminDisableRequestedEvent.queryPackage(sContext.getPackageName());
+
+            assertThat(eventLogs.poll()).isNotNull();
+        } finally {
+            profileOwner.remove();
+        }
+    }
+
+    @Test
+    @Ignore("It is not possible to trigger this through tests")
+    public void disableProfileOwner_logsDisabledEvent() {
+        ProfileOwner profileOwner =
+                sTestApis.devicePolicy().setProfileOwner(sUser, DEVICE_ADMIN_COMPONENT);
+
+        try {
+            // TODO: Trigger disable device admin
+
+            EventLogs<DeviceAdminDisabledEvent> eventLogs =
+                    DeviceAdminDisabledEvent.queryPackage(sContext.getPackageName());
 
             assertThat(eventLogs.poll()).isNotNull();
         } finally {
