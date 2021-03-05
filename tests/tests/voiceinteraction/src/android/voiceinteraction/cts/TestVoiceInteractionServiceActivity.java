@@ -25,14 +25,14 @@ import android.voiceinteraction.common.Utils;
 public class TestVoiceInteractionServiceActivity extends Activity {
     static final String TAG = "TestVoiceInteractionServiceActivity";
 
-    public void hotwordDetectionConfigTest(int serviceType) {
+    void triggerHotwordDetectionServiceTest(int serviceType) {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.START_TEST_VOICE_INTERACTION");
-        intent.setComponent(new ComponentName("android.voiceinteraction.service",
-                "android.voiceinteraction.service.CtsVoiceInteractionMainActivity"));
+        intent.setComponent(new ComponentName(Utils.SERVICE_PACKAGE_NAME,
+                Utils.SERVICE_PACKAGE_CTS_VOICE_INTERACTION_MAIN_ACTIVITY_NAME));
         intent.putExtra(Utils.KEY_SERVICE_TYPE, serviceType);
-        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.HOTWORD_DETECTION_SERVICE_CONFIG_TEST);
-        Log.i(TAG, "onCreate: " + intent);
+        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
+        Log.i(TAG, "triggerHotwordDetectionServiceTest: " + intent);
         startActivity(intent);
     }
 }
