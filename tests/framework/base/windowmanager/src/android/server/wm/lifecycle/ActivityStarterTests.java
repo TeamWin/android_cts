@@ -75,7 +75,8 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
             = getComponentName(ClearTaskOnLaunchActivity.class);
     private static final ComponentName FINISH_ON_TASK_LAUNCH_ACTIVITY
             = getComponentName(FinishOnTaskLaunchActivity.class);
-
+    private static final ComponentName DOCUMENT_INTO_EXISTING_ACTIVITY
+            = getComponentName(DocumentIntoExistingActivity.class);
 
     /**
      * Ensures that the following launch flag combination works when starting an activity which is
@@ -597,6 +598,31 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
                 mWmState.getActivityCountInTask(taskId, FINISH_ON_TASK_LAUNCH_ACTIVITY));
     }
 
+    @Test
+    public void testActivityWithDocumentIntoExisting() {
+        // Launch a documentLaunchMode="intoExisting" activity
+        launchActivityWithData(DOCUMENT_INTO_EXISTING_ACTIVITY, "test");
+        waitAndAssertActivityState(DOCUMENT_INTO_EXISTING_ACTIVITY, STATE_RESUMED,
+                "Activity should be resumed");
+        final int taskId = mWmState.getTaskByActivity(DOCUMENT_INTO_EXISTING_ACTIVITY).getTaskId();
+
+        // Navigate home
+        launchHomeActivity();
+
+        // Launch the alias activity.
+        final ComponentName componentName = new ComponentName(mContext.getPackageName(),
+                DocumentIntoExistingActivity.class.getPackageName()
+                        + ".ActivityStarterTests$DocumentIntoExistingAliasActivity");
+        launchActivityWithData(componentName, "test");
+
+        waitAndAssertActivityState(DOCUMENT_INTO_EXISTING_ACTIVITY, STATE_RESUMED,
+                "Activity should be resumed");
+        final int taskId2 = mWmState.getTaskByActivity(DOCUMENT_INTO_EXISTING_ACTIVITY).getTaskId();
+        assertEquals("Activity must be in the same task.", taskId, taskId2);
+        assertEquals("Activity is the only member of its task", 1,
+                mWmState.getActivityCountInTask(taskId2, null));
+    }
+
     // Test activity
     public static class StandardActivity extends Activity {
     }
@@ -636,6 +662,10 @@ public class ActivityStarterTests extends ActivityLifecycleClientTestBase {
 
     // Test activity
     public static class SingleInstanceActivity extends Activity {
+    }
+
+    // Test activity
+    public static class DocumentIntoExistingActivity extends Activity {
     }
 
     // Launching activity
