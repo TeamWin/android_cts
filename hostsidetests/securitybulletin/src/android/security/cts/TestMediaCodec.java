@@ -157,7 +157,6 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0540() throws Exception {
-        getOomCatcher().setHighMemoryTest();
         String inputFiles[] = {"cve_2017_0540.hevc"};
         runHevcDecodeMemTest(inputFiles,
                 "--input " + AdbUtils.TMP_PATH + inputFiles[0] + " --num_frames -1", getDevice());
@@ -351,7 +350,6 @@ public class TestMediaCodec extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2017-12")
     public void testPocCVE_2017_13150() throws Exception {
-        getOomCatcher().setHighMemoryTest();
         pocPusher.only32();
         String inputFiles[] = {"cve_2017_13150.m2v"};
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13150",

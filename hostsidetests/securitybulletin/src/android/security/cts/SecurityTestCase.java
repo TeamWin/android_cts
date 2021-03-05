@@ -58,8 +58,6 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
 
     private long kernelStartTime;
 
-    private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
-
     @Rule public TestName testName = new TestName();
     @Rule public PocPusher pocPusher = new PocPusher();
 
@@ -79,7 +77,6 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
         // TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
 
-        oomCatcher.start();
         sBuildInfo.put(getDevice(), mBuild);
         sAbi.put(getDevice(), mAbi);
         sTestName.put(getDevice(), testName.getMethodName());
@@ -94,8 +91,6 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
      */
     @After
     public void tearDown() throws Exception {
-        oomCatcher.stop(getDevice().getSerialNumber());
-
         try {
             getDevice().waitForDeviceAvailable(90 * 1000);
         } catch (DeviceNotAvailableException e) {
@@ -104,27 +99,11 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
             getDevice().waitForDeviceAvailable(30 * 1000);
         }
 
-        if (oomCatcher.isOomDetected()) {
-            // we don't need to check kernel start time if we intentionally rebooted because oom
-            updateKernelStartTime();
-            switch (oomCatcher.getOomBehavior()) {
-                case FAIL_AND_LOG:
-                    fail("The device ran out of memory.");
-                    break;
-                case PASS_AND_LOG:
-                    Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
-                    break;
-                case FAIL_NO_LOG:
-                    fail();
-                    break;
-            }
-        } else {
-            long deviceTime = getDeviceUptime() + kernelStartTime;
-            long hostTime = System.currentTimeMillis() / 1000;
-            assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
+        long deviceTime = getDeviceUptime() + kernelStartTime;
+        long hostTime = System.currentTimeMillis() / 1000;
+        assertTrue("Phone has had a hard reset", (hostTime - deviceTime) < 2);
 
-            // TODO(badash@): add ability to catch runtime restart
-        }
+        // TODO(badash@): add ability to catch runtime restart
     }
 
 
@@ -306,9 +285,5 @@ public class SecurityTestCase extends CompatibilityHostTestBase {
     public void updateKernelStartTime() throws DeviceNotAvailableException {
         long uptime = getDeviceUptime();
         kernelStartTime = (System.currentTimeMillis() / 1000) - uptime;
-    }
-
-    public HostsideOomCatcher getOomCatcher() {
-        return oomCatcher;
     }
 }
