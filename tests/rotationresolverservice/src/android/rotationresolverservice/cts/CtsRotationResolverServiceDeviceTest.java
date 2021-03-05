@@ -15,6 +15,8 @@
  */
 package android.rotationresolverservice.cts;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -26,13 +28,17 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.platform.test.annotations.AppModeFull;
 import android.service.rotationresolver.RotationResolverService;
+import android.text.TextUtils;
 import android.view.Surface;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.android.compatibility.common.util.DeviceConfigStateChangerRule;
+
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,13 +51,25 @@ import org.junit.runner.RunWith;
 @AppModeFull(reason = "PM will not recognize CtsTestRotationResolverService in instantMode.")
 public class CtsRotationResolverServiceDeviceTest {
 
+    private static final String NAMESPACE_ROTATION_RESOLVER = "rotation_resolver";
+    private static final String KEY_SERVICE_ENABLED = "service_enabled";
     private static final String FAKE_SERVICE_PACKAGE =
             CtsTestRotationResolverService.class.getPackage().getName();
+    private final boolean isTestable =
+            !TextUtils.isEmpty(getRotationResolverServiceComponent());
     private Context mContext;
+
+    @Rule
+    public final DeviceConfigStateChangerRule mLookAllTheseRules =
+            new DeviceConfigStateChangerRule(getInstrumentation().getTargetContext(),
+                    NAMESPACE_ROTATION_RESOLVER,
+                    KEY_SERVICE_ENABLED,
+                    "true");
 
     @Before
     public void setUp() {
-        assumeTrue(VERSION.SDK_INT >= VERSION_CODES.R);
+        assumeTrue(VERSION.SDK_INT >= VERSION_CODES.S);
+        assumeTrue("Feature not available on this device. Skipping test.", isTestable);
         mContext = ApplicationProvider.getApplicationContext();
         clearTestableRotationResolverService();
         CtsTestRotationResolverService.reset();
@@ -80,7 +98,7 @@ public class CtsRotationResolverServiceDeviceTest {
     }
 
     @Test
-    public void testAttentionService_OnCancelledFromService() {
+    public void testRotationResolverService_OnCancelledFromService() {
         /** From manager, call ResolveRotation() on test service */
         assertThat(CtsTestRotationResolverService.hasPendingChecks()).isFalse();
         callResolveRotation();
