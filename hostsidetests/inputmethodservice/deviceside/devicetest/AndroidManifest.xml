@@ -28,7 +28,8 @@
 
     <application android:label="CtsInputMethodServiceDeviceTests"
          android:icon="@mipmap/ic_launcher"
-         android:allowBackup="false">
+         android:allowBackup="false"
+         android:debuggable="true">
 
         <uses-library android:name="android.test.runner"/>
 

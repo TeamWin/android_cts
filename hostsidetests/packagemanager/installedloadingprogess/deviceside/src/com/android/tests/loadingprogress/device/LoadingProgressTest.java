@@ -40,6 +40,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -89,11 +90,15 @@ public class LoadingProgressTest {
     public void testReadAllBytes() throws Exception {
         ApplicationInfo appInfo = mLauncherApps.getApplicationInfo(
                 TEST_PACKAGE_NAME, /* flags= */ 0, mUser);
-        String codePath = appInfo.sourceDir;
-        assertTrue(codePath.toLowerCase().endsWith(".apk"));
-        byte[] apkContentBytes = Files.readAllBytes(Paths.get(codePath));
-        assertNotNull(apkContentBytes);
-        assertTrue(apkContentBytes.length > 0);
+        final String codePath = appInfo.sourceDir;
+        final String apkDir = codePath.substring(0, codePath.lastIndexOf('/'));
+        for (String apkName : new File(apkDir).list()) {
+            final String apkPath = apkDir + "/" + apkName;
+            assertTrue(new File(apkPath).exists());
+            byte[] apkContentBytes = Files.readAllBytes(Paths.get(apkPath));
+            assertNotNull(apkContentBytes);
+            assertTrue(apkContentBytes.length > 0);
+        }
     }
 
     @Test
@@ -110,7 +115,9 @@ public class LoadingProgressTest {
             if (activity.getComponentName().getPackageName().equals(
                     TEST_PACKAGE_NAME)) {
                 foundTestApp = true;
-                assertTrue(progressCondition.test(activity.getLoadingProgress()));
+                final float progress = activity.getLoadingProgress();
+                assertTrue("progress <" + progress + "> does not meet requirement",
+                        progressCondition.test(progress));
             }
             assertTrue(activity.getUser().equals(mUser));
         }

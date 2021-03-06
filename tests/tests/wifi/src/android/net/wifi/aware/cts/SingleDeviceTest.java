@@ -16,7 +16,6 @@
 
 package android.net.wifi.aware.cts;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
@@ -51,7 +50,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcel;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
 
 import androidx.core.os.BuildCompat;
 
@@ -59,7 +57,6 @@ import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -82,6 +79,9 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
     private static final int MIN_DISTANCE_MM = 1 * 1000;
     private static final int MAX_DISTANCE_MM = 3 * 1000;
     private static final byte[] PMK_VALID = "01234567890123456789012345678901".getBytes();
+    private static final int AVAILABLE_DATA_PATH_COUNT = 2;
+    private static final int AVAILABLE_PUBLISH_SESSION_COUNT = 8;
+    private static final int AVAILABLE_SUBSCRIBE_SESSION_COUNT = 8;
 
     private final Object mLock = new Object();
     private final HandlerThread mHandlerThread = new HandlerThread("SingleDeviceTest");
@@ -935,6 +935,22 @@ public class SingleDeviceTest extends WifiJUnit3TestBase {
 
         assertEquals(parcelablePeerHandle, rereadParcelablePeerHandle);
         assertEquals(parcelablePeerHandle.hashCode(), rereadParcelablePeerHandle.hashCode());
+    }
+
+    /**
+     * Test AwareResources constructor function.
+     */
+    public void testAwareResourcesConstructor() {
+        if (!BuildCompat.isAtLeastS()) {
+            return;
+        }
+        AwareResources awareResources = new AwareResources(AVAILABLE_DATA_PATH_COUNT,
+                AVAILABLE_PUBLISH_SESSION_COUNT, AVAILABLE_SUBSCRIBE_SESSION_COUNT);
+        assertEquals(AVAILABLE_DATA_PATH_COUNT, awareResources.getAvailableDataPathsCount());
+        assertEquals(AVAILABLE_PUBLISH_SESSION_COUNT, awareResources
+                .getAvailablePublishSessionsCount());
+        assertEquals(AVAILABLE_SUBSCRIBE_SESSION_COUNT, awareResources
+                .getAvailableSubscribeSessionsCount());
     }
 
     // local utilities

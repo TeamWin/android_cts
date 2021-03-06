@@ -16,6 +16,8 @@
 
 package android.hdmicec.cts;
 
+import java.io.File;
+
 public final class HdmiCecConstants {
 
     private HdmiCecConstants() {}
@@ -80,4 +82,10 @@ public final class HdmiCecConstants {
 
     // CEC Device property list
     public static final String HDMI_DEVICE_TYPE_PROPERTY = "ro.hdmi.device_type";
+
+    /*
+     * The default name of local directory into which the port to device mapping files are stored.
+     */
+    public static final File CEC_MAP_FOLDER =
+            new File(System.getProperty("java.io.tmpdir"), "cec-cts-temp");
 }

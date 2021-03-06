@@ -37,7 +37,7 @@ import sensor_fusion_utils
 _CAM_FRAME_RANGE_MAX = 9.0  # Seconds: max allowed camera frame range.
 _FEATURE_MARGIN = 0.20  # Only take feature points from center 20% so that
                         # rotation measured has less rolling shutter effect.
-_CV2_FEATURE_PARAMS = dict(maxCorners=240,
+_CV2_FEATURE_PARAMS = dict(maxCorners=100,
                            qualityLevel=0.3,
                            minDistance=7,
                            blockSize=7)  # values for cv2.goodFeaturesToTrack
@@ -270,15 +270,17 @@ def _get_cam_rotations(frames, facing, h, log_path):
     gframes.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
   rots = []
 
-  ymin = h * (1 - _FEATURE_MARGIN) / 2
-  ymax = h * (1 + _FEATURE_MARGIN) / 2
+  # create mask
+  ymin = int(h * (1 - _FEATURE_MARGIN) / 2)
+  ymax = int(h * (1 + _FEATURE_MARGIN) / 2)
+  mask = numpy.zeros_like(gframes[0])
+  mask[ymin:ymax, :] = 255
+
   for i in range(1, len(gframes)):
     gframe0 = gframes[i-1]
     gframe1 = gframes[i]
-    p0 = cv2.goodFeaturesToTrack(gframe0, mask=None, **_CV2_FEATURE_PARAMS)
-    # p0's shape is N * 1 * 2
-    mask = (p0[:, 0, 1] >= ymin) & (p0[:, 0, 1] <= ymax)
-    p0_filtered = p0[mask]
+    p0_filtered = cv2.goodFeaturesToTrack(
+        gframe0, mask=mask, **_CV2_FEATURE_PARAMS)
     num_features = len(p0_filtered)
     if num_features < _FEATURE_PTS_MIN:
       raise AssertionError(
@@ -300,7 +302,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
     if i == 1:
       # Save a debug visualization of the features that are being
       # tracked in the first frame.
-      frame = frames[i]
+      frame = frames[i-1]
       for x, y in p0_filtered[st == 1]:
         cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
       image_processing_utils.write_image(

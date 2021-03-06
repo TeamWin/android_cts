@@ -18,11 +18,13 @@ package android.server.wm;
 
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_BOUNDS;
+import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -256,6 +258,45 @@ public class DisplayHashManagerTest {
 
         int errorCode = mSyncDisplayHashResultCallback.getError();
         assertEquals(DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN, errorCode);
+    }
+
+    @Test
+    public void testGenerateDisplayHash_InvalidHashAlgorithm() {
+        mInstrumentation.runOnMainSync(() -> {
+            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y);
+            mTestView = new View(mActivity);
+            mTestView.setBackgroundColor(Color.BLUE);
+            mMainView.addView(mTestView, p);
+            mMainView.invalidate();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mTestView.generateDisplayHash("fake hash", null, mExecutor,
+                mSyncDisplayHashResultCallback);
+        int errorCode = mSyncDisplayHashResultCallback.getError();
+        assertEquals(DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM, errorCode);
+    }
+
+    @Test
+    public void testVerifyDisplayHash_InvalidDisplayHash() {
+        mInstrumentation.runOnMainSync(() -> {
+            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y);
+            mTestView = new View(mActivity);
+            mTestView.setBackgroundColor(Color.BLUE);
+            mMainView.addView(mTestView, p);
+            mMainView.invalidate();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        DisplayHash displayHash = generateDisplayHash(null);
+        DisplayHash fakeDisplayHash = new DisplayHash(
+                displayHash.getTimeMillis(), displayHash.getBoundsInWindow(),
+                displayHash.getHashAlgorithm(), new byte[32], displayHash.getHmac());
+        VerifiedDisplayHash verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(
+                fakeDisplayHash);
+        assertNull(verifiedDisplayHash);
     }
 
     private DisplayHash generateDisplayHash(Rect bounds) {

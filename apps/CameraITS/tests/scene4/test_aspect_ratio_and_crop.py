@@ -106,9 +106,7 @@ def _print_failed_test_results(failed_ar, failed_fov, failed_crop):
     logging.error('Images failed in the aspect ratio test:')
     logging.error('Aspect ratio value: width / height')
     for fa in failed_ar:
-      logging.error('%s with %s %dx%d: %.3f; valid range %.3f ~ %.3f',
-                    fa['fmt_iter'], fa['fmt_cmpr'], fa['w'], fa['h'], fa['ar'],
-                    fa['valid_range'][0], fa['valid_range'][1])
+      logging.error('%s', fa)
 
   if failed_fov:
     logging.error('FoV test summary')
@@ -121,13 +119,7 @@ def _print_failed_test_results(failed_ar, failed_fov, failed_crop):
     logging.error('Images failed in the crop test:')
     logging.error('Circle center (H x V) relative to the image center.')
     for fc in failed_crop:
-      logging.error('%s with %s %dx%d: %.3f x %.3f', fc['fmt_iter'],
-                    fc['fmt_cmpr'], fc['w'], fc['h'], fc['ct_hori'],
-                    fc['ct_vert'])
-      logging.error('valid H range: %.3f ~ %.3f', fc['valid_range_h'][0],
-                    fc['valid_range_h'][1])
-      logging.error('valid V range: %.3f ~ %.3f', fc['valid_range_v'][0],
-                    fc['valid_range_v'][1])
+      logging.error('%s', fc)
   if failed_ar:
     raise RuntimeError
   if failed_fov:
@@ -337,14 +329,15 @@ def _check_ar(circle, ar_gt, w, h, fmt_iter, fmt_cmpr):
     fmt_cmpr: format of secondary capture
 
   Returns:
-    dict of info if check fails
+    error string if check fails
   """
   thresh_ar = max(_THRESH_AR_L, _THRESH_AR_S +
                   max(w, h) * (_THRESH_AR_L-_THRESH_AR_S) / _LARGE_SIZE)
   ar = circle['w'] / circle['h']
   if not np.isclose(ar, ar_gt, atol=thresh_ar):
-    return {'fmt_iter': fmt_iter, 'fmt_cmpr': fmt_cmpr,
-            'w': w, 'h': h, 'ar': ar, 'thresh': thresh_ar}
+    e_msg = (f'{fmt_iter} with {fmt_cmpr} {w}x{h}: aspect_ratio {ar:.3f}, '
+             f'thresh {thresh_ar:.3f}')
+    return e_msg
 
 
 def _check_crop(circle, cc_gt, w, h, fmt_iter, fmt_cmpr, crop_thresh_factor):
@@ -366,7 +359,7 @@ def _check_crop(circle, cc_gt, w, h, fmt_iter, fmt_cmpr, crop_thresh_factor):
     crop_thresh_factor: scaling factor for crop thresholds
 
   Returns:
-    dict of info for error
+    error string if check fails
   """
   thresh_crop_l = _THRESH_CROP_L * crop_thresh_factor
   thresh_crop_s = _THRESH_CROP_S * crop_thresh_factor
@@ -383,9 +376,15 @@ def _check_crop(circle, cc_gt, w, h, fmt_iter, fmt_cmpr, crop_thresh_factor):
                      atol=thresh_crop_hori) or
       not np.isclose(circle['y_offset'], cc_gt['vert'],
                      atol=thresh_crop_vert)):
-    return {'fmt_iter': fmt_iter, 'fmt_cmpr': fmt_cmpr, 'w': w, 'h': h,
-            'ct_hori': circle['x_offset'], 'ct_vert': circle['y_offset'],
-            'thresh_h': thresh_crop_hori, 'thresh_v': thresh_crop_vert}
+    valid_x_range = (cc_gt['hori'] - thresh_crop_hori,
+                     cc_gt['hori'] + thresh_crop_hori)
+    valid_y_range = (cc_gt['vert'] - thresh_crop_vert,
+                     cc_gt['vert'] + thresh_crop_vert)
+    e_msg = (f'{fmt_iter} with {fmt_cmpr} {w}x{h} '
+             f"offset X {circle['x_offset']:.3f}, Y {circle['y_offset']:.3f}, "
+             f'valid X range: {valid_x_range[0]:.3f} ~ {valid_x_range[1]:.3f}, '
+             f'valid Y range: {valid_y_range[0]:.3f} ~ {valid_y_range[1]:.3f}')
+    return e_msg
 
 
 class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
