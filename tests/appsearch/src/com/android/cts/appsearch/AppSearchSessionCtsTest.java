@@ -30,14 +30,13 @@ public class AppSearchSessionCtsTest extends AppSearchSessionCtsTestBase {
     @Override
     protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName) {
         return AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder().setDatabaseName(dbName).build());
+                new AppSearchManager.SearchContext.Builder(dbName).build());
     }
 
     @Override
-    protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName,
-            @NonNull ExecutorService executor) {
+    protected ListenableFuture<AppSearchSessionShim> createSearchSession(
+            @NonNull String dbName, @NonNull ExecutorService executor) {
         return AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder().setDatabaseName(dbName).build(),
-                executor);
+                new AppSearchManager.SearchContext.Builder(dbName).build(), executor);
     }
 }

@@ -102,7 +102,7 @@ public class GlobalSearchSessionPlatformCtsTest {
                     .setBody("this is the body of the email")
                     .build();
 
-    private static final String DB_NAME = AppSearchManager.DEFAULT_DATABASE_NAME;
+    private static final String DB_NAME = "";
 
     private AppSearchSessionShim mDb;
 
@@ -114,9 +114,7 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         mDb =
                 AppSearchSessionShimImpl.createSearchSession(
-                                new AppSearchManager.SearchContext.Builder()
-                                        .setDatabaseName(DB_NAME)
-                                        .build())
+                                new AppSearchManager.SearchContext.Builder(DB_NAME).build())
                         .get();
         cleanup();
     }

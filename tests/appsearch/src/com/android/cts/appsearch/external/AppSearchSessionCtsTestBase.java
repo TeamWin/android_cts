@@ -66,7 +66,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 public abstract class AppSearchSessionCtsTestBase {
-    private static final String DB_NAME_1 = AppSearchManager.DEFAULT_DATABASE_NAME;
+    private static final String DB_NAME_1 = "";
     private static final String DB_NAME_2 = "testDb2";
 
     private AppSearchSessionShim mDb1;

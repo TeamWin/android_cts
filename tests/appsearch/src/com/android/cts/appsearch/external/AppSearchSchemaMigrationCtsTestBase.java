@@ -70,7 +70,7 @@ import java.util.concurrent.ExecutionException;
 // TODO(b/178060626) add a platform version of this test
 public abstract class AppSearchSchemaMigrationCtsTestBase {
 
-    private static final String DB_NAME = AppSearchManager.DEFAULT_DATABASE_NAME;
+    private static final String DB_NAME = "";
     private static final AppSearchSchema.Migrator NO_OP_MIGRATOR =
             new AppSearchSchema.Migrator() {
                 @Override
