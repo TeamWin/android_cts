@@ -99,6 +99,14 @@ public class CodecDecoderValidationTest extends CodecDecoderTestBase {
                         "bbb_2ch_44kHz_s16le.raw", 53.066f, -1L, CODEC_ALL},
                 {MediaFormat.MIMETYPE_AUDIO_MPEG, new String[]{"bbb_2ch_44kHz_lame_crc.mp3"},
                         "bbb_2ch_44kHz_s16le.raw", 104.09f, -1L, CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{"bbb_1280x720_800kbps_30fps_vp9" +
+                        ".webm"}, null, -1.0f, 1319105122L, CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{"bbb_1280x720_1200kbps_30fps_vp9" +
+                        ".webm"}, null, -1.0f, 4128150660L, CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{"bbb_1280x720_1600kbps_30fps_vp9" +
+                        ".webm"}, null, -1.0f, 156928091L, CODEC_ALL},
+                {MediaFormat.MIMETYPE_VIDEO_VP9, new String[]{"bbb_1280x720_2000kbps_30fps_vp9" +
+                        ".webm"}, null, -1.0f, 3902485256L, CODEC_ALL},
         });
         return prepareParamList(exhaustiveArgsList, isEncoder, needAudio, needVideo, false);
     }
