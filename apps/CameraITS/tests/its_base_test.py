@@ -147,6 +147,9 @@ class ItsBaseTest(base_test.BaseTestClass):
     time.sleep(TABLET_CMD_DELAY_SEC)
     self.tablet.adb.shell(['input', 'keyevent', 'KEYCODE_WAKEUP'])
     time.sleep(TABLET_CMD_DELAY_SEC)
+    # Dismiss keyguard
+    self.tablet.adb.shell(['wm', 'dismiss-keyguard'])
+    time.sleep(TABLET_CMD_DELAY_SEC)
     # Turn off the adaptive brightness on tablet.
     self.tablet.adb.shell(
         ['settings', 'put', 'system', 'screen_brightness_mode',

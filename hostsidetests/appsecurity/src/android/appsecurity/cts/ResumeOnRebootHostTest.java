@@ -60,6 +60,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     private static final String FEATURE_REBOOT_ESCROW = "feature:android.hardware.reboot_escrow";
     private static final String FEATURE_DEVICE_ADMIN = "feature:android.software.device_admin";
+    private static final String FEATURE_SECURE_LOCK_SCREEN =
+            "feature:android.software.secure_lock_screen";
 
     private static final long SHUTDOWN_TIME_MS = TimeUnit.SECONDS.toMicros(30);
     private static final int USER_SYSTEM = 0;
@@ -274,15 +276,17 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         }
     }
 
-    private boolean isAtLeastSDevice() throws Exception {
+    private boolean isSupportedSDevice() throws Exception {
         // The following tests targets API level >= S.
-        return ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
+        boolean isAtleastS = ApiLevelUtil.isAfter(getDevice(), 30 /* BUILD.VERSION_CODES.R */)
                 || ApiLevelUtil.codenameEquals(getDevice(), "S");
+
+        return isAtleastS && getDevice().hasFeature(FEATURE_SECURE_LOCK_SCREEN);
     }
 
     @Test
     public void resumeOnReboot_SingleUser_ServerBased_Success() throws Exception {
-        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
@@ -318,7 +322,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_SingleUser_MultiClient_ClientASuccess() throws Exception {
-        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
@@ -361,7 +365,7 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
 
     @Test
     public void resumeOnReboot_SingleUser_MultiClient_ClientBSuccess() throws Exception {
-        assumeTrue("Device isn't at least S", isAtLeastSDevice());
+        assumeTrue("Device isn't at least S or have no lock screen", isSupportedSDevice());
 
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];

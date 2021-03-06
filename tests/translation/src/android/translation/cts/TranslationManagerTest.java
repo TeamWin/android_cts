@@ -44,6 +44,7 @@ import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,6 +119,7 @@ public class TranslationManagerTest {
             } catch (InterruptedException e) {
                 Log.w(TAG, "Exception waiting for onConnected");
             }
+            assertThat(translator.isDestroyed()).isFalse();
 
             final TranslationResponse response = translator.translate(
                     new TranslationRequest("hello world"));
@@ -128,6 +130,7 @@ public class TranslationManagerTest {
             translationLatch.countDown();
 
             translator.destroy();
+            assertThat(translator.isDestroyed()).isTrue();
             try {
                 mServiceWatcher.waitOnDisconnected();
             } catch (InterruptedException e) {
@@ -150,6 +153,30 @@ public class TranslationManagerTest {
         final TranslationRequest request = response.getTranslations().get(0);
         assertThat(request.getAutofillId()).isEqualTo(null);
         assertThat(request.getTranslationText()).isEqualTo("success");
+    }
+
+    @Test
+    public void testGetSupportedLocales() throws Exception{
+        enableCtsTranslationService();
+
+        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
+                TranslationManager.class);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<List<String>> resultRef = new AtomicReference<>();
+
+        final Thread th = new Thread(() -> {
+            final List<String> supportLocales = manager.getSupportedLocales();
+            // TODO(b/178651514): empty implementation not forward to service, should update tests
+            resultRef.set(supportLocales);
+            latch.countDown();
+        });
+        th.start();
+        latch.await();
+
+        final List<String> supportLocales  = resultRef.get();
+        // TODO(b/178651514): empty implementation and has bug now. It will return null instead of
+        //  empty list
+        assertThat(supportLocales).isNull();
     }
 
     protected void enableCtsTranslationService() {

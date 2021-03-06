@@ -28,6 +28,7 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -263,6 +264,55 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
         new InstallMultiple()
                 .addFile(SPLIT_APK)
                 .runExpectingFailure();
+    }
+
+    @Test
+    public void testInstallBaseIncrementally() throws Exception {
+        assumeIncrementalDeliveryFeature();
+        new InstallMultiple()
+                .useIncremental()
+                .addFile(BASE_APK)
+                .run();
+    }
+
+    @Test
+    @Ignore("IncFs does not support STATX_ATTR_VERITY")
+    public void testInstallBaseWithFsvSigIncrementally() throws Exception {
+        assumeIncrementalDeliveryFeature();
+        new InstallMultiple()
+                .useIncremental()
+                .addFile(BASE_APK)
+                .addFile(BASE_APK + FSV_SIG_SUFFIX)
+                .run();
+        assumeIncrementalDeliveryV2Feature();
+        verifyFsverityInstall(BASE_APK);
+    }
+
+    @Test
+    @Ignore("IncFs does not support STATX_ATTR_VERITY")
+    public void testInstallEverythingWithFsvSigIncrementally() throws Exception {
+        assumeIncrementalDeliveryFeature();
+        new InstallMultiple()
+                .useIncremental()
+                .addFile(BASE_APK)
+                .addFile(BASE_APK_DM)
+                .addFile(BASE_APK_DM + FSV_SIG_SUFFIX)
+                .addFile(SPLIT_APK)
+                .addFile(SPLIT_APK_DM)
+                .addFile(SPLIT_APK_DM + FSV_SIG_SUFFIX)
+                .run();
+        assumeIncrementalDeliveryV2Feature();
+        verifyFsverityInstall(BASE_APK_DM, SPLIT_APK_DM);
+    }
+
+    private void assumeIncrementalDeliveryFeature() throws Exception {
+        assumeTrue("true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery")));
+    }
+
+    private void assumeIncrementalDeliveryV2Feature() throws Exception {
+        assumeTrue("true\n".equals(getDevice().executeShellCommand(
+                "pm has-feature android.software.incremental_delivery 2")));
     }
 
     void verifyFsverityInstall(String... files) throws DeviceNotAvailableException {

@@ -46,9 +46,10 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
     private final IAbi mAbi;
 
     private final List<String> mArgs = new ArrayList<>();
-    private final List<File> mFiles = new ArrayList<>();
-    private final List<String> mSplits = new ArrayList<>();
-    private boolean mUseNaturalAbi;
+    private final List<File> mFilesToAdd = new ArrayList<>();
+    private final List<String> mSplitsToRemove = new ArrayList<>();
+    private boolean mUseNaturalAbi = false;
+    private boolean mUseIncremental = false;
 
     public BaseInstallMultiple(ITestDevice device, IBuildInfo buildInfo, IAbi abi) {
         this(device, buildInfo, abi, true);
@@ -71,12 +72,12 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
     T addFile(String file) throws FileNotFoundException {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        mFiles.add(buildHelper.getTestFile(file, mAbi));
+        mFilesToAdd.add(buildHelper.getTestFile(file, mAbi));
         return (T) this;
     }
 
     T removeSplit(String split) {
-        mSplits.add(split);
+        mSplitsToRemove.add(split);
         return (T) this;
     }
 
@@ -88,6 +89,11 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
     T useNaturalAbi() {
         mUseNaturalAbi = true;
+        return (T) this;
+    }
+
+    T useIncremental() {
+        mUseIncremental = true;
         return (T) this;
     }
 
@@ -143,6 +149,11 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
     }
 
     private void run(boolean expectingSuccess, String failure) throws DeviceNotAvailableException {
+        if (mUseIncremental) {
+            runIncremental(expectingSuccess, failure);
+            return;
+        }
+
         final ITestDevice device = mDevice;
 
         // Create an install session
@@ -173,8 +184,8 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
         // Push our files into session. Ideally we'd use stdin streaming,
         // but ddmlib doesn't support it yet.
-        for (int i = 0; i < mFiles.size(); i++) {
-            final File file = mFiles.get(i);
+        for (int i = 0; i < mFilesToAdd.size(); i++) {
+            final File file = mFilesToAdd.get(i);
             final String remoteName = deriveRemoteName(file.getName(), i);
             final String remotePath = "/data/local/tmp/" + remoteName;
             if (!device.pushFile(file, remotePath)) {
@@ -191,8 +202,8 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
             TestCase.assertTrue(result, result.startsWith("Success"));
         }
 
-        for (int i = 0; i < mSplits.size(); i++) {
-            final String split = mSplits.get(i);
+        for (int i = 0; i < mSplitsToRemove.size(); i++) {
+            final String split = mSplitsToRemove.get(i);
 
             cmd.setLength(0);
             cmd.append("pm install-remove");
@@ -209,6 +220,49 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
         cmd.append(' ').append(sessionId);
 
         result = device.executeShellCommand(cmd.toString()).trim();
+        if (failure == null) {
+            if (expectingSuccess) {
+                TestCase.assertTrue(result, result.startsWith("Success"));
+            } else {
+                TestCase.assertFalse(result, result.startsWith("Success"));
+            }
+        } else {
+            TestCase.assertTrue(result, result.contains(failure));
+        }
+    }
+
+    private void runIncremental(boolean expectingSuccess, String failure) throws DeviceNotAvailableException {
+        final ITestDevice device = mDevice;
+
+        if (!mSplitsToRemove.isEmpty()) {
+            throw new IllegalStateException("Incremental sessions can't remove splits");
+        }
+
+        // Create an install session
+        final StringBuilder cmd = new StringBuilder();
+        cmd.append("pm install-incremental");
+        for (String arg : mArgs) {
+            cmd.append(' ').append(arg);
+        }
+        if (!mUseNaturalAbi && mAbi != null) {
+            cmd.append(' ').append(AbiUtils.createAbiFlag(mAbi.getName()));
+        }
+
+        // Push our files into session. Ideally we'd use stdin streaming,
+        // but ddmlib doesn't support it yet.
+        for (int i = 0; i < mFilesToAdd.size(); i++) {
+            final File file = mFilesToAdd.get(i);
+            final String remoteName = deriveRemoteName(file.getName(), i);
+            final String remotePath = "/data/local/tmp/" + remoteName;
+            if (!device.pushFile(file, remotePath)) {
+                throw new IllegalStateException("Failed to push " + file);
+            }
+
+            cmd.append(' ').append(remotePath);
+        }
+
+        // Everything staged; let's pull trigger
+        String result = device.executeShellCommand(cmd.toString()).trim();
         if (failure == null) {
             if (expectingSuccess) {
                 TestCase.assertTrue(result, result.startsWith("Success"));

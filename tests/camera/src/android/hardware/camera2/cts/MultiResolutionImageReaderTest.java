@@ -1,0 +1,383 @@
+/*
+ * Copyright 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.hardware.camera2.cts;
+
+import android.graphics.ImageFormat;
+import android.hardware.HardwareBuffer;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.MultiResolutionImageReader;
+import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
+import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
+import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
+import android.hardware.camera2.params.MultiResolutionStreamInfo;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.Image;
+import android.media.ImageReader;
+import android.util.Log;
+import android.util.Range;
+import android.util.Size;
+import android.view.Surface;
+
+import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.Test;
+
+import static android.hardware.camera2.cts.CameraTestUtils.ImageAndMultiResStreamInfo;
+import static android.hardware.camera2.cts.CameraTestUtils.SimpleMultiResolutionImageReaderListener;
+import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
+/**
+ * Basic test for MultiResolutionImageReader APIs.
+ *
+ * <p>Below image formats are tested:</p>
+ *
+ * <p>YUV_420_888: flexible YUV420, it is mandatory format for camera. </p>
+ * <p>JPEG: used for JPEG still capture, also mandatory format. </p>
+ * <p>PRIVATE: used for input for private reprocessing.</p>
+ * <p>RAW: used for raw capture. </p>
+ */
+
+@RunWith(Parameterized.class)
+public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
+    private static final String TAG = "MultiResolutionImageReaderTest";
+    private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
+
+    // Number of frame (for streaming requests) to be verified.
+    private static final int NUM_FRAME_VERIFIED = 6;
+    // Number of frame (for streaming requests) to be verified with log processing time.
+    // Max number of images can be accessed simultaneously from ImageReader.
+    private static final int MAX_NUM_IMAGES = 5;
+    // Capture result timeout
+    private static final int WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
+    private static final int CAPTURE_TIMEOUT = 1500; //ms
+
+    private MultiResolutionImageReader mMultiResolutionImageReader;
+    private SimpleMultiResolutionImageReaderListener mListener;
+
+    @Test
+    public void testMultiResolutionCaptureCharacteristics() {
+        for (String id : mCameraIdsUnderTest) {
+            if (VERBOSE) {
+                Log.v(TAG, "Testing multi-resolution capture characteristics for Camera " + id);
+            }
+            StaticMetadata info = mAllStaticInfo.get(id);
+            CameraCharacteristics c = info.getCharacteristics();
+            StreamConfigurationMap config = c.get(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            int[] outputFormats = config.getOutputFormats();
+            int[] capabilities = CameraTestUtils.getValueNotNull(
+                    c, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            boolean isLogicalCamera = CameraTestUtils.contains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
+            Set<String> physicalCameraIds = c.getPhysicalCameraIds();
+
+            MultiResolutionStreamConfigurationMap multiResolutionMap = c.get(
+                    CameraCharacteristics.SCALER_MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP);
+            if (multiResolutionMap == null) {
+                Log.i(TAG, "Camera " + id + " doesn't support multi-resolution capture.");
+                continue;
+            }
+            if (VERBOSE) {
+                Log.v(TAG, "MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP: "
+                        + multiResolutionMap.toString());
+            }
+
+            int[] multiResolutionOutputFormats = multiResolutionMap.getOutputFormats();
+            //TODO: Handle ultra high resolution sensor camera
+            assertTrue("Camera " + id + " must be a logical multi-camera "
+                    + "to support multi-resolution capture.", isLogicalCamera);
+
+            for (int format : multiResolutionOutputFormats) {
+                assertTrue(String.format("Camera %s: multi-resolution output format %d "
+                        + "isn't a supported format", id, format),
+                        CameraTestUtils.contains(outputFormats, format));
+
+                Collection<MultiResolutionStreamInfo> multiResolutionStreams =
+                        multiResolutionMap.getOutputInfo(format);
+                assertTrue(String.format("Camera %s supports %d multi-resolution "
+                        + "outputInfo, expected at least 2", id,
+                        multiResolutionStreams.size()),
+                        multiResolutionStreams.size() >= 2);
+
+                // Make sure that each multi-resolution output stream info has the maximum size
+                // for that format.
+                for (MultiResolutionStreamInfo streamInfo : multiResolutionStreams) {
+                    String physicalCameraId = streamInfo.getPhysicalCameraId();
+                    int width = streamInfo.getWidth();
+                    int height = streamInfo.getHeight();
+                    assertTrue("Camera " + id + "'s multi-resolution output info " +
+                            "physical camera id " + physicalCameraId + "isn't valid",
+                            physicalCameraIds.contains(physicalCameraId));
+
+                    StaticMetadata pInfo = mAllStaticInfo.get(physicalCameraId);
+                    CameraCharacteristics pChar = pInfo.getCharacteristics();
+                    StreamConfigurationMap pConfig = pChar.get(
+                            CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                    Size[] sizes = pConfig.getOutputSizes(format);
+
+                    assertTrue(String.format("Camera %s physical camera %s must "
+                            + "support at least one output size for output "
+                            + "format %d.", id, physicalCameraId, format),
+                             sizes != null && sizes.length > 0);
+
+                    Size maxSize = CameraTestUtils.getMaxSize(sizes);
+                    assertTrue(String.format("Camera %s's supported multi-resolution"
+                           + " size [%d, %d] for physical camera %s is not the largest "
+                           + "supported size [%d, %d] for format %d", id, width, height,
+                           physicalCameraId, maxSize.getWidth(), maxSize.getHeight(), format),
+                           width == maxSize.getWidth() && height == maxSize.getHeight());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderJpeg() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.JPEG, /*repeating*/false);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderFlexibleYuv() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.YUV_420_888, /*repeating*/false);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderRaw() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.RAW_SENSOR, /*repeating*/false);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderPrivate() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.PRIVATE, /*repeating*/false);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderRepeatingJpeg() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.JPEG, /*repeating*/true);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderRepeatingFlexibleYuv() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.YUV_420_888, /*repeating*/true);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderRepeatingRaw() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.RAW_SENSOR, /*repeating*/true);
+    }
+
+    @Test
+    public void testMultiResolutionImageReaderRepeatingPrivate() throws Exception {
+        testMultiResolutionImageReaderForFormat(ImageFormat.PRIVATE, /*repeating*/true);
+    }
+
+    private void testMultiResolutionImageReaderForFormat(int format, boolean repeating)
+            throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            try {
+                if (VERBOSE) {
+                    Log.v(TAG, "Testing multi-resolution capture for Camera " + id
+                            + " format " + format + " repeating " + repeating);
+                }
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                CameraCharacteristics c = staticInfo.getCharacteristics();
+
+                // Find the supported multi-resolution output stream info for the specified format
+                MultiResolutionStreamConfigurationMap multiResolutionMap = c.get(
+                        CameraCharacteristics.SCALER_MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP);
+                if (multiResolutionMap == null) {
+                    Log.i(TAG, "Camera " + id + " doesn't support multi-resolution image reader.");
+                    continue;
+                }
+                int[] outputFormats = multiResolutionMap.getOutputFormats();
+                if (!CameraTestUtils.contains(outputFormats, format)) {
+                    Log.i(TAG, "Camera " + id + " doesn't support multi-resolution image reader "
+                            + "for format " + format + " vs " + Arrays.toString(outputFormats));
+                    continue;
+                }
+                Collection<MultiResolutionStreamInfo> multiResolutionStreams =
+                        multiResolutionMap.getOutputInfo(format);
+
+               /* Test the multi-resolution ImageReader at different zoom ratios
+                 * to give the camera device best chance to switch between
+                 * physical cameras.*/
+                List<Float> zoomRatios = CameraTestUtils.getCandidateZoomRatios(staticInfo);
+
+                openDevice(id);
+                multiResolutionImageReaderFormatTestByCamera(format,
+                        multiResolutionStreams, zoomRatios, repeating);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void multiResolutionImageReaderFormatTestByCamera(int format,
+            Collection<MultiResolutionStreamInfo> multiResolutionStreams, List<Float> zoomRatios,
+            boolean repeating) throws Exception {
+        try {
+            int numFrameVerified = repeating ? NUM_FRAME_VERIFIED : 1;
+
+            // Create multi-resolution ImageReader
+            mMultiResolutionImageReader = MultiResolutionImageReader.newInstance(
+                    multiResolutionStreams, format, MAX_NUM_IMAGES);
+            mListener = new SimpleMultiResolutionImageReaderListener(
+                    mMultiResolutionImageReader, MAX_NUM_IMAGES, repeating);
+            mMultiResolutionImageReader.setOnImageAvailableListener(mListener,
+                    new HandlerExecutor(mHandler));
+
+            // Create session
+            Collection<OutputConfiguration> outputConfigs =
+                    OutputConfiguration.createInstancesForMultiResolutionOutput(
+                    mMultiResolutionImageReader);
+            ArrayList<OutputConfiguration> outputConfigsList = new ArrayList<OutputConfiguration>(
+                    outputConfigs);
+            createSessionByConfigs(outputConfigsList);
+
+            CaptureRequest.Builder captureBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            assertNotNull("Failed to create captureRequest", captureBuilder);
+            captureBuilder.addTarget(mMultiResolutionImageReader.getSurface());
+
+            // Capture images at different zoom ratios
+            SimpleCaptureCallback listener = new SimpleCaptureCallback();
+            for (Float zoomRatio : zoomRatios) {
+                captureBuilder.set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio);
+                CaptureRequest request = captureBuilder.build();
+
+                int sequenceId = -1;
+                if (repeating) {
+                    sequenceId = mCameraSession.setRepeatingRequest(request, listener, mHandler);
+                } else {
+                    mCameraSession.capture(request, listener, mHandler);
+                }
+
+                // Validate  images
+                validateImage(format, multiResolutionStreams, numFrameVerified, listener,
+                        repeating);
+
+                if (repeating) {
+                    mCameraSession.stopRepeating();
+                    listener.getCaptureSequenceLastFrameNumber(sequenceId, CAPTURE_TIMEOUT);
+                    listener.drain();
+                }
+
+                // Return all pending images to the ImageReader as the validateImage may
+                // take a while to return and there could be many images pending.
+                mMultiResolutionImageReader.flush();
+                mListener.reset();
+            }
+        } finally {
+            // Close MultiResolutionImageReader
+            if (mMultiResolutionImageReader != null) {
+                mMultiResolutionImageReader.close();
+            }
+            mMultiResolutionImageReader = null;
+        }
+    }
+
+    private void validateImage(int format, Collection<MultiResolutionStreamInfo> streams,
+            int captureCount, SimpleCaptureCallback listener, boolean repeating) throws Exception {
+        ImageAndMultiResStreamInfo imgAndStreamInfo;
+        final int MAX_RETRY_COUNT = 20;
+        int retryCount = 0;
+        int numImageVerified = 0;
+        while (numImageVerified < captureCount) {
+            assertNotNull("Image listener is null", mListener);
+            imgAndStreamInfo = mListener.getAnyImageAndInfoAvailable(CAPTURE_WAIT_TIMEOUT_MS);
+            if (imgAndStreamInfo == null && retryCount < MAX_RETRY_COUNT) {
+                // For acquireLatestImage, a null image may be returned.
+                retryCount++;
+                continue;
+            }
+
+            Image img = imgAndStreamInfo.image;
+            MultiResolutionStreamInfo streamInfoForImage = imgAndStreamInfo.streamInfo;
+            mCollector.expectEquals(String.format("Output image width %d doesn't match " +
+                    " the expected width %d", img.getWidth(), streamInfoForImage.getWidth()),
+                    img.getWidth(), streamInfoForImage.getWidth());
+            mCollector.expectEquals(String.format("Output image height %d doesn't match " +
+                    " the expected height %d", img.getHeight(), streamInfoForImage.getHeight()),
+                    img.getHeight(), streamInfoForImage.getHeight());
+
+            if (format != ImageFormat.PRIVATE) {
+                CameraTestUtils.validateImage(img, img.getWidth(), img.getHeight(), format,
+                        mDebugFileNameBase);
+            } else {
+                mCollector.expectEquals(String.format("Output image format %d doesn't match " +
+                        "expected format %d", img.getFormat(), format), format, img.getFormat());
+            }
+
+            // Get active physical camera id in the capture result. Only do the correlation
+            // between activePhysicalCameraId with image size for single request for simplicity
+            // reasons.
+            String activePhysicalCameraId = null;
+            if (!repeating && mStaticInfo.isActivePhysicalCameraIdSupported()) {
+                TotalCaptureResult result = listener.getCaptureResult(
+                        WAIT_FOR_RESULT_TIMEOUT_MS, img.getTimestamp());
+                activePhysicalCameraId =
+                        result.get(CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                mCollector.expectNotNull(
+                        "Camera's capture result should contain ACTIVE_PHYSICAL_ID",
+                        activePhysicalCameraId);
+                mCollector.expectEquals(String.format("Active physical camera id %s doesn't " +
+                        "match the expected physical camera id %s for the image",
+                        activePhysicalCameraId, streamInfoForImage.getPhysicalCameraId()),
+                        activePhysicalCameraId, streamInfoForImage.getPhysicalCameraId());
+            }
+
+            // Make sure the image size is one within streams
+            boolean validSize = false;
+            for (MultiResolutionStreamInfo streamInfo : streams) {
+                if (streamInfoForImage.getPhysicalCameraId().equals(
+                        streamInfo.getPhysicalCameraId())
+                        && streamInfo.getWidth() == img.getWidth()
+                        && streamInfo.getHeight() == img.getHeight()) {
+                    validSize = true;
+                }
+            }
+            mCollector.expectTrue(String.format("Camera's physical camera id + image size " +
+                    "[%s: %d, %d] must be the supported multi-resolution output streams " +
+                    "for current physical camera", streamInfoForImage.getPhysicalCameraId(),
+                    img.getWidth(), img.getHeight()), validSize);
+
+            HardwareBuffer hwb = img.getHardwareBuffer();
+            assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
+
+            img.close();
+            numImageVerified++;
+        }
+    }
+}
