@@ -34,7 +34,6 @@ import com.android.tradefed.util.RunUtil;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -54,6 +53,8 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
     private static final String DEVICE_TEST_PACKAGE_NAME =
             "com.android.tests.loadingprogress.device";
     private static final String TEST_APK = "CtsInstalledLoadingProgressTestsApp.apk";
+    private static final String TEST_SPLIT_APK =
+            "CtsInstalledLoadingProgressTestsApp_hdpi-v4.apk";
     private static final String TEST_APP_PACKAGE_NAME = "com.android.tests.loadingprogress.app";
     private static final String TEST_CLASS_NAME = DEVICE_TEST_PACKAGE_NAME + ".LoadingProgressTest";
     private static final String IDSIG_SUFFIX = ".idsig";
@@ -67,13 +68,21 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
                 "pm has-feature android.software.incremental_delivery")));
         getDevice().uninstallPackage(TEST_APP_PACKAGE_NAME);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
-        final File apk = buildHelper.getTestFile(TEST_APK);
-        assertNotNull(apk);
-        final File v4Signature = buildHelper.getTestFile(TEST_APK + IDSIG_SUFFIX);
-        assertNotNull(v4Signature);
+        final File base_apk = buildHelper.getTestFile(TEST_APK);
+        assertNotNull(base_apk);
+        final File base_v4Signature = buildHelper.getTestFile(
+                TEST_APK + IDSIG_SUFFIX);
+        assertNotNull(base_v4Signature);
+        final File split_apk = buildHelper.getTestFile(TEST_SPLIT_APK);
+        assertNotNull(split_apk);
+        final File split_v4Signature = buildHelper.getTestFile(
+                TEST_SPLIT_APK + IDSIG_SUFFIX);
+        assertNotNull(split_v4Signature);
         mSession = new IncrementalInstallSession.Builder()
-                .addApk(Paths.get(apk.getAbsolutePath()),
-                        Paths.get(v4Signature.getAbsolutePath()))
+                .addApk(Paths.get(base_apk.getAbsolutePath()),
+                        Paths.get(base_v4Signature.getAbsolutePath()))
+                .addApk(Paths.get(split_apk.getAbsolutePath()),
+                        Paths.get(split_v4Signature.getAbsolutePath()))
                 .addExtraArgs("-t")
                 .build();
 
@@ -110,7 +119,6 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @LargeTest
     @Test
-    @Ignore("b/181820354")
     public void testOnPackageLoadingProgressChangedCalledWithPartialLoaded() throws Exception {
         assertTrue(runDeviceTests(DEVICE_TEST_PACKAGE_NAME, TEST_CLASS_NAME,
                 "testOnPackageLoadingProgressChangedCalledWithPartialLoaded"));
@@ -125,7 +133,6 @@ public class IncrementalLoadingProgressTest extends BaseHostJUnit4Test {
 
     @LargeTest
     @Test
-    @Ignore("b/181820354")
     public void testLoadingProgressPersistsAfterReboot() throws Exception {
         // Wait for loading progress to update
         RunUtil.getDefault().sleep(WAIT_FOR_LOADING_PROGRESS_UPDATE_MS);

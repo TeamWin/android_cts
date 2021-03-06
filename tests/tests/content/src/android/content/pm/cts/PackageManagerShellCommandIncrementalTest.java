@@ -27,8 +27,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteCallback;
@@ -51,21 +49,21 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,11 +76,15 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static final String TEST_APK_PATH = "/data/local/tmp/cts/content/";
     private static final String TEST_APK = "HelloWorld5.apk";
+    private static final String TEST_APK_IDSIG = "HelloWorld5.apk.idsig";
     private static final String TEST_APK_PROFILEABLE = "HelloWorld5Profileable.apk";
     private static final String TEST_APK_SHELL = "HelloWorldShell.apk";
     private static final String TEST_APK_SPLIT0 = "HelloWorld5_mdpi-v4.apk";
+    private static final String TEST_APK_SPLIT0_IDSIG = "HelloWorld5_mdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT1 = "HelloWorld5_hdpi-v4.apk";
+    private static final String TEST_APK_SPLIT1_IDSIG = "HelloWorld5_hdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT2 = "HelloWorld5_xhdpi-v4.apk";
+    private static final String TEST_APK_SPLIT2_IDSIG = "HelloWorld5_xhdpi-v4.apk.idsig";
 
     private static final long EXPECTED_READ_TIME = 1000L;
 
@@ -92,6 +94,10 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
+    }
+
+    private static PackageManager getPackageManager() {
+        return getContext().getPackageManager();
     }
 
     @Before
@@ -198,11 +204,42 @@ public class PackageManagerShellCommandIncrementalTest {
         long newLength = length - (length % 1024 == 0 ? 1024 : length % 1024);
         final Result stateListenerResult = startListeningForBroadcast();
         assertTrue(
-                executeShellCommand("pm install-incremental -t -g -S " + length,
-                        new File[]{file}, new long[]{newLength}).contains(
-                        "Failure"));
+                executeShellCommand(
+                        "pm install-incremental -t -g -S " + length,
+                        new File[] {file},
+                        new long[] {newLength})
+                        .contains("Failure"));
         assertFalse(stateListenerResult.await());
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @LargeTest
+    @Test
+    @Ignore("Pending fix in IncFs")
+    public void testInstallWithIdSigNoMissingPages() throws Exception {
+        // Overall timeout of 3secs in 100ms intervals.
+        final int atraceDumpIterations = 30;
+        final int atraceDumpDelayMs = 100;
+        final String unexpected = "|missing_page_reads:";
+
+        assertFalse(
+                "Missing page reads found (" + unexpected + ") in atrace dump",
+                checkSysTrace(
+                        atraceDumpIterations,
+                        atraceDumpDelayMs,
+                        () -> {
+                            // Install multiple splits so that digesters won't kick in.
+                            installPackage(TEST_APK);
+                            installSplit(TEST_APK_SPLIT0);
+                            installSplit(TEST_APK_SPLIT1);
+                            installSplit(TEST_APK_SPLIT2);
+                            // Now read splits as fast as we can.
+                            readSplitAndReportTime("split_config.mdpi.apk", 1000);
+                            readSplitAndReportTime("split_config.hdpi.apk", 1000);
+                            readSplitAndReportTime("split_config.xhdpi.apk", 1000);
+                            return null;
+                        },
+                        (stdout) -> stdout.contains(unexpected)));
     }
 
     @LargeTest
@@ -302,8 +339,7 @@ public class PackageManagerShellCommandIncrementalTest {
         Thread.currentThread().sleep(beforeReadDelayMs);
 
         // Try to read a split and see if we are throttled.
-        final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), "split_config.mdpi.apk");
-        final long readTime = readAndReportTime(apkToRead, 1000);
+        final long readTime = readSplitAndReportTime("split_config.mdpi.apk", 1000);
         assertTrue("Must take less than " + EXPECTED_READ_TIME + "ms vs " + readTime + "ms",
                 readTime < EXPECTED_READ_TIME);
     }
@@ -352,28 +388,34 @@ public class PackageManagerShellCommandIncrementalTest {
         doTestInstallSysTrace(TEST_APK_PROFILEABLE);
     }
 
-    private void doTestInstallSysTrace(String testApk) throws Exception {
-        // Async atrace dump uses less resources but requires periodic pulls.
-        // Overall timeout of 30secs in 100ms intervals should be enough.
-        final int atraceDumpIterations = 300;
-        final int atraceDumpDelayMs = 100;
+    private boolean checkSysTraceForSubstring(String testApk, final String expected,
+            int atraceDumpIterations, int atraceDumpDelayMs) throws Exception {
+        return checkSysTrace(
+                atraceDumpIterations,
+                atraceDumpDelayMs,
+                () -> installPackage(testApk),
+                (stdout) -> stdout.contains(expected));
+    }
 
-        final String expected = "|page_read:";
-        final ByteArrayOutputStream result = new ByteArrayOutputStream();
+    private boolean checkSysTrace(
+            int atraceDumpIterations,
+            int atraceDumpDelayMs,
+            final Callable<Void> installer,
+            final Function<String, Boolean> checker)
+            throws Exception {
+        final int beforeReadDelayMs = 1000;
+
+        final CompletableFuture<Boolean> result = new CompletableFuture<>();
         final Thread readFromProcess = new Thread(() -> {
             try {
                 executeShellCommand("atrace --async_start -b 1024 -c adb");
                 try {
                     for (int i = 0; i < atraceDumpIterations; ++i) {
-                        final ParcelFileDescriptor stdout = getUiAutomation().executeShellCommand(
-                                "atrace --async_dump");
-                        try (InputStream inputStream =
-                                     new ParcelFileDescriptor.AutoCloseInputStream(
-                                             stdout)) {
-                            final String found = waitForSubstring(inputStream, expected);
-                            if (!TextUtils.isEmpty(found)) {
-                                result.write(found.getBytes());
-                                return;
+                        final String stdout = executeShellCommand("atrace --async_dump");
+                        try {
+                            if (checker.apply(stdout)) {
+                                result.complete(true);
+                                break;
                             }
                             Thread.currentThread().sleep(atraceDumpDelayMs);
                         } catch (InterruptedException ignored) {
@@ -388,13 +430,27 @@ public class PackageManagerShellCommandIncrementalTest {
         readFromProcess.start();
 
         for (int i = 0; i < 3; ++i) {
-            installPackage(testApk);
+            installer.call();
             assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+            Thread.currentThread().sleep(beforeReadDelayMs);
             uninstallPackageSilently(TEST_APP_PACKAGE);
         }
 
         readFromProcess.join();
-        assertNotEquals(0, result.size());
+        return result.getNow(false);
+    }
+
+    private void doTestInstallSysTrace(String testApk) throws Exception {
+        // Async atrace dump uses less resources but requires periodic pulls.
+        // Overall timeout of 30secs in 100ms intervals should be enough.
+        final int atraceDumpIterations = 300;
+        final int atraceDumpDelayMs = 100;
+        final String expected = "|page_read:";
+
+        assertTrue(
+                "No page reads (" + expected + ") found in atrace dump",
+                checkSysTraceForSubstring(testApk, expected, atraceDumpIterations,
+                        atraceDumpDelayMs));
     }
 
     private boolean isAppInstalled(String packageName) throws IOException {
@@ -432,10 +488,11 @@ public class PackageManagerShellCommandIncrementalTest {
         return TEST_APK_PATH + baseName;
     }
 
-    private void installPackage(String baseName) throws IOException {
+    private Void installPackage(String baseName) throws IOException {
         File file = new File(createApkPath(baseName));
         assertEquals("Success\n",
                 executeShellCommand("pm install-incremental -t -g " + file.getPath()));
+        return null;
     }
 
     private void installSplit(String splitName) throws Exception {
@@ -450,15 +507,19 @@ public class PackageManagerShellCommandIncrementalTest {
         assertTrue(stateListenerResult.await());
     }
 
+    private long readSplitAndReportTime(String split, long borderTime) throws Exception {
+        final File apkToRead = new File(getCodePath(TEST_APP_PACKAGE), split);
+        return readAndReportTime(apkToRead, 1000);
+    }
+
     private long readAndReportTime(File file, long borderTime) throws Exception {
         assertTrue(file.toString(), file.exists());
 
         final long startTime = SystemClock.uptimeMillis();
         long readTime = 0;
         try (InputStream baseApkStream = new FileInputStream(file)) {
-            final byte[] buffer = new byte[4096];
-            int length;
-            while ((length = baseApkStream.read(buffer)) != -1) {
+            final byte[] buffer = new byte[128 * 1024];
+            while (baseApkStream.read(buffer) != -1) {
                 readTime = SystemClock.uptimeMillis() - startTime;
                 if (readTime >= borderTime) {
                     break;
@@ -485,24 +546,27 @@ public class PackageManagerShellCommandIncrementalTest {
                 .setData(Uri.parse("test://" + UUID.randomUUID().toString()))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
         intent.putExtra(Intent.EXTRA_PACKAGE_NAME, TEST_APP_PACKAGE);
-        HandlerThread responseThread = new HandlerThread("response");
-        responseThread.start();
         // Should receive at least one fully_loaded broadcast
-        final Semaphore fullyLoadedSemaphore = new Semaphore(0);
+        final CompletableFuture<Boolean> fullyLoaded = new CompletableFuture<>();
         final RemoteCallback callback = new RemoteCallback(
                 bundle -> {
                     if (bundle == null) {
                         return;
                     }
-                    if (bundle.getString("intent").equals(Intent.ACTION_PACKAGE_FULLY_LOADED)) {
-                        fullyLoadedSemaphore.release();
+                    if (bundle.getString("intent").equals(
+                            Intent.ACTION_PACKAGE_FULLY_LOADED)) {
+                        fullyLoaded.complete(true);
                     }
-                },
-                new Handler(responseThread.getLooper())
-        );
+                });
         intent.putExtra("callback", callback);
-        InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
-        return () -> fullyLoadedSemaphore.tryAcquire(10, TimeUnit.SECONDS);
+        getContext().startActivity(intent);
+        return () -> {
+            try {
+                return fullyLoaded.get(10, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                return false;
+            }
+        };
     }
 
     private static String executeShellCommand(String command) throws IOException {
@@ -571,14 +635,6 @@ public class PackageManagerShellCommandIncrementalTest {
         }
         if (expected > 0) {
             assertEquals(expected, total);
-        }
-    }
-
-    private static String waitForSubstring(InputStream inputStream, String expected)
-            throws IOException {
-        try (Reader reader = new InputStreamReader(inputStream);
-             BufferedReader lines = new BufferedReader(reader)) {
-            return lines.lines().filter(line -> line.contains(expected)).findFirst().orElse("");
         }
     }
 

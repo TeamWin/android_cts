@@ -49,7 +49,7 @@ def define_raw_stats_fmt(props):
 class RawSensitivityTest(its_base_test.ItsBaseTest):
   """Capture a set of raw images with increasing gains and measure the noise."""
 
-  def test_raw_sensitivity_test(self):
+  def test_raw_sensitivity(self):
     logging.debug('Starting %s', NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,

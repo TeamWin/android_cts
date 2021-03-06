@@ -31,11 +31,13 @@ import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
 import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.PerPixelBitmapVerifier;
-import android.uirendering.cts.bitmapverifiers.RectVerifier;
+import android.uirendering.cts.bitmapverifiers.RegionVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.Tracer;
 import android.uirendering.cts.util.BitmapAsserter;
@@ -255,83 +257,70 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(0f, effect.getDistance(), 0.001f);
     }
 
-    // This is only needed temporarily while using the offset RenderEffect substitution.
-    private int calculateEffectHeight(float width, float height) {
-        final float radiusFactor = 0.6f;
-        final float sin = (float) Math.sin(Math.PI / 6);
-        final float cos = (float) Math.cos(Math.PI / 6);
-        final float r = width * radiusFactor / sin;
-        final float y = cos * r;
-        final float h = r - y;
-
-        return (int) Math.min(height, h);
-    }
-
-    private RenderNode drawEdgeEffect(float rotationDegrees, int distance) {
-        int effectWidth = WIDTH - 20;
-        int boxHeight = HEIGHT - 20;
-        int effectHeight = boxHeight / 2;
-        float realEffectHeight = calculateEffectHeight(effectWidth, effectHeight);
-        float distanceFraction = distance / realEffectHeight;
-
+    private RenderNode drawStretchEffect(float distance, float displacement, float rotation) {
+        int width = WIDTH;
+        int height = HEIGHT;
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setSize(width, height);
         edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
-        edgeEffect.setSize(effectWidth, effectHeight);
-        edgeEffect.onPullDistance(distanceFraction, 0.5f);
+        edgeEffect.onPullDistance(distance, displacement);
 
-        Paint bluePaint = new Paint();
-        bluePaint.setColor(Color.BLUE);
-        bluePaint.setStyle(Paint.Style.FILL);
+        RenderNode renderNode = new RenderNode("");
+        renderNode.setPosition(0, 0, width, height);
+        RecordingCanvas recordingCanvas = renderNode.beginRecording();
+        Paint paint = new Paint();
+        paint.setColor(Color.GREEN);
+        recordingCanvas.drawRect(0f, 0f, width, height / 2f, paint);
+        paint.setColor(Color.MAGENTA);
+        recordingCanvas.drawRect(0, height / 2f, width, height, paint);
+        renderNode.endRecording();
 
-        RenderNode innerNode = new RenderNode("effect");
-        innerNode.setPosition(0, 0, effectWidth, boxHeight);
-        innerNode.setClipToBounds(false);
-        Canvas effectCanvas = innerNode.beginRecording(effectWidth, boxHeight);
-        effectCanvas.drawRect(0f, 0f, effectWidth, boxHeight, bluePaint);
-        effectCanvas.rotate(rotationDegrees, effectWidth / 2f, boxHeight / 2f);
-
-        edgeEffect.draw(effectCanvas);
-        innerNode.endRecording();
-
-        Paint whitePaint = new Paint();
-        whitePaint.setStyle(Paint.Style.FILL);
-        whitePaint.setColor(Color.WHITE);
-
-        RenderNode outerNode = new RenderNode("outer");
-        outerNode.setPosition(0, 0, WIDTH, HEIGHT);
-        Canvas outerCanvas = outerNode.beginRecording(WIDTH, HEIGHT);
-        outerCanvas.drawRect(0, 0, WIDTH, HEIGHT, whitePaint);
-        outerCanvas.translate(10f, 10f);
-        outerCanvas.drawRenderNode(innerNode);
-        outerCanvas.translate(-10f, -10f);
-        outerNode.endRecording();
-        return outerNode;
+        RenderNode outer = new RenderNode("outer");
+        outer.setPosition(0, 0, width, height);
+        RecordingCanvas outerRecordingCanvas = outer.beginRecording();
+        outerRecordingCanvas.drawRenderNode(renderNode);
+        recordingCanvas.rotate(rotation, width / 2f, height / 2f);
+        edgeEffect.draw(outerRecordingCanvas);
+        outer.endRecording();
+        return outer;
     }
 
     @Test
     public void testStretchTop() {
-        RenderNode renderNode = drawEdgeEffect(0, 5);
-
-        Rect innerRect = new Rect(10, 15, WIDTH - 10, HEIGHT - 5);
-
+        RenderNode renderNode = drawStretchEffect(0.2f, 0.2f, 0f);
+        Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2 + 5);
+        Rect outerRect = new Rect(0, HEIGHT / 2 + 20, WIDTH, HEIGHT);
         createTest()
                 .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                     canvas.drawRenderNode(renderNode);
                 }, true)
-                .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, innerRect));
+                .runWithVerifier(
+                        new RegionVerifier().addVerifier(
+                                innerRect,
+                                new ColorVerifier(Color.GREEN)
+                        ).addVerifier(
+                                outerRect,
+                                new ColorVerifier(Color.MAGENTA)
+                        ));
     }
 
     @Test
-    public void testStretchRotated() {
-        RenderNode renderNode = drawEdgeEffect(180, 5);
-
-        Rect innerRect = new Rect(10, 5, WIDTH - 10, HEIGHT - 15);
-
+    public void testStretchBottom() {
+        RenderNode renderNode = drawStretchEffect(0.2f, 0.2f, 180f);
+        Rect innerRect = new Rect(0, 0, WIDTH, 1);
+        Rect outerRect = new Rect(0, (HEIGHT / 2) - 1, WIDTH, HEIGHT / 2);
         createTest()
                 .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                     canvas.drawRenderNode(renderNode);
                 }, true)
-                .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, innerRect));
+                .runWithVerifier(
+                        new RegionVerifier().addVerifier(
+                                innerRect,
+                                new ColorVerifier(Color.GREEN)
+                        ).addVerifier(
+                                outerRect,
+                                new ColorVerifier(Color.MAGENTA)
+                        ));
     }
 
     /**

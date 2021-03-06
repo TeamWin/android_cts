@@ -561,6 +561,88 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
     }
 
+    @Test
+    public void testExpeditedJobDeferredAfterTimeoutInDoze() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+
+        toggleDeviceIdleState(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Should be rescheduled.
+        assertJobNotReady();
+        assertJobWaiting();
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        runJob();
+        assertFalse("Job started after timing out in Doze",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        // Should start when Doze is turned off.
+        toggleDeviceIdleState(false);
+        assertTrue("Job did not start after Doze turned off",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testExpeditedJobDeferredAfterTimeoutInBatterySaver() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Should be rescheduled.
+        assertJobNotReady();
+        assertJobWaiting();
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        runJob();
+        assertFalse("Job started after timing out in battery saver",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        // Should start when battery saver is turned off.
+        BatteryUtils.enableBatterySaver(false);
+        assertTrue("Job did not start after battery saver turned off",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testExpeditedJobDeferredAfterTimeout_DozeAndBatterySaver() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        toggleDeviceIdleState(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertTrue("Job did not stop after timeout", mTestAppInterface.awaitJobStop(70_000L));
+        // Should be rescheduled.
+        assertJobNotReady();
+        assertJobWaiting();
+        // Battery saver kicks in before Doze ends. Job shouldn't start while BS is on.
+        BatteryUtils.enableBatterySaver(true);
+        toggleDeviceIdleState(false);
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        runJob();
+        assertFalse("Job started while power restrictions active after timing out",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        // Should start when battery saver is turned off.
+        BatteryUtils.enableBatterySaver(false);
+        assertTrue("Job did not start after power restrictions turned off",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
     @After
     public void tearDown() throws Exception {
         AppOpsUtils.reset(TEST_APP_PACKAGE);
@@ -720,6 +802,26 @@ public class JobThrottlingTest {
         } else {
             mUiDevice.executeShellCommand("cmd connectivity airplane-mode disable");
         }
+    }
+
+    private String getJobState() throws Exception {
+        return mUiDevice.executeShellCommand("cmd jobscheduler get-job-state --user cur "
+                + TEST_APP_PACKAGE + " " + mTestJobId).trim();
+    }
+
+    private void assertJobWaiting() throws Exception {
+        String state = getJobState();
+        assertTrue("Job unexpectedly not waiting, in state: " + state, state.contains("waiting"));
+    }
+
+    private void assertJobNotReady() throws Exception {
+        String state = getJobState();
+        assertFalse("Job unexpectedly ready, in state: " + state, state.contains("ready"));
+    }
+
+    private void assertJobReady() throws Exception {
+        String state = getJobState();
+        assertTrue("Job unexpectedly not ready, in state: " + state, state.contains("ready"));
     }
 
     private boolean waitUntilTrue(long maxWait, Condition condition) throws Exception {

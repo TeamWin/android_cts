@@ -17,6 +17,7 @@
 package android.systemui.cts.tv
 
 import android.content.ComponentName
+import android.platform.test.annotations.AppModeFull
 import android.platform.test.annotations.Postsubmit
 import android.server.wm.annotation.Group2
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -32,6 +33,7 @@ import org.junit.runner.RunWith
 @Postsubmit
 @Group2
 @RunWith(AndroidJUnit4::class)
+@AppModeFull
 class MicIndicatorTest : TvTestBase() {
     companion object {
         private val AUDIO_RECORD_API_SERVICE = ComponentName.createRelative(
