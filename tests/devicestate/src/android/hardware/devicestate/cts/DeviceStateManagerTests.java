@@ -32,12 +32,14 @@ import android.hardware.devicestate.DeviceStateManager;
 import android.hardware.devicestate.DeviceStateRequest;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.FlakyTest;
 
 import org.junit.runner.RunWith;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 /** CTS tests for {@link DeviceStateManager} API(s). */
+@FlakyTest(bugId = 181996170)
 @RunWith(AndroidJUnit4.class)
 public class DeviceStateManagerTests extends DeviceStateManagerTestBase {
     /**
