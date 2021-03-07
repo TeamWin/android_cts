@@ -23,7 +23,8 @@ import android.net.wifi.WifiEnterpriseConfig;
 import android.net.wifi.WifiEnterpriseConfig.Eap;
 import android.net.wifi.WifiEnterpriseConfig.Phase2;
 import android.platform.test.annotations.AppModeFull;
-import android.test.AndroidTestCase;
+
+import androidx.test.filters.SdkSuppress;
 
 import java.io.ByteArrayInputStream;
 import java.security.KeyFactory;
@@ -820,6 +821,23 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
 
         config.setClientCertificateAlias(CLIENT_CERTIFICATE_ALIAS);
         assertThat(config.getClientCertificateAlias()).isEqualTo(CLIENT_CERTIFICATE_ALIAS);
+    }
+
+    /**
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetSetClientKeyPairAlias() {
+        if (!hasWifi()) {
+            return;
+        }
+        WifiEnterpriseConfig config = new WifiEnterpriseConfig();
+
+        config.setClientKeyPairAlias("");
+        assertThat(config.getClientKeyPairAlias()).isEmpty();
+
+        config.setClientKeyPairAlias(CLIENT_CERTIFICATE_ALIAS);
+        assertThat(config.getClientKeyPairAlias()).isEqualTo(CLIENT_CERTIFICATE_ALIAS);
     }
 
     public void testGetSetOcsp() {

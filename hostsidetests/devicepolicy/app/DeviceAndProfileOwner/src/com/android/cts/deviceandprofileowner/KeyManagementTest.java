@@ -893,6 +893,30 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                 singleton(getWho().getPackageName())));
     }
 
+    public void testIsWifiGrant_default() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+
+        assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
+    }
+
+    public void testIsWifiGrant_allowed() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS);
+
+        assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isTrue();
+    }
+
+    public void testIsWifiGrant_denied() {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS);
+        mDevicePolicyManager.revokeKeyPairFromWifiAuth(TEST_ALIAS);
+
+        assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
+    }
+
     private void assertGranted(String alias, boolean expected)
             throws InterruptedException, KeyChainException {
         boolean granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
