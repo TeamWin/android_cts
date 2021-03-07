@@ -37,6 +37,7 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.autofill.AutofillManager;
+import android.view.inputmethod.InlineSuggestionsRequest;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -72,6 +73,7 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
     private static final int MSG_REQUEST_AUTOFILL = 2;
 
     private static Bundle sData;
+    private static InlineSuggestionsRequest sInlineSuggestionsRequest;
     private static final SparseArray<CannedDataset> sDatasets = new SparseArray<>();
     private static final SparseArray<CannedFillResponse> sResponses = new SparseArray<>();
     private static final ArrayList<PendingIntent> sPendingIntents = new ArrayList<>();
@@ -99,6 +101,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         setRequestAutofillForAuthenticationActivity(/* requestAutofill */ false);
         sDatasets.clear();
         sResponses.clear();
+        sData = null;
+        sInlineSuggestionsRequest = null;
         for (int i = 0; i < sPendingIntents.size(); i++) {
             final PendingIntent pendingIntent = sPendingIntents.get(i);
             Log.d(TAG, "Cancelling " + pendingIntent);
@@ -176,6 +180,12 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
         final Bundle data = sData;
         sData = null;
         return data;
+    }
+
+    public static InlineSuggestionsRequest getInlineSuggestionsRequest() {
+        final InlineSuggestionsRequest request = sInlineSuggestionsRequest;
+        sInlineSuggestionsRequest = null;
+        return request;
     }
 
     /**
@@ -264,6 +274,8 @@ public class AuthenticationActivity extends AbstractAutoFillActivity {
 
         // and the bundle
         sData = getIntent().getBundleExtra(AutofillManager.EXTRA_CLIENT_STATE);
+        sInlineSuggestionsRequest = getIntent().getParcelableExtra(
+                AutofillManager.EXTRA_INLINE_SUGGESTIONS_REQUEST);
         final CannedFillResponse response =
                 sResponses.get(getIntent().getIntExtra(EXTRA_RESPONSE_ID, 0));
         final CannedDataset dataset =
