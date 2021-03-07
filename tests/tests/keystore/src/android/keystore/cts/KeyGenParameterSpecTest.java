@@ -18,6 +18,7 @@ package android.keystore.cts;
 
 import static org.testng.Assert.assertThrows;
 
+import android.os.Process;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.test.MoreAsserts;
@@ -350,7 +351,7 @@ public class KeyGenParameterSpecTest extends TestCase {
                 KeyProperties.KEY_ALGORITHM_HMAC_SHA256, "AndroidKeyStore");
         keyGenerator.init(
                 new KeyGenParameterSpec.Builder("alias", KeyProperties.PURPOSE_SIGN)
-                        .setUid(123)
+                        .setUid(Process.WIFI_UID)
                         .build());
         assertThrows(ProviderException.class, keyGenerator::generateKey);
     }

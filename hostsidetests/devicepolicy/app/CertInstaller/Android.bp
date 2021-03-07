@@ -32,6 +32,7 @@ android_test_helper_app {
         "truth-prebuilt",
         "testng",
         "cts-security-test-support-library",
+        "devicepolicy-deviceside-common",
     ],
     // tag this module as a cts test artifact
     test_suites: [

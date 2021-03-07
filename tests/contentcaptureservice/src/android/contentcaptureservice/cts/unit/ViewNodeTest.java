@@ -237,6 +237,7 @@ public class ViewNodeTest {
         structure.setClassName("Classy!");
         structure.setContentDescription("Described I am!");
         structure.setVisibility(View.INVISIBLE);
+        structure.setOnReceiveContentMimeTypes(new String[]{"text/*", "image/*"});
 
         // Autofill properties
         structure.setAutofillType(View.AUTOFILL_TYPE_TEXT);
@@ -293,6 +294,8 @@ public class ViewNodeTest {
         assertThat(node.getClassName()).isEqualTo("Classy!");
         assertThat(node.getContentDescription().toString()).isEqualTo("Described I am!");
         assertThat(node.getVisibility()).isEqualTo(View.INVISIBLE);
+        assertThat(node.getOnReceiveContentMimeTypes()).isEqualTo(
+                new String[]{"text/*", "image/*"});
 
         // Autofill properties
         assertThat(node.getAutofillType()).isEqualTo(View.AUTOFILL_TYPE_TEXT);
