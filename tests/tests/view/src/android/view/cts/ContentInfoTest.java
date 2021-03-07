@@ -16,6 +16,7 @@
 
 package android.view.cts;
 
+import static android.view.ContentInfo.SOURCE_APP;
 import static android.view.ContentInfo.SOURCE_CLIPBOARD;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -34,6 +35,8 @@ import org.junit.runner.RunWith;
 
 /**
  * Tests for {@link ContentInfo}.
+ *
+ * <p>To run: {@code atest CtsViewTestCases:ContentInfoTest}
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -96,5 +99,50 @@ public class ContentInfoTest {
         split = payload.partition(item -> true);
         assertThat(split.first).isSameInstanceAs(payload);
         assertThat(split.second).isNull();
+    }
+
+    @Test
+    public void testBuilder_copy() throws Exception {
+        ClipData clip = ClipData.newPlainText("", "Hello");
+        ContentInfo original = new ContentInfo.Builder(clip, SOURCE_CLIPBOARD)
+                .setFlags(ContentInfo.FLAG_CONVERT_TO_PLAIN_TEXT)
+                .setLinkUri(Uri.parse("http://example.com"))
+                .setExtras(new Bundle())
+                .build();
+
+        // Verify that that calling the builder with a ContentInfo instance creates a shallow copy.
+        ContentInfo copy = new ContentInfo.Builder(original).build();
+        assertThat(copy).isNotSameInstanceAs(original);
+        assertThat(copy.getClip()).isSameInstanceAs(original.getClip());
+        assertThat(copy.getSource()).isEqualTo(original.getSource());
+        assertThat(copy.getFlags()).isEqualTo(original.getFlags());
+        assertThat(copy.getLinkUri()).isSameInstanceAs(original.getLinkUri());
+        assertThat(copy.getExtras()).isSameInstanceAs(original.getExtras());
+    }
+
+    @Test
+    public void testBuilder_copyAndUpdate() throws Exception {
+        ClipData clip1 = ClipData.newPlainText("", "Hello");
+        ContentInfo original = new ContentInfo.Builder(clip1, SOURCE_CLIPBOARD)
+                .setFlags(ContentInfo.FLAG_CONVERT_TO_PLAIN_TEXT)
+                .setLinkUri(Uri.parse("http://example.com"))
+                .setExtras(new Bundle())
+                .build();
+
+        // Verify that calling setters after initializing the builder with a ContentInfo instance
+        // updates the fields.
+        ClipData clip2 = ClipData.newPlainText("", "Bye");
+        ContentInfo copy = new ContentInfo.Builder(original)
+                .setClip(clip2)
+                .setSource(SOURCE_APP)
+                .setFlags(0)
+                .setLinkUri(null)
+                .setExtras(null)
+                .build();
+        assertThat(copy.getClip().getItemAt(0).getText()).isEqualTo("Bye");
+        assertThat(copy.getSource()).isEqualTo(SOURCE_APP);
+        assertThat(copy.getFlags()).isEqualTo(0);
+        assertThat(copy.getLinkUri()).isEqualTo(null);
+        assertThat(copy.getExtras()).isEqualTo(null);
     }
 }
