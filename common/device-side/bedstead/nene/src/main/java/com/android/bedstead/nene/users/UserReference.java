@@ -16,6 +16,8 @@
 
 package com.android.bedstead.nene.users;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
@@ -28,6 +30,7 @@ import com.android.bedstead.nene.users.User.UserState;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -158,11 +161,15 @@ public abstract class UserReference {
             //  the user being backgrounded is the user running the test. We should support this
             //  when this is not the case.
             List<String> intents = new ArrayList<>();
-            intents.add(Intent.ACTION_USER_BACKGROUND);
             intents.add(Intent.ACTION_USER_FOREGROUND);
             BlockingBroadcastReceiver broadcastReceiver =
-                    new BlockingBroadcastReceiver(sContext, intents);
-            broadcastReceiver.register();
+                    new BlockingBroadcastReceiver(sContext, intents,
+                            (intent) ->((UserHandle)
+                                    intent.getParcelableExtra(Intent.EXTRA_USER))
+                                    .getIdentifier() == mId);
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    broadcastReceiver::registerForAllUsers, INTERACT_ACROSS_USERS_FULL);
 
             // Expects no output on success or failure
             ShellCommand.builder("am switch-user")
