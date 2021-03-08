@@ -169,10 +169,12 @@ public class DevicePolicySafetyCheckerIntegrationTester {
             // Must force OneTimeSafetyChecker to generate the event by calling the unsafe operation
             assertThrows(UnsafeStateException.class, () -> dpm.lockNow());
 
+            Log.d(TAG, "Waiting isSafe=false event");
             assertNextEvent(receiver, reason, /* isSafe= */ false);
 
             // OneTimeSafetyChecker automatically disables itself after one operation, which in turn
             // triggers another event
+            Log.d(TAG, "Waiting isSafe=true event");
             assertNextEvent(receiver, reason, /* isSafe= */ true);
         } finally {
             receiver.unregister(context);
