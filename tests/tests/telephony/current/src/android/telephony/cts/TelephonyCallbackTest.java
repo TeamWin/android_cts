@@ -792,7 +792,7 @@ public class TelephonyCallbackTest {
     private class CallStateListener extends TelephonyCallback
             implements TelephonyCallback.CallStateListener {
         @Override
-        public void onCallStateChanged(int state, String incomingNumber) {
+        public void onCallStateChanged(int state) {
             synchronized (mLock) {
                 mOnCallStateChangedCalled = true;
                 mLock.notify();
@@ -808,10 +808,9 @@ public class TelephonyCallbackTest {
         }
         assertFalse(mOnCallStateChangedCalled);
 
-        mHandler.post(() -> {
-            mCallStateCallback = new CallStateListener();
-            registerTelephonyCallback(mCallStateCallback);
-        });
+        mCallStateCallback = new CallStateListener();
+        registerTelephonyCallback(mCallStateCallback);
+
         synchronized (mLock) {
             if (!mOnCallStateChangedCalled) {
                 mLock.wait(WAIT_TIME);
