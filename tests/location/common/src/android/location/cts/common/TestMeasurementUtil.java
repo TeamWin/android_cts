@@ -366,9 +366,9 @@ public final class TestMeasurementUtil {
                     + "Frequency offset from reported pseudorange rate "
                     + "for this CorrelationVector",
                     timeInNs,
-                    "X >= 0",
+                    "X >= 0.0",
                     String.valueOf(correlationVector.getFrequencyOffsetMetersPerSecond()),
-                    correlationVector.getFrequencyOffsetMetersPerSecond() >= 0);
+                    correlationVector.getFrequencyOffsetMetersPerSecond() >= 0.0);
             softAssert.assertTrue("sampling_width_m : "
                     + "The space between correlation samples in meters",
                     timeInNs,
