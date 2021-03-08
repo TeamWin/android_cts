@@ -45,6 +45,7 @@ java_test_host {
         "cts",
         "general-tests",
         "mts-documentsui",
+        "mts-mainline-infra",
         "mts-mediaprovider",
         "sts",
     ],
