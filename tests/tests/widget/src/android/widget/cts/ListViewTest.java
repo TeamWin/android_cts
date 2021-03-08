@@ -38,6 +38,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import android.app.ActionBar.LayoutParams;
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -97,6 +98,8 @@ import java.util.concurrent.TimeUnit;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ListViewTest {
+    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
+    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
     private final String[] mCountryList = new String[] {
         "Argentina", "Australia", "China", "France", "Germany", "Italy", "Japan", "United States"
     };
@@ -1162,7 +1165,10 @@ public class ListViewTest {
     @Test
     public void testEdgeEffectType() {
         // Should default to "glow"
-        assertEquals(EdgeEffect.TYPE_GLOW, mListView.getEdgeEffectType());
+        int expectedStartType = (CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_BY_DEFAULT)
+                || CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED))
+                ? EdgeEffect.TYPE_STRETCH : EdgeEffect.TYPE_GLOW;
+        assertEquals(expectedStartType, mListView.getEdgeEffectType());
 
         // This one has "stretch" attribute
         assertEquals(EdgeEffect.TYPE_STRETCH, mListViewStretch.getEdgeEffectType());
