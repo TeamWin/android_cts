@@ -221,7 +221,7 @@ class ZoomTest(its_base_test.ItsBaseTest):
 
       # check relative size against zoom[0]
       radius_ratio = circles[i][2] / radius_0
-      logging.debug('radius_ratio: %.3f', radius_ratio)
+      logging.debug('r ratio req: %.3f, measured: %.3f', z_ratio, radius_ratio)
       if not np.isclose(z_ratio, radius_ratio, rtol=RADIUS_RTOL):
         raise AssertionError(f'zoom: {z_ratio:.2f}, radius ratio: '
                              f'{radius_ratio:.2f}, RTOL: {RADIUS_RTOL}')
