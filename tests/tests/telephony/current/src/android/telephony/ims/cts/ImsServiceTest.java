@@ -2370,7 +2370,7 @@ public class ImsServiceTest {
 
         try {
             automan.adoptShellPermissionIdentity();
-            provisioningManager.registerRcsProvisioningChangedCallback(
+            provisioningManager.registerRcsProvisioningCallback(
                     getContext().getMainExecutor(), cb);
         } finally {
             automan.dropShellPermissionIdentity();
@@ -2415,7 +2415,7 @@ public class ImsServiceTest {
         //unregister callback and verify not to receive callback any more
         try {
             automan.adoptShellPermissionIdentity();
-            provisioningManager.unregisterRcsProvisioningChangedCallback(cb);
+            provisioningManager.unregisterRcsProvisioningCallback(cb);
         } finally {
             automan.dropShellPermissionIdentity();
         }
@@ -2459,7 +2459,7 @@ public class ImsServiceTest {
 
         try {
             automan.adoptShellPermissionIdentity();
-            provisioningManager.registerRcsProvisioningChangedCallback(
+            provisioningManager.registerRcsProvisioningCallback(
                     getContext().getMainExecutor(), cb);
         } finally {
             automan.dropShellPermissionIdentity();
@@ -2525,7 +2525,7 @@ public class ImsServiceTest {
         //set default rcs config
         try {
             automan.adoptShellPermissionIdentity();
-            provisioningManager.registerRcsProvisioningChangedCallback(
+            provisioningManager.registerRcsProvisioningCallback(
                     getContext().getMainExecutor(), cb);
         } finally {
             automan.dropShellPermissionIdentity();
