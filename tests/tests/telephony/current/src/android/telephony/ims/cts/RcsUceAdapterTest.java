@@ -565,18 +565,7 @@ public class RcsUceAdapterTest {
         TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
 
-        // The API requestCapabilities is available to be called without exceptions.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-        } catch (ImsException e) {
-            fail("requestCapabilities failed " + e);
-        }
+        requestCapabilities(uceAdapter, numbers, callback);
 
         // Verify that the callback "onError" is called with the error code NOT_ENABLED because
         // the carrier config KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL is still false.
@@ -590,19 +579,7 @@ public class RcsUceAdapterTest {
             errorQueue.clear();
         }
 
-        // The API requestAvailability is available to be called without exceptions.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestAvailability(
-                            sTestNumberUri, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-        } catch (ImsException e) {
-            fail("requestAvailability failed " + e);
-        }
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
 
         // Verify that the callback "onError" is called with the error code NOT_ENABLED because
         // the carrier config KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL is still false.
@@ -630,19 +607,7 @@ public class RcsUceAdapterTest {
             cb.onTerminated("", 0L);
         });
 
-        // Call the API requestCapabilities and it should work as expected after the
-        // KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL is updated to true.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-        } catch (ImsException e) {
-            fail("requestCapabilities failed " + e);
-        }
+        requestCapabilities(uceAdapter, numbers, callback);
 
         // Verify that the contact capability is received and the onCompleted is called.
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
@@ -654,19 +619,7 @@ public class RcsUceAdapterTest {
         capabilityQueue.clear();
         removeTestContactFromEab();
 
-        // Call the API requestAvailability and it should work as expected after the
-        // KEY_ENABLE_PRESENCE_CAPABILITY_EXCHANGE_BOOL is updated to true.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    a -> a.requestAvailability(sTestNumberUri, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (ImsException e) {
-            fail("requestAvailability failed " + e);
-        }
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
 
         // Verify that the contact capability is received and the onCompleted is called.
         capability = waitForResult(capabilityQueue);
@@ -735,19 +688,7 @@ public class RcsUceAdapterTest {
                 cb.onCommandError(cmdError);
             });
 
-            // Call the exposed API "requestCapabilities" to retrieve the contact's capabilities.
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
-                        ImsException.class,
-                        "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestCapabilities should succeed with"
-                        + " ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-            } catch (ImsException e) {
-                fail("requestCapabilities failed " + e);
-            }
+            requestCapabilities(uceAdapter, contacts, callback);
 
             // Verify that the callback "onError" is called with the expected error code.
             try {
@@ -760,18 +701,7 @@ public class RcsUceAdapterTest {
                 retryAfterQueue.clear();
             }
 
-            // Call another exposed API "requestAvailability" to retrieve the capabilities.
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        adapter -> adapter.requestAvailability(sTestNumberUri,
-                                Runnable::run, callback), ImsException.class,
-                                "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (ImsException e) {
-                fail("requestAvailability failed " + e);
-            }
+            requestAvailability(uceAdapter, sTestNumberUri, callback);
 
             // Verify that the callback "onError" is called with the expected error code.
             try {
@@ -897,20 +827,7 @@ public class RcsUceAdapterTest {
                 cb.onNetworkResponse(networkResp.getKey(), networkResp.getValue());
             });
 
-            // Request capabilities by calling the API requestCapabilities
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                        ImsException.class,
-                        "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestCapabilities should succeed with"
-                        + " ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-            } catch (ImsException e) {
-                fail("requestCapabilities failed " + e);
-            }
-
+            requestCapabilities(uceAdapter, numbers, callback);
             // Verify that the callback "onError" is called with the expected error code.
             try {
                 assertEquals(expectedCallbackResult.intValue(), waitForIntResult(errorQueue));
@@ -922,18 +839,7 @@ public class RcsUceAdapterTest {
                 retryAfterQueue.clear();
             }
 
-            // Request capabilities by calling the API requestAvailability
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        a -> a.requestAvailability(sTestNumberUri, Runnable::run, callback),
-                        ImsException.class,
-                        "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (ImsException e) {
-                fail("requestAvailability failed " + e);
-            }
+            requestAvailability(uceAdapter, sTestNumberUri, callback);
 
             // Verify that the callback "onError" is called with the expected error code.
             try {
@@ -956,19 +862,7 @@ public class RcsUceAdapterTest {
                         networkResp.getKey(), networkResp.getValue());
             });
 
-            // Request capabilities by calling the API requestCapabilities
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                        ImsException.class,
-                        "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestCapabilities should succeed with"
-                        + " ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-            } catch (ImsException e) {
-                fail("requestCapabilities failed " + e);
-            }
+            requestCapabilities(uceAdapter, numbers, callback);
 
             // Verify that the callback "onError" is called with the expected error code.
             try {
@@ -981,18 +875,7 @@ public class RcsUceAdapterTest {
                 retryAfterQueue.clear();
             }
 
-            // Request capabilities by calling the API requestAvailability
-            try {
-                ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                        uceAdapter,
-                        a -> a.requestAvailability(sTestNumberUri, Runnable::run, callback),
-                        ImsException.class,
-                        "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (SecurityException e) {
-                fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-            } catch (ImsException e) {
-                fail("requestAvailability failed " + e);
-            }
+            requestAvailability(uceAdapter, sTestNumberUri, callback);
 
             // Verify that the callback "onError" is called with the expected error code.
             try {
@@ -1013,18 +896,7 @@ public class RcsUceAdapterTest {
             cb.onNetworkResponse(networkResp, networkRespReason);
         });
 
-        // Request the capabilities by calling the API requestAvailability
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    a -> a.requestAvailability(sTestNumberUri, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (ImsException e) {
-            fail("requestAvailability failed " + e);
-        }
+        requestAvailability(uceAdapter, sTestNumberUri, callback);
 
         // Verify that the callback "onError" is called with the error code FORBIDDEN
         try {
@@ -1037,18 +909,7 @@ public class RcsUceAdapterTest {
             retryAfterQueue.clear();
         }
 
-        // Request the capabilities again after the ImsService return the 403 error.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (ImsException e) {
-            fail("requestCapabilities failed " + e);
-        }
+        requestCapabilities(uceAdapter, numbers, callback);
 
         // Verify that the capabilities request is sill failed because the ImsService has returned
         // the 403 error before.
@@ -1133,18 +994,7 @@ public class RcsUceAdapterTest {
         // Stay in the foreground.
         lunchUceActivity();
 
-        // Request capabilities by calling the API requestCapabilities.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-        } catch (ImsException e) {
-            fail("requestCapabilities failed " + e);
-        }
+        requestCapabilities(uceAdapter, contacts, callback);
 
         // Verify that all the three contact's capabilities are received
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
@@ -1180,18 +1030,7 @@ public class RcsUceAdapterTest {
             cb.onTerminated("", 0L);
         });
 
-        // Request capabilities by again calling the API requestCapabilities
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter,
-                    adapter -> adapter.requestCapabilities(contacts, Runnable::run, callback),
-                    ImsException.class,
-                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
-        } catch (SecurityException e) {
-            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE.");
-        } catch (ImsException e) {
-            fail("requestCapabilities failed " + e);
-        }
+        requestCapabilities(uceAdapter, contacts, callback);
 
         // Verify the first contact is found.
         capability = waitForResult(capabilityQueue);
@@ -1683,6 +1522,38 @@ public class RcsUceAdapterTest {
             sServiceConnector.removeEabContacts(sTestSlot, builder.toString());
         } catch (Exception e) {
             Log.w("RcsUceAdapterTest", "Cannot remove test contacts from eab database: " + e);
+        }
+    }
+
+    private void requestCapabilities(RcsUceAdapter uceAdapter, Collection<Uri> numbers,
+            RcsUceAdapter.CapabilitiesCallback callback) {
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestCapabilities(numbers, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
+        } catch (SecurityException e) {
+            fail("requestCapabilities should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE. "
+                    + "Exception: " + e);
+        } catch (ImsException e) {
+            fail("requestCapabilities failed " + e);
+        }
+    }
+
+    private void requestAvailability(RcsUceAdapter uceAdapter, Uri number,
+            RcsUceAdapter.CapabilitiesCallback callback) {
+        try {
+            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
+                    uceAdapter,
+                    adapter -> adapter.requestAvailability(number, Runnable::run, callback),
+                    ImsException.class,
+                    "android.permission.ACCESS_RCS_USER_CAPABILITY_EXCHANGE");
+        } catch (SecurityException e) {
+            fail("requestAvailability should succeed with ACCESS_RCS_USER_CAPABILITY_EXCHANGE. "
+                    + "Exception: " + e);
+        } catch (ImsException e) {
+            fail("requestAvailability failed " + e);
         }
     }
 
