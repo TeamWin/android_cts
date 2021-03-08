@@ -100,6 +100,10 @@ public class Constants {
     public static final String TARGET_BROWSER = PKG_BASE + "browser.activity";
     /** A package that offers an activity acts as a browser, but uses a wildcard for host */
     public static final String TARGET_BROWSER_WILDCARD = PKG_BASE + "browser.wildcard.activity";
+    /** A package that exposes itself as a syncadapter. */
+    public static final String TARGET_SYNCADAPTER = PKG_BASE + "syncadapter";
+    /** A package that exposes itself as a syncadapter with a shared uid. */
+    public static final String TARGET_SYNCADAPTER_SHARED_USER = PKG_BASE + "syncadapter.shareduid";
 
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
@@ -164,6 +168,8 @@ public class Constants {
     public static final String ACTION_QUERY_RESOLVER =
             PKG_BASE + "cts.action.QUERY_RESOLVER_FOR_VISIBILITY";
     public static final String ACTION_BIND_SERVICE = PKG_BASE + "cts.action.BIND_SERVICE";
+    public static final String ACTION_GET_SYNCADAPTER_TYPES =
+            PKG_BASE + "cts.action.GET_SYNCADAPTER_TYPES";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_ERROR = "error";
