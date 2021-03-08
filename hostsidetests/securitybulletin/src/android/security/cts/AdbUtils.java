@@ -49,6 +49,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 
 public class AdbUtils {
 
@@ -767,5 +768,9 @@ public class AdbUtils {
             } catch (JSONException e) {}
         }
         fail(error.toString());
+    }
+
+    public static void assumeHasNfc(ITestDevice device) throws DeviceNotAvailableException {
+        assumeTrue("nfc not available on device", device.hasFeature("android.hardware.nfc"));
     }
 }
