@@ -65,6 +65,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -225,8 +226,12 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 assertThat(statsEntry.getProbeMcsRateSinceLastUpdate()).isAtLeast(-1);
                 assertThat(statsEntry.getRxLinkSpeedMbps()).isAtLeast(-1);
                 if (BuildCompat.isAtLeastS()) {
-                    assertThat(statsEntry.getTimeSliceDutyCycleInPercent())
-                            .isIn(Range.closed(0, 100));
+                    try {
+                        assertThat(statsEntry.getTimeSliceDutyCycleInPercent())
+                                .isIn(Range.closed(0, 100));
+                    } catch (NoSuchElementException e) {
+                        // pass - Device does not support the field.
+                    }
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())
