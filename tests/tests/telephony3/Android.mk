@@ -33,7 +33,7 @@ LOCAL_PACKAGE_NAME := CtsTelephony3TestCases
 LOCAL_SDK_VERSION := 28
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
