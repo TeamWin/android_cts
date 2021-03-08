@@ -20,8 +20,8 @@ import static org.junit.Assert.assertEquals;
 
 import android.app.Instrumentation;
 import android.content.Context;
-import android.graphics.PointF;
 import android.os.Parcel;
+import android.util.SizeF;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Test {@link RemoteViews#RemoteViews(Map<PointF, RemoteViews>)}.
+ * Test {@link RemoteViews#RemoteViews(Map<SizeF, RemoteViews>)}.
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -72,8 +72,8 @@ public class RemoteViewsSizeMapTest {
 
     private View mResult;
 
-    private List<PointF> mSizes;
-    private Map<PointF, RemoteViews> mRemoteViewsSizeMap;
+    private List<SizeF> mSizes;
+    private Map<SizeF, RemoteViews> mRemoteViewsSizeMap;
 
     @UiThreadTest
     @Before
@@ -82,10 +82,10 @@ public class RemoteViewsSizeMapTest {
         mContext = mInstrumentation.getTargetContext();
 
         mSizes = new ArrayList<>();
-        mSizes.add(new PointF(100, 100));
-        mSizes.add(new PointF(100, 150));
-        mSizes.add(new PointF(150, 130));
-        mSizes.add(new PointF(200, 200));
+        mSizes.add(new SizeF(100, 100));
+        mSizes.add(new SizeF(100, 150));
+        mSizes.add(new SizeF(150, 130));
+        mSizes.add(new SizeF(200, 200));
 
         mRemoteViewsSizeMap = new HashMap<>();
         for (int i = 0; i < mSizes.size(); i++) {
@@ -112,7 +112,7 @@ public class RemoteViewsSizeMapTest {
         assertEquals(R.layout.remoteviews_good, mRemoteViews.getLayoutId());
     }
 
-    private void applyRemoteViewOnUiThread(PointF initialSize) {
+    private void applyRemoteViewOnUiThread(SizeF initialSize) {
         mResult = mRemoteViews.apply(mContext, null, null, initialSize);
 
         // Add our host view to the activity behind this test. This is similar to how launchers
@@ -126,7 +126,7 @@ public class RemoteViewsSizeMapTest {
         root.addView(mResult);
     }
 
-    private void applyRemoteView(PointF initialSize) throws Throwable {
+    private void applyRemoteView(SizeF initialSize) throws Throwable {
         mActivityRule.runOnUiThread(() -> applyRemoteViewOnUiThread(initialSize));
     }
 
@@ -139,28 +139,28 @@ public class RemoteViewsSizeMapTest {
 
     @Test
     public void apply_withSmallSize_shouldReturnSmallLayout() throws Throwable {
-        applyRemoteView(new PointF(50, 50));
+        applyRemoteView(new SizeF(50, 50));
 
         assertEquals("1", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
 
     @Test
     public void apply_withLargeSize_shouldReturnLargestLayout() throws Throwable {
-        applyRemoteView(new PointF(500, 500));
+        applyRemoteView(new SizeF(500, 500));
 
         assertEquals("4", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
 
     @Test
     public void apply_withSize_shouldReturnClosestFittingLayoutWithMargin() throws Throwable {
-        applyRemoteView(new PointF(99.7f, 150));
+        applyRemoteView(new SizeF(99.7f, 150));
 
         assertEquals("2", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
 
     @Test
     public void apply_withSize_shouldReturnClosestFittingLayout() throws Throwable {
-        applyRemoteView(new PointF(160, 150));
+        applyRemoteView(new SizeF(160, 150));
 
         assertEquals("3", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
@@ -177,40 +177,40 @@ public class RemoteViewsSizeMapTest {
 
     @Test
     public void reapply_withSmallSize_shouldReturnSmallLayout() throws Throwable {
-        applyRemoteView(new PointF(50, 50));
+        applyRemoteView(new SizeF(50, 50));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(50, 50), null /* colorResources */));
+                        new SizeF(50, 50), null /* colorResources */));
 
         assertEquals("1", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
 
     @Test
     public void reapply_witLargeSize_shouldReturnLargestLayout() throws Throwable {
-        applyRemoteView(new PointF(500, 500));
+        applyRemoteView(new SizeF(500, 500));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(500, 500), null /* colorResources */));
+                        new SizeF(500, 500), null /* colorResources */));
 
         assertEquals(mResult.<TextView>findViewById(R.id.remoteView_text).getText(), "4");
     }
 
     @Test
     public void reapply_withSize_shouldReturnClosestFittingLayoutWithMargin() throws Throwable {
-        applyRemoteView(new PointF(99.7f, 150));
+        applyRemoteView(new SizeF(99.7f, 150));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(99.7f, 150), null /* colorResources */));
+                        new SizeF(99.7f, 150), null /* colorResources */));
 
         assertEquals("2", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
 
     @Test
     public void reapply_withSize_shouldReturnClosestFittingLayout() throws Throwable {
-        applyRemoteView(new PointF(160, 150));
+        applyRemoteView(new SizeF(160, 150));
         mActivityRule.runOnUiThread(
                 () -> mRemoteViews.reapply(mContext, mResult, null /* handler */,
-                        new PointF(160, 150), null /* colorResources */));
+                        new SizeF(160, 150), null /* colorResources */));
 
         assertEquals("3", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }
@@ -222,7 +222,7 @@ public class RemoteViewsSizeMapTest {
         p.setDataPosition(0);
         mRemoteViews = new RemoteViews(p);
         p.recycle();
-        applyRemoteView(new PointF(160, 150));
+        applyRemoteView(new SizeF(160, 150));
 
         assertEquals("3", mResult.<TextView>findViewById(R.id.remoteView_text).getText());
     }

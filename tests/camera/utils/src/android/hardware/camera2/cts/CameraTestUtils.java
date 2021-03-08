@@ -32,6 +32,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.MultiResolutionImageReader;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.params.InputConfiguration;
@@ -40,6 +41,7 @@ import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
+import android.hardware.camera2.params.MultiResolutionStreamInfo;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
@@ -51,6 +53,7 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.media.Image.Plane;
 import android.os.Build;
+import android.os.ConditionVariable;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
@@ -130,6 +133,8 @@ public class CameraTestUtils extends Assert {
     private static final float EXIF_EXPOSURE_TIME_ERROR_MARGIN_RATIO = 0.05f;
     private static final float EXIF_EXPOSURE_TIME_MIN_ERROR_MARGIN_SEC = 0.002f;
     private static final float EXIF_APERTURE_ERROR_MARGIN = 0.001f;
+
+    private static final float ZOOM_RATIO_THRESHOLD = 0.01f;
 
     private static final Location sTestLocation0 = new Location(LocationManager.GPS_PROVIDER);
     private static final Location sTestLocation1 = new Location(LocationManager.GPS_PROVIDER);
@@ -532,6 +537,88 @@ public class CameraTestUtils extends Assert {
                 fail("wait for image available timed out after " + timeoutMs + "ms");
             }
         }
+    }
+
+    public static class ImageAndMultiResStreamInfo {
+        public final Image image;
+        public final MultiResolutionStreamInfo streamInfo;
+
+        public ImageAndMultiResStreamInfo(Image image, MultiResolutionStreamInfo streamInfo) {
+            this.image = image;
+            this.streamInfo = streamInfo;
+        }
+    }
+
+    public static class SimpleMultiResolutionImageReaderListener
+            implements ImageReader.OnImageAvailableListener {
+        public SimpleMultiResolutionImageReaderListener(MultiResolutionImageReader owner,
+                int maxBuffers, boolean acquireLatest) {
+            mOwner = owner;
+            mMaxBuffers = maxBuffers;
+            mAcquireLatest = acquireLatest;
+        }
+
+        @Override
+        public void onImageAvailable(ImageReader reader) {
+            if (VERBOSE) Log.v(TAG, "new image available");
+
+            if (mAcquireLatest) {
+                mLastReader = reader;
+                mImageAvailable.open();
+            } else {
+                if (mQueue.size() < mMaxBuffers) {
+                    Image image = reader.acquireNextImage();
+                    MultiResolutionStreamInfo multiResStreamInfo =
+                            mOwner.getStreamInfoForImageReader(reader);
+                    mQueue.offer(new ImageAndMultiResStreamInfo(image, multiResStreamInfo));
+                }
+            }
+        }
+
+        public ImageAndMultiResStreamInfo getAnyImageAndInfoAvailable(long timeoutMs)
+                throws Exception {
+            if (mAcquireLatest) {
+                Image image = null;
+                if (mImageAvailable.block(timeoutMs)) {
+                    if (mLastReader != null) {
+                        image = mLastReader.acquireLatestImage();
+                        if (VERBOSE) Log.v(TAG, "acquireLatestImage");
+                    } else {
+                        fail("invalid image reader");
+                    }
+                    mImageAvailable.close();
+                } else {
+                    fail("wait for image available time out after " + timeoutMs + "ms");
+                }
+                return new ImageAndMultiResStreamInfo(image,
+                        mOwner.getStreamInfoForImageReader(mLastReader));
+            } else {
+                ImageAndMultiResStreamInfo imageAndInfo = mQueue.poll(timeoutMs,
+                        java.util.concurrent.TimeUnit.MILLISECONDS);
+                if (imageAndInfo == null) {
+                    fail("wait for image available timed out after " + timeoutMs + "ms");
+                }
+                return imageAndInfo;
+            }
+        }
+
+        public void reset() {
+            while (!mQueue.isEmpty()) {
+                ImageAndMultiResStreamInfo imageAndInfo = mQueue.poll();
+                assertNotNull("Acquired image is not valid", imageAndInfo.image);
+                imageAndInfo.image.close();
+            }
+            mImageAvailable.close();
+            mLastReader = null;
+        }
+
+        private LinkedBlockingQueue<ImageAndMultiResStreamInfo> mQueue =
+                new LinkedBlockingQueue<ImageAndMultiResStreamInfo>();
+        private final MultiResolutionImageReader mOwner;
+        private final int mMaxBuffers;
+        private final boolean mAcquireLatest;
+        private ConditionVariable mImageAvailable = new ConditionVariable();
+        private ImageReader mLastReader = null;
     }
 
     public static class SimpleCaptureCallback extends CameraCaptureSession.CaptureCallback {
@@ -1158,9 +1245,26 @@ public class CameraTestUtils extends Assert {
             InputConfiguration inputConfiguration, List<Surface> outputSurfaces,
             CameraCaptureSession.StateCallback listener, Handler handler)
             throws CameraAccessException {
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        for (Surface surface : outputSurfaces) {
+            outputConfigs.add(new OutputConfiguration(surface));
+        }
+        CameraCaptureSession session = configureReprocessableCameraSessionWithConfigurations(
+                camera, inputConfiguration, outputConfigs, listener, handler);
+
+        return session;
+    }
+
+    public static CameraCaptureSession configureReprocessableCameraSessionWithConfigurations(
+            CameraDevice camera, InputConfiguration inputConfiguration,
+            List<OutputConfiguration> outputConfigs, CameraCaptureSession.StateCallback listener,
+            Handler handler) throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
-        camera.createReprocessableCaptureSession(inputConfiguration, outputSurfaces,
-                sessionListener, handler);
+        SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outputConfigs, new HandlerExecutor(handler),
+                sessionListener);
+        sessionConfig.setInputConfiguration(inputConfiguration);
+        camera.createCaptureSession(sessionConfig);
 
         Integer[] sessionStates = {BlockingSessionCallback.SESSION_READY,
                                    BlockingSessionCallback.SESSION_CONFIGURE_FAILED};
@@ -1169,7 +1273,6 @@ public class CameraTestUtils extends Assert {
 
         assertTrue("Creating a reprocessable session failed.",
                 state == BlockingSessionCallback.SESSION_READY);
-
         CameraCaptureSession session =
                 sessionListener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
         assertTrue("Camera session should be a reprocessable session", session.isReprocessable());
@@ -3253,5 +3356,26 @@ public class CameraTestUtils extends Assert {
                     cameraId, minBurstFps), foundYUVStreamingRange);
         }
         return targetRange;
+    }
+    /**
+     * Get the candidate supported zoom ratios for testing
+     *
+     * <p>
+     * This function returns the bounary values of supported zoom ratio range in addition to 1.0x
+     * zoom ratio.
+     * </p>
+     */
+    public static List<Float> getCandidateZoomRatios(StaticMetadata staticInfo) {
+        List<Float> zoomRatios = new ArrayList<Float>();
+        Range<Float> zoomRatioRange = staticInfo.getZoomRatioRangeChecked();
+        zoomRatios.add(zoomRatioRange.getLower());
+        if (zoomRatioRange.contains(1.0f) &&
+                1.0f - zoomRatioRange.getLower() > ZOOM_RATIO_THRESHOLD &&
+                zoomRatioRange.getUpper() - 1.0f > ZOOM_RATIO_THRESHOLD) {
+            zoomRatios.add(1.0f);
+        }
+        zoomRatios.add(zoomRatioRange.getUpper());
+
+        return zoomRatios;
     }
 }

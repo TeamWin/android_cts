@@ -119,7 +119,7 @@ public class MatchFlagTests {
         startNoBrowserRequireDefaultInternal(false);
     }
 
-    private void startNoBrowserRequireDefaultInternal(boolean shouldStartActivity) {
+    private void startNoBrowserRequireDefaultInternal(boolean isDomainApproved) {
         Intent uniqueUriIntent = new Intent(Intent.ACTION_VIEW)
                 .addCategory(Intent.CATEGORY_BROWSABLE)
                 .setData(Uri.parse(UNIQUE_URI));
@@ -135,21 +135,32 @@ public class MatchFlagTests {
             // with require default, we'll get activity not found
             try {
                 startActivity(uniqueUriIntentNoBrowserRequireDefault);
-                fail("Should fail to launch when started with non-browser and require default");
+                if (!isDomainApproved) {
+                    fail("Should fail to launch when started with non-browser and require default"
+                            + " when browser present");
+                }
             } catch (ActivityNotFoundException e) {
                 // hooray!
+                if (isDomainApproved) {
+                    // Domain approval should force only the test Activity to be returned, which
+                    // means it should pass the above flags and launch.
+                    fail("Should succeed launch when started with non-browser and require default"
+                            + " when browser present");
+                }
             }
         } else {
             // with non-browser, but no browser present, we'd get a single result
             // with require default, we'll resolve to that single result
             try {
                 startActivity(uniqueUriIntentNoBrowserRequireDefault);
-                if (!shouldStartActivity) {
-                    fail("Should fail to launch when started with non-browser and require default");
+                if (!isDomainApproved) {
+                    fail("Should fail to launch when started with non-browser and require default"
+                            + " when browser not present");
                 }
             } catch (ActivityNotFoundException e) {
-                if (shouldStartActivity) {
-                    fail("Should succeed launch when started with non-browser and require default");
+                if (isDomainApproved) {
+                    fail("Should succeed launch when started with non-browser and require default"
+                            + " when browser not present");
                 }
             }
         }
