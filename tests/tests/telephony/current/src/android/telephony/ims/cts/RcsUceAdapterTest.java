@@ -1525,7 +1525,7 @@ public class RcsUceAdapterTest {
         }
     }
 
-    private void requestCapabilities(RcsUceAdapter uceAdapter, Collection<Uri> numbers,
+    private void requestCapabilities(RcsUceAdapter uceAdapter, List<Uri> numbers,
             RcsUceAdapter.CapabilitiesCallback callback) {
         try {
             ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
