@@ -16,6 +16,8 @@
 
 package android.net.wifi.cts;
 
+import static android.Manifest.permission.CONNECTIVITY_INTERNAL;
+import static android.Manifest.permission.NETWORK_SETTINGS;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
@@ -330,6 +332,31 @@ public class TestHelper {
     /**
      * Tests the entire connection success flow using the provided suggestion.
      *
+     * Note: The caller needs to invoke this after acquiring shell identity.
+     *
+     * @param network saved network from the device to use for the connection.
+     * @param suggestion suggestion to use for the connection.
+     * @param executorService Excutor service to run scan periodically (to trigger connection).
+     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     *                                    the provided capability.
+     *
+     * @return NetworkCallback used for the connection (can be used by client to release the
+     * connection.
+     */
+    public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionWithShellIdentity(
+            WifiConfiguration network, WifiNetworkSuggestion suggestion,
+            @NonNull ScheduledExecutorService executorService,
+            @Nullable Integer restrictedNetworkCapability) {
+        return testConnectionFlowWithSuggestionInternal(
+                network, suggestion, executorService, restrictedNetworkCapability, true);
+    }
+
+    /**
+     * Tests the entire connection success flow using the provided suggestion.
+     *
+     * Note: The helper method drops the shell identity, so don't use this if the caller already
+     * adopted shell identity.
+     *
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
      * @param executorService Excutor service to run scan periodically (to trigger connection).
@@ -343,8 +370,15 @@ public class TestHelper {
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
             @Nullable Integer restrictedNetworkCapability) {
-        return testConnectionFlowWithSuggestionInternal(
-                network, suggestion, executorService, restrictedNetworkCapability, true);
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
+            return testConnectionFlowWithSuggestionWithShellIdentity(
+                    network, suggestion, executorService, restrictedNetworkCapability);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -363,8 +397,15 @@ public class TestHelper {
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
             @Nullable Integer restrictedNetworkCapability) {
-        return testConnectionFlowWithSuggestionInternal(
-                network, suggestion, executorService, restrictedNetworkCapability, false);
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
+            return testConnectionFlowWithSuggestionInternal(
+                    network, suggestion, executorService, restrictedNetworkCapability, false);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -388,9 +429,7 @@ public class TestHelper {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
-            uiAutomation.adoptShellPermissionIdentity();
             // File a request for restricted (oem paid) wifi network.
             NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
                     .addTransportType(TRANSPORT_WIFI)
@@ -429,7 +468,6 @@ public class TestHelper {
             }
         } catch (InterruptedException e) {
         } finally {
-            uiAutomation.dropShellPermissionIdentity();
             executorService.shutdown();
         }
         return testNetworkCallback;
@@ -503,12 +541,9 @@ public class TestHelper {
         // cannot be reset.
         // TODO(b/177591382): Use ArrayBlockingQueue/LinkedBlockingQueue
         Object uiLock = new Object();
-        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         TestNetworkRequestMatchCallback networkRequestMatchCallback =
                 new TestNetworkRequestMatchCallback(uiLock);
         try {
-            uiAutomation.adoptShellPermissionIdentity();
-
             // 1. Wait for registration callback.
             synchronized (uiLock) {
                 try {
@@ -553,12 +588,13 @@ public class TestHelper {
             }
         } finally {
             mWifiManager.unregisterNetworkRequestMatchCallback(networkRequestMatchCallback);
-            uiAutomation.dropShellPermissionIdentity();
         }
     }
 
     /**
-     * Tests the entire connection flow using the provided specifier.
+     * Tests the entire connection flow using the provided specifier,
+     *
+     * Note: The caller needs to invoke this after acquiring shell identity.
      *
      * @param specifier Specifier to use for network request.
      * @param shouldUserReject Whether to simulate user rejection or not.
@@ -566,7 +602,7 @@ public class TestHelper {
      * @return NetworkCallback used for the connection (can be used by client to release the
      * connection.
      */
-    public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifier(
+    public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifierWithShellIdentity(
             WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // Fork a thread to handle the UI interactions.
@@ -585,7 +621,7 @@ public class TestHelper {
                     testNetworkCallback);
             // Wait for the request to reach the wifi stack before kick-starting the UI
             // interactions.
-            Thread.sleep(100);
+            Thread.sleep(500);
             // Start the UI interactions.
             uiThread.run();
             // now wait for callback
@@ -613,6 +649,31 @@ public class TestHelper {
             fail("UI interaction interrupted");
         }
         return testNetworkCallback;
+    }
+
+    /**
+     * Tests the entire connection flow using the provided specifier.
+     *
+     * Note: The helper method drops the shell identity, so don't use this if the caller already
+     * adopted shell identity.
+     *
+     * @param specifier Specifier to use for network request.
+     * @param shouldUserReject Whether to simulate user rejection or not.
+     *
+     * @return NetworkCallback used for the connection (can be used by client to release the
+     * connection.
+     */
+    public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifier(
+            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject) {
+        final UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS);
+            return testConnectionFlowWithSpecifierWithShellIdentity(
+                    network, specifier, shouldUserReject);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 
     /**
