@@ -17,9 +17,10 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.deviceadmin">
+          package="android.DeviceAdminTestApp">
     <application
-        android:appComponentFactory="com.android.eventlib.premade.EventLibAppComponentFactory">
+        android:appComponentFactory="com.android.eventlib.premade.EventLibAppComponentFactory"
+        android:testOnly="true">
     </application>
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
 </manifest>
