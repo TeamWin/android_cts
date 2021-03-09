@@ -25,7 +25,9 @@ import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.translation.TranslationManager;
 import android.view.translation.TranslationRequest;
+import android.view.translation.TranslationRequestValue;
 import android.view.translation.TranslationResponse;
+import android.view.translation.TranslationResponseValue;
 import android.view.translation.TranslationSpec;
 import android.view.translation.Translator;
 
@@ -100,8 +102,9 @@ public class TranslationManagerTest {
 
         sTranslationReplier.addResponse(
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                        .addTranslations(new TranslationRequest.Builder()
-                                .setTranslationText("success")
+                        .setTranslationResponseValue(0, new TranslationResponseValue
+                                .Builder(TranslationResponseValue.STATUS_SUCCESS)
+                                .setText("success")
                                 .build())
                         .build());
 
@@ -122,7 +125,10 @@ public class TranslationManagerTest {
             assertThat(translator.isDestroyed()).isFalse();
 
             final TranslationResponse response = translator.translate(
-                    new TranslationRequest("hello world"));
+                    new TranslationRequest.Builder()
+                            .addTranslationRequestValue(
+                                    TranslationRequestValue.forText("hello world"))
+                            .build());
 
             sTranslationReplier.getNextTranslationRequest();
 
@@ -148,11 +154,14 @@ public class TranslationManagerTest {
         assertThat(response).isNotNull();
         assertThat(response.getTranslationStatus())
                 .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(1);
+        assertThat(response.getTranslationResponseValues().size()).isEqualTo(1);
+        assertThat(response.getViewTranslationResponses().size()).isEqualTo(0);
 
-        final TranslationRequest request = response.getTranslations().get(0);
-        assertThat(request.getAutofillId()).isEqualTo(null);
-        assertThat(request.getTranslationText()).isEqualTo("success");
+        final TranslationResponseValue value = response.getTranslationResponseValues().get(0);
+        assertThat(value.getStatusCode()).isEqualTo(TranslationResponseValue.STATUS_SUCCESS);
+        assertThat(value.getText()).isEqualTo("success");
+        assertThat(value.getTransliteration()).isNull();
+        assertThat(value.getDictionaryDescription()).isNull();
     }
 
     @Test

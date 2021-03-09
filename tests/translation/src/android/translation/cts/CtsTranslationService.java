@@ -20,10 +20,10 @@ import android.content.Context;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Looper;
-import android.service.translation.TranslationRequest;
 import android.service.translation.TranslationService;
 import android.util.Log;
+import android.view.translation.TranslationRequest;
+import android.view.translation.TranslationRequestValue;
 import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationSpec;
 
@@ -112,8 +112,6 @@ public class CtsTranslationService extends TranslationService {
             @NonNull CancellationSignal cancellationSignal,
             @NonNull OnTranslationResultCallback callback) {
         Log.v(TAG, "onTranslationRequest(" + request + ")");
-        final android.view.translation.TranslationRequest viewRequest =
-                request.getTranslationRequests().get(0);
 
         mHandler.post(() -> sTranslationReplier.handleOnTranslationRequest(getApplicationContext(),
                 request, sessionId, cancellationSignal, callback));
