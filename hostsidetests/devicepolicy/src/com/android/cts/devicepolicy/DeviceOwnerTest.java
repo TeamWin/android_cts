@@ -665,7 +665,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @LargeTest
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testPackageInstallCache_multiUser() throws Exception {
         assumeCanCreateAdditionalUsers(1);
 
@@ -721,7 +720,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testAirplaneModeRestriction() throws Exception {
         executeDeviceOwnerTest("AirplaneModeRestrictionTest");
     }
@@ -893,8 +891,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
-    // TODO(b/132260693): createAffiliatedSecondaryUser() is failing on headless user
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testListForegroundAffiliatedUsers_extraUser() throws Exception {
         assumeCanCreateAdditionalUsers(1);
@@ -904,6 +900,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testListForegroundAffiliatedUsers_notAffiliated() throws Exception {
         assumeCanCreateAdditionalUsers(1);
@@ -914,7 +911,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 "testListForegroundAffiliatedUsers_empty");
     }
 
-    // TODO(b/132260693): createAffiliatedSecondaryUser() is failing on headless user
+    // TODO(b/132260693): Instrumentation run failed due to 'Process crashed'
     @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testListForegroundAffiliatedUsers_affiliated() throws Exception {
@@ -938,8 +935,15 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     private int createAffiliatedSecondaryUser() throws Exception {
         final int userId = createUser();
         installAppAsUser(INTENT_RECEIVER_APK, userId);
-        installAppAsUser(DEVICE_OWNER_APK, userId);
-        setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
+        // For headless system user mode, after DO is setup, PO is already
+        // set on the secondary user. Meanwhile, it requires additional permission while
+        // using DevicePolicyManagerWrapper while using DPM APIs from secondary user.
+        if (!isHeadlessSystemUserMode()) {
+            installAppAsUser(DEVICE_OWNER_APK, userId);
+            setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
+        } else {
+            grantDpmWrapperPermissions(userId);
+        }
         wakeupAndDismissKeyguard();
 
         // Setting the same affiliation ids on both users
