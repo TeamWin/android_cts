@@ -73,4 +73,12 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
         info.setCoupledSinkSupportAtSource(true);
         assertTrue(info.isCoupledSinkSupportedAtSource());
     }
+
+    public void testWifiP2pWfdR2Info() {
+        assumeTrue(BuildCompat.isAtLeastS());
+        WifiP2pWfdInfo info = new WifiP2pWfdInfo();
+
+        info.setWfdR2Device(WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE);
+        assertTrue(info.isR2Enabled());
+    }
 }
