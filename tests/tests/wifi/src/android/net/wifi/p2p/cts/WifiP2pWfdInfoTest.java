@@ -16,10 +16,23 @@
 
 package android.net.wifi.p2p.cts;
 
-import android.net.wifi.p2p.WifiP2pWfdInfo;
-import android.test.AndroidTestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
-public class WifiP2pWfdInfoTest extends AndroidTestCase {
+import android.net.wifi.cts.WifiJUnit4TestBase;
+import android.net.wifi.p2p.WifiP2pWfdInfo;
+
+import androidx.core.os.BuildCompat;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.runner.RunWith;
+
+@SmallTest
+@RunWith(AndroidJUnit4.class)
+public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
 
     private final int TEST_DEVICE_TYPE = WifiP2pWfdInfo.DEVICE_TYPE_WFD_SOURCE;
     private final boolean TEST_DEVICE_ENABLE_STATUS = true;
@@ -46,5 +59,18 @@ public class WifiP2pWfdInfoTest extends AndroidTestCase {
         assertEquals(TEST_MAX_THROUGHPUT, copiedInfo.getMaxThroughput());
         assertEquals(TEST_CONTENT_PROTECTION_SUPPORTED_STATUS,
                 copiedInfo.isContentProtectionSupported());
+    }
+
+    public void testWifiCoupledSink() {
+        assumeTrue(BuildCompat.isAtLeastS());
+        WifiP2pWfdInfo info = new WifiP2pWfdInfo();
+
+        assertFalse(info.isCoupledSinkSupportedAtSink());
+        info.setCoupledSinkSupportAtSink(true);
+        assertTrue(info.isCoupledSinkSupportedAtSink());
+
+        assertFalse(info.isCoupledSinkSupportedAtSource());
+        info.setCoupledSinkSupportAtSource(true);
+        assertTrue(info.isCoupledSinkSupportedAtSource());
     }
 }
