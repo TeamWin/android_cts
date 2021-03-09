@@ -90,6 +90,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.LocusId;
 import android.content.OperationApplicationException;
 import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
@@ -250,7 +251,6 @@ public class NotificationManagerTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
         mNotificationManager.cancelAll();
-
         for (String id : mRuleIds) {
             mNotificationManager.removeAutomaticZenRule(id);
         }
@@ -3294,7 +3294,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             // Start & get the activity
             SendBubbleActivity a = startSendBubbleActivity();
             // Send a bubble that doesn't fulfill policy from foreground
-            a.sendInvalidBubble(false /* autoExpand */);
+            a.sendInvalidBubble(BUBBLE_NOTIF_ID, false /* autoExpand */);
 
             // No foreground bubbles that don't fulfill policy in R (allowed in Q)
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, false /* shouldBeBubble */);
@@ -3330,10 +3330,9 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(true /* autoExpand */, false /* suppressNotif */);
+            a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */, false /* suppressNotif */);
 
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
@@ -3572,8 +3571,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                             .build();
             Notification.Builder nb = getConversationNotification();
 
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            sendAndVerifyBubble(42, nb, data, shouldBeBubble);
+            sendAndVerifyBubble(42, nb, data, true /* shouldBeBubble */);
             mListener.resetData();
 
             deleteShortcuts();
@@ -3601,9 +3599,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             SendBubbleActivity a = startSendBubbleActivity();
 
             // send the bubble with notification suppressed
-            a.sendBubble(false /* autoExpand */, true /* suppressNotif */);
-            boolean shouldBeBubble = !mActivityManager.isLowRamDevice();
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
+            a.sendBubble(BUBBLE_NOTIF_ID, false /* autoExpand */, true /* suppressNotif */);
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             // check for the notification
             StatusBarNotification sbnSuppressed = mListener.mPosted.get(0);
@@ -3617,8 +3614,8 @@ public class NotificationManagerTest extends AndroidTestCase {
             mListener.resetData();
 
             // send the bubble with notification NOT suppressed
-            a.sendBubble(false /* autoExpand */, false /* suppressNotif */);
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, shouldBeBubble);
+            a.sendBubble(BUBBLE_NOTIF_ID, false /* autoExpand */, false /* suppressNotif */);
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBubble */);
 
             // check for the notification
             StatusBarNotification sbnNotSuppressed = mListener.mPosted.get(0);
@@ -3648,8 +3645,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             createDynamicShortcut();
             setUpNotifListener();
 
-            // make ourselves foreground so we can auto-expand the bubble
+            // Make a bubble
             SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             // Prep to find bubbled activity
             Class clazz = BubbledActivity.class;
@@ -3659,7 +3662,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(true /* autoExpand */, false /* suppressNotif */);
+            a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */, false /* suppressNotif */);
 
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
@@ -3688,8 +3691,14 @@ public class NotificationManagerTest extends AndroidTestCase {
             createDynamicShortcut();
             setUpNotifListener();
 
-            // make ourselves foreground so we can auto-expand the bubble
+            // Make a bubble
             SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             // Prep to find bubbled activity
             Class clazz = BubbledActivity.class;
@@ -3699,7 +3708,10 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(true /* autoExpand */, false /* suppressNotif */, true /* useShortcut */);
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    true /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* useShortcut */);
 
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
@@ -3707,6 +3719,299 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
             assertTrue(activity.isBubbled());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies the bubble is suppressed when it should be. */
+    public void testNotificationManagerBubble_setSuppressBubble()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            final int notifId = 3;
+
+            // Make a bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(notifId,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */);
+
+            verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            // Launch same activity as whats in the bubble
+            a.startBubbleActivity(notifId);
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // It should have the locusId
+            assertEquals(new LocusId(String.valueOf(notifId)),
+                    activity.getLocusId());
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
+
+            // Bubble should have suppressed flag
+            StatusBarNotification sbn = findPostedNotification(notifId, true);
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies the bubble is not suppressed if dev didn't specify suppressable */
+    public void testNotificationManagerBubble_setSuppressBubble_notSuppressable()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            // Make a bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    false /* suppressBubble */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            // Launch same activity as whats in the bubble
+            a.startBubbleActivity(BUBBLE_NOTIF_ID);
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // It should have the locusId
+            assertEquals(new LocusId(String.valueOf(BUBBLE_NOTIF_ID)),
+                    activity.getLocusId());
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Bubble should not be suppressed
+            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies the bubble is not suppressed if the activity doesn't have a locusId. */
+    public void testNotificationManagerBubble_setSuppressBubble_activityNoLocusId()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            // Make a bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            // Launch same activity as whats in the bubble
+            a.startBubbleActivity(BUBBLE_NOTIF_ID, false /* addLocusId */);
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // It shouldn't have the locusId
+            assertNull(activity.getLocusId());
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Bubble should not be suppressed
+            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies the bubble is not suppressed if the notification doesn't have a locusId. */
+    public void testNotificationManagerBubble_setSuppressBubble_notificationNoLocusId()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            // Make a bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(BUBBLE_NOTIF_ID,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */,
+                    false /* useShortcut */,
+                    false /* setLocusId */);
+
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            // Launch same activity as whats in the bubble
+            a.startBubbleActivity(BUBBLE_NOTIF_ID, true /* addLocusId */);
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // Activity has the locus
+            assertNotNull(activity.getLocusId());
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
+
+            // Bubble should not be suppressed & not have a locusId
+            StatusBarNotification sbn = findPostedNotification(BUBBLE_NOTIF_ID, true);
+            assertNull(sbn.getNotification().getLocusId());
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+        } finally {
+            deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies the bubble is unsuppressed when the locus activity is hidden. */
+    public void testNotificationManagerBubble_setSuppressBubble_dismissLocusActivity()
+            throws Exception {
+        if (FeatureUtil.isAutomotive() || FeatureUtil.isTV()
+                || mActivityManager.isLowRamDevice()) {
+            // These do not support bubbles.
+            return;
+        }
+        try {
+            setBubblesGlobal(true);
+            setBubblesAppPref(1 /* all */);
+            setBubblesChannelAllowed(true);
+
+            createDynamicShortcut();
+            setUpNotifListener();
+
+            final int notifId = 2;
+
+            // Make a bubble
+            SendBubbleActivity a = startSendBubbleActivity();
+            a.sendBubble(notifId,
+                    false /* autoExpand */,
+                    false /* suppressNotif */,
+                    true /* suppressBubble */);
+
+            verifyNotificationBubbleState(notifId, true);
+
+            StatusBarNotification sbn = findPostedNotification(notifId, true);
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+
+            // Prep to find bubbled activity
+            Class clazz = BubbledActivity.class;
+            Instrumentation.ActivityResult result =
+                    new Instrumentation.ActivityResult(0, new Intent());
+            Instrumentation.ActivityMonitor monitor =
+                    new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
+            InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
+
+            // Launch same activity as whats in the bubble
+            a.startBubbleActivity(notifId);
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+
+            // It should have the locusId
+            assertEquals(new LocusId(String.valueOf(notifId)),
+                    activity.getLocusId());
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
+
+            // Bubble should have suppressed flag
+            sbn = findPostedNotification(notifId, true);
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
+
+            activity.finish();
+
+            // notif gets posted with update, so wait
+            verifyNotificationBubbleState(notifId, true /* shouldBeBubble */);
+
+            sbn = findPostedNotification(notifId, true);
+            assertTrue(sbn.getNotification().getBubbleMetadata().isBubbleSuppressable());
+            assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
             deleteShortcuts();
             cleanupSendBubbleActivity();
