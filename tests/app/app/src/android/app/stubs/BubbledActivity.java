@@ -18,24 +18,37 @@ package android.app.stubs;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.LocusId;
 import android.os.Bundle;
 
 /**
  * Used by NotificationManagerTest for testing policy around bubbles, this activity is shown
- * within the bubble.
+ * within the bubble (and sometimes outside too depending on the test).
  */
 public class BubbledActivity extends Activity {
 
     boolean mIsBubbled = false;
 
+    public static final String EXTRA_LOCUS_ID = "EXTRA_ID_LOCUS_ID";
+    private LocusId mLocusId;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
         mIsBubbled = getIntent().getBooleanExtra(Intent.EXTRA_IS_BUBBLED, false);
+        Bundle b = getIntent().getExtras();
+        String locus = b != null ? b.getString(EXTRA_LOCUS_ID, null) : null;
+        mLocusId = locus != null ? new LocusId(locus) : null;
+        setLocusContext(mLocusId, null /* bundle */);
     }
 
     public boolean isBubbled() {
         return mIsBubbled;
+    }
+
+    public LocusId getLocusId() {
+        return mLocusId;
     }
 }

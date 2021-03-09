@@ -16,6 +16,7 @@
 package com.android.bedstead.dpmwrapper;
 
 import android.app.ActivityManager;
+import android.content.Context;
 import android.content.IntentFilter;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -37,13 +38,13 @@ final class Utils {
         return UserManager.isHeadlessSystemUserMode() && MY_USER_ID == UserHandle.USER_SYSTEM;
     }
 
-    static boolean isCurrentUserOnHeadlessSystemUser() {
+    static boolean isCurrentUserOnHeadlessSystemUser(Context context) {
         return UserManager.isHeadlessSystemUserMode()
-                && MY_USER_ID == ActivityManager.getCurrentUser();
+                && context.getSystemService(UserManager.class).isUserForeground();
     }
 
-    static void assertCurrentUserOnHeadlessSystemMode() {
-        if (isCurrentUserOnHeadlessSystemUser()) return;
+    static void assertCurrentUserOnHeadlessSystemMode(Context context) {
+        if (isCurrentUserOnHeadlessSystemUser(context)) return;
 
         throw new IllegalStateException("Should only be called by current user ("
                 + ActivityManager.getCurrentUser() + ") on headless system user device, but was "

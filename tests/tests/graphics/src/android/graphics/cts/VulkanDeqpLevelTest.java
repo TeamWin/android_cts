@@ -55,7 +55,7 @@ public class VulkanDeqpLevelTest {
     private FeatureInfo mVulkanHardwareVersion = null;
 
     @Before
-    public void setup() throws Throwable {
+    public void setup() {
         mPm = InstrumentationRegistry.getTargetContext().getPackageManager();
         FeatureInfo[] features = mPm.getSystemAvailableFeatures();
         if (features != null) {
@@ -74,8 +74,8 @@ public class VulkanDeqpLevelTest {
     @Test
     public void testVulkanDeqpLevel() {
         assumeTrue(
-                "Test does not apply for vendor image with API level lower than Android 11",
-                PropertyUtil.isVendorApiLevelNewerThan(28));
+                "Test only applies for vendor image with API level >= 30 (Android 11)",
+                PropertyUtil.isVendorApiLevelNewerThan(29));
         assumeTrue(
                 "Test does not apply if Vulkan 1.0 or higher is not supported",
                 mVulkanHardwareVersion != null && mVulkanHardwareVersion.version >= VULKAN_1_0);

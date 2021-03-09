@@ -37,7 +37,7 @@ public final class TestAppHelper {
      */
     public static void registerTestCaseReceiver(Context context, BroadcastReceiver receiver,
             IntentFilter filter) {
-        if (isCurrentUserOnHeadlessSystemUser()) {
+        if (isCurrentUserOnHeadlessSystemUser(context)) {
             TestAppCallbacksReceiver.registerReceiver(context, receiver, filter);
             return;
         }
@@ -51,7 +51,7 @@ public final class TestAppHelper {
      * device owner's {@link android.app.admin.DeviceAdminReceiver}.
      */
     public static void unregisterTestCaseReceiver(Context context, BroadcastReceiver receiver) {
-        if (isCurrentUserOnHeadlessSystemUser()) {
+        if (isCurrentUserOnHeadlessSystemUser(context)) {
             TestAppCallbacksReceiver.unregisterReceiver(context, receiver);
             return;
         }

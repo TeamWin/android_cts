@@ -61,22 +61,21 @@ public final class TestAppCallbacksReceiver extends BroadcastReceiver {
     private static final ArrayMap<String, ArrayList<BroadcastReceiver>> sRealReceivers =
             new ArrayMap<>();
 
-    /**
-     * Called by {@code ActivityManager} to deliver an intent.
-     */
-    public TestAppCallbacksReceiver() {
-        assertCurrentUserOnHeadlessSystemMode();
-        if (sHandlerThread == null) {
-            sHandlerThread = new HandlerThread("NonDeviceOwnerCallbackReceiverThread");
-            Log.i(TAG, "Starting thread " + sHandlerThread + " on user " + MY_USER_ID);
-            sHandlerThread.start();
-            sHandler = new Handler(sHandlerThread.getLooper());
-        }
+    private static void setHandlerThread() {
+        if (sHandlerThread != null) return;
+
+        sHandlerThread = new HandlerThread("TestAppCallbacksReceiverThread");
+        Log.i(TAG, "Starting thread " + sHandlerThread + " on user " + MY_USER_ID);
+        sHandlerThread.start();
+        sHandler = new Handler(sHandlerThread.getLooper());
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.i(TAG, " received intent on user " + context.getUserId() + ": " + intent);
+        assertCurrentUserOnHeadlessSystemMode(context);
+        setHandlerThread();
+
         Intent realIntent = intent.getParcelableExtra(EXTRA);
         if (realIntent == null) {
             Log.e(TAG, "No " + EXTRA + " on intent " + intent);

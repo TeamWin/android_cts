@@ -914,4 +914,104 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         assertThat(copy.getPassword()).isEqualTo(PASSWORD);
         assertThat(copy.getRealm()).isEqualTo(REALM);
     }
+
+    /**
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsEnterpriseConfigServerCertNotEnabled() {
+        if (!hasWifi()) {
+            return;
+        }
+        WifiEnterpriseConfig baseConfig = new WifiEnterpriseConfig();
+        baseConfig.setEapMethod(Eap.PEAP);
+        baseConfig.setPhase2Method(Phase2.MSCHAPV2);
+        assertTrue(baseConfig.isEapMethodServerCertUsed());
+        assertFalse(baseConfig.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig noMatchConfig = new WifiEnterpriseConfig(baseConfig);
+        noMatchConfig.setCaCertificate(FakeKeys.CA_CERT0);
+        // Missing match disables validation.
+        assertTrue(baseConfig.isEapMethodServerCertUsed());
+        assertFalse(baseConfig.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig noCaConfig = new WifiEnterpriseConfig(baseConfig);
+        noCaConfig.setDomainSuffixMatch(DOM_SUBJECT_MATCH);
+        // Missing CA certificate disables validation.
+        assertTrue(baseConfig.isEapMethodServerCertUsed());
+        assertFalse(baseConfig.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig noValidationConfig = new WifiEnterpriseConfig();
+        noValidationConfig.setEapMethod(Eap.AKA);
+        assertFalse(noValidationConfig.isEapMethodServerCertUsed());
+    }
+
+    /**
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsEnterpriseConfigServerCertEnabledWithPeap() {
+        if (!hasWifi()) {
+            return;
+        }
+        testIsEnterpriseConfigServerCertEnabled(Eap.PEAP);
+    }
+
+    /**
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsEnterpriseConfigServerCertEnabledWithTls() {
+        if (!hasWifi()) {
+            return;
+        }
+        testIsEnterpriseConfigServerCertEnabled(Eap.TLS);
+    }
+
+    /**
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testIsEnterpriseConfigServerCertEnabledWithTTLS() {
+        if (!hasWifi()) {
+            return;
+        }
+        testIsEnterpriseConfigServerCertEnabled(Eap.TTLS);
+    }
+
+    private void testIsEnterpriseConfigServerCertEnabled(int eapMethod) {
+        WifiEnterpriseConfig configWithCertAndDomainSuffixMatch = createEnterpriseConfig(eapMethod,
+                Phase2.NONE, FakeKeys.CA_CERT0, null, DOM_SUBJECT_MATCH, null);
+        assertTrue(configWithCertAndDomainSuffixMatch.isEapMethodServerCertUsed());
+        assertTrue(configWithCertAndDomainSuffixMatch.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig configWithCertAndAltSubjectMatch = createEnterpriseConfig(eapMethod,
+                Phase2.NONE, FakeKeys.CA_CERT0, null, null, ALT_SUBJECT_MATCH);
+        assertTrue(configWithCertAndAltSubjectMatch.isEapMethodServerCertUsed());
+        assertTrue(configWithCertAndAltSubjectMatch.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig configWithAliasAndDomainSuffixMatch = createEnterpriseConfig(eapMethod,
+                Phase2.NONE, null, new String[]{"alias1", "alisa2"}, DOM_SUBJECT_MATCH,
+                null);
+        assertTrue(configWithAliasAndDomainSuffixMatch.isEapMethodServerCertUsed());
+        assertTrue(configWithAliasAndDomainSuffixMatch.isServerCertValidationEnabled());
+
+        WifiEnterpriseConfig configWithAliasAndAltSubjectMatch = createEnterpriseConfig(eapMethod,
+                Phase2.NONE, null, new String[]{"alias1", "alisa2"}, null, ALT_SUBJECT_MATCH);
+        assertTrue(configWithAliasAndAltSubjectMatch.isEapMethodServerCertUsed());
+        assertTrue(configWithAliasAndAltSubjectMatch.isServerCertValidationEnabled());
+    }
+
+    private WifiEnterpriseConfig createEnterpriseConfig(int eapMethod, int phase2Method,
+            X509Certificate caCertificate, String[] aliases, String domainSuffixMatch,
+            String altSubjectMatch) {
+        WifiEnterpriseConfig config = new WifiEnterpriseConfig();
+        config.setEapMethod(eapMethod);
+        config.setPhase2Method(phase2Method);
+        config.setCaCertificate(caCertificate);
+        config.setCaCertificateAliases(aliases);
+        config.setDomainSuffixMatch(domainSuffixMatch);
+        config.setAltSubjectMatch(altSubjectMatch);
+        return config;
+    }
 }
