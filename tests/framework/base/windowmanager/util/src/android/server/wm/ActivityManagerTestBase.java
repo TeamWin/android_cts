@@ -857,6 +857,10 @@ public abstract class ActivityManagerTestBase {
         return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
     }
 
+    protected boolean isOperatorTierDevice() {
+        return hasDeviceFeature("com.google.android.tv.operator_tier");
+    }
+
     protected void waitAndAssertActivityState(ComponentName activityName,
             String state, String message) {
         mAmWmState.waitForActivityState(activityName, state);
