@@ -48,7 +48,6 @@ public class Poc18_06 extends SecurityTestCase {
     @Test
     @SecurityTest
     public void testPocCVE_2018_9349() throws Exception {
-        getOomCatcher().setHighMemoryTest();
         pocPusher.only32();
         AdbUtils.pushResource(
                 "/CVE-2018-9349.yuv", "/data/local/tmp/CVE-2018-9349.yuv", getDevice());
