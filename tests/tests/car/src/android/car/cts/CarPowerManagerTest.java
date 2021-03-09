@@ -62,10 +62,10 @@ public final class CarPowerManagerTest extends CarApiTestBase {
      */
     @Test
     public void testApplyNewPowerPolicy() throws Exception {
-        PowerPolicyChangeListenerImpl listenerAudioOne = new PowerPolicyChangeListenerImpl();
-        PowerPolicyChangeListenerImpl listenerAudioTwo = new PowerPolicyChangeListenerImpl();
-        PowerPolicyChangeListenerImpl listenerWifi = new PowerPolicyChangeListenerImpl();
-        PowerPolicyChangeListenerImpl listenerLocation = new PowerPolicyChangeListenerImpl();
+        PowerPolicyListenerImpl listenerAudioOne = new PowerPolicyListenerImpl();
+        PowerPolicyListenerImpl listenerAudioTwo = new PowerPolicyListenerImpl();
+        PowerPolicyListenerImpl listenerWifi = new PowerPolicyListenerImpl();
+        PowerPolicyListenerImpl listenerLocation = new PowerPolicyListenerImpl();
         CarPowerPolicyFilter filterAudio = new CarPowerPolicyFilter.Builder()
                 .setComponents(PowerComponent.AUDIO).build();
         CarPowerPolicyFilter filterWifi = new CarPowerPolicyFilter.Builder()
@@ -75,16 +75,16 @@ public final class CarPowerManagerTest extends CarApiTestBase {
         String policyId = "audio_on_wifi_off";
 
         definePowerPolicy(policyId, "AUDIO", "WIFI");
-        mCarPowerManager.addPowerPolicyChangeListener(mExecutor, listenerAudioOne, filterAudio);
-        mCarPowerManager.addPowerPolicyChangeListener(mExecutor, listenerAudioTwo, filterAudio);
-        mCarPowerManager.addPowerPolicyChangeListener(mExecutor, listenerWifi, filterWifi);
-        mCarPowerManager.addPowerPolicyChangeListener(mExecutor, listenerLocation, filterLocation);
-        mCarPowerManager.removePowerPolicyChangeListener(listenerAudioTwo);
+        mCarPowerManager.addPowerPolicyListener(mExecutor, filterAudio, listenerAudioOne);
+        mCarPowerManager.addPowerPolicyListener(mExecutor, filterAudio, listenerAudioTwo);
+        mCarPowerManager.addPowerPolicyListener(mExecutor, filterWifi, listenerWifi);
+        mCarPowerManager.addPowerPolicyListener(mExecutor, filterLocation, listenerLocation);
+        mCarPowerManager.removePowerPolicyListener(listenerAudioTwo);
         applyPowerPolicy(policyId);
 
         CarPowerPolicy policy = mCarPowerManager.getCurrentPowerPolicy();
         assertWithMessage("Current power policy").that(policy).isNotNull();
-        assertWithMessage("Current power policy ID").that(policy.policyId).isEqualTo(policyId);
+        assertWithMessage("Current power policy ID").that(policy.getPolicyId()).isEqualTo(policyId);
         assertWithMessage("Added audio listener's current policy ID")
                 .that(listenerAudioOne.getCurrentPolicyId(LISTENER_WAIT_TIME_MS))
                 .isEqualTo(policyId);
@@ -123,15 +123,15 @@ public final class CarPowerManagerTest extends CarApiTestBase {
                 "cmd car_service apply-power-policy %s", policyId);
     }
 
-    private final class PowerPolicyChangeListenerImpl implements
-            CarPowerManager.CarPowerPolicyChangeListener {
+    private final class PowerPolicyListenerImpl implements
+            CarPowerManager.CarPowerPolicyListener {
 
         private final CountDownLatch mLatch = new CountDownLatch(1);
         private String mCurrentPolicyId;
 
         @Override
         public void onPolicyChanged(CarPowerPolicy policy) {
-            mCurrentPolicyId = policy.policyId;
+            mCurrentPolicyId = policy.getPolicyId();
             mLatch.countDown();
         }
 
