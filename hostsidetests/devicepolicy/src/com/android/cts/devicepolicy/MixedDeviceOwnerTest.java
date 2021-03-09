@@ -383,6 +383,12 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         // Skip for now, re-enable when the code path sets DO as able to grant permissions.
     }
 
+    @Override
+    @Test
+    public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
+        // Skip because in DO mode the admin can read permission state.
+    }
+
     //TODO(b/180413140) Investigate why the test fails on DO mode.
     @Override
     @Test

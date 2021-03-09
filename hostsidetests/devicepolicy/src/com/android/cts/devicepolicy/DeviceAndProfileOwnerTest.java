@@ -448,6 +448,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testSensorsRelatedPermissionsNotGrantedViaPolicy");
     }
 
+    @Test
+    public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
+        installAppPermissionAppAsUser();
+        executeDeviceTestMethod(".PermissionsTest",
+                "testStateOfSensorsRelatedPermissionsCannotBeRead");
+    }
+
     /**
      * Require a device for tests that use the network stack. Headless Androids running in
      * data centres might need their network rules un-tampered-with in order to keep the ADB / VNC
