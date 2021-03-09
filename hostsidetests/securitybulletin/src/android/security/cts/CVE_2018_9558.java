@@ -33,6 +33,7 @@ public class CVE_2018_9558 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2018-12")
     @Test
     public void testPocCVE_2018_9558() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
         String binaryName = "CVE-2018-9558";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};

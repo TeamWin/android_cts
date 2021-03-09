@@ -31,6 +31,7 @@ public class CVE_2019_2207 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-11")
     @Test
     public void testPocCVE_2019_2207() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2207", null, getDevice());
     }
