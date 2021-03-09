@@ -2610,6 +2610,56 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
+    @Test
+    public void testDeferredScanHidesPartialDatabaseRows() throws Exception {
+        ContentValues values = new ContentValues();
+        // Insert a pending row
+        final Uri targetUri = getContentResolver().insert(getImageContentUri(), values, null);
+        try (InputStream in =
+                     getContext().getResources().openRawResource(R.raw.img_with_metadata)) {
+            try (ParcelFileDescriptor pfd =
+                         getContentResolver().openFileDescriptor(targetUri, "w")) {
+                // Write image content to the file
+                FileUtils.copy(in, new ParcelFileDescriptor.AutoCloseOutputStream(pfd));
+            }
+        }
+
+        // Verify that metadata is not updated yet.
+        try (Cursor c = getContentResolver().query(targetUri, new String[] {
+                MediaStore.Images.ImageColumns.DATE_TAKEN}, null, null)) {
+            assertThat(c.moveToFirst()).isTrue();
+            assertThat(c.getString(0)).isNull();
+        }
+        // Get file path to use in the next query().
+        final String imageFilePath = getFilePathFromUri(targetUri);
+
+        values.put(MediaStore.MediaColumns.IS_PENDING, 0);
+        Bundle extras = new Bundle();
+        extras.putBoolean(MediaStore.QUERY_ARG_DEFER_SCAN, true);
+        // Publish the file, but, defer the scan on update().
+        assertThat(getContentResolver().update(targetUri, values, extras)).isEqualTo(1);
+
+        // The update() above can return before scanning is complete. Verify that either we don't
+        // see the file in published files or if the file appears in the collection, it means that
+        // deferred scan is now complete, hence verify metadata is intact.
+        try (Cursor c = getContentResolver().query(getImageContentUri(),
+                new String[] {MediaStore.Images.ImageColumns.DATE_TAKEN},
+                MediaStore.Files.FileColumns.DATA + "=?", new String[] {imageFilePath}, null)) {
+            if (c.getCount() == 1) {
+                // If the file appears in media collection as published file, verify that metadata
+                // is correct.
+                assertThat(c.moveToFirst()).isTrue();
+                assertThat(c.getString(0)).isNotNull();
+                Log.i(TAG, "Verified that deferred scan on " + imageFilePath + " is complete"
+                        + " and hence metadata is updated");
+
+            } else {
+                assertThat(c.getCount()).isEqualTo(0);
+                Log.i(TAG, "Verified that " + imageFilePath + " was excluded in default query");
+            }
+        }
+    }
+
     private void assertCanWriteAndRead(File file, byte[] data) throws Exception {
         // Assert we can write to images/videos
         try (FileOutputStream fos = new FileOutputStream(file)) {
