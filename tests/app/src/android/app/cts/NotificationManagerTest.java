@@ -2008,7 +2008,7 @@ public class NotificationManagerTest extends AndroidTestCase {
                                 .bigLargeIcon(
                                         Icon.createWithResource(getContext(), R.drawable.icon_blue))
                                 .setSummaryText("summary")
-                                .bigPictureContentDescription("content description"))
+                                .setContentDescription("content description"))
                         .build();
         mNotificationManager.notify(id, notification);
 
