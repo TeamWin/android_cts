@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene;
 
+import com.android.bedstead.nene.devicepolicy.DevicePolicy;
 import com.android.bedstead.nene.packages.Packages;
 import com.android.bedstead.nene.users.Users;
 
@@ -25,6 +26,7 @@ import com.android.bedstead.nene.users.Users;
 public final class TestApis {
     private final Users mUsers = new Users();
     private final Packages mPackages = new Packages(this);
+    private final DevicePolicy mDevicePolicy = new DevicePolicy(this);
 
     /** Access Test APIs related to Users. */
     public Users users() {
@@ -34,5 +36,10 @@ public final class TestApis {
     /** Access Test APIs related to Packages. */
     public Packages packages() {
         return mPackages;
+    }
+
+    /** Access Test APIs related to device policy. */
+    public DevicePolicy devicePolicy() {
+        return mDevicePolicy;
     }
 }

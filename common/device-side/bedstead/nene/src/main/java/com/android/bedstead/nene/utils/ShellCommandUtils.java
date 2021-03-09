@@ -16,7 +16,7 @@
 
 package com.android.bedstead.nene.utils;
 
-import static android.os.Build.VERSION.SDK_INT;
+import static android.os.Build.VERSION_CODES.S;
 
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
@@ -64,7 +64,7 @@ public final class ShellCommandUtils {
             throws AdbException {
         logCommand(command, allowEmptyOutput, stdInBytes);
 
-        if (SDK_INT < Versions.S) {
+        if (!Versions.isRunningOn(S, "S")) {
             return executeCommandPreS(command, allowEmptyOutput, stdInBytes);
         }
 
