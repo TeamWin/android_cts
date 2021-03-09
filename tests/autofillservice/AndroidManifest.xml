@@ -149,6 +149,7 @@
         <activity android:name=".activities.SimpleAfterLoginActivity"/>
         <activity android:name=".activities.SimpleBeforeLoginActivity"/>
         <activity android:name=".activities.NonAutofillableActivity"/>
+        <activity android:name=".activities.ClientSuggestionsActivity"/>
 
         <receiver android:name=".testcore.SelfDestructReceiver"
              android:exported="true"
