@@ -69,10 +69,9 @@ public final class ShellCommandUtils {
         }
 
         // TODO(scottjonathan): Add argument to force errors to stderr
-        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
 
-            ParcelFileDescriptor[] fds = automation.executeShellCommandRwe(command);
+            ParcelFileDescriptor[] fds = uiAutomation().executeShellCommandRwe(command);
             ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
             ParcelFileDescriptor fdErr = fds[ERR_DESCRIPTOR_INDEX];
@@ -154,8 +153,7 @@ public final class ShellCommandUtils {
 
     private static String executeCommandPreS(
             String command, boolean allowEmptyOutput, byte[] stdInBytes) throws AdbException {
-        UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ParcelFileDescriptor[] fds = automation.executeShellCommandRw(command);
+        ParcelFileDescriptor[] fds = uiAutomation().executeShellCommandRw(command);
         ParcelFileDescriptor fdOut = fds[OUT_DESCRIPTOR_INDEX];
         ParcelFileDescriptor fdIn = fds[IN_DESCRIPTOR_INDEX];
 
@@ -196,5 +194,12 @@ public final class ShellCommandUtils {
         try (FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(fd)) {
             return new String(FileUtils.readInputStreamFully(fis));
         }
+    }
+
+    /**
+     * Get a {@link UiAutomation}.
+     */
+    public static UiAutomation uiAutomation() {
+        return InstrumentationRegistry.getInstrumentation().getUiAutomation();
     }
 }
