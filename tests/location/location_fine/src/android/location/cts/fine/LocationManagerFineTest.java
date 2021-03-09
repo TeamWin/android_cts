@@ -91,6 +91,7 @@ import com.android.compatibility.common.util.SettingsUtils.SettingResetter;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -1524,6 +1525,7 @@ public class LocationManagerFineTest {
         mManager.setTestProviderEnabled(TEST_PROVIDER, true);
     }
 
+    @Ignore("b/181693958")
     @Test
     public void testLocationAttributionTagBlaming() {
         // No tag set
