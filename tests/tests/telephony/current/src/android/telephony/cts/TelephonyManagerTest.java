@@ -75,6 +75,7 @@ import android.telephony.SignalStrengthUpdateRequest;
 import android.telephony.SignalThresholdInfo;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.ThermalMitigationRequest;
 import android.telephony.UiccCardInfo;
@@ -270,7 +271,7 @@ public class TelephonyManagerTest {
 
     @After
     public void tearDown() throws Exception {
-        if (mListener != null && mListener.isExecutorSet()) {
+        if (mListener != null) {
             // unregister the listener
             mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         }
@@ -446,25 +447,6 @@ public class TelephonyManagerTest {
         }
     }
 
-    @Test
-    public void testListenFailWithNonLooper() throws Throwable {
-        if (!InstrumentationRegistry.getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "Skipping test that requires PackageManager.FEATURE_TELEPHONY");
-            return;
-        }
-
-        mListener = new PhoneStateListener();
-        try {
-            // .listen generates an onCellLocationChanged event
-            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-            fail("PhoneStateListener created from a thread without looper should " +
-                    "trigger IllegalStateException.");
-        } catch (IllegalStateException e) {
-        }
-    }
-
-    @Test
     public void testListen() throws Throwable {
         if (!InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -495,7 +477,7 @@ public class TelephonyManagerTest {
                 };
 
                 synchronized (mLock) {
-                    mLock.notify(); // listener is ready
+                    mLock.notify(); // mListener is ready
                 }
 
                 Looper.loop();
@@ -509,8 +491,8 @@ public class TelephonyManagerTest {
 
         // Test register
         synchronized (mLock) {
-            // .registerPhoneStateListener generates an onCellLocationChanged event
-            mTelephonyManager.registerPhoneStateListener(mSimpleExecutor, mMockPhoneStateListener);
+            // .listen generates an onCellLocationChanged event
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
             mLock.wait(TOLERANCE);
 
             assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
@@ -529,19 +511,19 @@ public class TelephonyManagerTest {
         }
 
         // unregister the listener
-        mTelephonyManager.unregisterPhoneStateListener(mMockPhoneStateListener);
+        mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
         Thread.sleep(TOLERANCE);
 
         // Test unregister
         synchronized (mLock) {
-            mOnCellInfoChanged = false;
+            mOnCellLocationChangedCalled = false;
             // unregister again, to make sure doing so does not call the listener
-            mTelephonyManager.unregisterPhoneStateListener(mMockPhoneStateListener);
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
             CellLocation.requestLocationUpdate();
             mLock.wait(TOLERANCE);
 
             assertFalse("Test unregister, mOnCellLocationChangedCalled should be false.",
-                    mOnCellInfoChanged);
+                    mOnCellLocationChangedCalled);
         }
     }
 
@@ -4122,10 +4104,10 @@ public class TelephonyManagerTest {
         }
     };
 
-    private static MockSignalStrengthsPhoneStateListener mMockSignalStrengthsPhoneStateListener;
+    private static MockSignalStrengthsTelephonyCallback mMockSignalStrengthsTelephonyCallback;
 
-    private class MockSignalStrengthsPhoneStateListener extends PhoneStateListener
-            implements PhoneStateListener.SignalStrengthsChangedListener {
+    private class MockSignalStrengthsTelephonyCallback extends TelephonyCallback
+            implements TelephonyCallback.SignalStrengthsListener {
         @Override
         public void onSignalStrengthsChanged(SignalStrength signalStrength) {
             if (!mOnSignalStrengthsChanged) {
@@ -4138,18 +4120,18 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testRegisterPhoneStateListenerWithNonLooper() throws Throwable {
+    public void testRegisterTelephonyCallbackWithNonLooper() throws Throwable {
         if (!InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires PackageManager.FEATURE_TELEPHONY");
             return;
         }
 
-        mMockSignalStrengthsPhoneStateListener = new MockSignalStrengthsPhoneStateListener();
+        mMockSignalStrengthsTelephonyCallback = new MockSignalStrengthsTelephonyCallback();
 
         // Test register, generates an mOnSignalStrengthsChanged event
-        mTelephonyManager.registerPhoneStateListener(mSimpleExecutor,
-                mMockSignalStrengthsPhoneStateListener);
+        mTelephonyManager.registerTelephonyCallback(mSimpleExecutor,
+                mMockSignalStrengthsTelephonyCallback);
 
         synchronized (mLock) {
             if (!mOnSignalStrengthsChanged) {
@@ -4162,16 +4144,16 @@ public class TelephonyManagerTest {
         // Test unregister
         mOnSignalStrengthsChanged = false;
         // unregister again, to make sure doing so does not call the listener
-        mTelephonyManager.unregisterPhoneStateListener(mMockSignalStrengthsPhoneStateListener);
+        mTelephonyManager.unregisterTelephonyCallback(mMockSignalStrengthsTelephonyCallback);
 
         assertFalse("Test unregister, mOnSignalStrengthsChanged should be false.",
                 mOnSignalStrengthsChanged);
     }
 
-    private static MockPhoneStateListener mMockPhoneStateListener;
+    private static MockCellInfoListener mMockCellInfoListener;
 
-    private class MockPhoneStateListener extends PhoneStateListener
-            implements PhoneStateListener.CellInfoChangedListener {
+    private class MockCellInfoListener extends TelephonyCallback
+            implements TelephonyCallback.CellInfoListener {
         @Override
         public void onCellInfoChanged(@NonNull List<CellInfo> cellInfo) {
             if (!mOnCellInfoChanged) {
@@ -4184,7 +4166,7 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testRegisterPhoneStateListener() throws Throwable {
+    public void testRegisterTelephonyCallback() throws Throwable {
         if (!InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             Log.d(TAG, "Skipping test that requires PackageManager.FEATURE_TELEPHONY");
@@ -4200,7 +4182,7 @@ public class TelephonyManagerTest {
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
-                mMockPhoneStateListener = new MockPhoneStateListener();
+                mMockCellInfoListener = new MockCellInfoListener();
                 synchronized (mLock) {
                     mLock.notify(); // listener is ready
                 }
@@ -4216,9 +4198,8 @@ public class TelephonyManagerTest {
 
         // Test register
         synchronized (mLock) {
-            // .registerPhoneStateListener generates an onCellLocationChanged event
-            mTelephonyManager.registerPhoneStateListener(getContext().getMainExecutor(),
-                    mMockPhoneStateListener);
+            // .registerTelephonyCallback generates an onCellLocationChanged event
+            mTelephonyManager.registerTelephonyCallback(mSimpleExecutor, mMockCellInfoListener);
             mLock.wait(TOLERANCE);
 
             assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
@@ -4237,14 +4218,14 @@ public class TelephonyManagerTest {
         }
 
         // unregister the listener
-        mTelephonyManager.unregisterPhoneStateListener(mMockPhoneStateListener);
+        mTelephonyManager.unregisterTelephonyCallback(mMockCellInfoListener);
         Thread.sleep(TOLERANCE);
 
         // Test unregister
         synchronized (mLock) {
             mOnCellInfoChanged = false;
             // unregister again, to make sure doing so does not call the listener
-            mTelephonyManager.unregisterPhoneStateListener(mMockPhoneStateListener);
+            mTelephonyManager.unregisterTelephonyCallback(mMockCellInfoListener);
             CellLocation.requestLocationUpdate();
             mLock.wait(TOLERANCE);
 
