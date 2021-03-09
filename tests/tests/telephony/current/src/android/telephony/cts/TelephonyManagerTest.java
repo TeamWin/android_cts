@@ -447,6 +447,7 @@ public class TelephonyManagerTest {
         }
     }
 
+    @Test
     public void testListen() throws Throwable {
         if (!InstrumentationRegistry.getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
