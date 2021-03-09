@@ -429,9 +429,17 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
     }
 
     protected void checkImageReaderSessionConfiguration(String msg) throws Exception {
-        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
-        outputConfigs.add(new OutputConfiguration(mReaderSurface));
+        checkImageReaderSessionConfiguration(msg, /*physicalCameraId*/null);
+    }
 
+    protected void checkImageReaderSessionConfiguration(String msg, String physicalCameraId)
+            throws Exception {
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        OutputConfiguration config = new OutputConfiguration(mReaderSurface);
+        if (physicalCameraId != null) {
+            config.setPhysicalCameraId(physicalCameraId);
+        }
+        outputConfigs.add(config);
         checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs, /*inputConfig*/ null,
                 SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true, msg);
     }
