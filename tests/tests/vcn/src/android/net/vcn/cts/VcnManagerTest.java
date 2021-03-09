@@ -186,9 +186,9 @@ public class VcnManagerTest {
         });
     }
 
-    /** Test implementation of VcnNetworkPolicyListener for verification purposes. */
-    private static class TestVcnNetworkPolicyListener
-            implements VcnManager.VcnNetworkPolicyListener {
+    /** Test implementation of VcnNetworkPolicyChangeListener for verification purposes. */
+    private static class TestVcnNetworkPolicyChangeListener
+            implements VcnManager.VcnNetworkPolicyChangeListener {
         private final CompletableFuture<Void> mFutureOnPolicyChanged = new CompletableFuture<>();
 
         @Override
@@ -202,21 +202,24 @@ public class VcnManagerTest {
     }
 
     @Test(expected = SecurityException.class)
-    public void testAddVcnNetworkPolicyListener_noNetworkFactoryPermission() throws Exception {
-        final TestVcnNetworkPolicyListener listener = new TestVcnNetworkPolicyListener();
+    public void testAddVcnNetworkPolicyChangeListener_noNetworkFactoryPermission()
+            throws Exception {
+        final TestVcnNetworkPolicyChangeListener listener =
+                new TestVcnNetworkPolicyChangeListener();
 
         try {
-            mVcnManager.addVcnNetworkPolicyListener(INLINE_EXECUTOR, listener);
+            mVcnManager.addVcnNetworkPolicyChangeListener(INLINE_EXECUTOR, listener);
         } finally {
-            mVcnManager.removeVcnNetworkPolicyListener(listener);
+            mVcnManager.removeVcnNetworkPolicyChangeListener(listener);
         }
     }
 
     @Test
-    public void testRemoveVcnNetworkPolicyListener() {
-        final TestVcnNetworkPolicyListener listener = new TestVcnNetworkPolicyListener();
+    public void testRemoveVcnNetworkPolicyChangeListener_noNetworkFactoryPermission() {
+        final TestVcnNetworkPolicyChangeListener listener =
+                new TestVcnNetworkPolicyChangeListener();
 
-        mVcnManager.removeVcnNetworkPolicyListener(listener);
+        mVcnManager.removeVcnNetworkPolicyChangeListener(listener);
     }
 
     @Test(expected = SecurityException.class)
