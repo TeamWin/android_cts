@@ -21,6 +21,16 @@
 
     <uses-permission android:name="android.permission.MANAGE_MUSIC_RECOGNITION" />
 
+    <!-- Attribution for MusicRecognitionManagerService. -->
+    <attribution android:tag="MusicRecognitionManagerService"
+        android:label="@string/music_recognition_manager_service"/>
+
+    <!-- Attribution for CTS MusicRecognitionService. In this test, music recognition
+    manager and service are in the same process. Otherwise this tag needs to exist
+    in a separate manifest file (in the app implementing MusicRecognitionService). -->
+    <attribution android:tag="CtsMusicRecognitionAttributionTag"
+        android:label="@string/cts_music_recognition_service"/>
+
     <application>
 
         <uses-library android:name="android.test.runner"/>
