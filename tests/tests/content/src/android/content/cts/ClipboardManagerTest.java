@@ -16,12 +16,15 @@
 
 package android.content.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipData.Item;
@@ -39,6 +42,7 @@ import android.support.test.uiautomator.Until;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +64,12 @@ public class ClipboardManagerTest {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mUiDevice.wakeUp();
         launchActivity(MockActivity.class);
+    }
+
+    @After
+    public void cleanUp() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     @Test
@@ -279,6 +289,29 @@ public class ClipboardManagerTest {
                 "TextLabel",
                 new String[] {ClipDescription.MIMETYPE_TEXT_PLAIN},
                 new ExpectedClipItem("Text2", null, null));
+    }
+
+    @Test
+    public void testClipSourceRecordedWhenClipSet() {
+        ClipData clipData = ClipData.newPlainText("TextLabel", "Text1");
+        mClipboardManager.setPrimaryClip(clipData);
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
+        assertThat(
+                mClipboardManager.getPrimaryClipSource()).isEqualTo("android.content.cts");
+    }
+
+    @Test
+    public void testSetPrimaryClipAsPackage() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(Manifest.permission.SET_CLIP_SOURCE);
+
+        ClipData clipData = ClipData.newPlainText("TextLabel", "Text1");
+        mClipboardManager.setPrimaryClipAsPackage(clipData, "test.package");
+
+        assertThat(
+                mClipboardManager.getPrimaryClipSource()).isEqualTo("test.package");
     }
 
     private void launchActivity(Class<? extends Activity> clazz) {

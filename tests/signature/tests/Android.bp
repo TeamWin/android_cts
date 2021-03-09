@@ -23,5 +23,4 @@ java_test_host {
     "junit",
     "signature-hostside",
   ],
-  test_suites: ["general-tests"],
 }

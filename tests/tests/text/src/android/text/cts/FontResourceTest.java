@@ -19,6 +19,7 @@ package android.text.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +33,7 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@AppModeFull
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class FontResourceTest {

@@ -17,12 +17,15 @@
 package android.hardware.input.cts.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.hardware.input.cts.InputCallback;
 import android.hardware.input.cts.InputCtsActivity;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.InputEvent;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -121,7 +124,7 @@ public abstract class InputTestCase {
         }
         assertEquals(mCurrentTestCase + " (action)",
                 expectedKeyEvent.getAction(), receivedKeyEvent.getAction());
-        assertSource(mCurrentTestCase, expectedKeyEvent.getSource(), receivedKeyEvent.getSource());
+        assertSource(mCurrentTestCase, expectedKeyEvent, receivedKeyEvent);
         assertEquals(mCurrentTestCase + " (keycode)",
                 expectedKeyEvent.getKeyCode(), receivedKeyEvent.getKeyCode());
         assertMetaState(mCurrentTestCase, expectedKeyEvent.getMetaState(),
@@ -147,7 +150,7 @@ public abstract class InputTestCase {
         }
         assertEquals(mCurrentTestCase + " (action)",
                 expectedEvent.getAction(), event.getAction());
-        assertSource(mCurrentTestCase, expectedEvent.getSource(), event.getSource());
+        assertSource(mCurrentTestCase, expectedEvent, event);
         assertEquals(mCurrentTestCase + " (button state)",
                 expectedEvent.getButtonState(), event.getButtonState());
         if (event.getActionMasked() == MotionEvent.ACTION_BUTTON_PRESS
@@ -183,12 +186,20 @@ public abstract class InputTestCase {
     /**
      * Asserts source flags. Separate this into a different method to allow individual test case to
      * specify it.
+     * The input source check verifies if actual source is equal or a subset of the expected source.
+     * With Linux kernel 4.18 or later the input hid driver could register multiple evdev devices
+     * when the HID descriptor has HID usages for different applications. Android frameworks will
+     * create multiple KeyboardInputMappers for each of the evdev device, and each
+     * KeyboardInputMapper will generate key events with source of the evdev device it belongs to.
+     * As long as the source of these key events is a subset of expected source, we consider it as
+     * a valid source.
      *
-     * @param expectedSource expected source flag specified in JSON files.
-     * @param actualSource actual source flag received in the test app.
+     * @param expected expected event with source flag specified in JSON files.
+     * @param actual actual event with source flag received in the test app.
      */
-    void assertSource(String testCase, int expectedSource, int actualSource) {
-        assertEquals(testCase + " (source)", expectedSource, actualSource);
+    private void assertSource(String testCase, InputEvent expected, InputEvent actual) {
+        assertNotEquals(testCase + " (source)", InputDevice.SOURCE_CLASS_NONE, actual.getSource());
+        assertTrue(testCase + " (source)", expected.isFromSource(actual.getSource()));
     }
 
     /**

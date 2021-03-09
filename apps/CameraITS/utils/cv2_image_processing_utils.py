@@ -58,6 +58,7 @@ RGB_GRAY_WEIGHTS = (0.299, 0.587, 0.114)  # RGB to Gray conversion matrix
 SCALE_RFOV_IN_WFOV_BOX = 0.67
 SCALE_TELE_IN_RFOV_BOX = 0.67
 SCALE_TELE_IN_WFOV_BOX = 0.5
+SCALE_SUPER_TELE_IN_RFOV_BOX = 0.5
 
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
 SQUARE_TOL = 0.1  # Square W vs H mismatch RTOL
@@ -96,6 +97,9 @@ def calc_chart_scaling(chart_distance, camera_fov):
   elif (camera_fov <= FOV_THRESH_TELE and
         numpy.isclose(chart_distance, CHART_DISTANCE_WFOV, rtol=0.1)):
     chart_scaling = SCALE_TELE_IN_WFOV_BOX
+  elif (camera_fov <= FOV_THRESH_SUPER_TELE and
+        numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
+    chart_scaling = SCALE_SUPER_TELE_IN_RFOV_BOX
   elif (camera_fov <= FOV_THRESH_TELE and
         numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
     chart_scaling = SCALE_TELE_IN_RFOV_BOX

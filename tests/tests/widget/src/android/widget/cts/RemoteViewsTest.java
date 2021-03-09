@@ -1501,6 +1501,30 @@ public class RemoteViewsTest {
         assertFalse(button2.isChecked());
     }
 
+    @Test
+    public void testSetViewId() throws Throwable {
+        assertEquals(View.NO_ID, mRemoteViews.getViewId());
+        mRemoteViews.setViewId(100);
+
+        assertEquals(100, mRemoteViews.getViewId());
+        mActivityRule.runOnUiThread(() -> {
+            mResult = mRemoteViews.apply(mContext, null);
+        });
+
+        assertEquals(100, mResult.getId());
+    }
+
+    @Test
+    public void testSetViewIdFailsOnMultipleLayouts() throws Throwable {
+        mRemoteViews = new RemoteViews(
+                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout),
+                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout)
+        );
+
+        mExpectedException.expect(UnsupportedOperationException.class);
+        mRemoteViews.setViewId(100);
+    }
+
     private void createSampleImage(File imagefile, int resid) throws IOException {
         try (InputStream source = mContext.getResources().openRawResource(resid);
              OutputStream target = new FileOutputStream(imagefile)) {
