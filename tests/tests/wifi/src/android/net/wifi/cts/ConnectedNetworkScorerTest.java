@@ -25,6 +25,10 @@ import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_FAILURE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_NO_PROBE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_SUCCESS;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_UNKNOWN;
+import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BE;
+import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_BK;
+import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VI;
+import static android.net.wifi.WifiUsabilityStatsEntry.WME_ACCESS_CATEGORY_VO;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -232,6 +236,38 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     } catch (NoSuchElementException e) {
                         // pass - Device does not support the field.
                     }
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BE).getContentionTimeMinMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BE).getContentionTimeMaxMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BE).getContentionTimeAvgMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BE).getContentionNumSamples()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BK).getContentionTimeMinMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BK).getContentionTimeMaxMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BK).getContentionTimeAvgMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_BK).getContentionNumSamples()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VI).getContentionTimeMinMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VI).getContentionTimeMaxMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VI).getContentionTimeAvgMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VI).getContentionNumSamples()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VO).getContentionTimeMinMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VO).getContentionTimeMaxMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VO).getContentionTimeAvgMicros()).isAtLeast(0);
+                    assertThat(statsEntry.getContentionTimeStats(
+                            WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())
