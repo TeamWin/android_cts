@@ -179,9 +179,10 @@ public class SignalStrengthTest {
             case TelephonyManager.NETWORK_TYPE_LTE: /* fall through */
             case TelephonyManager.NETWORK_TYPE_LTE_CA:
                 return CellSignalStrengthLte.class;
+            case TelephonyManager.NETWORK_TYPE_NR:
+                return CellSignalStrengthNr.class;
             case TelephonyManager.NETWORK_TYPE_IWLAN: /* fall through */
             case TelephonyManager.NETWORK_TYPE_IDEN: /* fall through */
-            case TelephonyManager.NETWORK_TYPE_NR: /* fall through */
             default:
                 return null;
         }
