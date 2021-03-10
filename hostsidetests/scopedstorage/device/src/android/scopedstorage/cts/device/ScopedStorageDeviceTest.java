@@ -17,6 +17,7 @@
 package android.scopedstorage.cts.device;
 
 import static android.app.AppOpsManager.permissionToOp;
+import static android.database.Cursor.FIELD_TYPE_BLOB;
 import static android.os.ParcelFileDescriptor.MODE_CREATE;
 import static android.os.ParcelFileDescriptor.MODE_READ_WRITE;
 import static android.os.SystemProperties.getBoolean;
@@ -111,6 +112,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.Manifest;
 import android.app.AppOpsManager;
@@ -2710,6 +2712,81 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
             }
         } finally {
             files.forEach(file -> file.delete());
+        }
+    }
+
+    @Test
+    public void testQueryOnRedactionUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        final Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        final Cursor uriCursor = getContentResolver().query(uri, null, null, null);
+        final String redactedUriDir = ".transforms/synthetic/redacted";
+        final String redactedUriDirAbsolutePath =
+                Environment.getExternalStorageDirectory() + "/" + redactedUriDir;
+        try {
+            assertNotNull(uriCursor);
+            assertThat(uriCursor.moveToFirst()).isTrue();
+
+            final Cursor redactedUriCursor = getContentResolver().query(redactedUri, null, null,
+                    null);
+            assertNotNull(redactedUriCursor);
+            assertThat(redactedUriCursor.moveToFirst()).isTrue();
+
+            assertEquals(redactedUriCursor.getColumnCount(), uriCursor.getColumnCount());
+
+            final String data = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DATA);
+            final String redactedUriId = redactedUri.getLastPathSegment();
+            assertEquals(redactedUriDirAbsolutePath + "/" + redactedUriId, data);
+
+            final String name = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DISPLAY_NAME);
+            assertEquals(redactedUriId, name);
+
+            final String relativePath = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.RELATIVE_PATH);
+            assertEquals(redactedUriDir, relativePath);
+
+            final String bucketDisplayName = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.BUCKET_DISPLAY_NAME);
+            assertEquals(redactedUriDir, bucketDisplayName);
+
+            final String docId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DOCUMENT_ID);
+            assertNull(docId);
+
+            final String insId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.INSTANCE_ID);
+            assertNull(insId);
+
+            final String bucId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.BUCKET_ID);
+            assertNull(bucId);
+
+            final Collection<String> updatedCols = Arrays.asList(MediaStore.MediaColumns._ID,
+                    MediaStore.MediaColumns.DISPLAY_NAME,
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+                    MediaStore.MediaColumns.DATA,
+                    MediaStore.MediaColumns.DOCUMENT_ID,
+                    MediaStore.MediaColumns.INSTANCE_ID,
+                    MediaStore.MediaColumns.BUCKET_ID);
+            for (String colName : uriCursor.getColumnNames()) {
+                if (!updatedCols.contains(colName)) {
+                    if (uriCursor.getType(uriCursor.getColumnIndex(colName)) == FIELD_TYPE_BLOB) {
+                        assertThat(
+                                Arrays.equals(uriCursor.getBlob(uriCursor.getColumnIndex(colName)),
+                                        redactedUriCursor.getBlob(redactedUriCursor.getColumnIndex(
+                                                colName)))).isTrue();
+                    } else {
+                        assertEquals(getStringFromCursor(uriCursor, colName),
+                                getStringFromCursor(redactedUriCursor, colName));
+                    }
+                }
+            }
+        } finally {
+            img.delete();
         }
     }
 
