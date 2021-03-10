@@ -643,6 +643,46 @@ public class JobThrottlingTest {
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
+    @Test
+    public void testLongExpeditedJobStoppedByDoze() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+
+        toggleDeviceIdleState(false);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        // Should get to run past min runtime.
+        assertFalse("Job stopped after min runtime", mTestAppInterface.awaitJobStop(90_000L));
+
+        // Should stop when Doze is turned on.
+        toggleDeviceIdleState(true);
+        assertTrue("Job did not stop after Doze turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testLongExpeditedJobStoppedByBatterySaver() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(false);
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        // Should get to run past min runtime.
+        assertFalse("Job stopped after runtime", mTestAppInterface.awaitJobStop(90_000L));
+
+        // Should stop when battery saver is turned on.
+        BatteryUtils.enableBatterySaver(true);
+        assertTrue("Job did not stop after battery saver turned on",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+    }
+
     @After
     public void tearDown() throws Exception {
         AppOpsUtils.reset(TEST_APP_PACKAGE);
