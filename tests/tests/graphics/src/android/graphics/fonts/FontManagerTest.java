@@ -156,6 +156,13 @@ public class FontManagerTest {
         assertThat(errors.get(0)).isEqualTo("Only shell or root user can execute font command.");
     }
 
+    private static void updateFontFile(FontManager fm, FontFileUpdateRequest ffur,
+            int baseVersion) {
+        fm.updateFontFamily(
+                new FontFamilyUpdateRequest.Builder().addFontFileUpdateRequest(ffur).build(),
+                baseVersion);
+    }
+
     @Test
     public void fontManager_shellCommandPermissionTest() throws Exception {
         assertSecurityException("");
@@ -176,7 +183,7 @@ public class FontManagerTest {
                 ParcelFileDescriptor.MODE_READ_ONLY);
 
         try {
-            fm.updateFontFile(new FontFileUpdateRequest(pfd, new byte[256]), -1);
+            updateFontFile(fm, new FontFileUpdateRequest(pfd, new byte[256]), -1);
             fail("IllegalArgumentException is expected.");
         } catch (IllegalArgumentException e) {
             // pass
@@ -195,7 +202,7 @@ public class FontManagerTest {
         byte[] randomSignature = new byte[256];
 
         try {
-            fm.updateFontFile(new FontFileUpdateRequest(pfd, randomSignature),
+            updateFontFile(fm, new FontFileUpdateRequest(pfd, randomSignature),
                     fm.getFontConfig().getConfigVersion());
             fail("SecurityException is expected.");
         } catch (SecurityException e) {
