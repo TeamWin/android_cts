@@ -19,6 +19,7 @@ package android.telecom.cts;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Intent;
+import android.os.IBinder;
 import android.telecom.Conference;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
@@ -58,8 +59,8 @@ public class CtsConnectionService extends ConnectionService {
     private static boolean sIsBound = false;
     private static CountDownLatch sServiceUnBoundLatch = new CountDownLatch(1);
 
-    public CtsConnectionService() throws Exception {
-        super();
+    @Override
+    public void onBindClient(Intent intent) {
         sTelecomConnectionService = this;
         sIsBound = true;
     }
@@ -77,7 +78,6 @@ public class CtsConnectionService extends ConnectionService {
 
     public static void tearDown() {
         synchronized(sLock) {
-            sTelecomConnectionService = null;
             sConnectionService = null;
         }
     }
@@ -185,14 +185,24 @@ public class CtsConnectionService extends ConnectionService {
 
     public static void addConferenceToTelecom(Conference conference) {
         synchronized(sLock) {
-            sTelecomConnectionService.addConference(conference);
+            if (sTelecomConnectionService != null) {
+                sTelecomConnectionService.addConference(conference);
+            } else {
+                Log.e(LOG_TAG, "addConferenceToTelecom called when"
+                        + " sTelecomConnectionService null!");
+            }
         }
     }
 
     public static void addExistingConnectionToTelecom(
             PhoneAccountHandle phoneAccountHandle, Connection connection) {
         synchronized(sLock) {
-            sTelecomConnectionService.addExistingConnection(phoneAccountHandle, connection);
+            if (sTelecomConnectionService != null) {
+                sTelecomConnectionService.addExistingConnection(phoneAccountHandle, connection);
+            } else {
+                Log.e(LOG_TAG, "addExistingConnectionToTelecom called when"
+                        + " sTelecomConnectionService null!");
+            }
         }
     }
 
@@ -209,8 +219,14 @@ public class CtsConnectionService extends ConnectionService {
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
         synchronized(sLock) {
-            return sTelecomConnectionService.createRemoteOutgoingConnection(
-                    connectionManagerPhoneAccount, request);
+            if (sTelecomConnectionService != null) {
+                return sTelecomConnectionService.createRemoteOutgoingConnection(
+                        connectionManagerPhoneAccount, request);
+            } else {
+                Log.e(LOG_TAG, "createRemoteOutgoingConnectionToTelecom called when"
+                        + " sTelecomConnectionService null!");
+                return null;
+            }
         }
     }
 
@@ -218,8 +234,14 @@ public class CtsConnectionService extends ConnectionService {
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
         synchronized(sLock) {
-            return sTelecomConnectionService.createRemoteIncomingConnection(
-                    connectionManagerPhoneAccount, request);
+            if (sTelecomConnectionService != null) {
+                return sTelecomConnectionService.createRemoteIncomingConnection(
+                        connectionManagerPhoneAccount, request);
+            } else {
+                Log.e(LOG_TAG, "createRemoteIncomingConnectionToTelecom called when"
+                        + " sTelecomConnectionService null!");
+                return null;
+            }
         }
     }
 
@@ -227,8 +249,14 @@ public class CtsConnectionService extends ConnectionService {
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
         synchronized (sLock) {
-            return sTelecomConnectionService.createRemoteIncomingConference(
-                    connectionManagerPhoneAccount, request);
+            if (sTelecomConnectionService != null) {
+                return sTelecomConnectionService.createRemoteIncomingConference(
+                        connectionManagerPhoneAccount, request);
+            } else {
+                Log.e(LOG_TAG, "createRemoteIncomingConferenceToTelecom called when"
+                        + " sTelecomConnectionService null!");
+                return null;
+            }
         }
     }
 
@@ -237,8 +265,14 @@ public class CtsConnectionService extends ConnectionService {
             PhoneAccountHandle connectionManagerPhoneAccount,
             ConnectionRequest request) {
         synchronized (sLock) {
-            return sTelecomConnectionService.createRemoteOutgoingConference(
-                    connectionManagerPhoneAccount, request);
+            if (sTelecomConnectionService != null) {
+                return sTelecomConnectionService.createRemoteOutgoingConference(
+                        connectionManagerPhoneAccount, request);
+            } else {
+                Log.e(LOG_TAG, "createRemoteOutgoingConferenceToTelecom called when"
+                        + " sTelecomConnectionService null!");
+                return null;
+            }
         }
     }
 
@@ -275,6 +309,7 @@ public class CtsConnectionService extends ConnectionService {
         sServiceUnBoundLatch.countDown();
         sIsBound = false;
         sConnectionService = null;
+        sTelecomConnectionService = null;
         return super.onUnbind(intent);
     }
 
