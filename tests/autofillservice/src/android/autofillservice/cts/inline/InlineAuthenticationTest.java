@@ -35,11 +35,13 @@ import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.Helper;
 import android.autofillservice.cts.testcore.InlineUiBot;
+import android.autofillservice.cts.testcore.InstrumentedAutoFillService;
 import android.autofillservice.cts.testcore.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.testcore.UiBot;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
+import android.view.inputmethod.InlineSuggestionsRequest;
 
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -395,6 +397,85 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
 
     @Presubmit
     @Test
+    public void testDatasetAuthInlineSuggestionsRequestForTwoPartitions() throws Exception {
+        // Set service.
+        enableService();
+
+        // Prepare the authenticated response and configure the service behavior
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, UNUSED_AUTOFILL_VALUE)
+                        .setPresentation(createPresentation("auth"))
+                        .setInlinePresentation(createInlinePresentation("auth"))
+                        .setAuthentication(AuthenticationActivity.createSender(mContext, 1,
+                                new CannedDataset.Builder()
+                                        .setField(ID_USERNAME, "dude")
+                                        .build()))
+                        .build())
+                .build());
+
+        // Set expectation for the activity
+        mActivity.expectAutoFill("dude");
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+
+        final InlineSuggestionsRequest inlineSuggestionsRequest =
+                sReplier.getNextFillRequest().inlineRequest;
+
+        // Tap authentication request.
+        mUiBot.selectDataset("auth");
+        mUiBot.waitForIdle();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.waitForIdle();
+
+        // Assert inline suggestions request on authentication activity.
+        assertWithMessage("Auth intent extras should contain InlineSuggestionsRequest")
+                .that(AuthenticationActivity.getInlineSuggestionsRequest())
+                .isEqualTo(inlineSuggestionsRequest);
+
+        // Now tap on password to trigger a new autofill request since it's a different partition.
+
+        // Prepare the authenticated response
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_PASSWORD, UNUSED_AUTOFILL_VALUE)
+                        .setPresentation(createPresentation("auth2"))
+                        .setInlinePresentation(createInlinePresentation("auth2"))
+                        .setAuthentication(AuthenticationActivity.createSender(mContext, 2,
+                                new CannedDataset.Builder()
+                                        .setField(ID_PASSWORD, "sweet")
+                                        .build()))
+                        .build())
+                .build());
+        // Set expectation for the activity
+        mActivity.expectPasswordAutoFill("sweet");
+
+        // Trigger auto-fill.
+        mUiBot.selectByRelativeId(ID_PASSWORD);
+        mUiBot.waitForIdle();
+        final InlineSuggestionsRequest inlineSuggestionsRequest2 =
+                sReplier.getNextFillRequest().inlineRequest;
+
+        // Tap authentication request.
+        mUiBot.selectDataset("auth2");
+        mUiBot.waitForIdle();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.waitForIdle();
+
+        // Assert inline suggestions request on authentication activity.
+        assertWithMessage("Auth intent extras should contain InlineSuggestionsRequest")
+                .that(AuthenticationActivity.getInlineSuggestionsRequest())
+                .isEqualTo(inlineSuggestionsRequest2);
+    }
+
+    @Presubmit
+    @Test
     public void testDatasetAuthClientStateSetOnIntentOnly() throws Exception {
         fillDatasetAuthWithClientState(ClientStateLocation.INTENT_ONLY);
     }
@@ -444,7 +525,8 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
 
         // Trigger auto-fill, make sure it's showing initially.
         assertSuggestionShownBySelectViewId(ID_USERNAME, "auth");
-        sReplier.getNextFillRequest();
+        InstrumentedAutoFillService.FillRequest fillRequest = sReplier.getNextFillRequest();
+        final InlineSuggestionsRequest inlineSuggestionsRequest = fillRequest.inlineRequest;
 
         // Tap authentication request.
         mUiBot.selectDataset("auth");
@@ -472,6 +554,9 @@ public class InlineAuthenticationTest extends AbstractLoginActivityTestCase {
         // Assert client state on authentication activity.
         Helper.assertAuthenticationClientState("auth activity", AuthenticationActivity.getData(),
                 "CSI", "FromResponse");
+        assertWithMessage("Auth intent extras should contain InlineSuggestionsRequest")
+                .that(AuthenticationActivity.getInlineSuggestionsRequest())
+                .isEqualTo(inlineSuggestionsRequest);
 
         // Assert client state on save request.
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
