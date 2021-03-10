@@ -109,6 +109,7 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.Manifest;
@@ -151,7 +152,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -2659,6 +2662,73 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
                 Log.i(TAG, "Verified that " + imageFilePath + " was excluded in default query");
             }
         }
+    }
+
+    private void testRedactedUriCommon(Uri uri, Uri redactedUri) {
+        assertEquals(redactedUri.getAuthority(), uri.getAuthority());
+        assertEquals(redactedUri.getScheme(), uri.getScheme());
+        assertNotEquals(redactedUri.getPath(), uri.getPath());
+        assertNotEquals(redactedUri.getPathSegments(), uri.getPathSegments());
+
+        final String uriId = redactedUri.getLastPathSegment();
+        assertThat(uriId.startsWith("RUID")).isTrue();
+        assertEquals(uriId.length(), 36);
+    }
+
+    @Test
+    public void testRedactedUri_single() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+
+        try {
+            final Uri uri = MediaStore.scanFile(getContentResolver(), img);
+            final Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+            testRedactedUriCommon(uri, redactedUri);
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testRedactedUri_list() throws Exception {
+        List<Uri> uris = new ArrayList<>();
+        List<File> files = new ArrayList<>();
+
+        try {
+            for (int i = 0; i < 10; i++) {
+                File file = stageImageFileWithMetadata("img_metadata" + String.valueOf(
+                        System.nanoTime()) + i + ".jpg");
+                files.add(file);
+                uris.add(MediaStore.scanFile(getContentResolver(), file));
+            }
+
+            final Collection<Uri> redactedUris = MediaStore.getRedactedUri(getContentResolver(),
+                    uris);
+            int i = 0;
+            for (Uri redactedUri : redactedUris) {
+                Uri uri = uris.get(i++);
+                testRedactedUriCommon(uri, redactedUri);
+            }
+        } finally {
+            files.forEach(file -> file.delete());
+        }
+    }
+
+    private String getStringFromCursor(Cursor c, String colName) {
+        return c.getString(c.getColumnIndex(colName));
+    }
+
+    private File stageImageFileWithMetadata(String name) throws Exception {
+        final File img = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), name);
+
+        try (InputStream in =
+                     getContext().getResources().openRawResource(R.raw.img_with_metadata);
+             OutputStream out = new FileOutputStream(img)) {
+            // Dump the image we have to external storage
+            FileUtils.copy(in, out);
+        }
+
+        return img;
     }
 
     private void assertCanWriteAndRead(File file, byte[] data) throws Exception {
