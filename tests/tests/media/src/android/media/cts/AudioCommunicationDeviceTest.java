@@ -24,28 +24,14 @@ import android.util.Log;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.internal.annotations.GuardedBy;
 
+import java.util.List;
 import java.util.concurrent.Executors;
+
 
 public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioCommunicationDeviceTest";
 
     private AudioManager mAudioManager;
-
-    private static final int[] VALID_COMMUNICATION_DEVICE_TYPES = {
-        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
-        AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
-        AudioDeviceInfo.TYPE_WIRED_HEADSET,
-        AudioDeviceInfo.TYPE_USB_HEADSET,
-        AudioDeviceInfo.TYPE_BUILTIN_EARPIECE,
-        AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-        AudioDeviceInfo.TYPE_HEARING_AID,
-        AudioDeviceInfo.TYPE_BLE_HEADSET,
-        AudioDeviceInfo.TYPE_USB_DEVICE,
-        AudioDeviceInfo.TYPE_BLE_SPEAKER,
-        AudioDeviceInfo.TYPE_LINE_ANALOG,
-        AudioDeviceInfo.TYPE_HDMI,
-        AudioDeviceInfo.TYPE_AUX_LINE
-    };
 
     @Override
     protected void setUp() throws Exception {
@@ -53,69 +39,58 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         mAudioManager = getInstrumentation().getContext().getSystemService(AudioManager.class);
     }
 
-    private boolean isValidCommunicationDevice(AudioDeviceInfo device) {
-        for (int type : VALID_COMMUNICATION_DEVICE_TYPES) {
-            if (device.getType() == type) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public void testSetValidDeviceForCommunication() {
-        if (!isValidPlatform("testSetValidDeviceForCommunication")) return;
+    public void testSetValidCommunicationDevice() {
+        if (!isValidPlatform("testSetValidCommunicationDevice")) return;
 
         AudioDeviceInfo commDevice = null;
-        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
         for (AudioDeviceInfo device : devices) {
-            if (!isValidCommunicationDevice(device)) {
-                continue;
-            }
             try {
-                mAudioManager.setDeviceForCommunication(device);
+                mAudioManager.setCommunicationDevice(device);
                 try {
-                    commDevice = mAudioManager.getDeviceForCommunication();
+                    commDevice = mAudioManager.getCommunicationDevice();
                 } catch (Exception e) {
-                    fail("getDeviceForCommunication failed with exception: " + e);
+                    fail("getCommunicationDevice failed with exception: " + e);
                 }
                 if (commDevice == null || commDevice.getType() != device.getType()) {
-                    fail("setDeviceForCommunication failed, expected device: "
+                    fail("setCommunicationDevice failed, expected device: "
                             + device.getType() + " but got: "
                             + ((commDevice == null)
                                 ? AudioDeviceInfo.TYPE_UNKNOWN : commDevice.getType()));
                 }
             } catch (Exception e) {
-                fail("setDeviceForCommunication failed with exception: " + e);
+                fail("setCommunicationDevice failed with exception: " + e);
             }
         }
 
         try {
-            mAudioManager.clearDeviceForCommunication();
+            mAudioManager.clearCommunicationDevice();
         } catch (Exception e) {
-            fail("clearDeviceForCommunication failed with exception: " + e);
+            fail("clearCommunicationDevice failed with exception: " + e);
         }
         try {
-            commDevice = mAudioManager.getDeviceForCommunication();
+            commDevice = mAudioManager.getCommunicationDevice();
         } catch (Exception e) {
-            fail("getDeviceForCommunication failed with exception: " + e);
+            fail("getCommunicationDevice failed with exception: " + e);
         }
-        if (commDevice != null) {
-            fail("clearDeviceForCommunication failed, expected device null but got: "
-                    + commDevice.getType());
+        if (commDevice == null) {
+            fail("platform has no default communication device");
         }
     }
 
-    public void testSetInvalidDeviceForCommunication() {
-        if (!isValidPlatform("testSetInvalidDeviceForCommunication")) return;
+    public void testSetInvalidCommunicationDevice() {
+        if (!isValidPlatform("testSetInvalidCommunicationDevice")) return;
 
-        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
-        for (AudioDeviceInfo device : devices) {
-            if (isValidCommunicationDevice(device)) {
+        AudioDeviceInfo[] alldevices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        List<AudioDeviceInfo> validDevices = mAudioManager.getAvailableCommunicationDevices();
+
+        for (AudioDeviceInfo device : alldevices) {
+            if (validDevices.contains(device)) {
                 continue;
             }
             try {
-                mAudioManager.setDeviceForCommunication(device);
-                fail("setDeviceForCommunication should fail for device: " + device.getType());
+                mAudioManager.setCommunicationDevice(device);
+                fail("setCommunicationDevice should fail for device: " + device.getType());
             } catch (Exception e) {
             }
         }
@@ -170,8 +145,8 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         }
     }
 
-    public void testDeviceForCommunicationListener() {
-        if (!isValidPlatform("testDeviceForCommunicationListener")) return;
+    public void testCommunicationDeviceListener() {
+        if (!isValidPlatform("testCommunicationDeviceListener")) return;
 
         MyOnCommunicationDeviceChangedListener listener =
                 new MyOnCommunicationDeviceChangedListener();
@@ -210,24 +185,24 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
         } catch (Exception e) {
         }
 
-        AudioDeviceInfo originalDevice = mAudioManager.getDeviceForCommunication();
+        AudioDeviceInfo originalDevice = mAudioManager.getCommunicationDevice();
+        assertNotNull("Platform as no default communication device", originalDevice);
+
         AudioDeviceInfo requestedDevice = null;
-        AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+        List<AudioDeviceInfo> devices = mAudioManager.getAvailableCommunicationDevices();
+
         for (AudioDeviceInfo device : devices) {
-            if (!isValidCommunicationDevice(device)) {
-                continue;
-            }
-            if (originalDevice == null || device.getType() != originalDevice.getType()) {
+            if (device.getType() != originalDevice.getType()) {
                 requestedDevice = device;
                 break;
             }
         }
         if (requestedDevice == null) {
-            Log.i(TAG,"Skipping end of testDeviceForCommunicationListener test,"
+            Log.i(TAG,"Skipping end of testCommunicationDeviceListener test,"
                     +" no valid decice to test");
             return;
         }
-        mAudioManager.setDeviceForCommunication(requestedDevice);
+        mAudioManager.setCommunicationDevice(requestedDevice);
         AudioDeviceInfo listenerDevice = listener.waitForDeviceUpdate();
         if (listenerDevice == null || listenerDevice.getType() != requestedDevice.getType()) {
             fail("listener and setter device mismatch, expected device: "
@@ -235,7 +210,7 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
                     + ((listenerDevice == null)
                         ? AudioDeviceInfo.TYPE_UNKNOWN : listenerDevice.getType()));
         }
-        AudioDeviceInfo getterDevice = mAudioManager.getDeviceForCommunication();
+        AudioDeviceInfo getterDevice = mAudioManager.getCommunicationDevice();
         if (getterDevice == null || getterDevice.getType() != listenerDevice.getType()) {
             fail("listener and getter device mismatch, expected device: "
                     + listenerDevice.getType() + " but got: "
@@ -245,24 +220,14 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
 
         listener.reset();
 
-        if (originalDevice == null) {
-            mAudioManager.clearDeviceForCommunication();
-        } else {
-            mAudioManager.setDeviceForCommunication(originalDevice);
-        }
+        mAudioManager.setCommunicationDevice(originalDevice);
+
         listenerDevice = listener.waitForDeviceUpdate();
-        if (originalDevice == null) {
-            if (listenerDevice != null) {
-                fail("setDeviceForCommunication failed, expected null device but got: "
-                        + listenerDevice.getType());
-            }
-        } else {
-            if (listenerDevice == null || listenerDevice.getType() != originalDevice.getType()) {
-                fail("communication device listener failed on clear, expected device: "
-                        + originalDevice.getType() + " but got: "
-                        + ((listenerDevice == null)
-                            ? AudioDeviceInfo.TYPE_UNKNOWN : listenerDevice.getType()));
-            }
+        assertNotNull("Platform as no default communication device", listenerDevice);
+
+        if (listenerDevice.getType() != originalDevice.getType()) {
+            fail("communication device listener failed on clear, expected device: "
+                    + originalDevice.getType() + " but got: " + listenerDevice.getType());
         }
 
         try {
@@ -274,11 +239,12 @@ public class AudioCommunicationDeviceTest extends CtsAndroidTestCase {
     }
 
     private boolean isValidPlatform(String testName) {
-        if (!(getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT) &&
-                !getInstrumentation().getContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY))) {
-            Log.i(TAG,"Skipping test " + testName + " : device has no audio output or is a TV.");
+        PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)
+                ||  pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)
+                || !pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.i(TAG,"Skipping test " + testName
+                    + " : device has no audio output or is a TV or does not support telephony");
             return false;
         }
         return true;
