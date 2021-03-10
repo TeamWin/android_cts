@@ -295,6 +295,30 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
                 .isEqualTo(singleton(singleton(getContext().getPackageName())));
     }
 
+    public void testIsWifiGrant_default() {
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
+                TEST_ALIAS, /* requestAccess= */ false);
+
+        assertThat(mDpm.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
+    }
+
+    public void testIsWifiGrant_allowed() {
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDpm.grantKeyPairToWifiAuth(TEST_ALIAS);
+
+        assertThat(mDpm.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isTrue();
+    }
+
+    public void testIsWifiGrant_denied() {
+        mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
+                TEST_ALIAS, /* requestAccess= */ false);
+        mDpm.grantKeyPairToWifiAuth(TEST_ALIAS);
+        mDpm.revokeKeyPairFromWifiAuth(TEST_ALIAS);
+
+        assertThat(mDpm.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
+    }
+
     private PrivateKey rsaKeyFromString(String key) throws Exception {
         final PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(
                 Base64.decode(key, Base64.DEFAULT));
