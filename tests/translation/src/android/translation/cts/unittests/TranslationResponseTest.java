@@ -16,131 +16,178 @@
 
 package android.translation.cts.unittests;
 
+import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
+
 import static com.google.common.truth.Truth.assertThat;
+
+import static org.testng.Assert.assertThrows;
 
 import android.os.Parcel;
 import android.view.autofill.AutofillId;
-import android.view.translation.TranslationRequest;
 import android.view.translation.TranslationResponse;
+import android.view.translation.TranslationResponseValue;
+import android.view.translation.ViewTranslationResponse;
 
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.ArrayList;
-
 @RunWith(AndroidJUnit4.class)
 public class TranslationResponseTest {
 
-    private final TranslationRequest mRequest = new TranslationRequest.Builder()
-            .setAutofillId(new AutofillId(17))
-            .setTranslationText("text1")
+    private final TranslationResponseValue mValue =
+            new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                    .setText("hello")
+                    .build();
+
+    private final ViewTranslationResponse mResponse = new ViewTranslationResponse
+            .Builder(new AutofillId(17))
+            .setValue("sample id",
+                    new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                            .setText("sample text")
+                            .build())
             .build();
-    private final TranslationRequest mRequest2 = new TranslationRequest.Builder()
-            .setAutofillId(new AutofillId(42))
-            .setTranslationText("text2")
-            .build();
 
     @Test
-    public void testBuilder_nullTranslation() {
-        final TranslationResponse response =
+    public void testBuilder_validViewTranslationResponse() {
+        final TranslationResponse request =
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .addTranslations(null)
-                .build();
+                        .setViewTranslationResponse(0, mResponse)
+                        .build();
 
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(1);
-        assertThat(response.getTranslations().get(0)).isNull();
+        assertThat(request.getTranslationResponseValues().size()).isEqualTo(0);
+        assertThat(request.getViewTranslationResponses().size()).isEqualTo(1);
+
+        final ViewTranslationResponse viewRequest =
+                request.getViewTranslationResponses().get(0);
+        assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
+        assertThat(viewRequest.getKeys().size()).isEqualTo(1);
+        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
     }
 
     @Test
-    public void testBuilder_emptyTranslations() {
-        final TranslationResponse response =
+    public void testBuilder_errorViewTranslationResponse() {
+        final TranslationResponse request =
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .build();
+                        .setViewTranslationResponse(0, new ViewTranslationResponse
+                                .Builder(new AutofillId(42))
+                                .setValue("id2",
+                                        TranslationResponseValue.forError())
+                                .build())
+                        .build();
 
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(0);
+        assertThat(request.getTranslationResponseValues().size()).isEqualTo(0);
+        assertThat(request.getViewTranslationResponses().size()).isEqualTo(1);
+
+        final ViewTranslationResponse viewRequest =
+                request.getViewTranslationResponses().get(0);
+        assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(42));
+        assertThat(viewRequest.getKeys().size()).isEqualTo(1);
+        assertThat(viewRequest.getValue("id2").getStatusCode())
+                .isEqualTo(TranslationResponseValue.STATUS_ERROR);
     }
 
     @Test
-    public void testBuilder_changeTranslationStatus() {
-        final TranslationResponse response =
+    public void testBuilder_validTranslationResponseValue() {
+        final TranslationResponse request =
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .setTranslationStatus(TranslationResponse.TRANSLATION_STATUS_UNKNOWN_ERROR)
-                .build();
+                        .setTranslationResponseValue(0, mValue)
+                        .build();
 
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_UNKNOWN_ERROR);
+        assertThat(request.getTranslationResponseValues().size()).isEqualTo(1);
+        assertThat(request.getViewTranslationResponses().size()).isEqualTo(0);
+
+        final TranslationResponseValue value =
+                request.getTranslationResponseValues().get(0);
+        assertThat(value.getText()).isEqualTo("hello");
     }
 
     @Test
-    public void testBuilder_validAddRequests() {
-        final TranslationResponse response =
+    public void testParceledRequest_validTranslationResponseValues() {
+        final TranslationResponse request =
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .addTranslations(mRequest)
-                .addTranslations(mRequest2)
-                .build();
-
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(2);
-
-        final TranslationRequest request1 = response.getTranslations().get(0);
-        assertThat(request1.getAutofillId()).isEqualTo(new AutofillId(17));
-        assertThat(request1.getTranslationText()).isEqualTo("text1");
-
-        final TranslationRequest request2 = response.getTranslations().get(1);
-        assertThat(request2.getAutofillId()).isEqualTo(new AutofillId(42));
-        assertThat(request2.getTranslationText()).isEqualTo("text2");
-    }
-
-    @Test
-    public void testBuilder_validSetRequests() {
-        final ArrayList<TranslationRequest> requests = new ArrayList<>();
-        requests.add(mRequest);
-        requests.add(mRequest2);
-        final TranslationResponse response =
-                new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .setTranslations(requests)
-                .build();
-
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(2);
-
-        final TranslationRequest request1 = response.getTranslations().get(0);
-        assertThat(request1.getAutofillId()).isEqualTo(new AutofillId(17));
-        assertThat(request1.getTranslationText()).isEqualTo("text1");
-
-        final TranslationRequest request2 = response.getTranslations().get(1);
-        assertThat(request2.getAutofillId()).isEqualTo(new AutofillId(42));
-        assertThat(request2.getTranslationText()).isEqualTo("text2");
-    }
-
-    @Test
-    public void testParceledResponse() {
-        final TranslationResponse response =
-                new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
-                .addTranslations(mRequest)
-                .build();
+                        .setTranslationResponseValue(0, mValue)
+                        .setTranslationResponseValue(2,
+                                new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                                        .setText("world")
+                                        .build())
+                        .build();
 
         final Parcel parcel = Parcel.obtain();
-        response.writeToParcel(parcel, 0);
+        request.writeToParcel(parcel, 0);
         parcel.setDataPosition(0);
-        final TranslationResponse parceledResponse =
+        final TranslationResponse parceledRequest =
                 TranslationResponse.CREATOR.createFromParcel(parcel);
 
-        assertThat(response.getTranslationStatus())
-                .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
-        assertThat(response.getTranslations().size()).isEqualTo(1);
+        assertThat(parceledRequest.getTranslationResponseValues().size()).isEqualTo(2);
+        assertThat(parceledRequest.getViewTranslationResponses().size()).isEqualTo(0);
 
-        final TranslationRequest request1 = response.getTranslations().get(0);
+        final TranslationResponseValue value1 =
+                parceledRequest.getTranslationResponseValues().get(0);
+        assertThat(value1.getText()).isEqualTo("hello");
+
+        final TranslationResponseValue value2 =
+                parceledRequest.getTranslationResponseValues().get(2);
+        assertThat(value2.getText()).isEqualTo("world");
+    }
+
+    @Test
+    public void testBuilder_mixingAdders() {
+        final TranslationResponse response =
+                new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
+                        .setViewTranslationResponse(0, mResponse)
+                        .setTranslationResponseValue(0, mValue)
+                        .build();
+
+        assertThat(response.getTranslationResponseValues().size()).isEqualTo(1);
+        assertThat(response.getViewTranslationResponses().size()).isEqualTo(1);
+
+        final ViewTranslationResponse viewResponse =
+                response.getViewTranslationResponses().get(0);
+        assertThat(viewResponse.getAutofillId()).isEqualTo(new AutofillId(17));
+        assertThat(viewResponse.getKeys().size()).isEqualTo(1);
+        assertThat(viewResponse.getValue("sample id").getText()).isEqualTo("sample text");
+
+        final TranslationResponseValue value =
+                response.getTranslationResponseValues().get(0);
+        assertThat(value.getText()).isEqualTo("hello");
+    }
+
+    @Test
+    public void testParceledRequest_validViewTranslationResponses() {
+        final TranslationResponse request =
+                new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
+                        .setViewTranslationResponse(0, mResponse)
+                        .setViewTranslationResponse(2, new ViewTranslationResponse
+                                .Builder(new AutofillId(42))
+                                .setValue("id2",
+                                        new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                                                .setText("test")
+                                                .build())
+                                .build())
+                        .build();
+
+        final Parcel parcel = Parcel.obtain();
+        request.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        final TranslationResponse parceledRequest =
+                TranslationResponse.CREATOR.createFromParcel(parcel);
+
+        assertThat(parceledRequest.getTranslationResponseValues().size()).isEqualTo(0);
+        assertThat(parceledRequest.getViewTranslationResponses().size()).isEqualTo(2);
+
+        final ViewTranslationResponse request1 =
+                parceledRequest.getViewTranslationResponses().get(0);
         assertThat(request1.getAutofillId()).isEqualTo(new AutofillId(17));
-        assertThat(request1.getTranslationText()).isEqualTo("text1");
+        assertThat(request1.getKeys().size()).isEqualTo(1);
+        assertThat(request1.getValue("sample id").getText()).isEqualTo("sample text");
+
+        final ViewTranslationResponse request2 =
+                parceledRequest.getViewTranslationResponses().get(2);
+        assertThat(request2.getAutofillId()).isEqualTo(new AutofillId(42));
+        assertThat(request2.getKeys().size()).isEqualTo(1);
+        assertThat(request2.getValue("id2").getText()).isEqualTo("test");
     }
 
 }
