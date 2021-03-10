@@ -775,6 +775,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
      */
     @Test
     public void testBuilderWithWpa3SaeH2eOnlyMode() throws Exception {
+        assumeTrue(BuildCompat.isAtLeastS());
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWpa3Passphrase(TEST_PASSPHRASE)
