@@ -48,6 +48,7 @@ android_test {
         "androidx.test.core",
         "cts-install-lib",
         "ShortcutManagerTestUtils",
+        "libincfs-prebuilt",
     ],
     // Use multi-dex as the compatibility-common-util-devicesidelib dependency
     // on compatibility-device-util-axt pushes us beyond 64k methods.

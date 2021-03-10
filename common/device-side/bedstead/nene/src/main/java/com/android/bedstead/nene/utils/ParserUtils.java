@@ -52,23 +52,35 @@ public final class ParserUtils {
      */
     public static Set<String> extractIndentedSections(String list, int baseIndentation)
             throws AdbParseException {
-        Set<String> sections = new HashSet<>();
-        String[] lines = list.split("\n");
-        StringBuilder sectionBuilder = null;
-        for (String line : lines) {
-            int indentation = countIndentation(line);
-            if (indentation == baseIndentation) {
-                // New item
-                if (sectionBuilder != null) {
-                    sections.add(sectionBuilder.toString().trim());
+        try {
+            Set<String> sections = new HashSet<>();
+            String[] lines = list.split("\n");
+
+            boolean skippingStart = true; // Skip empty lines at the start
+            StringBuilder sectionBuilder = null;
+            for (String line : lines) {
+                if (skippingStart && line.isEmpty()) {
+                    continue;
                 }
-                sectionBuilder = new StringBuilder(line).append("\n");
-            } else {
-                sectionBuilder.append(line).append("\n");
+                skippingStart = false;
+                int indentation = countIndentation(line);
+                if (indentation == baseIndentation) {
+                    // New item
+                    if (sectionBuilder != null) {
+                        sections.add(sectionBuilder.toString().trim());
+                    }
+                    sectionBuilder = new StringBuilder(line).append("\n");
+                } else {
+                    sectionBuilder.append(line).append("\n");
+                }
             }
+            sections.add(sectionBuilder.toString().trim());
+            return sections;
+        } catch (NullPointerException e) {
+            throw new AdbParseException(
+                    "Error extracting indented sections with baseIndentation: " + baseIndentation,
+                    list, e);
         }
-        sections.add(sectionBuilder.toString().trim());
-        return sections;
     }
 
     private static int countIndentation(String s) {
