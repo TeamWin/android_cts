@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import android.cts.statsdatom.lib.ConfigUtils;
 import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
-import com.android.compatibility.common.util.PropertyUtil;
 import com.android.os.AtomsProto;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -31,7 +30,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 
 import java.util.List;
 
-public class IonHeapSizeStatsTests extends DeviceTestCase implements IBuildReceiver {
+public class SystemMemoryStatsTests extends DeviceTestCase implements IBuildReceiver {
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -57,39 +56,21 @@ public class IonHeapSizeStatsTests extends DeviceTestCase implements IBuildRecei
         mCtsBuild = buildInfo;
     }
 
-    public void testIonHeapSize_optional() throws Exception {
-        if (isIonHeapSizeMandatory()) {
-            return;
-        }
-
-        List<AtomsProto.Atom> atoms = pullIonHeapSizeAsGaugeMetric();
-        if (atoms.isEmpty()) {
-            // No support.
-            return;
-        }
-        assertIonHeapSize(atoms);
+    public void testSystemMemoryAtom() throws Exception {
+        List<AtomsProto.Atom> atoms = pullSystemMemoryAsGaugeMetric();
+        assertThat(atoms).hasSize(1);
+        AtomsProto.SystemMemory systemMemory = atoms.get(0).getSystemMemory();
+        assertThat(systemMemory.getUnreclaimableSlabKb()).isAtLeast(0);
+        assertThat(systemMemory.getVmallocUsedKb()).isAtLeast(0);
+        assertThat(systemMemory.getPageTablesKb()).isAtLeast(0);
+        assertThat(systemMemory.getKernelStackKb()).isAtLeast(0);
     }
 
-    public void testIonHeapSize_mandatory() throws Exception {
-        if (!isIonHeapSizeMandatory()) {
-            return;
-        }
-
-        List<AtomsProto.Atom> atoms = pullIonHeapSizeAsGaugeMetric();
-        assertIonHeapSize(atoms);
-    }
-
-    /** Returns whether IonHeapSize atom is supported. */
-    private boolean isIonHeapSizeMandatory() throws Exception {
-        // Support is guaranteed by libmeminfo VTS.
-        return PropertyUtil.getFirstApiLevel(getDevice()) >= 30;
-    }
-
-    /** Returns IonHeapSize atoms pulled as a simple gauge metric while test app is running. */
-    private List<AtomsProto.Atom> pullIonHeapSizeAsGaugeMetric() throws Exception {
-        // Get IonHeapSize as a simple gauge metric.
+    /** Returns SystemMemory atoms pulled as a simple gauge metric while test app is running. */
+    private List<AtomsProto.Atom> pullSystemMemoryAsGaugeMetric() throws Exception {
+        // Get SystemMemory as a simple gauge metric.
         ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                AtomsProto.Atom.ION_HEAP_SIZE_FIELD_NUMBER);
+                AtomsProto.Atom.SYSTEM_MEMORY_FIELD_NUMBER);
 
         // Start test app and trigger a pull while it is running.
         try (AutoCloseable a = DeviceUtils.withActivity(getDevice(),
@@ -101,11 +82,4 @@ public class IonHeapSizeStatsTests extends DeviceTestCase implements IBuildRecei
 
         return ReportUtils.getGaugeMetricAtoms(getDevice());
     }
-
-    private static void assertIonHeapSize(List<AtomsProto.Atom> atoms) {
-        assertThat(atoms).hasSize(1);
-        AtomsProto.IonHeapSize ionHeapSize = atoms.get(0).getIonHeapSize();
-        assertThat(ionHeapSize.getTotalSizeKb()).isAtLeast(0);
-    }
-
 }
