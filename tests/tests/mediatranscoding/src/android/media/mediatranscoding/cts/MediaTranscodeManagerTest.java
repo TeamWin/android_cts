@@ -16,8 +16,8 @@
 
 package android.media.mediatranscoding.cts;
 
+import static org.junit.Assert.assertNotEquals;
 import static org.testng.Assert.assertThrows;
-
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -337,10 +337,13 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             assertTrue("Transcode failed to complete in time.", finishedOnTime);
         }
 
-        File dstFile = new File(dstUri.getPath());;
+        File dstFile = new File(dstUri.getPath());
         if (expectedResult == TranscodingSession.RESULT_SUCCESS) {
             // Checks the destination file get generated.
             assertTrue("Failed to create destination file", dstFile.exists());
+            assertEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
+        } else {
+            assertNotEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
         }
 
         if (dstFile.exists()) {
