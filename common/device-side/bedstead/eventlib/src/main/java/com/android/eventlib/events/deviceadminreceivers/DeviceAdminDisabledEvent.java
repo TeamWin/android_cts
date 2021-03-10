@@ -32,42 +32,42 @@ import com.android.eventlib.queryhelpers.IntentQueryHelper;
 import com.android.eventlib.util.SerializableParcelWrapper;
 
 /**
- * Event logged when {@link DeviceAdminReceiver#onEnabled(Context, Intent)} is called.
+ * Event logged when {@link DeviceAdminReceiver#onDisabled(Context, Intent)} is called.
  */
-public final class DeviceAdminEnabledEvent extends Event {
+public final class DeviceAdminDisabledEvent extends Event {
 
-    /** Begin a query for {@link DeviceAdminEnabledEvent} events. */
-    public static DeviceAdminEnabledEventQuery queryPackage(String packageName) {
-        return new DeviceAdminEnabledEventQuery(packageName);
+    /** Begin a query for {@link DeviceAdminDisabledEvent} events. */
+    public static DeviceAdminDisabledEventQuery queryPackage(String packageName) {
+        return new DeviceAdminDisabledEventQuery(packageName);
     }
 
-    /** {@link EventLogsQuery} for {@link DeviceAdminEnabledEvent}. */
-    public static final class DeviceAdminEnabledEventQuery
-            extends EventLogsQuery<DeviceAdminEnabledEvent, DeviceAdminEnabledEventQuery> {
-        DeviceAdminReceiverQueryHelper<DeviceAdminEnabledEventQuery> mDeviceAdminReceiver =
+    /** {@link EventLogsQuery} for {@link DeviceAdminDisabledEvent}. */
+    public static final class DeviceAdminDisabledEventQuery
+            extends EventLogsQuery<DeviceAdminDisabledEvent, DeviceAdminDisabledEventQuery> {
+        DeviceAdminReceiverQueryHelper<DeviceAdminDisabledEventQuery> mDeviceAdminReceiver =
                 new DeviceAdminReceiverQueryHelper<>(this);
-        IntentQueryHelper<DeviceAdminEnabledEventQuery> mIntent = new IntentQueryHelper<>(this);
+        IntentQueryHelper<DeviceAdminDisabledEventQuery> mIntent = new IntentQueryHelper<>(this);
 
-        private DeviceAdminEnabledEventQuery(String packageName) {
-            super(DeviceAdminEnabledEvent.class, packageName);
+        private DeviceAdminDisabledEventQuery(String packageName) {
+            super(DeviceAdminDisabledEvent.class, packageName);
         }
 
         /**
-         * Query {@link Intent} passed into {@link DeviceAdminReceiver#onEnabled(Context, Intent)}.
+         * Query {@link Intent} passed into {@link DeviceAdminReceiver#onDisabled(Context, Intent)}.
          */
         @CheckResult
-        public IntentQueryHelper<DeviceAdminEnabledEventQuery> whereIntent() {
+        public IntentQueryHelper<DeviceAdminDisabledEventQuery> whereIntent() {
             return mIntent;
         }
 
         /** Query {@link DeviceAdminReceiver}. */
         @CheckResult
-        public DeviceAdminReceiverQuery<DeviceAdminEnabledEventQuery> whereDeviceAdminReceiver() {
+        public DeviceAdminReceiverQuery<DeviceAdminDisabledEventQuery> whereDeviceAdminReceiver() {
             return mDeviceAdminReceiver;
         }
 
         @Override
-        protected boolean filter(DeviceAdminEnabledEvent event) {
+        protected boolean filter(DeviceAdminDisabledEvent event) {
             if (!mIntent.matches(event.mIntent)) {
                 return false;
             }
@@ -78,45 +78,45 @@ public final class DeviceAdminEnabledEvent extends Event {
         }
     }
 
-    /** Begin logging a {@link DeviceAdminEnabledEvent}. */
-    public static DeviceAdminEnabledEventLogger logger(
+    /** Begin logging a {@link DeviceAdminDisabledEvent}. */
+    public static DeviceAdminDisabledEventLogger logger(
             DeviceAdminReceiver deviceAdminReceiver, Context context, Intent intent) {
-        return new DeviceAdminEnabledEventLogger(deviceAdminReceiver, context, intent);
+        return new DeviceAdminDisabledEventLogger(deviceAdminReceiver, context, intent);
     }
 
-    /** {@link EventLogger} for {@link DeviceAdminEnabledEvent}. */
-    public static final class DeviceAdminEnabledEventLogger
-            extends EventLogger<DeviceAdminEnabledEvent> {
-        private DeviceAdminEnabledEventLogger(
+    /** {@link EventLogger} for {@link DeviceAdminDisabledEvent}. */
+    public static final class DeviceAdminDisabledEventLogger
+            extends EventLogger<DeviceAdminDisabledEvent> {
+        private DeviceAdminDisabledEventLogger(
                 DeviceAdminReceiver deviceAdminReceiver, Context context, Intent intent) {
-            super(context, new DeviceAdminEnabledEvent());
+            super(context, new DeviceAdminDisabledEvent());
             mEvent.mIntent = new SerializableParcelWrapper<>(intent);
             setDeviceAdminReceiver(deviceAdminReceiver);
         }
 
         /** Set the {@link DeviceAdminReceiver} which received this event. */
-        public DeviceAdminEnabledEventLogger setDeviceAdminReceiver(
+        public DeviceAdminDisabledEventLogger setDeviceAdminReceiver(
                 DeviceAdminReceiver deviceAdminReceiver) {
             mEvent.mDeviceAdminReceiver = new DeviceAdminReceiverInfo(deviceAdminReceiver);
             return this;
         }
 
         /** Set the {@link DeviceAdminReceiver} which received this event. */
-        public DeviceAdminEnabledEventLogger setDeviceAdminReceiver(
+        public DeviceAdminDisabledEventLogger setDeviceAdminReceiver(
                 Class<? extends DeviceAdminReceiver> deviceAdminReceiverClass) {
             mEvent.mDeviceAdminReceiver = new DeviceAdminReceiverInfo(deviceAdminReceiverClass);
             return this;
         }
 
         /** Set the {@link DeviceAdminReceiver} which received this event. */
-        public DeviceAdminEnabledEventLogger setDeviceAdminReceiver(
+        public DeviceAdminDisabledEventLogger setDeviceAdminReceiver(
                 String deviceAdminReceiverClassName) {
             mEvent.mDeviceAdminReceiver = new DeviceAdminReceiverInfo(deviceAdminReceiverClassName);
             return this;
         }
 
         /** Set the {@link Intent} which was received. */
-        public DeviceAdminEnabledEventLogger setIntent(Intent intent) {
+        public DeviceAdminDisabledEventLogger setIntent(Intent intent) {
             mEvent.mIntent = new SerializableParcelWrapper<>(intent);
             return this;
         }
@@ -126,7 +126,7 @@ public final class DeviceAdminEnabledEvent extends Event {
     protected DeviceAdminReceiverInfo mDeviceAdminReceiver;
 
     /**
-     * The {@link Intent} passed into {@link DeviceAdminReceiver#onEnabled(Context, Intent)}.
+     * The {@link Intent} passed into {@link DeviceAdminReceiver#onDisabled(Context, Intent)}.
      */
     public Intent intent() {
         if (mIntent == null) {
@@ -142,7 +142,7 @@ public final class DeviceAdminEnabledEvent extends Event {
 
     @Override
     public String toString() {
-        return "DeviceAdminEnabledEvent{"
+        return "DeviceAdminDisabledEvent{"
                 + " intent=" + intent()
                 + ", deviceAdminReceiver=" + mDeviceAdminReceiver
                 + ", packageName='" + mPackageName + "'"
