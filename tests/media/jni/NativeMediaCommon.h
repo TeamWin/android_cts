@@ -35,6 +35,9 @@ extern const char* AMEDIA_MIMETYPE_AUDIO_FLAC;
 extern const char* AMEDIA_MIMETYPE_AUDIO_VORBIS;
 extern const char* AMEDIA_MIMETYPE_AUDIO_OPUS;
 
+extern const long kQDeQTimeOutUs;
+extern const int kRetryLimit;
+
 // TODO(b/146420990)
 typedef enum {
     OUTPUT_FORMAT_START = 0,
