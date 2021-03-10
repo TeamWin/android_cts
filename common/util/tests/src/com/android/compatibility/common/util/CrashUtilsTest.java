@@ -192,4 +192,28 @@ public class CrashUtilsTest {
                 .appendAbortMessageExcludes("exclude not matches")
                 .setProcessPatterns(Pattern.compile("com\\.android\\.bluetooth"))));
     }
+
+    @Test
+    public void testAbortMessageExcludeCannotLink() throws Exception {
+        JSONArray crashes = new JSONArray();
+        crashes.put(createCrashJson(
+                18959, 18959, "CVE-2020-0073", "/data/local/tmp/CVE-2020-0073", null, "SIGABRT",
+                "'CANNOT LINK EXECUTABLE \"/data/local/tmp/CVE-2020-0073\": library "
+                + "\"libnfc-nci.so\" (\"(default)\", \"/data/local/tmp/CVE-2020-0073\", \"\") "
+                + "not found'"));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .setProcessPatterns(Pattern.compile("CVE-2020-0073"))));
+
+        crashes.put(createCrashJson(
+                5105, 5105, "CVE-2015-6616-2", "/data/local/tmp/CVE-2015-6616-2", null, "SIGABRT",
+                "'CANNOT LINK EXECUTABLE \"/data/local/tmp/CVE-2015-6616-2\": "
+                + "cannot locate symbol \""
+                + "_ZN7android14MediaExtractor17CreateFromServiceERKNS_2spINS_10DataSourceEEEPKc"
+                + "\" referenced by \"/data/local/tmp/CVE-2015-6616-2\"...'"));
+        Assert.assertFalse(CrashUtils.securityCrashDetected(crashes, new CrashUtils.Config()
+                .appendSignals(CrashUtils.SIGABRT)
+                .setProcessPatterns(Pattern.compile("CVE-2015-6616-2"))));
+
+    }
 }

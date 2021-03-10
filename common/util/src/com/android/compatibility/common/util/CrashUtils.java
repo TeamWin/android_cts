@@ -243,7 +243,7 @@ public class CrashUtils {
             minCrashAddress = MIN_CRASH_ADDR;
             setSignals(SIGSEGV, SIGBUS);
             abortMessageIncludes = new ArrayList<>();
-            setAbortMessageExcludes("CHECK_");
+            setAbortMessageExcludes("CHECK_", "CANNOT LINK EXECUTABLE");
             processPatterns = new ArrayList();
         }
 
