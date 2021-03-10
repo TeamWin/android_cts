@@ -52,6 +52,7 @@ import android.telecom.VideoProfile;
 import android.telecom.cts.MockInCallService.InCallServiceCallbacks;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
 import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
 import android.telephony.emergency.EmergencyNumber;
 import android.test.InstrumentationTestCase;
@@ -121,6 +122,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     HandlerThread mPhoneStateListenerThread;
     Handler mPhoneStateListenerHandler;
     TestPhoneStateListener mPhoneStateListener;
+    TestCallStateListener mTestCallStateListener;
     Handler mHandler;
 
     /**
@@ -178,6 +180,29 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Expected " + expected + " calls."
         );
+    }
+
+    static class TestCallStateListener extends TelephonyCallback
+            implements TelephonyCallback.CallStateListener {
+
+        private CountDownLatch mCountDownLatch = new CountDownLatch(1);
+        private int mLastState = -1;
+
+        @Override
+        public void onCallStateChanged(int state) {
+            Log.i(TAG, "onCallStateChanged: state=" + state);
+            mLastState = state;
+            mCountDownLatch.countDown();
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        public CountDownLatch getCountDownLatch() {
+            return mCountDownLatch;
+        }
+
+        public int getLastState() {
+            return mLastState;
+        }
     }
 
     static class TestPhoneStateListener extends PhoneStateListener {
@@ -265,6 +290,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         });
         registeredLatch.await(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
+
+        // Register a call state listener.
+        mTestCallStateListener = new TestCallStateListener();
+        mTelephonyManager.registerTelephonyCallback(r -> r.run(), mTestCallStateListener);
+        mTestCallStateListener.getCountDownLatch().await(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
     }
 
     @Override
@@ -273,6 +304,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         if (!mShouldTestTelecom) {
             return;
         }
+
+        mTelephonyManager.unregisterTelephonyCallback(mTestCallStateListener);
 
         final CountDownLatch unregisteredLatch = new CountDownLatch(1);
         mPhoneStateListenerHandler.post(new Runnable() {
@@ -919,6 +952,12 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     void setAndVerifyConferenceForOutgoingCall(MockConference conference) {
         conference.setActive();
         assertConferenceState(conference, Connection.STATE_ACTIVE);
+    }
+
+    void verifyCallStateListener(int expectedCallState) throws InterruptedException {
+        mTestCallStateListener.getCountDownLatch().await(
+                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS);
+        assertEquals(expectedCallState, mTestCallStateListener.getLastState());
     }
 
     void verifyPhoneStateListenerCallbacksForCall(int expectedCallState, String expectedNumber)

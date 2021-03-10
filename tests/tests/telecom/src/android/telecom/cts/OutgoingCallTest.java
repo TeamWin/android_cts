@@ -17,6 +17,7 @@
 package android.telecom.cts;
 
 import static android.telecom.Call.STATE_SELECT_PHONE_ACCOUNT;
+import static android.telephony.TelephonyManager.CALL_STATE_RINGING;
 
 import android.content.Context;
 import android.media.AudioManager;
@@ -174,6 +175,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
                 .getAddress().getSchemeSpecificPart();
         verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_OFFHOOK,
                 expectedNumber);
+        verifyCallStateListener(TelephonyManager.CALL_STATE_OFFHOOK);
     }
 
     /**
