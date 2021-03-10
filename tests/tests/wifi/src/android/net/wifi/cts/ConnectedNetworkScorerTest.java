@@ -268,6 +268,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             WME_ACCESS_CATEGORY_VO).getContentionTimeAvgMicros()).isAtLeast(0);
                     assertThat(statsEntry.getContentionTimeStats(
                             WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
+                    assertThat(statsEntry.getChannelUtilizationRatio()).isIn(Range.closed(0, 255));
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())
