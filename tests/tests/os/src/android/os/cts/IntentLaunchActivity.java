@@ -19,14 +19,21 @@ package android.os.cts;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
+
+import java.net.URISyntaxException;
 
 /**
  * Activity used to verify an UnsafeIntentLaunch StrictMode violation is reported when an Intent
  * is unparceled from the delivered Intent and used to start another activity.
  */
 public class IntentLaunchActivity extends Activity {
-    private static final String INNER_INTENT_KEY = "inner-intent";
+    private static final String TAG = "IntentLaunchActivity";
+
+    private static final String EXTRA_INNER_INTENT = "inner-intent";
+    private static final String EXTRA_INNER_INTENT_URI_STRING = "inner-intent-uri-string";
 
     private static final String ACTION_UNSAFE_INTENT_LAUNCH = "android.os.cts.UNSAFE_INTENT_LAUNCH";
     private static final String ACTION_UNSAFE_DATA_COPY_FROM_INTENT =
@@ -35,6 +42,13 @@ public class IntentLaunchActivity extends Activity {
             "android.os.cts.DATA_COPY_FROM_DELIVERED_INTENT_WITH_UNPARCELED_EXTRAS";
     private static final String ACTION_UNSAFE_DATA_COPY_FROM_EXTRAS =
             "android.os.cts.UNSAFE_DATA_COPY_FROM_EXTRAS";
+    private static final String ACTION_UNSAFE_INTENT_FROM_URI_LAUNCH =
+            "android.os.cts.UNSAFE_INTENT_FROM_URI_LAUNCH";
+    private static final String ACTION_SAFE_INTENT_FROM_URI_LAUNCH =
+            "android.os.cts.SAFE_INTENT_FROM_URI_LAUNCH";
+
+    private static final String ACTION_BROWSABLE_INTENT_LAUNCH =
+            "android.os.cts.BROWSABLE_INTENT_LAUNCH";
 
     private static final String EXTRA_TEST_KEY = "android.os.cts.TEST_KEY";
 
@@ -88,10 +102,45 @@ public class IntentLaunchActivity extends Activity {
      */
     private static Intent getTestIntentWithExtrasInParceledIntent(Context context, String action) {
         Intent intent = getTestIntent(context, action);
-        Intent innerIntent = intent.getParcelableExtra(INNER_INTENT_KEY);
+        Intent innerIntent = intent.getParcelableExtra(EXTRA_INNER_INTENT);
         // Add an extra to the Intent so that it contains the extras Bundle; the data itself is not
         // important, just the fact that there is data to be copied without sanitation / validation.
         innerIntent.putExtra(EXTRA_TEST_KEY, "TEST_VALUE");
+        return intent;
+    }
+
+    /**
+     * Returns an Intent containing an Intent encoded as a URI in the extras; the returned Intent
+     * can be used to start this Activity and verify the StrictMode UnsafeIntentLaunch violation is
+     * reported as expected when launching an Intent parsed from a URI.
+     */
+    public static Intent getUnsafeIntentFromUriLaunchTestIntent(Context context) {
+        return getTestIntentWithUriIntentInExtras(context, ACTION_UNSAFE_INTENT_FROM_URI_LAUNCH);
+    }
+
+    /**
+     * Returns an Intent containing an Intent encoded as a URI in the extras; the returned Intent
+     * can be used to start this Activity and verify the StrictMode UnsafeIntentLaunch violation is
+     * not reported when launching an Intent parsed from a URI with the browsable category and
+     * without an explicit component.
+     */
+    public static Intent getSafeIntentFromUriLaunchTestIntent(Context context) {
+        return getTestIntentWithUriIntentInExtras(context, ACTION_SAFE_INTENT_FROM_URI_LAUNCH);
+    }
+
+    /**
+     * Returns an Intent with the specified {@code action} set and containing an Intent encoded as a
+     * URI in the extras.
+     */
+    private static Intent getTestIntentWithUriIntentInExtras(Context context, String action) {
+        Intent intent = getTestIntent(context, action);
+        Intent innerIntent = intent.getParcelableExtra(EXTRA_INNER_INTENT);
+        innerIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+        innerIntent.setAction(ACTION_BROWSABLE_INTENT_LAUNCH);
+        innerIntent.setPackage(context.getPackageName());
+        String intentUriString = innerIntent.toUri(Intent.URI_ANDROID_APP_SCHEME);
+        intent.putExtra(EXTRA_INNER_INTENT_URI_STRING, intentUriString);
+        intent.removeExtra(EXTRA_INNER_INTENT);
         return intent;
     }
 
@@ -103,7 +152,7 @@ public class IntentLaunchActivity extends Activity {
         intent.setAction(action);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         Intent innerIntent = new Intent(context, SimpleTestActivity.class);
-        intent.putExtra(INNER_INTENT_KEY, innerIntent);
+        intent.putExtra(EXTRA_INNER_INTENT, innerIntent);
         return intent;
     }
 
@@ -111,8 +160,9 @@ public class IntentLaunchActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent deliveredIntent = getIntent();
-        Intent innerIntent = deliveredIntent.getParcelableExtra(INNER_INTENT_KEY);
-        switch (deliveredIntent.getAction()) {
+        Intent innerIntent = deliveredIntent.getParcelableExtra(EXTRA_INNER_INTENT);
+        String action = deliveredIntent.getAction();
+        switch (action) {
             case ACTION_UNSAFE_INTENT_LAUNCH: {
                 if (innerIntent != null) {
                     startActivity(innerIntent);
@@ -141,6 +191,27 @@ public class IntentLaunchActivity extends Activity {
                 Intent intent = new Intent(getApplicationContext(), SimpleTestActivity.class);
                 intent.putExtras(deliveredIntent);
                 startActivity(intent);
+                break;
+            }
+            case ACTION_UNSAFE_INTENT_FROM_URI_LAUNCH:
+            case ACTION_SAFE_INTENT_FROM_URI_LAUNCH: {
+                String intentUriString = deliveredIntent.getStringExtra(
+                        EXTRA_INNER_INTENT_URI_STRING);
+                if (intentUriString != null) {
+                    try {
+                        Intent intent = Intent.parseUri(intentUriString,
+                                Intent.URI_ANDROID_APP_SCHEME);
+                        // If this is a safe intent from URI launch then clear the component as a
+                        // browsable Intent without a component set should not result in a
+                        // violation.
+                        if (ACTION_SAFE_INTENT_FROM_URI_LAUNCH.equals(action)) {
+                            intent.setComponent(null);
+                        }
+                        startActivity(intent);
+                    } catch (URISyntaxException e) {
+                        Log.e(TAG, "Exception parsing URI: " + intentUriString, e);
+                    }
+                }
                 break;
             }
             default:

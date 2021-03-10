@@ -80,7 +80,14 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="android.os.cts.SimpleTestActivity"/>
+        <activity android:name="android.os.cts.SimpleTestActivity"
+             android:exported="false">
+            <intent-filter>
+                <action android:name="android.os.cts.BROWSABLE_INTENT_LAUNCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+            </intent-filter>
+        </activity>
 
         <activity android:name="android.os.cts.IntentLaunchActivity"
              android:exported="false" />

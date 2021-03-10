@@ -975,6 +975,44 @@ public class StrictModeTest {
         assertNoViolation(() -> context.startActivity(intent));
     }
 
+    @Test
+    public void testUnsafeIntentLaunch_UnsafeIntentFromUriLaunch_ThrowsViolation()
+            throws Exception {
+        // Intents can also be delivered as URI strings and parsed with Intent#parseUri. This test
+        // verifies if an Intent is parsed from a URI string and launched without any additional
+        // sanitation / validation then a violation is reported.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent =
+                IntentLaunchActivity.getUnsafeIntentFromUriLaunchTestIntent(context);
+
+        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
+    }
+
+    @Test
+    public void testUnsafeIntentLaunch_SafeIntentFromUriLaunch_NoViolation() throws Exception {
+        // The documentation for Intent#URI_ALLOW_UNSAFE recommend using the CATEGORY_BROWSABLE
+        // when launching an Intent parsed from a URI; while an explicit Intent will still be
+        // delivered to the target component with this category set an implicit Intent will be
+        // limited to components with Intent-filters that handle this category. This test verifies
+        // an implicit Intent parsed from a URI with the browsable category set does not result in
+        // an UnsafeIntentLaunch StrictMode violation.
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectUnsafeIntentLaunch()
+                        .penaltyLog()
+                        .build());
+        Context context = getContext();
+        Intent intent =
+                IntentLaunchActivity.getSafeIntentFromUriLaunchTestIntent(context);
+
+        assertNoViolation(() -> context.startActivity(intent));
+    }
+
     private Context createWindowContext() {
         final Display display = getContext().getSystemService(DisplayManager.class)
                 .getDisplay(DEFAULT_DISPLAY);
