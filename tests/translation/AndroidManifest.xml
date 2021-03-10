@@ -21,12 +21,29 @@
     <application android:label="Translation TestCase">
         <uses-library android:name="android.test.runner"/>
 
+        <activity android:name=".SimpleActivity"
+                  android:label="SimpleActivity"
+                  android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <service android:name=".CtsTranslationService"
                  android:label="CtsTranslationService"
                  android:permission="android.permission.BIND_TRANSLATION_SERVICE"
                  android:exported="true">
             <intent-filter>
                 <action android:name="android.service.translation.TranslationService"/>
+            </intent-filter>
+        </service>
+        <service android:name=".CtsContentCaptureService"
+                 android:label="CtsContentCaptureService"
+                 android:permission="android.permission.BIND_CONTENT_CAPTURE_SERVICE"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.contentcapture.ContentCaptureService"/>
             </intent-filter>
         </service>
     </application>

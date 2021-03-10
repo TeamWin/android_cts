@@ -93,7 +93,7 @@ public class TranslationManagerTest {
 
     @After
     public void cleanup() {
-        resetTemporaryTranslationService();
+        Helper.resetTemporaryTranslationService();
     }
 
     @Test
@@ -193,29 +193,6 @@ public class TranslationManagerTest {
 
     protected void enableCtsTranslationService() {
         mServiceWatcher = CtsTranslationService.setServiceWatcher();
-        setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
-    }
-
-    /**
-     * Sets the translation service temporarily.
-     *
-     * @param service name of temporary translation service.
-     */
-    private static void setTemporaryTranslationService(@NonNull String service) {
-        Log.d(TAG, "Setting translation service to " + service);
-
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service 0 %s %d", service,
-                120000);
-    }
-
-    /**
-     * Resets the translation service.
-     */
-    private static void resetTemporaryTranslationService() {
-        Log.d(TAG, "Resetting translation service");
-
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service 0");
+        Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
     }
 }
