@@ -628,12 +628,15 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
                 .setDesiredHeight(BUBBLE_HEIGHT)
+                .setSuppressBubble(false)
                 .setDeleteIntent(deleteIntent);
 
         Notification.BubbleMetadata data = metadataBuilder.build();
@@ -642,18 +645,22 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(bubbleIntent, data.getIntent());
         assertEquals(deleteIntent, data.getDeleteIntent());
         assertFalse(data.isNotificationSuppressed());
+        assertFalse(data.isBubbleSuppressable());
         assertFalse(data.getAutoExpandBubble());
     }
 
     public void testBubbleMetadata_parcel() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata metadata =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setAutoExpandBubble(true)
                         .setSuppressNotification(true)
+                        .setSuppressBubble(true)
                         .setDeleteIntent(deleteIntent)
                         .build();
 
@@ -664,30 +671,35 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertTrue(metadata.getAutoExpandBubble());
         assertTrue(metadata.isNotificationSuppressed());
+        assertTrue(metadata.isBubbleSuppressable());
     }
 
     public void testBubbleMetadataBuilder_shortcutId() {
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID)
                         .setDesiredHeight(BUBBLE_HEIGHT)
+                        .setSuppressBubble(true)
                         .setDeleteIntent(deleteIntent);
 
         Notification.BubbleMetadata data = metadataBuilder.build();
         assertEquals(BUBBLE_HEIGHT, data.getDesiredHeight());
         assertEquals(BUBBLE_SHORTCUT_ID, data.getShortcutId());
         assertEquals(deleteIntent, data.getDeleteIntent());
+        assertTrue(data.isBubbleSuppressable());
         assertFalse(data.isNotificationSuppressed());
         assertFalse(data.getAutoExpandBubble());
     }
 
     public void testBubbleMetadataBuilder_parcelShortcutId() {
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
-
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Notification.BubbleMetadata metadata =
                 new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID)
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setAutoExpandBubble(true)
+                        .setSuppressBubble(true)
                         .setSuppressNotification(true)
                         .setDeleteIntent(deleteIntent)
                         .build();
@@ -696,12 +708,14 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(BUBBLE_HEIGHT, metadata.getDesiredHeight());
         assertEquals(deleteIntent, metadata.getDeleteIntent());
         assertEquals(BUBBLE_SHORTCUT_ID, metadata.getShortcutId());
+        assertTrue(metadata.isBubbleSuppressable());
         assertTrue(metadata.getAutoExpandBubble());
         assertTrue(metadata.isNotificationSuppressed());
     }
 
     public void testBubbleMetadata_parcelResId() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata metadata =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
@@ -712,6 +726,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(icon, metadata.getIcon());
         assertEquals(bubbleIntent, metadata.getIntent());
         assertFalse(metadata.getAutoExpandBubble());
+        assertFalse(metadata.isBubbleSuppressable());
         assertFalse(metadata.isNotificationSuppressed());
     }
 
@@ -737,7 +752,8 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_shortcutBuilder_throwsForSetIntent() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
         try {
             Notification.BubbleMetadata.Builder metadataBuilder =
                     new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID)
@@ -801,7 +817,8 @@ public class NotificationTest extends AndroidTestCase {
         new Canvas(b).drawColor(0xffff0000);
         Icon icon = Icon.createWithAdaptiveBitmap(b);
 
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon);
         Notification.BubbleMetadata metadata = metadataBuilder.build();
@@ -812,7 +829,8 @@ public class NotificationTest extends AndroidTestCase {
     public void testBubbleMetadataBuilder_noThrowForNonBitmapIcon() {
         Icon icon = Icon.createWithResource(mContext, R.drawable.ic_android);
 
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon);
         Notification.BubbleMetadata metadata = metadataBuilder.build();
@@ -821,8 +839,10 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_replaceHeightRes() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
@@ -838,8 +858,10 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testBubbleMetadataBuilder_replaceHeightDp() {
-        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
-        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent bubbleIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_MUTABLE);
+        PendingIntent deleteIntent = PendingIntent.getActivity(mContext, 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
         Icon icon = Icon.createWithResource(mContext, 1);
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
