@@ -34,6 +34,7 @@ public class CVE_2020_0073 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2020-04")
     @Test
     public void testPocCVE_2020_0073() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
         String binaryName = "CVE-2020-0073";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};

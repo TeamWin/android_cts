@@ -24,6 +24,7 @@ android_test {
         "general-tests",
     ],
     static_libs: [
+        "TestApp",
         "Nene",
         "EventLib",
         "androidx.test.ext.junit",
