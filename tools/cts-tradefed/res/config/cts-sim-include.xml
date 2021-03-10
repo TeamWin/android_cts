@@ -30,6 +30,7 @@
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases1" />
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases2" />
     <option name="compatibility:include-filter" value="CtsSecureElementAccessControlTestCases3" />
+    <option name="compatibility:include-filter" value="CtsSimPhonebookProviderTestCases" />
     <option name="compatibility:include-filter" value="CtsSimRestrictedApisTestCases" />
     <option name="compatibility:include-filter" value="CtsStatsdHostTestCases" />
     <option name="compatibility:include-filter" value="CtsStatsdAtomHostTestCases" />
