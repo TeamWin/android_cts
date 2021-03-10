@@ -203,6 +203,38 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(null, mContext.getAttributionTag());
     }
 
+    public void testContextParams() throws Exception {
+        final ContextParams params = new ContextParams.Builder()
+                .setAttributionTag("foo")
+                .setReceiverPackage("bar", "baz")
+                .setRenouncedPermissions(new HashSet<>(Arrays.asList(GRANTED_PERMISSION))).build();
+
+        assertEquals("foo", params.getAttributionTag());
+        assertEquals("bar", params.getReceiverPackage());
+        assertEquals("baz", params.getReceiverAttributionTag());
+        assertEquals(new HashSet<>(Arrays.asList(GRANTED_PERMISSION)),
+                params.getRenouncedPermissions());
+    }
+
+    public void testContextParams_Inherit() throws Exception {
+        final ContextParams orig = new ContextParams.Builder()
+                .setAttributionTag("foo").build();
+        {
+            final ContextParams params = new ContextParams.Builder(orig).build();
+            assertEquals("foo", params.getAttributionTag());
+        }
+        {
+            final ContextParams params = new ContextParams.Builder(orig)
+                    .setAttributionTag("bar").build();
+            assertEquals("bar", params.getAttributionTag());
+        }
+        {
+            final ContextParams params = new ContextParams.Builder(orig)
+                    .setAttributionTag(null).build();
+            assertEquals(null, params.getAttributionTag());
+        }
+    }
+
     public void testCreateContext_WithRenouncedPermissions() throws Exception {
         final Context attrib = mContext.createContext(new ContextParams.Builder()
                 .setRenouncedPermissions(

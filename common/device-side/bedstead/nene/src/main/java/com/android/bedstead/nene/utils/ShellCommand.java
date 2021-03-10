@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.utils;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -32,6 +33,10 @@ public final class ShellCommand {
     private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
     private static final long WAIT_UNTIL_DELAY_MILLIS = 100;
 
+    /**
+     * Begin building a new {@link ShellCommand}.
+     */
+    @CheckResult
     public static Builder builder(String command) {
         if (command == null) {
             throw new NullPointerException();
@@ -42,6 +47,7 @@ public final class ShellCommand {
     /**
      * Create a builder and if {@code userReference} is not {@code null}, add "--user <userId>".
      */
+    @CheckResult
     public static Builder builderForUser(@Nullable UserReference userReference, String command) {
         Builder builder = builder(command);
         if (userReference != null) {
@@ -69,6 +75,7 @@ public final class ShellCommand {
          *
          * <p>e.g. --user 10
          */
+        @CheckResult
         public Builder addOption(String key, Object value) {
             // TODO: Deal with spaces/etc.
             commandBuilder.append(" ").append(key).append(" ").append(value);
@@ -78,6 +85,7 @@ public final class ShellCommand {
         /**
          * Add an operand to the command.
          */
+        @CheckResult
         public Builder addOperand(Object value) {
             // TODO: Deal with spaces/etc.
             commandBuilder.append(" ").append(value);
@@ -89,6 +97,7 @@ public final class ShellCommand {
          *
          * <p>Defaults to {@code false}
          */
+        @CheckResult
         public Builder allowEmptyOutput(boolean allowEmptyOutput) {
             mAllowEmptyOutput = allowEmptyOutput;
             return this;

@@ -228,21 +228,13 @@ class SpellCheckerTest : EndToEndImeTestBase() {
         val tsm = context.getSystemService(TextServicesManager::class.java)!!
         assertThat(tsm).isNotNull()
         assertThat(tsm!!.isSpellCheckerEnabled()).isTrue()
-        val spellCheckerInfo = tsm.getCurrentSpellChecker()
+        val spellCheckerInfo = tsm.getCurrentSpellCheckerInfo()
         assertThat(spellCheckerInfo).isNotNull()
         assertThat(spellCheckerInfo!!.getPackageName()).isEqualTo(
             "com.android.cts.mockspellchecker")
         assertThat(spellCheckerInfo!!.getSubtypeCount()).isEqualTo(1)
-        val spellCheckerSubtypeAllowImplicitlySelected = tsm.getCurrentSpellCheckerSubtype(true)
-        assertThat(spellCheckerSubtypeAllowImplicitlySelected).isNotNull()
-        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getLanguageTag()).isEqualTo("en-US")
-        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getLocale()).isEqualTo("en")
-        assertThat(spellCheckerSubtypeAllowImplicitlySelected!!.getExtraValue()).isEmpty()
-        val spellCheckerSubtypeNotAllowImplicitlySelected =
-            tsm.getCurrentSpellCheckerSubtype(false)
-        assertThat(spellCheckerSubtypeNotAllowImplicitlySelected).isNull()
-        assertThat(tsm.getEnabledSpellCheckersList()!!.size).isAtLeast(1)
-        assertThat(tsm.getEnabledSpellCheckersList()!!.map { it.getPackageName() })
+        assertThat(tsm.getEnabledSpellCheckerInfos()!!.size).isAtLeast(1)
+        assertThat(tsm.getEnabledSpellCheckerInfos()!!.map { it.getPackageName() })
                         .contains("com.android.cts.mockspellchecker")
     }
 
