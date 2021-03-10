@@ -100,14 +100,14 @@ public class GnssMeasurementTest {
                 new CorrelationVector.Builder()
                         .setSamplingWidthMeters(30d)
                         .setSamplingStartMeters(10d)
-                        .setFrequencyOffsetMetersPerSecond(10)
+                        .setFrequencyOffsetMetersPerSecond(10d)
                         .setMagnitude(new int[] {0, 5000, 10000, 5000, 0, 0, 3000, 0})
                         .build());
         correlationVectors.add(
                 new CorrelationVector.Builder()
                         .setSamplingWidthMeters(30d)
                         .setSamplingStartMeters(20d)
-                        .setFrequencyOffsetMetersPerSecond(20)
+                        .setFrequencyOffsetMetersPerSecond(20d)
                         .setMagnitude(new int[] {0, 3000, 5000, 3000, 0, 0, 1000, 0})
                         .build());
         return correlationVectors;
