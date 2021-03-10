@@ -273,7 +273,8 @@ public final class DeviceState implements TestRule {
     @Nullable
     public UserReference tvProfile(UserReference forUser) {
         return mTestApis.users().all().stream()
-                .filter(u -> forUser.equals(u.parent()) && u.type().equals(TV_PROFILE_TYPE_NAME))
+                .filter(u ->
+                        forUser.equals(u.parent()) && u.type().name().equals(TV_PROFILE_TYPE_NAME))
                 .findFirst().orElse(null);
     }
 
