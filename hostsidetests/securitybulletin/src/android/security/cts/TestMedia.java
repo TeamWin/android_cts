@@ -544,7 +544,11 @@ public class TestMedia extends SecurityTestCase {
         String binaryName = "CVE-2018-9537";
         String signals[] = {CrashUtils.SIGSEGV, CrashUtils.SIGBUS, CrashUtils.SIGABRT};
         AdbUtils.pocConfig testConfig = new AdbUtils.pocConfig(binaryName, getDevice());
-        testConfig.config = new CrashUtils.Config().setProcessPatterns(binaryName);
+        // example of check crash to skip:
+        // Abort message: 'frameworks/av/media/extractors/mkv/MatroskaExtractor.cpp:548 CHECK(mCluster) failed.'
+        testConfig.config = new CrashUtils.Config()
+                .setProcessPatterns(binaryName)
+                .appendAbortMessageExcludes("CHECK\\(.*?\\)");
         testConfig.config.setSignals(signals);
         AdbUtils.runPocAssertNoCrashesNotVulnerable(testConfig);
     }
