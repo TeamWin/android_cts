@@ -57,6 +57,9 @@ public class Activities {
     public static class SingleTaskActivity2 extends BaseActivity {
     }
 
+    public static class SingleInstancePerTaskActivity extends BaseActivity {
+    }
+
     public static class TaskAffinity1Activity extends BaseActivity {
     }
 
