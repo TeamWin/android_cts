@@ -567,7 +567,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertNotNull(params.getNetwork());
         final NetworkCapabilities capabilities =
                 getContext().getSystemService(ConnectivityManager.class)
@@ -586,7 +586,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        params = kTestEnvironment.getLastJobParameters();
+        params = kTestEnvironment.getLastStartJobParameters();
         assertNull(params.getNetwork());
 
         // No network requested
@@ -597,7 +597,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        params = kTestEnvironment.getLastJobParameters();
+        params = kTestEnvironment.getLastStartJobParameters();
         assertNull(params.getNetwork());
     }
 
@@ -859,7 +859,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
     }
 
-    private static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
+    static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
         return wm.isWifiEnabled() && cm.getActiveNetwork() != null
                 && cm.getNetworkCapabilities(cm.getActiveNetwork()).hasTransport(TRANSPORT_WIFI);
     }
