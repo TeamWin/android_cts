@@ -56,6 +56,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                 "$APK_DIRECTORY/CtsUsePermissionApp30WithBackground.apk"
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
         const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
+        const val APP_APK_PATH_LOCATION_PROVIDER =
+            "$APK_DIRECTORY/CtsUsePermissionAppLocationProvider.apk"
         const val APP_APK_PATH_WITH_OVERLAY = "$APK_DIRECTORY/CtsUsePermissionAppWithOverlay.apk"
         const val APP_PACKAGE_NAME = "android.permission3.cts.usepermission"
 
