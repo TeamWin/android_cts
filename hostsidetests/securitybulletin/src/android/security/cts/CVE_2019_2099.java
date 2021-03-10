@@ -32,6 +32,7 @@ public class CVE_2019_2099 extends SecurityTestCase {
     @SecurityTest(minPatchLevel = "2019-06")
     @Test
     public void testPocCVE_2019_2099() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only64();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2099", null, getDevice());
     }
