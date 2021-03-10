@@ -66,6 +66,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -77,6 +78,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -92,6 +94,13 @@ import java.util.function.Predicate;
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+
+    private static final String ERASE_FONT_SCALE_CMD = "settings delete system font_scale";
+    // 1.2 is an arbitrary value.
+    private static final String PUT_FONT_SCALE_CMD = "settings put system font_scale 1.2";
+    private static final String SCREEN_DEFAULT_CMD = "wm reset";
+    private static final String PUT_SCREEN_RESOLUTION = "wm size 1080x1920";
+    private static final String PUT_SCREEN_DENSITY = "wm density 390";
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -244,6 +253,67 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
 
             expectImeVisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testHandlesConfigChanges() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            // MockIme handles fontScale. Make sure changing fontScale doesn't restart IME.
+            toggleFontScale();
+            toggleResolution();
+            toggleDensity();
+            expectImeVisible(TIMEOUT);
+            // Make sure IME was not restarted.
+            notExpectEvent(stream, event -> "onCreate".equals(event.getEventName()), EXPECTED_TIMEOUT);
+            notExpectEvent(stream, event -> "onBindInput".equals(event.getEventName()), EXPECTED_TIMEOUT);
+        }
+    }
+
+    // Font scale is a global configuration.
+    // This function will delete any previous font scale changes, apply one, and remove it.
+    private void toggleFontScale() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            SystemUtil.runShellCommand(instrumentation, ERASE_FONT_SCALE_CMD);
+            instrumentation.waitForIdleSync();
+            SystemUtil.runShellCommand(instrumentation, PUT_FONT_SCALE_CMD);
+            instrumentation.waitForIdleSync();
+            SystemUtil.runShellCommand(instrumentation, ERASE_FONT_SCALE_CMD);
+        } catch (IOException io) {
+            fail("Couldn't apply font scale.");
+        }
+    }
+
+    private void toggleResolution() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            SystemUtil.runShellCommand(instrumentation, PUT_SCREEN_RESOLUTION);
+            instrumentation.waitForIdleSync();
+            SystemUtil.runShellCommand(instrumentation, SCREEN_DEFAULT_CMD);
+            instrumentation.waitForIdleSync();
+        } catch (IOException io) {
+            fail("Couldn't apply screen resolution.");
+        }
+    }
+
+    // Toggle screen density
+    private void toggleDensity() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            SystemUtil.runShellCommand(instrumentation, PUT_SCREEN_DENSITY);
+            instrumentation.waitForIdleSync();
+            SystemUtil.runShellCommand(instrumentation, SCREEN_DEFAULT_CMD);
+            instrumentation.waitForIdleSync();
+        } catch (IOException io) {
+            fail("Couldn't apply screen resolution.");
         }
     }
 
