@@ -83,7 +83,7 @@ class ItsBaseTest(base_test.BaseTestClass):
     if self.user_params.get('chart_loc_arg'):
       self.chart_loc_arg = self.user_params['chart_loc_arg']
     else:
-      self.chart_loc_arg = ""
+      self.chart_loc_arg = ''
     if self.user_params.get('debug_mode'):
       self.debug_mode = True if self.user_params[
           'debug_mode'] == 'True' else False
@@ -173,7 +173,6 @@ class ItsBaseTest(base_test.BaseTestClass):
     camera_id_combo = self.camera.split(':')
     return camera_id_combo
 
-
   def determine_not_yet_mandated_tests(self, device_id, scene):
     """Determine not_yet_mandated tests from NOT_YET_MANDATED list & phone info.
 
@@ -193,9 +192,11 @@ class ItsBaseTest(base_test.BaseTestClass):
 
     # Determine which test are not yet mandated for first api level.
     tests = NOT_YET_MANDATED[scene]
-    for test in tests:
-      if test[1] >= first_api_level:
-        not_yet_mandated[scene].append(test[0])
+    for [test, first_api_level_mandated] in tests:
+      logging.debug('First API level test MANDATED: %d',
+                    first_api_level_mandated)
+      if first_api_level < first_api_level_mandated:
+        not_yet_mandated[scene].append(test)
     return not_yet_mandated
 
   def on_pass(self, record):
