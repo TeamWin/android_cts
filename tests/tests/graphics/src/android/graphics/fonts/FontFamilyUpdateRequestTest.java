@@ -78,22 +78,24 @@ public final class FontFamilyUpdateRequestTest {
                 new FontFamilyUpdateRequest.Font("Test",
                         new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC),
                         Collections.emptyList()));
-        FontFamilyUpdateRequest.FontFamily fontFamily = new FontFamilyUpdateRequest.FontFamily(
-                name, fonts);
+        FontFamilyUpdateRequest.FontFamily fontFamily =
+                new FontFamilyUpdateRequest.FontFamily.Builder(name, fonts).build();
         assertThat(fontFamily.getName()).isEqualTo(name);
         assertThat(fontFamily.getFonts()).containsExactlyElementsIn(fonts).inOrder();
 
         // Invalid parameters
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.FontFamily(null, fonts));
+                new FontFamilyUpdateRequest.FontFamily.Builder(null, fonts).build());
         assertThrows(IllegalArgumentException.class, () ->
-                new FontFamilyUpdateRequest.FontFamily("", fonts));
+                new FontFamilyUpdateRequest.FontFamily.Builder("", fonts).build());
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.FontFamily(name, null));
+                new FontFamilyUpdateRequest.FontFamily.Builder(name, null).build());
         assertThrows(IllegalArgumentException.class, () ->
-                new FontFamilyUpdateRequest.FontFamily(name, Collections.emptyList()));
+                new FontFamilyUpdateRequest.FontFamily.Builder(name,
+                        Collections.emptyList()).build());
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.FontFamily(name, Collections.singletonList(null)));
+                new FontFamilyUpdateRequest.FontFamily.Builder(name,
+                        Collections.singletonList(null)).build());
     }
 
     @Test
@@ -112,10 +114,10 @@ public final class FontFamilyUpdateRequestTest {
                 new FontFamilyUpdateRequest.Font("Roboto-Regular",
                         new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC),
                         Collections.emptyList()));
-        FontFamilyUpdateRequest.FontFamily fontFamily1 = new FontFamilyUpdateRequest.FontFamily(
-                "test-roboto1", fonts);
-        FontFamilyUpdateRequest.FontFamily fontFamily2 = new FontFamilyUpdateRequest.FontFamily(
-                "test-roboto2", fonts);
+        FontFamilyUpdateRequest.FontFamily fontFamily1 =
+                new FontFamilyUpdateRequest.FontFamily.Builder("test-roboto1", fonts).build();
+        FontFamilyUpdateRequest.FontFamily fontFamily2 =
+                new FontFamilyUpdateRequest.FontFamily.Builder("test-roboto2", fonts).build();
 
         FontFamilyUpdateRequest request = new FontFamilyUpdateRequest.Builder()
                 .addFontFileUpdateRequest(fontFileUpdateRequest)

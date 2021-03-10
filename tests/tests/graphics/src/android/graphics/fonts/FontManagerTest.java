@@ -217,11 +217,11 @@ public class FontManagerTest {
 
         try {
             fm.updateFontFamily(new FontFamilyUpdateRequest.Builder()
-                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily("test", Arrays.asList(
-                            new FontFamilyUpdateRequest.Font(
+                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily.Builder("test",
+                            Arrays.asList(new FontFamilyUpdateRequest.Font(
                                     "Roboto-Regular",
                                     new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
-                                    Collections.emptyList()))))
+                                    Collections.emptyList()))).build())
                     .build(), -1);
             fail("IllegalArgumentException is expected.");
         } catch (IllegalArgumentException e) {
@@ -237,11 +237,11 @@ public class FontManagerTest {
 
         try {
             fm.updateFontFamily(new FontFamilyUpdateRequest.Builder()
-                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily("test", Arrays.asList(
-                            new FontFamilyUpdateRequest.Font(
+                    .addFontFamily(new FontFamilyUpdateRequest.FontFamily.Builder("test",
+                            Arrays.asList(new FontFamilyUpdateRequest.Font(
                                     "Roboto-Regular",
                                     new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
-                                    Collections.emptyList()))))
+                                    Collections.emptyList()))).build())
                     .build(), fm.getFontConfig().getConfigVersion());
             fail("SecurityException is expected.");
         } catch (SecurityException e) {
