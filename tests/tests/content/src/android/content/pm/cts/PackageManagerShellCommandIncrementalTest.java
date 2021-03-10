@@ -29,13 +29,16 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.service.dataloader.DataLoaderService;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
@@ -58,11 +61,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Scanner;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -240,6 +245,204 @@ public class PackageManagerShellCommandIncrementalTest {
                             return null;
                         },
                         (stdout) -> stdout.contains(unexpected)));
+    }
+
+
+    static class ReadLogEntry {
+        public final String line;
+        public final int blockIdx;
+        public final int count;
+        public final int fileIdx;
+        public final int appId;
+        public final int userId;
+
+        private ReadLogEntry(String line, int blockIdx, int count, int fileIdx, int appId,
+                int userId) {
+            this.line = line;
+            this.blockIdx = blockIdx;
+            this.count = count;
+            this.fileIdx = fileIdx;
+            this.appId = appId;
+            this.userId = userId;
+        }
+
+        public String toString() {
+            return blockIdx + "/" + count + "/" + fileIdx + "/" + appId + "/" + userId;
+        }
+
+        static final String BLOCK_PREFIX = "|page_read: index=";
+        static final String COUNT_PREFIX = " count=";
+        static final String FILE_PREFIX = " file=";
+        static final String APP_ID_PREFIX = " appid=";
+        static final String USER_ID_PREFIX = " userid=";
+
+        private static int parseInt(String line, int prefixIdx, int prefixLen, int endIdx) {
+            if (prefixIdx == -1) {
+                return -1;
+            }
+            final String intStr;
+            if (endIdx != -1) {
+                intStr = line.substring(prefixIdx + prefixLen, endIdx);
+            } else {
+                intStr = line.substring(prefixIdx + prefixLen);
+            }
+
+            return Integer.parseInt(intStr);
+        }
+
+        static ReadLogEntry parse(String line) {
+            int blockIdx = line.indexOf(BLOCK_PREFIX);
+            if (blockIdx == -1) {
+                return null;
+            }
+            int countIdx = line.indexOf(COUNT_PREFIX, blockIdx + BLOCK_PREFIX.length());
+            if (countIdx == -1) {
+                return null;
+            }
+            int fileIdx = line.indexOf(FILE_PREFIX, countIdx + COUNT_PREFIX.length());
+            if (fileIdx == -1) {
+                return null;
+            }
+            int appIdIdx = line.indexOf(APP_ID_PREFIX, fileIdx + FILE_PREFIX.length());
+            final int userIdIdx;
+            if (appIdIdx != -1) {
+                userIdIdx = line.indexOf(USER_ID_PREFIX, appIdIdx + APP_ID_PREFIX.length());
+            } else {
+                userIdIdx = -1;
+            }
+
+            return new ReadLogEntry(
+                    line,
+                    parseInt(line, blockIdx, BLOCK_PREFIX.length(), countIdx),
+                    parseInt(line, countIdx, COUNT_PREFIX.length(), fileIdx),
+                    parseInt(line, fileIdx, FILE_PREFIX.length(), appIdIdx),
+                    parseInt(line, appIdIdx, APP_ID_PREFIX.length(), userIdIdx),
+                    parseInt(line, userIdIdx, USER_ID_PREFIX.length(), -1));
+        }
+    }
+    ;
+
+    @Test
+    public void testReadLogParser() throws Exception {
+        assertEquals(null, ReadLogEntry.parse("# tracer: nop\n"));
+        assertEquals(
+                "178/290/0/10184/0",
+                ReadLogEntry.parse(
+                        "<...>-2777  ( 1639) [006] ....  2764.227110: tracing_mark_write: "
+                                + "B|1639|page_read: index=178 count=290 file=0 appid=10184 "
+                                + "userid=0")
+                        .toString());
+        assertEquals(
+                null,
+                ReadLogEntry.parse(
+                        "<...>-2777  ( 1639) [006] ....  2764.227111: tracing_mark_write: E|1639"));
+        assertEquals(
+                "468/337/0/10184/2",
+                ReadLogEntry.parse(
+                        "<...>-2777  ( 1639) [006] ....  2764.243227: tracing_mark_write: "
+                                + "B|1639|page_read: index=468 count=337 file=0 appid=10184 "
+                                + "userid=2")
+                        .toString());
+        assertEquals(
+                null,
+                ReadLogEntry.parse(
+                        "<...>-2777  ( 1639) [006] ....  2764.243229: tracing_mark_write: E|1639"));
+        assertEquals(
+                "18/9/3/-1/-1",
+                ReadLogEntry.parse(
+                        "           <...>-2777  ( 1639) [006] ....  2764.227095: "
+                                + "tracing_mark_write: B|1639|page_read: index=18 count=9 file=3")
+                        .toString());
+    }
+
+    static class AppReads {
+        public final String packageName;
+        public final int reads;
+
+        AppReads(String packageName, int reads) {
+            this.packageName = packageName;
+            this.reads = reads;
+        }
+    }
+
+    @LargeTest
+    @Test
+    @Ignore("Pending fix in GMSCore")
+    public void testInstallWithIdSigNoDigesting() throws Exception {
+        // Overall timeout of 3secs in 100ms intervals.
+        final int atraceDumpIterations = 30;
+        final int atraceDumpDelayMs = 100;
+        final int blockSize = 4096;
+
+        File apkfile = new File(createApkPath(TEST_APK));
+        int blocks = (int) ((apkfile.length() + blockSize - 1) / blockSize);
+        boolean[] touched = new boolean[blocks];
+
+        final ArrayMap<Integer, Integer> uids = new ArrayMap<>();
+
+        final AtomicInteger totalTouchedBlocks = new AtomicInteger(0);
+        checkSysTrace(atraceDumpIterations, atraceDumpDelayMs, () -> installPackage(TEST_APK),
+                (stdout) -> {
+                    try (Scanner scanner = new Scanner(stdout)) {
+                        while (scanner.hasNextLine()) {
+                            final ReadLogEntry readLogEntry = ReadLogEntry.parse(
+                                    scanner.nextLine());
+                            if (readLogEntry == null) {
+                                continue;
+                            }
+                            for (int i = 0, count = readLogEntry.count; i < count; ++i) {
+                                int blockIdx = readLogEntry.blockIdx + i;
+                                if (touched[blockIdx]) {
+                                    continue;
+                                }
+
+                                touched[blockIdx] = true;
+
+                                int uid = UserHandle.getUid(readLogEntry.userId,
+                                        readLogEntry.appId);
+                                Integer touchedByUid = uids.get(uid);
+                                uids.put(uid, touchedByUid == null ? 1 : touchedByUid + 1);
+
+                                if (totalTouchedBlocks.incrementAndGet() >= blocks) {
+                                    return true;
+                                }
+                            }
+                        }
+                        return false;
+                    }
+                });
+
+        if (totalTouchedBlocks.get() < blocks) {
+            return;
+        }
+
+        PackageManager pm = getPackageManager();
+
+        AppReads[] appIdReads = new AppReads[uids.size()];
+        for (int i = 0, size = uids.size(); i < size; ++i) {
+            final int uid = uids.keyAt(i);
+            final int appId = UserHandle.getAppId(uid);
+            final int userId = UserHandle.getUserId(uid);
+
+            final String packageName;
+            if (appId < Process.FIRST_APPLICATION_UID) {
+                packageName = "<system>";
+            } else {
+                String[] packages = pm.getPackagesForUid(uid);
+                if (packages == null || packages.length == 0) {
+                    packageName = "<unknown package, appId=" + appId + ", userId=" + userId + ">";
+                } else {
+                    packageName = "[" + String.join(",", packages) + "]";
+                }
+            }
+            appIdReads[i] = new AppReads(packageName, uids.valueAt(i));
+        }
+        Arrays.sort(appIdReads, (lhs, rhs) -> Integer.compare(rhs.reads, lhs.reads));
+
+        final String packages = String.join("\n", Arrays.stream(appIdReads).map(
+                item -> item.packageName + " : " + item.reads + " blocks").toArray(String[]::new));
+        assertTrue("Digesting detected, list of packages: " + packages,
+                totalTouchedBlocks.get() < blocks);
     }
 
     @LargeTest
