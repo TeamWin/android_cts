@@ -18,6 +18,7 @@ package android.seccomp.cts.app;
 
 import android.content.pm.ApplicationInfo;
 import android.os.Process;
+import android.os.UserHandle;
 import android.util.Log;
 
 public class ZygotePreload implements android.app.ZygotePreload {
@@ -26,38 +27,41 @@ public class ZygotePreload implements android.app.ZygotePreload {
     static volatile boolean sResult = false;
     static volatile int sStartOfIsolatedRange = -1;
 
-    static private boolean testSetResUidGidBlocked(int rid, int eid, int sid) {
-        if (!SeccompDeviceTest.testSetresuidBlocked(rid, eid, sid)) {
-            Log.e(TAG, "setresuid( " + Integer.toString(rid) + ","
-                    + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
-                    + " is wrongly allowed.");
+    static private boolean testSetResUidGidBlocked(int rid, int eid, int sid,
+            boolean expectBlocked, boolean log) {
+        boolean blocked = SeccompDeviceTest.testSetresuidBlocked(rid, eid, sid);
+        if (blocked != expectBlocked) {
+            if (log) {
+                Log.e(TAG, "setresuid( " + Integer.toString(rid) + ","
+                        + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
+                        + " is wrongly " + (expectBlocked ? "allowed." : "blocked."));
+            }
             return false;
         }
-        if (!SeccompDeviceTest.testSetresgidBlocked(rid, eid, sid)) {
-            Log.e(TAG, "setresguid( " + Integer.toString(rid) + ","
-                    + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
-                    + " is wrongly allowed.");
+
+        blocked = SeccompDeviceTest.testSetresgidBlocked(rid, eid, sid);
+        if (blocked != expectBlocked) {
+            if (log) {
+                Log.e(TAG, "setresguid( " + Integer.toString(rid) + ","
+                        + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
+                        + " is wrongly " + (expectBlocked ? "allowed." : "blocked."));
+            }
             return false;
         }
 
         return true;
     }
 
-    static private boolean testSetResUidGidAllowed(int rid, int eid, int sid) {
-        if (SeccompDeviceTest.testSetresuidBlocked(rid, eid, sid)) {
-            Log.e(TAG, "setresuid( " + Integer.toString(rid) + ","
-                    + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
-                    + " is wrongly blocked.");
-            return false;
-        }
-        if (SeccompDeviceTest.testSetresgidBlocked(rid, eid, sid)) {
-            Log.e(TAG, "setresguid( " + Integer.toString(rid) + ","
-                    + Integer.toString(eid) + "," + Integer.toString(sid) + ")"
-                    + " is wrongly blocked.");
-            return false;
-        }
+    static private boolean testSetResUidGidBlocked(int rid, int eid, int sid) {
+        return testSetResUidGidBlocked(rid, eid, sid, true /*expectBlocked */, true /* log */);
+    }
 
-        return true;
+    static private boolean testSetResUidGidAllowed(int rid, int eid, int sid) {
+        return testSetResUidGidBlocked(rid, eid, sid, false /*expectBlocked */, true /* log */);
+    }
+
+    static private boolean testSetResUidGidAllowedNoLog(int rid, int eid, int sid) {
+        return testSetResUidGidBlocked(rid, eid, sid, false /*expectBlocked */, false /* log */);
     }
 
     static synchronized public boolean getSeccomptestResult() {
@@ -90,25 +94,35 @@ public class ZygotePreload implements android.app.ZygotePreload {
         result &= testSetResUidGidBlocked(0, Process.SYSTEM_UID,
                 Process.SYSTEM_UID);
 
-        // an app uid
-        result &= testSetResUidGidBlocked(Process.FIRST_APPLICATION_UID,
-                Process.FIRST_APPLICATION_UID, Process.FIRST_APPLICATION_UID);
-        result &= testSetResUidGidBlocked(Process.LAST_APPLICATION_UID,
-                Process.LAST_APPLICATION_UID, Process.LAST_APPLICATION_UID);
+        // an app uid for the current user, and another user
+        for (int userId = UserHandle.myUserId(); userId <= UserHandle.myUserId() + 1; userId++) {
+            int appStart = UserHandle.getUid(userId, Process.FIRST_APPLICATION_UID);
+            result &= testSetResUidGidBlocked(appStart, appStart, appStart);
+            int appEnd = UserHandle.getUid(userId, Process.LAST_APPLICATION_UID);
+            result &= testSetResUidGidBlocked(appEnd, appEnd, appEnd);
+        }
 
-        // an isolated process uid
-        result &= testSetResUidGidBlocked(Process.FIRST_ISOLATED_UID,
-                Process.FIRST_ISOLATED_UID, Process.FIRST_ISOLATED_UID);
-        result &= testSetResUidGidBlocked(Process.LAST_ISOLATED_UID, Process.LAST_ISOLATED_UID,
-                Process.LAST_ISOLATED_UID);
+        // an isolated process uid for the current user, and another user
+        for (int userId = UserHandle.myUserId(); userId <= UserHandle.myUserId() + 1; userId++) {
+            int regularIsolatedStart = UserHandle.getUid(userId, Process.FIRST_ISOLATED_UID);
+            result &= testSetResUidGidBlocked(regularIsolatedStart, regularIsolatedStart,
+                    regularIsolatedStart);
+            int regularIsolatedEnd = UserHandle.getUid(userId, Process.LAST_ISOLATED_UID);
+            result &= testSetResUidGidBlocked(regularIsolatedEnd, regularIsolatedEnd,
+                    regularIsolatedEnd);
+        }
 
         // Test all ranges of app zygote UIDs; we don't know here which
         // isolated UID is assigned to our process, so we will test all ranges,
         // and verify only one is allowed; then have the caller verify that
         // this was indeed our allowed range.
-        for (int i = Process.FIRST_APP_ZYGOTE_ISOLATED_UID;
-                i < Process.LAST_APP_ZYGOTE_ISOLATED_UID; i += Process.NUM_UIDS_PER_APP_ZYGOTE) {
-            boolean rangeAllowed = testSetResUidGidAllowed(i, i, i);
+        int isolatedUserStart = UserHandle.getUid(UserHandle.myUserId(),
+                Process.FIRST_APP_ZYGOTE_ISOLATED_UID);
+        int isolatedUserEnd = UserHandle.getUid(UserHandle.myUserId(),
+                Process.LAST_APP_ZYGOTE_ISOLATED_UID);
+
+        for (int i = isolatedUserStart; i < isolatedUserEnd; i += Process.NUM_UIDS_PER_APP_ZYGOTE) {
+            boolean rangeAllowed = testSetResUidGidAllowedNoLog(i, i, i);
             if (rangeAllowed) {
                 if (sStartOfIsolatedRange != -1) {
                     Log.e(TAG, "Found more than one allowed isolated UID range: "
@@ -137,7 +151,6 @@ public class ZygotePreload implements android.app.ZygotePreload {
             }
         }
 
-        // one over the range
         result &= testSetResUidGidBlocked(Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1,
                 Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1, Process.LAST_APP_ZYGOTE_ISOLATED_UID + 1);
 
