@@ -405,6 +405,8 @@ def main():
     tot_pass = 0
     for s in scenes:
       test_params_content['scene'] = s
+      results[s]['TEST_STATUS'] = []
+
       # unit is millisecond for execution time record in CtsVerifier
       scene_start_time = int(round(time.time() * 1000))
       scene_test_summary = f'Cam{camera_id} {s}' + '\n'
@@ -498,6 +500,8 @@ def main():
 
           os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
           logging.info('%s %s/%s', return_string, s, test)
+          test_name = test.split('/')[-1].split('.')[0]
+          results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
           msg_short = '%s %s' % (return_string, test)
           scene_test_summary += msg_short + '\n'
 
