@@ -16,9 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.FlakyTest;
@@ -27,7 +27,9 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -49,25 +51,31 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     private static final String ARG_SECURITY_LOGGING_BATCH_NUMBER = "batchNumber";
     private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
 
+    private boolean mDeviceOwnerSet;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         mUserId = mPrimaryUserId;
 
-        installAppAsUser(DEVICE_ADMIN_APK, mUserId);
-        if (!setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId, /*expectFailure*/
-                false)) {
+        installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
+        mDeviceOwnerSet = setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId,
+                /*expectFailure= */ false);
+
+        if (!mDeviceOwnerSet) {
             removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId);
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
-            fail("Failed to set device owner");
+            fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
     }
 
     @Override
     public void tearDown() throws Exception {
-        assertTrue("Failed to remove device owner",
-                    removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mUserId));
+        if (mDeviceOwnerSet && !removeAdmin(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId)) {
+            // Don't fail as it could hide the real failure from the test method
+            CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
+        }
 
         super.tearDown();
     }
@@ -387,6 +395,36 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     @Test
     public void testPermissionPrompts() throws Exception {
+    }
+
+    @Override
+    public void testSuspendPackage() throws Exception {
+        assumeTestIsNotRedundant();
+
+        super.testSuspendPackage();
+    }
+
+    @Override
+    public void testSuspendPackageWithPackageManager() throws Exception {
+        assumeTestIsNotRedundant();
+
+        super.testSuspendPackageWithPackageManager();
+    }
+
+    /**
+     * Checks whether this test should be skipped because it's redundant.
+     *
+     * <p>For example, {@code setPackagesSuspended()} is meaningless when called from device owner
+     * on headless system user mode as that API suspends activities and the system user runs in the
+     * background for that type of user. In real-life, the DPC would only use that API in the PO, so
+     * in theory it wouldn't need to be tested by this class, as it would be tested by
+     * {@link MixedProfileOwnerTest}, but that will only happen if the device supports managed user.
+     */
+    private void assumeTestIsNotRedundant() throws DeviceNotAvailableException {
+        if (isHeadlessSystemUserMode() && hasDeviceFeature(FEATURE_MANAGED_USERS)) {
+            throw new AssumptionViolatedException("Redundant test on headless system user mode "
+                    + "because it will be tested by the equivalent PO test");
+        }
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {

@@ -42,12 +42,12 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
         installAppAsUser(DEVICE_OWNER_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId,
-                /*expectFailure*/ false);
+                /*expectFailure= */ false);
 
         if (!mDeviceOwnerSet) {
             removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId);
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
-            fail("Failed to set device owner for user " + mDeviceOwnerUserId);
+            fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
 
         if (isHeadlessSystemUserMode()) {
@@ -72,7 +72,7 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
     public void tearDown() throws Exception {
         if (mDeviceOwnerSet && !removeAdmin(DEVICE_OWNER_COMPONENT, mDeviceOwnerUserId)) {
             // Don't fail as it could hide the real failure from the test method
-            CLog.e("Failed to remove device owner for user " + mDeviceOwnerUserId);
+            CLog.e("Failed to remove device owner on user " + mDeviceOwnerUserId);
         }
         getDevice().uninstallPackage(DEVICE_OWNER_PKG);
 
