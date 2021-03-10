@@ -86,9 +86,17 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     private static final int ACTIVITY_FOCUS_TIMEOUT_MS = 3000;
     private static final String APP_A_PACKAGE_NAME = APP_A_FOREGROUND_ACTIVITY.getPackageName();
     private static final long ACTIVITY_BG_START_GRACE_PERIOD_MS = 10 * 1000;
+    private static final int ACTIVITY_START_TIMEOUT_MS = 5000;
+    private static final int ACTIVITY_NOT_RESUMED_TIMEOUT_MS = 5000;
 
     private static final String TEST_PACKAGE_APP_A = "android.server.wm.backgroundactivity.appa";
     private static final String TEST_PACKAGE_APP_B = "android.server.wm.backgroundactivity.appb";
+    public static final ComponentName APP_A_RELAUNCHING_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_A,
+                    "android.server.wm.backgroundactivity.appa.RelaunchingActivity");
+    public static final ComponentName APP_A_PIP_ACTIVITY =
+            new ComponentName(TEST_PACKAGE_APP_A,
+                    "android.server.wm.backgroundactivity.appa.PipActivity");
     private static final String SHELL_PACKAGE = "com.android.shell";
 
     /**
@@ -496,6 +504,78 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
         boolean result = waitForActivityFocused(APP_A_BACKGROUND_ACTIVITY);
         assertTrue("Not able to launch background activity", result);
         assertTaskStack(new ComponentName[]{APP_A_BACKGROUND_ACTIVITY}, APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
+    public void testAppCannotStartBgActivityAfterHomeButton() throws Exception {
+
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_RELAUNCHING_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        assertTrue("Main activity not started", waitUntilForegroundChanged(
+                TEST_PACKAGE_APP_A, true, ACTIVITY_START_TIMEOUT_MS));
+
+        // Click home button, and test app activity onPause() will try to start a background
+        // activity, but we expect this will be blocked BAL logic in system, as app cannot start
+        // any background activity even within grace period after pressing home button.
+        pressHomeAndWaitHomeResumed();
+
+        assertActivityNotResumed();
+    }
+
+    // Check picture-in-picture(PIP) won't allow to start BAL after pressing home.
+    @Test
+    public void testPipCannotStartAfterHomeButton() throws Exception {
+
+        Intent intent = new Intent();
+        intent.setComponent(APP_A_PIP_ACTIVITY);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+
+        assertTrue("Pip activity not started", waitUntilForegroundChanged(
+                TEST_PACKAGE_APP_A, true, ACTIVITY_START_TIMEOUT_MS));
+
+        // Click home button, and test app activity onPause() will trigger pip window,
+        // test will will try to start background activity, but we expect the background activity
+        // will be blocked even the app has a visible pip window, as we do not allow background
+        // activity to be started after pressing home button.
+        pressHomeAndWaitHomeResumed();
+
+        assertActivityNotResumed();
+    }
+
+    private void pressHomeAndWaitHomeResumed() {
+        pressHomeButton();
+        mWmState.waitForHomeActivityVisible();
+    }
+
+    private boolean checkPackageResumed(String pkg) {
+        WindowManagerStateHelper helper = new WindowManagerStateHelper();
+        helper.computeState();
+        return ComponentName.unflattenFromString(
+                helper.getFocusedActivity()).getPackageName().equals(pkg);
+    }
+
+    // Return true if the state of the package is changed to target state.
+    private boolean waitUntilForegroundChanged(String targetPkg, boolean toBeResumed, int timeout)
+            throws Exception {
+        long startTime = System.currentTimeMillis();
+        while (checkPackageResumed(targetPkg) != toBeResumed) {
+            if (System.currentTimeMillis() - startTime < timeout) {
+                Thread.sleep(100);
+            } else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void assertActivityNotResumed() throws Exception {
+        assertFalse("Test activity is resumed",
+                waitUntilForegroundChanged(TEST_PACKAGE_APP_A, true,
+                        ACTIVITY_NOT_RESUMED_TIMEOUT_MS));
     }
 
     private Intent getLaunchActivitiesBroadcast(ComponentName... componentNames) {
