@@ -17,7 +17,6 @@
 package android.telephony.cts;
 
 import static android.app.AppOpsManager.OPSTR_USE_ICC_AUTH_WITH_DEVICE_IDENTIFIER;
-import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NONE;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_NSA;
 import static android.telephony.PhoneCapability.DEVICE_NR_CAPABILITY_SA;
 
@@ -25,6 +24,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -1385,62 +1385,27 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testGetPhoneCapability() throws Throwable {
-        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            Log.d(TAG, "skipping test on device without FEATURE_TELEPHONY present");
-            return;
-        }
-
-        // test without permission: verify SecurityException
-        try {
-            mTelephonyManager.getPhoneCapability();
-            fail("testGetPhoneCapability: SecurityException expected");
-        } catch (SecurityException se) {
-            // expected
-        }
-
-        assertThat(mOnPhoneCapabilityChanged).isFalse();
-        TestThread t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-
-                mMockPhoneCapabilityListener = new MockPhoneCapabilityListener();
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                        (tm) -> tm.registerTelephonyCallback(mSimpleExecutor,
-                                mMockPhoneCapabilityListener));
-                Looper.loop();
-            }
-        });
-        synchronized (mLock) {
-            t.start();
-            mLock.wait(TOLERANCE);
-        }
-
-        // test with permission
-        try {
-            PhoneCapability phoneCapability = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                    mTelephonyManager, (tm) -> tm.getPhoneCapability());
-
-            assertEquals(mPhoneCapability, phoneCapability);
-        } catch (SecurityException se) {
-            fail("testGetPhoneCapability: SecurityException not expected");
-        }
-    }
-
-    @Test
     public void testGetPhoneCapabilityAndVerify() {
         boolean is5gStandalone = getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_telephony5gStandalone);
         boolean is5gNonStandalone = getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_telephony5gNonStandalone);
-        int deviceNrCapability =
-                (is5gStandalone ? DEVICE_NR_CAPABILITY_SA : DEVICE_NR_CAPABILITY_NONE) | (
-                        is5gNonStandalone ? DEVICE_NR_CAPABILITY_NSA : DEVICE_NR_CAPABILITY_NONE);
+        int[] deviceNrCapabilities = new int[0];
+        if (is5gStandalone || is5gNonStandalone) {
+            List<Integer> list = new ArrayList<>();
+            if (is5gNonStandalone) {
+                list.add(DEVICE_NR_CAPABILITY_NSA);
+            }
+            if (is5gStandalone) {
+                list.add(DEVICE_NR_CAPABILITY_SA);
+            }
+            deviceNrCapabilities = list.stream().mapToInt(Integer::valueOf).toArray();
+        }
 
         PhoneCapability phoneCapability = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.getPhoneCapability());
 
-        assertEquals(deviceNrCapability, phoneCapability.getDeviceNrCapabilityBitmask());
+        assertArrayEquals(deviceNrCapabilities, phoneCapability.getDeviceNrCapabilities());
     }
 
     @Test
