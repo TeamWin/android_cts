@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.content.pm.ActivityInfo.CONFIG_DENSITY;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -77,6 +79,7 @@ public class InputMethodInfoTest {
     private boolean mSubtypeOverridesImplicitlyEnabledSubtype;
     private int mSubtypeId;
     private InputMethodSubtype mInputMethodSubtype;
+    private int mHandledConfigChanges;
 
     @Before
     public void setup() {
@@ -85,7 +88,9 @@ public class InputMethodInfoTest {
         mClassName = InputMethodSettingsActivityStub.class.getName();
         mLabel = "test";
         mSettingsActivity = "android.view.inputmethod.cts.InputMethodSettingsActivityStub";
-        mInputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel, mSettingsActivity);
+        mHandledConfigChanges = CONFIG_DENSITY;
+        mInputMethodInfo = new InputMethodInfo(
+                mPackageName, mClassName, mLabel, mSettingsActivity, mHandledConfigChanges);
 
         mSubtypeNameResId = 0;
         mSubtypeIconResId = 0;
@@ -155,6 +160,7 @@ public class InputMethodInfoTest {
         String expectedId = component.flattenToShortString();
         assertEquals(expectedId, info.getId());
         assertEquals(mClassName, info.getServiceName());
+        assertEquals(mHandledConfigChanges, info.getConfigChanges());
     }
 
     @Test
@@ -174,7 +180,7 @@ public class InputMethodInfoTest {
     @Test
     public void testEquals() {
         InputMethodInfo inputMethodInfo = new InputMethodInfo(mPackageName, mClassName, mLabel,
-                mSettingsActivity);
+                mSettingsActivity, mHandledConfigChanges);
         assertTrue(inputMethodInfo.equals(mInputMethodInfo));
     }
 
