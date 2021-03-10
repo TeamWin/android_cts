@@ -22,6 +22,7 @@ android_test {
     ],
     static_libs: [
         "kotlin-stdlib",
+        "androidx.core_core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
@@ -37,6 +38,7 @@ android_test {
         ":CtsUsePermissionApp29",
         ":CtsUsePermissionAppLatest",
         ":CtsUsePermissionAppLatestWithBackground",
+        ":CtsUsePermissionAppLocationProvider",
         ":CtsUsePermissionAppWithOverlay",
     ],
     test_suites: [
