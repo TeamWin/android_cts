@@ -61,6 +61,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2019-09")
     public void testPocCVE_2019_2179() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         pocPusher.only32();
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2179", null, getDevice());
     }
@@ -106,6 +107,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2020-11")
     public void testPocCVE_2020_0450() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2020-0450", null, getDevice());
     }
 
@@ -161,6 +163,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2019-08")
     public void testPocCVE_2019_2133() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2133", null, getDevice());
     }
 
@@ -171,6 +174,7 @@ public class TestMedia extends SecurityTestCase {
     @Test
     @SecurityTest(minPatchLevel = "2019-08")
     public void testPocCVE_2019_2134() throws Exception {
+        AdbUtils.assumeHasNfc(getDevice());
         AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2019-2134", null, getDevice());
     }
 
