@@ -81,6 +81,11 @@ public class CameraUtils {
         Integer facing = ch.get(CameraCharacteristics.LENS_FACING);
         switch (facing.intValue()) {
             case CameraMetadata.LENS_FACING_EXTERNAL:
+                if (info.facing != Camera.CameraInfo.CAMERA_FACING_FRONT &&
+                    info.facing != Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    return false;
+                }
+                break;
             case CameraMetadata.LENS_FACING_FRONT:
                 if (info.facing != Camera.CameraInfo.CAMERA_FACING_FRONT) {
                     return false;
