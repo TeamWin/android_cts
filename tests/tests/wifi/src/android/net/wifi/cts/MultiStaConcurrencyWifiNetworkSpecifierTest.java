@@ -222,13 +222,13 @@ public class MultiStaConcurrencyWifiNetworkSpecifierTest extends WifiJUnit4TestB
     }
 
     private void testSuccessfulConnectionWithSpecifier(
-            WifiConfiguration network, WifiNetworkSpecifier specifier) {
+            WifiConfiguration network, WifiNetworkSpecifier specifier) throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
                 network, specifier, false);
     }
 
     private void testUserRejectionWithSpecifier(
-            WifiConfiguration network, WifiNetworkSpecifier specifier) {
+            WifiConfiguration network, WifiNetworkSpecifier specifier) throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
                 network, specifier, true);
     }

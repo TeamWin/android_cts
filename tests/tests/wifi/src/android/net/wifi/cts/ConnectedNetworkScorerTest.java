@@ -505,7 +505,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
          */
         ConnectivityManager.NetworkCallback initiateConnection(
                 @NonNull WifiConfiguration testNetwork,
-                @NonNull ScheduledExecutorService executorService);
+                @NonNull ScheduledExecutorService executorService) throws Exception;
     }
 
     private void setWifiConnectedNetworkScorerAndInitiateConnectToSpecifierOrRestrictedSuggestion(
