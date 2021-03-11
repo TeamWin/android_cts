@@ -38,6 +38,7 @@ FOV_THRESH_WFOV = 91
 SCALE_RFOV_IN_WFOV_BOX = 0.67
 SCALE_TELE_IN_RFOV_BOX = 0.67
 SCALE_TELE_IN_WFOV_BOX = 0.5
+SCALE_SUPER_TELE_IN_RFOV_BOX = 0.5
 
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
@@ -52,6 +53,9 @@ def calc_chart_scaling(chart_distance, camera_fov):
     elif (camera_fov <= FOV_THRESH_TELE and
           numpy.isclose(chart_distance, CHART_DISTANCE_WFOV, rtol=0.1)):
         chart_scaling = SCALE_TELE_IN_WFOV_BOX
+    elif (camera_fov <= FOV_THRESH_SUPER_TELE and
+          numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
+        chart_scaling = SCALE_SUPER_TELE_IN_RFOV_BOX
     elif (camera_fov <= FOV_THRESH_TELE and
           numpy.isclose(chart_distance, CHART_DISTANCE_RFOV, rtol=0.1)):
         chart_scaling = SCALE_TELE_IN_RFOV_BOX
