@@ -21,7 +21,8 @@
     <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27"/>
     <application
         android:label="Event Library Tests"
-        android:appComponentFactory="com.android.eventlib.premade.EventLibAppComponentFactory">
+        android:appComponentFactory="com.android.eventlib.premade.EventLibAppComponentFactory"
+        android:testOnly="true">
         <uses-library android:name="android.test.runner" />
 
         <activity android:name="com.android.eventlib.premade.EventLibActivity"

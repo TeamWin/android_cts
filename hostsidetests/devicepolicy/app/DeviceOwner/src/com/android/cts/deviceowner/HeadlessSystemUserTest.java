@@ -23,7 +23,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.annotation.UserIdInt;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.UserInfo;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
 
@@ -70,8 +72,11 @@ public final class HeadlessSystemUserTest extends BaseDeviceOwnerTest {
 
             // Must try a couple times as PO is asynchronously set after user is created.
             // TODO(b/178102911): use a callback instead
-            eventually(() -> assertProfileOwner(mDevicePolicyManager.getProfileOwnerAsUser(userId),
-                    userId));
+            Context newUserContext = mContext.createContextAsUser(UserHandle.of(userId),
+                    /* flags=*/ 0);
+            DevicePolicyManager newUserDpm = newUserContext
+                    .getSystemService(DevicePolicyManager.class);
+            eventually(() -> assertProfileOwner(newUserDpm.getProfileOwner(), userId));
 
         } finally {
             if (user != null) {

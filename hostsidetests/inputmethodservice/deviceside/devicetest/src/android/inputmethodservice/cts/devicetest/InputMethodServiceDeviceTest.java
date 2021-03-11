@@ -16,8 +16,6 @@
 
 package android.inputmethodservice.cts.devicetest;
 
-import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
-import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
 import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
@@ -39,7 +37,6 @@ import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingF
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.content.Intent;
 import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType;
 import android.inputmethodservice.cts.common.EditTextAppConstants;
