@@ -226,6 +226,28 @@ public class HdmiControlManagerTest {
     }
 
     @Test
+    public void testHdmiCecConfig_HdmiCecVolumeControlEnabled() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getHdmiCecVolumeControlEnabled();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_VOLUME_CONTROL_MODE)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_VOLUME_CONTROL_MODE)) {
+                mHdmiControlManager.setHdmiCecVolumeControlEnabled(value);
+                assertThat(mHdmiControlManager.getHdmiCecVolumeControlEnabled()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setHdmiCecVolumeControlEnabled(originalValue);
+            assertThat(mHdmiControlManager.getHdmiCecVolumeControlEnabled()).isEqualTo(
+                    originalValue);
+        }
+    }
+
+    @Test
     public void testHdmiCecConfig_PowerControlMode() throws Exception {
         // Save original value
         String originalValue = mHdmiControlManager.getPowerControlMode();
@@ -287,6 +309,50 @@ public class HdmiControlManagerTest {
             // Restore original value
             mHdmiControlManager.setSystemAudioModeMuting(originalValue);
             assertThat(mHdmiControlManager.getSystemAudioModeMuting()).isEqualTo(originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_TvWakeOnOneTouchPlay() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getTvWakeOnOneTouchPlay();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_TV_WAKE_ON_ONE_TOUCH_PLAY)) {
+                mHdmiControlManager.setTvWakeOnOneTouchPlay(value);
+                assertThat(mHdmiControlManager.getTvWakeOnOneTouchPlay()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setTvWakeOnOneTouchPlay(originalValue);
+            assertThat(mHdmiControlManager.getTvWakeOnOneTouchPlay()).isEqualTo(
+                    originalValue);
+        }
+    }
+
+    @Test
+    public void testHdmiCecConfig_TvTvSendStandbyOnSleep() throws Exception {
+        // Save original value
+        int originalValue = mHdmiControlManager.getTvSendStandbyOnSleep();
+        if (!mHdmiControlManager.getUserCecSettings().contains(
+                HdmiControlManager.CEC_SETTING_NAME_TV_SEND_STANDBY_ON_SLEEP)) {
+            return;
+        }
+        try {
+            for (int value : mHdmiControlManager.getAllowedCecSettingIntValues(
+                    HdmiControlManager.CEC_SETTING_NAME_TV_SEND_STANDBY_ON_SLEEP)) {
+                mHdmiControlManager.setTvSendStandbyOnSleep(value);
+                assertThat(mHdmiControlManager.getTvSendStandbyOnSleep()).isEqualTo(value);
+            }
+        } finally {
+            // Restore original value
+            mHdmiControlManager.setTvSendStandbyOnSleep(originalValue);
+            assertThat(mHdmiControlManager.getTvSendStandbyOnSleep()).isEqualTo(
+                    originalValue);
         }
     }
 }
