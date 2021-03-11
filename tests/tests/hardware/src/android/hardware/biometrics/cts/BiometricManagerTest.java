@@ -18,7 +18,6 @@ package android.hardware.biometrics.cts;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.KeyguardManager;
@@ -68,7 +67,7 @@ public class BiometricManagerTest {
 
     @Test
     public void test_getButtonLabel_isDifferentForBiometricAndCredential() {
-        // Ensure that labels for biometrics and credential are different (if non-empty).
+        // Ensure labels for biometrics and credential are different (if non-empty).
         final CharSequence biometricLabel =
                 mBiometricManager.getButtonLabel(Authenticators.BIOMETRIC_WEAK);
         final CharSequence credentialLabel =
@@ -80,8 +79,9 @@ public class BiometricManagerTest {
     }
 
     @Test
-    public void test_getButtonLabel_matchesOneForAllowedAuthType() {
-        // Ensure label for biometrics|credential matches one for biometrics or for credential.
+    public void test_getButtonLabel_isNonEmptyIfPresentForSubAuthType() {
+        // Ensure label for biometrics|credential is non-empty if one for biometrics or credential
+        // (or both) is non-empty.
         final CharSequence biometricOrCredentialLabel =
                 mBiometricManager.getButtonLabel(
                         Authenticators.BIOMETRIC_WEAK | Authenticators.DEVICE_CREDENTIAL);
@@ -89,32 +89,38 @@ public class BiometricManagerTest {
                 mBiometricManager.getButtonLabel(Authenticators.BIOMETRIC_WEAK);
         final CharSequence credentialLabel =
                 mBiometricManager.getButtonLabel(Authenticators.DEVICE_CREDENTIAL);
-        if (TextUtils.isEmpty(biometricOrCredentialLabel)) {
-            assertTrue("Label should not be empty if an allowed authenticator label is non-empty",
-                    TextUtils.isEmpty(biometricLabel) && TextUtils.isEmpty(credentialLabel));
-        } else {
-            assertTrue("Label should match one of the allowed authenticator labels",
-                    TextUtils.equals(biometricOrCredentialLabel, biometricLabel)
-                            || TextUtils.equals(biometricOrCredentialLabel, credentialLabel));
-        }
+        final boolean isLabelPresentForSubAuthType =
+                !TextUtils.isEmpty(biometricLabel) || !TextUtils.isEmpty(credentialLabel);
+        assertFalse("Label should not be empty if one for an authenticator sub-type is non-empty",
+                TextUtils.isEmpty(biometricOrCredentialLabel) && isLabelPresentForSubAuthType);
     }
 
     @Test
-    public void test_getPromptMessage_isDifferentForBiometricAndCredential() {
-        // Ensure that messages for biometrics and credential are different (if non-empty).
+    public void test_getPromptMessage_isDifferentForDifferentAuthenticators() {
+        // Ensure messages for biometrics, credential, and biometrics|credential are different.
         final CharSequence biometricMessage =
                 mBiometricManager.getPromptMessage(Authenticators.BIOMETRIC_WEAK);
         final CharSequence credentialMessage =
                 mBiometricManager.getPromptMessage(Authenticators.DEVICE_CREDENTIAL);
-        if (!TextUtils.isEmpty(biometricMessage) || !TextUtils.isEmpty(credentialMessage)) {
+        final CharSequence biometricOrCredentialMessage =
+                mBiometricManager.getPromptMessage(
+                        Authenticators.BIOMETRIC_WEAK | Authenticators.DEVICE_CREDENTIAL);
+        if (!TextUtils.isEmpty(biometricMessage)
+                || !TextUtils.isEmpty(credentialMessage)
+                || !TextUtils.isEmpty(biometricOrCredentialMessage)) {
             assertFalse("Biometric and credential prompt messages should not match",
                     TextUtils.equals(biometricMessage, credentialMessage));
+            assertFalse("Biometric and biometric|credential prompt messages should not match",
+                    TextUtils.equals(biometricMessage, biometricOrCredentialMessage));
+            assertFalse("Credential and biometric|credential prompt messages should not match",
+                    TextUtils.equals(credentialMessage, biometricOrCredentialMessage));
         }
     }
 
     @Test
-    public void test_getPromptMessage_matchesOneForAllowedAuthType() {
-        // Ensure message for biometrics|credential matches one for biometrics or for credential.
+    public void test_getPromptMessage_isNonEmptyIfPresentForSubAuthType() {
+        // Ensure message for biometrics|credential is non-empty if one for biometrics or credential
+        // (or both) is non-empty.
         final CharSequence biometricOrCredentialMessage =
                 mBiometricManager.getPromptMessage(
                         Authenticators.BIOMETRIC_WEAK | Authenticators.DEVICE_CREDENTIAL);
@@ -122,15 +128,10 @@ public class BiometricManagerTest {
                 mBiometricManager.getPromptMessage(Authenticators.BIOMETRIC_WEAK);
         final CharSequence credentialMessage =
                 mBiometricManager.getPromptMessage(Authenticators.DEVICE_CREDENTIAL);
-        if (TextUtils.isEmpty(biometricOrCredentialMessage)) {
-            assertTrue(
-                    "Message should not be empty if an allowed authenticator message is non-empty",
-                    TextUtils.isEmpty(biometricMessage) && TextUtils.isEmpty(credentialMessage));
-        } else {
-            assertTrue("Message should match one of the allowed authenticator messages",
-                    TextUtils.equals(biometricOrCredentialMessage, biometricMessage)
-                            || TextUtils.equals(biometricOrCredentialMessage, credentialMessage));
-        }
+        final boolean isMessagePresentForSubAuthType =
+                !TextUtils.isEmpty(biometricMessage) || !TextUtils.isEmpty(credentialMessage);
+        assertFalse("Message should not be empty if one for an authenticator sub-type is non-empty",
+                TextUtils.isEmpty(biometricOrCredentialMessage) && isMessagePresentForSubAuthType);
     }
 
     @Test
