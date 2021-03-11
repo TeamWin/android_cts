@@ -46,6 +46,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(AndroidJUnit4.class)
@@ -53,7 +54,7 @@ import java.util.concurrent.TimeUnit;
 public class HdmiControlManagerTest {
 
     private static final int DEVICE_TYPE_SWITCH = 6;
-    private static final int TIMEOUT_CONTENT_CHANGE_SEC = 3;
+    private static final int TIMEOUT_CONTENT_CHANGE_SEC = 13;
 
     private HdmiControlManager mHdmiControlManager;
 
@@ -185,7 +186,10 @@ public class HdmiControlManagerTest {
                 };
         try {
             mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_DISABLED);
-            mHdmiControlManager.addHdmiCecEnabledChangeListener(listener);
+            TimeUnit.SECONDS.sleep(1);
+            mHdmiControlManager.addHdmiCecEnabledChangeListener(
+                    Executors.newSingleThreadExecutor(), listener);
+            TimeUnit.SECONDS.sleep(3);
             mHdmiControlManager.setHdmiCecEnabled(HdmiControlManager.HDMI_CEC_CONTROL_ENABLED);
             if (!notifyLatch1.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS)) {
                 fail("Timed out waiting for the notify callback");
@@ -195,6 +199,8 @@ public class HdmiControlManagerTest {
             notifyLatch2.await(TIMEOUT_CONTENT_CHANGE_SEC, TimeUnit.SECONDS);
             assertThat(notifyLatch2.getCount()).isEqualTo(1);
         } finally {
+            // Remove listener in case not yet removed.
+            mHdmiControlManager.removeHdmiCecEnabledChangeListener(listener);
             // Restore original value
             mHdmiControlManager.setHdmiCecEnabled(originalValue);
             assertThat(mHdmiControlManager.getHdmiCecEnabled()).isEqualTo(originalValue);
