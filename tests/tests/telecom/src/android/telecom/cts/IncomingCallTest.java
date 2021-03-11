@@ -119,6 +119,7 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
         verifyConnectionForIncomingCall();
         verifyPhoneStateListenerCallbacksForCall(CALL_STATE_RINGING,
                 testNumber.getSchemeSpecificPart());
+        verifyCallStateListener(CALL_STATE_RINGING);
     }
 
     /**

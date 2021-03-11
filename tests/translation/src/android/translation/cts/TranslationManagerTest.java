@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.translation.TranslationManager;
 import android.view.translation.TranslationRequest;
@@ -59,6 +60,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * that is set via shell command. This temporary service is not defined in the trusted
  * TranslationService, it should only receive queries from clients in the same package.</p>
  */
+@AppModeFull(reason = "TODO(b/182330968): disable instant mode. Re-enable after we decouple the "
+        + "service from the test package.")
 @RunWith(AndroidJUnit4.class)
 public class TranslationManagerTest {
 
@@ -90,7 +93,7 @@ public class TranslationManagerTest {
 
     @After
     public void cleanup() {
-        resetTemporaryTranslationService();
+        Helper.resetTemporaryTranslationService();
     }
 
     @Test
@@ -190,29 +193,6 @@ public class TranslationManagerTest {
 
     protected void enableCtsTranslationService() {
         mServiceWatcher = CtsTranslationService.setServiceWatcher();
-        setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
-    }
-
-    /**
-     * Sets the translation service temporarily.
-     *
-     * @param service name of temporary translation service.
-     */
-    private static void setTemporaryTranslationService(@NonNull String service) {
-        Log.d(TAG, "Setting translation service to " + service);
-
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service 0 %s %d", service,
-                120000);
-    }
-
-    /**
-     * Resets the translation service.
-     */
-    private static void resetTemporaryTranslationService() {
-        Log.d(TAG, "Resetting translation service");
-
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service 0");
+        Helper.setTemporaryTranslationService(CtsTranslationService.SERVICE_NAME);
     }
 }

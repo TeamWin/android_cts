@@ -30,7 +30,8 @@ public class Change {
                                             + "(; (?<disabled>disabled))?"
                                             + "(; (?<loggingOnly>loggingOnly))?"
                                             + "(; packageOverrides=(?<overrides>[^\\);]+))?"
-                                            + "(; rawOverrides=(?<rawOverrides>[^\\)]+))?"
+                                            + "(; rawOverrides=(?<rawOverrides>[^\\);]+))?"
+                                            + "(; (?<overridable>overridable))?"
                                             + "\\)");
     public long changeId;
     public String changeName;

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import android.accessibility.cts.common.AccessibilityDumpOnFailureRule;
 import android.accessibility.cts.common.InstrumentedAccessibilityServiceTestRule;
@@ -144,5 +145,6 @@ public class AccessibilityServiceInfoTest {
                 speakingService.getInteractiveUiTimeoutMillis());
         assertEquals(/* expected= */ 1000,
                 speakingService.getNonInteractiveUiTimeoutMillis());
+        assertTrue(speakingService.isAccessibilityTool());
     }
 }

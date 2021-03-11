@@ -48,14 +48,14 @@ public final class InlineSuggestionsRequestDeviceTest {
      * the regular CTS tests.
      */
     @Test
-    public void imeAutofillDefaultSupportedLocalesIsEmpty_changeEnabled(){
+    public void imeAutofillDefaultSupportedLocalesIsEmpty_changeEnabled() {
         assertTrue(CompatChanges.isChangeEnabled(169273070L));
-        InlineSuggestionsRequest request =createInlineSuggestionsRequestWithoutLocale();
+        InlineSuggestionsRequest request = createInlineSuggestionsRequestWithoutLocale();
         assertEquals(LocaleList.getEmptyLocaleList(), request.getSupportedLocales());
     }
 
     @Test
-    public void imeAutofillDefaultSupportedLocalesIsEmpty_changeDisabled(){
+    public void imeAutofillDefaultSupportedLocalesIsEmpty_changeDisabled() {
         assertFalse(CompatChanges.isChangeEnabled(169273070L));
         InlineSuggestionsRequest request = createInlineSuggestionsRequestWithoutLocale();
         assertEquals(LocaleList.getDefault(), request.getSupportedLocales());
