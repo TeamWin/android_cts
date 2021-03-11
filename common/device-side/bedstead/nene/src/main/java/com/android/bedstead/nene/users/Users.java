@@ -26,6 +26,7 @@ import static com.android.bedstead.nene.users.UserType.SYSTEM_USER_TYPE_NAME;
 import android.os.Build;
 import android.os.UserHandle;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
 import com.android.bedstead.nene.exceptions.AdbException;
@@ -153,6 +154,7 @@ public final class Users {
     /**
      * Create a new user.
      */
+    @CheckResult
     public UserBuilder createUser() {
         return new UserBuilder(this);
     }
