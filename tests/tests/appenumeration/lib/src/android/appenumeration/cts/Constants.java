@@ -136,6 +136,13 @@ public class Constants {
     public static final String ACTION_GET_PACKAGE_INFO = PKG_BASE + "cts.action.GET_PACKAGE_INFO";
     public static final String ACTION_GET_PACKAGES_FOR_UID =
             PKG_BASE + "cts.action.GET_PACKAGES_FOR_UID";
+    public static final String ACTION_GET_NAME_FOR_UID =
+            PKG_BASE + "cts.action.GET_NAME_FOR_UID";
+    public static final String ACTION_GET_NAMES_FOR_UIDS =
+            PKG_BASE + "cts.action.GET_NAMES_FOR_UIDS";
+    public static final String ACTION_CHECK_SIGNATURES = PKG_BASE + "cts.action.CHECK_SIGNATURES";
+    public static final String ACTION_HAS_SIGNING_CERTIFICATE =
+            PKG_BASE + "cts.action.HAS_SIGNING_CERTIFICATE";
     public static final String ACTION_START_FOR_RESULT = PKG_BASE + "cts.action.START_FOR_RESULT";
     public static final String ACTION_START_DIRECTLY = PKG_BASE + "cts.action.START_DIRECTLY";
     public static final String ACTION_JUST_FINISH = PKG_BASE + "cts.action.JUST_FINISH";
@@ -162,5 +169,6 @@ public class Constants {
     public static final String EXTRA_ERROR = "error";
     public static final String EXTRA_FLAGS = "flags";
     public static final String EXTRA_DATA = "data";
+    public static final String EXTRA_CERT = "cert";
     public static final String EXTRA_AUTHORITY = "authority";
 }
