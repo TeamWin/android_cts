@@ -27,8 +27,6 @@ ADAPTIVE_BRIGHTNESS_OFF = '0'
 TABLET_CMD_DELAY_SEC = 0.5  # found empirically
 TABLET_DIMMER_TIMEOUT_MS = 1800000  # this is max setting possible
 CTS_VERIFIER_PKG = 'com.android.cts.verifier'
-MBS_PKG_TXT = 'mbs'
-MBS_PKG = 'com.google.android.mobly.snippet.bundled'
 WAIT_TIME_SEC = 5
 SCROLLER_TIMEOUT_MS = 3000
 VALID_NUM_DEVICES = (1, 2)
@@ -75,7 +73,6 @@ class ItsBaseTest(base_test.BaseTestClass):
   def setup_class(self):
     devices = self.register_controller(android_device, min_number=1)
     self.dut = devices[0]
-    self.dut.load_snippet(MBS_PKG_TXT, MBS_PKG)
     self.camera = self.user_params['camera']
     if self.user_params.get('chart_distance'):
       self.chart_distance = float(self.user_params['chart_distance'])
@@ -102,7 +99,6 @@ class ItsBaseTest(base_test.BaseTestClass):
     if num_devices == 2:  # scenes [0,1,2,3,4,5,6]
       try:
         self.tablet = devices[1]
-        self.tablet.load_snippet(MBS_PKG_TXT, MBS_PKG)
         self.tablet_screen_brightness = self.user_params['brightness']
       except KeyError:
         logging.debug('Not all tablet arguments set.')
