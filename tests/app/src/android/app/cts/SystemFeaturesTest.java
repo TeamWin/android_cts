@@ -644,7 +644,7 @@ public class SystemFeaturesTest {
     }
 
     private boolean isAndroidEmulator() {
-        return PropertyUtil.propertyEquals("ro.kernel.qemu", "1");
+        return PropertyUtil.propertyEquals("ro.boot.qemu", "1");
     }
 
     private void assertFeature(boolean exist, String feature) {
