@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts;
 
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.view.inputmethod.cts.util.InputMethodVisibilityVerifier.expectImeInvisible;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.graphics.Matrix;
@@ -652,6 +655,33 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                 "testBatchEdit_getCommitSpaceAndSetComposingRegionTestInSelectionTest_webView/")
                 .setTestTextView(false)
                 .runTest();
+    }
+
+    @Test
+    public void testImeVisibleAfterRotation() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final Activity activity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            final int initialOrientation = activity.getRequestedOrientation();
+            try {
+                activity.setRequestedOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+                mInstrumentation.waitForIdleSync();
+                expectImeVisible(TIMEOUT);
+
+                activity.setRequestedOrientation(SCREEN_ORIENTATION_PORTRAIT);
+                mInstrumentation.waitForIdleSync();
+                expectImeVisible(TIMEOUT);
+            } finally {
+                if (initialOrientation != SCREEN_ORIENTATION_PORTRAIT) {
+                    activity.setRequestedOrientation(initialOrientation);
+                }
+            }
+        }
     }
 
     /** Test case for committing and setting composing region after cursor. */
