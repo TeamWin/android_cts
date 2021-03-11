@@ -108,7 +108,7 @@ public final class AutoFillServiceTestCase {
             return false;
         }
 
-        protected static UiBot getInlineUiBot() {
+        protected static InlineUiBot getInlineUiBot() {
             return sDefaultUiBot2;
         }
 
@@ -480,7 +480,7 @@ public final class AutoFillServiceTestCase {
     }
 
     protected static final UiBot sDefaultUiBot = new UiBot();
-    protected static final UiBot sDefaultUiBot2 = new InlineUiBot();
+    protected static final InlineUiBot sDefaultUiBot2 = new InlineUiBot();
 
     private AutoFillServiceTestCase() {
         throw new UnsupportedOperationException("Contain static stuff only");
