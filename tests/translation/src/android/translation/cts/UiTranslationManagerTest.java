@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.translation.TranslationService;
 import android.util.Log;
@@ -73,6 +74,9 @@ import java.util.Locale;
  * service for CTS tests that is set via shell command. The test will get the token from the
  * {@link ContentCaptureService} then uses this token in {@link UiTranslationManager} APIs.</p>
  */
+
+@AppModeFull(reason = "TODO(b/182330968): disable instant mode. Re-enable after we decouple the "
+        + "service from the test package.")
 @RunWith(AndroidJUnit4.class)
 public class UiTranslationManagerTest {
 
