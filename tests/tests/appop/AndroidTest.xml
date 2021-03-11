@@ -45,6 +45,7 @@
         <option name="push-file" key="AppWithAttributionInheritingFromSelf.apk" value="/data/local/tmp/cts/appops/AppWithAttributionInheritingFromSelf.apk" />
         <option name="push-file" key="AppWithLongAttributionTag.apk" value="/data/local/tmp/cts/appops/AppWithLongAttributionTag.apk" />
         <option name="push-file" key="AppWithTooManyAttributions.apk" value="/data/local/tmp/cts/appops/AppWithTooManyAttributions.apk" />
+        <option name="push-file" key="CtsAppWithReceiverAttribution.apk" value="/data/local/tmp/cts/appops/CtsAppWithReceiverAttribution.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
