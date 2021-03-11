@@ -553,6 +553,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(new Intent(Settings.ACTION_WIFI_ADD_NETWORKS));
     }
 
+    public void testManageUnusedAppsIntent() {
+        assertCanBeHandled(new Intent(Intent.ACTION_MANAGE_UNUSED_APPS));
+    }
+
     private boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
         // we check for touchscreen and NOT watch, NOT tv and NOT car
