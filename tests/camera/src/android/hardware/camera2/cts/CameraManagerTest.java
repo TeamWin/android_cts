@@ -676,26 +676,31 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
                 // simplicity. This is since when mAdoptShellPerm is false, we can't test for
                 // onCameraOpened/Closed callbacks (no CAMERA_OPEN_CLOSE_LISTENER permissions).
                 // So, to test all cameras, we test them when we adopt shell permission identity.
+                super.onCameraAvailable(cameraId);
                 availableEventQueue.offer(cameraId);
             }
 
             @Override
             public void onCameraUnavailable(String cameraId) {
+                super.onCameraUnavailable(cameraId);
                 unavailableEventQueue.offer(cameraId);
             }
 
             @Override
             public void onPhysicalCameraAvailable(String cameraId, String physicalCameraId) {
+                super.onPhysicalCameraAvailable(cameraId, physicalCameraId);
                 availablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
             }
 
             @Override
             public void onPhysicalCameraUnavailable(String cameraId, String physicalCameraId) {
+                super.onPhysicalCameraUnavailable(cameraId, physicalCameraId);
                 unavailablePhysicalCamEventQueue.offer(new Pair<>(cameraId, physicalCameraId));
             }
 
             @Override
             public void onCameraOpened(String cameraId, String packageId) {
+                super.onCameraOpened(cameraId, packageId);
                 String curPackageId = mContext.getPackageName();
                 assertTrue("Opening package should be " + curPackageId + ", was " + packageId,
                         curPackageId.equals(packageId));
@@ -704,6 +709,7 @@ public class CameraManagerTest extends Camera2ParameterizedTestCase {
 
             @Override
             public void onCameraClosed(String cameraId) {
+                super.onCameraClosed(cameraId);
                 onCameraClosedEventQueue.offer(cameraId);
             }
 
