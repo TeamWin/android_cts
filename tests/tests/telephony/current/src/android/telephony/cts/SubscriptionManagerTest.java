@@ -749,6 +749,8 @@ public class SubscriptionManagerTest {
                 // not treating this as test failure as it may be due to UX confirmation or may not
                 // be supported
                 Log.e(TAG, "setSubscriptionEnabled() did not complete");
+                executeWithShellPermissionAndDefault(false, mSm,
+                    (sm) -> sm.setSubscriptionEnabled(mSubId, enabled));
                 return;
             }
 
