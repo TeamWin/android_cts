@@ -17,9 +17,13 @@
 package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
+import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
+import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
+import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
@@ -32,6 +36,7 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
+import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
@@ -73,7 +78,10 @@ import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
+import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
+import static android.content.pm.PackageManager.SIGNATURE_MATCH;
+import static android.content.pm.PackageManager.SIGNATURE_UNKNOWN_PACKAGE;
 import static android.os.Process.INVALID_UID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
@@ -91,6 +99,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.os.Bundle;
@@ -115,13 +124,19 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Stream;
 
 @RunWith(AndroidJUnit4.class)
 public class AppEnumerationTests {
@@ -129,6 +144,8 @@ public class AppEnumerationTests {
     private static HandlerThread sResponseThread;
 
     private static boolean sGlobalFeatureEnabled;
+
+    private static PackageManager sPm;
 
     @Rule
     public TestName name = new TestName();
@@ -151,6 +168,8 @@ public class AppEnumerationTests {
         sResponseThread = new HandlerThread("response");
         sResponseThread.start();
         sResponseHandler = new Handler(sResponseThread.getLooper());
+
+        sPm = InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
     }
 
     @AfterClass
@@ -407,13 +426,117 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void queriesNothing_cannotSeeSharedUserMembers() throws Exception {
-        assertNotVisible(QUERIES_NOTHING, TARGET_SHARED_USER);
+    public void queriesNothing_getPackagesForUid_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNull(getPackagesForUid(QUERIES_NOTHING, targetSharedUid));
+        Assert.assertNull(getPackagesForUid(QUERIES_NOTHING, targetUid));
     }
 
     @Test
-    public void queriesNothingHasPermission_canSeeSharedUserMembers() throws Exception {
-        assertVisible(QUERIES_NOTHING_PERM, TARGET_SHARED_USER);
+    public void queriesNothingHasPermission_getPackagesForUid_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNotNull(getPackagesForUid(QUERIES_NOTHING_PERM, targetSharedUid));
+        Assert.assertNotNull(getPackagesForUid(QUERIES_NOTHING_PERM, targetUid));
+    }
+
+    @Test
+    public void queriesNothing_getNameForUid_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNull(getNameForUid(QUERIES_NOTHING, targetSharedUid));
+        Assert.assertNull(getNameForUid(QUERIES_NOTHING, targetUid));
+    }
+
+    @Test
+    public void queriesNothingHasPermission_getNameForUid_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNotNull(getNameForUid(QUERIES_NOTHING_PERM, targetSharedUid));
+        Assert.assertNotNull(getNameForUid(QUERIES_NOTHING_PERM, targetUid));
+    }
+
+    @Test
+    public void queriesNothing_getNamesForUids_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetSharedUid)[0]);
+        Assert.assertNull(getNamesForUids(QUERIES_NOTHING, targetUid)[0]);
+    }
+
+    @Test
+    public void queriesNothingHasPermission_getNamesForUids_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetSharedUid)[0]);
+        Assert.assertNotNull(getNamesForUids(QUERIES_NOTHING_PERM, targetUid)[0]);
+    }
+
+    @Test
+    public void queriesNothing_checkSignatures_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertEquals(SIGNATURE_UNKNOWN_PACKAGE,
+                checkSignatures(QUERIES_NOTHING, targetSharedUid));
+        Assert.assertEquals(SIGNATURE_UNKNOWN_PACKAGE,
+                checkSignatures(QUERIES_NOTHING, targetUid));
+    }
+
+    @Test
+    public void queriesNothingHasPermission_checkSignatures_consistentVisibility()
+            throws Exception {
+        final int targetSharedUid = sPm.getPackageUid(TARGET_SHARED_USER, /* flags */ 0);
+        final int targetUid = sPm.getPackageUid(TARGET_FILTERS, /* flags */ 0);
+        Assert.assertEquals(SIGNATURE_MATCH,
+                checkSignatures(QUERIES_NOTHING_PERM, targetSharedUid));
+        Assert.assertEquals(SIGNATURE_MATCH, checkSignatures(QUERIES_NOTHING_PERM, targetUid));
+    }
+
+    @Test
+    public void queriesNothing_hasSigningCertificate_consistentVisibility() throws Exception {
+        final PackageInfo targetSharedUidInfo = sPm.getPackageInfo(TARGET_SHARED_USER,
+                GET_SIGNING_CERTIFICATES);
+        final PackageInfo targetUidInfo = sPm.getPackageInfo(TARGET_FILTERS,
+                GET_SIGNING_CERTIFICATES);
+        final byte[] targetSharedCert = convertSignaturesToCertificates(
+                targetSharedUidInfo.signingInfo.getApkContentsSigners()).get(0).getEncoded();
+        final byte[] targetCert = convertSignaturesToCertificates(
+                targetUidInfo.signingInfo.getApkContentsSigners()).get(0).getEncoded();
+
+        Assert.assertFalse(
+                hasSigningCertificate(QUERIES_NOTHING, targetSharedUidInfo.applicationInfo.uid,
+                        targetSharedCert));
+        Assert.assertFalse(
+                hasSigningCertificate(QUERIES_NOTHING, targetUidInfo.applicationInfo.uid,
+                        targetCert));
+    }
+
+    @Test
+    public void queriesNothingHasPermission_hasSigningCertificate_consistentVisibility()
+            throws Exception {
+        final PackageInfo targetSharedUidInfo = sPm.getPackageInfo(TARGET_SHARED_USER,
+                GET_SIGNING_CERTIFICATES);
+        final PackageInfo targetUidInfo = sPm.getPackageInfo(TARGET_FILTERS,
+                GET_SIGNING_CERTIFICATES);
+        final byte[] targetSharedCert = convertSignaturesToCertificates(
+                targetSharedUidInfo.signingInfo.getApkContentsSigners()).get(0).getEncoded();
+        final byte[] targetCert = convertSignaturesToCertificates(
+                targetUidInfo.signingInfo.getApkContentsSigners()).get(0).getEncoded();
+
+        Assert.assertTrue(
+                hasSigningCertificate(QUERIES_NOTHING_PERM, targetSharedUidInfo.applicationInfo.uid,
+                        targetSharedCert));
+        Assert.assertTrue(
+                hasSigningCertificate(QUERIES_NOTHING_PERM, targetUidInfo.applicationInfo.uid,
+                        targetCert));
     }
 
     @Test
@@ -466,10 +589,6 @@ public class AppEnumerationTests {
     private void assertVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
-        final int targetUid = InstrumentationRegistry.getInstrumentation().getContext()
-                .getPackageManager().getPackageUid(targetPackageName, /* flags */ 0);
-        Assert.assertTrue(isAppInPackageNamesArray(targetPackageName,
-                getPackagesForUid(sourcePackageName, targetUid)));
         Assert.assertNotNull(sourcePackageName + " should be able to see " + targetPackageName,
                 getPackageInfo(sourcePackageName, targetPackageName));
     }
@@ -558,10 +677,6 @@ public class AppEnumerationTests {
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
-        final int targetUid = InstrumentationRegistry.getInstrumentation().getContext()
-                .getPackageManager().getPackageUid(targetPackageName, /* flags */ 0);
-        Assert.assertFalse(isAppInPackageNamesArray(targetPackageName,
-                getPackagesForUid(sourcePackageName, targetUid)));
         try {
             getPackageInfo(sourcePackageName, targetPackageName);
             fail(sourcePackageName + " should not be able to see " + targetPackageName);
@@ -579,11 +694,6 @@ public class AppEnumerationTests {
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
         assertFalse(bindService(sourcePackageName, targetPackageName));
-    }
-
-    private boolean isAppInPackageNamesArray(String packageName, String[] packageNames) {
-        return packageNames != null && Stream.of(packageNames).anyMatch(
-                name -> name.equals(packageName));
     }
 
     interface ThrowingBiFunction<T, U, R> {
@@ -628,9 +738,48 @@ public class AppEnumerationTests {
 
     private String[] getPackagesForUid(String sourcePackageName, int targetUid)
             throws Exception {
-        Bundle response = sendCommandBlocking(sourcePackageName, targetUid, /* intentExtra */ null,
-                ACTION_GET_PACKAGES_FOR_UID);
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetUid,
+                /* intentExtra */ null, ACTION_GET_PACKAGES_FOR_UID);
         return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String getNameForUid(String sourcePackageName, int targetUid) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetUid,
+                /* intentExtra */ null, ACTION_GET_NAME_FOR_UID);
+        return response.getString(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] getNamesForUids(String sourcePackageName, int targetUid) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetUid,
+                /* intentExtra */ null, ACTION_GET_NAMES_FOR_UIDS);
+        return response.getStringArray(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private int checkSignatures(String sourcePackageName, int targetUid) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetUid,
+                /* intentExtra */ null, ACTION_CHECK_SIGNATURES);
+        return response.getInt(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private boolean hasSigningCertificate(String sourcePackageName, int targetUid, byte[] cert)
+            throws Exception {
+        final Bundle extra = new Bundle();
+        extra.putByteArray(EXTRA_CERT, cert);
+        final Bundle response = sendCommandBlocking(sourcePackageName, targetUid, extra,
+                ACTION_HAS_SIGNING_CERTIFICATE);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private List<Certificate> convertSignaturesToCertificates(Signature[] signatures)
+            throws Exception {
+        final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        ArrayList<Certificate> certs = new ArrayList<>(signatures.length);
+        for (Signature signature : signatures) {
+            final InputStream is = new ByteArrayInputStream(signature.toByteArray());
+            final X509Certificate cert = (X509Certificate) cf.generateCertificate(is);
+            certs.add(cert);
+        }
+        return certs;
     }
 
     private PackageInfo startForResult(String sourcePackageName, String targetPackageName)
@@ -731,6 +880,8 @@ public class AppEnumerationTests {
                 intent.putExtra(Intent.EXTRA_INTENT, intentExtra);
             } else if (intentExtra instanceof PendingIntent) {
                 intent.putExtra("pendingIntent", intentExtra);
+            } else if (intentExtra instanceof Bundle) {
+                intent.putExtra(EXTRA_DATA, intentExtra);
             }
         }
 

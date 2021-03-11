@@ -16,9 +16,13 @@
 
 package android.appenumeration.cts.query;
 
+import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
+import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
+import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_ACTIVITIES;
 import static android.appenumeration.cts.Constants.ACTION_QUERY_PROVIDERS;
@@ -27,10 +31,14 @@ import static android.appenumeration.cts.Constants.ACTION_SEND_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_SENDER_FOR_RESULT;
+import static android.appenumeration.cts.Constants.EXTRA_CERT;
+import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
+import static android.content.pm.PackageManager.CERT_INPUT_RAW_X509;
+import static android.os.Process.INVALID_UID;
 
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -93,8 +101,23 @@ public class TestActivity extends Activity {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 sendPackageInfo(remoteCallback, packageName);
             } else if (ACTION_GET_PACKAGES_FOR_UID.equals(action)) {
-                final int uid = intent.getIntExtra(Intent.EXTRA_UID, -1);
+                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
                 sendPackagesForUid(remoteCallback, uid);
+            } else if (ACTION_GET_NAME_FOR_UID.equals(action)) {
+                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                sendNameForUid(remoteCallback, uid);
+            } else if (ACTION_GET_NAMES_FOR_UIDS.equals(action)) {
+                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                sendNamesForUids(remoteCallback, uid);
+            } else if (ACTION_CHECK_SIGNATURES.equals(action)) {
+                final int uid1 = getPackageManager().getApplicationInfo(
+                        getPackageName(), /* flags */ 0).uid;
+                final int uid2 = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                sendCheckSignatures(remoteCallback, uid1, uid2);
+            } else if (ACTION_HAS_SIGNING_CERTIFICATE.equals(action)) {
+                final int uid = intent.getIntExtra(Intent.EXTRA_UID, INVALID_UID);
+                final byte[] cert = intent.getBundleExtra(EXTRA_DATA).getByteArray(EXTRA_CERT);
+                sendHasSigningCertificate(remoteCallback, uid, cert, CERT_INPUT_RAW_X509);
             } else if (ACTION_START_FOR_RESULT.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 int requestCode = RESULT_FIRST_USER + callbacks.size();
@@ -174,7 +197,7 @@ public class TestActivity extends Activity {
             @Override
             public void onReceive(Context context, Intent intent) {
                 final Bundle result = new Bundle();
-                result.putString(Constants.EXTRA_DATA, intent.getDataString());
+                result.putString(EXTRA_DATA, intent.getDataString());
                 remoteCallback.sendResult(result);
                 mainHandler.removeCallbacksAndMessages(token);
                 finish();
@@ -284,6 +307,39 @@ public class TestActivity extends Activity {
         final String[] packages = getPackageManager().getPackagesForUid(uid);
         final Bundle result = new Bundle();
         result.putStringArray(EXTRA_RETURN_RESULT, packages);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendNameForUid(RemoteCallback remoteCallback, int uid) {
+        final String name = getPackageManager().getNameForUid(uid);
+        final Bundle result = new Bundle();
+        result.putString(EXTRA_RETURN_RESULT, name);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendNamesForUids(RemoteCallback remoteCallback, int uid) {
+        final String[] names = getPackageManager().getNamesForUids(new int[]{uid});
+        final Bundle result = new Bundle();
+        result.putStringArray(EXTRA_RETURN_RESULT, names);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendCheckSignatures(RemoteCallback remoteCallback, int uid1, int uid2) {
+        final int signatureResult = getPackageManager().checkSignatures(uid1, uid2);
+        final Bundle result = new Bundle();
+        result.putInt(EXTRA_RETURN_RESULT, signatureResult);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendHasSigningCertificate(RemoteCallback remoteCallback, int uid, byte[] cert,
+            int type) {
+        final boolean signatureResult = getPackageManager().hasSigningCertificate(uid, cert, type);
+        final Bundle result = new Bundle();
+        result.putBoolean(EXTRA_RETURN_RESULT, signatureResult);
         remoteCallback.sendResult(result);
         finish();
     }
