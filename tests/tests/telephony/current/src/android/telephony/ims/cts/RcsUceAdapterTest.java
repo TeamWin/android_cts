@@ -1343,17 +1343,6 @@ public class RcsUceAdapterTest {
         bundle.putBoolean(CarrierConfigManager.KEY_USE_RCS_SIP_OPTIONS_BOOL, sipOptionsEnabled);
         overrideCarrierConfig(bundle);
 
-        // Enable the UCE setting.
-        try {
-            ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(
-                    uceAdapter, adapter -> adapter.setUceSettingEnabled(true), ImsException.class,
-                    "android.permission.MODIFY_PHONE_STATE");
-        } catch (SecurityException e) {
-            fail("setUceSettingEnabled should succeed with MODIFY_PHONE_STATE.");
-        } catch (ImsException e) {
-            fail("setUceSettingEnabled failed with code " + e);
-        }
-
         // Connect to the TestImsService
         connectTestImsService();
     }
