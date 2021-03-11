@@ -281,7 +281,7 @@ public class ImsMmTelManagerTest {
         ImsMmTelManager mMmTelManager = imsManager.getImsMmTelManager(sTestSub);
 
         boolean isEnabled = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
-                mMmTelManager, ImsMmTelManager::isCrossSimCallingEnabledByUser, ImsException.class,
+                mMmTelManager, ImsMmTelManager::isCrossSimCallingEnabled, ImsException.class,
                 "android.permission.READ_PRIVILEGED_PHONE_STATE");
         ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(mMmTelManager,
                 (m) -> m.setCrossSimCallingEnabled(!isEnabled),  ImsException.class,
@@ -290,10 +290,10 @@ public class ImsMmTelManagerTest {
         waitForLatch(contentObservedLatch, observer);
         boolean isEnabledResult = ShellIdentityUtils.invokeThrowableMethodWithShellPermissions(
                 mMmTelManager,
-                ImsMmTelManager::isCrossSimCallingEnabledByUser,
+                ImsMmTelManager::isCrossSimCallingEnabled,
                 ImsException.class,
                 "android.permission.READ_PRIVILEGED_PHONE_STATE");
-        assertEquals("isCrossSimCallingEnabledByUser did not match"
+        assertEquals("isCrossSimCallingEnabled did not match"
                         + "value set by setCrossSimCallingEnabled",
                 !isEnabled, isEnabledResult);
 
