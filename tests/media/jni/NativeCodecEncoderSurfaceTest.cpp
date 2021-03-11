@@ -28,7 +28,6 @@
 
 class CodecEncoderSurfaceTest {
   private:
-    const long kQDeQTimeOutUs = 5000;
     const char* mMime;
     ANativeWindow* mWindow;
     AMediaExtractor* mExtractor;
@@ -322,8 +321,8 @@ bool CodecEncoderSurfaceTest::tryEncoderOutput(long timeOutUs) {
                         }
                     }
                 } else {
-                    if (retry > 10) return false;
-                    usleep(timeOutUs);
+                    if (retry > kRetryLimit) return false;
+                    usleep(kQDeQTimeOutUs);
                     retry ++;
                 }
             }

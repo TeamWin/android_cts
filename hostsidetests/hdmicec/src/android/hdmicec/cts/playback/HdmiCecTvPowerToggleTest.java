@@ -111,6 +111,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
         String previousPowerControlMode = setPowerControlMode("to_tv");
         try {
             device.executeShellCommand("input keyevent KEYCODE_HOME");
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
@@ -136,6 +137,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
         String previousPowerControlMode = setPowerControlMode("to_tv");
         try {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,
@@ -161,6 +163,7 @@ public final class HdmiCecTvPowerToggleTest extends BaseHdmiCecCtsTest {
         String previousPowerControlMode = setPowerControlMode("to_tv");
         try {
             device.executeShellCommand("input keyevent KEYCODE_SLEEP");
+            TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
             device.executeShellCommand("input keyevent KEYCODE_TV_POWER");
             hdmiCecClient.checkExpectedOutput(LogicalAddress.TV, CecOperand.GIVE_POWER_STATUS);
             hdmiCecClient.sendCecMessage(LogicalAddress.TV, PLAYBACK_DEVICE,

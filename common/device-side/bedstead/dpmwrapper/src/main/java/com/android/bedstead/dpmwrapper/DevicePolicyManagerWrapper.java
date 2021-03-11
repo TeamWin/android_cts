@@ -76,10 +76,6 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).enableSystemApp(any(), any(Intent.class));
             doAnswer(answer).when(spy).canAdminGrantSensorsPermissions();
 
-            // Used by HeadlessSystemUserTest
-            doAnswer(answer).when(spy).getProfileOwnerAsUser(anyInt());
-            doAnswer(answer).when(spy).getProfileOwnerAsUser(any());
-
             // Used by NetworkLoggingTest
             doAnswer(answer).when(spy).retrieveNetworkLogs(any(), anyLong());
             doAnswer(answer).when(spy).setNetworkLoggingEnabled(any(), anyBoolean());

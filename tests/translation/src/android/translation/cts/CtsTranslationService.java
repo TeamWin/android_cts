@@ -58,6 +58,8 @@ public class CtsTranslationService extends TranslationService {
 
     private final Handler mHandler;
 
+    private final CountDownLatch mSessionDestroyedLatch = new CountDownLatch(1);
+
     /**
      * Timeout for Translation cts.
      */
@@ -105,6 +107,7 @@ public class CtsTranslationService extends TranslationService {
     @Override
     public void onFinishTranslationSession(int sessionId) {
         Log.v(TAG, "onFinishTranslationSession");
+        mSessionDestroyedLatch.countDown();
     }
 
     @Override
@@ -124,6 +127,17 @@ public class CtsTranslationService extends TranslationService {
         }
         sServiceWatcher = new ServiceWatcher();
         return sServiceWatcher;
+    }
+
+    /**
+     * Wait the Translation session destroyed.
+     */
+    void awaitSessionDestroyed() {
+        try {
+            mSessionDestroyedLatch.await(TRANSLATION_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // do nothing
+        }
     }
 
     /**
@@ -301,6 +315,10 @@ public class CtsTranslationService extends TranslationService {
                 throw new IllegalStateException("not created");
             }
 
+            return mService;
+        }
+
+        public CtsTranslationService getService() {
             return mService;
         }
 

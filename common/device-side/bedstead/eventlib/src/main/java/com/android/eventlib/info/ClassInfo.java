@@ -47,9 +47,15 @@ public class ClassInfo implements Serializable {
     }
 
     private static String getSimpleName(String name) {
-        final int dot = name.lastIndexOf(".");
+        // First deal with inner classes
+        int dollar = name.lastIndexOf("$");
+        if (dollar > 0) {
+            return name.substring(dollar + 1); // strip the package name
+        }
+
+        int dot = name.lastIndexOf(".");
         if (dot > 0) {
-            return name.substring(name.lastIndexOf(".")+1); // strip the package name
+            return name.substring(dot + 1); // strip the package name
         }
         return name;
     }
