@@ -22,6 +22,7 @@ import static com.android.bedstead.nene.users.User.UserState.RUNNING_UNLOCKED;
 
 import android.os.Build;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
@@ -172,6 +173,7 @@ public final class Packages {
      * <p>This will ensure they can still be resolved and re-installed without needing the APK
      */
     @RequiresApi(Build.VERSION_CODES.S)
+    @CheckResult
     public KeepUninstalledPackagesBuilder keepUninstalledPackages() {
         Versions.requireS();
 
