@@ -19,7 +19,7 @@
 
     <!-- This application schedules jobs independently of the test instrumentation to make
     it possible to test behaviour for different app states, whitelists and device idle modes -->
-    <application>
+    <application android:debuggable="true">
         <service android:name=".TestJobService"
                  android:permission="android.permission.BIND_JOB_SERVICE" />
         <activity android:name=".TestActivity"
