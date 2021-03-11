@@ -331,6 +331,27 @@ public class BuildTest extends TestCase {
                 Build.VERSION.SDK_INT >= Build.VERSION.FIRST_SDK_INT);
     }
 
+    /**
+     * Verify that MEDIA_PERFORMANCE_CLASS are bounded by both high and low expected values.
+     */
+    public void testMediaPerformanceClass() {
+        // media performance class value of 0 is valid
+        if (Build.VERSION.MEDIA_PERFORMANCE_CLASS == 0) {
+            return;
+        }
+
+        assertTrue(
+                "Media Performance Class " + Build.VERSION.MEDIA_PERFORMANCE_CLASS
+                        + " is invalid; must be at least VERSION_CODES.S",
+                // TODO: flip this once VERSION_CODES.S is finalized
+                Build.VERSION.MEDIA_PERFORMANCE_CLASS > Build.VERSION_CODES.R);
+        assertTrue(
+                "Media Performance Class " + Build.VERSION.MEDIA_PERFORMANCE_CLASS
+                        + " is invalid; must be at most VERSION.SDK_INT",
+                // we use RESOURCES_SDK_INT to account for active development versions
+                Build.VERSION.MEDIA_PERFORMANCE_CLASS <= Build.VERSION.RESOURCES_SDK_INT);
+    }
+
     static final String RO_DEBUGGABLE = "ro.debuggable";
     private static final String RO_SECURE = "ro.secure";
 
