@@ -66,6 +66,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                 CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME, CecOperand.CEC_VERSION,
                 CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
                 CecOperand.GET_MENU_LANGUAGE);
+        allowedMessages.addAll(expectedMessages);
 
         device.executeShellCommand("reboot");
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
@@ -74,6 +75,7 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                 hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
 
         List<CecOperand> notPermittedMessages = messagesReceived.stream()
+                .filter(message -> !expectedMessages.contains(message))
                 .filter(message -> !allowedMessages.contains(message))
                 .collect(Collectors.toList());
 
