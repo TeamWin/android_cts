@@ -70,6 +70,7 @@ android_test_helper_app {
         "libcrashhelper",
     ],
     compile_multilib: "both",
+    v4_signature: true,
 }
 
 genrule {

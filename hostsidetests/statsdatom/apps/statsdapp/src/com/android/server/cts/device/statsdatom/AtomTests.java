@@ -85,8 +85,12 @@ import com.android.compatibility.common.util.ShellIdentityUtils;
 
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1419,5 +1423,24 @@ public class AtomTests {
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> wifiManager.getConnectionInfo().getNetworkId() != -1);
+    }
+
+    @Test
+    public void testLoadingApks() throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+        final ApplicationInfo appInfo = context.getPackageManager()
+                .getApplicationInfo(context.getPackageName(), 0);
+        final String codePath = appInfo.sourceDir;
+        final String apkDir = codePath.substring(0, codePath.lastIndexOf('/'));
+        for (String apkName : new File(apkDir).list()) {
+            final String apkPath = apkDir + "/" + apkName;
+            if (new File(apkPath).isFile()) {
+                try {
+                    Files.readAllBytes(Paths.get(apkPath));
+                } catch (IOException ignored) {
+                    // Probably hitting pages that we are intentionally blocking
+                }
+            }
+        }
     }
 }
