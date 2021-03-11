@@ -229,14 +229,14 @@ public class VcnManagerTest {
 
     /** Test implementation of VcnStatusCallback for verification purposes. */
     private static class TestVcnStatusCallback extends VcnManager.VcnStatusCallback {
-        private final CompletableFuture<Integer> mFutureOnVcnStatusChanged =
+        private final CompletableFuture<Integer> mFutureOnStatusChanged =
                 new CompletableFuture<>();
         private final CompletableFuture<GatewayConnectionError> mFutureOnGatewayConnectionError =
                 new CompletableFuture<>();
 
         @Override
-        public void onVcnStatusChanged(int statusCode) {
-            mFutureOnVcnStatusChanged.complete(statusCode);
+        public void onStatusChanged(int statusCode) {
+            mFutureOnStatusChanged.complete(statusCode);
         }
 
         @Override
@@ -246,8 +246,8 @@ public class VcnManagerTest {
                     new GatewayConnectionError(networkCapabilities, errorCode, detail));
         }
 
-        public int awaitOnVcnStatusChanged() throws Exception {
-            return mFutureOnVcnStatusChanged.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        public int awaitOnStatusChanged() throws Exception {
+            return mFutureOnStatusChanged.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
         }
 
         public GatewayConnectionError awaitOnGatewayConnectionError() throws Exception {
@@ -286,7 +286,7 @@ public class VcnManagerTest {
         try {
             registerVcnStatusCallbackForSubId(callback, subId);
 
-            final int statusCode = callback.awaitOnVcnStatusChanged();
+            final int statusCode = callback.awaitOnStatusChanged();
             assertEquals(VcnManager.VCN_STATUS_CODE_NOT_CONFIGURED, statusCode);
         } finally {
             mVcnManager.unregisterVcnStatusCallback(callback);
