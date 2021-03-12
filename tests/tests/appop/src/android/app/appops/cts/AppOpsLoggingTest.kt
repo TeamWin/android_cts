@@ -29,6 +29,7 @@ import android.app.AppOpsManager.OPSTR_GET_ACCOUNTS
 import android.app.AppOpsManager.OPSTR_GET_USAGE_STATS
 import android.app.AppOpsManager.OPSTR_READ_CONTACTS
 import android.app.AppOpsManager.OPSTR_READ_EXTERNAL_STORAGE
+import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_SEND_SMS
 import android.app.AppOpsManager.OPSTR_WRITE_CONTACTS
 import android.app.AppOpsManager.OnOpNotedCallback
@@ -57,6 +58,9 @@ import android.hardware.camera2.CameraManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.media.AudioAttributes
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.DropBoxManager
@@ -95,6 +99,13 @@ private external fun nativeNoteOp(
     packageName: String,
     attributionTag: String? = null,
     message: String? = null
+)
+
+private external fun nativeStartStopAudioRecord(
+    isShared: Boolean,
+    isLowLatency: Boolean,
+    packageName: String,
+    attributionTag: String? = null
 )
 
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
@@ -136,6 +147,7 @@ class AppOpsLoggingTest {
     @Before
     fun loadNativeCode() {
         System.loadLibrary("CtsAppOpsTestCases_jni")
+        System.loadLibrary("NDKCtsAppOpsTestCases_jni")
     }
 
     @Before
@@ -648,6 +660,93 @@ class AppOpsLoggingTest {
         assertThat(noted[0].second.map { it.methodName }).contains("getCellInfo")
     }
 
+    /**
+     * Realistic end-to-end test for recording audio
+     */
+    @Test
+    fun recordAudio() {
+        val ar = AudioRecord.Builder()
+                .setContext(context.createAttributionContext(TEST_ATTRIBUTION_TAG)).build()
+        try {
+            ar.startRecording()
+            ar.stop()
+        } finally {
+            ar.release()
+        }
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_RECORD_AUDIO)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for recording low latency audio
+     */
+    @Test
+    fun recordAudioLowLatency() {
+        val ar = AudioRecord.Builder()
+                .setAudioAttributes(AudioAttributes.Builder()
+                        .setFlags(AudioAttributes.FLAG_LOW_LATENCY)
+                        .setCapturePreset(MediaRecorder.AudioSource.DEFAULT).build())
+                .setContext(context.createAttributionContext(TEST_ATTRIBUTION_TAG)).build()
+        try {
+            ar.startRecording()
+            ar.stop()
+        } finally {
+            ar.release()
+        }
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_RECORD_AUDIO)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for recording using the public native API with shared, low latency
+     */
+    @Test
+    fun recordAudioNativeLowLatencyShared() {
+        nativeStartStopAudioRecord(isShared = true, isLowLatency = true,
+                packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_RECORD_AUDIO)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for recording using the public native API in exclusive low latency
+     * mode
+     */
+    @Test
+    fun recordAudioNativeLowLatencyExclusive() {
+        nativeStartStopAudioRecord(isShared = false, isLowLatency = true,
+                packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_RECORD_AUDIO)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
+    /**
+     * Realistic end-to-end test for recording using the public native API in shared normal latency
+     * mode
+     */
+    @Test
+    fun recordAudioNativeShared() {
+        nativeStartStopAudioRecord(isShared = true, isLowLatency = false,
+                packageName = context.packageName, attributionTag = TEST_ATTRIBUTION_TAG)
+
+        eventually {
+            assertThat(asyncNoted[0].op).isEqualTo(OPSTR_RECORD_AUDIO)
+            assertThat(asyncNoted[0].attributionTag).isEqualTo(TEST_ATTRIBUTION_TAG)
+        }
+    }
+
     private fun openCamera(context: Context) {
         val cameraManager = context.getSystemService(CameraManager::class.java)
 
@@ -688,7 +787,7 @@ class AppOpsLoggingTest {
      */
     @Test
     fun openCameraWithDefaultAttribution() {
-        openCamera(context.createAttributionContext(null))
+        openCamera(context)
     }
 
     /**
