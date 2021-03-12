@@ -118,6 +118,7 @@ import android.Manifest;
 import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -2792,11 +2793,40 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     }
 
     @Test
+    public void testGrantUriPermissionsForRedactedUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            getContext().grantUriPermission(APP_B_NO_PERMS.getPackageName(), redactedUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            assertThrows(SecurityException.class, () ->
+                    getContext().grantUriPermission(APP_B_NO_PERMS.getPackageName(), redactedUri,
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testDisallowedOperationsOnRedactedUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(MediaStore.MediaColumns.DATE_ADDED, 1);
+            assertEquals(0, getContentResolver().update(redactedUri, new ContentValues(),
+                    new Bundle()));
+            assertEquals(0, getContentResolver().delete(redactedUri, new Bundle()));
+        } finally {
+            img.delete();
+        }
+    }
+
+
+    @Test
     public void testOpenOnRedactionUri_file() throws Exception {
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
-        Uri uri = MediaStore.scanFile(getContentResolver(), img);
-        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
-
+        final Uri redactedUri = getRedactedUri(img);
         try {
             assertUriIsUnredacted(img);
 
@@ -2813,9 +2843,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testOpenOnRedactionUri_write() throws Exception {
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
-        Uri uri = MediaStore.scanFile(getContentResolver(), img);
-        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
-
+        final Uri redactedUri = getRedactedUri(img);
         try {
             assertThrows(UnsupportedOperationException.class,
                     () -> getContentResolver().openFileDescriptor(redactedUri,
@@ -2828,8 +2856,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testOpenOnRedactionUri_inputstream() throws Exception {
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
-        Uri uri = MediaStore.scanFile(getContentResolver(), img);
-        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        final Uri redactedUri = getRedactedUri(img);
         try {
             assertUriIsUnredacted(img);
 
@@ -2844,8 +2871,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testOpenOnRedactionUri_read() throws Exception {
         final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
-        Uri uri = MediaStore.scanFile(getContentResolver(), img);
-        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        final Uri redactedUri = getRedactedUri(img);
         try {
             assertUriIsUnredacted(img);
 
@@ -2856,6 +2882,11 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             img.delete();
         }
+    }
+
+    private Uri getRedactedUri(File file) {
+        final Uri uri = MediaStore.scanFile(getContentResolver(), file);
+        return MediaStore.getRedactedUri(getContentResolver(), uri);
     }
 
     private void assertUriIsUnredacted(File img) throws Exception {
