@@ -16,18 +16,15 @@
 
 package android.server.wm.app;
 
-import static android.view.WindowInsets.Type.systemBars;
-
-import android.app.Activity;
-import android.os.Bundle;
-
-public class BackgroundImageActivity extends Activity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.background_image);
-        getWindow().setDecorFitsSystemWindows(false);
-        getWindow().getInsetsController().hide(systemBars());
-    }
+/**
+ * This activity is used to test 2 things:
+ * 1. Blur behind does not work if WindowManager.LayoutParams.FLAG_BLUR_BEHIND is not set,
+ *    respectively if windowBlurBehindEnabled is not set.
+ * 2. Background blur does not work for opaque activities (where windowIsTranslucent is false)
+ *
+ * In the style of this activity windowBlurBehindEnabled is false and windowIsTranslucent is false.
+ * As a result, we expect that neither blur behind, nor background blur is rendered, even though
+ * they are requested with setBlurBehindRadius and setBackgroundBlurRadius.
+ */
+public class BadBlurActivity extends BlurActivity {
 }

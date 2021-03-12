@@ -20,14 +20,17 @@ import static android.view.WindowInsets.Type.systemBars;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 
-public class BackgroundImageActivity extends Activity {
-
+public class BlurAttributesActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.background_image);
+        setContentView(R.layout.blur_activity);
         getWindow().setDecorFitsSystemWindows(false);
         getWindow().getInsetsController().hide(systemBars());
+        getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
     }
+
 }
