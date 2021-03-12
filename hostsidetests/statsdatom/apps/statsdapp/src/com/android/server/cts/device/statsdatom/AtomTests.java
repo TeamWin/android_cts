@@ -818,7 +818,7 @@ public class AtomTests {
         WifiManager.WifiLock lock =
                 wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "StatsdCTSWifiLock");
         lock.acquire();
-        sleep(500);
+        sleep(1500);
         lock.release();
     }
 
@@ -829,7 +829,7 @@ public class AtomTests {
         WifiManager.WifiLock lock =
                 wm.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "StatsdCTSWifiLock");
         lock.acquire();
-        sleep(500);
+        sleep(1500);
         lock.release();
     }
 
@@ -867,7 +867,7 @@ public class AtomTests {
         wifiReconnect(context);
         wifiDisconnect(context);
         wifiReconnect(context);
-        sleep(500);
+        sleep(1500);
     }
 
     @Test
