@@ -26,6 +26,10 @@ public class TestImsConfig extends ImsConfigImplBase {
     private HashMap<Integer, Integer> mIntHashMap = new HashMap<>();
     private HashMap<Integer, String> mStringHashMap = new HashMap<>();
 
+    TestImsConfig() {
+        TestAcsClient.getInstance().setImsConfigImpl(this);
+    }
+
     @Override
     public int setConfig(int item, int value) {
         mIntHashMap.put(item, value);
