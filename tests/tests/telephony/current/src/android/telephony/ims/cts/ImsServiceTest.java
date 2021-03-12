@@ -129,11 +129,24 @@ public class ImsServiceTest {
             + "\t\t</Ext>\n"
             + "\t</SERVICES>\n"
             + "</RCSConfig>";
+    private static final String TEST_RCS_PRE_CONFIG = "<RCSPreProvisiniongConfig>\n"
+            + "\t<VERS>\n"
+            + "\t\t<version>1</version>\n"
+            + "\t\t<validity>1728000</validity>\n"
+            + "\t</VERS>\n"
+            + "\t<TOKEN>\n"
+            + "\t\t<token>X</token>\n"
+            + "\t</TOKEN>\n"
+            + "\t<EXT>\n"
+            + "\t\t<url>https://rcs.mnc123.mcc456.pub.3gppnetwork.org</url>\n"
+            + "\t</EXT>\n"
+            + "</RCSPreProvisiniongConfig>";
     private static final int RCS_CONFIG_CB_UNKNOWN = Integer.MAX_VALUE;
     private static final int RCS_CONFIG_CB_CHANGED = 0;
     private static final int RCS_CONFIG_CB_ERROR   = 1;
     private static final int RCS_CONFIG_CB_RESET   = 2;
     private static final int RCS_CONFIG_CB_DELETE  = 3;
+    private static final int RCS_CONFIG_CB_PREPROV = 4;
 
     private static CarrierConfigReceiver sReceiver;
     private static SingleRegistrationCapabilityReceiver sSrcReceiver;
@@ -2412,6 +2425,15 @@ public class ImsServiceTest {
         res = waitForIntResult(actionQueue);
         assertEquals(res, RCS_CONFIG_CB_RESET);
 
+        //verify callback when rcs pre-provisioning configuration received
+        TestAcsClient.getInstance().notifyPreProvisioning(TEST_RCS_PRE_CONFIG.getBytes());
+
+        res = waitForIntResult(actionQueue);
+        assertEquals(res, RCS_CONFIG_CB_PREPROV);
+        params = waitForResult(paramsQueue);
+        assertNotNull(params);
+        assertTrue(Arrays.equals(params.mConfig, TEST_RCS_PRE_CONFIG.getBytes()));
+
         //unregister callback and verify not to receive callback any more
         try {
             automan.adoptShellPermissionIdentity();
@@ -2821,6 +2843,16 @@ public class ImsServiceTest {
             @Override
             public void onRemoved() {
                 actionQueue.offer(RCS_CONFIG_CB_DELETE);
+            }
+
+            @Override
+            public void onPreProvisioningReceived(byte[] configXml) {
+                actionQueue.offer(RCS_CONFIG_CB_PREPROV);
+                if (paramQueue != null) {
+                    RcsProvisioningCallbackParams params = new RcsProvisioningCallbackParams();
+                    params.mConfig = configXml;
+                    paramQueue.offer(params);
+                }
             }
         };
     }
