@@ -17,6 +17,7 @@
 package android.telephony.ims.cts;
 
 import android.telephony.ims.RcsClientConfiguration;
+import android.telephony.ims.stub.ImsConfigImplBase;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -29,6 +30,7 @@ public class TestAcsClient {
     private LinkedBlockingQueue<Integer> mActionQueue = new LinkedBlockingQueue<>();
     private RcsClientConfiguration mRcc;
     private byte[] mConfig;
+    private ImsConfigImplBase mImsConfigImpl;
 
     private static TestAcsClient sInstance;
 
@@ -76,5 +78,13 @@ public class TestAcsClient {
         mActionQueue.clear();
         mRcc = null;
         mConfig = null;
+    }
+
+    public void setImsConfigImpl(ImsConfigImplBase impl) {
+        mImsConfigImpl = impl;
+    }
+
+    public void notifyPreProvisioning(byte[] conf) {
+        mImsConfigImpl.notifyPreProvisioningReceived(conf);
     }
 }
