@@ -25,6 +25,7 @@ import android.net.wifi.hotspot2.pps.Credential;
 import android.net.wifi.hotspot2.pps.HomeSp;
 import android.platform.test.annotations.AppModeFull;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 
 import java.security.MessageDigest;
@@ -43,6 +44,7 @@ public class PasspointConfigurationTest extends WifiJUnit3TestBase {
     private static final int CERTIFICATE_FINGERPRINT_BYTES = 32;
     public static final int EAP_SIM = 18;
     public static final int EAP_TTLS = 21;
+    private static final String TEST_DECORATED_IDENTITY_PREFIX = "androidwifi.dev!";
 
     /**
      * Verify that the unique identifier generated is identical for two instances
@@ -174,6 +176,20 @@ public class PasspointConfigurationTest extends WifiJUnit3TestBase {
         config2.setCredential(credential);
 
         assertNotEquals(config1.getUniqueId(), config2.getUniqueId());
+    }
+
+    /**
+     * Verify that the set and get decorated identity prefix methods work as expected.
+     */
+    public void testSetGetDecoratedIdentityPrefix() throws Exception {
+        if (!BuildCompat.isAtLeastS()) {
+            return;
+        }
+        PasspointConfiguration config = createConfig();
+        assertNull(config.getDecoratedIdentityPrefix());
+        config.setDecoratedIdentityPrefix(TEST_DECORATED_IDENTITY_PREFIX);
+        assertEquals(TEST_DECORATED_IDENTITY_PREFIX, config.getDecoratedIdentityPrefix());
+
     }
 
     /**

@@ -49,6 +49,7 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
     private static final String CA_PATH = "capath";
     private static final String CLIENT_CERTIFICATE_ALIAS = "clientcertificatealias";
     private static final String WAPI_CERT_SUITE = "wapicertsuite";
+    private static final String TEST_DECORATED_IDENTITY_PREFIX = "androidwifi.dev!";
 
     /*
      * The keys and certificates below are generated with:
@@ -1013,5 +1014,20 @@ public class WifiEnterpriseConfigTest extends WifiJUnit3TestBase {
         config.setDomainSuffixMatch(domainSuffixMatch);
         config.setAltSubjectMatch(altSubjectMatch);
         return config;
+    }
+
+    /*
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testSetGetDecoratedIdentityPrefix() {
+        if (!hasWifi()) {
+            return;
+        }
+        WifiEnterpriseConfig config = new WifiEnterpriseConfig();
+
+        assertEquals("", config.getDecoratedIdentityPrefix());
+        config.setDecoratedIdentityPrefix(TEST_DECORATED_IDENTITY_PREFIX);
+        assertEquals(TEST_DECORATED_IDENTITY_PREFIX, config.getDecoratedIdentityPrefix());
     }
 }
