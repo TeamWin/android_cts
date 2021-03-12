@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * A reference to either a Device Owner or a Profile Owner.
  */
-public abstract class DevicePolicyController {
+public abstract class DevicePolicyController implements AutoCloseable {
 
     protected final UserReference mUser;
     protected final PackageReference mPackage;
@@ -75,5 +75,11 @@ public abstract class DevicePolicyController {
         return Objects.hashCode(mUser)
                 + Objects.hashCode(mPackage)
                 + Objects.hashCode(mComponentName);
+    }
+
+    /** See {@link #remove}. */
+    @Override
+    public void close() {
+        remove();
     }
 }
