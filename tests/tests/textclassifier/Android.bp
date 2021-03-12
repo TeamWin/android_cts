@@ -29,6 +29,7 @@ android_test {
     ],
     libs: ["android.test.base"],
     static_libs: [
+        "androidx.appcompat_appcompat",
         "androidx.test.core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
@@ -43,5 +44,5 @@ android_test {
     ],
     resource_dirs: ["res"],
     sdk_version: "test_current",
-    min_sdk_version: "29",
+    min_sdk_version: "30",
 }

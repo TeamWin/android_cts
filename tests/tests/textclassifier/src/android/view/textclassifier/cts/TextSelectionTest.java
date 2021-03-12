@@ -30,6 +30,7 @@ import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextSelection;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -60,13 +61,15 @@ public class TextSelectionTest {
         final float addressScore = 0.1f;
         final float emailScore = 0.9f;
 
-        final TextSelection original = new TextSelection.Builder(START, END)
+        final TextSelection.Builder originalBuilder = new TextSelection.Builder(START, END)
                 .setEntityType(TextClassifier.TYPE_ADDRESS, addressScore)
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
                 .setId(ID)
-                .setExtras(BUNDLE)
-                .setTextClassification(TEXT_CLASSIFICATION)
-                .build();
+                .setExtras(BUNDLE);
+        if (BuildCompat.isAtLeastS()) {
+            originalBuilder.setTextClassification(TEXT_CLASSIFICATION);
+        }
+        final TextSelection original = originalBuilder.build();
 
         TextSelection selection = parcelizeDeparcelize(original, TextSelection.CREATOR);
 
@@ -82,7 +85,9 @@ public class TextSelectionTest {
         assertThat(selection.getConfidenceScore("random_type")).isEqualTo(0);
         assertThat(selection.getId()).isEqualTo(ID);
         assertThat(selection.getExtras().getString(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
-        assertThat(selection.getTextClassification().getText()).isEqualTo(TEXT);
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(selection.getTextClassification().getText()).isEqualTo(TEXT);
+        }
     }
 
     @Test
@@ -116,7 +121,9 @@ public class TextSelectionTest {
         assertThat(selection.getEntityCount()).isEqualTo(0);
         assertThat(selection.getId()).isNull();
         assertThat(selection.getExtras().isEmpty()).isTrue();
-        assertThat(selection.getTextClassification()).isNull();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(selection.getTextClassification()).isNull();
+        }
     }
 
     @Test
@@ -158,11 +165,14 @@ public class TextSelectionTest {
 
     @Test
     public void testTextSelectionRequest() {
-        final TextSelection.Request original = new TextSelection.Request.Builder(TEXT, START, END)
+        final TextSelection.Request.Builder originalBuilder =
+                new TextSelection.Request.Builder(TEXT, START, END)
                 .setDefaultLocales(LOCALES)
-                .setExtras(BUNDLE)
-                .setIncludeTextClassification(true)
-                .build();
+                .setExtras(BUNDLE);
+        if (BuildCompat.isAtLeastS()) {
+            originalBuilder.setIncludeTextClassification(true);
+        }
+        final TextSelection.Request original = originalBuilder.build();
 
         TextSelection.Request request =
                 parcelizeDeparcelize(original, TextSelection.Request.CREATOR);
@@ -172,7 +182,9 @@ public class TextSelectionTest {
         assertThat(request.getEndIndex()).isEqualTo(END);
         assertThat(request.getDefaultLocales()).isEqualTo(LOCALES);
         assertThat(request.getExtras().getString(BUNDLE_KEY)).isEqualTo(BUNDLE_VALUE);
-        assertThat(request.shouldIncludeTextClassification()).isEqualTo(true);
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(request.shouldIncludeTextClassification()).isEqualTo(true);
+        }
     }
 
     @Test
@@ -198,7 +210,9 @@ public class TextSelectionTest {
 
         assertThat(request.getDefaultLocales()).isNull();
         assertThat(request.getExtras().isEmpty()).isTrue();
-        assertThat(request.shouldIncludeTextClassification()).isFalse();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(request.shouldIncludeTextClassification()).isFalse();
+        }
     }
 
     private static <T extends Parcelable> T parcelizeDeparcelize(

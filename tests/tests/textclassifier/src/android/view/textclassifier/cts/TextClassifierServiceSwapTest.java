@@ -19,6 +19,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -34,6 +36,7 @@ import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextSelection;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
@@ -136,6 +139,8 @@ public class TextClassifierServiceSwapTest {
 
     @Test
     public void testResourceIconsRewrittenToContentUriIcons_suggestSelection() throws Exception {
+        assumeTrue(BuildCompat.isAtLeastS());
+
         final TextClassifier tc = ApplicationProvider.getApplicationContext()
                 .getSystemService(TextClassificationManager.class)
                 .getTextClassifier();
