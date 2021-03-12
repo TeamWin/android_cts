@@ -59,6 +59,8 @@
         <option name="test-file-name" value="CtsAppEnumerationWildcardShareActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardWebActivitySource.apk" />
         <option name="test-file-name" value="CtsAppEnumerationWildcardBrowserActivitySource.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationSyncadapterTarget.apk" />
+        <option name="test-file-name" value="CtsAppEnumerationSyncadapterSharedUidTarget.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

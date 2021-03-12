@@ -23,6 +23,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
@@ -77,6 +78,8 @@ import static android.appenumeration.cts.Constants.TARGET_FORCEQUERYABLE_NORMAL;
 import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
+import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
+import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
@@ -88,6 +91,8 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItemInArray;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -97,6 +102,7 @@ import static org.junit.Assert.fail;
 import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.SyncAdapterType;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.Signature;
@@ -674,6 +680,24 @@ public class AppEnumerationTests {
         assertServiceNotVisible(QUERIES_NOTHING, TARGET_FILTERS);
     }
 
+    @Test
+    public void queriesPackage_canSeeSyncadapterTarget() throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
+    }
+
+    @Test
+    public void queriesNothing_cannotSeeSyncadapterTarget() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterTypes);
+    }
+
+    @Test
+    public void queriesNothingSharedUser_canSeeSyncadapterSharedUserTarget() throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterTypes);
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -698,6 +722,10 @@ public class AppEnumerationTests {
 
     interface ThrowingBiFunction<T, U, R> {
         R apply(T arg1, U arg2) throws Exception;
+    }
+
+    interface ThrowingFunction<T, R> {
+        R apply(T arg1) throws Exception;
     }
 
     private void assertNotQueryable(String sourcePackageName, String targetPackageName,
@@ -727,6 +755,22 @@ public class AppEnumerationTests {
         }
         fail(sourcePackageName + " should be able to query " + targetPackageName + " via "
                 + intentAction);
+    }
+
+    private void assertVisible(String sourcePackageName, String targetPackageName,
+            ThrowingFunction<String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
+                packageNames, hasItemInArray(targetPackageName));
+    }
+
+    private void assertNotVisible(String sourcePackageName, String targetPackageName,
+            ThrowingFunction<String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
+                packageNames, not(hasItemInArray(targetPackageName)));
     }
 
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
@@ -855,6 +899,17 @@ public class AppEnumerationTests {
         final Bundle response = sendCommandBlocking(sourcePackageName, targetPackageName,
                 /* intentExtra */ null, ACTION_BIND_SERVICE);
         return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
+    }
+
+    private String[] getSyncAdapterTypes(String sourcePackageName) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                /* intentExtra */ null, ACTION_GET_SYNCADAPTER_TYPES);
+        final List<Parcelable> parcelables = response.getParcelableArrayList(
+                Intent.EXTRA_RETURN_RESULT);
+        return parcelables.stream()
+                .map(parcelable -> ((SyncAdapterType) parcelable).getPackageName())
+                .distinct()
+                .toArray(String[]::new);
     }
 
     interface Result {
