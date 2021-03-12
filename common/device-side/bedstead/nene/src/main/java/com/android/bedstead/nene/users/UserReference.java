@@ -42,7 +42,7 @@ import javax.annotation.Nullable;
  *
  * <p>To resolve the user into a {@link User}, see {@link #resolve()}.
  */
-public abstract class UserReference {
+public abstract class UserReference implements AutoCloseable {
 
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
@@ -200,5 +200,11 @@ public abstract class UserReference {
     @Override
     public int hashCode() {
         return id();
+    }
+
+    /** See {@link #remove}. */
+    @Override
+    public void close() {
+        remove();
     }
 }
