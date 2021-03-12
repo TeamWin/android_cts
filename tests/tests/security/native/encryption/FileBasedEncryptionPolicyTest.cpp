@@ -171,7 +171,8 @@ static void validateEncryptionModes(int contents_mode, int filenames_mode,
 // CTS test.  To keep things simple we just check whether the system knows about
 // at least one eMMC device.
 static bool usingEmmcStorage() {
-    return access("/sys/class/block/mmcblk0", F_OK) == 0;
+    struct stat stbuf;
+    return lstat("/sys/class/block/mmcblk0", &stbuf) == 0;
 }
 
 // CDD 9.9.3/C-1-15: must not reuse IVs for file contents encryption except when

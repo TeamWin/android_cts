@@ -37,7 +37,6 @@ import android.net.LinkProperties;
 import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.NetworkCapabilitiesProto;
 import android.net.NetworkRequest;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
@@ -289,7 +288,7 @@ public class TestHelper {
      * connection.
      */
     public ConnectivityManager.NetworkCallback testConnectionFlowWithConnect(
-            @NonNull WifiConfiguration network) {
+            @NonNull WifiConfiguration network) throws Exception {
         CountDownLatch countDownLatchAl = new CountDownLatch(1);
         CountDownLatch countDownLatchNr = new CountDownLatch(1);
         TestActionListener actionListener = new TestActionListener(countDownLatchAl);
@@ -322,7 +321,11 @@ public class TestHelper {
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
             assertConnectionEquals(
                     network, (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
-        } catch (InterruptedException e) {
+        } catch (Throwable e /* catch assertions & exceptions */) {
+            // Unregister the network callback in case of any failure (since we don't end up
+            // returning the network callback to the caller).
+            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            throw e;
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -346,7 +349,7 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionWithShellIdentity(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) {
+            @Nullable Integer restrictedNetworkCapability) throws Exception {
         return testConnectionFlowWithSuggestionInternal(
                 network, suggestion, executorService, restrictedNetworkCapability, true);
     }
@@ -369,7 +372,7 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestion(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) {
+            @Nullable Integer restrictedNetworkCapability) throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
@@ -396,7 +399,7 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFailureFlowWithSuggestion(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) {
+            @Nullable Integer restrictedNetworkCapability) throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
@@ -425,7 +428,7 @@ public class TestHelper {
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
             @Nullable Integer restrictedNetworkCapability,
-            boolean expectConnectionSuccess) {
+            boolean expectConnectionSuccess) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
@@ -466,7 +469,9 @@ public class TestHelper {
                 assertThat(countDownLatch.await(
                         DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isFalse();
             }
-        } catch (InterruptedException e) {
+        } catch (Throwable e /* catch assertions & exceptions */) {
+            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            throw e;
         } finally {
             executorService.shutdown();
         }
@@ -603,19 +608,28 @@ public class TestHelper {
      * connection.
      */
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifierWithShellIdentity(
-            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject) {
+            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject)
+            throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        // Fork a thread to handle the UI interactions.
-        Thread uiThread = new Thread(() -> handleUiInteractions(network, shouldUserReject));
-
         // File the network request & wait for the callback.
         TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
+
+        // Fork a thread to handle the UI interactions.
+        Thread uiThread = new Thread(() -> {
+            try {
+                handleUiInteractions(network, shouldUserReject);
+            } catch (Throwable e /* catch assertions & exceptions */) {
+                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+                throw e;
+            }
+        });
+
         try {
             // File a request for wifi network.
             mConnectivityManager.requestNetwork(
                     new NetworkRequest.Builder()
-                            .addTransportType(NetworkCapabilitiesProto.TRANSPORT_WIFI)
-                            .removeCapability(NetworkCapabilitiesProto.NET_CAPABILITY_INTERNET)
+                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                            .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                             .setNetworkSpecifier(specifier)
                             .build(),
                     testNetworkCallback);
@@ -627,25 +641,29 @@ public class TestHelper {
             // now wait for callback
             assertThat(countDownLatch.await(
                     DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
-        } catch (InterruptedException e) {
-        }
-        if (shouldUserReject) {
-            assertThat(testNetworkCallback.onUnavailableCalled).isTrue();
-        } else {
-            assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-            final WifiInfo wifiInfo;
-            if (BuildCompat.isAtLeastS()) {
-                // WifiInfo in transport info, only available in S.
-                wifiInfo = (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo();
+            if (shouldUserReject) {
+                assertThat(testNetworkCallback.onUnavailableCalled).isTrue();
             } else {
-                wifiInfo = mWifiManager.getConnectionInfo();
+                assertThat(testNetworkCallback.onAvailableCalled).isTrue();
+                final WifiInfo wifiInfo;
+                if (BuildCompat.isAtLeastS()) {
+                    // WifiInfo in transport info, only available in S.
+                    wifiInfo =
+                            (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo();
+                } else {
+                    wifiInfo = mWifiManager.getConnectionInfo();
+                }
+                assertConnectionEquals(network, wifiInfo);
             }
-            assertConnectionEquals(network, wifiInfo);
+        } catch (Throwable e /* catch assertions & exceptions */) {
+            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            throw e;
         }
         try {
             // Ensure that the UI interaction thread has completed.
             uiThread.join(DURATION_UI_INTERACTION_MILLIS);
         } catch (InterruptedException e) {
+            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
             fail("UI interaction interrupted");
         }
         return testNetworkCallback;
@@ -664,7 +682,8 @@ public class TestHelper {
      * connection.
      */
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSpecifier(
-            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject) {
+            WifiConfiguration network, WifiNetworkSpecifier specifier, boolean shouldUserReject)
+            throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {

@@ -449,6 +449,13 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
             assertFalse(call.getDetails().getExtras().containsKey(TelecomManager.EXTRA_PRIORITY));
             assertFalse(call.getDetails().getExtras()
                     .containsKey(TelecomManager.EXTRA_CALL_SUBJECT));
+
+            assertFalse(call.getDetails().getIntentExtras()
+                    .containsKey(TelecomManager.EXTRA_LOCATION));
+            assertFalse(call.getDetails().getIntentExtras()
+                    .containsKey(TelecomManager.EXTRA_PRIORITY));
+            assertFalse(call.getDetails().getIntentExtras()
+                    .containsKey(TelecomManager.EXTRA_CALL_SUBJECT));
         } finally {
             MockCallScreeningService.disableService(mContext);
             TestUtils.clearSystemDialerOverride(getInstrumentation());

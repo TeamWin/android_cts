@@ -25,6 +25,7 @@ import static org.mockito.Matchers.anyFloat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BlendMode;
@@ -63,6 +64,8 @@ import org.mockito.ArgumentCaptor;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class EdgeEffectTests extends ActivityTestBase {
+    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
+    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
 
     private static final int WIDTH = 90;
     private static final int HEIGHT = 90;
@@ -117,6 +120,7 @@ public class EdgeEffectTests extends ActivityTestBase {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setSize(WIDTH, HEIGHT);
         edgeEffect.setColor(Color.RED);
+        edgeEffect.setType(EdgeEffect.TYPE_GLOW);
         assertEquals(Color.RED, edgeEffect.getColor());
         initializer.initialize(edgeEffect);
         edgeEffect.draw(canvas);
@@ -213,8 +217,10 @@ public class EdgeEffectTests extends ActivityTestBase {
     public void testEdgeEffectTypeAccessors() {
         EdgeEffect effect = new EdgeEffect(getContext());
 
-        // It defaults to glow without any attribute set
-        assertEquals(EdgeEffect.TYPE_GLOW, effect.getType());
+        int expectedStartType = (CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_BY_DEFAULT)
+                || CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED))
+                ? EdgeEffect.TYPE_STRETCH : EdgeEffect.TYPE_GLOW;
+        assertEquals(expectedStartType, effect.getType());
         effect.setType(EdgeEffect.TYPE_STRETCH);
         assertEquals(EdgeEffect.TYPE_STRETCH, effect.getType());
     }
@@ -485,6 +491,7 @@ public class EdgeEffectTests extends ActivityTestBase {
             ArgumentCaptor<Paint> captor = ArgumentCaptor.forClass(Paint.class);
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
             edgeEffect.setSize(200, 200);
+            edgeEffect.setType(EdgeEffect.TYPE_GLOW);
             initializer.initialize(edgeEffect);
             edgeEffect.draw(canvas);
             verify(canvas).drawCircle(anyFloat(), anyFloat(), anyFloat(), captor.capture());

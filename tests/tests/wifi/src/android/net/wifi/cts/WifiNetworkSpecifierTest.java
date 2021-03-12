@@ -295,12 +295,14 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         mTestHelper.turnScreenOff();
     }
 
-    private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier) {
+    private void testSuccessfulConnectionWithSpecifier(WifiNetworkSpecifier specifier)
+            throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
                 mTestNetwork, specifier, false);
     }
 
-    private void testUserRejectionWithSpecifier(WifiNetworkSpecifier specifier) {
+    private void testUserRejectionWithSpecifier(WifiNetworkSpecifier specifier)
+            throws Exception {
         mNrNetworkCallback = mTestHelper.testConnectionFlowWithSpecifier(
                 mTestNetwork, specifier, true);
     }
@@ -309,7 +311,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      * Tests the entire connection flow using a specific SSID in the specifier.
      */
     @Test
-    public void testConnectionWithSpecificSsid() {
+    public void testConnectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
                         mTestNetwork)
@@ -321,7 +323,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      * Tests the entire connection flow using a SSID pattern in the specifier.
      */
     @Test
-    public void testConnectionWithSsidPattern() {
+    public void testConnectionWithSsidPattern() throws Exception {
         // Creates a ssid pattern by dropping the last char in the saved network & pass that
         // as a prefix match pattern in the request.
         String ssidUnquoted = WifiInfo.sanitizeSsid(mTestNetwork.SSID);
@@ -341,7 +343,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      * Tests the entire connection flow using a specific BSSID in the specifier.
      */
     @Test
-    public void testConnectionWithSpecificBssid() {
+    public void testConnectionWithSpecificBssid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetworkWithBssid(
                         mTestNetwork)
@@ -353,7 +355,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      * Tests the entire connection flow using a BSSID pattern in the specifier.
      */
     @Test
-    public void testConnectionWithBssidPattern() {
+    public void testConnectionWithBssidPattern() throws Exception {
         // Note: The match may return more than 1 network in this case since we use a prefix match,
         // But, we will still ensure that the UI interactions in the test still selects the
         // saved network for connection.
@@ -370,7 +372,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
      * Tests the entire connection flow using a BSSID pattern in the specifier.
      */
     @Test
-    public void testUserRejectionWithSpecificSsid() {
+    public void testUserRejectionWithSpecificSsid() throws Exception {
         WifiNetworkSpecifier specifier =
                 TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
                         mTestNetwork)
