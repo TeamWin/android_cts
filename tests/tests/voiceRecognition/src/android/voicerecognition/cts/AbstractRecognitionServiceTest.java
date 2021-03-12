@@ -33,6 +33,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import static org.junit.Assert.fail;
 
 import android.os.SystemClock;
+import android.speech.SpeechRecognizer;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
@@ -60,11 +61,11 @@ abstract class AbstractRecognitionServiceTest {
     private static final long WAIT_TIMEOUT_MS = 30000L; // 30 secs
     private static final long SEQUENCE_TEST_WAIT_TIMEOUT_MS = 5000L;
 
-    private final String CTS_VOICE_RECOGNITION_SERVICE =
+    private static final String CTS_VOICE_RECOGNITION_SERVICE =
             "android.recognitionservice.service/android.recognitionservice.service"
                     + ".CtsVoiceRecognitionService";
 
-    private final String IN_PACKAGE_RECOGNITION_SERVICE =
+    private static final String IN_PACKAGE_RECOGNITION_SERVICE =
             "android.voicerecognition.cts/android.voicerecognition.cts.CtsRecognitionService";
 
     @Rule
@@ -74,7 +75,7 @@ abstract class AbstractRecognitionServiceTest {
     private UiDevice mUiDevice;
     private SpeechRecognitionActivity mActivity;
 
-    abstract void setCurrentRecognizer(String recognizer);
+    abstract void setCurrentRecognizer(SpeechRecognizer recognizer, String component);
 
     abstract boolean isOnDeviceTest();
 
@@ -91,7 +92,7 @@ abstract class AbstractRecognitionServiceTest {
 
     @Test
     public void testStartListening() throws Throwable {
-        setCurrentRecognizer(CTS_VOICE_RECOGNITION_SERVICE);
+        setCurrentRecognizer(mActivity.mRecognizer, CTS_VOICE_RECOGNITION_SERVICE);
         mUiDevice.waitForIdle();
 
         mActivity.startListening();
@@ -278,7 +279,7 @@ abstract class AbstractRecognitionServiceTest {
             List<CallbackMethod> callbackMethodInstructions,
             List<Boolean> expectedRecognizerServiceMethodsToPropagate,
             List<CallbackMethod> expectedClientCallbackMethods) {
-        setCurrentRecognizer(IN_PACKAGE_RECOGNITION_SERVICE);
+        setCurrentRecognizer(mActivity.mRecognizer, IN_PACKAGE_RECOGNITION_SERVICE);
         mUiDevice.waitForIdle();
 
         mActivity.mCallbackMethodsInvoked.clear();

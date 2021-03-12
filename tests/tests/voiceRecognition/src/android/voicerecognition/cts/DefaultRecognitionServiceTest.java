@@ -20,6 +20,7 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import android.content.Context;
 import android.provider.Settings;
+import android.speech.SpeechRecognizer;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -46,10 +47,10 @@ public final class DefaultRecognitionServiceTest extends AbstractRecognitionServ
                     mOriginalVoiceRecognizer);
 
     @Override
-    protected void setCurrentRecognizer(String recognizer) {
+    protected void setCurrentRecognizer(SpeechRecognizer recognizer, String component) {
         runWithShellPermissionIdentity(
                 () -> Settings.Secure.putString(mContext.getContentResolver(),
-                        VOICE_RECOGNITION_SERVICE, recognizer));
+                        VOICE_RECOGNITION_SERVICE, component));
     }
 
     @Override

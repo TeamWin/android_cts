@@ -35,18 +35,16 @@ import java.util.concurrent.CountDownLatch;
  * to provide the voice recognition functions.
  */
 public class SpeechRecognitionActivity extends Activity {
-
     private final String TAG = "SpeechRecognitionActivity";
 
-    private SpeechRecognizer mRecognizer;
-    private Intent mRecognizerIntent;
+    SpeechRecognizer mRecognizer;
+
     private Handler mHandler;
     private SpeechRecognizerListener mListener;
 
     final List<CallbackMethod> mCallbackMethodsInvoked = new ArrayList<>();
 
     public boolean mStartListeningCalled;
-
     public CountDownLatch mCountDownLatch;
 
     @Override
@@ -88,14 +86,14 @@ public class SpeechRecognitionActivity extends Activity {
         mHandler.post(mRecognizer::destroy);
     }
 
-    public void init(boolean onDevice, String customRecgonizerComponent) {
+    public void init(boolean onDevice, String customRecognizerComponent) {
         mHandler = new Handler(getMainLooper());
         mHandler.post(() -> {
             if (onDevice) {
                 mRecognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(this);
-            } else if (customRecgonizerComponent != null) {
+            } else if (customRecognizerComponent != null) {
                 mRecognizer = SpeechRecognizer.createSpeechRecognizer(this,
-                        ComponentName.unflattenFromString(customRecgonizerComponent));
+                        ComponentName.unflattenFromString(customRecognizerComponent));
             } else {
                 mRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
             }

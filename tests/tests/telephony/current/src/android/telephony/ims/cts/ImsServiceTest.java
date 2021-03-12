@@ -1432,6 +1432,129 @@ public class ImsServiceTest {
     }
 
     @Test
+    public void testRcsPublishThrottle() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+
+        // Trigger carrier config change
+        PersistableBundle bundle = new PersistableBundle();
+        bundle.putBoolean(CarrierConfigManager.KEY_CARRIER_VOLTE_PROVISIONED_BOOL, false);
+        bundle.putBoolean(CarrierConfigManager.Ims.KEY_ENABLE_PRESENCE_PUBLISH_BOOL, true);
+        overrideCarrierConfig(bundle);
+
+        ImsManager imsManager = getContext().getSystemService(ImsManager.class);
+        if (imsManager == null) {
+            fail("Cannot get the ImsManager");
+        }
+        ImsRcsManager imsRcsManager = imsManager.getImsRcsManager(sTestSub);
+        RcsUceAdapter uceAdapter = imsRcsManager.getUceAdapter();
+
+        // Connect to the ImsService
+        triggerFrameworkConnectToImsServiceBindMmTelAndRcsFeature();
+
+        TestRcsCapabilityExchangeImpl capExchangeImpl = sServiceConnector.getCarrierService()
+                .getRcsFeature().getRcsCapabilityExchangeImpl();
+
+        // Setup the response of the publish request.
+        capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
+            int networkResp = 200;
+            String reason = "OK";
+            listener.onPublish();
+            cb.onNetworkResponse(networkResp, reason);
+        });
+
+        // Register the callback to listen to the publish state changed
+        LinkedBlockingQueue<Integer> publishStateQueue = new LinkedBlockingQueue<>();
+        RcsUceAdapter.OnPublishStateChangedListener publishStateCallback =
+                new RcsUceAdapter.OnPublishStateChangedListener() {
+                    public void onPublishStateChange(int state) {
+                        publishStateQueue.offer(state);
+                    }
+                };
+
+        final UiAutomation automation = InstrumentationRegistry.getInstrumentation()
+                .getUiAutomation();
+        try {
+            automation.adoptShellPermissionIdentity();
+            uceAdapter.addOnPublishStateChangedListener(getContext().getMainExecutor(),
+                    publishStateCallback);
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Verify receiving the publish state callback immediately after registering the callback.
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED,
+                waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+
+        // IMS registers
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+
+        // Verify the PUBLISH request should not be triggered and the publish state is still
+        // NOT_PUBLISHED even the IMS is registered.
+        if (publishStateQueue.poll() != null) {
+            fail("The PUBLISH request should not be triggered.");
+        }
+        try {
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_NOT_PUBLISHED, publishState);
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
+        RcsImsCapabilities capabilities =
+                new RcsImsCapabilities(RcsUceAdapter.CAPABILITY_TYPE_PRESENCE_UCE);
+        sServiceConnector.getCarrierService().getRcsFeature()
+                .notifyCapabilitiesStatusChanged(capabilities);
+
+        CapabilityExchangeEventListener eventListener =
+                sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
+
+        // Notify framework to send the PUBLISH request to the ImsService.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify that ImsService received the first PUBLISH
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH));
+        assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, waitForIntResult(publishStateQueue));
+        publishStateQueue.clear();
+        try {
+            automation.adoptShellPermissionIdentity();
+            int publishState = uceAdapter.getUcePublishState();
+            assertEquals(RcsUceAdapter.PUBLISH_STATE_OK, publishState);
+        } finally {
+            automation.dropShellPermissionIdentity();
+        }
+
+        // Now enable voice availability
+        sServiceConnector.getCarrierService().getMmTelFeature()
+                .notifyCapabilitiesStatusChanged(new MmTelFeature.MmTelCapabilities(
+                        MmTelFeature.MmTelCapabilities.CAPABILITY_TYPE_VOICE));
+
+        // The published just succeeded. The next publish should not be triggered immediately even
+        // the device capabilities has changed. Wait 3 seconds to verify the ImsService does not
+        // receive the publish request from the framework.
+        assertFalse(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH, 3000 /* 3 seconds */));
+
+        // However, if the request is triggered from the service, a new publish request should be
+        // sent immediately.
+        eventListener.onRequestPublishCapabilities(
+                RcsUceAdapter.CAPABILITY_UPDATE_TRIGGER_MOVE_TO_WLAN);
+
+        // Verify the ImsService receive the publish request
+        assertTrue(sServiceConnector.getCarrierService().waitForLatchCountdown(
+                TestImsService.LATCH_UCE_REQUEST_PUBLISH, 3000 /* Wait up to 3 seconds */));
+
+        overrideCarrierConfig(null);
+    }
+
+    @Test
     public void testRcsManagerRegistrationCallback() throws Exception {
         if (!ImsUtils.shouldTestImsService()) {
             return;

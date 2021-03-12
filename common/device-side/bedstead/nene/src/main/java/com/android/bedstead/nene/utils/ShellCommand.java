@@ -29,8 +29,8 @@ import java.util.function.Function;
  */
 public final class ShellCommand {
 
-    // 60 seconds
-    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 600;
+    // 10 seconds
+    private static final int MAX_WAIT_UNTIL_ATTEMPTS = 100;
     private static final long WAIT_UNTIL_DELAY_MILLIS = 100;
 
     /**
