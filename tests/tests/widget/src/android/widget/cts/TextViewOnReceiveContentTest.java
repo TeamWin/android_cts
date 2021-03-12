@@ -45,6 +45,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.Selection;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -595,6 +596,29 @@ public class TextViewOnReceiveContentTest {
         verifyNoMoreInteractions(mMockReceiver);
         // Note: The cursor is moved to the location of the drop before calling the receiver.
         assertTextAndCursorPosition("xz", 0);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testDragAndDrop_customReceiver_nonEditableTextView() throws Exception {
+        // Initialize the view and assert preconditions.
+        mTextView.setText("Hello");
+        assertTextAndSelection("Hello", -1, -1);
+        assertThat(mTextView.isTextSelectable()).isFalse();
+        assertThat(mTextView.getText()).isNotInstanceOf(Editable.class);
+
+        // Configure the listener.
+        String[] receiverMimeTypes = new String[] {"text/*"};
+        mTextView.setOnReceiveContentListener(receiverMimeTypes, mMockReceiver);
+
+        // Trigger drop event and assert that the custom receiver was executed.
+        ClipData clip = ClipData.newPlainText("test", "y");
+        triggerDropEvent(clip);
+        verify(mMockReceiver, times(1)).onReceiveContent(
+                eq(mTextView), contentEq(clip, SOURCE_DRAG_AND_DROP, 0));
+        verifyNoMoreInteractions(mMockReceiver);
+        // Note: The cursor/selection should not change since the view is not editable.
+        assertTextAndSelection("Hello", -1, -1);
     }
 
     @UiThreadTest
