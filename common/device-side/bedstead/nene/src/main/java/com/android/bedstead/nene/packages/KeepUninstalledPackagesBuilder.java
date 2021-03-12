@@ -29,6 +29,7 @@ import com.android.compatibility.common.util.SystemUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -38,9 +39,11 @@ import java.util.List;
 @RequiresApi(Build.VERSION_CODES.S)
 public final class KeepUninstalledPackagesBuilder {
 
-    private final List<String> mPackages = new ArrayList<>();
+    private final List<String> mPackagesToKeep = new ArrayList<>();
+    private final Packages mPackages;
 
-    KeepUninstalledPackagesBuilder() {
+    KeepUninstalledPackagesBuilder(Packages packages) {
+        mPackages = packages;
     }
 
     /**
@@ -60,7 +63,7 @@ public final class KeepUninstalledPackagesBuilder {
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
             // Needs KEEP_UNINSTALLED_PACKAGES
-            packageManager.setKeepUninstalledPackages(mPackages);
+            packageManager.setKeepUninstalledPackages(mPackagesToKeep);
         });
     }
 
@@ -71,7 +74,7 @@ public final class KeepUninstalledPackagesBuilder {
      * any user.
      */
     public void clear() {
-        mPackages.clear();
+        mPackagesToKeep.clear();
         commit();
     }
 
@@ -80,8 +83,16 @@ public final class KeepUninstalledPackagesBuilder {
      */
     @CheckResult
     public KeepUninstalledPackagesBuilder add(PackageReference pkg) {
-        mPackages.add(pkg.packageName());
+        mPackagesToKeep.add(pkg.packageName());
         return this;
+    }
+
+    /**
+     * Add a package to the list of those which will not be cleaned up.
+     */
+    @CheckResult
+    public KeepUninstalledPackagesBuilder add(String pkg) {
+        return add(mPackages.find(pkg));
     }
 
     /**
@@ -93,5 +104,13 @@ public final class KeepUninstalledPackagesBuilder {
             add(pkg);
         }
         return this;
+    }
+
+    /**
+     * Add a collection of packages to the list of those which will not be cleaned up.
+     */
+    @CheckResult
+    public KeepUninstalledPackagesBuilder addPackageNames(Collection<String> packages) {
+        return add(packages.stream().map(mPackages::find).collect(Collectors.toSet()));
     }
 }
