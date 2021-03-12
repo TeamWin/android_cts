@@ -53,6 +53,7 @@ import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 import android.widget.TextView;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.ViewInteraction;
@@ -153,6 +154,7 @@ public class TextViewIntegrationTest {
 
     @Test
     public void smartSelection_suggestSelectionNotIncludeTextClassification() throws Exception {
+        Assume.assumeTrue(BuildCompat.isAtLeastS());
         smartSelectionInternal();
 
         assertThat(mSimpleTextClassifier.getClassifyTextInvocationCount()).isEqualTo(1);
@@ -160,6 +162,7 @@ public class TextViewIntegrationTest {
 
     @Test
     public void smartSelection_suggestSelectionIncludeTextClassification() throws Exception {
+        Assume.assumeTrue(BuildCompat.isAtLeastS());
         mSimpleTextClassifier.setIncludeTextClassification(true);
         smartSelectionInternal();
 
@@ -168,6 +171,7 @@ public class TextViewIntegrationTest {
 
     @Test
     public void smartSelection_cancelSelectionDoesNotInvokeClassifyText() throws Exception {
+        Assume.assumeTrue(BuildCompat.isAtLeastS());
         smartSelectionInternal();
         onView(withId(R.id.textview)).perform(TextViewActions.tapOnTextAtIndex(0));
         Thread.sleep(1000);
