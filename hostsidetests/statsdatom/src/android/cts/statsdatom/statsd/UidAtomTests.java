@@ -207,7 +207,9 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         // TODO(b/172866626): add tests for incremental packages that crashed during loading
-        assertFalse(atom.getIsPackageLoading());
+        assertFalse(atom.getIsIncremental());
+        assertTrue((1 - atom.getLoadingProgress()) < 0.001);
+        assertEquals(0, atom.getMillisSinceOldestPendingRead());
     }
 
     public void testAppCrashOccurredNative() throws Exception {
@@ -233,7 +235,9 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         // TODO(b/172866626): add tests for incremental packages that crashed during loading
-        assertFalse(atom.getIsPackageLoading());
+        assertFalse(atom.getIsIncremental());
+        assertTrue((1 - atom.getLoadingProgress()) < 0.001);
+        assertEquals(0, atom.getMillisSinceOldestPendingRead());
     }
 
 
@@ -757,7 +761,9 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         // TODO(b/172866626): add tests for incremental packages that ANR'd during loading
-        assertFalse(atom.getIsPackageLoading());
+        assertFalse(atom.getIsIncremental());
+        assertTrue((1 - atom.getLoadingProgress()) < 0.001);
+        assertEquals(0, atom.getMillisSinceOldestPendingRead());
     }
 
     public void testWriteRawTestAtom() throws Exception {
