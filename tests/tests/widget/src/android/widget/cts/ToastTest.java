@@ -16,6 +16,7 @@
 
 package android.widget.cts;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -28,6 +29,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
+import android.app.ActivityOptions;
 import android.app.UiAutomation;
 import android.app.UiAutomation.AccessibilityEventFilter;
 import android.content.BroadcastReceiver;
@@ -729,19 +731,18 @@ public class ToastTest {
         Intent intent = new Intent();
         intent.setComponent(COMPONENT_TRANSLUCENT_ACTIVITY);
         intent.setFlags(FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
+        // Launch the translucent activity in fullscreen to ensure the test activity won't resume
+        // even on the freeform-first multi-window device.
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchWindowingMode(WINDOWING_MODE_FULLSCREEN);
+        mContext.startActivity(intent, options.toBundle());
         activityStarted.block();
         makeCustomToast();
         View view = mToast.getView();
 
         mActivityRule.runOnUiThread(mToast::show);
 
-        // The custom toast should not be blocked in multi-window mode. Otherwise, it should be.
-        if (mActivityRule.getActivity().isInMultiWindowMode()) {
-            assertShowCustomToast(view);
-        } else {
-            assertNotShowCustomToast(view);
-        }
+        assertNotShowCustomToast(view);
         mContext.sendBroadcast(new Intent(ACTION_TRANSLUCENT_ACTIVITY_FINISH));
     }
 
