@@ -82,6 +82,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.StaticLayout;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -8719,6 +8720,27 @@ public class TextViewTest {
         textView.setTextDirection(View.TEXT_DIRECTION_LOCALE);
 
         assertEquals(TextDirectionHeuristics.LOCALE, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    public void measureConsistency() {
+        String text = "12\n34";
+        TextView textView = new TextView(mActivity);
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_PX, 100);
+        textView.setText(text);
+
+        int width = (int) Math.ceil(Layout.getDesiredWidth(text, textView.getPaint()));
+        int height = StaticLayout.Builder.obtain(text, 0, text.length(),
+                textView.getPaint(), width).build().getHeight();
+        // Reserve enough width for the text.
+        int wMeasureSpec = View.MeasureSpec.makeMeasureSpec(width * 2, View.MeasureSpec.AT_MOST);
+        int hMeasureSpec = View.MeasureSpec.makeMeasureSpec(height * 2, View.MeasureSpec.AT_MOST);
+
+        textView.measure(wMeasureSpec, hMeasureSpec);
+        int measuredWidth = textView.getMeasuredWidth();
+
+        textView.measure(wMeasureSpec, hMeasureSpec);
+        assertEquals(measuredWidth, textView.getMeasuredWidth());
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
