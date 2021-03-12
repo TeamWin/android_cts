@@ -1418,6 +1418,7 @@ public class WindowManagerState {
         String state;
         boolean visible;
         boolean frontOfTask;
+        boolean inSizeCompatMode;
         int procId = -1;
         public boolean translucent;
         ActivityTask task;
@@ -1441,6 +1442,10 @@ public class WindowManagerState {
 
         public String getState() {
             return state;
+        }
+
+        public boolean inSizeCompatMode() {
+            return inSizeCompatMode;
         }
     }
 
@@ -1705,7 +1710,7 @@ public class WindowManagerState {
         private Rect mSurfaceInsets = new Rect();
         private Rect mGivenContentInsets = new Rect();
         private Rect mCrop = new Rect();
-        private boolean mInSizeCompatMode;
+        private boolean mHasCompatScale;
         private float mGlobalScale;
         private int mRequestedWidth;
         private int mRequestedHeight;
@@ -1748,7 +1753,7 @@ public class WindowManagerState {
                 mWindowType = 0;
             }
             collectDescendantsOfType(WindowState.class, this, mSubWindows);
-            mInSizeCompatMode = proto.inSizeCompatMode;
+            mHasCompatScale = proto.hasCompatScale;
             mGlobalScale = proto.globalScale;
             mRequestedWidth = proto.requestedWidth;
             mRequestedHeight = proto.requestedHeight;
@@ -1810,8 +1815,8 @@ public class WindowManagerState {
             return mType;
         }
 
-        public boolean isInSizeCompatMode() {
-            return mInSizeCompatMode;
+        public boolean hasCompatScale() {
+            return mHasCompatScale;
         }
 
         public float getGlobalScale() {
