@@ -132,6 +132,17 @@ public class Components extends ComponentsBase {
     public static final ComponentName SINGLE_TOP_ACTIVITY = component("SingleTopActivity");
     public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
+    public static final ComponentName DISABLE_PREVIEW_ACTIVITY =
+            component("DisablePreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedAttrNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedAttrRemoveAttrNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedWithDialogNoPreviewActivity");
+
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
     public static final ComponentName TOAST_ACTIVITY = component("ToastActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
