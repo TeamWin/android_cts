@@ -19,8 +19,10 @@ package android.net.wifi.cts.app;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.ConnectivityManager;
+import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
 import android.net.TransportInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -28,6 +30,8 @@ import android.os.Bundle;
 import android.util.Log;
 
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An activity that retrieves Transport info and returns status.
@@ -35,46 +39,73 @@ import java.util.Objects;
 public class RetrieveTransportInfoAndReturnStatusActivity extends Activity {
     private static final String TAG = "RetrieveTransportInfoAndReturnStatusActivity";
     private static final String STATUS_EXTRA = "android.net.wifi.cts.app.extra.STATUS";
+    private static final int DURATION_NETWORK_CONNECTION_MILLIS = 60_000;
+
+    private static class TestNetworkCallback extends ConnectivityManager.NetworkCallback {
+        private final CountDownLatch mCountDownLatch;
+        public boolean onAvailableCalled = false;
+        public NetworkCapabilities networkCapabilities;
+
+        TestNetworkCallback(CountDownLatch countDownLatch) {
+            super(ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO);
+            mCountDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void onAvailable(Network network) {
+            onAvailableCalled = true;
+        }
+
+        @Override
+        public void onCapabilitiesChanged(Network network,
+                NetworkCapabilities networkCapabilities) {
+            if (onAvailableCalled) {
+                this.networkCapabilities = networkCapabilities;
+                mCountDownLatch.countDown();
+            }
+        }
+    }
 
     public static boolean canRetrieveSsidFromTransportInfo(
             String logTag, ConnectivityManager connectivityManager) {
-        // Assumes wifi network is the default route.
-        Network[] networks = connectivityManager.getAllNetworks();
-        if (networks == null || networks.length == 0) {
-            Log.e(logTag, " Failed to get any networks");
-            return false;
-        }
-        NetworkCapabilities wifiNetworkCapabilities = null;
-        for (Network network : networks) {
-            NetworkCapabilities networkCapabilities =
-                    connectivityManager.getNetworkCapabilities(network);
-            if (networkCapabilities == null) {
-                Log.e(logTag, "Failed to get network capabilities for network: " + network);
-                continue;
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
+        try {
+            // File a callback for wifi network.
+            connectivityManager.registerNetworkCallback(
+                    new NetworkRequest.Builder()
+                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                            .build(),
+                    testNetworkCallback);
+            // Wait for callback.
+            if (!countDownLatch.await(
+                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)) {
+                Log.e(logTag, "Timed out waiting for wifi network");
+                return false;
             }
-            if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
-                wifiNetworkCapabilities = networkCapabilities;
-                break;
+            if (!testNetworkCallback.onAvailableCalled) {
+                Log.e(logTag, "Failed to get wifi network onAvailable");
+                return false;
             }
-        }
-        if (wifiNetworkCapabilities == null) {
-            Log.e(logTag, "Failed to get network capabilities for wifi network."
-                    + " Available networks: " + networks);
+            TransportInfo transportInfo =
+                    testNetworkCallback.networkCapabilities.getTransportInfo();
+            if (!(transportInfo instanceof WifiInfo)) {
+                Log.e(logTag, "Failed to retrieve WifiInfo");
+                return false;
+            }
+            WifiInfo wifiInfo = (WifiInfo) transportInfo;
+            boolean succeeded = !Objects.equals(wifiInfo.getSSID(), WifiManager.UNKNOWN_SSID);
+            if (succeeded) {
+                Log.v(logTag, "SSID from transport info retrieval succeeded");
+            } else {
+                Log.v(logTag, "Failed to retrieve SSID from transport info");
+            }
+            return succeeded;
+        } catch (InterruptedException e) {
             return false;
+        } finally {
+            connectivityManager.unregisterNetworkCallback(testNetworkCallback);
         }
-        TransportInfo transportInfo = wifiNetworkCapabilities.getTransportInfo();
-        if (!(transportInfo instanceof WifiInfo)) {
-            Log.e(logTag, " Failed to retrieve WifiInfo");
-            return false;
-        }
-        WifiInfo wifiInfo = (WifiInfo) transportInfo;
-        boolean succeeded = !Objects.equals(wifiInfo.getSSID(), WifiManager.UNKNOWN_SSID);
-        if (succeeded) {
-            Log.v(logTag, "SSID from transport info retrieval succeeded");
-        } else {
-            Log.v(logTag, "Failed to retrieve SSID from transport info");
-        }
-        return succeeded;
     }
 
     @Override
