@@ -222,6 +222,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
         File systemSepolicyCilFile = File.createTempFile("plat_sepolicy", ".cil");
         systemSepolicyCilFile.deleteOnExit();
+        File fileContextsFile = File.createTempFile("file_contexts", ".txt");
+        fileContextsFile.deleteOnExit();
 
         assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
 
@@ -229,6 +231,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             secilc.getAbsolutePath(),
             "-m", "-M", "true", "-c", "30",
             "-o", builtPolicyFile.getAbsolutePath(),
+	    "-f", fileContextsFile.getAbsolutePath(),
             systemSepolicyCilFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
