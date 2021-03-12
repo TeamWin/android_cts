@@ -29,6 +29,7 @@ import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.DiagnosticCall;
 import android.telecom.TelecomManager;
+import android.telephony.TelephonyManager;
 
 import java.util.concurrent.TimeUnit;
 
@@ -197,7 +198,7 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         message.putInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_TYPE,
                 DiagnosticCall.MESSAGE_CALL_NETWORK_TYPE);
         message.putInt(Connection.EXTRA_DEVICE_TO_DEVICE_MESSAGE_VALUE,
-                DiagnosticCall.NETWORK_TYPE_NR);
+                TelephonyManager.NETWORK_TYPE_LTE);
         mConnection.sendConnectionEvent(Connection.EVENT_DEVICE_TO_DEVICE_MESSAGE, message);
 
         CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
@@ -205,7 +206,7 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
                 TimeUnit.MILLISECONDS);
         assertEquals(DiagnosticCall.MESSAGE_CALL_NETWORK_TYPE,
                 diagnosticCall.getMessageType());
-        assertEquals(DiagnosticCall.NETWORK_TYPE_NR,
+        assertEquals(TelephonyManager.NETWORK_TYPE_LTE,
                 diagnosticCall.getMessageValue());
     }
 
