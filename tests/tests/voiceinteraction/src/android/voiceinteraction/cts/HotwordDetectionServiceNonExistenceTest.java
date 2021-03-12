@@ -20,50 +20,47 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
-import android.service.voice.VoiceInteractionService;
 import android.voiceinteraction.common.Utils;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+/**
+ * Tests for using the VoiceInteractionService without a basic HotwordDetectionService.
+ */
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
-public final class HotwordDetectionServiceTest extends AbstractVoiceInteractionTestCase {
-    static final String TAG = "HotwordDetectionServiceTest";
+public final class HotwordDetectionServiceNonExistenceTest
+        extends AbstractVoiceInteractionTestCase {
+    static final String TAG = "HotwordDetectionServiceNonExistenceTest";
 
-    private static final int TIMEOUT_MS = 10 * 1000;
-
-    private TestVoiceInteractionServiceActivity mTestActivity;
+    private static final int TIMEOUT_MS = 5 * 1000;
 
     @Rule
-    public final ActivityTestRule<TestVoiceInteractionServiceActivity> mActivityTestRule =
-            new ActivityTestRule<>(TestVoiceInteractionServiceActivity.class);
-
-    @Before
-    public void setup() throws Exception {
-        mTestActivity = mActivityTestRule.getActivity();
-    }
+    public final ActivityScenarioRule<TestVoiceInteractionServiceActivity> mActivityTestRule =
+            new ActivityScenarioRule<>(TestVoiceInteractionServiceActivity.class);
 
     @Test
-    public void testSetHotwordDetectionConfig_noHotwordDetectionComponentName_returnFailure()
+    public void testHotwordDetectionService_noHotwordDetectionComponentName_triggerFailure()
             throws Throwable {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
-                Utils.BROADCAST_CONFIG_RESULT_INTENT);
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
         receiver.register();
 
-        mTestActivity.hotwordDetectionConfigTest(Utils.HOTWORD_DETECTION_SERVICE_NONE);
+        mActivityTestRule.getScenario().onActivity(activity -> {
+            activity.triggerHotwordDetectionServiceTest(Utils.HOTWORD_DETECTION_SERVICE_NONE);
+        });
 
         final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
         assertThat(intent).isNotNull();
-        assertThat(intent.getIntExtra(Utils.KEY_CONFIG_RESULT, -1)).isEqualTo(
-                VoiceInteractionService.HOTWORD_CONFIG_FAILURE);
+        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE);
 
         receiver.unregisterQuietly();
     }

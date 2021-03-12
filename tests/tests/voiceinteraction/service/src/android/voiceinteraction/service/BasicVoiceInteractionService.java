@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,27 @@
 
 package android.voiceinteraction.service;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.VoiceInteractionService;
-import android.service.voice.VoiceInteractionSession;
+import android.system.ErrnoException;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
-import java.util.Collections;
+import java.nio.ByteBuffer;
 import java.util.Locale;
-import java.util.Set;
 
-public class MainInteractionService extends VoiceInteractionService {
-    static final String TAG = "MainInteractionService";
-    private Intent mIntent;
+/**
+ * This service included a basic HotwordDetectionService for testing.
+ */
+public class BasicVoiceInteractionService extends VoiceInteractionService {
+    // TODO: (b/182236586) Refactor the voice interaction service logic
+    static final String TAG = "BasicVoiceInteractionService";
+
+    public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[] {1, 2, 3};
+
     private boolean mReady = false;
 
     @Override
@@ -44,62 +48,28 @@ public class MainInteractionService extends VoiceInteractionService {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.i(TAG, "onStartCommand received");
-        mIntent = intent;
 
-        if (mIntent == null || !mReady) {
+        if (intent == null || !mReady) {
             Log.wtf(TAG, "Can't start because either intent is null or onReady() "
-                    + "is not called yet. mIntent = " + mIntent + ", mReady = " + mReady);
+                    + "is not called yet. intent = " + intent + ", mReady = " + mReady);
             return START_NOT_STICKY;
         }
 
-        final int testEvent = mIntent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
-        if (testEvent == Utils.VOICE_INTERACTION_SERVICE_NORMAL_TEST) {
-            maybeStart();
-        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
+        final int testEvent = intent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
+        if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
             callCreateAlwaysOnHotwordDetector();
         }
+
         return START_NOT_STICKY;
-    }
-
-    private void maybeStart() {
-        Bundle args = mIntent.getExtras();
-        final String className = (args != null)
-                ? args.getString(Utils.DIRECT_ACTIONS_KEY_CLASS) : null;
-        if (className == null) {
-            Log.i(TAG, "Yay! about to start session with TestApp");
-            if (isActiveService(this, new ComponentName(this, getClass()))) {
-                // Call to verify onGetSupportedVoiceActions is available.
-                onGetSupportedVoiceActions(Collections.emptySet());
-                args = new Bundle();
-                Intent intent = new Intent()
-                        .setAction(Intent.ACTION_VIEW)
-                        .addCategory(Intent.CATEGORY_VOICE)
-                        .addCategory(Intent.CATEGORY_BROWSABLE)
-                        .setData(Uri.parse("https://android.voiceinteraction.testapp"
-                                + "/TestApp"));
-                args.putParcelable("intent", intent);
-                Log.v(TAG, "showSession(): " + args);
-                showSession(args, 0);
-            } else {
-                Log.wtf(TAG, "**** Not starting MainInteractionService because" +
-                        " it is not set as the current voice interaction service");
-            }
-        } else {
-            showSession(args, VoiceInteractionSession.SHOW_WITH_ASSIST);
-        }
-    }
-
-    @Override
-    public Set<String> onGetSupportedVoiceActions(Set<String> voiceActions) {
-        Log.v(TAG, "onGetSupportedVoiceActions " + voiceActions);
-        return super.onGetSupportedVoiceActions(voiceActions);
     }
 
     private void callCreateAlwaysOnHotwordDetector() {
         Log.i(TAG, "callCreateAlwaysOnHotwordDetector()");
         try {
             createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Google",
-                    Locale.forLanguageTag("en-US"), /* options */ null, /* sharedMemory */ null,
+                    Locale.forLanguageTag("en-US"),
+                    createFakeBundleData(),
+                    createFakeSharedMemoryData(),
                     new AlwaysOnHotwordDetector.Callback() {
                         @Override
                         public void onAvailabilityChanged(int status) {
@@ -140,5 +110,24 @@ public class MainInteractionService extends VoiceInteractionService {
                 .putExtra(Utils.KEY_TEST_RESULT, result);
         Log.d(TAG, "broadcast intent = " + intent + ", result = " + result);
         sendBroadcast(intent);
+    }
+
+    private SharedMemory createFakeSharedMemoryData() {
+        try {
+            SharedMemory sharedMemory = SharedMemory.create("SharedMemory", 3);
+            ByteBuffer byteBuffer = sharedMemory.mapReadWrite();
+            byteBuffer.put(FAKE_BYTE_ARRAY_DATA);
+            return sharedMemory;
+        } catch (ErrnoException e) {
+            Log.w(TAG, "createFakeSharedMemoryData ErrnoException : " + e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private Bundle createFakeBundleData() {
+        // TODO : Add more data for testing
+        Bundle bundle = new Bundle();
+        bundle.putByteArray("fakeData", FAKE_BYTE_ARRAY_DATA);
+        return bundle;
     }
 }
