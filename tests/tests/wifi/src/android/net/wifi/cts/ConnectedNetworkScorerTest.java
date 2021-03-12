@@ -71,6 +71,7 @@ import org.junit.runner.RunWith;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -599,7 +600,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     }
 
     private void testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(
-            int restrictedNetworkCapability) throws Exception {
+            Set<Integer> restrictedNetworkCapabilities) throws Exception {
         setWifiConnectedNetworkScorerAndInitiateConnectToSpecifierOrRestrictedSuggestion(
                 (testNetwork, executorService) -> {
                     // Connect using wifi network suggestion.
@@ -607,16 +608,15 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             TestHelper
                                     .createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
                                     testNetwork);
-                    if (restrictedNetworkCapability == NET_CAPABILITY_OEM_PAID) {
+                    if (restrictedNetworkCapabilities.contains(NET_CAPABILITY_OEM_PAID)) {
                         suggestionBuilder.setOemPaid(true);
-                    } else if (restrictedNetworkCapability == NET_CAPABILITY_OEM_PRIVATE) {
+                    }
+                    if (restrictedNetworkCapabilities.contains(NET_CAPABILITY_OEM_PRIVATE)) {
                         suggestionBuilder.setOemPrivate(true);
-                    } else {
-                        fail("Unexpected capability: " + restrictedNetworkCapability);
                     }
                     return mTestHelper.testConnectionFlowWithSuggestionWithShellIdentity(
                             testNetwork, suggestionBuilder.build(), executorService,
-                            restrictedNetworkCapability);
+                            restrictedNetworkCapabilities);
                 }
         );
     }
@@ -630,7 +630,8 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testSetWifiConnectedNetworkScorerForOemPaidSuggestionConnection() throws Exception {
-        testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(NET_CAPABILITY_OEM_PAID);
+        testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(
+                Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -644,6 +645,6 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     public void testSetWifiConnectedNetworkScorerForOemPrivateSuggestionConnection()
             throws Exception {
         testSetWifiConnectedNetworkScorerForRestrictedSuggestionConnection(
-                NET_CAPABILITY_OEM_PRIVATE);
+                Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 }
