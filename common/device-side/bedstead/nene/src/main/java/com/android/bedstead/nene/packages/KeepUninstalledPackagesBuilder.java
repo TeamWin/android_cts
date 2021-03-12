@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
+import androidx.annotation.CheckResult;
 import androidx.annotation.RequiresApi;
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -77,6 +78,7 @@ public final class KeepUninstalledPackagesBuilder {
     /**
      * Add a package to the list of those which will not be cleaned up.
      */
+    @CheckResult
     public KeepUninstalledPackagesBuilder add(PackageReference pkg) {
         mPackages.add(pkg.packageName());
         return this;
@@ -85,6 +87,7 @@ public final class KeepUninstalledPackagesBuilder {
     /**
      * Add a collection of packages to the list of those which will not be cleaned up.
      */
+    @CheckResult
     public KeepUninstalledPackagesBuilder add(Collection<PackageReference> packages) {
         for (PackageReference pkg : packages) {
             add(pkg);

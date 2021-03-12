@@ -815,20 +815,15 @@ public class KeyStoreTest extends TestCase {
             try {
                 keyStore.setKeyEntry(null, null, null, null);
                 fail(keyStore.getType());
-            } catch (Exception e) {
-                if (e.getClass() != NullPointerException.class
-                    && e.getClass() != KeyStoreException.class) {
-                    throw e;
-                }
+            } catch (NullPointerException | KeyStoreException expected) {
+              // ignored
             }
+
             try {
                 keyStore.setKeyEntry(null, null, PASSWORD_KEY, null);
                 fail(keyStore.getType());
-            } catch (Exception e) {
-                if (e.getClass() != NullPointerException.class
-                    && e.getClass() != KeyStoreException.class) {
-                    throw e;
-                }
+            } catch (NullPointerException | KeyStoreException expected) {
+              // ignored
             }
             try {
                 keyStore.setKeyEntry(ALIAS_PRIVATE,

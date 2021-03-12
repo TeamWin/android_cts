@@ -1238,6 +1238,61 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
         }
     }
 
+    /**
+     * Test that the framework handles a device ignoring
+     * events for the onSessionLostStateListener after
+     * clearOnSessionLostStateListener is called.
+     *
+     * Expected behavior: OnSessionLostState is not called with
+     * the sessionId
+     */
+    @Presubmit
+    public void testClearOnSessionLostStateListener() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        boolean gotException = false;
+        mLostStateReceived = false;
+
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc",
+                CLEARKEY_SCHEME_UUID, MediaDrm.KEY_TYPE_STREAMING);
+
+        mDrm.setPropertyString("drmErrorTest", "lostState");
+        mSessionId = openSession(drm);
+
+        // Simulates session lost state here, event is sent from closeSession.
+        // The session lost state should not arrive in the listener
+        // after clearOnSessionLostStateListener() is called.
+        try {
+            try {
+                mDrm.clearOnSessionLostStateListener();
+                Thread.sleep(2000);
+                closeSession(drm, mSessionId);
+            } catch (MediaDrmStateException e) {
+                gotException = true; // expected for lost state
+            }
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mLostStateReceived; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (mLostStateReceived) {
+                throw new Error("Should not receive callback for OnSessionLostStateListener");
+            }
+        } catch(Exception e) {
+            throw new Error("Unexpected exception ", e);
+        } finally {
+            stopDrm(drm);
+        }
+        if (!gotException) {
+            throw new Error("Didn't receive expected MediaDrmStateException");
+        }
+    }
+
     @Presubmit
     public void testIsCryptoSchemeSupportedWithSecurityLevel() {
         if (watchHasNoClearkeySupport()) {

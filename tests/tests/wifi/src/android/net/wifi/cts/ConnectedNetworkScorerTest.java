@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.Manifest.permission.CONNECTIVITY_INTERNAL;
 import static android.Manifest.permission.NETWORK_SETTINGS;
+import static android.Manifest.permission.READ_WIFI_CREDENTIAL;
 import static android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
@@ -504,7 +505,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
          */
         ConnectivityManager.NetworkCallback initiateConnection(
                 @NonNull WifiConfiguration testNetwork,
-                @NonNull ScheduledExecutorService executorService);
+                @NonNull ScheduledExecutorService executorService) throws Exception;
     }
 
     private void setWifiConnectedNetworkScorerAndInitiateConnectToSpecifierOrRestrictedSuggestion(
@@ -518,13 +519,14 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         List<WifiConfiguration> savedNetworks = null;
         try {
             uiAutomation.adoptShellPermissionIdentity(
-                    NETWORK_SETTINGS, WIFI_UPDATE_USABILITY_STATS_SCORE, CONNECTIVITY_INTERNAL);
+                    NETWORK_SETTINGS, WIFI_UPDATE_USABILITY_STATS_SCORE, CONNECTIVITY_INTERNAL,
+                    READ_WIFI_CREDENTIAL);
 
             // Clear any external scorer already active on the device.
             mWifiManager.clearWifiConnectedNetworkScorer();
             Thread.sleep(500);
 
-            savedNetworks = mWifiManager.getConfiguredNetworks();
+            savedNetworks = mWifiManager.getPrivilegedConfiguredNetworks();
             WifiConfiguration testNetwork =
                     TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
                             .get(0);
