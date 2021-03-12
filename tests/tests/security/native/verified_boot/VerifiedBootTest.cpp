@@ -57,6 +57,12 @@ TEST(VerifiedBootTest, avbHashtreeNotUsingSha1) {
       continue;
     }
 
+    if (android::base::EqualsIgnoreCase(entry.fs_type, "emmc")) {
+      GTEST_LOG_(INFO) << entry.mount_point << " has emmc fs_type, skipping"
+          << " hashtree algorithm verification";
+      continue;
+    }
+
     GTEST_LOG_(ERROR) << "partition enabled verity " << entry.mount_point;
 
     // The verity sysprop use "system" as the partition name in the system as
