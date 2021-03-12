@@ -176,12 +176,11 @@ public class UserReferenceTest {
 
         UserReference user = mTestApis.users().createUser().createAndStart();
         try {
+            mTestApis.packages().find(sContext.getPackageName()).install(user);
+            user.switchTo();
+
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 // for INTERACT_ACROSS_USERS
-
-                mTestApis.packages().find(sContext.getPackageName()).install(user);
-                user.switchTo();
-
                 Intent intent = new Intent();
                 intent.setPackage(sContext.getPackageName());
                 intent.setClassName(sContext.getPackageName(), TEST_ACTIVITY_NAME);
