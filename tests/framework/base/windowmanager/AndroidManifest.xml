@@ -313,6 +313,12 @@
                   android:turnScreenOn="true"
                   android:showWhenLocked="true"/>
 
+        <activity android:name="android.server.wm.RoundedCornerTests$TestActivity"
+                  android:configChanges="orientation|screenSize"
+                  android:screenOrientation="nosensor"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"/>
+
         <activity android:name="android.server.wm.WindowInsetsAnimationSynchronicityTests$TestActivity"
              android:turnScreenOn="true"
              android:showWhenLocked="true"/>
