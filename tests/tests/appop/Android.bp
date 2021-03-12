@@ -37,6 +37,25 @@ cc_test_library {
     ],
 }
 
+cc_test_library {
+    name: "libNDKCtsAppOpsTestCases_jni",
+
+    stl: "libc++_static",
+    gtest: false,
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wno-unused-parameter",
+    ],
+
+    srcs: ["ndk-jni/**/*.cpp"],
+
+    header_libs: ["jni_headers"],
+    shared_libs: [
+        "libaaudio",
+    ],
+}
+
 android_test {
     name: "CtsAppOpsTestCases",
 
@@ -91,6 +110,7 @@ android_test {
         "libziparchive",
         "libz",
         "libCtsAppOpsTestCases_jni",
+        "libNDKCtsAppOpsTestCases_jni",
     ],
 
     test_suites: [
