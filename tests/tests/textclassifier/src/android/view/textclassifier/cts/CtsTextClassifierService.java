@@ -34,6 +34,7 @@ import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
+import androidx.core.os.BuildCompat;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public final class CtsTextClassifierService extends TextClassifierService {
         handleRequest(sessionId, "onSuggestSelection");
         TextSelection.Builder textSelection =
                 new TextSelection.Builder(request.getStartIndex(), request.getEndIndex());
-        if (request.shouldIncludeTextClassification()) {
+        if (BuildCompat.isAtLeastS() && request.shouldIncludeTextClassification()) {
             textSelection.setTextClassification(createTextClassification());
         }
         callback.onSuccess(textSelection.build());
