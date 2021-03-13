@@ -51,6 +51,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -240,7 +241,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PAID);
+                Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Ensure that there are 2 wifi connections available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
@@ -262,7 +263,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PAID);
+                Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Now trigger internet connectivity.
         mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
@@ -292,7 +293,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PRIVATE);
+                Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Ensure that there are 2 wifi connections available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(2);
@@ -314,7 +315,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PRIVATE);
+                Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Now trigger internet connectivity.
         mNetworkCallback = mTestHelper.testConnectionFlowWithConnect(
@@ -346,7 +347,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PRIVATE);
+                Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Ensure that there is only 1 connection available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
@@ -374,7 +375,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PAID);
+                Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Ensure that there is only 1 connection available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
@@ -402,7 +403,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PAID);
+                Set.of(NET_CAPABILITY_OEM_PAID));
 
         // Ensure that there is only 1 connection available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
@@ -430,7 +431,7 @@ public class MultiStaConcurrencyRestrictedWifiNetworkSuggestionTest extends Wifi
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
                 mTestNetworkForRestrictedConnection, suggestion, mExecutorService,
-                NET_CAPABILITY_OEM_PRIVATE);
+                Set.of(NET_CAPABILITY_OEM_PRIVATE));
 
         // Ensure that there is only 1 connection available for apps.
         assertThat(mTestHelper.getNumWifiConnections()).isEqualTo(1);
