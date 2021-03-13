@@ -128,7 +128,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityL
             // Asserts isEnabled() status.
             assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
-            activity.finish();
+            mUiBot.waitForWindowChange(() -> activity.finish());
         }
         return SystemClock.elapsedRealtime() - before;
     }
