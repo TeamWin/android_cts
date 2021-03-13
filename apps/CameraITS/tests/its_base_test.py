@@ -166,7 +166,7 @@ class ItsBaseTest(base_test.BaseTestClass):
     Returns:
       Array with camera id and hidden_physical camera id.
     """
-    camera_id_combo = self.camera.split(':')
+    camera_id_combo = self.camera.split(its_session_utils.SUB_CAMERA_SEPARATOR)
     return camera_id_combo
 
   def determine_not_yet_mandated_tests(self, device_id, scene):
