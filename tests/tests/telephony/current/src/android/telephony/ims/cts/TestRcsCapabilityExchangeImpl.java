@@ -91,14 +91,6 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
         }
     }
 
-    public void subscribeForCapabilities(List<Uri> uris, SubscribeResponseCallback cb) {
-        try {
-            mSubscribeOperation.execute(uris, cb);
-        } catch (ImsException e) {
-            Log.w(LOG_TAG, "subscribeForCapabilities exception: " + e);
-        }
-    }
-
     @Override
     public void subscribeForCapabilities(Collection<Uri> uris, SubscribeResponseCallback cb) {
         try {
