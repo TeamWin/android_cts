@@ -90,6 +90,12 @@ public class BlockingBroadcastReceiver extends BroadcastReceiver {
         }
     }
 
+    public void registerForAllUsers() {
+        for (String expectedAction : mExpectedActions) {
+            mContext.registerReceiverForAllUsers(this, new IntentFilter(expectedAction), /* broadcastPermission= */ null, /* scheduler= */ null);
+        }
+    }
+
     /**
      * Wait until the broadcast.
      *

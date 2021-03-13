@@ -23,6 +23,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
 
+/**
+ * Uses this activity to trigger different services for testing hotword detection service related
+ * functionality.
+ *
+ * It will trigger the voice interaction service by the service type and also bring the test event
+ * into it.
+ */
 public class CtsVoiceInteractionMainActivity extends Activity {
     static final String TAG = "CtsVoiceInteractionMainActivity";
 
@@ -35,6 +42,9 @@ public class CtsVoiceInteractionMainActivity extends Activity {
         Intent serviceIntent = new Intent();
         if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_NONE) {
             serviceIntent.setComponent(new ComponentName(this, MainInteractionService.class));
+        } else if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_BASIC) {
+            serviceIntent.setComponent(new ComponentName(this,
+                    BasicVoiceInteractionService.class));
         } else {
             Log.w(TAG, "Never here");
             finish();

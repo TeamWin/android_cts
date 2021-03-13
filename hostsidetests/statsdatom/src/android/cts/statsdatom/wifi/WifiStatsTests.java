@@ -91,7 +91,7 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWifiLockStateChanged().getState().getNumber());
 
         for (StatsLog.EventMetricData event : data) {
@@ -120,7 +120,7 @@ public class WifiStatsTests extends DeviceTestCase implements IBuildReceiver {
         List<Set<Integer>> stateSet = Arrays.asList(lockOn, lockOff);
 
         // Assert that the events happened in the expected order.
-        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_LONG,
+        AtomTestUtils.assertStatesOccurred(stateSet, data, AtomTestUtils.WAIT_TIME_SHORT,
                 atom -> atom.getWifiLockStateChanged().getState().getNumber());
 
         for (StatsLog.EventMetricData event : data) {

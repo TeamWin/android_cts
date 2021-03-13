@@ -20,6 +20,7 @@ package android.os.cts.powerexemption;
 import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
+import android.os.PowerExemptionManager;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -31,8 +32,15 @@ import org.junit.runner.RunWith;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PowerExemptionTest {
+
     @Test
-    public void testPowerExemptionManager() {
+    public void testPowerExemptionManager_WithClass() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        assertNotNull(context.getSystemService(PowerExemptionManager.class));
+    }
+
+    @Test
+    public void testPowerExemptionManager_WithContextString() {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         assertNotNull(context.getSystemService(Context.POWER_EXEMPTION_SERVICE));
     }

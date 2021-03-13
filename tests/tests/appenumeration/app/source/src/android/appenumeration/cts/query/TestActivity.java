@@ -47,11 +47,13 @@ import android.appenumeration.cts.MissingBroadcastException;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.content.SyncAdapterType;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -60,6 +62,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.os.PatternMatcher;
 import android.os.RemoteCallback;
 import android.util.SparseArray;
@@ -179,6 +182,8 @@ public class TestActivity extends Activity {
             } else if (Constants.ACTION_BIND_SERVICE.equals(action)) {
                 final String packageName = intent.getStringExtra(Intent.EXTRA_PACKAGE_NAME);
                 bindService(remoteCallback, packageName);
+            } else if (Constants.ACTION_GET_SYNCADAPTER_TYPES.equals(action)) {
+                sendSyncAdapterTypes(remoteCallback);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -340,6 +345,23 @@ public class TestActivity extends Activity {
         final boolean signatureResult = getPackageManager().hasSigningCertificate(uid, cert, type);
         final Bundle result = new Bundle();
         result.putBoolean(EXTRA_RETURN_RESULT, signatureResult);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    /**
+     * Instead of sending a list of package names, this function sends a List of
+     * {@link SyncAdapterType}, since the {@link SyncAdapterType#getPackageName()} is a test api
+     * which can only be invoked in the instrumentation.
+     */
+    private void sendSyncAdapterTypes(RemoteCallback remoteCallback) {
+        final SyncAdapterType[] types = ContentResolver.getSyncAdapterTypes();
+        final ArrayList<Parcelable> parcelables = new ArrayList<>();
+        for (SyncAdapterType type : types) {
+            parcelables.add(type);
+        }
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
         remoteCallback.sendResult(result);
         finish();
     }

@@ -17,6 +17,7 @@
 package android.packageinstaller.install.cts
 
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_MUTABLE
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -32,18 +33,17 @@ import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
 import android.content.pm.PackageManager
 import android.support.test.uiautomator.By
-import androidx.test.InstrumentationRegistry
-import androidx.test.rule.ActivityTestRule
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
+import androidx.test.InstrumentationRegistry
+import androidx.test.rule.ActivityTestRule
 import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Rule
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -158,7 +158,7 @@ open class PackageInstallerTestBase {
         // Commit session
         val dialog = FutureResultActivity.doAndAwaitStart {
             val pendingIntent = PendingIntent.getBroadcast(context, 0, Intent(INSTALL_ACTION_CB),
-                    FLAG_UPDATE_CURRENT)
+                    FLAG_UPDATE_CURRENT or FLAG_MUTABLE)
             session.commit(pendingIntent.intentSender)
         }
 
