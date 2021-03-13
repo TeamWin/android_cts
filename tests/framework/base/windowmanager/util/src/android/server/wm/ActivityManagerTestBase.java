@@ -1016,8 +1016,12 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsBlur() {
-            return SystemProperties.get("ro.surface_flinger.supports_background_blur", "default")
-                                   .equals("1");
+        return SystemProperties.get("ro.surface_flinger.supports_background_blur", "default")
+                .equals("1");
+    }
+
+    protected boolean usesSkiaRenderEngine() {
+        return SystemProperties.get("debug.renderengine.backend", "default").contains("skia");
     }
 
     protected boolean isWatch() {

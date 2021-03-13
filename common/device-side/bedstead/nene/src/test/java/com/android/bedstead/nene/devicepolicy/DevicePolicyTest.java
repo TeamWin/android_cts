@@ -281,4 +281,24 @@ public class DevicePolicyTest {
         // TODO(scottjonathan): Encode this assumption in the annotations when Harrier supports
         assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
     }
+
+    @Test
+    public void profileOwner_autoclose_removesProfileOwner() {
+        try (ProfileOwner profileOwner =
+                     sTestApis.devicePolicy().setProfileOwner(sUser, DPC_COMPONENT_NAME)) {
+            // We intentionally don't do anything here, just rely on the auto-close behaviour
+        }
+
+        assertThat(sTestApis.devicePolicy().getProfileOwner(sUser)).isNull();
+    }
+
+    @Test
+    public void deviceOwner_autoclose_removesDeviceOwner() {
+        try (DeviceOwner deviceOwner =
+                     sTestApis.devicePolicy().setDeviceOwner(sUser, DPC_COMPONENT_NAME)) {
+            // We intentionally don't do anything here, just rely on the auto-close behaviour
+        }
+
+        assertThat(sTestApis.devicePolicy().getDeviceOwner()).isNull();
+    }
 }

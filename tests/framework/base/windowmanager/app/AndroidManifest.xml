@@ -360,6 +360,24 @@
              android:theme="@style/SplashscreenTheme"
              android:exported="true"/>
 
+        <activity android:name=".DisablePreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedNoPreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedAttrNoPreviewActivity"
+             android:showWhenLocked="true"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedAttrRemoveAttrNoPreviewActivity"
+             android:showWhenLocked="true"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+        <activity android:name=".ShowWhenLockedWithDialogNoPreviewActivity"
+             android:theme="@style/NoPreview"
+             android:exported="true"/>
+
         <activity android:name=".NoHistoryActivity"
              android:noHistory="true"
              android:exported="true"/>
@@ -565,11 +583,18 @@
              android:launchMode="singleTop"
              android:exported="true"/>
         <activity android:name=".HideOverlayWindowsActivity" android:exported="true"/>
+        <activity android:name=".BackgroundImageActivity"
+             android:theme="@style/BackgroundImage"
+             android:exported="true"/>
         <activity android:name=".BlurActivity"
              android:exported="true"
-             android:theme="@style/Theme.Tinted.Translucent.Dialog"/>
-        <activity android:name=".BackgroundImageActivity"
-             android:exported="true"/>
+             android:theme="@style/TranslucentDialog"/>
+        <activity android:name=".BlurAttributesActivity"
+             android:exported="true"
+             android:theme="@style/BlurryDialog"/>
+        <activity android:name=".BadBlurActivity"
+             android:exported="true"
+             android:theme="@style/BadBlurryDialog"/>
 
         <activity android:name=".HandleSplashScreenExitActivity"
                   android:theme="@style/ShowBrandingTheme"

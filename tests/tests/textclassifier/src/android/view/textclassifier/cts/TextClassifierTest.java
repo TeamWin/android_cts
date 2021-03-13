@@ -40,6 +40,7 @@ import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
+import androidx.core.os.BuildCompat;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
 
@@ -302,7 +303,9 @@ public class TextClassifierTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
-        assertThat(selection.getTextClassification()).isNull();
+        if (BuildCompat.isAtLeastS()) {
+            assertThat(selection.getTextClassification()).isNull();
+        }
     }
 
     private static void assertValidResult(TextClassification classification) {
