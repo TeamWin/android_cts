@@ -185,6 +185,17 @@ public class UserTest {
         assertThat(user.parent()).isEqualTo(parentUser);
     }
 
+    @Test
+    public void autoclose_removesUser() {
+        int numUsers = mTestApis.users().all().size();
+
+        try (UserReference user = mTestApis.users().createUser().create()) {
+            // We intentionally don't do anything here, just rely on the auto-close behaviour
+        }
+
+        assertThat(mTestApis.users().all()).hasSize(numUsers);
+    }
+
     private User.MutableUser createValidMutableUser() {
         User.MutableUser mutableUser = new User.MutableUser();
         mutableUser.mId = 1;

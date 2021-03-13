@@ -132,6 +132,17 @@ public class Components extends ComponentsBase {
     public static final ComponentName SINGLE_TOP_ACTIVITY = component("SingleTopActivity");
     public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
+    public static final ComponentName DISABLE_PREVIEW_ACTIVITY =
+            component("DisablePreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedAttrNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedAttrRemoveAttrNoPreviewActivity");
+    public static final ComponentName SHOW_WHEN_LOCKED_WITH_DIALOG_NO_PREVIEW_ACTIVITY =
+            component("ShowWhenLockedWithDialogNoPreviewActivity");
+
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
     public static final ComponentName TOAST_ACTIVITY = component("ToastActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
@@ -235,11 +246,17 @@ public class Components extends ComponentsBase {
     public static final ComponentName OVERLAY_TEST_SERVICE =
             component("OverlayTestService");
 
+    public static final ComponentName BACKGROUND_IMAGE_ACTIVITY =
+            component("BackgroundImageActivity");
+
     public static final ComponentName BLUR_ACTIVITY =
             component("BlurActivity");
 
-    public static final ComponentName BACKGROUND_IMAGE_ACTIVITY =
-            component("BackgroundImageActivity");
+    public static final ComponentName BLUR_ATTRIBUTES_ACTIVITY =
+            component("BlurAttributesActivity");
+
+    public static final ComponentName BAD_BLUR_ACTIVITY =
+            component("BadBlurActivity");
 
     /**
      * Action and extra key constants for {@link #INPUT_METHOD_TEST_ACTIVITY}.
@@ -420,8 +437,9 @@ public class Components extends ComponentsBase {
      * Extra constants for {@link android.server.wm.app.BlurActivity}.
      */
     public static class BlurActivity {
+        public static final String EXTRA_NO_BLUR_BACKGROUND_COLOR = "no_blur_background_color";
         public static final String EXTRA_BACKGROUND_BLUR_RADIUS_PX = "background_blur_radius";
-        public static final String ACTION_FINISH = "android.server.wm.app.BlurActivity.finish";
+        public static final String EXTRA_BLUR_BEHIND_RADIUS_PX = "blur_behind_radius";
     }
 
     /**

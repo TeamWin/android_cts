@@ -16,15 +16,18 @@
 
 package android.server.wm.app;
 
+import static android.view.WindowInsets.Type.systemBars;
+
 import android.app.Activity;
 import android.os.Bundle;
-
 
 public class BackgroundImageActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getWindow().setBackgroundDrawable(getResources().getDrawable(R.drawable.image));
+        setContentView(R.layout.background_image);
+        getWindow().setDecorFitsSystemWindows(false);
+        getWindow().getInsetsController().hide(systemBars());
     }
 }

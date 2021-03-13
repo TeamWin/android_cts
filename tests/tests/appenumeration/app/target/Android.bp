@@ -158,3 +158,31 @@ android_test_helper_app {
     ],
     sdk_version: "test_current",
 }
+
+android_test_helper_app {
+    name: "CtsAppEnumerationSyncadapterTarget",
+    manifest: "AndroidManifest-syncadapter.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppEnumerationSyncadapterSharedUidTarget",
+    manifest: "AndroidManifest-syncadapter-sharedUser.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    resource_dirs: ["res"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}

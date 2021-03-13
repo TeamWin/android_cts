@@ -19,7 +19,7 @@
           package="com.android.bedstead.deviceadminapp"
           android:targetSandboxVersion="2">
 
-    <application>
+    <application android:testOnly="true">
         <receiver android:name="com.android.eventlib.premade.EventLibDeviceAdminReceiver"
                   android:permission="android.permission.BIND_DEVICE_ADMIN"
                   android:exported="true">

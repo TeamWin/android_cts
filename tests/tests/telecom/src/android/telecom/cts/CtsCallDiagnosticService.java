@@ -84,8 +84,6 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
             mReceivedMessageLatch.countDown();
         }
 
-        @NonNull
-        @Override
         public Call.Details getCallDetails() {
             return mCallDetails;
         }
