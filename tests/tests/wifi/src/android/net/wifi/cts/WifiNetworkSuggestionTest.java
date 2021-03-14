@@ -76,6 +76,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -1106,7 +1107,8 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         mTestNetwork)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, null /* restrictedNetworkCapability */);
+                mTestNetwork, suggestion, mExecutorService,
+                Set.of() /* restrictedNetworkCapability */);
     }
 
     /**
@@ -1123,7 +1125,26 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPaid(true)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
+    }
+
+    /**
+     * Connect to a network using restricted suggestion API.
+     *
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    @Test
+    public void testConnectToOemPaidAndOemPrivateSuggestion() throws Exception {
+        WifiNetworkSuggestion suggestion =
+                TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
+                        mTestNetwork)
+                        .setOemPaid(true)
+                        .setOemPrivate(true)
+                        .build();
+        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
+                mTestNetwork, suggestion, mExecutorService,
+                Set.of(NET_CAPABILITY_OEM_PAID, NET_CAPABILITY_OEM_PRIVATE));
     }
 
     /**
@@ -1140,7 +1161,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPrivate(true)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 
     /**
@@ -1158,7 +1179,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPaid(true)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 
     /**
@@ -1176,7 +1197,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         .setOemPrivate(true)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -1193,7 +1214,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         mTestNetwork)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PAID);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -1210,6 +1231,6 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                         mTestNetwork)
                         .build();
         mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, NET_CAPABILITY_OEM_PRIVATE);
+                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 }

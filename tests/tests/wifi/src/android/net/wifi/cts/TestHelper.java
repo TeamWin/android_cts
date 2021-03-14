@@ -56,6 +56,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -325,7 +326,9 @@ public class TestHelper {
         } catch (Throwable e /* catch assertions & exceptions */) {
             // Unregister the network callback in case of any failure (since we don't end up
             // returning the network callback to the caller).
-            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            try {
+                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            } catch (IllegalArgumentException ie) { }
             throw e;
         } finally {
             uiAutomation.dropShellPermissionIdentity();
@@ -341,7 +344,7 @@ public class TestHelper {
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
      * @param executorService Excutor service to run scan periodically (to trigger connection).
-     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      *
      * @return NetworkCallback used for the connection (can be used by client to release the
@@ -350,9 +353,9 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionWithShellIdentity(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) throws Exception {
+            @NonNull Set<Integer> restrictedNetworkCapabilities) throws Exception {
         return testConnectionFlowWithSuggestionInternal(
-                network, suggestion, executorService, restrictedNetworkCapability, true);
+                network, suggestion, executorService, restrictedNetworkCapabilities, true);
     }
 
     /**
@@ -364,7 +367,7 @@ public class TestHelper {
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
      * @param executorService Excutor service to run scan periodically (to trigger connection).
-     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      *
      * @return NetworkCallback used for the connection (can be used by client to release the
@@ -373,13 +376,13 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestion(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) throws Exception {
+            @NonNull Set<Integer> restrictedNetworkCapabilities) throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
             return testConnectionFlowWithSuggestionWithShellIdentity(
-                    network, suggestion, executorService, restrictedNetworkCapability);
+                    network, suggestion, executorService, restrictedNetworkCapabilities);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -391,7 +394,7 @@ public class TestHelper {
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
      * @param executorService Excutor service to run scan periodically (to trigger connection).
-     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      *
      * @return NetworkCallback used for the connection (can be used by client to release the
@@ -400,13 +403,13 @@ public class TestHelper {
     public ConnectivityManager.NetworkCallback testConnectionFailureFlowWithSuggestion(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability) throws Exception {
+            @NonNull Set<Integer> restrictedNetworkCapabilities) throws Exception {
         final UiAutomation uiAutomation =
                 InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity(NETWORK_SETTINGS, CONNECTIVITY_INTERNAL);
             return testConnectionFlowWithSuggestionInternal(
-                    network, suggestion, executorService, restrictedNetworkCapability, false);
+                    network, suggestion, executorService, restrictedNetworkCapabilities, false);
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
@@ -418,7 +421,7 @@ public class TestHelper {
      * @param network saved network from the device to use for the connection.
      * @param suggestion suggestion to use for the connection.
      * @param executorService Excutor service to run scan periodically (to trigger connection).
-     * @param restrictedNetworkCapability Whether this connection should be restricted with
+     * @param restrictedNetworkCapabilities Whether this connection should be restricted with
      *                                    the provided capability.
      * @param expectConnectionSuccess Whether to expect connection success or not.
      *
@@ -428,7 +431,7 @@ public class TestHelper {
     private ConnectivityManager.NetworkCallback testConnectionFlowWithSuggestionInternal(
             WifiConfiguration network, WifiNetworkSuggestion suggestion,
             @NonNull ScheduledExecutorService executorService,
-            @Nullable Integer restrictedNetworkCapability,
+            @NonNull Set<Integer> restrictedNetworkCapabilities,
             boolean expectConnectionSuccess) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
@@ -438,12 +441,14 @@ public class TestHelper {
             NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
                     .addTransportType(TRANSPORT_WIFI)
                     .addCapability(NET_CAPABILITY_INTERNET);
-            if (restrictedNetworkCapability == null) {
+            if (restrictedNetworkCapabilities.isEmpty()) {
                 // If not a restricted connection, a network callback is sufficient.
                 mConnectivityManager.registerNetworkCallback(
                         nrBuilder.build(), testNetworkCallback);
             } else {
-                nrBuilder.addCapability(restrictedNetworkCapability);
+                for (Integer restrictedNetworkCapability : restrictedNetworkCapabilities) {
+                    nrBuilder.addCapability(restrictedNetworkCapability);
+                }
                 mConnectivityManager.requestNetwork(nrBuilder.build(), testNetworkCallback);
             }
             // Add wifi network suggestion.
@@ -471,7 +476,9 @@ public class TestHelper {
                         DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isFalse();
             }
         } catch (Throwable e /* catch assertions & exceptions */) {
-            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            try {
+                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            } catch (IllegalArgumentException ie) { }
             throw e;
         } finally {
             executorService.shutdown();
@@ -620,7 +627,9 @@ public class TestHelper {
             try {
                 handleUiInteractions(network, shouldUserReject);
             } catch (Throwable e /* catch assertions & exceptions */) {
-                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+                try {
+                    mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+                } catch (IllegalArgumentException ie) { }
                 throw e;
             }
         });
@@ -657,14 +666,18 @@ public class TestHelper {
                 assertConnectionEquals(network, wifiInfo);
             }
         } catch (Throwable e /* catch assertions & exceptions */) {
-            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            try {
+                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            } catch (IllegalArgumentException ie) { }
             throw e;
         }
         try {
             // Ensure that the UI interaction thread has completed.
             uiThread.join(DURATION_UI_INTERACTION_MILLIS);
         } catch (InterruptedException e) {
-            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            try {
+                mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+            } catch (IllegalArgumentException ie) { }
             fail("UI interaction interrupted");
         }
         return testNetworkCallback;
