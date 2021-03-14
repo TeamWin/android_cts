@@ -278,6 +278,28 @@ void SurfaceTransaction_setGeometry(JNIEnv* /*env*/, jclass,
             reinterpret_cast<ASurfaceControl*>(surfaceControl), src, dst, transform);
 }
 
+void SurfaceTransaction_setSourceRect(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                      jlong surfaceTransaction, jint srcLeft, jint srcTop,
+                                      jint srcRight, jint srcBottom) {
+    const ARect src{srcLeft, srcTop, srcRight, srcBottom};
+    ASurfaceTransaction_setSourceRect(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                      reinterpret_cast<ASurfaceControl*>(surfaceControl), src);
+}
+
+void SurfaceTransaction_setPosition(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                    jlong surfaceTransaction, jint dstLeft, jint dstTop,
+                                    jint dstRight, jint dstBottom) {
+    const ARect dst{dstLeft, dstTop, dstRight, dstBottom};
+    ASurfaceTransaction_setPosition(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                    reinterpret_cast<ASurfaceControl*>(surfaceControl), dst);
+}
+
+void SurfaceTransaction_setTransform(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                     jlong surfaceTransaction, jint transform) {
+    ASurfaceTransaction_setTransform(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                     reinterpret_cast<ASurfaceControl*>(surfaceControl), transform);
+}
+
 void SurfaceTransaction_setDamageRegion(JNIEnv* /*env*/, jclass,
                                         jlong surfaceControl,
                                         jlong surfaceTransaction, jint left,
