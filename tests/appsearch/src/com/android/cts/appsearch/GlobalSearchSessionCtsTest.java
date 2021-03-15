@@ -30,7 +30,7 @@ public class GlobalSearchSessionCtsTest extends GlobalSearchSessionCtsTestBase {
     @Override
     protected ListenableFuture<AppSearchSessionShim> createSearchSession(@NonNull String dbName) {
         return AppSearchSessionShimImpl.createSearchSession(
-                new AppSearchManager.SearchContext.Builder().setDatabaseName(dbName).build());
+                new AppSearchManager.SearchContext.Builder(dbName).build());
     }
 
     @Override
