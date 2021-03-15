@@ -399,9 +399,11 @@ def main():
       results[s] = {RESULT_KEY: RESULT_NOT_EXECUTED}
     # A subdir in topdir will be created for each camera_id. All scene test
     # output logs for each camera id will be stored in this subdir.
-    os.mkdir(os.path.join(topdir, 'cam_id_' + camera_id))
     # This output log path is a mobly param : LogPath
-    mobly_output_logs_path = os.path.join(topdir, 'cam_id_' + camera_id)
+    cam_id_string = 'cam_id_%s' % (
+        camera_id.replace(its_session_utils.SUB_CAMERA_SEPARATOR, '_'))
+    mobly_output_logs_path = os.path.join(topdir, cam_id_string)
+    os.mkdir(mobly_output_logs_path)
     tot_pass = 0
     for s in scenes:
       test_params_content['scene'] = s
