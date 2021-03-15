@@ -23,7 +23,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchEmail;
-import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
@@ -125,7 +124,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index a document
         AppSearchEmail inEmail =
-                new AppSearchEmail.Builder("uri1")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -163,7 +162,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index a document to instance 1.
         AppSearchEmail inEmail1 =
-                new AppSearchEmail.Builder("uri1")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -174,7 +173,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index a document to instance 2.
         AppSearchEmail inEmail2 =
-                new AppSearchEmail.Builder("uri2")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -205,7 +204,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
         // Index 31 documents
         for (int i = 0; i < 31; i++) {
             AppSearchEmail inEmail =
-                    new AppSearchEmail.Builder("uri" + i)
+                    new AppSearchEmail.Builder("namespace", "uri" + i)
                             .setFrom("from@example.com")
                             .setTo("to1@example.com", "to2@example.com")
                             .setSubject("testPut example")
@@ -293,7 +292,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index a generic document into db1
         GenericDocument genericDocument =
-                new GenericDocument.Builder<>("uri2", "Generic")
+                new GenericDocument.Builder<>("namespace", "uri2", "Generic")
                         .setPropertyString("foo", "body")
                         .build();
         checkIsBatchResultSuccess(
@@ -303,8 +302,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                                 .build()));
 
         AppSearchEmail email =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -354,8 +352,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index two documents
         AppSearchEmail document1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace1")
+                new AppSearchEmail.Builder("namespace1", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -365,8 +362,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(document1).build()));
 
         AppSearchEmail document2 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace2")
+                new AppSearchEmail.Builder("namespace2", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -417,8 +413,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index two documents
         AppSearchEmail document1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace1")
+                new AppSearchEmail.Builder("namespace1", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -428,8 +423,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(document1).build()));
 
         AppSearchEmail document2 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace2")
+                new AppSearchEmail.Builder("namespace2", "uri1")
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -464,8 +458,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index one document in each database.
         AppSearchEmail email1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -476,8 +469,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
 
         AppSearchEmail email2 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -501,15 +493,13 @@ public abstract class GlobalSearchSessionCtsTestBase {
         // The two email documents should have been returned with only the "subject" and "to"
         // properties.
         AppSearchEmail expected1 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
                         .build();
         AppSearchEmail expected2 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
@@ -527,8 +517,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index one document in each database.
         AppSearchEmail email1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -539,8 +528,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
 
         AppSearchEmail email2 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -561,13 +549,11 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // The two email documents should have been returned without any properties.
         AppSearchEmail expected1 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .build();
         AppSearchEmail expected2 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .build();
         assertThat(documents).containsExactly(expected1, expected2);
@@ -583,8 +569,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
 
         // Index one document in each database.
         AppSearchEmail email1 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -595,8 +580,7 @@ public abstract class GlobalSearchSessionCtsTestBase {
                 mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
 
         AppSearchEmail email2 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .setFrom("from@example.com")
                         .setTo("to1@example.com", "to2@example.com")
@@ -621,15 +605,13 @@ public abstract class GlobalSearchSessionCtsTestBase {
         // The two email documents should have been returned with only the "subject" and "to"
         // properties.
         AppSearchEmail expected1 =
-                new AppSearchEmail.Builder("uri2")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri2")
                         .setCreationTimestampMillis(1000)
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
                         .build();
         AppSearchEmail expected2 =
-                new AppSearchEmail.Builder("uri1")
-                        .setNamespace("namespace")
+                new AppSearchEmail.Builder("namespace", "uri1")
                         .setCreationTimestampMillis(1000)
                         .setTo("to1@example.com", "to2@example.com")
                         .setSubject("testPut example")
