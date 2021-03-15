@@ -20,10 +20,13 @@ import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATUR
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
+import android.stats.devicepolicy.EventId;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.annotations.PermissionsTest;
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import org.junit.Test;
@@ -137,6 +140,19 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Test
     public void testSetGetNetworkSlicingStatus() throws Exception {
         executeDeviceTestMethod(".NetworkSlicingStatusTest", "testGetSetNetworkSlicingStatus");
+    }
+
+    @Test
+    public void testSetNetworkSlicingStatusLogged() throws Exception {
+        DevicePolicyEventLogVerifier.assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".DevicePolicyLoggingTest",
+                    "testSetNetworkSlicingEnabledLogged");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_SLICING_ENABLED_VALUE)
+                .setBoolean(true)
+                .build(),
+        new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_SLICING_ENABLED_VALUE)
+                .setBoolean(false)
+                .build());
     }
 
     /** VPN tests don't require physical device for managed profile, thus overriding. */
