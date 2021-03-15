@@ -800,6 +800,7 @@ public class StorageManagerTest extends AndroidTestCase {
                 StorageManager.convert(UUID.fromString("fafafafa-fafa-5afa-8afa-fafadeadbeef")));
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold MANAGE_EXTERNAL_STORAGE permission")
     public void testGetManageSpaceActivityIntent() throws Exception {
         String packageName = "android.os.cts";
         int REQUEST_CODE = 1;
