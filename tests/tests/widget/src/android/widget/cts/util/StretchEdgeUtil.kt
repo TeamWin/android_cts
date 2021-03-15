@@ -254,7 +254,7 @@ fun dragDownStretches(
     )
 
     // The blue should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 52) == Color.BLUE
+    return bitmap.getPixel(45, 48) == Color.BLUE
 }
 
 /**
@@ -296,7 +296,7 @@ fun dragUpStretches(
     )
 
     // The magenta should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 38) == Color.MAGENTA
+    return bitmap.getPixel(45, 42) == Color.MAGENTA
 }
 
 /**
