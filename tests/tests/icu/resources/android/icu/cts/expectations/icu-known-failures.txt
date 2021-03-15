@@ -31,10 +31,5 @@
     "android.icu.dev.test.collator.G7CollationTest#TestG7Data"
   ],
   bug: "27552651"
-},
-{
-  description: "Unknown Language != Unknown language",
-  name: "android.icu.dev.test.TestLocaleNamePackaging#testLanguageDisplayNames",
-  bug: "33447162"
 }
 ]
