@@ -25,7 +25,6 @@ import static org.testng.Assert.expectThrows;
 
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchBatchResult;
-import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.AppSearchMigrationHelper;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
@@ -403,12 +402,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                 .get();
 
         GenericDocument doc1 =
-                new GenericDocument.Builder<>("uri1", "testSchema")
+                new GenericDocument.Builder<>("namespace", "uri1", "testSchema")
                         .setPropertyString("subject", "testPut example1")
                         .setPropertyString("To", "testTo example1")
                         .build();
         GenericDocument doc2 =
-                new GenericDocument.Builder<>("uri2", "testSchema")
+                new GenericDocument.Builder<>("namespace", "uri2", "testSchema")
                         .setPropertyString("subject", "testPut example2")
                         .setPropertyString("To", "testTo example2")
                         .build();
@@ -454,7 +453,9 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 (currentVersion1, finalVersion1, document) -> {
                                     if (document.getUri().equals("uri2")) {
                                         return new GenericDocument.Builder<>(
-                                                        document.getUri(), document.getSchemaType())
+                                                        document.getNamespace(),
+                                                        document.getUri(),
+                                                        document.getSchemaType())
                                                 .setPropertyString("subject", "testPut example2")
                                                 .setPropertyString(
                                                         "to",
@@ -463,7 +464,9 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 .build();
                                     }
                                     return new GenericDocument.Builder<>(
-                                                    document.getUri(), document.getSchemaType())
+                                                    document.getNamespace(),
+                                                    document.getUri(),
+                                                    document.getSchemaType())
                                             .setPropertyString(
                                                     "subject", "testPut example1 migrated")
                                             .setCreationTimestampMillis(12345L)
@@ -490,17 +493,17 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
 
         // Check migrate the first document is success
         GenericDocument expected =
-                new GenericDocument.Builder<>("uri1", "testSchema")
+                new GenericDocument.Builder<>("namespace", "uri1", "testSchema")
                         .setPropertyString("subject", "testPut example1 migrated")
                         .setCreationTimestampMillis(12345L)
                         .build();
-        assertThat(doGet(mDb, GenericDocument.DEFAULT_NAMESPACE, "uri1")).containsExactly(expected);
+        assertThat(doGet(mDb, "namespace", "uri1")).containsExactly(expected);
 
         // Check migrate the second document is fail.
         assertThat(setSchemaResponse.getMigrationFailures()).hasSize(1);
         SetSchemaResponse.MigrationFailure migrationFailure =
                 setSchemaResponse.getMigrationFailures().get(0);
-        assertThat(migrationFailure.getNamespace()).isEqualTo(GenericDocument.DEFAULT_NAMESPACE);
+        assertThat(migrationFailure.getNamespace()).isEqualTo("namespace");
         assertThat(migrationFailure.getSchemaType()).isEqualTo("testSchema");
         assertThat(migrationFailure.getUri()).isEqualTo("uri2");
     }
