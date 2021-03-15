@@ -473,6 +473,20 @@ public class PermissionsTest extends BaseDeviceAdminTest {
         }
     }
 
+    public void testStateOfSensorsRelatedPermissionsCannotBeRead() throws Exception {
+        for (String sensorPermission: SENSORS_PERMISSIONS) {
+            // The admin tries to grant the permission.
+            setPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_GRANTED);
+
+            // But the user denies it.
+            PermissionUtils.launchActivityAndRequestPermission(mReceiver, mDevice, sensorPermission,
+                    PERMISSION_DENIED, PERMISSION_APP_PACKAGE_NAME, PERMISSIONS_ACTIVITY_NAME);
+
+            // And the admin cannot learn of it.
+            assertPermissionGrantState(sensorPermission, PERMISSION_GRANT_STATE_DEFAULT);
+        }
+    }
+
     private void assertFailedToSetPermissionGrantState(String permission, int value) {
         assertTrue(mDevicePolicyManager.setPermissionGrantState(ADMIN_RECEIVER_COMPONENT,
                 PERMISSION_APP_PACKAGE_NAME, permission, value));
