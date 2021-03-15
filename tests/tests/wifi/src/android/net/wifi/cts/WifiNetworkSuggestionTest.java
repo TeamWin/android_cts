@@ -97,134 +97,134 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     private static boolean sWasScanThrottleEnabled;
     private static boolean sWasWifiEnabled;
 
-    private Context mContext;
-    private WifiManager mWifiManager;
-    private ConnectivityManager mConnectivityManager;
-    private UiDevice mUiDevice;
-    private WifiConfiguration mTestNetwork;
-    private ConnectivityManager.NetworkCallback mNsNetworkCallback;
+    private static Context sContext;
+    private static WifiManager sWifiManager;
+    private static ConnectivityManager sConnectivityManager;
+    private static UiDevice sUiDevice;
+    private static WifiConfiguration sTestNetwork;
+    private static ConnectivityManager.NetworkCallback sNsNetworkCallback;
+    private static TestHelper sTestHelper;
+
     private ScheduledExecutorService mExecutorService;
-    private TestHelper mTestHelper;
 
     private static final int DURATION_MILLIS = 10_000;
 
     @BeforeClass
     public static void setUpClass() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        sContext = InstrumentationRegistry.getInstrumentation().getContext();
         // skip the test if WiFi is not supported
         // Don't use assumeTrue in @BeforeClass
-        if (!WifiFeature.isWifiSupported(context)) return;
+        if (!WifiFeature.isWifiSupported(sContext)) return;
+        // skip the test if location is not supported
+        if (!sContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION)) return;
+        // skip if the location is disabled
+        if (!sContext.getSystemService(LocationManager.class).isLocationEnabled()) return;
 
-        WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertThat(wifiManager).isNotNull();
+        sWifiManager = sContext.getSystemService(WifiManager.class);
+        assertThat(sWifiManager).isNotNull();
+        sConnectivityManager = sContext.getSystemService(ConnectivityManager.class);
+        sUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        sTestHelper = new TestHelper(sContext, sUiDevice);
 
         // turn on verbose logging for tests
         sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isVerboseLoggingEnabled());
+                () -> sWifiManager.isVerboseLoggingEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setVerboseLoggingEnabled(true));
+                () -> sWifiManager.setVerboseLoggingEnabled(true));
         // Disable scan throttling for tests.
         sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isScanThrottleEnabled());
+                () -> sWifiManager.isScanThrottleEnabled());
         ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setScanThrottleEnabled(false));
+                () -> sWifiManager.setScanThrottleEnabled(false));
 
         // enable Wifi
         sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.isWifiEnabled());
-        if (!wifiManager.isWifiEnabled()) {
-            ShellIdentityUtils.invokeWithShellPermissions(() -> wifiManager.setWifiEnabled(true));
+                () -> sWifiManager.isWifiEnabled());
+        if (!sWifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(() -> sWifiManager.setWifiEnabled(true));
         }
-        PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> wifiManager.isWifiEnabled());
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        if (!WifiFeature.isWifiSupported(context)) return;
-
-        WifiManager wifiManager = context.getSystemService(WifiManager.class);
-        assertThat(wifiManager).isNotNull();
-
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> wifiManager.setWifiEnabled(sWasWifiEnabled));
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        mWifiManager = mContext.getSystemService(WifiManager.class);
-        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mExecutorService = Executors.newSingleThreadScheduledExecutor();
-        mTestHelper = new TestHelper(mContext, mUiDevice);
-
-        // skip the test if WiFi is not supported
-        assumeTrue(WifiFeature.isWifiSupported(mContext));
-        // skip the test if location is not supported
-        assumeTrue(mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LOCATION));
-
-        assertWithMessage("Please enable location for this test!").that(
-                mContext.getSystemService(LocationManager.class).isLocationEnabled()).isTrue();
-
-        // turn screen on
-        mTestHelper.turnScreenOn();
-
-        // Clear any existing app state before each test.
-        if (WifiBuildCompat.isAtLeastS(mContext)) {
-            ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
-        }
+        PollingCheck.check("Wifi not enabled", DURATION_MILLIS, () -> sWifiManager.isWifiEnabled());
 
         // check we have >= 1 saved network
         List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
-                () -> mWifiManager.getPrivilegedConfiguredNetworks());
-        assertFalse("Need at least one saved network", savedNetworks.isEmpty());
+                () -> sWifiManager.getPrivilegedConfiguredNetworks());
+        if (savedNetworks.isEmpty()) {
+            return;
+        }
         // Pick any network in range.
-        mTestNetwork = TestHelper.findMatchingSavedNetworksWithBssid(mWifiManager, savedNetworks)
-                .get(0);
 
-        // Disconnect & disable auto-join on the saved network to prevent auto-connect from
+        List<WifiConfiguration> networks = TestHelper.findMatchingSavedNetworksWithBssid(
+                sWifiManager, savedNetworks);
+        if (!networks.isEmpty()) {
+            sTestNetwork = networks.get(0);
+        }
+
+        // Disable auto-join on the saved network to prevent auto-connect from
         // interfering with the test.
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> {
                     for (WifiConfiguration savedNetwork : savedNetworks) {
-                        mWifiManager.disableNetwork(savedNetwork.networkId);
+                        sWifiManager.disableNetwork(savedNetwork.networkId);
                     }
-                    mWifiManager.disconnect();
                 });
+    }
+
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+        if (!WifiFeature.isWifiSupported(sContext)) return;
+
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.setWifiEnabled(sWasWifiEnabled));
+
+        // Re-enable networks.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> {
+                    for (WifiConfiguration savedNetwork : sWifiManager.getConfiguredNetworks()) {
+                        sWifiManager.enableNetwork(savedNetwork.networkId, false);
+                    }
+                });
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        mExecutorService = Executors.newSingleThreadScheduledExecutor();
+        // turn screen on
+        sTestHelper.turnScreenOn();
+
+        // Disconnect current network if any.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> sWifiManager.disconnect());
 
         // Wait for Wifi to be disconnected.
         PollingCheck.check(
                 "Wifi not disconnected",
                 20_000,
-                () -> mWifiManager.getConnectionInfo().getNetworkId() == -1);
+                () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
+
+        // Clear any existing app state before each test.
+        if (WifiBuildCompat.isAtLeastS(sContext)) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
+        }
     }
 
     @After
     public void tearDown() throws Exception {
-        // Re-enable networks.
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> {
-                    for (WifiConfiguration savedNetwork : mWifiManager.getConfiguredNetworks()) {
-                        mWifiManager.enableNetwork(savedNetwork.networkId, false);
-                    }
-                });
         // Release the requests after the test.
-        if (mNsNetworkCallback != null) {
-            mConnectivityManager.unregisterNetworkCallback(mNsNetworkCallback);
+        if (sNsNetworkCallback != null) {
+            sConnectivityManager.unregisterNetworkCallback(sNsNetworkCallback);
         }
         mExecutorService.shutdownNow();
         // Clear any existing app state after each test.
-        if (BuildCompat.isAtLeastS()) {
+        if (WifiBuildCompat.isAtLeastS(sContext)) {
             ShellIdentityUtils.invokeWithShellPermissions(
-                    () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
+                    () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
         }
-        mTestHelper.turnScreenOff();
+        sTestHelper.turnScreenOff();
     }
 
     private static final String CA_SUITE_B_RSA3072_CERT_STRING =
@@ -1102,12 +1102,13 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToSuggestion() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService,
+        sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService,
                 Set.of() /* restrictedNetworkCapability */);
     }
 
@@ -1119,13 +1120,14 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToOemPaidSuggestion() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .setOemPaid(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
+        sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -1136,14 +1138,15 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToOemPaidAndOemPrivateSuggestion() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .setOemPaid(true)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService,
+        sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService,
                 Set.of(NET_CAPABILITY_OEM_PAID, NET_CAPABILITY_OEM_PRIVATE));
     }
 
@@ -1155,13 +1158,14 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToOemPrivateSuggestion() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
+        sNsNetworkCallback = sTestHelper.testConnectionFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 
     /**
@@ -1173,13 +1177,14 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToOemPaidSuggestionFailure() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .setOemPaid(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
+        sNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 
     /**
@@ -1191,13 +1196,14 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectToOemPrivateSuggestionFailure() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .setOemPrivate(true)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
+        sNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -1209,12 +1215,13 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectSuggestionFailureWithOemPaidNetCapability() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
+        sNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PAID));
     }
 
     /**
@@ -1226,11 +1233,12 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testConnectSuggestionFailureWithOemPrivateNetCapability() throws Exception {
+        assertNotNull(sTestNetwork);
         WifiNetworkSuggestion suggestion =
                 TestHelper.createSuggestionBuilderWithCredentialFromSavedNetworkWithBssid(
-                        mTestNetwork)
+                        sTestNetwork)
                         .build();
-        mNsNetworkCallback = mTestHelper.testConnectionFailureFlowWithSuggestion(
-                mTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
+        sNsNetworkCallback = sTestHelper.testConnectionFailureFlowWithSuggestion(
+                sTestNetwork, suggestion, mExecutorService, Set.of(NET_CAPABILITY_OEM_PRIVATE));
     }
 }
