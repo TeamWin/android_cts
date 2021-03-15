@@ -288,6 +288,21 @@ public class CredentialManagementAppTest {
         }
     }
 
+    @Postsubmit(reason="new")
+    @Test
+    public void unregisterAsCredentialManagementApp_returnTrue()
+            throws Exception {
+        setCredentialManagementApp();
+
+        try {
+            assertTrue(KeyChain.removeCredentialManagementApp(CONTEXT));
+
+            assertFalse(KeyChain.isCredentialManagementApp(CONTEXT));
+        } catch (Exception e) {
+            removeCredentialManagementApp();
+        }
+    }
+
     // TODO(scottjonathan): Using either code generation or reflection we could remove the need for
     //  these boilerplate classes
     private static class KeyChainAliasCallback extends BlockingCallback<String> implements
