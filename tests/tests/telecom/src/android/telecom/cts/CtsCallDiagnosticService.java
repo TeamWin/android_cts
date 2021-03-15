@@ -148,6 +148,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         diagCall.mCallDetails = call;
         mCalls.add(diagCall);
         mChangeLatch.countDown();
+        mChangeLatch = new CountDownLatch(1);
         return diagCall;
     }
 
@@ -156,6 +157,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         Log.i(LOG_TAG, "onRemoveDiagnosticCall: " + call);
         mCalls.remove(call);
         mChangeLatch.countDown();
+        mChangeLatch = new CountDownLatch(1);
     }
 
     @Override
@@ -192,9 +194,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     }
 
     public CountDownLatch getCallChangeLatch() {
-        CountDownLatch latch = mChangeLatch;
-        mChangeLatch = new CountDownLatch(1);
-        return latch;
+        return mChangeLatch;
     }
 
     public CountDownLatch getBluetoothCallQualityReportLatch() {
