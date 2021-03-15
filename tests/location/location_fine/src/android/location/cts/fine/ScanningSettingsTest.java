@@ -63,7 +63,8 @@ public class ScanningSettingsTest extends AndroidTestCase {
     private PackageManager mPackageManager;
 
     @Override
-    protected void setUp() {
+    protected void setUp() throws Exception {
+        super.setUp();
         // Can't use assumeTrue / assumeFalse because this is not a junit test, and so doesn't
         // support using these keywords to trigger assumption failure and skip test.
         if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
@@ -86,7 +87,8 @@ public class ScanningSettingsTest extends AndroidTestCase {
         if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
             return;
         }
-        launchScanningSettings();
+        launchLocationServicesSettings();
+        launchScanningSettingsFragment(WIFI_SCANNING_TITLE_RES);
 
         final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
         final int resId = res.getIdentifier(WIFI_SCANNING_TITLE_RES, "string", SETTINGS_PACKAGE);
@@ -118,12 +120,14 @@ public class ScanningSettingsTest extends AndroidTestCase {
         if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
             return;
         }
-        launchScanningSettings();
+        launchLocationServicesSettings();
+        launchScanningSettingsFragment(BLUETOOTH_SCANNING_TITLE_RES);
+
         toggleSettingAndVerify(BLUETOOTH_SCANNING_TITLE_RES,
                 Settings.Global.BLE_SCAN_ALWAYS_AVAILABLE);
     }
 
-    private void launchScanningSettings() {
+    private void launchLocationServicesSettings() {
         // Start from the home screen
         mDevice.pressHome();
         mDevice.wait(Until.hasObject(By.pkg(mLauncherPackage).depth(0)), TIMEOUT);
@@ -135,6 +139,18 @@ public class ScanningSettingsTest extends AndroidTestCase {
 
         // Wait for the app to appear
         mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(0)), TIMEOUT);
+    }
+
+    private void launchScanningSettingsFragment(String name)
+            throws PackageManager.NameNotFoundException {
+        final Resources res = mPackageManager.getResourcesForApplication(SETTINGS_PACKAGE);
+        int resId = res.getIdentifier(name, "string", SETTINGS_PACKAGE);
+        UiObject2 pref = mDevice.findObject(By.text(res.getString(resId)));
+        // Click the preference to show the Scanning fragment
+        pref.click();
+
+        // Wait for the Scanning fragment to appear
+        mDevice.wait(Until.hasObject(By.pkg(SETTINGS_PACKAGE).depth(1)), TIMEOUT);
     }
 
     private void clickAndWaitForSettingChange(UiObject2 pref, ContentResolver resolver,
