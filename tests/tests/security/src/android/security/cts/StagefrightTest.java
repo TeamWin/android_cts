@@ -1858,7 +1858,9 @@ public class StagefrightTest {
             Thread.sleep(CHECK_INTERVAL);
             timeout -= CHECK_INTERVAL;
         }
+
         if (!reportFile.exists() || !reportFile.isFile() || !lockFile.exists()) {
+            Log.e(TAG, "couldn't get the report or lock file");
             return null;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(reportFile))) {
@@ -1923,7 +1925,9 @@ public class StagefrightTest {
             if (what != MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 what = newWhat;
             }
+
             lock.lock();
+            errored = true;
             condition.signal();
             lock.unlock();
 
@@ -1946,17 +1950,19 @@ public class StagefrightTest {
 
         public int waitForError() throws InterruptedException {
             lock.lock();
-            if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
-                Log.d(TAG, "timed out on waiting for error");
+            if (!errored && !completed) {
+                if (condition.awaitNanos(TIMEOUT_NS) <= 0) {
+                    Log.d(TAG, "timed out on waiting for error. " +
+                          "errored: " + errored + ", completed: " + completed);
+                }
             }
             lock.unlock();
-            if (what != 0) {
+            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 // Sometimes mediaserver signals a decoding error first, and *then* crashes
                 // due to additional in-flight buffers being processed, so wait a little
                 // and see if more errors show up.
+                Log.e(TAG, "couldn't get media crash yet, waiting 1 second");
                 SystemClock.sleep(1000);
-            }
-            if (what == MediaPlayer.MEDIA_ERROR_SERVER_DIED) {
                 JSONArray crashes = getCrashReport(name.getMethodName(), 5000);
                 if (crashes == null) {
                     Log.e(TAG, "Crash results not found for test " + name.getMethodName());
@@ -1969,8 +1975,8 @@ public class StagefrightTest {
                     // 0 is the code for no error.
                     return 0;
                 }
-
             }
+            Log.d(TAG, "waitForError finished with no errors.");
             return what;
         }
 
@@ -1987,6 +1993,7 @@ public class StagefrightTest {
         Condition condition = lock.newCondition();
         int what;
         boolean completed = false;
+        boolean errored = false;
     }
 
     class LooperThread extends Thread {
