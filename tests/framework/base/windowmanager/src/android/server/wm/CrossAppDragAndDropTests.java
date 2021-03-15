@@ -73,6 +73,7 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     private static final String REQUEST_READ_NESTED = "request_read_nested";
     private static final String REQUEST_TAKE_PERSISTABLE = "request_take_persistable";
     private static final String REQUEST_WRITE = "request_write";
+    private static final String TARGET_ON_RECEIVE_CONTENT_LISTENER = "on_receive_content_listener";
 
     private static final String SOURCE_LOG_TAG = "DragSource";
     private static final String TARGET_LOG_TAG = "DropTarget";
@@ -226,11 +227,16 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
 
         mTargetResults = TestLogService.getResultsForClient(mTargetLogTag, 1000);
         assertTargetResult(RESULT_KEY_DROP_RESULT, expectedDropResult);
-        if (!RESULT_MISSING.equals(expectedDropResult)) {
-            assertTargetResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
-            assertTargetResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
+
+        // Skip the following assertions when testing OnReceiveContentListener, since it only
+        // handles drop events.
+        if (!TARGET_ON_RECEIVE_CONTENT_LISTENER.equals(targetMode)) {
+            if (!RESULT_MISSING.equals(expectedDropResult)) {
+                assertTargetResult(RESULT_KEY_ACCESS_BEFORE, RESULT_EXCEPTION);
+                assertTargetResult(RESULT_KEY_ACCESS_AFTER, RESULT_EXCEPTION);
+            }
+            assertListenerResults(expectedListenerResults);
         }
-        assertListenerResults(expectedListenerResults);
     }
 
     private void assertListenerResults(String expectedResult) throws Exception {
@@ -352,5 +358,15 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
     @Test
     public void testGrantWriteRequestWrite() throws Exception {
         assertDropResult(GRANT_WRITE, REQUEST_WRITE, RESULT_OK);
+    }
+
+    @Test
+    public void testOnReceiveContentListener_GrantRead() throws Exception {
+        assertDropResult(GRANT_READ, TARGET_ON_RECEIVE_CONTENT_LISTENER, RESULT_OK);
+    }
+
+    @Test
+    public void testOnReceiveContentListener_GrantNone() throws Exception {
+        assertDropResult(GRANT_NONE, TARGET_ON_RECEIVE_CONTENT_LISTENER, RESULT_EXCEPTION);
     }
 }
