@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.Manifest.permission.CONNECTIVITY_INTERNAL;
 import static android.Manifest.permission.NETWORK_SETTINGS;
+import static android.net.ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
@@ -231,8 +232,12 @@ public class TestHelper {
         public boolean onUnavailableCalled = false;
         public NetworkCapabilities networkCapabilities;
 
-        TestNetworkCallback(CountDownLatch countDownLatch) {
-            super(ConnectivityManager.NetworkCallback.FLAG_INCLUDE_LOCATION_INFO);
+        TestNetworkCallback(@NonNull CountDownLatch countDownLatch) {
+            mCountDownLatch = countDownLatch;
+        }
+
+        TestNetworkCallback(@NonNull CountDownLatch countDownLatch, int flags) {
+            super(flags);
             mCountDownLatch = countDownLatch;
         }
 
@@ -248,6 +253,16 @@ public class TestHelper {
         public void onUnavailable() {
             onUnavailableCalled = true;
             mCountDownLatch.countDown();
+        }
+    }
+
+    private static TestNetworkCallback createTestNetworkCallback(
+            @NonNull CountDownLatch countDownLatch) {
+        if (BuildCompat.isAtLeastS()) {
+            // flags for NetworkCallback only introduced in S.
+            return new TestNetworkCallback(countDownLatch, FLAG_INCLUDE_LOCATION_INFO);
+        } else {
+            return new TestNetworkCallback(countDownLatch);
         }
     }
 
@@ -294,7 +309,7 @@ public class TestHelper {
         CountDownLatch countDownLatchAl = new CountDownLatch(1);
         CountDownLatch countDownLatchNr = new CountDownLatch(1);
         TestActionListener actionListener = new TestActionListener(countDownLatchAl);
-        TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatchNr);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatchNr);
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity();
@@ -435,7 +450,7 @@ public class TestHelper {
             boolean expectConnectionSuccess) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
-        TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatch);
         try {
             // File a request for restricted (oem paid) wifi network.
             NetworkRequest.Builder nrBuilder = new NetworkRequest.Builder()
@@ -620,7 +635,7 @@ public class TestHelper {
             throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         // File the network request & wait for the callback.
-        TestNetworkCallback testNetworkCallback = new TestNetworkCallback(countDownLatch);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatch);
 
         // Fork a thread to handle the UI interactions.
         Thread uiThread = new Thread(() -> {
