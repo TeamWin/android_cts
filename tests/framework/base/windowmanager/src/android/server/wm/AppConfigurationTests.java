@@ -48,6 +48,7 @@ import static android.view.Surface.ROTATION_90;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
@@ -330,6 +331,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         SizeInfo reportedSizes = getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         assertEquals("portrait activity should be in portrait",
                 ORIENTATION_PORTRAIT, reportedSizes.orientation);
+        assertTrue("portrait activity should have height >= width",
+                reportedSizes.heightDp >= reportedSizes.widthDp);
         separateTestJournal();
 
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
@@ -337,6 +340,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         reportedSizes = getLastReportedSizesForActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("landscape activity should be in landscape",
                 ORIENTATION_LANDSCAPE, reportedSizes.orientation);
+        assertTrue("landscape activity should have height < width",
+                reportedSizes.heightDp < reportedSizes.widthDp);
         separateTestJournal();
 
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
@@ -356,6 +361,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                 getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         assertEquals("portrait activity should be in portrait",
                 ORIENTATION_PORTRAIT, initialReportedSizes.orientation);
+        assertTrue("portrait activity should have height >= width",
+                initialReportedSizes.heightDp >= initialReportedSizes.widthDp);
         separateTestJournal();
 
         launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
