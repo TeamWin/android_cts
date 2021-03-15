@@ -249,7 +249,7 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     public void testIsWifiGrant_allowed() {
         mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
                 TEST_ALIAS, /* requestAccess= */ false);
-        mDpm.grantKeyPairToWifiAuth(TEST_ALIAS);
+        assertTrue(mDpm.grantKeyPairToWifiAuth(TEST_ALIAS));
 
         assertThat(mDpm.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isTrue();
     }
@@ -257,8 +257,8 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     public void testIsWifiGrant_denied() {
         mDpm.installKeyPair(null, mTestPrivateKey, new Certificate[]{mTestCertificate},
                 TEST_ALIAS, /* requestAccess= */ false);
-        mDpm.grantKeyPairToWifiAuth(TEST_ALIAS);
-        mDpm.revokeKeyPairFromWifiAuth(TEST_ALIAS);
+        assertTrue(mDpm.grantKeyPairToWifiAuth(TEST_ALIAS));
+        assertTrue(mDpm.revokeKeyPairFromWifiAuth(TEST_ALIAS));
 
         assertThat(mDpm.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
     }
