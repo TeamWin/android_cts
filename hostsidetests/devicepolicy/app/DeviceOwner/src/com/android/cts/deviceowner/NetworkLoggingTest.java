@@ -274,7 +274,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
     private void verifyNetworkLogs(List<NetworkEvent> networkEvents, int eventsExpected) {
         // allow a batch to be slightly smaller or larger.
-        assertTrue(Math.abs(eventsExpected - networkEvents.size()) <= 50);
+        assertTrue(Math.abs(eventsExpected - networkEvents.size()) <= 150);
         int ctsPackageNameCounter = 0;
         // allow a small down margin for verification, to avoid flakiness
         final int eventsExpectedWithMargin = eventsExpected - 50;
