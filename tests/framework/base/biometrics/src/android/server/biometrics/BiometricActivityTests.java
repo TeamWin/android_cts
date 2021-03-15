@@ -73,10 +73,7 @@ public class BiometricActivityTests extends BiometricTestBase {
                 .get(activitySession.getComponentName());
 
         // Launch test activity
-        activitySession.start();
-        mWmState.waitForActivityState(activitySession.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
-        mInstrumentation.waitForIdleSync();
+        launchActivityAndWaitForResumed(activitySession);
 
         // The sensor being tested should not be idle
         BiometricServiceState state = getCurrentState();
@@ -128,10 +125,7 @@ public class BiometricActivityTests extends BiometricTestBase {
                 TestJournalProvider.TestJournalContainer.get(activitySession.getComponentName());
 
         // Launch test activity
-        activitySession.start();
-        mWmState.waitForActivityState(activitySession.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
-        mInstrumentation.waitForIdleSync();
+        launchActivityAndWaitForResumed(activitySession);
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
 
@@ -257,10 +251,7 @@ public class BiometricActivityTests extends BiometricTestBase {
                 .get(activitySession.getComponentName());
 
         // Launch test activity
-        activitySession.start();
-        mWmState.waitForActivityState(activitySession.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
-        mInstrumentation.waitForIdleSync();
+        launchActivityAndWaitForResumed(activitySession);
         BiometricCallbackHelper.State callbackState = getCallbackState(journal);
         assertNotNull(callbackState);
 
@@ -348,10 +339,7 @@ public class BiometricActivityTests extends BiometricTestBase {
                 .get(activitySession.getComponentName());
 
         // Launch test activity
-        activitySession.start();
-        mWmState.waitForActivityState(activitySession.getComponentName(),
-                WindowManagerState.STATE_RESUMED);
-        mInstrumentation.waitForIdleSync();
+        launchActivityAndWaitForResumed(activitySession);
         BiometricCallbackHelper.State callbackState;
 
         BiometricServiceState state = getCurrentState();
