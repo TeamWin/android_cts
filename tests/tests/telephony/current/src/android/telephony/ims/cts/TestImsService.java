@@ -345,6 +345,23 @@ public class TestImsService extends Service {
         return complete;
     }
 
+    public boolean waitForLatchCountdown(int latchIndex, long waitMs) {
+        boolean complete = false;
+        try {
+            CountDownLatch latch;
+            synchronized (mLock) {
+                latch = sLatches[latchIndex];
+            }
+            complete = latch.await(waitMs, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            // complete == false
+        }
+        synchronized (mLock) {
+            sLatches[latchIndex] = new CountDownLatch(1);
+        }
+        return complete;
+    }
+
     public void countDownLatch(int latchIndex) {
         synchronized (mLock) {
             sLatches[latchIndex].countDown();
