@@ -278,9 +278,13 @@ public class MultiDisplayTestBase extends ActivityManagerTestBase {
             mInitialDisplayMetrics.setDisplayMetrics(size, density);
         }
 
+        void restoreDisplayMetrics() {
+            mInitialDisplayMetrics.restoreDisplayMetrics();
+        }
+
         @Override
         public void close() {
-            mInitialDisplayMetrics.restoreDisplayMetrics();
+            restoreDisplayMetrics();
         }
     }
 
