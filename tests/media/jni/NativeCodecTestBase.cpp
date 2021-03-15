@@ -19,6 +19,7 @@
 #include <log/log.h>
 
 #include "NativeCodecTestBase.h"
+#include "NativeMediaCommon.h"
 
 static void onAsyncInputAvailable(AMediaCodec* codec, void* userdata, int32_t index) {
     (void)codec;

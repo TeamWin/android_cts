@@ -328,9 +328,11 @@ public class CodecEncoderSurfaceTest {
                             return;
                         }
                     } else {
-                        if (retry > 10) throw new InterruptedException(
-                                "did not receive output format changed for encoder");
-                        Thread.sleep(timeOutUs / 1000);
+                        if (retry > CodecTestBase.RETRY_LIMIT) throw new InterruptedException(
+                                "did not receive output format changed for encoder after " +
+                                        CodecTestBase.Q_DEQ_TIMEOUT_US * CodecTestBase.RETRY_LIMIT +
+                                        " us");
+                        Thread.sleep(CodecTestBase.Q_DEQ_TIMEOUT_US / 1000);
                         retry ++;
                     }
                 }
