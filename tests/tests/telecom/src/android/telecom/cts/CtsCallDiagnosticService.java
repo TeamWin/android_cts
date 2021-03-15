@@ -43,8 +43,9 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     private CountDownLatch mBluetoothCallQualityReportLatch = new CountDownLatch(1);
     private CountDownLatch mCallAudioStateLatch = new CountDownLatch(1);
     private List<CtsDiagnosticCall> mCalls = new ArrayList<>();
+    private CharSequence mDisconnectMessage = null;
 
-    public static class CtsDiagnosticCall extends DiagnosticCall {
+    public class CtsDiagnosticCall extends DiagnosticCall {
         private Call.Details mCallDetails;
         private int mMessageType;
         private int mMessageValue;
@@ -52,6 +53,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         private CountDownLatch mCallQualityReceivedLatch = new CountDownLatch(1);
         private CountDownLatch mReceivedMessageLatch = new CountDownLatch(1);
         private CountDownLatch mCallDetailsReceivedLatch = new CountDownLatch(1);
+        private CountDownLatch mDisconnectLatch = new CountDownLatch(1);
 
         @Override
         public void onCallDetailsChanged(@NonNull Call.Details details) {
@@ -69,13 +71,15 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         @Nullable
         @Override
         public CharSequence onCallDisconnected(int disconnectCause, int preciseDisconnectCause) {
-            return null;
+            mDisconnectLatch.countDown();
+            return mDisconnectMessage;
         }
 
         @Nullable
         @Override
         public CharSequence onCallDisconnected(@NonNull ImsReasonInfo disconnectReason) {
-            return null;
+            mDisconnectLatch.countDown();
+            return mDisconnectMessage;
         }
 
         @Override
@@ -114,6 +118,10 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
 
         public CountDownLatch getCallDetailsReceivedLatch() {
             return mCallDetailsReceivedLatch;
+        }
+
+        public CountDownLatch getDisconnectLatch() {
+            return mDisconnectLatch;
         }
     }
 
@@ -195,5 +203,9 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
 
     public List<CtsDiagnosticCall> getCalls() {
         return mCalls;
+    }
+
+    public void setDisconnectMessage(CharSequence charSequence) {
+        mDisconnectMessage = charSequence;
     }
 }
