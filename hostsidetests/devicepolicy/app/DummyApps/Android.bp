@@ -34,7 +34,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "dummyapp1/AndroidManifest.xml",
 }
@@ -61,7 +61,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "dummyapp2/AndroidManifest.xml",
 }
@@ -88,7 +88,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "dummyapp3/AndroidManifest.xml",
 }
@@ -115,7 +115,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "dummyapp4/AndroidManifest.xml",
 }

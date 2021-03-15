@@ -26,7 +26,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     platform_apis: true,
     manifest: "fullbackup/AndroidManifest.xml"
@@ -47,7 +47,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     platform_apis: true,
     manifest: "keyvalue/AndroidManifest.xml"
@@ -68,7 +68,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     platform_apis: true,
     manifest: "permission/AndroidManifest.xml"
@@ -89,7 +89,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     platform_apis: true,
     manifest: "permission22/AndroidManifest.xml"
