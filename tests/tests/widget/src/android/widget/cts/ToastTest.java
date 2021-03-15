@@ -979,6 +979,31 @@ public class ToastTest {
         assertCustomToastNotShown(toasts.get(1));
     }
 
+    @Test
+    public void testAppWithUnlimitedToastsPermissionCanPostUnlimitedToasts() throws Throwable {
+        // enable rate limiting to test it
+        SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
+                .setToastRateLimitingEnabled(true));
+
+        int highestToastRateLimit = TOAST_RATE_LIMITS[TOAST_RATE_LIMITS.length - 1];
+        List<TextToastInfo> toasts = createTextToasts(highestToastRateLimit + 1, "Text",
+                Toast.LENGTH_SHORT);
+
+        // We have to show one by one to avoid max number of toasts enqueued by a single package at
+        // a time.
+        for (TextToastInfo t : toasts) {
+            // The shell has the android.permission.UNLIMITED_TOASTS permission.
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                try {
+                    showToast(t);
+                } catch (Throwable throwable) {
+                    throw new RuntimeException(throwable);
+                }
+            });
+            assertTextToastShownAndHidden(t);
+        }
+    }
+
     /** Create given number of text toasts with the same given text and length. */
     private List<TextToastInfo> createTextToasts(int num, String text, int length)
             throws Throwable {
@@ -986,7 +1011,7 @@ public class ToastTest {
         mActivityRule.runOnUiThread(() -> {
             toasts.addAll(Stream
                     .generate(() -> TextToastInfo.create(mContext, text, length))
-                    .limit(num + 1)
+                    .limit(num)
                     .collect(toList()));
         });
         return toasts;
@@ -999,7 +1024,7 @@ public class ToastTest {
         mActivityRule.runOnUiThread(() -> {
             toasts.addAll(Stream
                     .generate(() -> CustomToastInfo.create(mContext, text, length))
-                    .limit(num + 1)
+                    .limit(num)
                     .collect(toList()));
         });
         return toasts;
@@ -1010,6 +1035,12 @@ public class ToastTest {
             for (ToastInfo t : toasts) {
                 t.getToast().show();
             }
+        });
+    }
+
+    private void showToast(ToastInfo toast) throws Throwable {
+        mActivityRule.runOnUiThread(() -> {
+            toast.getToast().show();
         });
     }
 
