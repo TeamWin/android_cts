@@ -95,7 +95,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     private static final String TEXT = "foo";
 
     private static final AppSearchEmail EMAIL_DOCUMENT =
-            new AppSearchEmail.Builder("uri1")
+            new AppSearchEmail.Builder("namespace", "uri1")
                     .setFrom("from@example.com")
                     .setTo("to1@example.com", "to2@example.com")
                     .setSubject(TEXT)
