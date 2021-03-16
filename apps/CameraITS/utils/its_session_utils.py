@@ -1054,6 +1054,25 @@ class ItsSession(object):
 
     return data['strValue'] == 'supportedCombination'
 
+  def is_camera_privacy_mode_supported(self):
+    """Query whether the mobile device supports camera privacy mode.
+
+    This function checks whether the mobile device has FEATURE_CAMERA_TOGGLE
+    feature support, which indicates the camera device can run in privacy mode.
+
+    Returns:
+      Boolean
+    """
+    cmd = {}
+    cmd['cmdName'] = 'isCameraPrivacyModeSupported'
+    self.sock.send(json.dumps(cmd).encode() + '\n'.encode())
+
+    data, _ = self.__read_response_from_socket()
+    if data['tag'] != 'cameraPrivacyModeSupport':
+      raise error_util.CameraItsError('Failed to query camera privacy mode'
+                                      ' support')
+    return data['strValue'] == 'true'
+
 
 def parse_camera_ids(ids):
   """Parse the string of camera IDs into array of CameraIdCombo tuples.
