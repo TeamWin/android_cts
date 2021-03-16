@@ -273,7 +273,7 @@ def _get_cam_rotations(frames, facing, h, log_path):
   # create mask
   ymin = int(h * (1 - _FEATURE_MARGIN) / 2)
   ymax = int(h * (1 + _FEATURE_MARGIN) / 2)
-  mask = numpy.zeros_like(gframes[0])
+  mask = np.zeros_like(gframes[0])
   mask[ymin:ymax, :] = 255
 
   for i in range(1, len(gframes)):
@@ -322,7 +322,7 @@ def _plot_best_shift(best, coeff, x, y, log_path):
 
   Args:
     best: x value of best fit data.
-    coeff: 3 element np array. Return of numpy.polyfit(x,y) for 2nd order fit.
+    coeff: 3 element np array. Return of np.polyfit(x,y) for 2nd order fit.
     x: np array of x data that was fit.
     y: np array of y data that was fit.
     log_path: where to store data.
