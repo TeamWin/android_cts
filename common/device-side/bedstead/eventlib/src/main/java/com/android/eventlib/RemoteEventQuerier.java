@@ -16,6 +16,7 @@
 
 package com.android.eventlib;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.Context.BIND_AUTO_CREATE;
 
 import static com.android.eventlib.QueryService.EARLIEST_LOG_TIME_KEY;
@@ -34,7 +35,8 @@ import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -54,6 +56,7 @@ public class
     private static final String LOG_TAG = "RemoteEventQuerier";
     private static final Context sContext =
             InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
 
     private final String mPackageName;
     private final EventLogsQuery<E, F> mEventLogsQuery;
@@ -144,7 +147,31 @@ public class
     private AtomicReference<IQueryService> mQuery = new AtomicReference<>();
     private CountDownLatch mConnectionCountdown;
 
+    private static final int MAX_INITIALISATION_ATTEMPTS = 10;
+    private static final long INITIALISATION_ATTEMPT_DELAY_MS = 100;
+
     private void ensureInitialised() {
+        // We have retries for binding because there are a number of reasons binding could fail in
+        // unpredictable ways
+        int attempts = 0;
+        while (attempts++ < MAX_INITIALISATION_ATTEMPTS) {
+            try {
+                ensureInitialisedOrThrow();
+                return;
+            } catch (Exception e) {
+                // Ignore, we will retry
+            }
+            try {
+                Thread.sleep(INITIALISATION_ATTEMPT_DELAY_MS);
+            } catch (InterruptedException e) {
+                throw new AssertionError("Interrupted while initialising", e);
+            }
+        }
+
+        ensureInitialisedOrThrow();
+    }
+
+    private void ensureInitialisedOrThrow() {
         if (mQuery.get() != null) {
             return;
         }
@@ -168,11 +195,12 @@ public class
 
         AtomicBoolean didBind = new AtomicBoolean(false);
         if (mEventLogsQuery.getUserHandle() != null) {
-            SystemUtil.runWithShellPermissionIdentity(() -> {
+            try (PermissionContext p =
+                         sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
                 didBind.set(sContext.bindServiceAsUser(
                         intent, connection, /* flags= */ BIND_AUTO_CREATE,
                         mEventLogsQuery.getUserHandle()));
-            });
+            }
         } else {
             didBind.set(sContext.bindService(intent, connection, /* flags= */ BIND_AUTO_CREATE));
         }
@@ -183,6 +211,9 @@ public class
             } catch (InterruptedException e) {
                 throw new AssertionError("Interrupted while binding to service", e);
             }
+        } else {
+            throw new AssertionError("Tried to bind but call returned false (intent is "
+                    + intent + ", user is  " + mEventLogsQuery.getUserHandle() + ")");
         }
 
         if (mQuery.get() == null) {
