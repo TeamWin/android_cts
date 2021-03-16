@@ -53,8 +53,7 @@ public class SensorRatePermissionDirectReportTestHelper {
             Sensor.TYPE_MAGNETIC_FIELD,
             Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED
     );
-    // Use same parameters like in all other tests in this sensor module
-    public static final int TEST_RUN_TIME_PERIOD_MILLISEC = 5000; // 1024 * 5 ms
+    public static final int TEST_RUN_TIME_PERIOD_MILLISEC = 1000;
     public static final int SENSORS_EVENT_SIZE = 104;
 
     static {
@@ -155,7 +154,7 @@ public class SensorRatePermissionDirectReportTestHelper {
      */
     public List<SensorDirectReportTest.DirectReportSensorEvent> getSensorEvents(int rateLevel)
             throws InterruptedException {
-        int sensorEventCount = 10240; // 800 Hz * 5s + extra
+        int sensorEventCount = 2000; // 800 Hz * 2.2 * 1s + extra
         int sharedMemorySize = sensorEventCount * SENSORS_EVENT_SIZE;
         HardwareBuffer hardwareBuffer = HardwareBuffer.create(
                 sharedMemorySize, 1, HardwareBuffer.BLOB, 1,
