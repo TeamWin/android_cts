@@ -293,9 +293,9 @@ public class EdgeEffectTests extends ActivityTestBase {
 
     @Test
     public void testStretchTop() {
-        RenderNode renderNode = drawStretchEffect(0.2f, 0.2f, 0f);
-        Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2 + 5);
-        Rect outerRect = new Rect(0, HEIGHT / 2 + 20, WIDTH, HEIGHT);
+        RenderNode renderNode = drawStretchEffect(1f, 1f, 0f);
+        Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2 + 1);
+        Rect outerRect = new Rect(0, HEIGHT / 2 + 5, WIDTH, HEIGHT);
         createTest()
                 .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                     canvas.drawRenderNode(renderNode);
@@ -312,7 +312,7 @@ public class EdgeEffectTests extends ActivityTestBase {
 
     @Test
     public void testStretchBottom() {
-        RenderNode renderNode = drawStretchEffect(0.2f, 0.2f, 180f);
+        RenderNode renderNode = drawStretchEffect(1f, 1f, 180f);
         Rect innerRect = new Rect(0, 0, WIDTH, 1);
         Rect outerRect = new Rect(0, (HEIGHT / 2) - 1, WIDTH, HEIGHT / 2);
         createTest()
@@ -327,6 +327,31 @@ public class EdgeEffectTests extends ActivityTestBase {
                                 outerRect,
                                 new ColorVerifier(Color.MAGENTA)
                         ));
+    }
+
+    @Test
+    public void testAbsorbThenDrawDoesNotCrash() {
+        MockVsyncHelper.runOnVsyncThread(() -> {
+            EdgeEffect edgeEffect = new EdgeEffect(getContext());
+            edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
+            edgeEffect.onPullDistance(1f, 1f);
+            edgeEffect.onAbsorb(100);
+            edgeEffect.onRelease();
+
+            nextFrame();
+
+            edgeEffect.setSize(10, 10);
+            RenderNode node = new RenderNode("");
+            node.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+            RecordingCanvas canvas = node.beginRecording();
+            Paint paint = new Paint();
+            paint.setColor(Color.RED);
+            canvas.drawRect(0f, 0f, TEST_WIDTH, TEST_HEIGHT, paint);
+
+            canvas.rotate(90, TEST_WIDTH / 2f, TEST_HEIGHT / 2f);
+            edgeEffect.draw(canvas);
+            node.endRecording();
+        });
     }
 
     /**

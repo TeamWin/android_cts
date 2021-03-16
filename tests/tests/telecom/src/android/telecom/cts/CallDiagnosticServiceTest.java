@@ -28,6 +28,7 @@ import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.DiagnosticCall;
+import android.telecom.DisconnectCause;
 import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
     private static final String POOR_CALL_MESSAGE = "Can you hear me?";
+    private static final String OVERRIDE_MESSAGE = "Whoopsie doodles; call dropped.  Oh well.";
     private static final int POOR_MESSAGE_ID = 90210;
     private TelecomManager mTelecomManager;
     private MockConnection mConnection;
@@ -282,6 +284,48 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         int messageId = extras.getInt(Call.EXTRA_DIAGNOSTIC_MESSAGE_ID);
         assertEquals(POOR_MESSAGE_ID, messageId);
+    }
+
+    /**
+     * Test not overriding the disconnect message.
+     * @throws InterruptedException
+     */
+    public void testSetNullDisconnectMessage() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+        mService.setDisconnectMessage(null);
+        mConnection.setDisconnected(new DisconnectCause(DisconnectCause.ERROR));
+        mConnection.destroy();
+        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getDisconnectLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+
+        assertCallState(mCall, Call.STATE_DISCONNECTED);
+        assertNull(mCall.getDetails().getDisconnectCause().getLabel());
+        assertNull(mCall.getDetails().getDisconnectCause().getDescription());
+    }
+
+    /**
+     * Test override the disconnect message.
+     * @throws InterruptedException
+     */
+    public void testOverrideDisconnectMessage() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+        mService.setDisconnectMessage(OVERRIDE_MESSAGE);
+        mConnection.setDisconnected(new DisconnectCause(DisconnectCause.ERROR));
+        mConnection.destroy();
+        CtsCallDiagnosticService.CtsDiagnosticCall diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getDisconnectLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                TimeUnit.MILLISECONDS);
+
+        assertCallState(mCall, Call.STATE_DISCONNECTED);
+        assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getLabel());
+        assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getDescription());
     }
 
     /**

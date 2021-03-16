@@ -903,7 +903,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     public void testIsWifiGrant_allowed() {
         mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
                 TEST_ALIAS, /* requestAccess= */ false);
-        mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS);
+        assertTrue(mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS));
 
         assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isTrue();
     }
@@ -911,8 +911,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
     public void testIsWifiGrant_denied() {
         mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
                 TEST_ALIAS, /* requestAccess= */ false);
-        mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS);
-        mDevicePolicyManager.revokeKeyPairFromWifiAuth(TEST_ALIAS);
+        assertTrue(mDevicePolicyManager.grantKeyPairToWifiAuth(TEST_ALIAS));
+        assertTrue(mDevicePolicyManager.revokeKeyPairFromWifiAuth(TEST_ALIAS));
 
         assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
     }
