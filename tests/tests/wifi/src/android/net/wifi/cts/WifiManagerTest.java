@@ -736,6 +736,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
+    public class TestWifiVerboseLoggingStatusCallback extends
+            WifiManager.WifiVerboseLoggingStatusCallback {
+        public int numCalls;
+        public boolean status;
+        @Override
+        public void onStatusChanged(boolean enabled) {
+            numCalls++;
+            status = enabled;
+        }
+    }
+
     public class TestSoftApCallback implements WifiManager.SoftApCallback {
         Object softApLock;
         int currentState;
@@ -2773,18 +2784,25 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         Boolean currState = null;
+        TestWifiVerboseLoggingStatusCallback callback =
+                new TestWifiVerboseLoggingStatusCallback();
         try {
             uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.registerWifiVerboseLoggingStatusCallback(mExecutor, callback);
             currState = mWifiManager.isVerboseLoggingEnabled();
             boolean newState = !currState;
+            assertEquals(0, callback.numCalls);
             mWifiManager.setVerboseLoggingEnabled(newState);
             PollingCheck.check(
                     "Wifi settings toggle failed!",
                     DURATION_SETTINGS_TOGGLE,
                     () -> mWifiManager.isVerboseLoggingEnabled() == newState);
             assertEquals(newState, mWifiManager.isVerboseLoggingEnabled());
+            assertEquals(newState, callback.status);
+            assertEquals(1, callback.numCalls);
         } finally {
             if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
+            mWifiManager.unregisterWifiVerboseLoggingStatusCallback(callback);
             uiAutomation.dropShellPermissionIdentity();
         }
     }
