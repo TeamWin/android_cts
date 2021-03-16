@@ -19,14 +19,18 @@ package android.media.cts;
 import static android.media.MediaRoute2Info.FEATURE_LIVE_AUDIO;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SAMPLE;
 import static android.media.cts.StubMediaRoute2ProviderService.FEATURE_SPECIAL;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID1;
 import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID2;
+import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID3_SESSION_CREATION_FAILED;
 import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_ID_VARIABLE_VOLUME;
 import static android.media.cts.StubMediaRoute2ProviderService.ROUTE_NAME2;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -34,6 +38,7 @@ import android.media.MediaRoute2Info;
 import android.media.MediaRouter2;
 import android.media.MediaRouter2.RouteCallback;
 import android.media.MediaRouter2.RoutingController;
+import android.media.MediaRouter2.TransferCallback;
 import android.media.MediaRouter2Manager;
 import android.media.RouteDiscoveryPreference;
 import android.media.RoutingSessionInfo;
@@ -52,7 +57,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -77,7 +84,7 @@ public class SystemMediaRouter2Test {
     private RouteCallback mAppRouterPlaceHolderCallback = new RouteCallback() {};
 
     private final List<RouteCallback> mRouteCallbacks = new ArrayList<>();
-    private final List<MediaRouter2.TransferCallback> mTransferCallbacks = new ArrayList<>();
+    private final List<TransferCallback> mTransferCallbacks = new ArrayList<>();
 
     public static final List<String> FEATURES_ALL = new ArrayList();
     public static final List<String> FEATURES_SPECIAL = new ArrayList();
@@ -172,7 +179,7 @@ public class SystemMediaRouter2Test {
 
     @Test
     public void testGetAllRoutes() throws Exception {
-        waitForRoutesAdded(FEATURE_SPECIAL);
+        waitAndGetRoutes(FEATURE_SPECIAL);
 
         // Regardless of whether the app router registered its preference,
         // getAllRoutes() will return all the routes.
@@ -192,23 +199,16 @@ public class SystemMediaRouter2Test {
         // only the system routes will come out after creation.
         assertTrue(mSystemRouter2ForCts.getRoutes().isEmpty());
 
-        waitForRoutesAdded(FEATURE_SPECIAL);
+        waitAndGetRoutes(FEATURE_SPECIAL);
 
-        mRouteCallbacks.add(mAppRouterPlaceHolderCallback);
-        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
-                new RouteDiscoveryPreference.Builder(FEATURES_SPECIAL, true).build());
-
-        new PollingCheck(TIMEOUT_MS) {
-            @Override
-            protected boolean check() {
-                for (MediaRoute2Info route : mSystemRouter2ForCts.getRoutes()) {
-                    if (route.getFeatures().contains(FEATURE_SPECIAL)) {
-                        return true;
-                    }
-                }
-                return false;
+        boolean routeFound = false;
+        for (MediaRoute2Info route : mSystemRouter2ForCts.getRoutes()) {
+            if (route.getFeatures().contains(FEATURE_SPECIAL)) {
+                routeFound = true;
+                break;
             }
-        }.run();
+        }
+        assertTrue(routeFound);
     }
 
     @Test
@@ -245,7 +245,7 @@ public class SystemMediaRouter2Test {
         mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
                 new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
 
-        waitForRoutesAdded(FEATURE_SAMPLE);
+        waitAndGetRoutes(FEATURE_SAMPLE);
 
         CountDownLatch removedLatch = new CountDownLatch(1);
         RouteCallback routeCallback = new RouteCallback() {
@@ -273,7 +273,7 @@ public class SystemMediaRouter2Test {
         mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
                 new RouteDiscoveryPreference.Builder(FEATURES_ALL, true).build());
 
-        waitForRoutesAdded(FEATURE_SAMPLE);
+        waitAndGetRoutes(FEATURE_SAMPLE);
 
         MediaRoute2Info routeToChangeVolume = null;
         for (MediaRoute2Info route : mSystemRouter2ForCts.getAllRoutes()) {
@@ -330,7 +330,175 @@ public class SystemMediaRouter2Test {
         assertTrue(featuresChangedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
-    private void waitForRoutesAdded(String feature) throws Exception {
+    @Test
+    public void testTransferToSuccess() throws Exception {
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SAMPLE);
+        MediaRoute2Info route = routes.get(ROUTE_ID1);
+        assertNotNull(route);
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        final CountDownLatch failureLatch = new CountDownLatch(1);
+        final List<RoutingController> controllers = new ArrayList<>();
+
+        // Create session with this route
+        TransferCallback transferCallback = new TransferCallback() {
+            @Override
+            public void onTransfer(RoutingController oldController,
+                    RoutingController newController) {
+                assertEquals(mSystemRouter2ForCts.getSystemController(), oldController);
+                assertTrue(createRouteMap(newController.getSelectedRoutes()).containsKey(
+                        ROUTE_ID1));
+                controllers.add(newController);
+                successLatch.countDown();
+            }
+
+            @Override
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
+                failureLatch.countDown();
+            }
+        };
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route);
+            assertTrue(successLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // onSessionCreationFailed should not be called.
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            releaseControllers(controllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+    @Test
+    public void testTransferToFailure() throws Exception {
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SAMPLE);
+        MediaRoute2Info route = routes.get(ROUTE_ID3_SESSION_CREATION_FAILED);
+        assertNotNull(route);
+
+        final CountDownLatch successLatch = new CountDownLatch(1);
+        final CountDownLatch failureLatch = new CountDownLatch(1);
+        final List<RoutingController> controllers = new ArrayList<>();
+
+        // Create session with this route
+        TransferCallback transferCallback = new TransferCallback() {
+            @Override
+            public void onTransfer(RoutingController oldController,
+                    RoutingController newController) {
+                controllers.add(newController);
+                successLatch.countDown();
+            }
+
+            @Override
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
+                assertEquals(route, requestedRoute);
+                failureLatch.countDown();
+            }
+        };
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route);
+            assertTrue(failureLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // onTransfer should not be called.
+            assertFalse(successLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            releaseControllers(controllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+
+    @Test
+    public void testTransferToTwice() throws Exception {
+        final CountDownLatch successLatch1 = new CountDownLatch(1);
+        final CountDownLatch successLatch2 = new CountDownLatch(1);
+        final CountDownLatch failureLatch = new CountDownLatch(1);
+        final CountDownLatch stopLatch = new CountDownLatch(1);
+        final CountDownLatch onReleaseSessionLatch = new CountDownLatch(1);
+
+        final List<RoutingController> createdControllers = new ArrayList<>();
+
+        // Create session with this route
+        TransferCallback transferCallback = new TransferCallback() {
+            @Override
+            public void onTransfer(RoutingController oldController,
+                    RoutingController newController) {
+                createdControllers.add(newController);
+                if (successLatch1.getCount() > 0) {
+                    successLatch1.countDown();
+                } else {
+                    successLatch2.countDown();
+                }
+            }
+
+            @Override
+            public void onTransferFailure(MediaRoute2Info requestedRoute) {
+                failureLatch.countDown();
+            }
+
+            @Override
+            public void onStop(RoutingController controller) {
+                stopLatch.countDown();
+            }
+        };
+
+        StubMediaRoute2ProviderService service = mService;
+        if (service != null) {
+            service.setProxy(new StubMediaRoute2ProviderService.Proxy() {
+                @Override
+                public void onReleaseSession(long requestId, String sessionId) {
+                    onReleaseSessionLatch.countDown();
+                }
+            });
+        }
+
+        Map<String, MediaRoute2Info> routes = waitAndGetRoutes(FEATURE_SAMPLE);
+        MediaRoute2Info route1 = routes.get(ROUTE_ID1);
+        MediaRoute2Info route2 = routes.get(ROUTE_ID2);
+        assertNotNull(route1);
+        assertNotNull(route2);
+
+        try {
+            mSystemRouter2ForCts.registerTransferCallback(mExecutor, transferCallback);
+            mSystemRouter2ForCts.transferTo(route1);
+            assertTrue(successLatch1.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            mSystemRouter2ForCts.transferTo(route2);
+            assertTrue(successLatch2.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+            // onTransferFailure/onStop should not be called.
+            assertFalse(failureLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+            assertFalse(stopLatch.await(WAIT_MS, TimeUnit.MILLISECONDS));
+
+            // Created controllers should have proper info
+            assertEquals(2, createdControllers.size());
+            RoutingController controller1 = createdControllers.get(0);
+            RoutingController controller2 = createdControllers.get(1);
+
+            assertNotEquals(controller1.getId(), controller2.getId());
+            assertTrue(createRouteMap(controller1.getSelectedRoutes()).containsKey(
+                    ROUTE_ID1));
+            assertTrue(createRouteMap(controller2.getSelectedRoutes()).containsKey(
+                    ROUTE_ID2));
+
+            // Should be able to release transferred controllers.
+            controller1.release();
+            assertTrue(onReleaseSessionLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        } finally {
+            releaseControllers(createdControllers);
+            mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
+        }
+    }
+
+    private Map<String, MediaRoute2Info> waitAndGetRoutes(String feature) throws Exception {
+        List<String> features = new ArrayList<>();
+        features.add(feature);
+
+        mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
+                new RouteDiscoveryPreference.Builder(features, true).build());
+
         CountDownLatch latch = new CountDownLatch(1);
         RouteCallback routeCallback = new RouteCallback() {
             @Override
@@ -344,12 +512,26 @@ public class SystemMediaRouter2Test {
             }
         };
 
-        mRouteCallbacks.add(routeCallback);
         mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
                 RouteDiscoveryPreference.EMPTY);
-        // Note: The routes can be added before registering the callback,
-        // therefore no assertTrue() here.
-        latch.await(WAIT_MS, TimeUnit.MILLISECONDS);
+
+        try {
+            // Note: The routes can be added before registering the callback,
+            // therefore no assertTrue() here.
+            latch.await(WAIT_MS, TimeUnit.MILLISECONDS);
+            return createRouteMap(mSystemRouter2ForCts.getRoutes());
+        } finally {
+            mSystemRouter2ForCts.unregisterRouteCallback(routeCallback);
+        }
+    }
+
+    // Helper for getting routes easily. Uses original ID as a key
+    private static Map<String, MediaRoute2Info> createRouteMap(List<MediaRoute2Info> routes) {
+        Map<String, MediaRoute2Info> routeMap = new HashMap<>();
+        for (MediaRoute2Info route : routes) {
+            routeMap.put(route.getOriginalId(), route);
+        }
+        return routeMap;
     }
 
     private void releaseAllSessions() {
@@ -366,10 +548,16 @@ public class SystemMediaRouter2Test {
         }
         mRouteCallbacks.clear();
 
-        for (MediaRouter2.TransferCallback transferCallback : mTransferCallbacks) {
+        for (TransferCallback transferCallback : mTransferCallbacks) {
             mAppRouter2.unregisterTransferCallback(transferCallback);
             mSystemRouter2ForCts.unregisterTransferCallback(transferCallback);
         }
         mTransferCallbacks.clear();
+    }
+
+    static void releaseControllers(List<RoutingController> controllers) {
+        for (RoutingController controller : controllers) {
+            controller.release();
+        }
     }
 }
