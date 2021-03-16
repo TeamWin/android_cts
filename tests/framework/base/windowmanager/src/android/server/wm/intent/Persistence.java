@@ -244,9 +244,8 @@ public class Persistence {
 
         @Override
         public Intent getActualIntent() {
-            Uri uri = null;
             final Intent intent = new Intent().setComponent(mComponentName).setFlags(buildFlag());
-            if (mData != null) {
+            if (mData != null && !mData.isEmpty()) {
                 intent.setData(Uri.parse(mData));
             }
             return intent;
