@@ -35,8 +35,7 @@ NOT_YET_MANDATED_ALL = 100
 # Not yet mandated tests ['test', first_api_level mandatory]
 # ie. ['test_test_patterns', 30] is MANDATED for first_api_level >= 30
 NOT_YET_MANDATED = {
-    'scene0': [['test_solid_color_test_pattern', 31],
-               ['test_test_patterns', 30],
+    'scene0': [['test_test_patterns', 30],
                ['test_tonemap_curve', 30]],
     'scene1_1': [['test_ae_precapture_trigger', 28],
                  ['test_channel_saturation', 29]],
@@ -189,8 +188,8 @@ class ItsBaseTest(base_test.BaseTestClass):
     # Determine which test are not yet mandated for first api level.
     tests = NOT_YET_MANDATED[scene]
     for [test, first_api_level_mandated] in tests:
-      logging.debug('First API level test MANDATED: %d',
-                    first_api_level_mandated)
+      logging.debug('First API level %s MANDATED: %d',
+                    test, first_api_level_mandated)
       if first_api_level < first_api_level_mandated:
         not_yet_mandated[scene].append(test)
     return not_yet_mandated
