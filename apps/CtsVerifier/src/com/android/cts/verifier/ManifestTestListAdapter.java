@@ -409,7 +409,7 @@ public class ManifestTestListAdapter extends TestListAdapter {
                                 .loadClass("android.os.SystemProperties")
                                 .getMethod("get", String.class);
                             String emulatorKernel = (String) getStringMethod.invoke("0",
-                                    "ro.kernel.qemu");
+                                    "ro.boot.qemu");
                             if (emulatorKernel.equals("1")) {
                                 return false;
                             }
