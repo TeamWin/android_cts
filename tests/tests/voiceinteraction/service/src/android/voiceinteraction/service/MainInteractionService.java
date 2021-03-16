@@ -16,6 +16,8 @@
 
 package android.voiceinteraction.service;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import android.content.ComponentName;
 import android.content.Intent;
 import android.net.Uri;
@@ -56,7 +58,9 @@ public class MainInteractionService extends VoiceInteractionService {
         if (testEvent == Utils.VOICE_INTERACTION_SERVICE_NORMAL_TEST) {
             maybeStart();
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
-            callCreateAlwaysOnHotwordDetector();
+            runWithShellPermissionIdentity(() -> {
+                callCreateAlwaysOnHotwordDetector();
+            });
         }
         return START_NOT_STICKY;
     }
@@ -130,7 +134,7 @@ public class MainInteractionService extends VoiceInteractionService {
             Log.w(TAG, "callCreateAlwaysOnHotwordDetector() exception: " + e);
             broadcastIntentWithResult(
                     Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE);
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
         }
     }
 
