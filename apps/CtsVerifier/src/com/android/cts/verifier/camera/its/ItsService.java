@@ -22,6 +22,7 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
@@ -231,6 +232,8 @@ public class ItsService extends Service implements SensorEventListener {
     private HandlerThread mSensorThread = null;
     private Handler mSensorHandler = null;
 
+    private PackageManager mPackageManager;
+
     private static final int SERIALIZER_SURFACES_ID = 2;
     private static final int SERIALIZER_PHYSICAL_METADATA_ID = 3;
 
@@ -312,6 +315,8 @@ public class ItsService extends Service implements SensorEventListener {
         mChannel.setDescription("ItsServiceChannel");
         mChannel.enableVibration(false);
         notificationManager.createNotificationChannel(mChannel);
+
+        mPackageManager = getPackageManager();
     }
 
     @Override
@@ -709,6 +714,8 @@ public class ItsService extends Service implements SensorEventListener {
                     mSocketRunnableObj.sendResponse("ItsVersion", ITS_SERVICE_VERSION);
                 } else if ("isStreamCombinationSupported".equals(cmdObj.getString("cmdName"))) {
                     doCheckStreamCombination(cmdObj);
+                } else if ("isCameraPrivacyModeSupported".equals(cmdObj.getString("cmdName"))) {
+                    doCheckCameraPrivacyModeSupport();
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }
@@ -1036,6 +1043,13 @@ public class ItsService extends Service implements SensorEventListener {
         } catch (CameraAccessException e) {
             throw new ItsException("Error checking stream combination", e);
         }
+    }
+
+    private void doCheckCameraPrivacyModeSupport() throws ItsException {
+        boolean hasPrivacySupport = mPackageManager.hasSystemFeature(
+                PackageManager.FEATURE_CAMERA_TOGGLE);
+        mSocketRunnableObj.sendResponse("cameraPrivacyModeSupport",
+                hasPrivacySupport ? "true" : "false");
     }
 
     private void prepareImageReaders(Size[] outputSizes, int[] outputFormats, Size inputSize,
