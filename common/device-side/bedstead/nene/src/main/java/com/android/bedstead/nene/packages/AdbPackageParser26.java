@@ -23,6 +23,7 @@ import android.os.Build;
 import androidx.annotation.RequiresApi;
 
 import com.android.bedstead.nene.exceptions.AdbParseException;
+import com.android.bedstead.nene.users.UserReference;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,22 +109,83 @@ public class AdbPackageParser26 implements AdbPackageParser {
             String packageName = packageString.split("\\[", 2)[1].split("]", 2)[0];
             Package.MutablePackage pkg = new Package.MutablePackage();
             pkg.mPackageName = packageName;
-            pkg.mInstalledOnUsers = new HashSet<>();
+            pkg.mInstalledOnUsers = new HashMap<>();
+            pkg.mInstallPermissions = new HashSet<>();
 
+            Set<String> sections = extractIndentedSections(
+                    packageString.split("\n", 2)[1], // Remove first line (package name)
+                    /* baseIndentation= */ 4);
 
-            Matcher userInstalledMatcher = USER_INSTALLED_PATTERN.matcher(packageString);
-            while (userInstalledMatcher.find()) {
-                int userId = Integer.parseInt(userInstalledMatcher.group(1));
-                boolean isInstalled = Boolean.parseBoolean(userInstalledMatcher.group(2));
-
-                if (isInstalled) {
-                    pkg.mInstalledOnUsers.add(mPackages.mTestApis.users().find(userId));
+            for (String section : sections) {
+                if (section.startsWith("install permissions")) {
+                    parseInstallPermissions(section, pkg);
+                } else if (section.startsWith("User ")) {
+                    parseUser(section, pkg);
                 }
             }
 
             return pkg;
         } catch (IndexOutOfBoundsException | NumberFormatException e) {
             throw new AdbParseException("Error parsing package", packageString, e);
+        }
+    }
+
+    void parseInstallPermissions(String section, Package.MutablePackage pkg) {
+        String list = section.split("\n", 2)[1]; // remove header
+        for (String item : list.split("\n")) {
+            String[] trimmed = item.trim().split(":", 2);
+            String permissionName = trimmed[0];
+
+            if (trimmed[1].contains("granted=true")) {
+                pkg.mInstallPermissions.add(permissionName);
+            }
+        }
+    }
+
+    void parseUser(String section, Package.MutablePackage pkg) throws AdbParseException {
+        Matcher userInstalledMatcher = USER_INSTALLED_PATTERN.matcher(section);
+        if (!userInstalledMatcher.find()) {
+            throw new AdbParseException("Error parsing user section in package", section);
+        }
+        int userId = Integer.parseInt(userInstalledMatcher.group(1));
+        boolean isInstalled = Boolean.parseBoolean(userInstalledMatcher.group(2));
+
+        if (!isInstalled) {
+            return;
+        }
+
+        UserReference user = mPackages.mTestApis.users().find(userId);
+        Package.MutableUserPackage userPackage = new Package.MutableUserPackage();
+        userPackage.mGrantedPermissions = new HashSet<>();
+        pkg.mInstalledOnUsers.put(user, userPackage);
+
+
+        try {
+            String[] sectionParts = section.split("\n", 2); // remove header
+
+            if (sectionParts.length < 2) {
+                return; // No content - just the header
+            }
+
+            Set<String> userSections = extractIndentedSections(
+                    sectionParts[1], // Remove first line (user name)
+                    /* baseIndentation= */ 6);
+
+            for (String userSection : userSections) {
+                if (userSection.startsWith("runtime permissions:")) {
+                    String list = userSection.split("\n", 2)[1]; // remove header
+                    for (String item : list.split("\n")) {
+                        String[] trimmed = item.trim().split(":", 2);
+                        String permissionName = trimmed[0];
+
+                        if (trimmed[1].contains("granted=true")) {
+                            userPackage.mGrantedPermissions.add(permissionName);
+                        }
+                    }
+                }
+            }
+        } catch (IndexOutOfBoundsException e) {
+            throw new AdbParseException("Error parsing user section", section, e);
         }
     }
 }
