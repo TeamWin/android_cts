@@ -38,7 +38,6 @@ import android.telephony.BarringInfo;
 import android.telephony.CellIdentity;
 import android.telephony.CellInfo;
 import android.telephony.CellLocation;
-import android.telephony.LinkCapacityEstimate;
 import android.telephony.PhysicalChannelConfig;
 import android.telephony.PreciseCallState;
 import android.telephony.PreciseDataConnectionState;
@@ -95,7 +94,6 @@ public class TelephonyCallbackTest {
     private boolean mOnTelephonyDisplayInfoChanged;
     private boolean mOnPhysicalChannelConfigCalled;
     private boolean mOnDataEnabledChangedCalled;
-    private boolean mOnLinkCapacityEstimateChangedCalled;
     @RadioPowerState
     private int mRadioPowerState;
     @SimActivationState
@@ -1326,20 +1324,7 @@ public class TelephonyCallbackTest {
                 mAllowedNetworkTypeReason = reason;
                 mAllowedNetworkTypeValue = allowedNetworkType;
                 mOnAllowedNetworkTypesChangedCalled = true;
-                mLock.notify();
-            }
-        }
-    }
 
-    private LinkCapacityEstimateChangedListener mLinkCapacityEstimateChangedListener;
-
-    private class LinkCapacityEstimateChangedListener extends TelephonyCallback
-            implements TelephonyCallback.LinkCapacityEstimateChangedListener {
-        @Override
-        public void onLinkCapacityEstimateChanged(
-                List<LinkCapacityEstimate> linkCapacityEstimateList) {
-            synchronized (mLock) {
-                mOnLinkCapacityEstimateChangedCalled = true;
                 mLock.notify();
             }
         }
@@ -1392,29 +1377,5 @@ public class TelephonyCallbackTest {
                 (tm) -> tm.setAllowedNetworkTypesForReason(
                         TelephonyManager.ALLOWED_NETWORK_TYPES_REASON_USER,
                         originalAllowedNetworkTypeUser));
-    }
-
-    public void testOnLinkCapacityEstimateChangedByRegisterPhoneStateListener() throws Throwable {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-
-        assertFalse(mOnLinkCapacityEstimateChangedCalled);
-        mHandler.post(() -> {
-            mLinkCapacityEstimateChangedListener = new LinkCapacityEstimateChangedListener();
-            registerTelephonyCallbackWithPermission(mLinkCapacityEstimateChangedListener);
-        });
-
-        synchronized (mLock) {
-            while (!mOnLinkCapacityEstimateChangedCalled) {
-                mLock.wait(WAIT_TIME);
-            }
-        }
-        assertTrue(mOnLinkCapacityEstimateChangedCalled);
-
-        // Test unregister
-        unRegisterTelephonyCallback(mOnLinkCapacityEstimateChangedCalled,
-                mLinkCapacityEstimateChangedListener);
     }
 }
