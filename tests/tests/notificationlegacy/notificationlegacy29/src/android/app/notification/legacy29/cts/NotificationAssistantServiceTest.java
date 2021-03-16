@@ -71,7 +71,7 @@ public class NotificationAssistantServiceTest {
     final String TAG = "NotAsstServiceTest";
     final String NOTIFICATION_CHANNEL_ID = "NotificationAssistantServiceTest";
     final int ICON_ID = android.R.drawable.sym_def_app_icon;
-    final long SLEEP_TIME = 500; // milliseconds
+    final long SLEEP_TIME = 1000; // milliseconds
 
     private TestNotificationAssistant mNotificationAssistantService;
     private TestNotificationListener mNotificationListenerService;
