@@ -169,6 +169,7 @@ public class SensorRatePermissionDirectReportTestHelper {
         List<SensorDirectReportTest.DirectReportSensorEvent> events =
                 readEventsFromHardwareBuffer(token, hardwareBuffer, sensorEventCount);
         channel.close();
+        hardwareBuffer.close();
         return events;
     }
 
