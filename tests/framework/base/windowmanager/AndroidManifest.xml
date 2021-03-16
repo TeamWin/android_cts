@@ -452,6 +452,24 @@
 
         <activity android:name="android.server.wm.DisplayHashManagerTest$TestActivity"
                    android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$ResizeablePortraitActivity"
+                  android:resizeableActivity="true"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$NonResizeablePortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true"/>
+
+        <activity android:name="android.server.wm.CompatChangeTests$SupportsSizeChangesPortraitActivity"
+                  android:resizeableActivity="false"
+                  android:screenOrientation="portrait"
+                  android:exported="true">
+            <meta-data android:name="android.supports_size_changes"
+                       android:value="true"/>
+        </activity>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

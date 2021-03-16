@@ -51,7 +51,7 @@ import java.util.List;
 
 public abstract class GlobalSearchSessionCtsTestBase {
     private AppSearchSessionShim mDb1;
-    private static final String DB_NAME_1 = AppSearchManager.DEFAULT_DATABASE_NAME;
+    private static final String DB_NAME_1 = "";
     private AppSearchSessionShim mDb2;
     private static final String DB_NAME_2 = "testDb2";
 

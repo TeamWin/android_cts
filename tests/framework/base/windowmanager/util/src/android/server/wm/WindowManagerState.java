@@ -836,11 +836,21 @@ public class WindowManagerState {
 
     private ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode,
             int excludeTaskId) {
+        Activity activity = getActivity(activityName, windowingMode, excludeTaskId);
+        return activity == null ? null : activity.task;
+    }
+
+    public Activity getActivity(ComponentName activityName) {
+        return getActivity(activityName, WINDOWING_MODE_UNDEFINED, -1);
+    }
+
+    private Activity getActivity(ComponentName activityName, int windowingMode,
+            int excludeTaskId) {
         for (ActivityTask stack : mRootTasks) {
             if (windowingMode == WINDOWING_MODE_UNDEFINED
                     || windowingMode == stack.getWindowingMode()) {
                 Activity activity = stack.getActivity(activityName, excludeTaskId);
-                if (activity != null) return activity.task;
+                if (activity != null) return activity;
             }
         }
         return null;
@@ -1430,6 +1440,7 @@ public class WindowManagerState {
             state = proto.state;
             visible = proto.visible;
             frontOfTask = proto.frontOfTask;
+            inSizeCompatMode = proto.inSizeCompatMode;
             if (proto.procId != 0) {
                 procId = proto.procId;
             }
