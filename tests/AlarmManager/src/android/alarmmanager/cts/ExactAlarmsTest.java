@@ -56,9 +56,9 @@ import java.util.Random;
 
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class WhileIdleAlarmsTest {
+public class ExactAlarmsTest {
     /**
-     * TODO (b/171306433): Add tests for the following:
+     * TODO (b/182835530): Add more tests for the following:
      *
      * Pre-S apps can:
      * - use setAlarmClock freely -- no temp-allowlist
@@ -66,10 +66,9 @@ public class WhileIdleAlarmsTest {
      * - use setInexactAndAWI with 7 / hr quota with standby-bucket "ACTIVE" and temp-allowlist
      *
      * S+ apps with permission can:
-     * - use setInexactAWI with low quota + standby and no temp-allowlist.
-     * - use setInexactAWI with whitelist if in the whitelist.
+     * - use setInexactAWI with low quota + standby and *no* temp-allowlist.
      */
-    private static final String TAG = WhileIdleAlarmsTest.class.getSimpleName();
+    private static final String TAG = ExactAlarmsTest.class.getSimpleName();
 
     private static final int ALLOW_WHILE_IDLE_QUOTA = 5;
     private static final long ALLOW_WHILE_IDLE_WINDOW = 10_000;
@@ -229,6 +228,24 @@ public class WhileIdleAlarmsTest {
         revokeAppOp();
         mAlarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME, 0,
                 getAlarmSender(0, false));
+    }
+
+    @Test(expected = SecurityException.class)
+    public void setExactPiWithoutPermissionOrWhitelist() throws IOException {
+        revokeAppOp();
+        mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME, 0, getAlarmSender(0, false));
+    }
+
+    @Test(expected = SecurityException.class)
+    public void setExactCallbackWithoutPermissionOrWhitelist() throws IOException {
+        revokeAppOp();
+        mAlarmManager.setExact(AlarmManager.ELAPSED_REALTIME, 0, "test",
+                new AlarmManager.OnAlarmListener() {
+                    @Override
+                    public void onAlarm() {
+                        Log.e(TAG, "Alarm fired!");
+                    }
+                }, null);
     }
 
     @Test

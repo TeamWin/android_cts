@@ -107,6 +107,7 @@ public class BasicApiTests {
 
         mDeviceConfigHelper.set("min_futurity", "0");
         mDeviceConfigHelper.set("min_interval", String.valueOf(REPEAT_PERIOD));
+        mDeviceConfigHelper.set("min_window", "0");
     }
 
     @After

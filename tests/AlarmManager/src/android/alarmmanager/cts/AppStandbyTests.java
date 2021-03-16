@@ -136,6 +136,7 @@ public class AppStandbyTests {
         mAlarmManagerDeviceConfigStateHelper =
                 new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         updateAlarmManagerConstants();
+        updateBackgroundSettleTime();
         setBatteryCharging(false);
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
@@ -253,6 +254,7 @@ public class AppStandbyTests {
     public void tearDown() throws Exception {
         setPowerWhitelisted(false);
         setBatteryCharging(true);
+        resetBackgroundSettleTime();
         mAlarmManagerDeviceConfigStateHelper.restoreOriginalValues();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
         cancelAlarmsIntent.setComponent(mAlarmScheduler);
@@ -277,6 +279,15 @@ public class AppStandbyTests {
             mAlarmManagerDeviceConfigStateHelper.set(APP_BUCKET_QUOTA_KEYS[i],
                     String.valueOf(APP_STANDBY_QUOTAS[i]));
         }
+    }
+
+    private void updateBackgroundSettleTime() throws IOException {
+        mUiDevice.executeShellCommand(
+                "settings put global activity_manager_constants background_settle_time=0");
+    }
+
+    private void resetBackgroundSettleTime() throws IOException {
+        mUiDevice.executeShellCommand("settings delete global activity_manager_constants");
     }
 
     private void setPowerWhitelisted(boolean whitelist) throws IOException {
