@@ -21,9 +21,8 @@ import android.app.AppOpsManager
 import android.content.ComponentName
 import android.content.Intent
 import android.location.LocationManager
-import android.os.Build
 import android.support.test.uiautomator.By
-import com.android.compatibility.common.util.ApiLevelUtil
+import androidx.core.os.BuildCompat
 import com.android.compatibility.common.util.AppOpsUtils.setOpMode
 import com.android.compatibility.common.util.SystemUtil.callWithShellPermissionIdentity
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -65,7 +64,7 @@ class PermissionUsageInfoTest : BaseUsePermissionTest() {
     @Test
     fun testLocationProviderPermissionUsageInfo() {
         val locationProviderPackageName: String
-        if (ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S) || ApiLevelUtil.codenameEquals("S")) {
+        if (BuildCompat.isAtLeastS()) {
             // Add the test app as location provider.
             val future = startActivityForFuture(
                 Intent().apply {
