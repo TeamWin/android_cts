@@ -16,8 +16,20 @@
 
 package com.android.bedstead.nene.packages;
 
+import static android.content.pm.PackageManager.GET_PERMISSIONS;
+
+import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.bedstead.nene.users.UserReference;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -25,21 +37,68 @@ import java.util.Set;
  */
 public class Package extends PackageReference {
 
+    private static final String LOG_TAG = "Package";
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final PackageManager sPackageManager = sContext.getPackageManager();
+
     static final class MutablePackage {
         String mPackageName;
-        Set<UserReference> mInstalledOnUsers;
+        Map<UserReference, MutableUserPackage> mInstalledOnUsers;
+        Set<String> mInstallPermissions;
+    }
+
+    static final class MutableUserPackage {
+        Set<String> mGrantedPermissions;
     }
 
     private final MutablePackage mMutablePackage;
+    private final Set<String> mRequestedPermissions;
 
     Package(Packages packages, MutablePackage mutablePackage) {
         super(packages, mutablePackage.mPackageName);
         mMutablePackage = mutablePackage;
+        mRequestedPermissions = new HashSet<>();
+
+        try {
+            PackageInfo packageInfo = sPackageManager.getPackageInfo(
+                    mMutablePackage.mPackageName, /* flags= */ GET_PERMISSIONS);
+            if (packageInfo.requestedPermissions != null) {
+                mRequestedPermissions.addAll(Arrays.asList(packageInfo.requestedPermissions));
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.d(LOG_TAG, "NameNotFound when resolving package", e);
+        }
     }
 
     /** Get {@link UserReference}s who have this {@link Package} installed. */
     public Set<UserReference> installedOnUsers() {
-        return mMutablePackage.mInstalledOnUsers;
+        return mMutablePackage.mInstalledOnUsers.keySet();
+    }
+
+    /**
+     * Get all permissions granted to this package on the given user.
+     *
+     * <p>This will also include permissions which are granted for all users.
+     */
+    public Set<String> grantedPermissions(UserReference user) {
+        MutableUserPackage userPackage = mMutablePackage.mInstalledOnUsers.get(user);
+        if (userPackage == null) {
+            return new HashSet<>();
+        }
+
+        Set<String> mergedPermissions = new HashSet<>();
+        mergedPermissions.addAll(mMutablePackage.mInstallPermissions);
+        mergedPermissions.addAll(userPackage.mGrantedPermissions);
+
+        return mergedPermissions;
+    }
+
+    /**
+     * Get all permissions requested by this package.
+     */
+    public Set<String> requestedPermissions() {
+        return mRequestedPermissions;
     }
 
     @Override
