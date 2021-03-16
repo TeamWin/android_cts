@@ -16,8 +16,8 @@
 
 package android.media.mediatranscoding.cts;
 
-import static org.junit.Assert.assertNotEquals;
 import static org.testng.Assert.assertThrows;
+
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -28,6 +28,7 @@ import android.media.MediaFormat;
 import android.media.MediaTranscodeManager;
 import android.media.MediaTranscodeManager.TranscodingRequest;
 import android.media.MediaTranscodeManager.TranscodingSession;
+import android.media.MediaTranscodeManager.VideoTranscodingRequest;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -178,13 +179,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         assertThrows(IllegalArgumentException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setDestinationUri(null)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                            .setVideoTrackFormat(createMediaFormat())
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, null,
+                            createMediaFormat())
                             .build();
         });
     }
@@ -197,14 +194,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         assertThrows(IllegalArgumentException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, mDestinationUri,
+                            createMediaFormat())
                             .setClientPid(-1)
-                            .setVideoTrackFormat(createMediaFormat())
                             .build();
         });
     }
@@ -217,14 +210,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         assertThrows(IllegalArgumentException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, mDestinationUri,
+                            createMediaFormat())
                             .setClientUid(-1)
-                            .setVideoTrackFormat(createMediaFormat())
                             .build();
         });
     }
@@ -237,12 +226,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             return;
         }
         assertThrows(IllegalArgumentException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(null)
-                            .setDestinationUri(mDestinationUri)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(null, mDestinationUri, createMediaFormat())
                             .build();
         });
     }
@@ -254,13 +239,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         if (shouldSkip()) {
             return;
         }
-        assertThrows(UnsupportedOperationException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                            .setVideoTrackFormat(createMediaFormat())
+        assertThrows(IllegalArgumentException.class, () -> {
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(null, mDestinationUri, createMediaFormat())
                             .build();
         });
     }
@@ -272,13 +253,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         if (shouldSkip()) {
             return;
         }
-        assertThrows(UnsupportedOperationException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                            .setVideoTrackFormat(createMediaFormat())
+        assertThrows(IllegalArgumentException.class, () -> {
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, null,
+                            createMediaFormat())
                             .build();
         });
     }
@@ -291,13 +269,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         if (shouldSkip()) {
             return;
         }
-        assertThrows(UnsupportedOperationException.class, () -> {
-            TranscodingRequest request =
-                    new TranscodingRequest.Builder()
-                            .setSourceUri(mSourceHEVCVideoUri)
-                            .setDestinationUri(mDestinationUri)
-                            .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                            .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
+        assertThrows(IllegalArgumentException.class, () -> {
+            VideoTranscodingRequest request =
+                    new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, mDestinationUri, null)
                             .build();
         });
     }
@@ -309,13 +283,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         }
         Semaphore transcodeCompleteSemaphore = new Semaphore(0);
 
-        TranscodingRequest request =
-                new TranscodingRequest.Builder()
-                        .setSourceUri(srcUri)
-                        .setDestinationUri(dstUri)
-                        .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                        .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                        .setVideoTrackFormat(createMediaFormat())
+        VideoTranscodingRequest request =
+                new VideoTranscodingRequest.Builder(srcUri, dstUri, createMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -337,13 +306,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             assertTrue("Transcode failed to complete in time.", finishedOnTime);
         }
 
-        File dstFile = new File(dstUri.getPath());
+        File dstFile = new File(dstUri.getPath());;
         if (expectedResult == TranscodingSession.RESULT_SUCCESS) {
             // Checks the destination file get generated.
             assertTrue("Failed to create destination file", dstFile.exists());
-            assertEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
-        } else {
-            assertNotEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
         }
 
         if (dstFile.exists()) {
@@ -495,15 +461,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         int pid = android.os.Process.myPid();
         int uid = android.os.Process.myUid();
 
-        TranscodingRequest.Builder builder =
-                new TranscodingRequest.Builder()
-                        .setSourceUri(fileUri)
-                        .setDestinationUri(destinationUri)
-                        .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
+        VideoTranscodingRequest.Builder builder =
+                new VideoTranscodingRequest.Builder(fileUri, destinationUri, videoTrackFormat)
                         .setClientPid(pid)
-                        .setClientUid(uid)
-                        .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                        .setVideoTrackFormat(videoTrackFormat);
+                        .setClientUid(uid);
 
         if (testFileDescriptor) {
             // Open source Uri.
@@ -577,13 +538,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
 
-        TranscodingRequest request =
-                new TranscodingRequest.Builder()
-                        .setSourceUri(mSourceHEVCVideoUri)
-                        .setDestinationUri(destinationUri)
-                        .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                        .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                        .setVideoTrackFormat(createMediaFormat())
+        VideoTranscodingRequest request =
+                new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
+                        createMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
@@ -666,13 +623,9 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
                 + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
 
-         TranscodingRequest request =
-                new TranscodingRequest.Builder()
-                        .setSourceUri(mSourceHEVCVideoUri)
-                        .setDestinationUri(destinationUri)
-                        .setType(MediaTranscodeManager.TRANSCODING_TYPE_VIDEO)
-                        .setPriority(MediaTranscodeManager.PRIORITY_REALTIME)
-                        .setVideoTrackFormat(createMediaFormat())
+        VideoTranscodingRequest request =
+                new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
+                        createMediaFormat())
                         .build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
 
