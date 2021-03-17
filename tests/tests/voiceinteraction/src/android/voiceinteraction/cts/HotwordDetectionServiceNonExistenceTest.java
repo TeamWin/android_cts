@@ -22,12 +22,10 @@ import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.voiceinteraction.common.Utils;
 
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -37,14 +35,8 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @AppModeFull(reason = "No real use case for instant mode hotword detection service")
 public final class HotwordDetectionServiceNonExistenceTest
-        extends AbstractVoiceInteractionTestCase {
+        extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceNonExistenceTest";
-
-    private static final int TIMEOUT_MS = 5 * 1000;
-
-    @Rule
-    public final ActivityScenarioRule<TestVoiceInteractionServiceActivity> mActivityTestRule =
-            new ActivityScenarioRule<>(TestVoiceInteractionServiceActivity.class);
 
     @Test
     public void testHotwordDetectionService_noHotwordDetectionComponentName_triggerFailure()
@@ -54,7 +46,9 @@ public final class HotwordDetectionServiceNonExistenceTest
         receiver.register();
 
         mActivityTestRule.getScenario().onActivity(activity -> {
-            activity.triggerHotwordDetectionServiceTest(Utils.HOTWORD_DETECTION_SERVICE_NONE);
+            activity.triggerHotwordDetectionServiceTest(
+                    Utils.HOTWORD_DETECTION_SERVICE_NONE,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
         });
 
         final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
@@ -63,5 +57,11 @@ public final class HotwordDetectionServiceNonExistenceTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE);
 
         receiver.unregisterQuietly();
+    }
+
+    @Override
+    public String getVoiceInteractionService() {
+        return "android.voiceinteraction.cts/"
+                + "android.voiceinteraction.service.MainInteractionService";
     }
 }

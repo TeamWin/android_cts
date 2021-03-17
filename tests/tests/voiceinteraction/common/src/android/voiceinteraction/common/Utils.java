@@ -128,12 +128,8 @@ public class Utils {
     }
     public static final LocusId DIRECT_ACTIONS_LOCUS_ID = new LocusId("locusId");
 
-    public static final String SERVICE_PACKAGE_NAME = "android.voiceinteraction.service";
     public static final String SERVICE_NAME =
             "android.voiceinteraction.service/.MainInteractionService";
-
-    public static final String SERVICE_PACKAGE_CTS_VOICE_INTERACTION_MAIN_ACTIVITY_NAME =
-            "android.voiceinteraction.service.CtsVoiceInteractionMainActivity";
 
     public static final String BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT =
             "android.intent.action.HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT";

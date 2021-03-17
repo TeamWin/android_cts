@@ -21,18 +21,27 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.util.Log;
 import android.voiceinteraction.common.Utils;
+import android.voiceinteraction.service.BasicVoiceInteractionService;
+import android.voiceinteraction.service.MainInteractionService;
 
 public class TestVoiceInteractionServiceActivity extends Activity {
     static final String TAG = "TestVoiceInteractionServiceActivity";
 
-    void triggerHotwordDetectionServiceTest(int serviceType) {
-        Intent intent = new Intent();
-        intent.setAction("android.intent.action.START_TEST_VOICE_INTERACTION");
-        intent.setComponent(new ComponentName(Utils.SERVICE_PACKAGE_NAME,
-                Utils.SERVICE_PACKAGE_CTS_VOICE_INTERACTION_MAIN_ACTIVITY_NAME));
-        intent.putExtra(Utils.KEY_SERVICE_TYPE, serviceType);
-        intent.putExtra(Utils.KEY_TEST_EVENT, Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
-        Log.i(TAG, "triggerHotwordDetectionServiceTest: " + intent);
-        startActivity(intent);
+    void triggerHotwordDetectionServiceTest(int serviceType, int testEvent) {
+        Intent serviceIntent = new Intent();
+        if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_NONE) {
+            serviceIntent.setComponent(new ComponentName(this,
+                    "android.voiceinteraction.service.MainInteractionService"));
+        } else if (serviceType == Utils.HOTWORD_DETECTION_SERVICE_BASIC) {
+            serviceIntent.setComponent(new ComponentName(this,
+                    "android.voiceinteraction.service.BasicVoiceInteractionService"));
+        } else {
+            Log.w(TAG, "Never here");
+            finish();
+            return;
+        }
+        serviceIntent.putExtra(Utils.KEY_TEST_EVENT, testEvent);
+        ComponentName serviceName = startService(serviceIntent);
+        Log.i(TAG, "triggerHotwordDetectionServiceTest Started service: " + serviceName);
     }
 }
