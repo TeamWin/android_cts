@@ -16,12 +16,15 @@
 
 package com.android.bedstead.nene.packages;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.pm.PermissionInfo.PROTECTION_DANGEROUS;
 import static android.content.pm.PermissionInfo.PROTECTION_FLAG_DEVELOPMENT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 
@@ -30,8 +33,10 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
+import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import java.io.File;
 
@@ -102,18 +107,39 @@ public abstract class PackageReference {
         if (user == null) {
             throw new NullPointerException();
         }
+
+        IntentFilter packageRemovedIntentFilter =
+                new IntentFilter(Intent.ACTION_PACKAGE_REMOVED);
+        packageRemovedIntentFilter.addDataScheme("package");
+
+        BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
+                mPackages.mTestApis.context().androidContextAsUser(user),
+                packageRemovedIntentFilter);
+
         try {
+            try (PermissionContext p = mPackages.mTestApis.permissions().withPermission(
+                    INTERACT_ACROSS_USERS_FULL)) {
+                broadcastReceiver.register();
+            }
+
             // Expected output "Success"
-            ShellCommand.builderForUser(user, "pm uninstall")
+            String output = ShellCommand.builderForUser(user, "pm uninstall")
                     .addOperand(mPackageName)
-                    .validate((output) -> {
-                        output = output.toUpperCase();
-                        return output.startsWith("SUCCESS") || output.contains("NOT INSTALLED FOR");
+                    .validate((o) -> {
+                        o = o.toUpperCase();
+                        return o.startsWith("SUCCESS") || o.contains("NOT INSTALLED FOR");
                     })
                     .execute();
+
+            if (output.toUpperCase().startsWith("SUCCESS")) {
+                broadcastReceiver.awaitForBroadcastOrFail();
+            }
+
             return this;
         } catch (AdbException e) {
             throw new NeneException("Could not uninstall package " + this, e);
+        } finally {
+            broadcastReceiver.unregisterQuietly();
         }
     }
 

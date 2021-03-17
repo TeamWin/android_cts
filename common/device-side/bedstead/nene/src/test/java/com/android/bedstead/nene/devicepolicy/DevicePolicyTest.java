@@ -93,10 +93,11 @@ public class DevicePolicyTest {
                 .parent(sUser)
                 .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
-        sTestApp.install(profile);
-        sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME);
-
         try {
+            sTestApp.install(profile);
+
+            sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME);
+
             assertThrows(NeneException.class,
                     () -> sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME));
         } finally {
@@ -151,11 +152,12 @@ public class DevicePolicyTest {
                 .parent(sUser)
                 .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
-        sTestApp.install(profile);
-        ProfileOwner profileOwner =
-                sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME);
-
         try {
+            sTestApp.install(profile);
+
+            ProfileOwner profileOwner =
+                    sTestApis.devicePolicy().setProfileOwner(profile, DPC_COMPONENT_NAME);
+
             assertThat(sTestApis.devicePolicy().getProfileOwner(profile)).isEqualTo(profileOwner);
         } finally {
             profile.remove();
