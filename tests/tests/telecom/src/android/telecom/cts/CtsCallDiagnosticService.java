@@ -21,7 +21,7 @@ import android.telecom.BluetoothCallQualityReport;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.CallDiagnosticService;
-import android.telecom.DiagnosticCall;
+import android.telecom.CallDiagnostics;
 import android.telephony.CallQuality;
 import android.telephony.ims.ImsReasonInfo;
 import android.util.Log;
@@ -42,10 +42,10 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     private CountDownLatch mChangeLatch = new CountDownLatch(1);
     private CountDownLatch mBluetoothCallQualityReportLatch = new CountDownLatch(1);
     private CountDownLatch mCallAudioStateLatch = new CountDownLatch(1);
-    private List<CtsDiagnosticCall> mCalls = new ArrayList<>();
+    private List<CtsCallDiagnostics> mCalls = new ArrayList<>();
     private CharSequence mDisconnectMessage = null;
 
-    public class CtsDiagnosticCall extends DiagnosticCall {
+    public class CtsCallDiagnostics extends CallDiagnostics {
         private Call.Details mCallDetails;
         private int mMessageType;
         private int mMessageValue;
@@ -143,8 +143,8 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
 
     @NonNull
     @Override
-    public DiagnosticCall onInitializeDiagnosticCall(@NonNull Call.Details call) {
-        CtsDiagnosticCall diagCall = new CtsDiagnosticCall();
+    public CallDiagnostics onInitializeCallDiagnostics(@NonNull Call.Details call) {
+        CtsCallDiagnostics diagCall = new CtsCallDiagnostics();
         diagCall.mCallDetails = call;
         mCalls.add(diagCall);
         mChangeLatch.countDown();
@@ -152,7 +152,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
     }
 
     @Override
-    public void onRemoveDiagnosticCall(@NonNull DiagnosticCall call) {
+    public void onRemoveCallDiagnostics(@NonNull CallDiagnostics call) {
         Log.i(LOG_TAG, "onRemoveDiagnosticCall: " + call);
         mCalls.remove(call);
         mChangeLatch.countDown();
@@ -201,7 +201,7 @@ public class CtsCallDiagnosticService extends CallDiagnosticService {
         return mBluetoothCallQualityReportLatch;
     }
 
-    public List<CtsDiagnosticCall> getCalls() {
+    public List<CtsCallDiagnostics> getCalls() {
         return mCalls;
     }
 
