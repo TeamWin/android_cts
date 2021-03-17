@@ -2829,14 +2829,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify that startTemporarilyDisablingAllNonCarrierMergedWifi disconnects wifi and disables
-     * autoconnect to non-carrier-merged networks. Then verify that
-     * stopTemporarilyDisablingAllNonCarrierMergedWifi makes the disabled networks clear to connect
+     * Verify that startRestrictingAutoJoinToSubscriptionId disconnects wifi and disables
+     * auto-connect to non-carrier-merged networks. Then verify that
+     * stopRestrictingAutoJoinToSubscriptionId makes the disabled networks clear to connect
      * again.
      * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
      */
     @SdkSuppress(minSdkVersion = 31, codeName = "S")
-    public void testStartAndStopTemporarilyDisablingAllNonCarrierMergedWifi() throws Exception {
+    public void testStartAndStopRestrictingAutoJoinToSubscriptionId() throws Exception {
         if (!WifiFeature.isWifiSupported(getContext())) {
             // skip the test if WiFi is not supported
             return;
@@ -2845,11 +2845,11 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         waitForConnection();
         int fakeSubscriptionId = 5;
         ShellIdentityUtils.invokeWithShellPermissions(() ->
-                mWifiManager.startTemporarilyDisablingAllNonCarrierMergedWifi(fakeSubscriptionId));
+                mWifiManager.startRestrictingAutoJoinToSubscriptionId(fakeSubscriptionId));
         startScan();
         ensureNotConnected();
         ShellIdentityUtils.invokeWithShellPermissions(() ->
-                mWifiManager.stopTemporarilyDisablingAllNonCarrierMergedWifi());
+                mWifiManager.stopRestrictingAutoJoinToSubscriptionId());
         startScan();
         waitForConnection();
     }
