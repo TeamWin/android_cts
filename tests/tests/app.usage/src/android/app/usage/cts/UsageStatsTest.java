@@ -45,6 +45,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Parcel;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -237,6 +238,26 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
+    public void testLastTimeComponentUsed_launchActivity() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
+
+        final long startTime = System.currentTimeMillis();
+        final Class clazz = Activities.ActivityOne.class;
+        launchSubActivity(clazz);
+        final long endTime = System.currentTimeMillis();
+
+        final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        final UsageStats stats = map.get(mTargetPackage);
+        assertNotNull(stats);
+        final long lastTimeComponentUsed = stats.getLastTimeComponentUsed();
+        assertLessThan(startTime, lastTimeComponentUsed);
+        assertLessThan(lastTimeComponentUsed, endTime);
+    }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
     public void testOrderedActivityLaunchSequenceInEventLog() throws Exception {
         @SuppressWarnings("unchecked")
         Class<? extends Activity>[] activitySequence = new Class[] {
@@ -245,6 +266,7 @@ public class UsageStatsTest {
                 Activities.ActivityThree.class,
         };
         mUiDevice.wakeUp();
+        dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
         // Launch the series of Activities.

@@ -1046,10 +1046,10 @@ public class RemoteViewsTest {
         DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
         assertMargins(
                 textView,
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
     }
 
     @Test
@@ -1063,10 +1063,10 @@ public class RemoteViewsTest {
         DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
         assertMargins(
                 textViewLtr,
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
 
         View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
         mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_START, 10, COMPLEX_UNIT_DIP);
@@ -1077,10 +1077,10 @@ public class RemoteViewsTest {
         displayMetrics = textViewRtl.getResources().getDisplayMetrics();
         assertMargins(
                 textViewRtl,
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics)),
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics)));
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
     }
 
     @Test
@@ -1154,7 +1154,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutWidth(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
                 textView.getLayoutParams().width);
 
         mRemoteViews.setViewLayoutWidth(
@@ -1185,7 +1185,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutHeight(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                Math.round(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics)),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
                 textView.getLayoutParams().height);
 
         mRemoteViews.setViewLayoutHeight(

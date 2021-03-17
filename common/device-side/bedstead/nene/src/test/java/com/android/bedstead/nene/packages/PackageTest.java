@@ -18,6 +18,10 @@ package com.android.bedstead.nene.packages;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.content.Context;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -33,7 +37,13 @@ public class PackageTest {
     // Controlled by AndroidTest.xml
     private static final String TEST_APP_PACKAGE_NAME =
             "com.android.bedstead.nene.testapps.TestApp1";
-    private static final File TEST_APP_APK_FILE = new File("/data/local/tmp/NeneTestApp1.apk");
+    private static final File TEST_APP_APK_FILE =
+            new File("/data/local/tmp/NeneTestApp1.apk");
+
+    private static final String ACCESS_NETWORK_STATE_PERMISSION =
+            "android.permission.ACCESS_NETWORK_STATE";
+    private static final Context sContext =
+            InstrumentationRegistry.getInstrumentation().getContext();
 
     private final TestApis mTestApis = new TestApis();
     private final UserReference mUser = mTestApis.users().instrumented();
@@ -62,5 +72,15 @@ public class PackageTest {
             packageReference.uninstall(mUser);
             user.remove();
         }
+    }
+
+    @Test
+    public void grantedPermission_includesKnownInstallPermission() {
+        // TODO(scottjonathan): This relies on the fact that the instrumented app declares
+        //  ACCESS_NETWORK_STATE - this should be replaced with TestApp with a useful query
+        PackageReference packageReference = mTestApis.packages().find(sContext.getPackageName());
+
+        assertThat(packageReference.resolve().grantedPermissions(mUser))
+                .contains(ACCESS_NETWORK_STATE_PERMISSION);
     }
 }

@@ -21,13 +21,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.Context;
+import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.cts.WifiJUnit4TestBase;
 import android.net.wifi.p2p.WifiP2pWfdInfo;
 
 import androidx.core.os.BuildCompat;
 import androidx.test.filters.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
@@ -41,6 +46,13 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
     private final int TEST_MAX_THROUGHPUT = 1024;
     private final boolean TEST_CONTENT_PROTECTION_SUPPORTED_STATUS = true;
 
+    @Before
+    public void setUp() {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        assumeTrue(WifiFeature.isWifiSupported(context));
+    }
+
+    @Test
     public void testWifiP2pWfdInfo() {
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
 
@@ -61,6 +73,7 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
                 copiedInfo.isContentProtectionSupported());
     }
 
+    @Test
     public void testWifiCoupledSink() {
         assumeTrue(BuildCompat.isAtLeastS());
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();
@@ -74,6 +87,7 @@ public class WifiP2pWfdInfoTest extends WifiJUnit4TestBase {
         assertTrue(info.isCoupledSinkSupportedAtSource());
     }
 
+    @Test
     public void testWifiP2pWfdR2Info() {
         assumeTrue(BuildCompat.isAtLeastS());
         WifiP2pWfdInfo info = new WifiP2pWfdInfo();

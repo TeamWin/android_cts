@@ -133,7 +133,7 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
         Map<Integer, List<EmergencyNumber>> emergencyNumbers = null;
 
         for (int i = 0; i < 5; i++) {
-            emergencyNumbers = mPhoneStateListener.waitForEmergencyNumberListUpdate(
+            emergencyNumbers = mTelephonyCallback.waitForEmergencyNumberListUpdate(
                     TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
             assertNotNull("Never got an update that the test emergency number was registered",
                     emergencyNumbers);

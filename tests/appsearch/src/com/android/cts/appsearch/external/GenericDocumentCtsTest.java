@@ -28,18 +28,20 @@ public class GenericDocumentCtsTest {
     private static final byte[] sByteArray1 = new byte[] {(byte) 1, (byte) 2, (byte) 3};
     private static final byte[] sByteArray2 = new byte[] {(byte) 4, (byte) 5, (byte) 6, (byte) 7};
     private static final GenericDocument sDocumentProperties1 =
-            new GenericDocument.Builder<>("sDocumentProperties1", "sDocumentPropertiesSchemaType1")
+            new GenericDocument.Builder<>(
+                            "namespace", "sDocumentProperties1", "sDocumentPropertiesSchemaType1")
                     .setCreationTimestampMillis(12345L)
                     .build();
     private static final GenericDocument sDocumentProperties2 =
-            new GenericDocument.Builder<>("sDocumentProperties2", "sDocumentPropertiesSchemaType2")
+            new GenericDocument.Builder<>(
+                            "namespace", "sDocumentProperties2", "sDocumentPropertiesSchemaType2")
                     .setCreationTimestampMillis(6789L)
                     .build();
 
     @Test
     public void testDocumentEquals_identical() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setTtlMillis(1L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
@@ -52,7 +54,7 @@ public class GenericDocumentCtsTest {
                                 "documentKey1", sDocumentProperties1, sDocumentProperties2)
                         .build();
         GenericDocument document2 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setTtlMillis(1L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
@@ -71,7 +73,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_differentOrder() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyBytes("byteKey1", sByteArray1, sByteArray2)
@@ -85,7 +87,7 @@ public class GenericDocumentCtsTest {
 
         // Create second document with same parameter but different order.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
                         .setPropertyDocument(
@@ -103,14 +105,14 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_failure() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .build();
 
         // Create second document with same order but different value.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 4L) // Different
                         .build();
@@ -121,14 +123,14 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_repeatedFieldOrder_failure() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
                         .build();
 
         // Create second document with same order but different value.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, true, false) // Different
                         .build();
@@ -139,7 +141,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentGetSingleValue() {
         GenericDocument document =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setScore(1)
                         .setTtlMillis(1L)
@@ -168,7 +170,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentGetArrayValues() {
         GenericDocument document =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
@@ -203,7 +205,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocument_toString() {
         GenericDocument document =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("", "uri1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
@@ -223,14 +225,14 @@ public class GenericDocumentCtsTest {
                         + "{ key: 'byteArray' value: [ '4' '5' '6' '7' ] }  } "
                         + "{ key: 'documentKey1' value: [ '"
                         + "{ key: 'creationTimestampMillis' value: 12345 } "
-                        + "{ key: 'namespace' value:  } "
+                        + "{ key: 'namespace' value: namespace } "
                         + "{ key: 'properties' value:  } "
                         + "{ key: 'schemaType' value: sDocumentPropertiesSchemaType1 } "
                         + "{ key: 'score' value: 0 } "
                         + "{ key: 'ttlMillis' value: 0 } "
                         + "{ key: 'uri' value: sDocumentProperties1 } ' '"
                         + "{ key: 'creationTimestampMillis' value: 6789 } "
-                        + "{ key: 'namespace' value:  } "
+                        + "{ key: 'namespace' value: namespace } "
                         + "{ key: 'properties' value:  } "
                         + "{ key: 'schemaType' value: sDocumentPropertiesSchemaType2 } "
                         + "{ key: 'score' value: 0 } "
@@ -249,7 +251,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentGetValues_differentTypes() {
         GenericDocument document =
-                new GenericDocument.Builder<>("uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
                         .setScore(1)
                         .setPropertyLong("longKey1", 1L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
@@ -278,7 +280,8 @@ public class GenericDocumentCtsTest {
 
     @Test
     public void testDocumentInvalid() {
-        GenericDocument.Builder<?> builder = new GenericDocument.Builder<>("uri1", "schemaType1");
+        GenericDocument.Builder<?> builder =
+                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1");
         expectThrows(
                 IllegalArgumentException.class,
                 () -> builder.setPropertyBoolean("test", new boolean[] {}));
