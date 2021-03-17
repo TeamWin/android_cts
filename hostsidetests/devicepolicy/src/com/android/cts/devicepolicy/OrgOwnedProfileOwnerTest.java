@@ -228,30 +228,56 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
 
     @Test
     public void testSecurityLogging() throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        testSecurityLoggingOnWorkProfile(DEVICE_ADMIN_PKG, ".SecurityLoggingTest");
+    }
+
+    @Test
+    public void testSecurityLoggingDelegate() throws Exception {
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        try {
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".WorkProfileSecurityLoggingDelegateTest",
+                    "testCannotAccessApis", mUserId);
+            // Set security logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSetDelegateScope_delegationSecurityLogging", mUserId);
+
+            testSecurityLoggingOnWorkProfile(DELEGATE_APP_PKG,
+                    ".WorkProfileSecurityLoggingDelegateTest");
+        } finally {
+            // Remove security logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSetDelegateScope_noDelegation", mUserId);
+        }
+    }
+
+    private void testSecurityLoggingOnWorkProfile(String packageName, String testClassName)
+            throws Exception {
         // Backup stay awake setting because testGenerateLogs() will turn it off.
         final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
         try {
             // Turn logging on.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testEnablingSecurityLogging", mUserId);
             // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
             rebootAndWaitUntilReady();
             waitForUserUnlock(mUserId);
 
             // Generate various types of events on device side and check that they are logged.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG,".SecurityLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testGenerateLogs", mUserId);
             getDevice().executeShellCommand("whoami"); // Generate adb command securty event
             getDevice().executeShellCommand("dpm force-security-logs");
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testVerifyGeneratedLogs", mUserId);
 
             // Immediately attempting to fetch events again should fail.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testSecurityLoggingRetrievalRateLimited", mUserId);
         } finally {
             // Turn logging off.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+            runDeviceTestsAsUser(packageName, testClassName,
                     "testDisablingSecurityLogging", mUserId);
             // Restore stay awake setting.
             if (stayAwake != null) {

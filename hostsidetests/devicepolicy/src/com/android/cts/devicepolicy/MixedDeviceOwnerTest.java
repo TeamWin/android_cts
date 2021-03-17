@@ -361,6 +361,61 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
+    public void testSecurityLoggingDelegate() throws Exception {
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        try {
+            // Test that the delegate cannot access the logs already
+            runDeviceTestsAsUser(DELEGATE_APP_PKG, ".SecurityLoggingDelegateTest",
+                    "testCannotAccessApis", mUserId);
+
+            // Set security logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSetDelegateScope_delegationSecurityLogging", mUserId);
+
+            runSecurityLoggingTests(DELEGATE_APP_PKG,
+                    ".SecurityLoggingDelegateTest");
+        } finally {
+            // Remove security logging delegate
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".SecurityLoggingTest",
+                    "testSetDelegateScope_noDelegation", mUserId);
+        }
+    }
+
+    private void runSecurityLoggingTests(String packageName, String testClassName)
+            throws Exception {
+        // Backup stay awake setting because testGenerateLogs() will turn it off.
+        final String stayAwake = getDevice().getSetting("global", "stay_on_while_plugged_in");
+        try {
+            // Turn logging on.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testEnablingSecurityLogging", mUserId);
+            // Reboot to ensure ro.device_owner is set to true in logd and logging is on.
+            rebootAndWaitUntilReady();
+            waitForUserUnlock(mUserId);
+
+            // Generate various types of events on device side and check that they are logged.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testGenerateLogs", mUserId);
+            getDevice().executeShellCommand("whoami"); // Generate adb command securty event
+            getDevice().executeShellCommand("dpm force-security-logs");
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testVerifyGeneratedLogs", mUserId);
+
+            // Immediately attempting to fetch events again should fail.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testSecurityLoggingRetrievalRateLimited", mUserId);
+        } finally {
+            // Turn logging off.
+            runDeviceTestsAsUser(packageName, testClassName,
+                    "testDisablingSecurityLogging", mUserId);
+            // Restore stay awake setting.
+            if (stayAwake != null) {
+                getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
+            }
+        }
+    }
+
+    @Test
     public void testLocationPermissionGrantNotifies() throws Exception {
         installAppPermissionAppAsUser();
         configureNotificationListener();

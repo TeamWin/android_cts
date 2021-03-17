@@ -22,6 +22,7 @@ import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
 import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_SELECTION;
 import static android.app.admin.DevicePolicyManager.DELEGATION_ENABLE_SYSTEM_APP;
 import static android.app.admin.DevicePolicyManager.DELEGATION_NETWORK_LOGGING;
+import static android.app.admin.DevicePolicyManager.DELEGATION_SECURITY_LOGGING;
 import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -188,7 +189,8 @@ public class DelegationTest extends BaseDeviceAdminTest {
     }
 
     public void testDeviceOwnerOrManagedPoOnlyDelegations() throws Exception {
-        final String doOrManagedPoDelegations[] = {DELEGATION_NETWORK_LOGGING};
+        final String [] doOrManagedPoDelegations =
+                { DELEGATION_NETWORK_LOGGING, DELEGATION_SECURITY_LOGGING };
         final boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(
                 mContext.getPackageName());
         final boolean isManagedProfileOwner = mDevicePolicyManager.getProfileOwner() != null
@@ -214,6 +216,7 @@ public class DelegationTest extends BaseDeviceAdminTest {
                 DELEGATION_CERT_SELECTION));
         if (mDevicePolicyManager.isDeviceOwnerApp(mContext.getPackageName())) {
             exclusiveDelegations.add(DELEGATION_NETWORK_LOGGING);
+            exclusiveDelegations.add(DELEGATION_SECURITY_LOGGING);
         }
         for (String scope : exclusiveDelegations) {
             testExclusiveDelegation(scope);
