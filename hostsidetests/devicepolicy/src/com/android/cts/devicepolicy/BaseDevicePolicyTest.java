@@ -688,7 +688,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected final void assumeCanCreateOneManagedUser() throws DeviceNotAvailableException {
         assumeSupportsMultiUser();
-        assumeHasDeviceFeature(FEATURE_MANAGED_USERS);
         assumeCanCreateAdditionalUsers(1);
     }
 

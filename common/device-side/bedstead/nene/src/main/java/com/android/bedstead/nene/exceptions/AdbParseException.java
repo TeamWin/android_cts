@@ -21,7 +21,7 @@ public class AdbParseException extends Exception {
 
     private final String adbOutput;
 
-    AdbParseException(String message, String adbOutput) {
+    public AdbParseException(String message, String adbOutput) {
         super(message);
         if (message == null || adbOutput == null) {
             throw new NullPointerException();

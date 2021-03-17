@@ -119,9 +119,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     MockConnectionService connectionService = null;
     boolean mIsEmergencyCallingSetup = false;
 
-    HandlerThread mPhoneStateListenerThread;
-    Handler mPhoneStateListenerHandler;
-    TestPhoneStateListener mPhoneStateListener;
+    HandlerThread mTelephonyCallbackThread;
+    Handler mTelephonyCallbackHandler;
+    TestTelephonyCallback mTelephonyCallback;
     TestCallStateListener mTestCallStateListener;
     Handler mHandler;
 
@@ -205,20 +205,23 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         }
     }
 
-    static class TestPhoneStateListener extends PhoneStateListener {
+    static class TestTelephonyCallback extends TelephonyCallback implements
+            TelephonyCallback.CallStateListener,
+            TelephonyCallback.OutgoingEmergencyCallListener,
+            TelephonyCallback.EmergencyNumberListListener {
         /** Semaphore released for every callback invocation. */
         public Semaphore mCallbackSemaphore = new Semaphore(0);
 
-        List<Pair<Integer, String>> mCallStates = new ArrayList<>();
+        List<Integer> mCallStates = new ArrayList<>();
         EmergencyNumber mLastOutgoingEmergencyNumber;
 
         LinkedBlockingQueue<Map<Integer, List<EmergencyNumber>>> mEmergencyNumberListQueue =
                new LinkedBlockingQueue<>(2);
 
         @Override
-        public void onCallStateChanged(int state, String number) {
-            Log.i(TAG, "onCallStateChanged: state=" + state + ", number=" + number);
-            mCallStates.add(Pair.create(state, number));
+        public void onCallStateChanged(int state) {
+            Log.i(TAG, "onCallStateChanged: state=" + state);
+            mCallStates.add(state);
             mCallbackSemaphore.release();
         }
 
@@ -269,33 +272,21 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         TestUtils.setDefaultDialer(getInstrumentation(), PACKAGE);
         setupCallbacks();
 
-        // PhoneStateListener's public API registers the listener on the calling thread, which must
-        // be a looper thread. So we need to create and register the listener in a custom looper
-        // thread.
-        mPhoneStateListenerThread = new HandlerThread("PhoneStateListenerThread");
-        mPhoneStateListenerThread.start();
-        mPhoneStateListenerHandler = new Handler(mPhoneStateListenerThread.getLooper());
-        final CountDownLatch registeredLatch = new CountDownLatch(1);
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mPhoneStateListener = new TestPhoneStateListener();
-                ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    (tm) -> tm.listen(mPhoneStateListener,
-                        PhoneStateListener.LISTEN_CALL_STATE
-                                | PhoneStateListener.LISTEN_OUTGOING_EMERGENCY_CALL
-                                | PhoneStateListener.LISTEN_EMERGENCY_NUMBER_LIST));
-                registeredLatch.countDown();
-            }
-        });
-        registeredLatch.await(
-                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
-
-        // Register a call state listener.
+       // Register a call state listener.
         mTestCallStateListener = new TestCallStateListener();
         mTelephonyManager.registerTelephonyCallback(r -> r.run(), mTestCallStateListener);
         mTestCallStateListener.getCountDownLatch().await(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
+        // Create a new thread for the telephony callback.
+        mTelephonyCallbackThread = new HandlerThread("PhoneStateListenerThread");
+        mTelephonyCallbackThread.start();
+        mTelephonyCallbackHandler = new Handler(mTelephonyCallbackThread.getLooper());
+
+        mTelephonyCallback = new TestTelephonyCallback();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.registerTelephonyCallback(
+                        mTelephonyCallbackHandler::post,
+                        mTelephonyCallback));
     }
 
     @Override
@@ -307,17 +298,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
         mTelephonyManager.unregisterTelephonyCallback(mTestCallStateListener);
 
-        final CountDownLatch unregisteredLatch = new CountDownLatch(1);
-        mPhoneStateListenerHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-                unregisteredLatch.countDown();
-            }
-        });
-        unregisteredLatch.await(
-                TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
-        mPhoneStateListenerThread.quit();
+        mTelephonyManager.unregisterTelephonyCallback(mTelephonyCallback);
+        mTelephonyCallbackThread.quit();
 
         cleanupCalls();
         if (!TextUtils.isEmpty(mPreviousDefaultDialer)) {
@@ -962,7 +944,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     void verifyPhoneStateListenerCallbacksForCall(int expectedCallState, String expectedNumber)
             throws Exception {
-        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+        assertTrue(mTelephonyCallback.mCallbackSemaphore.tryAcquire(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
         // At this point we can only be sure that we got AN update, but not necessarily the one we
         // are looking for; wait until we see the state we want before verifying further.
@@ -974,12 +956,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
                                               @Override
                                               public Object actual() {
-                                                  return mPhoneStateListener.mCallStates
+                                                  return mTelephonyCallback.mCallStates
                                                           .stream()
-                                                          .filter(p -> p.first.equals(
-                                                                  expectedCallState)
-                                                                  && p.second.equals(
-                                                                  expectedNumber))
+                                                          .filter(p -> p == expectedCallState)
                                                           .count() > 0;
                                               }
                                           },
@@ -991,9 +970,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         // Get the most recent callback; it is possible that there was an initial state reported due
         // to the fact that TelephonyManager will sometimes give an initial state back to the caller
         // when the listener is registered.
-        Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(
-                mPhoneStateListener.mCallStates.size() - 1);
-        assertEquals(expectedCallState, (int) callState.first);
+        int callState = mTelephonyCallback.mCallStates.get(
+                mTelephonyCallback.mCallStates.size() - 1);
+        assertEquals(expectedCallState, callState);
         // Note: We do NOT check the phone number here.  Due to changes in how the phone state
         // broadcast is sent, the caller may receive multiple broadcasts, and the number will be
         // present in one or the other.  We waited for a full matching broadcast above so we can
@@ -1002,7 +981,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     void verifyPhoneStateListenerCallbacksForEmergencyCall(String expectedNumber)
         throws Exception {
-        assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
+        assertTrue(mTelephonyCallback.mCallbackSemaphore.tryAcquire(
             TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
         // At this point we can only be sure that we got AN update, but not necessarily the one we
         // are looking for; wait until we see the state we want before verifying further.
@@ -1014,9 +993,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
                                               @Override
                                               public Object actual() {
-                                                  return mPhoneStateListener
+                                                  return mTelephonyCallback
                                                       .mLastOutgoingEmergencyNumber != null
-                                                      && mPhoneStateListener
+                                                      && mTelephonyCallback
                                                       .mLastOutgoingEmergencyNumber.getNumber()
                                                       .equals(expectedNumber);
                                               }
@@ -1024,7 +1003,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
             "Expected emergency number: " + expectedNumber);
 
-        assertEquals(mPhoneStateListener.mLastOutgoingEmergencyNumber.getNumber(),
+        assertEquals(mTelephonyCallback.mLastOutgoingEmergencyNumber.getNumber(),
             expectedNumber);
     }
 

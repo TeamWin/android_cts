@@ -116,6 +116,36 @@ _SCENE_REQ = {
 }
 
 
+SUB_CAMERA_TESTS = {
+    'scene0': [
+        'test_burst_capture',
+        'test_metadata',
+        'test_read_write',
+        'test_sensor_events',
+        'test_solid_color_test_pattern',
+        'test_unified_timestamps',
+    ],
+    'scene1_1': [
+        'test_exposure',
+        'test_dng_noise_model',
+        'test_linearity',
+    ],
+    'scene1_2': [
+        'test_raw_exposure',
+        'test_raw_sensitivity',
+    ],
+    'scene2_a': [
+        'test_faces',
+        'test_num_faces',
+    ],
+    'scene4': [
+        'test_aspect_ratio_and_crop',
+    ],
+    'sensor_fusion': [
+        'test_sensor_fusion',
+    ],
+}
+
 _DST_SCENE_DIR = '/mnt/sdcard/Download/'
 MOBLY_TEST_SUMMARY_TXT_FILE = 'test_mobly_summary.txt'
 
@@ -436,15 +466,20 @@ def main():
       logging.debug('Final config file contents: %s', config_file_contents)
       new_yml_file_name = get_updated_yml_file(config_file_contents)
       logging.info('Using %s as temporary config yml file', new_yml_file_name)
-      scene_dir = os.listdir(
-          os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', s))
-      for file_name in scene_dir:
-        if file_name.endswith('.py') and 'test' in file_name:
-          scene_test_list.append(file_name)
-
-      if _REPEATED_TESTS[s]:
-        for t in _REPEATED_TESTS[s]:
-          scene_test_list.append((os.path.join('tests', t[0], t[1] + '.py')))
+      if camera_id.rfind(its_session_utils.SUB_CAMERA_SEPARATOR) == -1:
+        scene_dir = os.listdir(
+            os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests', s))
+        for file_name in scene_dir:
+          if file_name.endswith('.py') and 'test' in file_name:
+            scene_test_list.append(file_name)
+        if _REPEATED_TESTS[s]:
+          for t in _REPEATED_TESTS[s]:
+            scene_test_list.append((os.path.join('tests', t[0], t[1] + '.py')))
+      else:  # sub-camera
+        if SUB_CAMERA_TESTS.get(s):
+          scene_test_list = [f'{test}.py' for test in SUB_CAMERA_TESTS[s]]
+        else:
+          scene_test_list = []
       scene_test_list.sort()
 
       # Run tests for scene

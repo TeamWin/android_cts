@@ -20,12 +20,23 @@ import android.companion.CompanionDeviceManager
 import android.content.pm.PackageManager.FEATURE_COMPANION_DEVICE_SETUP
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.net.MacAddress
+import android.os.Binder
+import android.os.Bundle
+import android.os.Parcelable
 import android.os.UserHandle
 import android.platform.test.annotations.AppModeFull
 import android.test.InstrumentationTestCase
+import android.util.Size
+import android.util.SizeF
+import android.util.SparseArray
+import android.view.accessibility.AccessibilityNodeInfo
+import android.view.accessibility.AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE
+import android.view.accessibility.AccessibilityNodeInfo.ACTION_SET_TEXT
+import android.widget.EditText
 import android.widget.TextView
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
+import com.android.compatibility.common.util.MatcherUtils
 import com.android.compatibility.common.util.MatcherUtils.hasIdThat
 import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
@@ -35,7 +46,10 @@ import com.android.compatibility.common.util.ThrowingSupplier
 import com.android.compatibility.common.util.UiAutomatorUtils.waitFindObject
 import com.android.compatibility.common.util.children
 import com.android.compatibility.common.util.click
+import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.Matcher
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.not
 import org.junit.Assert.assertThat
@@ -43,6 +57,7 @@ import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.Serializable
 
 const val COMPANION_APPROVE_WIFI_CONNECTIONS =
         "android.permission.COMPANION_APPROVE_WIFI_CONNECTIONS"
@@ -140,6 +155,11 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         installApk("/data/local/tmp/cts/os/CtsCompanionTestApp.apk")
         startApp(packageName)
 
+        waitFindNode(hasClassThat(`is`(equalTo(EditText::class.java.name))))
+                .performAction(ACTION_SET_TEXT,
+                        bundleOf(ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE to ""))
+        waitForIdle()
+
         click("Watch")
         click("Associate")
         val device = waitFindNode(hasIdThat(containsString("device_list")))
@@ -174,4 +194,46 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
 private fun click(label: String) {
     waitFindObject(byTextIgnoreCase(label)).click()
     waitForIdle()
+}
+
+fun hasClassThat(condition: Matcher<in String?>?): Matcher<AccessibilityNodeInfo> {
+    return MatcherUtils.propertyMatches(
+            "class",
+            { obj: AccessibilityNodeInfo -> obj.className },
+            condition)
+}
+
+fun bundleOf(vararg entries: Pair<String, Any>) = Bundle().apply {
+    entries.forEach { (k, v) -> set(k, v) }
+}
+
+operator fun Bundle.set(key: String, value: Any?) {
+    if (value is Array<*> && value.isArrayOf<Parcelable>()) {
+        putParcelableArray(key, value as Array<Parcelable>)
+        return
+    }
+    if (value is Array<*> && value.isArrayOf<CharSequence>()) {
+        putCharSequenceArray(key, value as Array<CharSequence>)
+        return
+    }
+    when (value) {
+        is Byte -> putByte(key, value)
+        is Char -> putChar(key, value)
+        is Short -> putShort(key, value)
+        is Float -> putFloat(key, value)
+        is CharSequence -> putCharSequence(key, value)
+        is Parcelable -> putParcelable(key, value)
+        is Size -> putSize(key, value)
+        is SizeF -> putSizeF(key, value)
+        is ArrayList<*> -> putParcelableArrayList(key, value as ArrayList<Parcelable>)
+        is SparseArray<*> -> putSparseParcelableArray(key, value as SparseArray<Parcelable>)
+        is Serializable -> putSerializable(key, value)
+        is ByteArray -> putByteArray(key, value)
+        is ShortArray -> putShortArray(key, value)
+        is CharArray -> putCharArray(key, value)
+        is FloatArray -> putFloatArray(key, value)
+        is Bundle -> putBundle(key, value)
+        is Binder -> putBinder(key, value)
+        else -> throw IllegalArgumentException("" + value)
+    }
 }

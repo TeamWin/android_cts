@@ -171,6 +171,7 @@ public class DirectReportAPI30Test {
                 mDirectReportTestHelper.readEventsFromHardwareBuffer(token,
                         hardwareBuffer, sensorEventCount);
         channel.close();
+        hardwareBuffer.close();
 
         // Check the sampling rates when the mic toggle were on and off
         double rateWhenMicToggleOn =
