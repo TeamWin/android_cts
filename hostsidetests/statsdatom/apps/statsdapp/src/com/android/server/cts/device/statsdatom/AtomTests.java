@@ -207,6 +207,7 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM, 107);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_FINE_LOCATION_SOURCE, 108);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_COARSE_LOCATION_SOURCE, 109);
+        APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_MANAGE_MEDIA, 110);
     }
 
     @Test
