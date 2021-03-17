@@ -189,7 +189,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     private static final String NOT_CALLED_FROM_PARENT = "notCalledFromParent";
 
-    // ID of the user all tests are run as. For device owner this will be the primary user, for
+    // ID of the user all tests are run as. For device owner this will be the current user, for
     // profile owner it is the user id of the created profile.
     protected int mUserId;
 
@@ -1139,12 +1139,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackage() throws Exception {
+        CLog.i("runTestSuspendPackage() on user %d", mUserId);
+
         installAppAsUser(INTENT_SENDER_APK, mUserId);
         installAppAsUser(INTENT_RECEIVER_APK, mUserId);
         assertMetricsLogged(getDevice(), () -> {
             // Suspend a testing package.
-            executeDeviceTestMethod(".SuspendPackageTest",
-                    "testSetPackagesSuspended");
+            executeDeviceTestMethod(".SuspendPackageTest", "testSetPackagesSuspended");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_PACKAGES_SUSPENDED_VALUE)
                     .setAdminPackageName(DEVICE_ADMIN_PKG)
                     .setStrings(INTENT_RECEIVER_PKG)
@@ -1165,6 +1166,8 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     @FlakyTest(bugId = 141314026)
     @Test
     public void testSuspendPackageWithPackageManager() throws Exception {
+        CLog.i("runTestSuspendPackageWithPackageManager() on user %d", mUserId);
+
         installAppAsUser(INTENT_SENDER_APK, mUserId);
         installAppAsUser(INTENT_RECEIVER_APK, mUserId);
         // Suspend a testing package with the PackageManager
@@ -1941,8 +1944,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void executeSuspendPackageTestMethod(String testName) throws Exception {
-        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".SuspendPackageTest",
-                testName, mUserId);
+        runDeviceTestsAsUser(INTENT_SENDER_PKG, ".SuspendPackageTest", testName, mUserId);
     }
 
     private void executeAccountTest(String testName) throws DeviceNotAvailableException {

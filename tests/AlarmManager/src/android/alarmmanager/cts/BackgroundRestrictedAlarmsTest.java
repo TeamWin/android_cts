@@ -192,7 +192,7 @@ public class BackgroundRestrictedAlarmsTest {
 
     private void updateBackgroundSettleTime() throws IOException {
         mUiDevice.executeShellCommand(
-                "settings put global activity_manager_constants background_settle_time=100");
+                "settings put global activity_manager_constants background_settle_time=0");
     }
 
     private void resetBackgroundSettleTime() throws IOException {

@@ -107,6 +107,7 @@ public class DebuggableAPI31Test {
                             | HardwareBuffer.USAGE_SENSOR_DIRECT_DATA);
             SensorDirectChannel channel = mSensorManager.createDirectChannel(hardwareBuffer);
             channel.configure(s, rateLevel);
+            hardwareBuffer.close();
             fail("Should have thrown a SecurityException");
         } catch (SecurityException e) {
             // Expected

@@ -19,7 +19,8 @@
 
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
 
-    <application android:label="Cts Alarm Manager Test">
+    <application android:label="Cts Alarm Manager Test"
+                 android:debuggable="true">
         <uses-library android:name="android.test.runner"/>
 
         <receiver android:name=".AlarmReceiver" />
