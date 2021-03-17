@@ -163,7 +163,7 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                     } finally {
                         /* Kill the unwanted cec-client process. */
                         Process killProcess = mCecClient.destroyForcibly();
-                        killProcess.waitFor();
+                        killProcess.waitFor(60, TimeUnit.SECONDS);
                         launchCommand.remove(port);
                     }
                 } while (portBeingRetried);
