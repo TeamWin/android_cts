@@ -27,7 +27,7 @@ import android.os.Bundle
  */
 class RichNotificationActivity : Activity() {
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "NotificationManagerTest"
+        const val NOTIFICATION_MANAGER_CHANNEL_ID = "NotificationManagerTest"
         const val EXTRA_ACTION = "action"
         const val ACTION_SEND_7 = "send-7"
         const val ACTION_SEND_8 = "send-8"
@@ -35,15 +35,15 @@ class RichNotificationActivity : Activity() {
         const val ACTION_CANCEL_8 = "cancel-8"
     }
 
-    enum class NotificationPreset(val id: Int) {
-        Preset7(7),
-        Preset8(8);
+    enum class NotificationPreset(val id: Int, val channelId: String) {
+        Preset7(7, NOTIFICATION_MANAGER_CHANNEL_ID),
+        Preset8(8, NOTIFICATION_MANAGER_CHANNEL_ID);
 
         fun build(context: Context): Notification {
             val extras = Bundle()
             extras.putString(Notification.EXTRA_BACKGROUND_IMAGE_URI,
                     "content://com.android.test.notificationprovider.provider/background$id.png")
-            return Notification.Builder(context, NOTIFICATION_CHANNEL_ID)
+            return Notification.Builder(context, NOTIFICATION_MANAGER_CHANNEL_ID)
                     .setContentTitle("Rich Notification #$id")
                     .setSmallIcon(android.R.drawable.sym_def_app_icon)
                     .addExtras(extras)
@@ -59,11 +59,7 @@ class RichNotificationActivity : Activity() {
             ACTION_SEND_8 -> sendNotification(NotificationPreset.Preset8)
             ACTION_CANCEL_7 -> cancelNotification(NotificationPreset.Preset7)
             ACTION_CANCEL_8 -> cancelNotification(NotificationPreset.Preset8)
-            else -> {
-                // reset both
-                cancelNotification(NotificationPreset.Preset7)
-                cancelNotification(NotificationPreset.Preset8)
-            }
+            else -> NotificationPreset.values().forEach(::cancelNotification)
         }
         finish()
     }
@@ -71,8 +67,8 @@ class RichNotificationActivity : Activity() {
     private val notificationManager by lazy { getSystemService(NotificationManager::class.java)!! }
 
     private fun sendNotification(preset: NotificationPreset) {
-        notificationManager.createNotificationChannel(NotificationChannel(NOTIFICATION_CHANNEL_ID,
-                "Notifications", NotificationManager.IMPORTANCE_DEFAULT))
+        notificationManager.createNotificationChannel(NotificationChannel(preset.channelId,
+                "${preset.channelId} Notifications", NotificationManager.IMPORTANCE_DEFAULT))
         notificationManager.notify(preset.id, preset.build(this))
     }
 
