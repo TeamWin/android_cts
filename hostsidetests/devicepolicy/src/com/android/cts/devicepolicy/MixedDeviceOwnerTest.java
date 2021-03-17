@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.fail;
@@ -29,7 +28,6 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -458,32 +456,14 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void testSuspendPackage() throws Exception {
-        assumeTestIsNotRedundant();
-
+        ignoreOnHeadlessSystemUserMode("headless system user doesn't launch activities");
         super.testSuspendPackage();
     }
 
     @Override
     public void testSuspendPackageWithPackageManager() throws Exception {
-        assumeTestIsNotRedundant();
-
+        ignoreOnHeadlessSystemUserMode("headless system user doesn't launch activities");
         super.testSuspendPackageWithPackageManager();
-    }
-
-    /**
-     * Checks whether this test should be skipped because it's redundant.
-     *
-     * <p>For example, {@code setPackagesSuspended()} is meaningless when called from device owner
-     * on headless system user mode as that API suspends activities and the system user runs in the
-     * background for that type of user. In real-life, the DPC would only use that API in the PO, so
-     * in theory it wouldn't need to be tested by this class, as it would be tested by
-     * {@link MixedProfileOwnerTest}, but that will only happen if the device supports managed user.
-     */
-    private void assumeTestIsNotRedundant() throws DeviceNotAvailableException {
-        if (isHeadlessSystemUserMode() && hasDeviceFeature(FEATURE_MANAGED_USERS)) {
-            throw new AssumptionViolatedException("Redundant test on headless system user mode "
-                    + "because it will be tested by the equivalent PO test");
-        }
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {
