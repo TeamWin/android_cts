@@ -16,10 +16,14 @@
 
 package android.os.cts
 
+import android.app.Instrumentation
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.provider.DeviceConfig.NAMESPACE_APP_HIBERNATION
+import android.support.test.uiautomator.By
+import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiObject2
 import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
@@ -43,6 +47,7 @@ class AppHibernationIntegrationTest {
         const val WAIT_TIME_MS = 1000L
     }
     private val context: Context = InstrumentationRegistry.getTargetContext()
+    private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
 
     private lateinit var packageManager: PackageManager
 
@@ -83,8 +88,16 @@ class AppHibernationIntegrationTest {
                         packageManager.getApplicationInfo(APK_PACKAGE_NAME_S_APP, 0 /* flags */)
                     val stopped = ((ai.flags and ApplicationInfo.FLAG_STOPPED) != 0)
                     assertTrue(stopped)
+                    runShellCommandOrThrow("cmd statusbar expand-notifications")
+                    waitFindObject(By.textContains("unused app"))
+                        .click()
+                    waitFindObject(By.text(APK_PACKAGE_NAME_S_APP))
                 }
             }
         }
+    }
+
+    private fun waitFindObject(selector: BySelector): UiObject2 {
+        return waitFindObject(instrumentation.uiAutomation, selector)
     }
 }
