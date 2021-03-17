@@ -173,13 +173,13 @@ public class CecPortDiscoverer extends BaseTargetPreparer {
                     "Caught "
                             + e.getClass().getSimpleName()
                             + ". "
-                            + "Could not get adapter mapping.");
+                            + "Could not get adapter mapping.", e);
         } catch (Exception generic) {
             throw new TargetSetupError(
                     "Caught an exception with message '"
                             + generic.getMessage()
                             + "'. "
-                            + "Could not get adapter mapping.");
+                            + "Could not get adapter mapping.", generic);
         }
         throw new TargetSetupError("Device not connected to any adapter!");
     }
