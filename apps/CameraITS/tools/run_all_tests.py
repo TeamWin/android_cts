@@ -561,18 +561,19 @@ def main():
       tot_pass += num_pass
       logging.info('scene tests: %s, Total tests passed: %s', tot_tests,
                    tot_pass)
-      logging.info('%s compatibility score: %.f/100\n',
-                   s, 100 * num_pass / tot_tests)
-
-      scene_test_summary_path = os.path.join(mobly_scene_output_logs_path,
-                                             'scene_test_summary.txt')
-      with open(scene_test_summary_path, 'w') as f:
-        f.write(scene_test_summary)
-
-      results[s][RESULT_KEY] = (RESULT_PASS if num_fail == 0 else RESULT_FAIL)
-      results[s][SUMMARY_KEY] = scene_test_summary_path
-      results[s][TIME_KEY_START] = scene_start_time
-      results[s][TIME_KEY_END] = scene_end_time
+      if tot_tests > 0:
+        logging.info('%s compatibility score: %.f/100\n',
+                     s, 100 * num_pass / tot_tests)
+        scene_test_summary_path = os.path.join(mobly_scene_output_logs_path,
+                                               'scene_test_summary.txt')
+        with open(scene_test_summary_path, 'w') as f:
+          f.write(scene_test_summary)
+        results[s][RESULT_KEY] = (RESULT_PASS if num_fail == 0 else RESULT_FAIL)
+        results[s][SUMMARY_KEY] = scene_test_summary_path
+        results[s][TIME_KEY_START] = scene_start_time
+        results[s][TIME_KEY_END] = scene_end_time
+      else:
+        logging.info('%s compatibility score: 0/100\n')
 
       # Delete temporary yml file after scene run.
       new_yaml_file_path = os.path.join(YAML_FILE_DIR, new_yml_file_name)
