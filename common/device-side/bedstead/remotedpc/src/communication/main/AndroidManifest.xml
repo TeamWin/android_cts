@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+
 <!--
   ~ Copyright (C) 2021 The Android Open Source Project
   ~
@@ -14,15 +16,9 @@
   ~ limitations under the License.
   -->
 
-<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-policies>
-        <limit-password />
-        <watch-login />
-        <encrypted-storage />
-        <wipe-data />
-        <reset-password />
-        <disable-keyguard-features />
-        <force-lock />
-        <limit-password />
-    </uses-policies>
-</device-admin>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.android.bedstead.remotedpc.communication">
+    <uses-sdk android:minSdkVersion="27" />
+    <application>
+    </application>
+</manifest>
