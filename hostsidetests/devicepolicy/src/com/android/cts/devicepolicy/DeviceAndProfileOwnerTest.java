@@ -1867,18 +1867,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     public void testAddNetworkWithKeychainKey_granted() throws Exception {
         assumeHasWifiFeature();
 
-        // STOPSHIP(b/160457441): remove when KS2 is the only one.
-        assumeTrue(getBooleanSystemProperty("persist.android.security.keystore2.enable", false));
-
         executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_granted");
     }
 
     @Test
     public void testAddNetworkSuggestionWithKeychainKey_granted() throws Exception {
         assumeHasWifiFeature();
-
-        // STOPSHIP(b/160457441): remove when KS2 is the only one.
-        assumeTrue(getBooleanSystemProperty("persist.android.security.keystore2.enable", false));
 
         executeDeviceTestMethod(".WifiTest", "testAddNetworkSuggestionWithKeychainKey_granted");
     }
@@ -1887,18 +1881,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     public void testAddNetworkSuggestionWithKeychainKey_notGranted() throws Exception {
         assumeHasWifiFeature();
 
-        // STOPSHIP(b/160457441): remove when KS2 is the only one.
-        assumeTrue(getBooleanSystemProperty("persist.android.security.keystore2.enable", false));
-
         executeDeviceTestMethod(".WifiTest", "testAddNetworkSuggestionWithKeychainKey_notGranted");
     }
 
     @Test
     public void testAddNetworkWithKeychainKey_notGranted() throws Exception {
         assumeHasWifiFeature();
-
-        // STOPSHIP(b/160457441): remove when KS2 is the only one.
-        assumeTrue(getBooleanSystemProperty("persist.android.security.keystore2.enable", false));
 
         executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_notGranted");
     }
