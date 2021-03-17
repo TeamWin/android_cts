@@ -2396,6 +2396,12 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="request_manage_credentials">Request to manage credentials</string>
     <string name="is_credential_management_app">Check is credential management app</string>
     <string name="credential_management_app_policy">Check correct authentication policy is set</string>
+    <string name="generate_key_pair">Generate key pair</string>
+    <string name="create_and_install_certificate">Create and install certificate</string>
+    <string name="request_certificate_authentication">Request certificate for authentication</string>
+    <string name="sign_data_with_key">Sign data with the private key</string>
+    <string name="verify_signature">Verify signature with the public key</string>
+    <string name="remove_credential_management_app">Remove credential management app</string>
 
     <!-- Strings for Widget -->
     <string name="widget_framework_test">Widget Framework Test</string>
