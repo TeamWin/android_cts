@@ -22,12 +22,10 @@ import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.voiceinteraction.common.Utils;
 
-import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,12 +38,6 @@ public final class HotwordDetectionServiceBasicTest
         extends AbstractVoiceInteractionBasicTestCase {
     static final String TAG = "HotwordDetectionServiceBasicTest";
 
-    private static final int TIMEOUT_MS = 5 * 1000;
-
-    @Rule
-    public final ActivityScenarioRule<TestVoiceInteractionServiceActivity> mActivityTestRule =
-            new ActivityScenarioRule<>(TestVoiceInteractionServiceActivity.class);
-
     @Test
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
             throws Throwable {
@@ -54,7 +46,9 @@ public final class HotwordDetectionServiceBasicTest
         receiver.register();
 
         mActivityTestRule.getScenario().onActivity(activity -> {
-            activity.triggerHotwordDetectionServiceTest(Utils.HOTWORD_DETECTION_SERVICE_BASIC);
+            activity.triggerHotwordDetectionServiceTest(
+                    Utils.HOTWORD_DETECTION_SERVICE_BASIC,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST);
         });
 
         final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
@@ -63,5 +57,11 @@ public final class HotwordDetectionServiceBasicTest
                 Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
 
         receiver.unregisterQuietly();
+    }
+
+    @Override
+    public String getVoiceInteractionService() {
+        return "android.voiceinteraction.cts/"
+                + "android.voiceinteraction.service.BasicVoiceInteractionService";
     }
 }
