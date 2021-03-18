@@ -21,8 +21,10 @@ import android.server.wm.Condition;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 /**
  * Base class for biometric tests, containing common useful logic.
@@ -62,8 +64,14 @@ public abstract class BiometricTestBase extends ActivityManagerTestBase {
     }
 
     protected static void waitFor(@NonNull String message, @NonNull BooleanSupplier condition) {
+        waitFor(message, condition, null /* onFailure */);
+    }
+
+    protected static void waitFor(@NonNull String message, @NonNull BooleanSupplier condition,
+            @Nullable Consumer<Object> onFailure) {
         Condition.waitFor(new Condition<>(message, condition)
                 .setRetryIntervalMs(500)
-                .setRetryLimit(20));
+                .setRetryLimit(20)
+                .setOnFailure(onFailure));
     }
 }
