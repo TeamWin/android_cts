@@ -107,6 +107,7 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
     private Looper mLooper;
     private MediaDrm mDrm = null;
     private final Object mLock = new Object();
+    private boolean mEventListenerCalled;
     private boolean mExpirationUpdateReceived;
     private boolean mLostStateReceived;
 
@@ -283,9 +284,21 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                 synchronized(mLock) {
                     mDrm.setOnEventListener(new MediaDrm.OnEventListener() {
                             @Override
-                            public void onEvent(MediaDrm md, byte[] sessionId, int event,
+                            public void onEvent(MediaDrm md, byte[] sid, int event,
                                     int extra, byte[] data) {
-                                if (event == MediaDrm.EVENT_KEY_REQUIRED) {
+                                if (md != mDrm) {
+                                    Log.e(TAG, "onEvent callback: drm object mismatch");
+                                    return;
+                                } else if (!Arrays.equals(mSessionId, sid)) {
+                                    Log.e(TAG, "onEvent callback: sessionId mismatch: |" +
+                                            Arrays.toString(mSessionId) + "| vs |" + Arrays.toString(sid) + "|");
+                                    return;
+                                }
+
+                                mEventListenerCalled = true;
+                                if (event == MediaDrm.EVENT_PROVISION_REQUIRED) {
+                                    Log.i(TAG, "MediaDrm event: Provision required");
+                                } else if (event == MediaDrm.EVENT_KEY_REQUIRED) {
                                     Log.i(TAG, "MediaDrm event: Key required");
                                     getKeys(mDrm, initDataType, mSessionId, mDrmInitData,
                                             keyType, clearKeyIds);
@@ -293,8 +306,12 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
                                     Log.i(TAG, "MediaDrm event: Key expired");
                                     getKeys(mDrm, initDataType, mSessionId, mDrmInitData,
                                             keyType, clearKeyIds);
+                                } else if (event == MediaDrm.EVENT_VENDOR_DEFINED) {
+                                    Log.i(TAG, "MediaDrm event: Vendor defined");
+                                } else if (event == MediaDrm.EVENT_SESSION_RECLAIMED) {
+                                    Log.i(TAG, "MediaDrm event: Session reclaimed");
                                 } else {
-                                    Log.e(TAG, "Events not supported " + event);
+                                    Log.e(TAG, "MediaDrm event not supported: " + event);
                                 }
                             }
                         });
@@ -1328,6 +1345,106 @@ public class MediaDrmClearkeyTest extends MediaCodecPlayerTestBase<MediaStubActi
             }
             if (mExpirationUpdateReceived) {
                 throw new Error("onExpirationUpdateListener should not be called");
+            }
+        } catch (MediaDrmStateException e) {
+              throw new Error("Unexpected exception from closing session: ", e);
+        } finally {
+            stopDrm(drm);
+        }
+    }
+
+    /**
+     * Test that after onClearEventListener is called,
+     * MediaDrm's event listener is not called.
+     *
+     * Clearkey plugin's provideKeyResponse method sends a
+     * vendor defined event to the media drm event listener
+     * for testing purpose. Check that after onClearEventListener
+     * is called, the event listener is not called.
+     */
+    @Presubmit
+    public void testClearOnEventListener() {
+
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = null;
+        mSessionId = null;
+        mEventListenerCalled = false;
+
+        // provideKeyResponse in clearkey plugin sends a
+        // vendor defined event to test the event listener;
+        // we therefore start a license request which will
+        // call provideKeyResonpse
+        byte[][] clearKeyIds = new byte[][] { CLEAR_KEY_CENC };
+        int keyType = MediaDrm.KEY_TYPE_STREAMING;
+        String initDataType = new String("cenc");
+
+        drm = startDrm(clearKeyIds,  initDataType, CLEARKEY_SCHEME_UUID, keyType);
+        mSessionId = openSession(drm);
+        try {
+            if (!preparePlayback(
+                    MIME_VIDEO_AVC,
+                    new String[] { CodecCapabilities.FEATURE_SecurePlayback },
+                    Uri.parse(Utils.getMediaPath() + CENC_AUDIO_PATH), false /* audioEncrypted */ ,
+                    Uri.parse(Utils.getMediaPath() + CENC_VIDEO_PATH), true /* videoEncrypted */,
+                    VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC, false /* scrambled */,
+                    mSessionId, getSurfaces())) {
+                closeSession(drm, mSessionId);
+                stopDrm(drm);
+                return;
+            }
+        } catch (Exception e) {
+            throw new Error("Unexpected exception ", e);
+        }
+
+        // test that the onEvent listener is called
+        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+        getKeys(drm, initDataType, mSessionId, mDrmInitData,
+                    keyType, clearKeyIds);
+
+        // wait for the vendor defined event, it should not arrive
+        // because the event listener is cleared
+        try {
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mEventListenerCalled; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (!mEventListenerCalled) {
+                closeSession(drm, mSessionId);
+                stopDrm(drm);
+                throw new Error("onEventListener should be called");
+            }
+        } catch (MediaDrmStateException e) {
+              closeSession(drm, mSessionId);
+              stopDrm(drm);
+              throw new Error("Unexpected exception from closing session: ", e);
+        }
+
+        // clear the drm event listener
+        // and test that the onEvent listener is not called
+        mEventListenerCalled = false;
+        drm.clearOnEventListener();
+        getKeys(drm, initDataType, mSessionId, mDrmInitData,
+                    keyType, clearKeyIds);
+
+        // wait for the vendor defined event, it should not arrive
+        // because the event listener is cleared
+        try {
+            closeSession(drm, mSessionId);
+            // wait up to 2 seconds for event
+            for (int i = 0; i < 20 && !mEventListenerCalled; i++) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+            if (mEventListenerCalled) {
+                throw new Error("onEventListener should not be called");
             }
         } catch (MediaDrmStateException e) {
               throw new Error("Unexpected exception from closing session: ", e);
