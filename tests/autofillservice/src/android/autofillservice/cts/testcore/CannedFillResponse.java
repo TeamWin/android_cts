@@ -603,9 +603,11 @@ public final class CannedFillResponse {
         private final Map<String, AutofillValue> mFieldValues;
         private final Map<String, RemoteViews> mFieldPresentations;
         private final Map<String, InlinePresentation> mFieldInlinePresentations;
+        private final Map<String, InlinePresentation> mFieldInlineTooltipPresentations;
         private final Map<String, Pair<Boolean, Pattern>> mFieldFilters;
         private final RemoteViews mPresentation;
         private final InlinePresentation mInlinePresentation;
+        private final InlinePresentation mInlineTooltipPresentation;
         private final IntentSender mAuthentication;
         private final String mId;
 
@@ -613,9 +615,11 @@ public final class CannedFillResponse {
             mFieldValues = builder.mFieldValues;
             mFieldPresentations = builder.mFieldPresentations;
             mFieldInlinePresentations = builder.mFieldInlinePresentations;
+            mFieldInlineTooltipPresentations = builder.mFieldInlineTooltipPresentations;
             mFieldFilters = builder.mFieldFilters;
             mPresentation = builder.mPresentation;
             mInlinePresentation = builder.mInlinePresentation;
+            mInlineTooltipPresentation = builder.mInlineTooltipPresentation;
             mAuthentication = builder.mAuthentication;
             mId = builder.mId;
         }
@@ -639,12 +643,15 @@ public final class CannedFillResponse {
         public Dataset asDatasetWithAutofillIdResolver(
                 Function<String, AutofillId> autofillIdResolver) {
             final Dataset.Builder builder = mPresentation != null
-                    ? mInlinePresentation == null
                     ? new Dataset.Builder(mPresentation)
-                    : new Dataset.Builder(mPresentation).setInlinePresentation(mInlinePresentation)
-                    : mInlinePresentation == null
-                            ? new Dataset.Builder()
-                            : new Dataset.Builder(mInlinePresentation);
+                    : new Dataset.Builder();
+            if (mInlinePresentation != null) {
+                if (mInlineTooltipPresentation != null) {
+                    builder.setInlinePresentation(mInlinePresentation, mInlineTooltipPresentation);
+                } else {
+                    builder.setInlinePresentation(mInlinePresentation);
+                }
+            }
 
             if (mFieldValues != null) {
                 for (Map.Entry<String, AutofillValue> entry : mFieldValues.entrySet()) {
@@ -657,27 +664,43 @@ public final class CannedFillResponse {
                     final AutofillValue value = entry.getValue();
                     final RemoteViews presentation = mFieldPresentations.get(id);
                     final InlinePresentation inlinePresentation = mFieldInlinePresentations.get(id);
+                    final InlinePresentation tooltipPresentation =
+                            mFieldInlineTooltipPresentations.get(id);
                     final Pair<Boolean, Pattern> filter = mFieldFilters.get(id);
                     if (presentation != null) {
                         if (filter == null) {
                             if (inlinePresentation != null) {
-                                builder.setValue(autofillId, value, presentation,
-                                        inlinePresentation);
+                                if (tooltipPresentation != null) {
+                                    builder.setValue(autofillId, value, presentation,
+                                            inlinePresentation, tooltipPresentation);
+                                } else {
+                                    builder.setValue(autofillId, value, presentation,
+                                            inlinePresentation);
+                                }
                             } else {
                                 builder.setValue(autofillId, value, presentation);
                             }
                         } else {
                             if (inlinePresentation != null) {
-                                builder.setValue(autofillId, value, filter.second, presentation,
-                                        inlinePresentation);
+                                if (tooltipPresentation != null) {
+                                    builder.setValue(autofillId, value, filter.second, presentation,
+                                            inlinePresentation, tooltipPresentation);
+                                } else {
+                                    builder.setValue(autofillId, value, filter.second, presentation,
+                                            inlinePresentation);
+                                }
                             } else {
                                 builder.setValue(autofillId, value, filter.second, presentation);
                             }
                         }
                     } else {
                         if (inlinePresentation != null) {
-                            builder.setFieldInlinePresentation(autofillId, value,
-                                    filter != null ? filter.second : null, inlinePresentation);
+                            if (tooltipPresentation != null) {
+                                throw new IllegalStateException("presentation can not be null");
+                            } else {
+                                builder.setFieldInlinePresentation(autofillId, value,
+                                        filter != null ? filter.second : null, inlinePresentation);
+                            }
                         } else {
                             if (filter == null) {
                                 builder.setValue(autofillId, value);
@@ -698,6 +721,7 @@ public final class CannedFillResponse {
                     + ", hasInlinePresentation=" + (mInlinePresentation != null)
                     + ", fieldPresentations=" + (mFieldPresentations)
                     + ", fieldInlinePresentations=" + (mFieldInlinePresentations)
+                    + ", fieldTooltipInlinePresentations=" + (mFieldInlineTooltipPresentations)
                     + ", hasAuthentication=" + (mAuthentication != null)
                     + ", fieldValues=" + mFieldValues
                     + ", fieldFilters=" + mFieldFilters + "]";
@@ -708,12 +732,15 @@ public final class CannedFillResponse {
             private final Map<String, RemoteViews> mFieldPresentations = new HashMap<>();
             private final Map<String, InlinePresentation> mFieldInlinePresentations =
                     new HashMap<>();
+            private final Map<String, InlinePresentation> mFieldInlineTooltipPresentations =
+                    new HashMap<>();
             private final Map<String, Pair<Boolean, Pattern>> mFieldFilters = new HashMap<>();
 
             private RemoteViews mPresentation;
             private InlinePresentation mInlinePresentation;
             private IntentSender mAuthentication;
             private String mId;
+            private InlinePresentation mInlineTooltipPresentation;
 
             public Builder() {
 
@@ -858,9 +885,41 @@ public final class CannedFillResponse {
              * {@link IdMode}.
              */
             public Builder setField(String id, String text, RemoteViews presentation,
+                    InlinePresentation inlinePresentation,
+                    InlinePresentation inlineTooltipPresentation) {
+                setField(id, text, presentation, inlinePresentation);
+                mFieldInlineTooltipPresentations.put(id, inlineTooltipPresentation);
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, RemoteViews presentation,
                     InlinePresentation inlinePresentation, Pattern filter) {
                 setField(id, text, presentation, inlinePresentation);
                 mFieldFilters.put(id, new Pair<>(true, filter));
+                return this;
+            }
+
+            /**
+             * Sets the canned value of a field based on its {@code id}.
+             *
+             * <p>The meaning of the id is defined by the object using the canned dataset.
+             * For example, {@link InstrumentedAutoFillService.Replier} resolves the id based on
+             * {@link IdMode}.
+             */
+            public Builder setField(String id, String text, RemoteViews presentation,
+                    InlinePresentation inlinePresentation,
+                    InlinePresentation inlineTooltipPresentation,
+                    Pattern filter) {
+                setField(id, text, presentation, inlinePresentation, inlineTooltipPresentation);
+                mFieldFilters.put(id, new Pair<>(true, filter));
+
                 return this;
             }
 
@@ -877,6 +936,14 @@ public final class CannedFillResponse {
              */
             public Builder setInlinePresentation(InlinePresentation inlinePresentation) {
                 mInlinePresentation = inlinePresentation;
+                return this;
+            }
+
+            /**
+             * Sets the inline tooltip to present the response in the UI.
+             */
+            public Builder setInlineTooltipPresentation(InlinePresentation tooltip) {
+                mInlineTooltipPresentation = tooltip;
                 return this;
             }
 

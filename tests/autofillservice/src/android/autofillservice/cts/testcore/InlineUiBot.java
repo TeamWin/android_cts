@@ -126,6 +126,13 @@ public final class InlineUiBot extends UiBot {
         strip.fling(direction, speed);
     }
 
+    public void assertTooltipShowing(String text) throws Exception {
+        final UiObject2 strip = waitForObject(By.text(text), UI_TIMEOUT);
+        if (strip == null) {
+            throw new AssertionError("not find inline tooltip by text: " + text);
+        }
+    }
+
     private UiObject2 findSuggestionStrip(Timeout timeout) throws Exception {
         return waitForObject(SUGGESTION_STRIP_SELECTOR, timeout);
     }
