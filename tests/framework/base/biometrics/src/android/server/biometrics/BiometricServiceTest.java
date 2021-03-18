@@ -327,7 +327,8 @@ public class BiometricServiceTest extends BiometricTestBase {
         waitForIdleService();
 
         final BiometricServiceState state = getCurrentState();
-        assertEquals(1, state.mSensorStates.sensorStates
+        assertEquals("Sensor: " + sensorId + " should have exactly one enrollment",
+                1, state.mSensorStates.sensorStates
                 .get(sensorId).getUserStates().get(userId).numEnrolled);
     }
 
@@ -687,6 +688,52 @@ public class BiometricServiceTest extends BiometricTestBase {
         }
 
         // Cleanup
+        for (BiometricTestSession session : biometricSessions) {
+            session.close();
+        }
+    }
+
+    @Test
+    public void testLockoutResetRequestedAfterCredentialUnlock() throws Exception {
+        // ResetLockout only really needs to be applied when enrollments exist. Furthermore, some
+        // interfaces may take this a step further and ignore resetLockout requests when no
+        // enrollments exist.
+        List<BiometricTestSession> biometricSessions = new ArrayList<>();
+        for (SensorProperties prop : mSensorProperties) {
+            BiometricTestSession session = mBiometricManager.createTestSession(prop.getSensorId());
+            enrollForSensor(session, prop.getSensorId());
+            biometricSessions.add(session);
+        }
+
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
+
+            // Explicitly clear the state so we can check exact number below
+            final BiometricServiceState clearState = getCurrentStateAndClearSchedulerLog();
+            credentialSession.verifyCredential();
+
+            waitFor("Waiting for password verification and resetLockout completion", () -> {
+                try {
+                    BiometricServiceState state = getCurrentState();
+                    // All sensors have processed exactly one resetLockout request. Use a boolean
+                    // to track this so we have better logging
+                    boolean allResetOnce = true;
+                    for (SensorProperties prop : mSensorProperties) {
+                        final int numResetLockouts = Utils.numberOfSpecifiedOperations(state,
+                                prop.getSensorId(), BiometricsProto.CM_RESET_LOCKOUT);
+                        Log.d(TAG, "Sensor: " + prop.getSensorId()
+                                + ", numResetLockouts: " + numResetLockouts);
+                        if (numResetLockouts != 1) {
+                            allResetOnce = false;
+                        }
+                    }
+                    return allResetOnce;
+                } catch (Exception e) {
+                    return false;
+                }
+            }, unused -> fail("All sensors must receive and process exactly one resetLockout"));
+        }
+
         for (BiometricTestSession session : biometricSessions) {
             session.close();
         }
