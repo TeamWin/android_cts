@@ -270,22 +270,6 @@ public class SplitPermissionTest {
      * If a permission was granted before the split happens, the new permission should inherit the
      * granted state.
      *
-     * This is a duplicate of {@link #inheritGrantedPermissionState} but for the storage permission
-     */
-    @Test
-    public void inheritGrantedPermissionStateStorage() throws Exception {
-        install(APK_STORAGE_29);
-        grantPermission(APP_PKG, READ_EXTERNAL_STORAGE);
-
-        install(APK_STORAGE_28);
-
-        assertPermissionGranted(ACCESS_MEDIA_LOCATION);
-    }
-
-    /**
-     * If a permission was granted before the split happens, the new permission should inherit the
-     * granted state.
-     *
      * <p>App using a shared uid
      */
     @Test
