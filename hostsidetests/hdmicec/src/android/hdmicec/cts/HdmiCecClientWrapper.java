@@ -352,10 +352,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         while ((endTime - startTime <= timeoutMillis)) {
             if (inputConsole.ready()) {
                 String line = inputConsole.readLine();
-                if (line != null && line.toLowerCase().contains(expectedMessage)) {
+                if (line != null && line.toLowerCase().contains(expectedMessage.toLowerCase())) {
                     CLog.v("Found " + expectedMessage + " in " + line);
                     return true;
-                } else if (line.toLowerCase().contains(CEC_PORT_BUSY)) {
+                } else if (line.toLowerCase().contains(CEC_PORT_BUSY.toLowerCase())) {
                     throw new CecPortBusyException();
                 }
             }

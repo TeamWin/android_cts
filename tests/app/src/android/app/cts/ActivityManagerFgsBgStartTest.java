@@ -53,6 +53,7 @@ import android.provider.Settings;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.filters.LargeTest;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -1149,6 +1150,112 @@ public class ActivityManagerFgsBgStartTest {
             SystemClock.sleep(10000);
         }
 
+    }
+
+    /**
+     * Test a FGS can start from BG if the process had a visible activity recently.
+     */
+    @LargeTest
+    @Test
+    public void testVisibleActivityGracePeriod() throws Exception {
+        ApplicationInfo app2Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP2, 0);
+        WatchUidRunner uid2Watcher = new WatchUidRunner(mInstrumentation, app2Info.uid,
+                WAITFOR_MSEC);
+        final String namespaceActivityManager = "activity_manager";
+        final String keyFgToBgFgsGraceDuration = "fg_to_bg_fgs_grace_duration";
+        final long[] curFgToBgFgsGraceDuration = {-1};
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Allow bg actvity start from APP1.
+            allowBgActivityStart(PACKAGE_NAME_APP1, true);
+
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                curFgToBgFgsGraceDuration[0] = DeviceConfig.getInt(
+                        namespaceActivityManager,
+                        keyFgToBgFgsGraceDuration, -1);
+                DeviceConfig.setProperty(namespaceActivityManager,
+                        keyFgToBgFgsGraceDuration,
+                        Long.toString(WAITFOR_MSEC), false);
+            });
+
+            testVisibleActivityGracePeriodInternal(uid2Watcher, "KEYCODE_HOME");
+            testVisibleActivityGracePeriodInternal(uid2Watcher, "KEYCODE_BACK");
+        } finally {
+            uid2Watcher.finish();
+            // Remove package from AllowList.
+            allowBgActivityStart(PACKAGE_NAME_APP1, false);
+            if (curFgToBgFgsGraceDuration[0] >= 0) {
+                SystemUtil.runWithShellPermissionIdentity(() -> {
+                    DeviceConfig.setProperty(namespaceActivityManager,
+                            keyFgToBgFgsGraceDuration,
+                            Long.toString(curFgToBgFgsGraceDuration[0]), false);
+                });
+            } else {
+                CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                        "device_config delete " + namespaceActivityManager
+                        + " " + keyFgToBgFgsGraceDuration);
+            }
+        }
+    }
+
+    private void testVisibleActivityGracePeriodInternal(WatchUidRunner uidWatcher, String keyCode)
+            throws Exception {
+        testVisibleActivityGracePeriodInternal(uidWatcher, keyCode, null,
+                () -> uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                                         WatchUidRunner.STATE_FG_SERVICE), true);
+
+        testVisibleActivityGracePeriodInternal(uidWatcher, keyCode,
+                () -> SystemClock.sleep(WAITFOR_MSEC + 2000), // Wait for the grace period to expire
+                () -> {
+                    try {
+                        uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE,
+                                WatchUidRunner.STATE_FG_SERVICE);
+                        fail("Service should not enter foreground service state");
+                    } catch (Exception e) {
+                        // Expected.
+                    }
+                }, false);
+    }
+
+    private void testVisibleActivityGracePeriodInternal(WatchUidRunner uidWatcher,
+            String keyCode, Runnable prep, Runnable verifier, boolean stopFgs) throws Exception {
+        // Put APP2 in TOP state.
+        CommandReceiver.sendCommand(mContext,
+                CommandReceiver.COMMAND_START_ACTIVITY,
+                PACKAGE_NAME_APP1, PACKAGE_NAME_APP2, 0, null);
+        uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_TOP);
+
+        // Take a nap to wait for the UI to settle down.
+        SystemClock.sleep(2000);
+
+        // Now inject key event.
+        CtsAppTestUtils.executeShellCmd(mInstrumentation, "input keyevent " + keyCode);
+
+        // It should go to the cached state.
+        uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+
+        if (prep != null) {
+            prep.run();
+        }
+
+        // Start FGS from APP2.
+        CommandReceiver.sendCommand(mContext,
+                CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+
+        if (verifier != null) {
+            verifier.run();
+        }
+
+        if (stopFgs) {
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP2, PACKAGE_NAME_APP2, 0, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+        }
     }
 
     /**

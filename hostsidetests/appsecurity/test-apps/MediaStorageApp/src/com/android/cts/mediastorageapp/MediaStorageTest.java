@@ -58,7 +58,6 @@ import com.android.cts.mediastorageapp.MediaStoreUtils.PendingSession;
 import com.google.common.io.ByteStreams;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -525,7 +524,6 @@ public class MediaStorageTest {
         assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
     }
 
-    @Ignore("b/181333720")
     @Test
     public void testMediaEscalation_RequestFavorite() throws Exception {
         doMediaEscalation_RequestFavorite(MediaStorageTest::createAudio);
