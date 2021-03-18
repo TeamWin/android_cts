@@ -1256,6 +1256,27 @@ public class ImsServiceTest {
             cb.onNetworkResponse(networkResp, reason);
         });
 
+        LinkedBlockingQueue<ImsRegistrationAttributes> mQueue = new LinkedBlockingQueue<>();
+        RegistrationManager.RegistrationCallback callback =
+                new RegistrationManager.RegistrationCallback() {
+                    @Override
+                    public void onRegistered(ImsRegistrationAttributes attr) {
+                        mQueue.offer(attr);
+                    }
+
+                    @Override
+                    public void onRegistering(ImsRegistrationAttributes attr) {}
+
+                    @Override
+                    public void onUnregistered(ImsReasonInfo info) {}
+
+                    @Override
+                    public void onTechnologyChangeFailed(int type, ImsReasonInfo info) {}
+                };
+        ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(imsRcsManager,
+                (m) -> m.registerImsRegistrationCallback(getContext().getMainExecutor(), callback),
+                ImsException.class);
+
         // IMS registers
         ArraySet<String> featureTags = new ArraySet<>();
         // Chat Session
@@ -1264,6 +1285,7 @@ public class ImsServiceTest {
         ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(
                 ImsRegistrationImplBase.REGISTRATION_TECH_LTE).setFeatureTags(featureTags).build();
         sServiceConnector.getCarrierService().getImsRegistration().onRegistered(attr);
+        waitForParam(mQueue, attr);
 
         // Notify framework that the RCS capability status is changed and PRESENCE UCE is enabled.
         RcsImsCapabilities capabilities =
@@ -1285,11 +1307,20 @@ public class ImsServiceTest {
         publishStateQueue.clear();
 
         // Can not verify the pidf fully, but we can ensure that the service id for the feature is
-        // contained in the XML.
-        String pidf = waitForResult(pidfQueue);
-        assertTrue("PIDF XML doesn't contain chat service-id", pidf.contains(CHAT_SERVICE_ID));
+        // contained in the XML. Multible PUBLISH requests may occur based on the state of the stack
+        // at the time of this call, retry to get correct PIDF up to 5 times.
+        boolean containsChatServiceId = false;
+        boolean containsFileTransferServiceId = false;
+        for (int retry = 0; retry < 5; retry++) {
+            String pidf = waitForResult(pidfQueue);
+            if (pidf == null) break;
+            containsChatServiceId = pidf.contains(CHAT_SERVICE_ID);
+            containsFileTransferServiceId  = pidf.contains(FILE_TRANSFER_SERVICE_ID);
+            if (containsChatServiceId && containsFileTransferServiceId) break;
+        }
+        assertTrue("PIDF XML doesn't contain chat service-id", containsChatServiceId);
         assertTrue("PIDF XML doesn't contain FT service-id",
-                        pidf.contains(FILE_TRANSFER_SERVICE_ID));
+                containsFileTransferServiceId);
 
         // Trigger RcsFeature is unavailable
         sServiceConnector.getCarrierService().getRcsFeature()
