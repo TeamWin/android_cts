@@ -780,7 +780,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         WifiNetworkSuggestion suggestion =
                 createBuilderWithCommonParams()
                         .setWpa3Passphrase(TEST_PASSPHRASE)
-                        .enableWpa3SaeH2eOnlyMode(true)
+                        .setIsWpa3SaeH2eOnlyModeEnabled(true)
                         .build();
         validateCommonParams(suggestion);
         assertEquals(TEST_PASSPHRASE, suggestion.getPassphrase());
