@@ -56,6 +56,7 @@ import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.Telephony;
 import android.telephony.SmsCbMessage;
+import android.telephony.SmsManager;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.telephony.cdma.CdmaSmsCbProgramData;
@@ -799,6 +800,15 @@ public class SmsManagerTest {
         } catch (Exception e) {
             // expected
         }
+    }
+
+    @Test
+    public void testCreateForSubscriptionId() {
+        int testSubId = 123;
+        SmsManager smsManager = mContext.getSystemService(SmsManager.class)
+                .createForSubscriptionId(testSubId);
+        assertEquals("getSubscriptionId() should be " + testSubId, testSubId,
+                smsManager.getSubscriptionId());
     }
 
     protected ArrayList<String> divideMessage(String text) {
