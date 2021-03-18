@@ -254,6 +254,16 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         put("MT6853V/NZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("MT6853V/TZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("MT6853V/TNZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/ZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/NZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/TZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/TNZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/MZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6833V/MNZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6877V/ZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6877V/NZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6877V/TZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
+        put("MT6877V/TNZA", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SDMMAGPIE", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM6150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
         put("SM7150", new String[]{"CONFIG_HARDEN_BRANCH_PREDICTOR=y"});
