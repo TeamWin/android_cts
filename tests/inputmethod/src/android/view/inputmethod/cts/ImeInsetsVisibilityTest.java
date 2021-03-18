@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 public class ImeInsetsVisibilityTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
-    private static final int NEW_KEYBOARD_HEIGHT = 400;
+    private static final int NEW_KEYBOARD_HEIGHT = 300;
 
     private static final String TEST_MARKER_PREFIX =
             "android.view.inputmethod.cts.ImeInsetsVisibilityTest";
