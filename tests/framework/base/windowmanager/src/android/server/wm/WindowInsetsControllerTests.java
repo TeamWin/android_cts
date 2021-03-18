@@ -30,6 +30,7 @@ import static android.view.WindowInsets.Type.systemBars;
 import static android.view.WindowInsets.Type.systemGestures;
 import static android.view.WindowInsetsController.BEHAVIOR_DEFAULT;
 import static android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE;
+import static android.view.WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM;
 import static android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
@@ -73,6 +74,7 @@ import androidx.annotation.Nullable;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Rule;
@@ -490,6 +492,37 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
     }
 
     @Test
+    public void testShowImeOnCreate_doesntCauseImeToReappearWhenDialogIsShown() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        assumeThat(MockImeSession.getUnavailabilityReason(instrumentation.getContext()),
+                nullValue());
+        try (MockImeSession imeSession = MockImeSession.create(instrumentation.getContext(),
+                instrumentation.getUiAutomation(), new ImeSettings.Builder())) {
+            final TestShowOnCreateActivity activity = startActivity(TestShowOnCreateActivity.class);
+            final View rootView = activity.getWindow().getDecorView();
+            PollingCheck.waitFor(TIMEOUT,
+                    () -> rootView.getRootWindowInsets().isVisible(ime()));
+            ANIMATION_CALLBACK.waitForFinishing();
+            ANIMATION_CALLBACK.reset();
+            getInstrumentation().runOnMainSync(() ->  {
+                rootView.getWindowInsetsController().hide(ime());
+            });
+            PollingCheck.waitFor(TIMEOUT,
+                    () -> !rootView.getRootWindowInsets().isVisible(ime()));
+            ANIMATION_CALLBACK.waitForFinishing();
+            getInstrumentation().runOnMainSync(() ->  {
+                activity.showAltImDialog();
+            });
+
+            for (long time = TIMEOUT; time >= 0; time -= TIME_SLICE) {
+                assertFalse("IME visible when it shouldn't be",
+                        rootView.getRootWindowInsets().isVisible(ime()));
+                SystemClock.sleep(TIME_SLICE);
+            }
+        }
+    }
+
+    @Test
     public void testInsetsDispatch() throws Exception {
         // Start an activity which hides system bars.
         final TestHideOnCreateActivity activity = startActivity(TestHideOnCreateActivity.class);
@@ -772,6 +805,14 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
             ANIMATION_CALLBACK.reset();
             getWindow().getDecorView().setWindowInsetsAnimationCallback(ANIMATION_CALLBACK);
             getWindow().getInsetsController().show(ime());
+        }
+
+        void showAltImDialog() {
+            AlertDialog dialog = new AlertDialog.Builder(this)
+                    .setTitle("TestDialog")
+                    .create();
+            dialog.getWindow().addFlags(FLAG_ALT_FOCUSABLE_IM);
+            dialog.show();
         }
     }
 }
