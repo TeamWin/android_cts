@@ -1549,6 +1549,22 @@ public final class Helper {
                         .build(), /* pinned= */ pinned);
     }
 
+    public static InlinePresentation createInlineTooltipPresentation(
+            @NonNull String message) {
+        final PendingIntent dummyIntent = PendingIntent.getActivity(getContext(), 0, new Intent(),
+                PendingIntent.FLAG_IMMUTABLE);
+        return createInlineTooltipPresentation(message, dummyIntent);
+    }
+
+    private static InlinePresentation createInlineTooltipPresentation(
+            @NonNull String message, @NonNull PendingIntent attribution) {
+        return InlinePresentation.createTooltipPresentation(
+                InlineSuggestionUi.newContentBuilder(attribution)
+                        .setTitle(message).build().getSlice(),
+                new InlinePresentationSpec.Builder(new Size(100, 100), new Size(400, 100))
+                        .build());
+    }
+
     public static void mockSwitchInputMethod(@NonNull Context context) throws Exception {
         final ContentResolver cr = context.getContentResolver();
         final int subtype = Settings.Secure.getInt(cr, SELECTED_INPUT_METHOD_SUBTYPE);
