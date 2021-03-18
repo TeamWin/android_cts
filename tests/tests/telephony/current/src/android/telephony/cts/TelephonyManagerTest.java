@@ -183,6 +183,11 @@ public class TelephonyManagerTest {
     private static final int MAX_FPLMN_NUM = 100;
     private static final int MIN_FPLMN_NUM = 3;
 
+    private static final String THERMAL_MITIGATION_COMMAND_BASE = "cmd phone thermal-mitigation ";
+    private static final String ALLOW_PACKAGE_SUBCOMMAND = "allow-package ";
+    private static final String DISALLOW_PACKAGE_SUBCOMMAND = "disallow-package ";
+    private static final String TELEPHONY_CTS_PACKAGE = "android.telephony.cts";
+
     private static final String TEST_FORWARD_NUMBER = "54321";
     private static final String TESTING_PLMN = "12345";
 
@@ -281,6 +286,12 @@ public class TelephonyManagerTest {
         if (mIsAllowedNetworkTypeChanged) {
             recoverAllowedNetworkType();
         }
+
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(THERMAL_MITIGATION_COMMAND_BASE).append(DISALLOW_PACKAGE_SUBCOMMAND)
+                .append(TELEPHONY_CTS_PACKAGE);
+        TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                cmdBuilder.toString());
     }
 
     private void saveAllowedNetworkTypesForAllReasons() {
@@ -3724,10 +3735,17 @@ public class TelephonyManagerTest {
     }
 
     @Test
-    public void testSendThermalMitigationRequest() {
+    public void testSendThermalMitigationRequest() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
         }
+
+        StringBuilder cmdBuilder = new StringBuilder();
+        cmdBuilder.append(THERMAL_MITIGATION_COMMAND_BASE).append(ALLOW_PACKAGE_SUBCOMMAND)
+                .append(TELEPHONY_CTS_PACKAGE);
+        TelephonyUtils.executeShellCommand(InstrumentationRegistry.getInstrumentation(),
+                cmdBuilder.toString());
+
         long arbitraryCompletionWindowSecs = 1L;
 
 
