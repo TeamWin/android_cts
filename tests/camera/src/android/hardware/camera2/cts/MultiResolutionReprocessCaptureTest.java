@@ -342,7 +342,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
         }
 
         // create an MultiResolutionImageReader for the regular capture
-        mMultiResImageReader = MultiResolutionImageReader.newInstance(inputInfo,
+        mMultiResImageReader = new MultiResolutionImageReader(inputInfo,
                 inputFormat, maxImages);
         mMultiResImageReaderListener = new SimpleMultiResolutionImageReaderListener(
                 mMultiResImageReader, 1, /*repeating*/false);
@@ -351,7 +351,7 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
 
         if (!mShareOneReader) {
             // create an MultiResolutionImageReader for the reprocess capture
-            mSecondMultiResImageReader = MultiResolutionImageReader.newInstance(
+            mSecondMultiResImageReader = new MultiResolutionImageReader(
                     outputInfo, outputFormat, maxImages);
             mSecondMultiResImageReaderListener = new SimpleMultiResolutionImageReaderListener(
                     mSecondMultiResImageReader, maxImages, /*repeating*/ false);
