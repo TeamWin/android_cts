@@ -51,7 +51,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-class TestTaskOrganizer extends TaskOrganizer {
+public class TestTaskOrganizer extends TaskOrganizer {
     private static final String TAG = TestTaskOrganizer.class.getSimpleName();
     public static final int INVALID_TASK_ID = -1;
 
@@ -79,7 +79,7 @@ class TestTaskOrganizer extends TaskOrganizer {
             WINDOWING_MODE_UNDEFINED
     };
 
-    TestTaskOrganizer(Context context) {
+    public TestTaskOrganizer(Context context) {
         super();
         mContext = context;
     }
@@ -158,7 +158,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         mRegistered = true;
     }
 
-    void unregisterOrganizerIfNeeded() {
+    public void unregisterOrganizerIfNeeded() {
         synchronized (this) {
             if (!mRegistered) return;
             mRegistered = false;
@@ -180,7 +180,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         }
     }
 
-    void putTaskInSplitPrimary(int taskId) {
+    public void putTaskInSplitPrimary(int taskId) {
         NestedShellPermission.run(() -> {
             synchronized (this) {
                 registerOrganizerIfNeeded();
@@ -202,7 +202,7 @@ class TestTaskOrganizer extends TaskOrganizer {
         });
     }
 
-    void putTaskInSplitSecondary(int taskId) {
+    public void putTaskInSplitSecondary(int taskId) {
         NestedShellPermission.run(() -> {
             synchronized (this) {
                 registerOrganizerIfNeeded();
@@ -270,6 +270,14 @@ class TestTaskOrganizer extends TaskOrganizer {
 
     void setRootSecondaryTaskBounds(Rect bounds) {
         setTaskBounds(mRootSecondary.getToken(), bounds);
+    }
+
+    public Rect getPrimaryTaskBounds() {
+        return mPrimaryBounds;
+    }
+
+    public Rect getSecondaryTaskBounds() {
+        return mSecondaryBounds;
     }
 
     private void setTaskBounds(WindowContainerToken container, Rect bounds) {
