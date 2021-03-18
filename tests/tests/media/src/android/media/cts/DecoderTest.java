@@ -95,8 +95,6 @@ public class DecoderTest extends MediaPlayerTestBase {
     private static final int SLEEP_TIME_MS = 1000;
     private static final long PLAY_TIME_MS = TimeUnit.MILLISECONDS.convert(1, TimeUnit.MINUTES);
 
-    private static final String AUDIO_URL_KEY = "decoder_test_audio_url";
-    private static final String VIDEO_URL_KEY = "decoder_test_video_url";
     private static final String MODULE_NAME = "CtsMediaTestCases";
     private DynamicConfigDeviceSide dynamicConfig;
     private DisplayManager mDisplayManager;
@@ -3595,14 +3593,17 @@ public class DecoderTest extends MediaPlayerTestBase {
         return (codecName == null) ? false : true;
     }
 
-
     /**
      * Test tunneled video playback mode if supported
+     *
+     * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
-    public void testTunneledVideoPlayback() throws Exception {
-        if (!isVideoFeatureSupported(MediaFormat.MIMETYPE_VIDEO_AVC,
+    private void tunneledVideoPlayback(String mimeType, String videoName) throws Exception {
+        if (!isVideoFeatureSupported(mimeType,
                 CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(TAG, "No tunneled video playback codec found!");
+            MediaUtils.skipTest(
+                    TAG,
+                    "No tunneled video playback codec found for MIME " + mimeType);
             return;
         }
 
@@ -3610,10 +3611,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
-        Uri audioUri = Uri.parse(dynamicConfig.getValue(AUDIO_URL_KEY));
-        Uri videoUri = Uri.parse(dynamicConfig.getValue(VIDEO_URL_KEY));
-        mMediaCodecPlayer.setAudioDataSource(audioUri, null);
-        mMediaCodecPlayer.setVideoDataSource(videoUri, null);
+        Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
@@ -3639,12 +3639,40 @@ public class DecoderTest extends MediaPlayerTestBase {
     }
 
     /**
-     * Test tunneled video playback flush if supported
+     * Test tunneled video playback mode with HEVC if supported
      */
-    public void testTunneledVideoFlush() throws Exception {
-        if (!isVideoFeatureSupported(MediaFormat.MIMETYPE_VIDEO_AVC,
-                CodecCapabilities.FEATURE_TunneledPlayback)) {
-            MediaUtils.skipTest(TAG, "No tunneled video playback codec found!");
+    public void testTunneledVideoPlaybackHevc() throws Exception {
+        tunneledVideoPlayback(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                    "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled video playback mode with AVC if supported
+     */
+    public void testTunneledVideoPlaybackAvc() throws Exception {
+        tunneledVideoPlayback(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     * Test tunneled video playback mode with VP9 if supported
+     */
+    public void testTunneledVideoPlaybackVp9() throws Exception {
+        tunneledVideoPlayback(MediaFormat.MIMETYPE_VIDEO_VP9,
+                    "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+    /**
+     * Test tunneled video playback flush if supported
+
+     * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
+     */
+    private void testTunneledVideoFlush(String mimeType, String videoName) throws Exception {
+        if (!isVideoFeatureSupported(mimeType,
+                        CodecCapabilities.FEATURE_TunneledPlayback)) {
+            MediaUtils.skipTest(
+                    TAG,
+                    "No tunneled video playback codec found for MIME " + mimeType);
             return;
         }
 
@@ -3652,10 +3680,9 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer = new MediaCodecTunneledPlayer(
                 getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
 
-        Uri audioUri = Uri.parse(dynamicConfig.getValue(AUDIO_URL_KEY));
-        Uri videoUri = Uri.parse(dynamicConfig.getValue(VIDEO_URL_KEY));
-        mMediaCodecPlayer.setAudioDataSource(audioUri, null);
-        mMediaCodecPlayer.setVideoDataSource(videoUri, null);
+        Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
         assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
         assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
 
@@ -3665,6 +3692,30 @@ public class DecoderTest extends MediaPlayerTestBase {
         mMediaCodecPlayer.pause();
         mMediaCodecPlayer.flush();
         // mMediaCodecPlayer.reset() handled in TearDown();
+    }
+
+    /**
+     * Test tunneled video playback flush with HEVC if supported
+     */
+    public void testTunneledVideoFlushHevc() throws Exception {
+        testTunneledVideoFlush(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled video playback flush with AVC if supported
+     */
+    public void testTunneledVideoFlushAvc() throws Exception {
+        testTunneledVideoFlush(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     * Test tunneled video playback flush with VP9 if supported
+     */
+    public void testTunneledVideoFlushVp9() throws Exception {
+        testTunneledVideoFlush(MediaFormat.MIMETYPE_VIDEO_VP9,
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 
     /**
