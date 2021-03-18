@@ -23,7 +23,6 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 import android.content.Context;
 import android.provider.Settings;
 
-import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.SettingsStateChangerRule;
 
 import org.junit.Before;
@@ -42,13 +41,7 @@ abstract class AbstractVoiceInteractionBasicTestCase {
 
     protected static final int TIMEOUT_MS = 5 * 1000;
 
-    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
-
     protected final Context mContext = getInstrumentation().getTargetContext();
-
-    @Rule
-    public final RequiredFeatureRule mRequiredFeatureRule = new RequiredFeatureRule(
-            FEATURE_VOICE_RECOGNIZERS);
 
     @Rule
     public final SettingsStateChangerRule mServiceSetterRule = new SettingsStateChangerRule(
