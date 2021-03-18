@@ -66,7 +66,7 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
   """Solid Color test pattern generation test.
 
     Test: Capture frame for the SOLID_COLOR test pattern with the values set
-    and check YUV image matches request.
+    and check RAW image matches request.
 
     android.sensor.testPatternMode
     0: OFF

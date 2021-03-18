@@ -43,6 +43,7 @@ import com.android.compatibility.common.util.SystemUtil.getEventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.UI_ROOT
+import com.android.compatibility.common.util.UiAutomatorUtils
 import com.android.compatibility.common.util.click
 import com.android.compatibility.common.util.depthFirstSearch
 import com.android.compatibility.common.util.lowestCommonAncestor
@@ -384,7 +385,27 @@ class AutoRevokeTest {
     }
 
     private fun waitFindObject(selector: BySelector): UiObject2 {
-        return waitFindObject(instrumentation.uiAutomation, selector)
+        try {
+            return UiAutomatorUtils.waitFindObject(selector)
+        } catch (e: RuntimeException) {
+            val ui = instrumentation.uiAutomation.rootInActiveWindow
+
+            val title = ui.depthFirstSearch { node ->
+                node.viewIdResourceName?.contains("alertTitle") == true
+            }
+            val okButton = ui.depthFirstSearch { node ->
+                node.textAsString?.equals("OK", ignoreCase = true) ?: false
+            }
+
+            if (title?.text?.toString() == "Android System" && okButton != null) {
+                // Auto dismiss occasional system dialogs to prevent interfering with the test
+                android.util.Log.w(LOG_TAG, "Ignoring exception", e)
+                okButton.click()
+                return UiAutomatorUtils.waitFindObject(selector)
+            } else {
+                throw e
+            }
+        }
     }
 }
 

@@ -19,13 +19,10 @@ package android.os.cts
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_TOP_SLEEPING
 import android.app.Instrumentation
-import android.app.UiAutomation
 import android.content.Context
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.provider.DeviceConfig
-import android.support.test.uiautomator.BySelector
-import android.support.test.uiautomator.UiObject2
 import androidx.test.InstrumentationRegistry
 import com.android.compatibility.common.util.LogcatInspector
 import com.android.compatibility.common.util.SystemUtil.eventually
@@ -33,10 +30,6 @@ import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import com.android.compatibility.common.util.ThrowingSupplier
-import com.android.compatibility.common.util.UiAutomatorUtils
-import com.android.compatibility.common.util.click
-import com.android.compatibility.common.util.depthFirstSearch
-import com.android.compatibility.common.util.textAsString
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matcher
 import org.hamcrest.Matchers
@@ -122,30 +115,6 @@ fun startApp(packageName: String) {
         CoreMatchers.containsString("Events injected: 1"))
     awaitAppState(packageName, Matchers.lessThanOrEqualTo(IMPORTANCE_TOP_SLEEPING))
     waitForIdle()
-}
-
-fun waitFindObject(uiAutomation: UiAutomation, selector: BySelector): UiObject2 {
-    try {
-        return UiAutomatorUtils.waitFindObject(selector)
-    } catch (e: RuntimeException) {
-        val ui = uiAutomation.rootInActiveWindow
-
-        val title = ui.depthFirstSearch { node ->
-            node.viewIdResourceName?.contains("alertTitle") == true
-        }
-        val okButton = ui.depthFirstSearch { node ->
-            node.textAsString?.equals("OK", ignoreCase = true) ?: false
-        }
-
-        if (title?.text?.toString() == "Android System" && okButton != null) {
-            // Auto dismiss occasional system dialogs to prevent interfering with the test
-            android.util.Log.w(AutoRevokeTest.LOG_TAG, "Ignoring exception", e)
-            okButton.click()
-            return UiAutomatorUtils.waitFindObject(selector)
-        } else {
-            throw e
-        }
-    }
 }
 
 class Logcat() : LogcatInspector() {

@@ -17,16 +17,14 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.sensorprivacy.cts.usemiccamera"
-          android:versionCode="1"
-          android:targetSandboxVersion="2">
+          android:versionCode="1">
 
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
 
     <application android:label="CtsUseMicOrCameraForSensorPrivacy">
         <activity android:name=".UseMicCamera"
-                  android:exported="true"
-                  android:visibleToInstantApps="true">
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.sensorprivacy.cts.usemiccamera.action.USE_MIC_CAM" />
                 <category android:name="android.intent.category.DEFAULT" />

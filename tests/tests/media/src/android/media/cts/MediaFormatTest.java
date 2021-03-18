@@ -589,16 +589,12 @@ public class MediaFormatTest extends AndroidTestCase {
     public void testMediaFormatConstructors() {
         MediaFormat format;
         {
-            String[] audioMimeTypes = { MediaFormat.MIMETYPE_AUDIO_AAC,
-                    MediaFormat.MIMETYPE_AUDIO_MPEGH_MHA1, MediaFormat.MIMETYPE_AUDIO_MPEGH_MHM1 };
-            for (String mime : audioMimeTypes) {
-                format = MediaFormat.createAudioFormat(mime, 48000, 6);
-                assertEquals(mime, format.getString(MediaFormat.KEY_MIME));
-                assertEquals(48000, format.getInteger(MediaFormat.KEY_SAMPLE_RATE));
-                assertEquals(6, format.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
-                assertEquals(3, format.getKeys().size());
-                assertEquals(0, format.getFeatures().size());
-            }
+            format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, 48000, 6);
+            assertEquals(MediaFormat.MIMETYPE_AUDIO_AAC, format.getString(MediaFormat.KEY_MIME));
+            assertEquals(48000, format.getInteger(MediaFormat.KEY_SAMPLE_RATE));
+            assertEquals(6, format.getInteger(MediaFormat.KEY_CHANNEL_COUNT));
+            assertEquals(3, format.getKeys().size());
+            assertEquals(0, format.getFeatures().size());
         }
 
         {
