@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith;
 
+import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 /**
@@ -38,6 +39,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 @RunWith(AndroidJUnit4.class)
 abstract class AbstractVoiceInteractionBasicTestCase {
     // TODO: (b/181943521) Combine the duplicated test class
+
+    protected static final int TIMEOUT_MS = 5 * 1000;
 
     protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
 
@@ -49,8 +52,11 @@ abstract class AbstractVoiceInteractionBasicTestCase {
 
     @Rule
     public final SettingsStateChangerRule mServiceSetterRule = new SettingsStateChangerRule(
-            mContext, Settings.Secure.VOICE_INTERACTION_SERVICE,
-            "android.voiceinteraction.service/.BasicVoiceInteractionService");
+            mContext, Settings.Secure.VOICE_INTERACTION_SERVICE, getVoiceInteractionService());
+
+    @Rule
+    public final ActivityScenarioRule<TestVoiceInteractionServiceActivity> mActivityTestRule =
+            new ActivityScenarioRule<>(TestVoiceInteractionServiceActivity.class);
 
     @Before
     public void prepareDevice() throws Exception {
@@ -60,4 +66,6 @@ abstract class AbstractVoiceInteractionBasicTestCase {
         // Dismiss keyguard, in case it's set as "Swipe to unlock".
         runShellCommand("wm dismiss-keyguard");
     }
+
+    public abstract String getVoiceInteractionService();
 }

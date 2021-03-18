@@ -23,9 +23,17 @@ android_test {
         "CtsVoiceInteractionCommon",
         "ctstestrunner-axt",
         "compatibility-device-util-axt",
-	"androidx.test.ext.junit",
+        "androidx.test.ext.junit",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "service/src/android/voiceinteraction/service/BasicVoiceInteractionService.java",
+        "service/src/android/voiceinteraction/service/MainHotwordDetectionService.java",
+        "service/src/android/voiceinteraction/service/MainInteractionService.java",
+        "service/src/android/voiceinteraction/service/MainInteractionSession.java",
+        "service/src/android/voiceinteraction/service/MainInteractionSessionService.java",
+        "service/src/android/voiceinteraction/service/MainRecognitionService.java"
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",

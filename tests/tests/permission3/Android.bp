@@ -26,6 +26,7 @@ android_test {
     ],
     static_libs: [
         "kotlin-stdlib",
+        "androidx.core_core",
         "androidx.test.rules",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
