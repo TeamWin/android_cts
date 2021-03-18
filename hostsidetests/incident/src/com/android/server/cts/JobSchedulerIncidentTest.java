@@ -19,6 +19,7 @@ package com.android.server.cts;
 import android.app.job.StopReasonEnum;
 import android.net.NetworkCapabilitiesProto;
 import android.net.NetworkRequestProto;
+import android.net.Transport;
 import com.android.server.job.ConstantsProto;
 import com.android.server.job.ConstraintEnum;
 import com.android.server.job.DataSetProto;
@@ -228,8 +229,8 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
     private static void testNetworkCapabilitesProto(NetworkCapabilitiesProto nc) throws Exception {
         assertNotNull(nc);
 
-        for (NetworkCapabilitiesProto.Transport t : nc.getTransportsList()) {
-            assertTrue(NetworkCapabilitiesProto.Transport.getDescriptor().getValues()
+        for (Transport t : nc.getTransportsList()) {
+            assertTrue(Transport.getDescriptor().getValues()
                 .contains(t.getValueDescriptor()));
         }
         for (NetworkCapabilitiesProto.NetCapability c : nc.getCapabilitiesList()) {
