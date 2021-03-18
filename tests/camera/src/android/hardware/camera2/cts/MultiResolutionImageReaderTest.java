@@ -251,7 +251,7 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
             int numFrameVerified = repeating ? NUM_FRAME_VERIFIED : 1;
 
             // Create multi-resolution ImageReader
-            mMultiResolutionImageReader = MultiResolutionImageReader.newInstance(
+            mMultiResolutionImageReader = new MultiResolutionImageReader(
                     multiResolutionStreams, format, MAX_NUM_IMAGES);
             mListener = new SimpleMultiResolutionImageReaderListener(
                     mMultiResolutionImageReader, MAX_NUM_IMAGES, repeating);
