@@ -612,6 +612,7 @@ public class RcsUceAdapterTest {
 
         // Verify that the contact capability is received and the onCompleted is called.
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + sTestNumberUri, capability);
         verifyCapabilityResult(capability, sTestNumberUri, REQUEST_RESULT_FOUND, true, true);
         waitForResult(completeQueue);
 
@@ -999,12 +1000,15 @@ public class RcsUceAdapterTest {
 
         // Verify that all the three contact's capabilities are received
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact1, capability);
         verifyCapabilityResult(capability, contact1, REQUEST_RESULT_FOUND, true, true);
 
         capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact2, capability);
         verifyCapabilityResult(capability, contact2, REQUEST_RESULT_FOUND, true, false);
 
         capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact3, capability);
         verifyCapabilityResult(capability, contact3, REQUEST_RESULT_FOUND, false, false);
 
         // Verify the onCompleted is called
@@ -1121,9 +1125,9 @@ public class RcsUceAdapterTest {
 
         // Verify the callback "onCapabilitiesReceived" is called.
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
-        // Verify the callback "onComplete" is called.
-        waitForResult(completeQueue);
         assertNotNull("RcsContactUceCapability should not be null", capability);
+        // Verify the callback "onComplete" is called.
+        assertNotNull(waitForResult(completeQueue));
         assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK, capability.getSourceType());
         assertEquals(sTestNumberUri, capability.getContactUri());
         assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND, capability.getRequestResult());
