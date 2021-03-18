@@ -186,6 +186,11 @@ public class MultiDisplayActivityLaunchTests extends MultiDisplayTestBase {
      */
     @Test
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
+        if (isOperatorTierDevice()) {
+            // This test is not applicable for the device who uses launch_after_boot configuration
+            return;
+        }
+
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);
         waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
