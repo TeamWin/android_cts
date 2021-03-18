@@ -250,7 +250,7 @@ fun dragDownStretches(
             0,
             0,
             0,
-            50
+            90
     )
 
     // The blue should stretch beyond its normal dimensions
@@ -270,7 +270,7 @@ fun dragRightStretches(
             view,
             0,
             0,
-            50,
+            90,
             0
     )
 
@@ -292,7 +292,7 @@ fun dragUpStretches(
             0,
             89,
             0,
-            -50
+            -90
     )
 
     // The magenta should stretch beyond its normal dimensions
@@ -312,7 +312,7 @@ fun dragLeftStretches(
             view,
             89,
             0,
-            -50,
+            -90,
             0
     )
 
