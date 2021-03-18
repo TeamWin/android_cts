@@ -26,6 +26,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 
 import androidx.annotation.Nullable;
 import androidx.test.rule.ActivityTestRule;
@@ -524,7 +525,7 @@ public final class CtsTouchUtils {
      * @param viewGroup View group
      */
     public static void emulateScrollToBottom(Instrumentation instrumentation,
-            ActivityTestRule<?> activityTestRule, ViewGroup viewGroup) {
+            ActivityTestRule<?> activityTestRule, ViewGroup viewGroup) throws Throwable {
         final int[] viewGroupOnScreenXY = new int[2];
         viewGroup.getLocationOnScreen(viewGroupOnScreenXY);
 
@@ -540,6 +541,28 @@ public final class CtsTouchUtils {
                     emulatedX, emulatedStartY, 0, -swipeAmount, 300, 10);
             next = new ViewStateSnapshot(viewGroup);
         } while (!prev.equals(next));
+
+        // wait until the overscroll animation completes
+        final boolean[] redrawn = new boolean[1];
+        final boolean[] animationFinished = new boolean[1];
+        final ViewTreeObserver.OnDrawListener onDrawListener = () -> {
+            redrawn[0] = true;
+        };
+
+        activityTestRule.runOnUiThread(() -> {
+            viewGroup.getViewTreeObserver().addOnDrawListener(onDrawListener);
+        });
+        while (!animationFinished[0]) {
+            activityTestRule.runOnUiThread(() -> {
+                if (!redrawn[0]) {
+                    animationFinished[0] = true;
+                }
+                redrawn[0] = false;
+            });
+        }
+        activityTestRule.runOnUiThread(() -> {
+            viewGroup.getViewTreeObserver().removeOnDrawListener(onDrawListener);
+        });
     }
 
     /**
