@@ -35,7 +35,9 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.util.List;
 
 public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiver {
+    private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private IBuildInfo mCtsBuild;
 
@@ -124,20 +126,43 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
         );
     }
 
+    public void testOemManagedBytesTransfer() throws Throwable {
+        doTestOemManagedBytesTransferThat(Atom.OEM_MANAGED_BYTES_TRANSFER_FIELD_NUMBER, true,
+                (atom) -> {
+                    final AtomsProto.OemManagedBytesTransfer data =
+                            atom.getOemManagedBytesTransfer();
+                    return new TransferredBytes(data.getRxBytes(), data.getTxBytes(),
+                            data.getRxPackets(), data.getTxPackets(), data.getUid(),
+                            data.getOemManagedType(), data.getTransportType());
+                }
+        );
+    }
+
     private static class TransferredBytes {
         final long mRxBytes;
         final long mTxBytes;
         final long mRxPackets;
         final long mTxPackets;
         final long mAppUid;
+        final long mOemManagedType;
+        final long mTransportType;
 
         public TransferredBytes(
                 long rxBytes, long txBytes, long rxPackets, long txPackets, long appUid) {
+            this(rxBytes, txBytes, rxPackets, txPackets, appUid, /*oemManagedType=*/-1,
+                    /*transportType=*/-1);
+        }
+
+        public TransferredBytes(
+                long rxBytes, long txBytes, long rxPackets, long txPackets, long appUid,
+                long oemManagedType, long transportType) {
             mRxBytes = rxBytes;
             mTxBytes = txBytes;
             mRxPackets = rxPackets;
             mTxPackets = txPackets;
             mAppUid = appUid;
+            mOemManagedType = oemManagedType;
+            mTransportType = transportType;
         }
     }
 
@@ -216,6 +241,67 @@ public class BytesTransferredTest extends DeviceTestCase implements IBuildReceiv
                 assertDataUsageAtomDataExpected(
                         transferredBytes.mRxBytes, transferredBytes.mTxBytes,
                         transferredBytes.mRxPackets, transferredBytes.mTxPackets);
+            }
+        }
+        assertWithMessage("Data for uid " + DeviceUtils.getAppUid(getDevice(),
+                DeviceUtils.STATSD_ATOM_TEST_PKG)
+                + " is not found in " + atoms.size() + " atoms.").that(foundAppStats).isTrue();
+    }
+
+    private void doTestOemManagedBytesTransferThat(int atomId, boolean isUidAtom,
+            ThrowingPredicate<Atom, Exception> p)
+            throws Throwable {
+        /* PANS is for automotive platforms only, and this test relies on WiFi to simulate OEM
+         * managed networks. */
+        if (!DeviceUtils.hasFeature(getDevice(), FEATURE_AUTOMOTIVE)
+                || !DeviceUtils.hasFeature(getDevice(), FEATURE_WIFI)) return;
+
+        // Upload the config.
+        final StatsdConfig.Builder config = ConfigUtils.createConfigBuilder(
+                DeviceUtils.STATSD_ATOM_TEST_PKG);
+        if (isUidAtom) {
+            ConfigUtils.addGaugeMetricForUidAtom(config, atomId, /*uidInAttributionChain=*/false,
+                    DeviceUtils.STATSD_ATOM_TEST_PKG);
+        } else {
+            ConfigUtils.addGaugeMetric(config, atomId);
+        }
+        ConfigUtils.uploadConfig(getDevice(), config);
+        // Generate some mobile traffic.
+        DeviceUtils.runDeviceTests(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG, ".AtomTests",
+                "testGenerateOemManagedTraffic");
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        // Force poll NetworkStatsService to get most updated network stats from lower layer.
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                "PollNetworkStatsActivity",
+                /*actionKey=*/null, /*actionValue=*/null);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        // Trigger atom pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        final List<Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice(),
+                /*checkTimestampTruncated=*/false);
+
+        assertThat(atoms.size()).isAtLeast(2);
+        boolean foundAppStats = false;
+        for (final Atom atom : atoms) {
+            TransferredBytes transferredBytes = p.accept(atom);
+            if (transferredBytes != null) {
+                foundAppStats = true;
+                // Checks that the uid in the atom corresponds to the app uid and checks that the
+                // bytes and packet data are as expected.
+                if (isUidAtom) {
+                    final int appUid = DeviceUtils.getAppUid(getDevice(),
+                            DeviceUtils.STATSD_ATOM_TEST_PKG);
+                    assertThat(transferredBytes.mAppUid).isEqualTo(appUid);
+                }
+                assertDataUsageAtomDataExpected(
+                        transferredBytes.mRxBytes, transferredBytes.mTxBytes,
+                        transferredBytes.mRxPackets, transferredBytes.mTxPackets);
+
+                // Make sure we have a value for the OEM managed type.
+                assertThat(transferredBytes.mOemManagedType).isGreaterThan(0);
+                // Make sure there's a NetworkTemplate#MATCH_* value for transport_type.
+                assertThat(transferredBytes.mTransportType).isGreaterThan(0);
             }
         }
         assertWithMessage("Data for uid " + DeviceUtils.getAppUid(getDevice(),
