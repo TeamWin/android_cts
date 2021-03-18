@@ -21,6 +21,7 @@ import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ER
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -279,6 +280,29 @@ public class DisplayHashManagerTest {
     }
 
     @Test
+    public void testVerifyDisplayHash_ValidDisplayHash() {
+        mInstrumentation.runOnMainSync(() -> {
+            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y);
+            mTestView = new View(mActivity);
+            mTestView.setBackgroundColor(Color.BLUE);
+            mMainView.addView(mTestView, p);
+            mMainView.invalidate();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        DisplayHash displayHash = generateDisplayHash(null);
+        VerifiedDisplayHash verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(
+                displayHash);
+
+        assertNotNull(verifiedDisplayHash);
+        assertEquals(displayHash.getTimeMillis(), verifiedDisplayHash.getTimeMillis());
+        assertEquals(displayHash.getBoundsInWindow(), verifiedDisplayHash.getBoundsInWindow());
+        assertEquals(displayHash.getHashAlgorithm(), verifiedDisplayHash.getHashAlgorithm());
+        assertArrayEquals(displayHash.getImageHash(), verifiedDisplayHash.getImageHash());
+    }
+
+    @Test
     public void testVerifyDisplayHash_InvalidDisplayHash() {
         mInstrumentation.runOnMainSync(() -> {
             final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
@@ -296,7 +320,23 @@ public class DisplayHashManagerTest {
                 displayHash.getHashAlgorithm(), new byte[32], displayHash.getHmac());
         VerifiedDisplayHash verifiedDisplayHash = mDisplayHashManager.verifyDisplayHash(
                 fakeDisplayHash);
+
         assertNull(verifiedDisplayHash);
+    }
+
+    @Test
+    public void testVerifiedDisplayHash() {
+        long timeMillis = 1000;
+        Rect boundsInWindow = new Rect(0, 0, 50, 100);
+        String hashAlgorithm = "hashAlgorithm";
+        byte[] imageHash = new byte[]{2, 4, 1, 5, 6, 2};
+        VerifiedDisplayHash verifiedDisplayHash = new VerifiedDisplayHash(timeMillis,
+                boundsInWindow, hashAlgorithm, imageHash);
+
+        assertEquals(timeMillis, verifiedDisplayHash.getTimeMillis());
+        assertEquals(boundsInWindow, verifiedDisplayHash.getBoundsInWindow());
+        assertEquals(hashAlgorithm, verifiedDisplayHash.getHashAlgorithm());
+        assertArrayEquals(imageHash, verifiedDisplayHash.getImageHash());
     }
 
     private DisplayHash generateDisplayHash(Rect bounds) {
