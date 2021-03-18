@@ -35,6 +35,7 @@ android_test {
         "android.test.mock",
     ],
     static_libs: [
+        "apache-commons-compress",
         "compatibility-device-util-axt",
         "ctstestrunner-axt",
         "services.core",
