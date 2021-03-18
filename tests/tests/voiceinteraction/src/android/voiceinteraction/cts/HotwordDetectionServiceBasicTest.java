@@ -59,6 +59,27 @@ public final class HotwordDetectionServiceBasicTest
         receiver.unregisterQuietly();
     }
 
+    @Test
+    public void testHotwordDetectionService_withoutAllowTriggerPermission_triggerFailure()
+            throws Throwable {
+        final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT);
+        receiver.register();
+
+        mActivityTestRule.getScenario().onActivity(activity -> {
+            activity.triggerHotwordDetectionServiceTest(
+                    Utils.HOTWORD_DETECTION_SERVICE_BASIC,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST);
+        });
+
+        final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
+        assertThat(intent).isNotNull();
+        assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION);
+
+        receiver.unregisterQuietly();
+    }
+
     @Override
     public String getVoiceInteractionService() {
         return "android.voiceinteraction.cts/"
