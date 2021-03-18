@@ -1547,6 +1547,8 @@ public class RemoteViewsTest {
         mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout);
         mRemoteViews.setViewId(2);
         assertFalse(mRemoteViews.canRecycleView(mResult));
+
+        assertFalse(mRemoteViews.canRecycleView(new View(mResult.getContext())));
     }
 
     private void createSampleImage(File imagefile, int resid) throws IOException {
