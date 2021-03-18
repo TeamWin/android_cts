@@ -18,6 +18,7 @@ package android.view.inputmethod.cts
 import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
+import android.os.Looper
 import android.provider.Settings
 import android.text.style.SuggestionSpan
 import android.text.style.SuggestionSpan.FLAG_GRAMMAR_ERROR
@@ -69,7 +70,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.Locale
+import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
+import kotlin.collections.ArrayList
 
 private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 
@@ -77,7 +80,8 @@ private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 @RunWith(AndroidJUnit4::class)
 class SpellCheckerTest : EndToEndImeTestBase() {
 
-    val SPELL_CHECKING_IME_ID = "com.android.cts.spellcheckingime/.SpellCheckingIme"
+    private val SPELL_CHECKING_IME_ID = "com.android.cts.spellcheckingime/.SpellCheckingIme"
+    private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context: Context = instrumentation.getTargetContext()
@@ -245,11 +249,80 @@ class SpellCheckerTest : EndToEndImeTestBase() {
         val spellCheckerInfo = tsm.getCurrentSpellCheckerInfo()
         assertThat(spellCheckerInfo).isNotNull()
         assertThat(spellCheckerInfo!!.getPackageName()).isEqualTo(
-            "com.android.cts.mockspellchecker")
+                "com.android.cts.mockspellchecker")
         assertThat(spellCheckerInfo!!.getSubtypeCount()).isEqualTo(1)
         assertThat(tsm.getEnabledSpellCheckerInfos()!!.size).isAtLeast(1)
         assertThat(tsm.getEnabledSpellCheckerInfos()!!.map { it.getPackageName() })
-                        .contains("com.android.cts.mockspellchecker")
+                .contains("com.android.cts.mockspellchecker")
+    }
+
+    @Test
+    fun newSpellCheckerSession() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockSpellCheckerClient.create(context, configuration).use {
+            val tsm = context.getSystemService(TextServicesManager::class.java)
+            assertThat(tsm).isNotNull()
+            val fakeListener = FakeSpellCheckerSessionListener()
+            val fakeExecutor = FakeExecutor()
+            var session: SpellCheckerSession? = tsm?.newSpellCheckerSession(Locale.US, false,
+                    RESULT_ATTR_LOOKS_LIKE_TYPO, null, fakeExecutor, fakeListener)
+            assertThat(session).isNotNull()
+            session?.getSentenceSuggestions(arrayOf(TextInfo("match")), 5)
+            waitOnMainUntil({ fakeExecutor.runnables.size == 1 }, TIMEOUT)
+            fakeExecutor.runnables[0].run()
+
+            assertThat(fakeListener.getSentenceSuggestionsResults).hasSize(1)
+            assertThat(fakeListener.getSentenceSuggestionsResults[0]).hasLength(1)
+            val sentenceSuggestionsInfo = fakeListener.getSentenceSuggestionsResults[0]!![0]
+            assertThat(sentenceSuggestionsInfo.suggestionsCount).isEqualTo(1)
+            assertThat(sentenceSuggestionsInfo.getOffsetAt(0)).isEqualTo(0)
+            assertThat(sentenceSuggestionsInfo.getLengthAt(0)).isEqualTo("match".length)
+            val suggestionsInfo = sentenceSuggestionsInfo.getSuggestionsInfoAt(0)
+            assertThat(suggestionsInfo.suggestionsCount).isEqualTo(1)
+            assertThat(suggestionsInfo.getSuggestionAt(0)).isEqualTo("suggestion")
+
+            assertThat(fakeListener.getSentenceSuggestionsResults).hasSize(1)
+            assertThat(fakeListener.getSentenceSuggestionsCallingThreads).hasSize(1)
+            assertThat(fakeListener.getSentenceSuggestionsCallingThreads[0])
+                    .isEqualTo(Thread.currentThread())
+        }
+    }
+
+    @Test
+    fun newSpellCheckerSession_implicitExecutor() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("match")
+                                .addSuggestions("suggestion")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockSpellCheckerClient.create(context, configuration).use {
+            val tsm = context.getSystemService(TextServicesManager::class.java)
+            assertThat(tsm).isNotNull()
+            val fakeListener = FakeSpellCheckerSessionListener()
+            var session: SpellCheckerSession? = null
+            runOnMainSync {
+                session = tsm?.newSpellCheckerSession(null /* bundle */, Locale.US,
+                        fakeListener, false /* referToSpellCheckerLanguageSettings */)
+            }
+            assertThat(session).isNotNull()
+            session?.getSentenceSuggestions(arrayOf(TextInfo("match")), 5)
+            waitOnMainUntil({
+                fakeListener.getSentenceSuggestionsCallingThreads.size > 0
+            }, TIMEOUT)
+            runOnMainSync {
+                assertThat(fakeListener.getSentenceSuggestionsCallingThreads).hasSize(1)
+                assertThat(fakeListener.getSentenceSuggestionsCallingThreads[0])
+                        .isEqualTo(Looper.getMainLooper().thread)
+            }
+        }
     }
 
     @Test
@@ -376,6 +449,7 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     private class FakeSpellCheckerSessionListener :
             SpellCheckerSession.SpellCheckerSessionListener {
         val getSentenceSuggestionsResults = ArrayList<Array<SentenceSuggestionsInfo>?>()
+        val getSentenceSuggestionsCallingThreads = ArrayList<Thread>()
 
         override fun onGetSuggestions(results: Array<SuggestionsInfo>?) {
             fail("Not expected")
@@ -383,6 +457,17 @@ class SpellCheckerTest : EndToEndImeTestBase() {
 
         override fun onGetSentenceSuggestions(results: Array<SentenceSuggestionsInfo>?) {
             getSentenceSuggestionsResults.add(results)
+            getSentenceSuggestionsCallingThreads.add(Thread.currentThread())
+        }
+    }
+
+    private class FakeExecutor : Executor {
+        @get:Synchronized
+        val runnables = ArrayList<Runnable>()
+
+        @Synchronized
+        override fun execute(r: Runnable) {
+            runnables.add(r)
         }
     }
 }
