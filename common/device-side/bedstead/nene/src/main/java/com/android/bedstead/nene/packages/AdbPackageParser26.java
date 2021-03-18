@@ -22,6 +22,7 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -43,13 +44,13 @@ public class AdbPackageParser26 implements AdbPackageParser {
 
     private static final int PACKAGE_LIST_BASE_INDENTATION = 2;
 
-    private final Packages mPackages;
+    private final TestApis mTestApis;
 
-    AdbPackageParser26(Packages packages) {
-        if (packages == null) {
+    AdbPackageParser26(TestApis testApis) {
+        if (testApis == null) {
             throw new NullPointerException();
         }
-        mPackages = packages;
+        mTestApis = testApis;
     }
 
     @Override
@@ -83,7 +84,7 @@ public class AdbPackageParser26 implements AdbPackageParser {
         Set<String> packageStrings = extractPackageStrings(packagesList);
         Map<String, Package> packages = new HashMap<>();
         for (String packageString : packageStrings) {
-            Package pkg = new Package(mPackages, parsePackage(packageString));
+            Package pkg = new Package(mTestApis, parsePackage(packageString));
             packages.put(pkg.packageName(), pkg);
         }
         return packages;
@@ -154,7 +155,7 @@ public class AdbPackageParser26 implements AdbPackageParser {
             return;
         }
 
-        UserReference user = mPackages.mTestApis.users().find(userId);
+        UserReference user = mTestApis.users().find(userId);
         Package.MutableUserPackage userPackage = new Package.MutableUserPackage();
         userPackage.mGrantedPermissions = new HashSet<>();
         pkg.mInstalledOnUsers.put(user, userPackage);

@@ -18,12 +18,10 @@ package com.android.eventlib.premade;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
 
@@ -48,9 +46,8 @@ public class EventLibBroadcastReceiverTest {
     private static final String GENERATED_BROADCAST_RECEIVER_ACTION =
             "com.android.eventlib.GENERATED_BROADCAST_RECEIVER";
 
-    private static final Instrumentation sInstrumentation =
-            InstrumentationRegistry.getInstrumentation();
-    private static final Context sContext = sInstrumentation.getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     @Before
     public void setUp() {
