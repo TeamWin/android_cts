@@ -431,13 +431,21 @@ fun waitFindSwitch(label: String): AccessibilityNodeInfo {
 /**
  * For some reason waitFindObject sometimes fails to find UI that is present in the view hierarchy
  */
-fun waitFindNode(matcher: Matcher<AccessibilityNodeInfo>): AccessibilityNodeInfo {
+fun waitFindNode(
+    matcher: Matcher<AccessibilityNodeInfo>,
+    failMsg: String? = null
+): AccessibilityNodeInfo {
     return getEventually {
         val ui = UI_ROOT
         ui.depthFirstSearch { node ->
             matcher.matches(node)
         }.assertNotNull {
-            "No view found matching $matcher:\n\n${uiDump(ui)}"
+            buildString {
+                if (failMsg != null) {
+                    appendLine(failMsg)
+                }
+                appendLine("No view found matching $matcher:\n\n${uiDump(ui)}")
+            }
         }
     }
 }

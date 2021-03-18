@@ -28,6 +28,7 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.MatcherUtils.hasIdThat
 import com.android.compatibility.common.util.SystemUtil.eventually
+import com.android.compatibility.common.util.SystemUtil.getEventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
@@ -141,11 +142,14 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         startApp(packageName)
 
         click("Watch")
-        click("Associate")
-        val device = waitFindNode(hasIdThat(containsString("device_list")))
-                .children
-                .find { it.className == TextView::class.java.name }
-        assumeTrue("Test requires a discoverable bluetooth device nearby", device != null)
+        val device = getEventually({
+            click("Associate")
+            waitFindNode(hasIdThat(containsString("device_list")),
+                    failMsg = "Test requires a discoverable bluetooth device nearby")
+                    .children
+                    .find { it.className == TextView::class.java.name }
+                    .assertNotNull { "Empty device list" }
+        }, 30_000)
         device!!.click()
 
         eventually {
