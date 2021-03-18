@@ -24,6 +24,7 @@ android_test {
         "cts",
         "vts10",
         "general-tests",
+        "sts",
     ],
 
     static_libs: ["cts-wm-app-base"],
