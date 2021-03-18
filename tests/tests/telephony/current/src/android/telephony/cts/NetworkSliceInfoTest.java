@@ -16,19 +16,19 @@
 
 package android.telephony.cts;
 
-import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_EMBB;
-import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_MIOT;
+import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_EMBB;
+import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_MIOT;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 
 import android.os.Parcel;
-import android.telephony.data.SliceInfo;
+import android.telephony.data.NetworkSliceInfo;
 
 import org.junit.Test;
 
-public class SliceInfoTest {
+public class NetworkSliceInfoTest {
     private static final int TEST_SLICE_DIFFERENTIATOR = 1;
     private static final int TEST_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_EMBB;
     private static final int TEST_HPLMN_SLICE_DIFFERENTIATOR = 10;
@@ -36,22 +36,22 @@ public class SliceInfoTest {
 
     @Test
     public void testParceling() {
-        testParceling(new SliceInfo.Builder()
+        testParceling(new NetworkSliceInfo.Builder()
                 .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
                 .build());
 
-        testParceling(new SliceInfo.Builder()
+        testParceling(new NetworkSliceInfo.Builder()
                 .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
                 .setSliceDifferentiator(TEST_SLICE_DIFFERENTIATOR)
                 .build());
 
-        testParceling(new SliceInfo.Builder()
+        testParceling(new NetworkSliceInfo.Builder()
                 .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
                 .setSliceDifferentiator(TEST_SLICE_DIFFERENTIATOR)
                 .setMappedHplmnSliceServiceType(TEST_HPLMN_SLICE_SERVICE_TYPE)
                 .build());
 
-        testParceling(new SliceInfo.Builder()
+        testParceling(new NetworkSliceInfo.Builder()
                 .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
                 .setSliceDifferentiator(TEST_SLICE_DIFFERENTIATOR)
                 .setMappedHplmnSliceServiceType(TEST_HPLMN_SLICE_SERVICE_TYPE)
@@ -59,47 +59,49 @@ public class SliceInfoTest {
                 .build());
     }
 
-    private void testParceling(SliceInfo sliceInfo1) {
+    private void testParceling(NetworkSliceInfo sliceInfo1) {
         Parcel stateParcel = Parcel.obtain();
         sliceInfo1.writeToParcel(stateParcel, 0);
         stateParcel.setDataPosition(0);
 
-        SliceInfo parcelResponse = SliceInfo.CREATOR.createFromParcel(stateParcel);
+        NetworkSliceInfo parcelResponse = NetworkSliceInfo.CREATOR.createFromParcel(stateParcel);
         assertThat(parcelResponse).isEqualTo(sliceInfo1);
     }
 
     @Test
     public void testSliceDifferentiatorRange() {
-        new SliceInfo.Builder()
-                .setSliceDifferentiator(SliceInfo.MIN_SLICE_DIFFERENTIATOR)
-                .setSliceDifferentiator(SliceInfo.MAX_SLICE_DIFFERENTIATOR)
-                .setMappedHplmnSliceDifferentiator(SliceInfo.MIN_SLICE_DIFFERENTIATOR)
-                .setMappedHplmnSliceDifferentiator(SliceInfo.MAX_SLICE_DIFFERENTIATOR);
+        new NetworkSliceInfo.Builder()
+                .setSliceDifferentiator(NetworkSliceInfo.MIN_SLICE_DIFFERENTIATOR)
+                .setSliceDifferentiator(NetworkSliceInfo.MAX_SLICE_DIFFERENTIATOR)
+                .setMappedHplmnSliceDifferentiator(NetworkSliceInfo.MIN_SLICE_DIFFERENTIATOR)
+                .setMappedHplmnSliceDifferentiator(NetworkSliceInfo.MAX_SLICE_DIFFERENTIATOR);
 
         try {
-            new SliceInfo.Builder()
-                    .setSliceDifferentiator(SliceInfo.MIN_SLICE_DIFFERENTIATOR - 1);
+            new NetworkSliceInfo.Builder()
+                    .setSliceDifferentiator(NetworkSliceInfo.MIN_SLICE_DIFFERENTIATOR - 1);
             fail("Illegal state exception expected");
         } catch (IllegalArgumentException ignored) {
         }
 
         try {
-            new SliceInfo.Builder()
-                    .setMappedHplmnSliceDifferentiator(SliceInfo.MIN_SLICE_DIFFERENTIATOR - 1);
+            new NetworkSliceInfo.Builder()
+                    .setMappedHplmnSliceDifferentiator(
+                            NetworkSliceInfo.MIN_SLICE_DIFFERENTIATOR - 1);
             fail("Illegal state exception expected");
         } catch (IllegalArgumentException ignored) {
         }
 
         try {
-            new SliceInfo.Builder()
-                    .setSliceDifferentiator(SliceInfo.MAX_SLICE_DIFFERENTIATOR + 1);
+            new NetworkSliceInfo.Builder()
+                    .setSliceDifferentiator(NetworkSliceInfo.MAX_SLICE_DIFFERENTIATOR + 1);
             fail("Illegal state exception expected");
         } catch (IllegalArgumentException ignored) {
         }
 
         try {
-            new SliceInfo.Builder()
-                    .setMappedHplmnSliceDifferentiator(SliceInfo.MAX_SLICE_DIFFERENTIATOR + 1);
+            new NetworkSliceInfo.Builder()
+                    .setMappedHplmnSliceDifferentiator(
+                            NetworkSliceInfo.MAX_SLICE_DIFFERENTIATOR + 1);
             fail("Illegal state exception expected");
         } catch (IllegalArgumentException ignored) {
         }
