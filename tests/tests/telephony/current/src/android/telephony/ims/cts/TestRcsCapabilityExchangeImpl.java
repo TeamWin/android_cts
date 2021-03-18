@@ -23,7 +23,7 @@ import android.telephony.ims.stub.RcsCapabilityExchangeImplBase;
 import android.util.Log;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 
 /**
@@ -46,7 +46,7 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
 
     @FunctionalInterface
     public interface OptionsOperation {
-        void execute(Uri contactUri, List<String> myCapabilities, OptionsResponseCallback callback)
+        void execute(Uri contactUri, Set<String> myCapabilities, OptionsResponseCallback callback)
                 throws ImsException;
     }
 
@@ -101,7 +101,7 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
     }
 
     @Override
-    public void sendOptionsCapabilityRequest(Uri contactUri, List<String> myCapabilities,
+    public void sendOptionsCapabilityRequest(Uri contactUri, Set<String> myCapabilities,
             OptionsResponseCallback callback) {
         try {
             mOptionsOperation.execute(contactUri, myCapabilities, callback);
