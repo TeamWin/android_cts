@@ -27,6 +27,7 @@ import static org.mockito.Mockito.verify;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.app.compat.CompatChanges;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -65,6 +66,9 @@ import java.util.ArrayList;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class HorizontalScrollViewTest {
+    static final long USE_STRETCH_EDGE_EFFECT_BY_DEFAULT = 171228096L;
+    static final long USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED = 178807038L;
+
     private static final int ITEM_WIDTH  = 250;
     private static final int ITEM_HEIGHT = 100;
     private static final int ITEM_COUNT  = 15;
@@ -820,8 +824,11 @@ public class HorizontalScrollViewTest {
 
     @Test
     public void testEdgeEffectType() {
-        // Should default to "glow"
-        assertEquals(EdgeEffect.TYPE_GLOW, mScrollViewRegular.getEdgeEffectType());
+        int expectedStartType = (CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_BY_DEFAULT)
+                || CompatChanges.isChangeEnabled(USE_STRETCH_EDGE_EFFECT_FOR_SUPPORTED))
+                ? EdgeEffect.TYPE_STRETCH : EdgeEffect.TYPE_GLOW;
+        // Should default value
+        assertEquals(expectedStartType, mScrollViewRegular.getEdgeEffectType());
 
         // This one has "stretch" attribute
         assertEquals(EdgeEffect.TYPE_STRETCH, mScrollViewStretch.getEdgeEffectType());
