@@ -68,6 +68,7 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
+        grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mUserId);
     }
 
     @Override

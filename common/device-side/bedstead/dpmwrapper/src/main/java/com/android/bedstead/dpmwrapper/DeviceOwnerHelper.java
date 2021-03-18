@@ -65,7 +65,7 @@ public final class DeviceOwnerHelper {
     public static boolean runManagerMethod(DeviceAdminReceiver receiver, Context context,
             Intent intent) {
         String action = intent.getAction();
-        Log.d(TAG, "onReceive(): user=" + context.getUserId() + ", action=" + action);
+        Log.d(TAG, "runManagerMethod(): user=" + context.getUserId() + ", action=" + action);
 
         if (!action.equals(ACTION_WRAPPED_MANAGER_CALL)) return false;
 
@@ -73,7 +73,7 @@ public final class DeviceOwnerHelper {
             String className = intent.getStringExtra(EXTRA_CLASS);
             String methodName = intent.getStringExtra(EXTRA_METHOD);
             int numberArgs = intent.getIntExtra(EXTRA_NUMBER_ARGS, 0);
-            Log.d(TAG, "onReceive(): userId=" + context.getUserId()
+            Log.d(TAG, "runManagerMethod(): userId=" + context.getUserId()
                     + ", intent=" + intent.getAction() + ", class=" + className
                     + ", methodName=" + methodName + ", numberArgs=" + numberArgs);
             Object[] args = null;
@@ -85,7 +85,7 @@ public final class DeviceOwnerHelper {
                 for (int i = 0; i < numberArgs; i++) {
                     getArg(extras, args, parameterTypes, i);
                 }
-                Log.d(TAG, "onReceive(): args=" + Arrays.toString(args) + ", types="
+                Log.d(TAG, "runManagerMethod(): args=" + Arrays.toString(args) + ", types="
                         + Arrays.toString(parameterTypes));
 
             }
@@ -101,7 +101,13 @@ public final class DeviceOwnerHelper {
                     : context.getSystemService(managerClass);
 
             Object result = method.invoke(manager, args);
-            Log.d(TAG, "onReceive(): result=" + result);
+
+            if (VERBOSE) {
+                // Some results - like network logging events - are quite large
+                Log.v(TAG, "runManagerMethod(): method returned " + result);
+            } else {
+                Log.v(TAG, "runManagerMethod(): method returned fine");
+            }
             sendResult(receiver, result);
         } catch (Exception e) {
             sendError(receiver, e);
