@@ -315,7 +315,6 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
 
     @Test
     public void testNormalProcessCannotAccessOtherAppExternalDataDir() throws Exception {
-        assumeThatFuseDataIsolationIsEnabled(getDevice());
 
         new InstallMultiple().addFile(APPA_APK).run();
         new InstallMultiple().addFile(APPB_APK).run();
@@ -415,13 +414,6 @@ public class AppDataIsolationTests extends BaseAppSecurityTest {
                 "cmd package install-existing --full"
                         + " --user " + Integer.toString(userId)
                         + " " + packageName));
-    }
-
-    private static void assumeThatFuseDataIsolationIsEnabled(ITestDevice device)
-            throws DeviceNotAvailableException {
-        assumeThat(device.executeShellCommand(
-                "getprop persist.sys.vold_app_data_isolation_enabled").trim(),
-                is("true"));
     }
 
     private boolean isFbeModeEmulated() throws Exception {

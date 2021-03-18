@@ -2613,6 +2613,7 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     @Test
     public void testDeferredScanHidesPartialDatabaseRows() throws Exception {
         ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.IS_PENDING, 1);
         // Insert a pending row
         final Uri targetUri = getContentResolver().insert(getImageContentUri(), values, null);
         try (InputStream in =

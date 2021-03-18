@@ -18,12 +18,13 @@ package android.net.wifi.cts;
 
 import static android.net.wifi.EasyConnectStatusCallback.EASY_CONNECT_EVENT_FAILURE_TIMEOUT;
 import static android.net.wifi.WifiConfiguration.SECURITY_TYPE_PSK;
-import static android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT;
+import static android.net.wifi.WifiManager.EASY_CONNECT_CRYPTOGRAPHY_CURVE_PRIME256V1;
 import static android.net.wifi.WifiManager.EASY_CONNECT_NETWORK_ROLE_STA;
 
 import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.Context;
+import android.net.Uri;
 import android.net.wifi.EasyConnectStatusCallback;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -117,7 +118,7 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onBootstrapUriGenerated(@NonNull String uri) {
+        public void onBootstrapUriGenerated(@NonNull Uri dppUri) {
             synchronized (mLock) {
                 mOnBootstrapUriGeneratedCallback = true;
                 mLock.notify();
@@ -219,8 +220,10 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             synchronized (mLock) {
+                assertTrue(mWifiManager.getEasyConnectMaxAllowedResponderDeviceInfoLength()
+                        > TEST_DEVICE_INFO.length());
                 mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_DEVICE_INFO,
-                        EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
+                        EASY_CONNECT_CRYPTOGRAPHY_CURVE_PRIME256V1, mExecutor,
                         mEasyConnectStatusCallback);
                 // Wait for supplicant to generate DPP URI and trigger the callback function to
                 // provide the generated URI.
@@ -255,7 +258,7 @@ public class EasyConnectStatusCallbackTest extends WifiJUnit3TestBase {
         try {
             uiAutomation.adoptShellPermissionIdentity();
             mWifiManager.startEasyConnectAsEnrolleeResponder(TEST_WRONG_DEVICE_INFO,
-                    EASY_CONNECT_CRYPTOGRAPHY_CURVE_DEFAULT, mExecutor,
+                    EASY_CONNECT_CRYPTOGRAPHY_CURVE_PRIME256V1, mExecutor,
                     mEasyConnectStatusCallback);
             fail("startEasyConnectAsEnrolleeResponder did not throw an IllegalArgumentException"
                     + "on passing a wrong device info!");
