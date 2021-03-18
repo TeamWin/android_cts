@@ -45,6 +45,7 @@ android_test_helper_app {
     test_suites: [
         "cts",
         "general-tests",
+        "sts",
     ],
     static_libs: [
         "androidx.annotation_annotation",
