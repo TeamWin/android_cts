@@ -16,7 +16,7 @@
 
 package android.net.wifi.cts;
 
-import static android.net.NetworkCapabilitiesProto.TRANSPORT_WIFI;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 import static android.os.Process.myUid;
 
 import static com.google.common.truth.Truth.assertThat;
