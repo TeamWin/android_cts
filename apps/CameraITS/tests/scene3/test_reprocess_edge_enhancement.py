@@ -37,9 +37,9 @@ SHARPNESS_RTOL = 0.15
 
 def check_edge_modes(sharpness):
   """Check that the sharpness for the different edge modes is correct."""
-  logging.debug(' Verify HQ is sharper than OFF')
+  logging.debug('Verify HQ is sharper than OFF')
   if sharpness[EDGE_MODES['HQ']] < sharpness[EDGE_MODES['OFF']]:
-    raise AssertionError(f"HQ: {sharpness[EDGE_MODES['HQ']]:.5f}, "
+    raise AssertionError(f"HQ < OFF! HQ: {sharpness[EDGE_MODES['HQ']]:.5f}, "
                          f"OFF: {sharpness[EDGE_MODES['OFF']]:.5f}")
 
   logging.debug('Verify ZSL is similar to OFF')
@@ -115,7 +115,8 @@ def do_capture_and_determine_sharpness(
       edge_mode_res = caps[n]['metadata']['android.edge.mode']
     sharpness_list.append(
         image_processing_utils.compute_image_sharpness(chart.img))
-
+  logging.debug('Sharpness list for edge mode %d: %s',
+                edge_mode, str(sharpness_list))
   return {'edge_mode': edge_mode_res, 'sharpness': np.mean(sharpness_list)}
 
 
@@ -169,6 +170,7 @@ class ReprocessEdgeEnhancementTest(its_base_test.ItsBaseTest):
         reprocess_formats.append('private')
 
       size = capture_request_utils.get_available_output_sizes('jpg', props)[0]
+      logging.debug('image W: %d, H: %d', size[0], size[1])
       out_surface = {'width': size[0], 'height': size[1], 'format': 'jpg'}
 
       # Get proper sensitivity, exposure time, and focus distance.
