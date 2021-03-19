@@ -144,4 +144,16 @@ public class TaggingSdk30Test extends TaggingBaseTest {
                 /*enabledChanges*/ ImmutableSet.of(),
                 /*disabledChanges*/ ImmutableSet.of());
     }
+
+    public void testHeapZeroInitActivity() throws Exception {
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapZeroInitActivity",
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ ImmutableSet.of());
+    }
+
+    public void testHeapZeroInitMemtagAsyncActivity() throws Exception {
+        runDeviceCompatTest(TEST_PKG, ".TaggingTest", "testHeapZeroInitMemtagAsyncActivity",
+                /*enabledChanges*/ ImmutableSet.of(),
+                /*disabledChanges*/ ImmutableSet.of());
+    }
 }
