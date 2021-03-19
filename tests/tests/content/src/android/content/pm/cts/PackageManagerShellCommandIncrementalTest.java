@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
@@ -44,10 +45,13 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.incfs.install.IBlockTransformer;
 import com.android.incfs.install.IncrementalInstallSession;
+import com.android.incfs.install.PendingBlock;
 
 import libcore.io.IoUtils;
 
+import org.apache.commons.compress.compressors.lz4.BlockLZ4CompressorOutputStream;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -63,6 +67,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -207,6 +213,96 @@ public class PackageManagerShellCommandIncrementalTest {
                         .addApk(Paths.get(apk), Paths.get(idsig))
                         .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
                         .setLogger(new IncrementalDeviceConnection.Logger())
+                        .build();
+        getUiAutomation().adoptShellPermissionIdentity();
+        try {
+            mSession.start(
+                    Executors.newSingleThreadExecutor(),
+                    new IncrementalDeviceConnection.Factory(
+                            IncrementalDeviceConnection.ConnectionType.RELIABLE));
+            mSession.waitForInstallCompleted(30, TimeUnit.SECONDS);
+        } finally {
+            getUiAutomation().dropShellPermissionIdentity();
+        }
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    /**
+     * Compress the data if the compressed size is < original size, otherwise return the original
+     * data.
+     */
+    private static ByteBuffer maybeCompressPage(ByteBuffer pageData) {
+        pageData.mark();
+        ByteArrayOutputStream compressedByteStream = new ByteArrayOutputStream();
+        try (BlockLZ4CompressorOutputStream compressor =
+                     new BlockLZ4CompressorOutputStream(compressedByteStream)) {
+            Channels.newChannel(compressor).write(pageData);
+            // This is required to make sure the bytes are written to the output
+            compressor.finish();
+        } catch (IOException impossible) {
+            throw new AssertionError(impossible);
+        } finally {
+            pageData.reset();
+        }
+
+        byte[] compressedBytes = compressedByteStream.toByteArray();
+        if (compressedBytes.length < pageData.remaining()) {
+            return ByteBuffer.wrap(compressedBytes);
+        }
+        return pageData;
+    }
+
+    static final class CompressedPendingBlock extends PendingBlock {
+        final ByteBuffer mPageData;
+
+        CompressedPendingBlock(PendingBlock block) throws IOException {
+            super(block);
+
+            final ByteBuffer buffer = ByteBuffer.allocate(super.getBlockSize());
+            super.readBlockData(buffer);
+            buffer.flip(); // switch to read mode
+
+            if (super.getType() == Type.APK_DATA) {
+                mPageData = maybeCompressPage(buffer);
+            } else {
+                mPageData = buffer;
+            }
+        }
+
+        public Compression getCompression() {
+            return this.getBlockSize() < super.getBlockSize() ? Compression.LZ4 : Compression.NONE;
+        }
+
+        public short getBlockSize() {
+            return (short) mPageData.remaining();
+        }
+
+        public void readBlockData(ByteBuffer buffer) throws IOException {
+            mPageData.mark();
+            buffer.put(mPageData);
+            mPageData.reset();
+        }
+    }
+
+    static final class CompressingBlockTransformer implements IBlockTransformer {
+        @Override
+        @NonNull
+        public PendingBlock transform(@NonNull PendingBlock block) throws IOException {
+            return new CompressedPendingBlock(block);
+        }
+    }
+
+    @LargeTest
+    @Test
+    public void testInstallWithStreamingAndCompression() throws Exception {
+        final String apk = createApkPath(TEST_APK);
+        final String idsig = createApkPath(TEST_APK_IDSIG);
+        mSession =
+                new IncrementalInstallSession.Builder()
+                        .addApk(Paths.get(apk), Paths.get(idsig))
+                        .addExtraArgs("-t", "-i", CTS_PACKAGE_NAME)
+                        .setLogger(new IncrementalDeviceConnection.Logger())
+                        .setBlockTransformer(new CompressingBlockTransformer())
                         .build();
         getUiAutomation().adoptShellPermissionIdentity();
         try {
