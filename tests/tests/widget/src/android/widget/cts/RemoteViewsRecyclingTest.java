@@ -95,6 +95,7 @@ public class RemoteViewsRecyclingTest {
         View text2 = container.getChildAt(1);
         View text3 = container.getChildAt(2);
 
+
         reapplyRemoteViews(rv, async);
 
         container = mResult.findViewById(R.id.remoteViews_recycle_container);
@@ -308,33 +309,6 @@ public class RemoteViewsRecyclingTest {
     @Test
     public void doesntRecycleWhenLayoutDoesntMatchAsync() throws Throwable {
         doesntRecycleWhenLayoutDoesntMatch(true /* async */);
-    }
-
-    private void doesntRecycleWhenViewIdDoesntMatch(boolean async) throws Throwable {
-        RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle);
-        rv.removeAllViews(R.id.remoteViews_recycle_container);
-        RemoteViews childView = createRemoteViews(R.layout.remoteviews_textview);
-        childView.setViewId(2345);
-        rv.addStableView(R.id.remoteViews_recycle_container, childView, FIRST_TEXT_ID);
-        applyRemoteViews(rv);
-        ViewGroup container = mResult.findViewById(R.id.remoteViews_recycle_container);
-        View text = container.getChildAt(0);
-
-        childView.setViewId(3456);
-        reapplyRemoteViews(rv, async);
-
-        container = mResult.findViewById(R.id.remoteViews_recycle_container);
-        assertNotSame("TextViews", text, container.getChildAt(0));
-    }
-
-    @Test
-    public void doesntRecycleWhenViewIdDoesntMatchSync() throws Throwable {
-        doesntRecycleWhenViewIdDoesntMatch(false /* async */);
-    }
-
-    @Test
-    public void doesntRecycleWhenViewIdDoesntMatchAsync() throws Throwable {
-        doesntRecycleWhenViewIdDoesntMatch(true /* async */);
     }
 
     private void recycleWhenRemovingFromEndAndInsertInMiddleAtManyLevels(boolean async)
