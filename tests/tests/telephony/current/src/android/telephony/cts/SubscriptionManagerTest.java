@@ -40,6 +40,7 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.Uri;
 import android.os.Looper;
 import android.os.ParcelUuid;
 import android.os.PersistableBundle;
@@ -89,6 +90,11 @@ public class SubscriptionManagerTest {
     private static final String TAG = "SubscriptionManagerTest";
     private static final String MODIFY_PHONE_STATE = "android.permission.MODIFY_PHONE_STATE";
     private SubscriptionManager mSm;
+    private static final List<Uri> CONTACTS = new ArrayList<>();
+    static {
+        CONTACTS.add(Uri.fromParts("tel", "+16505551212", null));
+        CONTACTS.add(Uri.fromParts("tel", "+16505552323", null));
+    }
 
     private int mSubId;
     private String mPackageName;
@@ -952,6 +958,17 @@ public class SubscriptionManagerTest {
         assertEquals(SubscriptionManager.D2D_SHARING_ALL,
                 mSm.getDeviceToDeviceStatusSharing(mSubId));
         mSm.setDeviceToDeviceStatusSharing(originalD2DStatusSharing, mSubId);
+        uiAutomation.dropShellPermissionIdentity();
+    }
+
+    @Test
+    public void testSetAndGetD2DSharingContacts() {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
+        List<Uri> originalD2DSharingContacts = mSm.getDeviceToDeviceStatusSharingContacts(mSubId);
+        mSm.setDeviceToDeviceStatusSharingContacts(CONTACTS, mSubId);
+        assertEquals(CONTACTS, mSm.getDeviceToDeviceStatusSharingContacts(mSubId));
+        mSm.setDeviceToDeviceStatusSharingContacts(originalD2DSharingContacts, mSubId);
         uiAutomation.dropShellPermissionIdentity();
     }
 
