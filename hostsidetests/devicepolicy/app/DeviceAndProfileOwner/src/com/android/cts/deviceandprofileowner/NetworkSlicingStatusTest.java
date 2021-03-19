@@ -32,14 +32,14 @@ public class NetworkSlicingStatusTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
-    public void testGetSetNetworkSlicingStatus() throws Exception {
+    public void testGetSetEnterpriseNetworkPreferenceStatus() throws Exception {
         // Assert default status is true
-        assertTrue(mDevicePolicyManager.isNetworkSlicingEnabled());
+        assertTrue(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
 
-        mDevicePolicyManager.setNetworkSlicingEnabled(false);
-        assertFalse(mDevicePolicyManager.isNetworkSlicingEnabled());
+        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(false);
+        assertFalse(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
 
-        mDevicePolicyManager.setNetworkSlicingEnabled(true);
-        assertTrue(mDevicePolicyManager.isNetworkSlicingEnabled());
+        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true);
+        assertTrue(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
     }
 }
