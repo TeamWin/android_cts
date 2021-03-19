@@ -942,7 +942,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             installAppAsUser(DEVICE_OWNER_APK, userId);
             setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
         } else {
-            grantDpmWrapperPermissions(userId);
+            grantDpmWrapperPermissions(DEVICE_OWNER_APK, userId);
         }
         wakeupAndDismissKeyguard();
 

@@ -54,7 +54,7 @@ public final class HotwordDetectionServiceNonExistenceTest
         final Intent intent = receiver.awaitForBroadcast(TIMEOUT_MS);
         assertThat(intent).isNotNull();
         assertThat(intent.getIntExtra(Utils.KEY_TEST_RESULT, -1)).isEqualTo(
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE);
+                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION);
 
         receiver.unregisterQuietly();
     }

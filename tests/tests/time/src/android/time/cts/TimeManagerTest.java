@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.time.Capabilities;
 import android.app.time.TimeManager;
 import android.app.time.TimeZoneCapabilities;
 import android.app.time.TimeZoneCapabilitiesAndConfig;
@@ -86,7 +87,7 @@ public class TimeManagerTest {
                         .setAutoDetectionEnabled(newAutoDetectionEnabledValue)
                         .build();
                 if (capabilities.getConfigureAutoDetectionEnabledCapability()
-                        >= TimeZoneCapabilities.CAPABILITY_NOT_APPLICABLE) {
+                        >= Capabilities.CAPABILITY_NOT_APPLICABLE) {
                     assertTrue(timeManager.updateTimeZoneConfiguration(configUpdate));
                     expectedListenerTriggerCount++;
                     waitForListenerCallbackCount(
@@ -112,7 +113,7 @@ public class TimeManagerTest {
                         .setGeoDetectionEnabled(newGeoDetectionEnabledValue)
                         .build();
                 if (capabilities.getConfigureGeoDetectionEnabledCapability()
-                        >= TimeZoneCapabilities.CAPABILITY_NOT_APPLICABLE) {
+                        >= Capabilities.CAPABILITY_NOT_APPLICABLE) {
                     assertTrue(timeManager.updateTimeZoneConfiguration(configUpdate));
                     expectedListenerTriggerCount++;
                     waitForListenerCallbackCount(

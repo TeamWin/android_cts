@@ -16,8 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -870,6 +868,16 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assertFalse(setDeviceOwner(componentName, userId, /* expectFailure =*/ true));
     }
 
+
+    protected void affiliateUsers(String deviceAdminPkg, int userId1, int userId2)
+            throws Exception {
+        CLog.d("Affiliating users %d and %d on admin package %s", userId1, userId2, deviceAdminPkg);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId1);
+        runDeviceTestsAsUser(
+                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId2);
+    }
+
     protected String getSettings(String namespace, String name, int userId)
             throws DeviceNotAvailableException {
         String command = "settings --user " + userId + " get " + namespace + " " + name;
@@ -1176,6 +1184,19 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         final String result = device
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
+    }
+
+    protected void grantDpmWrapperPermissions(String deviceAdminPkg, int userId) throws Exception {
+        // TODO(b/176993670): INTERACT_ACROSS_USERS is needed by DevicePolicyManagerWrapper to
+        // get the current user; the permission is available on mDeviceOwnerUserId because it
+        // was installed with -g, but not on mPrimaryUserId as the app is intalled by code
+        // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
+        // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
+        // we won't need to grant it anymore.
+        CLog.i("Granting INTERACT_ACROSS_USERS to DO %s on user %d as it will need to send ordered "
+                + "broadcasts to user 0", deviceAdminPkg, userId);
+        executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
+                userId, deviceAdminPkg);
     }
 
     boolean isTv() throws DeviceNotAvailableException {

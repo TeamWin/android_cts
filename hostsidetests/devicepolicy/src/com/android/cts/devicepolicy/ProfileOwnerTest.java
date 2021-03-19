@@ -15,14 +15,19 @@
  */
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
 import org.junit.Test;
 
 /**
  * Host side tests for profile owner.  Run the CtsProfileOwnerApp device side test.
  */
+@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
 public class ProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PROFILE_OWNER_PKG = "com.android.cts.profileowner";
     private static final String PROFILE_OWNER_APK = "CtsProfileOwnerApp.apk";

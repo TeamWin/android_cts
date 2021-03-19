@@ -167,6 +167,33 @@ public class CredentialManagementAppTest {
 
     @Postsubmit(reason="new")
     @Test
+    public void hasKeyPair_aliasIsNotInAuthenticationPolicy_throwsException() throws Exception {
+        setCredentialManagementApp();
+
+        try {
+            assertThrows(SecurityException.class, () -> mDpm.hasKeyPair(NOT_IN_USER_POLICY_ALIAS));
+        } finally {
+            removeCredentialManagementApp();
+        }
+    }
+
+    @Postsubmit(reason="new")
+    @Test
+    public void hasKeyPair_isCredentialManagementApp_success() throws Exception {
+        setCredentialManagementApp();
+        try {
+            mDpm.installKeyPair(/* admin = */ null, PRIVATE_KEY, CERTIFICATES, ALIAS,
+                    /* flags = */0);
+
+            assertThat(mDpm.hasKeyPair(ALIAS)).isTrue();
+        } finally {
+            mDpm.removeKeyPair(/* admin = */ null, ALIAS);
+            removeCredentialManagementApp();
+        }
+    }
+
+    @Postsubmit(reason="new")
+    @Test
     public void removeKeyPair_isCredentialManagementApp_success() throws Exception {
         setCredentialManagementApp();
         try {
