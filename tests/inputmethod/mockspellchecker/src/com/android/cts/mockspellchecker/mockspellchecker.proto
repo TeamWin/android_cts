@@ -31,4 +31,5 @@ message SuggestionRule {
 // Represents a MockSpellChecker configuration.
 message MockSpellCheckerConfiguration {
   repeated SuggestionRule suggestion_rules = 1;
+  optional bool match_sentence = 2;
 };
