@@ -36,6 +36,8 @@ public class PhysicalChannelConfigTest {
     private static final int CONNECTION_STATUS = PhysicalChannelConfig.CONNECTION_PRIMARY_SERVING;
     private static final int CELL_BANDWIDTH = 12345;
     private static final int CHANNEL_NUMBER = 1234;
+    private static final int DOWNLINK_FREQUENCY = 11100;
+    private static final int UPLINK_FREQUENCY = 11100;
     private static final int FREQUENCY_RANGE = 1;
     private static final int PHYSICAL_CELL_ID = 502;
     private static final int PHYSICAL_INVALID_CELL_ID = 1008;
@@ -167,5 +169,33 @@ public class PhysicalChannelConfigTest {
 
         assertThat(mPhysicalChannelConfig.getFrequencyRange()).isEqualTo(
                 ServiceState.FREQUENCY_RANGE_LOW);
+    }
+
+    private void setupNrPhysicalChannelConfig() {
+        mPhysicalChannelConfig = new PhysicalChannelConfig.Builder()
+                .setPhysicalCellId(PHYSICAL_CELL_ID)
+                .setNetworkType(NETWORK_TYPE_NR)
+                .setCellConnectionStatus(CONNECTION_STATUS)
+                .setCellBandwidthDownlinkKhz(CELL_BANDWIDTH)
+                .setCellBandwidthUplinkKhz(CELL_BANDWIDTH)
+                .setContextIds(CONTEXT_IDS)
+                .setDownlinkChannelNumber(2220)
+                .setUplinkChannelNumber(2220)
+                .setBand(BAND)
+                .build();
+    }
+
+    @Test
+    public void testUplinkFrequencyKhz() {
+        setupNrPhysicalChannelConfig();
+
+        assertEquals(UPLINK_FREQUENCY, mPhysicalChannelConfig.getUplinkFrequencyKhz());
+    }
+
+    @Test
+    public void testDownlinkFrequencyKhz() {
+        setupNrPhysicalChannelConfig();
+
+        assertEquals(DOWNLINK_FREQUENCY, mPhysicalChannelConfig.getDownlinkFrequencyKhz());
     }
 }
