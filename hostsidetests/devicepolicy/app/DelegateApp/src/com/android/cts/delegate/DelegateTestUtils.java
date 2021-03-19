@@ -23,6 +23,7 @@ import android.app.admin.NetworkEvent;
 import android.content.Context;
 import android.content.Intent;
 import android.test.MoreAsserts;
+import android.util.Log;
 
 import junit.framework.Assert;
 
@@ -78,7 +79,8 @@ public class DelegateTestUtils {
         try {
             r.run();
         } catch (Throwable e) {
-            Assert.assertTrue("Expected " + expectedExceptionType.getName() + " but caught " + e,
+            Assert.assertTrue("Expected " + expectedExceptionType.getName() + " but caught:"
+                            + "\n" + Log.getStackTraceString(e) + "\nTest exception:\n",
                 expectedExceptionType.isAssignableFrom(e.getClass()));
             if (expectedExceptionMessageRegex != null) {
                 MoreAsserts.assertContainsRegex(expectedExceptionMessageRegex, e.getMessage());
