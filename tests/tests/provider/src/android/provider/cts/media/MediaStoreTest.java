@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.Manifest;
 import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -264,7 +265,25 @@ public class MediaStoreTest {
                 .isFalse();
     }
 
-    public void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
+    @Test
+    public void testCanManageMedia() throws Exception {
+        final String opString = AppOpsManager.permissionToOp(Manifest.permission.MANAGE_MEDIA);
+
+        // no access
+        assertThat(MediaStore.canManageMedia(getContext())).isFalse();
+        try {
+            // grant access
+            setAppOpsModeForUid(Process.myUid(), AppOpsManager.MODE_ALLOWED, opString);
+
+            assertThat(MediaStore.canManageMedia(getContext())).isTrue();
+        } finally {
+            setAppOpsModeForUid(Process.myUid(), AppOpsManager.MODE_ERRORED, opString);
+        }
+        // no access
+        assertThat(MediaStore.canManageMedia(getContext())).isFalse();
+    }
+
+    private void setAppOpsModeForUid(int uid, int mode, @NonNull String... ops) {
         getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(null);
         try {
             for (String op : ops) {
