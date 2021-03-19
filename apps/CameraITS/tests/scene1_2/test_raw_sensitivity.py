@@ -22,9 +22,9 @@ from mobly import test_runner
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 GR_PLANE_IDX = 1  # GR plane index in RGGB data
 IMG_STATS_GRID = 9  # Center 11.11%
@@ -77,7 +77,7 @@ class RawSensitivityTest(its_base_test.ItsBaseTest):
       sens_step = (sens_max - sens_min) // NUM_SENS_STEPS
 
       # Skip AF if TELE camera
-      if camera_fov <= cv2_image_processing_utils.FOV_THRESH_TELE:
+      if camera_fov <= opencv_processing_utils.FOV_THRESH_TELE:
         s_ae, e_ae, _, _, _ = cam.do_3a(do_af=False, get_results=True)
         f_dist = 0
       else:
