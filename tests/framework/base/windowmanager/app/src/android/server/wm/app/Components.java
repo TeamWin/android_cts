@@ -275,6 +275,7 @@ public class Components extends ComponentsBase {
         public static final String RECEIVE_SPLASH_SCREEN_EXIT = "receive_splash_screen_exit";
         public static final String CONTAINS_CENTER_VIEW = "contains_center_view";
         public static final String CONTAINS_BRANDING_VIEW = "contains_branding_view";
+        public static final String ICON_BACKGROUND_COLOR = "icon_background_color";
         public static final String ICON_ANIMATION_DURATION = "icon_animation_duration";
         public static final String ICON_ANIMATION_START = "icon_animation_start";
 
