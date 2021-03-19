@@ -84,6 +84,10 @@ public class TranscodeTestUtils {
         return stageVideoFile(videoFile, R.raw.testVideo_HEVC_small);
     }
 
+    public static Uri stageMediumHevcVideoFile(File videoFile) throws IOException {
+        return stageVideoFile(videoFile, R.raw.testVideo_HEVC_medium);
+    }
+
     public static Uri stageLegacyVideoFile(File videoFile) throws IOException {
         return stageVideoFile(videoFile, R.raw.testVideo_Legacy);
     }
