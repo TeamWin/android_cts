@@ -23,6 +23,7 @@ import android.app.Instrumentation
 import android.app.UiAutomation
 import android.content.Context
 import android.content.pm.PackageManager
+import android.platform.test.annotations.SecurityTest
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
@@ -70,11 +71,13 @@ class StorageEscalationTest {
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2021-03")
     fun testCannotEscalateWithSdkDowngrade() {
         runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_28)
     }
 
     @Test
+    @SecurityTest(minPatchLevel = "2021-03")
     fun testCannotEscalateWithNewManifestLegacyRequest() {
         runStorageEscalationTest(APP_APK_PATH_29_SCOPED, APP_APK_PATH_29_FULL)
     }
