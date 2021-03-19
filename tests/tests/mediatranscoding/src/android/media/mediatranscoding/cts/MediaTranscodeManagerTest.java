@@ -449,11 +449,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         ApplicationMediaCapabilities clientCaps =
                 new ApplicationMediaCapabilities.Builder().build();
 
-        TranscodingRequest.MediaFormatResolver
-                resolver = new TranscodingRequest.MediaFormatResolver()
-                .setSourceVideoFormatHint(MediaFormat.createVideoFormat(
-                        MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT))
-                .setClientCapabilities(clientCaps);
+        TranscodingRequest.VideoFormatResolver
+                resolver = new TranscodingRequest.VideoFormatResolver(clientCaps,
+                MediaFormat.createVideoFormat(
+                        MediaFormat.MIMETYPE_VIDEO_HEVC, WIDTH, HEIGHT));
         assertTrue(resolver.shouldTranscode());
         MediaFormat videoTrackFormat = resolver.resolveVideoFormat();
         assertNotNull(videoTrackFormat);
