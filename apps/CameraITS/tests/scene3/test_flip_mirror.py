@@ -24,9 +24,9 @@ import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 
 CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images',
@@ -70,8 +70,8 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
   y = image_processing_utils.rotate_img_per_argv(y)
   patch = image_processing_utils.get_image_patch(y, chart.xnorm, chart.ynorm,
                                                  chart.wnorm, chart.hnorm)
-  patch = 255 * cv2_image_processing_utils.gray_scale_img(patch)
-  patch = cv2_image_processing_utils.scale_img(
+  patch = 255 * opencv_processing_utils.gray_scale_img(patch)
+  patch = opencv_processing_utils.scale_img(
       patch.astype(np.uint8), chart.scale)
 
   # check image has content
@@ -150,7 +150,7 @@ class FlipMirrorTest(its_base_test.ItsBaseTest):
           camera_properties_utils.read_3a(props))
 
       # initialize chart class and locate chart in scene
-      chart = cv2_image_processing_utils.Chart(
+      chart = opencv_processing_utils.Chart(
           cam, props, self.log_path, chart_loc=chart_loc_arg)
       fmt = {'format': 'yuv', 'width': VGA_W, 'height': VGA_H}
 
