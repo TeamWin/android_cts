@@ -20,11 +20,13 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.VoiceInteractionService;
 import android.system.ErrnoException;
 import android.util.Log;
+import android.voiceinteraction.common.ICtsHotwordDetectionServiceCallback;
 import android.voiceinteraction.common.Utils;
 
 import java.nio.ByteBuffer;
@@ -139,6 +141,17 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         // TODO : Add more data for testing
         Bundle bundle = new Bundle();
         bundle.putByteArray("fakeData", FAKE_BYTE_ARRAY_DATA);
+        ICtsHotwordDetectionServiceCallback callback =
+                new ICtsHotwordDetectionServiceCallback.Stub() {
+            @Override
+            public void onTestResult(int result) throws RemoteException {
+                Log.d(TAG, "onTestResult result = " + result);
+                broadcastIntentWithResult(
+                        Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                        result);
+            }
+        };
+        bundle.putBinder(Utils.KEY_TEST_FAKE_BINDER, callback.asBinder());
         return bundle;
     }
 }
