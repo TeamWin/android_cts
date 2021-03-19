@@ -208,9 +208,10 @@ private fun dragHoldAndCapture(
 
                     val downInjected = AnimationUtils.currentAnimationTimeMillis()
 
-                    // The receding time is 600 ms, but we don't want to be near the final
-                    // part of the animation when the pixels may overlap.
-                    if (downInjected - lastMotion < 400) {
+                    // The receding time is based on the spring, but 100 ms should be soon
+                    // enough that the animation is within the beginning and it shouldn't have
+                    // receded far yet.
+                    if (downInjected - lastMotion < 100) {
                         // Now make sure that we wait until the release should normally have finished:
                         sleepAnimationTime(600)
 
@@ -334,7 +335,7 @@ fun dragDownTapAndHoldStretches(
             0,
             0,
             0,
-            89
+            150
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The blue should stretch beyond its normal dimensions
@@ -354,7 +355,7 @@ fun dragRightTapAndHoldStretches(
             view,
             0,
             0,
-            89,
+            150,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
@@ -376,7 +377,7 @@ fun dragUpTapAndHoldStretches(
             0,
             89,
             0,
-            -89
+            -150
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The magenta should stretch beyond its normal dimensions
@@ -396,7 +397,7 @@ fun dragLeftTapAndHoldStretches(
             view,
             89,
             0,
-            -89,
+            -150,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
