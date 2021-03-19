@@ -2961,6 +2961,241 @@ public class AudioTrackTest {
         }
     }
 
+    /*
+     * The following helpers and tests are used to test setting
+     * and getting the start threshold in frames.
+     *
+     * See Android CDD 5.6 [C-1-2] Cold output latency
+     */
+    private static final int START_THRESHOLD_SLEEP_MILLIS = 500;
+
+    /**
+     * Helper test that validates setting the start threshold.
+     *
+     * @param track
+     * @param startThresholdInFrames
+     * @throws Exception
+     */
+    private static void validateSetStartThresholdInFrames(
+            AudioTrack track, int startThresholdInFrames) throws Exception {
+        assertEquals(startThresholdInFrames,
+                track.setStartThresholdInFrames(startThresholdInFrames));
+        assertEquals(startThresholdInFrames,
+                track.getStartThresholdInFrames());
+    }
+
+    /**
+     * Helper that tests that the head position eventually equals expectedFrames.
+     *
+     * Exponential backoff to ~ 2 x START_THRESHOLD_SLEEP_MILLIS
+     *
+     * @param track
+     * @param expectedFrames
+     * @param message
+     * @throws Exception
+     */
+    private static void validatePlaybackHeadPosition(
+            AudioTrack track, int expectedFrames, String message) throws Exception {
+        int cumulativeMillis = 0;
+        int playbackHeadPosition = 0;
+        for (double testMillis = START_THRESHOLD_SLEEP_MILLIS * 0.125;
+             testMillis <= START_THRESHOLD_SLEEP_MILLIS;  // this is exact for IEEE binary double
+             testMillis *= 2.) {
+            Thread.sleep((int)testMillis);
+            playbackHeadPosition = track.getPlaybackHeadPosition();
+            if (playbackHeadPosition == expectedFrames) return;
+            cumulativeMillis += (int)testMillis;
+        }
+        fail(message + ": expected track playbackHeadPosition: " + expectedFrames
+                + " actual playbackHeadPosition: " + playbackHeadPosition
+                + " wait time: " + cumulativeMillis + "ms");
+    }
+
+    /**
+     * Helper test that sets the start threshold to frames, and validates
+     * writing exactly frames amount of data is needed to start the
+     * track streaming.
+     *
+     * @param track
+     * @param frames
+     * @throws Exception
+     */
+    private static void validateWriteStartsStream(
+            AudioTrack track, int frames) throws Exception {
+        assertEquals(1, track.getChannelCount()); // must be MONO
+        final short[] data = new short[frames];
+
+        // The track must be idle/underrun or the test will fail.
+        int expectedFrames = track.getPlaybackHeadPosition();
+
+        // Set our threshold to frames.
+        validateSetStartThresholdInFrames(track, frames);
+
+        Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+        assertEquals("Changing start threshold doesn't start if it is larger than buffer data",
+                expectedFrames, track.getPlaybackHeadPosition());
+
+        // Write a small amount of data, this isn't enough to start the track.
+        final int PARTIAL_WRITE_IN_FRAMES = frames - 1;
+        track.write(data, 0 /* offsetInShorts */, PARTIAL_WRITE_IN_FRAMES);
+
+        // Ensure the track hasn't started.
+        Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+        assertEquals("Track needs enough frames to start",
+                expectedFrames, track.getPlaybackHeadPosition());
+
+        // Write exactly threshold frames out, this should kick the playback off.
+        track.write(data, 0 /* offsetInShorts */, data.length - PARTIAL_WRITE_IN_FRAMES);
+
+        // Verify that we have processed the data now.
+        expectedFrames += frames;
+        Thread.sleep(frames * 1000L / track.getSampleRate());  // accommodate for #frames.
+        validatePlaybackHeadPosition(track, expectedFrames,
+                "Writing buffer data to start threshold should start streaming");
+    }
+
+    /**
+     * Helper that tests reducing the start threshold to frames will start track
+     * streaming when frames of data are written to it.  (Presumes the
+     * previous start threshold was greater than frames).
+     *
+     * @param track
+     * @param frames
+     * @throws Exception
+     */
+    private static void validateSetStartThresholdStartsStream(
+            AudioTrack track, int frames) throws Exception {
+        assertTrue(track.getStartThresholdInFrames() > frames);
+        assertEquals(1, track.getChannelCount()); // must be MONO
+        final short[] data = new short[frames];
+
+        // The track must be idle/underrun or the test will fail.
+        int expectedFrames = track.getPlaybackHeadPosition();
+
+        // This write is too small for now.
+        track.write(data, 0 /* offsetInShorts */, data.length);
+
+        Thread.sleep(START_THRESHOLD_SLEEP_MILLIS);
+        assertEquals("Track needs enough frames to start",
+                expectedFrames, track.getPlaybackHeadPosition());
+
+        // Reduce our start threshold.  This should start streaming.
+        validateSetStartThresholdInFrames(track, frames);
+
+        // Verify that we have processed the data now.
+        expectedFrames += frames;
+        Thread.sleep(frames * 1000L / track.getSampleRate());  // accommodate for #frames.
+        validatePlaybackHeadPosition(track, expectedFrames,
+                "Changing start threshold to buffer data level should start streaming");
+    }
+
+    // Start threshold levels that we check.
+    private enum ThresholdLevel { LOW, MEDIUM, HIGH };
+    @Test
+    public void testStartThresholdInFrames() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        for (ThresholdLevel level : new ThresholdLevel[] {
+                ThresholdLevel.LOW, ThresholdLevel.MEDIUM, ThresholdLevel.HIGH}) {
+            AudioTrack audioTrack = null;
+            try {
+                // Build our audiotrack
+                audioTrack = new AudioTrack.Builder()
+                        .setAudioFormat(new AudioFormat.Builder()
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                                .build())
+                        .build();
+
+                // Initially the start threshold must be the same as the buffer size in frames.
+                final int bufferSizeInFrames = audioTrack.getBufferSizeInFrames();
+                assertEquals("At start, getBufferSizeInFrames should equal getStartThresholdInFrames",
+                        bufferSizeInFrames,
+                        audioTrack.getStartThresholdInFrames());
+
+                final int TARGET_THRESHOLD_IN_FRAMES;  // threshold level to verify
+                switch (level) {
+                    default:
+                    case LOW:
+                        TARGET_THRESHOLD_IN_FRAMES = 2;
+                        break;
+                    case MEDIUM:
+                        TARGET_THRESHOLD_IN_FRAMES = bufferSizeInFrames / 2;
+                        break;
+                    case HIGH:
+                        TARGET_THRESHOLD_IN_FRAMES = bufferSizeInFrames - 1;
+                        break;
+                }
+
+                // Skip extreme cases that don't need testing.
+                if (TARGET_THRESHOLD_IN_FRAMES < 2
+                        || TARGET_THRESHOLD_IN_FRAMES >= bufferSizeInFrames) continue;
+
+                // Start the AudioTrack. Now the track is waiting for data.
+                audioTrack.play();
+
+                validateWriteStartsStream(audioTrack, TARGET_THRESHOLD_IN_FRAMES);
+
+                // Try a condition that requires buffers to be filled again.
+                if (false) {
+                    // Only a deep underrun when the track becomes inactive requires a refill.
+                    // Disabled as this is dependent on underlying MixerThread timeouts.
+                    Thread.sleep(5000 /* millis */);
+                } else {
+                    // Flushing will require a refill (this does not require timing).
+                    audioTrack.pause();
+                    audioTrack.flush();
+                    audioTrack.play();
+                }
+
+                // Check that reducing to a smaller threshold will start the track streaming.
+                validateSetStartThresholdStartsStream(audioTrack, TARGET_THRESHOLD_IN_FRAMES - 1);
+            } finally {
+                if (audioTrack != null) {
+                    audioTrack.release();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testStartThresholdInFramesExceptions() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        AudioTrack audioTrack = null;
+        try {
+            // Build our audiotrack
+            audioTrack = new AudioTrack.Builder()
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                            .build())
+                    .build();
+
+            // Test setting invalid start threshold.
+            final AudioTrack track = audioTrack; // make final for lambda
+            assertThrows(IllegalArgumentException.class, () -> {
+                track.setStartThresholdInFrames(-1 /* startThresholdInFrames */);
+            });
+        } finally {
+            if (audioTrack != null) {
+                audioTrack.release();
+            }
+        }
+        // If we're here audioTrack should be non-null but released,
+        // so calls should return an IllegalStateException.
+        final AudioTrack track = audioTrack; // make final for lambda
+        assertThrows(IllegalStateException.class, () -> {
+            track.getStartThresholdInFrames();
+        });
+        assertThrows(IllegalStateException.class, () -> {
+            track.setStartThresholdInFrames(1 /* setStartThresholdInFrames */);
+        });
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
