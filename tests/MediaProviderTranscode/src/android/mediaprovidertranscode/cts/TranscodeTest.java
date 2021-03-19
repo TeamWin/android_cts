@@ -25,6 +25,8 @@ import static android.mediaprovidertranscode.cts.TranscodeTestUtils.open;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.openFileAs;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.uninstallApp;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -36,6 +38,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemProperties;
+import android.os.UserHandle;
 import android.provider.MediaStore;
 
 import androidx.test.runner.AndroidJUnit4;
@@ -885,6 +888,29 @@ public class TranscodeTest {
 
             // assert that read is same as written
             assertTrue(Arrays.equals(readBytes, writeBytes));
+        } finally {
+            if (pfdTranscodedContent != null) {
+                pfdTranscodedContent.close();
+            }
+            modernFile.delete();
+        }
+    }
+
+    @Test
+    public void testTranscodeDirectoryNotAccessible() throws Exception {
+        File modernFile = new File(DIR_CAMERA, HEVC_FILE_NAME);
+        ParcelFileDescriptor pfdTranscodedContent = null;
+        try {
+            TranscodeTestUtils.stageHEVCVideoFile(modernFile);
+            TranscodeTestUtils.enableTranscodingForPackage(getContext().getPackageName());
+            pfdTranscodedContent = open(modernFile, false);
+            TranscodeTestUtils.read(pfdTranscodedContent, 512, 0);
+
+            // Transcode directory must be created now.
+            String transcodeDirPath =
+                    "/storage/emulated/" + UserHandle.myUserId() + "/.transforms/transcode";
+            File transcodeDir = new File(transcodeDirPath);
+            assertThat(transcodeDir.exists()).isFalse();
         } finally {
             if (pfdTranscodedContent != null) {
                 pfdTranscodedContent.close();

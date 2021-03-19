@@ -865,8 +865,12 @@ public final class MockIme extends InputMethodService {
             presentationSpecs.add(new InlinePresentationSpec.Builder(new Size(100, 100),
                     new Size(400, 100)).setStyle(styles).build());
 
+            final InlinePresentationSpec tooltipSpec =
+                    new InlinePresentationSpec.Builder(new Size(100, 100),
+                            new Size(400, 100)).setStyle(styles).build();
             final InlineSuggestionsRequest.Builder builder =
                     new InlineSuggestionsRequest.Builder(presentationSpecs)
+                            .setInlineTooltipPresentationSpec(tooltipSpec)
                             .setMaxSuggestionCount(6);
             if (mInlineSuggestionsExtras != null) {
                 builder.setExtras(mInlineSuggestionsExtras.deepCopy());

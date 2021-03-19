@@ -59,7 +59,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 sharedMemory.mapReadWrite();
                 broadcastIntentWithResult(
                         Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                        Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE);
+                        Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY);
                 return;
             } catch (ErrnoException e) {
                 // For read-only case

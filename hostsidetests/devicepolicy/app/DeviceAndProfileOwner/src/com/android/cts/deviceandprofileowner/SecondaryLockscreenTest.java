@@ -67,6 +67,10 @@ public class SecondaryLockscreenTest {
                 mContext.getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_SECURE_LOCK_SCREEN));
 
+        // TODO(b/182994391): Replace with more generic solution to override the supervision
+        // component.
+        mUiDevice.executeShellCommand("settings put global device_policy_constants "
+                + "use_test_admin_as_supervision_component=true");
         mUiDevice.executeShellCommand("locksettings set-disabled false");
         mUiDevice.executeShellCommand("locksettings set-pin 1234");
 
@@ -82,6 +86,7 @@ public class SecondaryLockscreenTest {
     public void tearDown() throws Exception {
         mDevicePolicyManager.setSecondaryLockscreenEnabled(ADMIN_RECEIVER_COMPONENT, false);
         assertFalse(mDevicePolicyManager.isSecondaryLockscreenEnabled(Process.myUserHandle()));
+        mUiDevice.executeShellCommand("settings delete global device_policy_constants");
         mUiDevice.executeShellCommand("locksettings clear --old 1234");
         mUiDevice.executeShellCommand("locksettings set-disabled true");
     }

@@ -42,6 +42,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
@@ -55,7 +56,10 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.cts.util.CtsNetUtils;
+import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -84,8 +88,11 @@ import org.junit.Test;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -209,6 +216,10 @@ public class AtomTests {
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_COARSE_LOCATION_SOURCE, 109);
         APP_OPS_ENUM_MAP.put(AppOpsManager.OPSTR_MANAGE_MEDIA, 110);
     }
+
+    private static boolean sWasVerboseLoggingEnabled;
+    private static boolean sWasScanThrottleEnabled;
+    private static boolean sWasWifiEnabled;
 
     @Test
     // Start the isolated service, which logs an AppBreadcrumbReported atom, and then exit.
@@ -918,9 +929,11 @@ public class AtomTests {
      * Bring up and generate some traffic on cellular data connection.
      */
     @Test
-    public void testGenerateMobileTraffic() throws Exception {
+    public void testGenerateMobileTraffic() throws IllegalStateException {
         final Context context = InstrumentationRegistry.getContext();
-        doGenerateNetworkTraffic(context, NetworkCapabilities.TRANSPORT_CELLULAR);
+        if (!doGenerateNetworkTraffic(context, NetworkCapabilities.TRANSPORT_CELLULAR)) {
+            throw new IllegalStateException("Mobile network is not available.");
+        }
     }
 
     // Constants which are locally used by doGenerateNetworkTraffic.
@@ -928,21 +941,42 @@ public class AtomTests {
     private static final String HTTPS_HOST_URL =
             "https://connectivitycheck.gstatic.com/generate_204";
 
-    private void doGenerateNetworkTraffic(@NonNull Context context,
-            @NetworkCapabilities.Transport int transport) throws InterruptedException {
+    /**
+     * Returns a Network given a request. The return value is null if the requested Network is
+     * unavailable, and the caller is responsible for logging the error.
+     */
+    private Network getNetworkFromRequest(@NonNull Context context,
+            @NonNull NetworkRequest request) {
         final ConnectivityManager cm = context.getSystemService(ConnectivityManager.class);
-        final NetworkRequest request = new NetworkRequest.Builder().addCapability(
-                NetworkCapabilities.NET_CAPABILITY_INTERNET).addTransportType(transport).build();
         final CtsNetUtils.TestNetworkCallback callback = new CtsNetUtils.TestNetworkCallback();
+        ShellIdentityUtils.invokeWithShellPermissions(() -> cm.requestNetwork(request, callback));
+        final Network network;
+        try {
+             network = callback.waitForAvailable();
+             return network;
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Caught an InterruptedException while looking for requested network!");
+            return null;
+        } finally {
+            cm.unregisterNetworkCallback(callback);
+        }
+    }
 
-        // Request network, and make http query when the network is available.
-        cm.requestNetwork(request, callback);
-
-        // If network is not available, throws IllegalStateException.
-        final Network network = callback.waitForAvailable();
+    /**
+     * Attempts to generate traffic on a network for with a given NetworkRequest. Returns true if
+     * successful, and false is unsuccessful.
+     */
+    private boolean doGenerateNetworkTraffic(@NonNull Context context,
+            @NonNull NetworkRequest request) throws IllegalStateException {
+        final ConnectivityManager cm = context.getSystemService(ConnectivityManager.class);
+        final Network network = getNetworkFromRequest(context, request);
         if (network == null) {
-            throw new IllegalStateException("network "
-                    + NetworkCapabilities.transportNameOf(transport) + " is not available.");
+            // Caller should log an error.
+            return false;
+        }
+        if(!cm.bindProcessToNetwork(network)) {
+            Log.e(TAG, "bindProcessToNetwork Failed!");
+            throw new IllegalStateException("bindProcessToNetwork failed!");
         }
 
         final long startTime = SystemClock.elapsedRealtime();
@@ -953,9 +987,352 @@ public class AtomTests {
         } catch (Exception e) {
             Log.e(TAG, "exerciseRemoteHost failed in " + (SystemClock.elapsedRealtime()
                     - startTime) + " ms: " + e);
-        } finally {
-            cm.unregisterNetworkCallback(callback);
         }
+        return true;
+    }
+
+    /**
+     * Generates traffic on a network with a given transport.
+     */
+    private boolean doGenerateNetworkTraffic(@NonNull Context context,
+            @NetworkCapabilities.Transport int transport) throws IllegalStateException {
+        final NetworkRequest request = new NetworkRequest.Builder().addCapability(
+                NetworkCapabilities.NET_CAPABILITY_INTERNET).addTransportType(transport).build();
+        return doGenerateNetworkTraffic(context, request);
+    }
+
+    /**
+     * Generates traffic on a network with a given set of OEM managed network capabilities.
+     */
+    private boolean doGenerateOemManagedNetworkTraffic(@NonNull Context context,
+            List<Integer> capabilities)
+            throws IllegalStateException {
+        final NetworkRequest.Builder requestBuilder = new NetworkRequest.Builder().addCapability(
+            NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        for (final Integer capability : capabilities) {
+            requestBuilder.addCapability(capability);
+        }
+        final NetworkRequest request = requestBuilder.build();
+        return doGenerateNetworkTraffic(context, request);
+    }
+
+    /**
+     * Assembles a String representation of a list of NetworkCapabilities.
+     */
+    private String oemManagedCapabilitiesToString(@NonNull List<Integer> capabilities) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("{");
+        for (final Integer capability : capabilities) {
+            sb.append(NetworkCapabilities.capabilityNameOf(capability) + ", ");
+        }
+        // Must have been an empty set of capabilities.
+        if (sb.length() < 3) {
+            sb.append("}");
+            return sb.toString();
+        }
+        // Replace the trailing ", " with a "}".
+        sb.replace(sb.length()-2, sb.length()-1, "}");
+        return sb.toString();
+    }
+    /**
+     * Checks if a network with a given set of OEM managed capabilities (OEM_PAID, for example) is
+     * avaialable.
+     */
+    private boolean isOemManagedNetworkAvailable(@NonNull Context context,
+            List<Integer> capabilities) {
+        final NetworkRequest.Builder requestBuilder = new NetworkRequest.Builder().addCapability(
+            NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        for (final Integer capability : capabilities) {
+            requestBuilder.addCapability(capability);
+        }
+        final NetworkRequest request = requestBuilder.build();
+        final Network network = getNetworkFromRequest(context, request);
+        if (network == null) {
+            return false;
+        }
+        // There's an OEM managed network already available, so use that.
+        return true;
+    }
+
+    /**
+     * Callback WiFi scan results, on which we can await().
+     */
+    private static class TestScanResultsCallback extends WifiManager.ScanResultsCallback {
+        private final CountDownLatch mCountDownLatch;
+        public boolean onAvailableCalled = false;
+
+        TestScanResultsCallback(CountDownLatch countDownLatch) {
+            mCountDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void onScanResultsAvailable() {
+            onAvailableCalled = true;
+            mCountDownLatch.countDown();
+        }
+    }
+
+    /**
+     * Searches for saved WiFi networks, and returns a set of in-range saved WiFi networks.
+     */
+    private Set<WifiConfiguration> getAvailableSavedNetworks(@NonNull Context context,
+            @NonNull WifiManager wifiManager) throws IllegalStateException {
+        final Set<WifiConfiguration> availableNetworks = new HashSet<WifiConfiguration>();
+        final CountDownLatch countDownLatch = new CountDownLatch(1);
+        final TestScanResultsCallback scanCallback = new TestScanResultsCallback(countDownLatch);
+        final List<WifiConfiguration> savedNetworks = ShellIdentityUtils.invokeWithShellPermissions(
+            () -> wifiManager.getPrivilegedConfiguredNetworks());
+
+        // If there are no saved networks, we can't connect to WiFi.
+        if(savedNetworks.isEmpty()) {
+            throw new IllegalStateException("Device has no saved WiFi networks.");
+        }
+        setUpOemManagedWifi(wifiManager, savedNetworks);
+        wifiManager.registerScanResultsCallback(context.getMainExecutor(), scanCallback);
+        wifiManager.startScan();
+        try {
+            final boolean didFinish = countDownLatch.await(10, TimeUnit.SECONDS);
+            if (!didFinish) {
+                Log.e(TAG, "Failed to get WiFi scan results: operation timed out.");
+                // Empty list.
+                return availableNetworks;
+            }
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Caught InterruptedException while waiting for WiFi scan results!");
+            return availableNetworks;
+        }
+
+        // ScanResult could refer to Bluetooth or WiFi, so it has to be explicitly stated here.
+        final List<android.net.wifi.ScanResult> scanResults = wifiManager.getScanResults();
+        // Search for a saved network in range.
+        for (final WifiConfiguration savedNetwork : savedNetworks) {
+            for (final android.net.wifi.ScanResult scanResult : scanResults) {
+                if (WifiInfo.sanitizeSsid(savedNetwork.SSID).equals(WifiInfo.sanitizeSsid(
+                        scanResult.SSID))) {
+                    // We found a saved network that's in range.
+                    availableNetworks.add(savedNetwork);
+                }
+            }
+        }
+        if(availableNetworks.isEmpty()) {
+            throw new IllegalStateException("No saved networks in range.");
+        }
+        return availableNetworks;
+    }
+
+    /**
+     * Causes WiFi to disconnect and prevents auto-join from reconnecting.
+     */
+    private void disableNetworksAndDisconnectWifi(@NonNull WifiManager wifiManager,
+            @NonNull List<WifiConfiguration> savedNetworks) {
+        // Disable auto-join for our saved networks, and disconnect from them.
+        ShellIdentityUtils.invokeWithShellPermissions(
+            () -> {
+                for (final WifiConfiguration savedNetwork : savedNetworks) {
+                    wifiManager.disableNetwork(savedNetwork.networkId);
+                }
+                wifiManager.disconnect();
+           });
+    }
+
+    /**
+     * Puts the system back in the state we found it before setUpOemManagedWifi was called.
+     */
+    private void tearDownOemManagedWifi(@NonNull WifiManager wifiManager) {
+        // Put the system back the way we found it.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setVerboseLoggingEnabled(sWasVerboseLoggingEnabled));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setWifiEnabled(sWasWifiEnabled));
+    }
+
+    /**
+     * Builds a suggestion based on a saved WiFi network with a given list of OEM managed
+     * capabilities.
+     */
+    private static WifiNetworkSuggestion.Builder createOemManagedSuggestion(
+            @NonNull WifiConfiguration network, List<Integer> capabilities)
+            throws IllegalStateException {
+        final WifiNetworkSuggestion.Builder suggestionBuilder = new WifiNetworkSuggestion.Builder();
+        for (final Integer capability : capabilities) {
+            switch (capability) {
+                case NetworkCapabilities.NET_CAPABILITY_OEM_PAID:
+                    suggestionBuilder.setOemPaid(true);
+                    break;
+                case NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE:
+                    suggestionBuilder.setOemPrivate(true);
+                    break;
+                default:
+                    throw new IllegalStateException("Unsupported OEM network capability "
+                            + NetworkCapabilities.capabilityNameOf(capability));
+            }
+        }
+        suggestionBuilder.setSsid(WifiInfo.sanitizeSsid(network.SSID));
+        if (network.preSharedKey != null) {
+            if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_PSK)) {
+                suggestionBuilder.setWpa2Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
+            } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.SAE)) {
+                suggestionBuilder.setWpa3Passphrase(WifiInfo.sanitizeSsid(network.preSharedKey));
+            } else {
+                throw new IllegalStateException("Saved network has unsupported security type");
+            }
+        } else if (network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.OWE)) {
+            suggestionBuilder.setIsEnhancedOpen(true);
+        } else if (!network.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
+            throw new IllegalStateException("Saved network has unsupported security type");
+        }
+        suggestionBuilder.setIsHiddenSsid(network.hiddenSSID);
+        return suggestionBuilder;
+    }
+
+    /**
+     * Helper function for testGenerateOemManagedTraffic. Handles bringing up a WiFi network with a
+     * given list of OEM managed capabilities, and generates traffic on said network.
+     */
+    private boolean setWifiOemManagedAndGenerateTraffic(@NonNull Context context,
+            @NonNull WifiManager wifiManager, @NonNull WifiConfiguration network,
+            List<Integer> capabilities) throws IllegalStateException {
+        final WifiNetworkSuggestion.Builder oemSuggestionBuilder =
+                createOemManagedSuggestion(network, capabilities);
+        final WifiNetworkSuggestion oemSuggestion = oemSuggestionBuilder.build();
+
+        final int status = ShellIdentityUtils.invokeWithShellPermissions(
+            () -> wifiManager.addNetworkSuggestions(Arrays.asList(oemSuggestion)));
+        if (status != WifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+            throw new IllegalStateException("Adding WifiNetworkSuggestion failed with "
+                    + status);
+        }
+
+        // Wait for the suggestion to go through.
+        CountDownLatch suggestionLatch = new CountDownLatch(1);
+        BroadcastReceiver receiver =
+                registerReceiver(context, suggestionLatch, new IntentFilter(
+                        wifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION));
+        PendingIntent pendingSuggestionIntent = PendingIntent.getBroadcast(context, 0,
+                new Intent(wifiManager.ACTION_WIFI_NETWORK_SUGGESTION_POST_CONNECTION),
+                PendingIntent.FLAG_IMMUTABLE);
+        waitForReceiver(context, 1_000, suggestionLatch, receiver);
+
+        if (isOemManagedNetworkAvailable(context, capabilities)) {
+            if (!doGenerateOemManagedNetworkTraffic(context, capabilities)) {
+                throw new IllegalStateException("Network with "
+                        + oemManagedCapabilitiesToString(capabilities) + " is not available.");
+            }
+        } else {
+            // Network didn't come up.
+            Log.e(TAG, "isOemManagedNetworkAvailable reported " + network.SSID + " with "
+                    + oemManagedCapabilitiesToString(capabilities) + " is unavailable");
+            wifiManager.removeNetworkSuggestions(Arrays.asList(oemSuggestion));
+            return false;
+        }
+        wifiManager.removeNetworkSuggestions(Arrays.asList(oemSuggestion));
+        return true;
+    }
+
+    /**
+     * Does pre-requisite setup steps for testGenerateOemManagedTraffic via WiFi.
+     */
+    private void setUpOemManagedWifi(@NonNull WifiManager wifiManager,
+            @NonNull List<WifiConfiguration> savedNetworks) {
+        // Get the state the system was in before so we can put it back how we found it.
+        sWasWifiEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isWifiEnabled());
+        sWasVerboseLoggingEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isVerboseLoggingEnabled());
+        sWasScanThrottleEnabled = ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.isScanThrottleEnabled());
+
+        // Turn on the wifi.
+        if (!wifiManager.isWifiEnabled()) {
+            ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setWifiEnabled(true));
+        }
+
+        // Enable logging and disable scan throttling.
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setVerboseLoggingEnabled(true));
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> wifiManager.setScanThrottleEnabled(false));
+
+        disableNetworksAndDisconnectWifi(wifiManager, savedNetworks);
+    }
+
+    /**
+     * Brings up WiFi networks with specified combinations of OEM managed network capabilities and
+     * generates traffic on said networks.
+     */
+    private void generateWifiOemManagedTraffic(Context context,
+            List<List<Integer>> untestedCapabilities) {
+        final PackageManager packageManager = context.getPackageManager();
+        final WifiManager wifiManager = context.getSystemService(WifiManager.class);
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+            // If wifi isn't supported, don't bother trying.
+            Log.w(TAG, "Feature WiFi is unavailable!");
+            return;
+        }
+        final Set<WifiConfiguration> availableNetworks = getAvailableSavedNetworks(context,
+                wifiManager);
+
+        boolean foundGoodNetwork = false;
+        // Try to connect to a saved network in range.
+        for (final WifiConfiguration network : availableNetworks) {
+            // Try each of the OEM network capabilities.
+            for (final List<Integer> untestedCapability : untestedCapabilities) {
+                boolean generatedTraffic = setWifiOemManagedAndGenerateTraffic(context, wifiManager,
+                        network, untestedCapability);
+                if (foundGoodNetwork && !generatedTraffic) {
+                    // This already worked for a prior capability, so something is wrong.
+                    Log.e(TAG, network.SSID + " failed to come up with "
+                            + oemManagedCapabilitiesToString(untestedCapability));
+                    disableNetworksAndDisconnectWifi(wifiManager, Arrays.asList(network));
+                    tearDownOemManagedWifi(wifiManager);
+                    throw new IllegalStateException(network.SSID + " failed to come up!");
+                } else if (!generatedTraffic) {
+                    // This network didn't work, try another one.
+                    break;
+                }
+                foundGoodNetwork = true;
+                disableNetworksAndDisconnectWifi(wifiManager, Arrays.asList(network));
+            }
+            if (foundGoodNetwork) {
+                break;
+            }
+        }
+        tearDownOemManagedWifi(wifiManager);
+        if (foundGoodNetwork == false) {
+            throw new IllegalStateException("Couldn't connect to a good WiFi network!");
+        }
+    }
+
+    /**
+     * Bring up and generate some traffic on OEM managed WiFi network.
+     */
+    @Test
+    public void testGenerateOemManagedTraffic() throws Exception {
+        final Context context = InstrumentationRegistry.getContext();
+
+        final List<List<Integer>> oemCapabilities = new LinkedList<>(List.of(
+            List.of(NetworkCapabilities.NET_CAPABILITY_OEM_PAID),
+            List.of(NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE),
+            List.of(NetworkCapabilities.NET_CAPABILITY_OEM_PAID,
+                    NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE)));
+        final List<List<Integer>> untestedCapabilities = new LinkedList<>(oemCapabilities);
+
+        // In the event an OEM network exists already, use that to test.
+        for (final List<Integer> oemCapability : oemCapabilities) {
+            if (isOemManagedNetworkAvailable(context, oemCapability)) {
+                doGenerateOemManagedNetworkTraffic(context,
+                        oemCapability);
+                // Don't try to test on WiFi if the network already exists.
+                untestedCapabilities.remove(oemCapability);
+            }
+        }
+        if (untestedCapabilities.isEmpty()) return;
+
+        // There are capabilities we still need to test, so use WiFi to simulate it.
+        generateWifiOemManagedTraffic(context, untestedCapabilities);
     }
 
     /**
