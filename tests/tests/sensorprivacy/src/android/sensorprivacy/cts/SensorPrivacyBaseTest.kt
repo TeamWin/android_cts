@@ -80,7 +80,9 @@ abstract class SensorPrivacyBaseTest(
     @Test
     fun testDialog() {
         setSensor(true)
-        val intent = Intent(MIC_CAM_ACTIVITY_ACTION).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val intent = Intent(MIC_CAM_ACTIVITY_ACTION)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_MATCH_EXTERNAL)
         for (extra in extras) {
             intent.putExtra(extra, true)
         }
@@ -89,7 +91,12 @@ abstract class SensorPrivacyBaseTest(
         SystemUtil.eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
-        context.sendBroadcast(Intent(FINISH_MIC_CAM_ACTIVITY_ACTION))
+
+        // instant apps can't broadcast to other instant apps; use the shell
+        runShellCommandOrThrow("am broadcast" +
+                " --user ${context.userId}" +
+                " -a $FINISH_MIC_CAM_ACTIVITY_ACTION" +
+                " -f ${Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS}")
     }
 
     @Test

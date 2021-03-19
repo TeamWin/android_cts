@@ -18,8 +18,8 @@ package android.telephony.cts;
 
 import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_DO_FALLBACK;
 import static android.telephony.data.DataCallResponse.HANDOVER_FAILURE_MODE_LEGACY;
-import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_EMBB;
-import static android.telephony.data.SliceInfo.SLICE_SERVICE_TYPE_MIOT;
+import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_EMBB;
+import static android.telephony.data.NetworkSliceInfo.SLICE_SERVICE_TYPE_MIOT;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -28,7 +28,7 @@ import android.net.LinkAddress;
 import android.os.Parcel;
 import android.telephony.data.ApnSetting;
 import android.telephony.data.DataCallResponse;
-import android.telephony.data.SliceInfo;
+import android.telephony.data.NetworkSliceInfo;
 import android.telephony.data.TrafficDescriptor;
 
 import org.junit.Test;
@@ -60,8 +60,8 @@ public class DataCallResponseTest {
     private static final int TEST_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_EMBB;
     private static final int TEST_HPLMN_SLICE_DIFFERENTIATOR = 10;
     private static final int TEST_HPLMN_SLICE_SERVICE_TYPE = SLICE_SERVICE_TYPE_MIOT;
-    private static final SliceInfo SLICE_INFO =
-            new SliceInfo.Builder()
+    private static final NetworkSliceInfo SLICE_INFO =
+            new NetworkSliceInfo.Builder()
                 .setSliceServiceType(TEST_SLICE_SERVICE_TYPE)
                 .setSliceDifferentiator(TEST_SLICE_DIFFERENTIATOR)
                 .setMappedHplmnSliceDifferentiator(TEST_HPLMN_SLICE_DIFFERENTIATOR)

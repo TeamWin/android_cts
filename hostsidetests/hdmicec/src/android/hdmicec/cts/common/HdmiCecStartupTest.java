@@ -18,8 +18,6 @@ package android.hdmicec.cts.common;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
-
 import android.hdmicec.cts.BaseHdmiCecCtsTest;
 import android.hdmicec.cts.CecOperand;
 import android.hdmicec.cts.HdmiCecConstants;
@@ -27,13 +25,12 @@ import android.hdmicec.cts.HdmiCecConstants;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import com.google.common.collect.ImmutableList;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -62,10 +59,11 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
 
         List<CecOperand> expectedMessages = Collections.singletonList(
                 CecOperand.REPORT_PHYSICAL_ADDRESS);
-        List<CecOperand> allowedMessages = Arrays.asList(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
-                CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME, CecOperand.CEC_VERSION,
-                CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
-                CecOperand.GET_MENU_LANGUAGE);
+        List<CecOperand> allowedMessages = new ArrayList<>(
+                Arrays.asList(CecOperand.VENDOR_COMMAND, CecOperand.GIVE_DEVICE_VENDOR_ID,
+                        CecOperand.SET_OSD_NAME, CecOperand.GIVE_OSD_NAME, CecOperand.CEC_VERSION,
+                        CecOperand.DEVICE_VENDOR_ID, CecOperand.GIVE_POWER_STATUS,
+                        CecOperand.GET_MENU_LANGUAGE));
         allowedMessages.addAll(expectedMessages);
 
         device.executeShellCommand("reboot");
@@ -75,8 +73,8 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                 hdmiCecClient.getAllMessages(mDutLogicalAddress, 20);
 
         List<CecOperand> notPermittedMessages = messagesReceived.stream()
-                .filter(message -> !expectedMessages.contains(message))
                 .filter(message -> !allowedMessages.contains(message))
+                .filter(message -> !expectedMessages.contains(message))
                 .collect(Collectors.toList());
 
         List<CecOperand> requiredMessages = messagesReceived.stream()

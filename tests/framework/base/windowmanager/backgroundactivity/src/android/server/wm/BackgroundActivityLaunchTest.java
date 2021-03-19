@@ -290,6 +290,35 @@ public class BackgroundActivityLaunchTest extends ActivityManagerTestBase {
     }
 
     @Test
+    public void testActivityNotBlockedFromBgActivityInFgTask() {
+        // Launch Activity A, B in the same task with different processes.
+        final Intent intent = new Intent()
+                .setComponent(APP_A_FOREGROUND_ACTIVITY)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        mWmState.waitForValidState(APP_A_FOREGROUND_ACTIVITY);
+        mContext.sendBroadcast(getLaunchActivitiesBroadcast(APP_B_FOREGROUND_ACTIVITY));
+        mWmState.waitForValidState(APP_B_FOREGROUND_ACTIVITY);
+        assertTaskStack(new ComponentName[]{APP_B_FOREGROUND_ACTIVITY, APP_A_FOREGROUND_ACTIVITY},
+                APP_A_FOREGROUND_ACTIVITY);
+
+        // Refresh last-stop-app-switch-time by returning to home and then make the task foreground.
+        pressHomeAndResumeAppSwitch();
+        mContext.startActivity(intent);
+        mWmState.waitForValidState(APP_B_FOREGROUND_ACTIVITY);
+        // Though process A is in background, it is in a visible Task (top is B) so it should be
+        // able to start activity successfully.
+        mContext.sendBroadcast(new Intent(ACTION_LAUNCH_BACKGROUND_ACTIVITIES)
+                .putExtra(LAUNCH_INTENTS_EXTRA, new Intent[]{ new Intent()
+                        .setComponent(APP_A_BACKGROUND_ACTIVITY)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }));
+        mWmState.waitForValidState(APP_A_BACKGROUND_ACTIVITY);
+        mWmState.assertFocusedActivity(
+                "The background activity must be able to launch from a visible task",
+                APP_A_BACKGROUND_ACTIVITY);
+    }
+
+    @Test
     @FlakyTest(bugId = 130800326)
     @Ignore  // TODO(b/145981637): Make this test work
     public void testActivityBlockedWhenForegroundActivityRestartsItself() throws Exception {

@@ -52,25 +52,12 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
 
         if (isHeadlessSystemUserMode()) {
             affiliateUsers(DEVICE_OWNER_PKG, mDeviceOwnerUserId, mPrimaryUserId);
-            grantDpmWrapperPermissions(mPrimaryUserId);
+            grantDpmWrapperPermissions(DEVICE_OWNER_PKG, mPrimaryUserId);
         }
 
         // Enable the notification listener
         executeShellCommand("cmd notification allow_listener com.android.cts."
                 + "deviceowner/com.android.cts.deviceowner.NotificationListener");
-    }
-
-    protected void grantDpmWrapperPermissions(int userId) throws Exception {
-        // TODO(b/176993670): INTERACT_ACROSS_USERS is needed by DevicePolicyManagerWrapper to
-        // get the current user; the permission is available on mDeviceOwnerUserId because it
-        // was installed with -g, but not on mPrimaryUserId as the app is intalled by code
-        // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
-        // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
-        // we won't need to grant it anymore.
-        CLog.i("Granting INTERACT_ACROSS_USERS to DO %s on user %d as it will need to send ordered "
-                + "broadcasts to user 0", DEVICE_OWNER_PKG, userId);
-        executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
-                userId, DEVICE_OWNER_PKG);
     }
 
     @Override
@@ -82,14 +69,6 @@ abstract class BaseDeviceOwnerTest extends BaseDevicePolicyTest {
         getDevice().uninstallPackage(DEVICE_OWNER_PKG);
 
         super.tearDown();
-    }
-
-    void affiliateUsers(String deviceAdminPkg, int userId1, int userId2) throws Exception {
-        CLog.d("Affiliating users %d and %d on admin package %s", userId1, userId2, deviceAdminPkg);
-        runDeviceTestsAsUser(
-                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId1);
-        runDeviceTestsAsUser(
-                deviceAdminPkg, ".AffiliationTest", "testSetAffiliationId1", userId2);
     }
 
     protected final void executeDeviceOwnerTest(String testClassName) throws Exception {

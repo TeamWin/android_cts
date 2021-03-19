@@ -55,9 +55,12 @@ public class Utils {
     /** Indicate which test event for testing. */
     public static final int VOICE_INTERACTION_SERVICE_NORMAL_TEST = 0;
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_TEST = 1;
+    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST = 2;
 
     public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS = 1;
-    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_FAILURE = 2;
+    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_ILLEGAL_STATE_EXCEPTION = 2;
+    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION = 3;
+    public static final int HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY = 4;
 
     public static final String TESTCASE_TYPE = "testcase_type";
     public static final String TESTINFO = "testinfo";
