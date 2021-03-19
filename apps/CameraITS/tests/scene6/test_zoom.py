@@ -23,9 +23,9 @@ import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 CIRCLE_COLOR = 0  # [0: black, 255: white]
 CIRCLE_TOL = 0.05  # contour area vs ideal circle area pi*((w+h)/4)**2
@@ -103,7 +103,7 @@ def find_center_circle(img, img_name, color, min_area, debug):
   for contour in contours:
     area = cv2.contourArea(contour)
     if area > min_area and len(contour) >= MIN_CIRCLE_PTS:
-      shape = cv2_image_processing_utils.component_shape(contour)
+      shape = opencv_processing_utils.component_shape(contour)
       radius = (shape['width'] + shape['height']) / 4
       colour = img_bw[shape['cty']][shape['ctx']]
       circlish = round((math.pi * radius**2) / area, 4)

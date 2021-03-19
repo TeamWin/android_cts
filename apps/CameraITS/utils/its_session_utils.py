@@ -29,9 +29,9 @@ import numpy
 
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import error_util
 import image_processing_utils
+import opencv_processing_utils
 
 LOAD_SCENE_DELAY_SEC = 3
 SUB_CAMERA_SEPARATOR = '.'
@@ -1004,20 +1004,20 @@ class ItsSession(object):
      file_name: file name to display on the tablet.
 
     """
-    chart_scaling = cv2_image_processing_utils.calc_chart_scaling(
+    chart_scaling = opencv_processing_utils.calc_chart_scaling(
         chart_distance, camera_fov)
     if numpy.isclose(
         chart_scaling,
-        cv2_image_processing_utils.SCALE_TELE_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX,
         atol=0.01):
       file_name = '%s_%sx_scaled.pdf' % (
-          scene, str(cv2_image_processing_utils.SCALE_TELE_IN_WFOV_BOX))
+          scene, str(opencv_processing_utils.SCALE_TELE_IN_WFOV_BOX))
     elif numpy.isclose(
         chart_scaling,
-        cv2_image_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
+        opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX,
         atol=0.01):
       file_name = '%s_%sx_scaled.pdf' % (
-          scene, str(cv2_image_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
+          scene, str(opencv_processing_utils.SCALE_RFOV_IN_WFOV_BOX))
     else:
       file_name = '%s.pdf' % scene
     logging.debug('Scene to load: %s', file_name)
@@ -1147,14 +1147,14 @@ def load_scene(cam, props, scene, tablet, chart_distance):
   rfov_camera_in_rfov_box = (
       numpy.isclose(
           chart_distance,
-          cv2_image_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1) and
-      cv2_image_processing_utils.FOV_THRESH_TELE <= float(camera_fov)
-      <= cv2_image_processing_utils.FOV_THRESH_WFOV)
+          opencv_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1) and
+      opencv_processing_utils.FOV_THRESH_TELE <= float(camera_fov)
+      <= opencv_processing_utils.FOV_THRESH_WFOV)
   wfov_camera_in_wfov_box = (
       numpy.isclose(
           chart_distance,
-          cv2_image_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1) and
-      float(camera_fov) > cv2_image_processing_utils.FOV_THRESH_WFOV)
+          opencv_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1) and
+      float(camera_fov) > opencv_processing_utils.FOV_THRESH_WFOV)
   if rfov_camera_in_rfov_box or wfov_camera_in_wfov_box:
     cam.do_3a()
     cap = cam.do_capture(
