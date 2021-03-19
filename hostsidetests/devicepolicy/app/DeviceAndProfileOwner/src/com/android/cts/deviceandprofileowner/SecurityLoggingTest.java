@@ -61,6 +61,7 @@ import static com.android.cts.devicepolicy.TestCertificates.TEST_CA;
 import static com.android.cts.devicepolicy.TestCertificates.TEST_CA_SUBJECT;
 
 import static com.google.common.collect.ImmutableList.of;
+import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.SecurityLog.SecurityEvent;
 import android.content.Context;
@@ -102,6 +103,9 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
     private static final String PREF_NAME = "batchIds";
     // system/core/liblog/event.logtags: 1006  liblog (dropped|1)
     private static final int TAG_LIBLOG_DROPPED = 1006;
+    private static final String DELEGATE_APP_PKG = "com.android.cts.delegate";
+    private static final String DELEGATION_SECURITY_LOGGING = "delegation-security-logging";
+
 
     // For brevity.
     private static final Class<String> S = String.class;
@@ -539,6 +543,23 @@ public class SecurityLoggingTest extends BaseDeviceAdminTest {
             assertNull(mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT));
             assertNull(mDevicePolicyManager.retrieveSecurityLogs(ADMIN_RECEIVER_COMPONENT));
         }
+    }
+
+    public void testSetDelegateScope_delegationSecurityLogging() {
+        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
+                Arrays.asList(DELEGATION_SECURITY_LOGGING));
+
+        assertThat(mDevicePolicyManager.getDelegatedScopes(
+                ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG)).contains(DELEGATION_SECURITY_LOGGING);
+    }
+
+    public void testSetDelegateScope_noDelegation() {
+        mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG,
+                Arrays.asList());
+
+        assertThat(mDevicePolicyManager.getDelegatedScopes(
+                ADMIN_RECEIVER_COMPONENT, DELEGATE_APP_PKG))
+                .doesNotContain(DELEGATION_SECURITY_LOGGING);
     }
 
     private void generateKey(String keyAlias) throws Exception {
