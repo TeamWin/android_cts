@@ -45,6 +45,9 @@ import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.os.Bundle;
+import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.TestJournalProvider.TestJournal;
@@ -68,8 +71,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 @Presubmit
 public class BiometricServiceTest extends BiometricTestBase {
@@ -180,6 +186,20 @@ public class BiometricServiceTest extends BiometricTestBase {
         return false;
     }
 
+    private void successfullyAuthenticate(@NonNull BiometricTestSession session, int userId)
+            throws Exception {
+        session.acceptAuthentication(userId);
+        mInstrumentation.waitForIdleSync();
+        waitForStateNotEqual(STATE_AUTH_STARTED_UI_SHOWING);
+        BiometricServiceState state = getCurrentState();
+        Log.d(TAG, "State after acceptAuthentication: " + state);
+        if (state.mState == STATE_AUTH_PENDING_CONFIRM) {
+            findAndPressButton(BUTTON_ID_CONFIRM);
+            mInstrumentation.waitForIdleSync();
+            waitForState(STATE_AUTH_IDLE);
+        }
+    }
+
     private void waitForAllUnenrolled() throws Exception {
         for (int i = 0; i < 20; i++) {
             if (anyEnrollmentsExist()) {
@@ -190,6 +210,38 @@ public class BiometricServiceTest extends BiometricTestBase {
             }
         }
         fail("Some sensors still have enrollments. State: " + getCurrentState());
+    }
+
+    private void showBiometricPromptAndAuth(@NonNull BiometricTestSession session, int sensorId,
+            int userId) throws Exception {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
+                .setAllowBackgroundAuthentication(true)
+                .setAllowedSensorIds(new ArrayList<>(Collections.singletonList(sensorId)))
+                .build();
+        prompt.authenticate(new CancellationSignal(), executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        Log.d(TAG, "onAuthenticationError: " + errorCode);
+                    }
+
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        Log.d(TAG, "onAuthenticationSucceeded");
+                    }
+                });
+
+        waitForState(STATE_AUTH_STARTED_UI_SHOWING);
+        successfullyAuthenticate(session, userId);
     }
 
     @NonNull
@@ -373,18 +425,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
 
         // Auth and check again now
-        session.acceptAuthentication(userId);
-        mInstrumentation.waitForIdleSync();
-
-        waitForStateNotEqual(STATE_AUTH_STARTED_UI_SHOWING);
-
-        state = getCurrentState();
-        Log.d(TAG, "State after acceptAuthentication: " + state);
-        if (state.mState == STATE_AUTH_PENDING_CONFIRM) {
-            findAndPressButton(BUTTON_ID_CONFIRM);
-            mInstrumentation.waitForIdleSync();
-            waitForState(STATE_AUTH_IDLE);
-        }
+        successfullyAuthenticate(session, userId);
 
         mInstrumentation.waitForIdleSync();
         callbackState = getCallbackState(journal);
@@ -736,6 +777,160 @@ public class BiometricServiceTest extends BiometricTestBase {
 
         for (BiometricTestSession session : biometricSessions) {
             session.close();
+        }
+    }
+
+    @Test
+    public void testLockoutResetRequestedAfterBiometricUnlock_whenStrong() throws Exception {
+        assumeTrue(mSensorProperties.size() > 1);
+
+        // ResetLockout only really needs to be applied when enrollments exist. Furthermore, some
+        // interfaces may take this a step further and ignore resetLockout requests when no
+        // enrollments exist.
+        Map<Integer, BiometricTestSession> biometricSessions = new HashMap<>();
+        for (SensorProperties prop : mSensorProperties) {
+            BiometricTestSession session = mBiometricManager.createTestSession(prop.getSensorId());
+            enrollForSensor(session, prop.getSensorId());
+            biometricSessions.put(prop.getSensorId(), session);
+        }
+
+        // When a strong biometric sensor authenticates, all other biometric sensors that:
+        //  1) Do not require HATs for resetLockout (e.g. IBiometricsFingerprint@2.1) or
+        //  2) Require HATs but do not require challenges (e.g. IFingerprint@1.0, IFace@1.0)
+        // schedule and complete a resetLockout operation.
+        //
+        // To be more explicit, sensors that require HATs AND challenges (IBiometricsFace@1.0)
+        // do not schedule resetLockout, since the interface has no way of generating multiple
+        // HATs with a single authentication (e.g. if the user requested to unlock an auth-bound
+        // key, the only HAT returned would have the keystore operationId within).
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() != SensorProperties.STRENGTH_STRONG) {
+                Log.d(TAG, "Skipping sensor: " + prop.getSensorId()
+                        + ", strength: " + prop.getSensorStrength());
+                continue;
+            }
+            testLockoutResetRequestedAfterBiometricUnlock_whenStrong_forSensor(
+                    prop.getSensorId(), biometricSessions.get(prop.getSensorId()));
+        }
+
+        for (BiometricTestSession session : biometricSessions.values()) {
+            session.close();
+        }
+    }
+
+    private void testLockoutResetRequestedAfterBiometricUnlock_whenStrong_forSensor(int sensorId,
+            @NonNull BiometricTestSession session)
+            throws Exception {
+        Log.d(TAG, "testLockoutResetRequestedAfterBiometricUnlock_whenStrong_forSensor: "
+                + sensorId);
+        final int userId = 0;
+
+        BiometricServiceState state = getCurrentState();
+        final List<Integer> eligibleSensorsToReset = new ArrayList<>();
+        final List<Integer> ineligibleSensorsToReset = new ArrayList<>();
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorId() == sensorId) {
+                // Do not need to resetLockout for self
+                continue;
+            }
+
+            SensorState sensorState = state.mSensorStates.sensorStates.get(prop.getSensorId());
+            final boolean supportsChallengelessHat =
+                    sensorState.isResetLockoutRequiresHardwareAuthToken()
+                            && !sensorState.isResetLockoutRequiresChallenge();
+            final boolean doesNotRequireHat =
+                    !sensorState.isResetLockoutRequiresHardwareAuthToken();
+            Log.d(TAG, "SensorId: " + prop.getSensorId()
+                    + ", supportsChallengelessHat: " + supportsChallengelessHat
+                    + ", doesNotRequireHat: " + doesNotRequireHat);
+            if (supportsChallengelessHat || doesNotRequireHat) {
+                Log.d(TAG, "Adding eligible sensor: " + prop.getSensorId());
+                eligibleSensorsToReset.add(prop.getSensorId());
+            } else {
+                Log.d(TAG, "Adding ineligible sensor: " + prop.getSensorId());
+                ineligibleSensorsToReset.add(prop.getSensorId());
+            }
+        }
+
+        // Explicitly clear the log so that we can check the exact number of resetLockout operations
+        // below.
+        state = getCurrentStateAndClearSchedulerLog();
+
+        // Request authentication with the specified sensorId that was passed in
+        showBiometricPromptAndAuth(session, sensorId, userId);
+
+        // Check that all eligible sensors have resetLockout in their scheduler history
+        state = getCurrentState();
+        for (Integer id : eligibleSensorsToReset) {
+            assertEquals("Sensor: " + id + " should have exactly one resetLockout", 1,
+                    Utils.numberOfSpecifiedOperations(state, id, BiometricsProto.CM_RESET_LOCKOUT));
+        }
+
+        // Check that all ineligible sensors do not have resetLockout in their scheduler history
+        for (Integer id : ineligibleSensorsToReset) {
+            assertEquals("Sensor: " + id + " should have no resetLockout", 0,
+                    Utils.numberOfSpecifiedOperations(state, id, BiometricsProto.CM_RESET_LOCKOUT));
+        }
+    }
+
+    @Test
+    public void testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong() throws Exception {
+        assumeTrue(mSensorProperties.size() > 1);
+
+        // ResetLockout only really needs to be applied when enrollments exist. Furthermore, some
+        // interfaces may take this a step further and ignore resetLockout requests when no
+        // enrollments exist.
+        Map<Integer, BiometricTestSession> biometricSessions = new HashMap<>();
+        for (SensorProperties prop : mSensorProperties) {
+            BiometricTestSession session = mBiometricManager.createTestSession(prop.getSensorId());
+            enrollForSensor(session, prop.getSensorId());
+            biometricSessions.put(prop.getSensorId(), session);
+        }
+
+        // Sensors that do not meet BIOMETRIC_STRONG are not allowed to resetLockout for other
+        // sensors.
+        // TODO: Note that we are only testing STRENGTH_WEAK for now, since STRENGTH_CONVENIENCE is
+        //  not exposed to BiometricPrompt. In other words, we currently do not have a way to
+        //  request and finish authentication for STRENGTH_CONVENIENCE sensors.
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() != SensorProperties.STRENGTH_WEAK) {
+                Log.d(TAG, "Skipping sensor: " + prop.getSensorId()
+                        + ", strength: " + prop.getSensorStrength());
+                continue;
+            }
+
+            testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong_forSensor(
+                    prop.getSensorId(), biometricSessions.get(prop.getSensorId()));
+        }
+
+        // Cleanup
+        for (BiometricTestSession s : biometricSessions.values()) {
+            s.close();
+        }
+    }
+
+    private void testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong_forSensor(
+            int sensorId, @NonNull BiometricTestSession session) throws Exception {
+        Log.d(TAG, "testLockoutResetNotRequestedAfterBiometricUnlock_whenNotStrong_forSensor: "
+                + sensorId);
+        final int userId = 0;
+
+        // Explicitly clear the log so that we can check the exact number of resetLockout operations
+        // below.
+        BiometricServiceState state = getCurrentStateAndClearSchedulerLog();
+
+        // Request authentication with the specified sensorId that was passed in
+        showBiometricPromptAndAuth(session, sensorId, userId);
+
+        // Check that no other sensors have resetLockout in their queue
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorId() == sensorId) {
+                continue;
+            }
+            state = getCurrentState();
+            assertEquals("Sensor: " + prop.getSensorId() + " should have no resetLockout", 0,
+                    Utils.numberOfSpecifiedOperations(state, prop.getSensorId(),
+                            BiometricsProto.CM_RESET_LOCKOUT));
         }
     }
 
