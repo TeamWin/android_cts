@@ -151,7 +151,6 @@ public class CapturedActivity extends Activity {
         @Override
         public void onServiceConnected(ComponentName className, IBinder service) {
             startActivityForResult(mProjectionManager.createScreenCaptureIntent(), PERMISSION_CODE);
-            dismissPermissionDialog();
             mProjectionServiceBound = true;
         }
 
