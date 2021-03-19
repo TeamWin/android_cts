@@ -57,7 +57,11 @@ public class TestHtmlConstants {
 
     public static final String LOGIN_FORM_URL = "webkit/test_loginForm.html";
 
-    public static final String EXT_WEB_URL1 = "http://www.example.com/";
+    // Note: tests should avoid loading external URLs if at all possible, since any changes to that
+    // public site (even if it doesn't currently exist) can affect test behavior. The ".test" TLD is
+    // OK because (1) it's reserved for testing by RFC2606 and (2) the test never navigates to this
+    // page.
+    public static final String EXT_WEB_URL1 = "http://www.example.test/";
 
     public static final String PARAM_ASSET_URL = "webkit/test_queryparam.html";
     public static final String ANCHOR_ASSET_URL = "webkit/test_anchor.html";
@@ -66,8 +70,9 @@ public class TestHtmlConstants {
     public static final String DATABASE_ACCESS_URL = "webkit/test_databaseaccess.html";
     public static final String STOP_LOADING_URL = "webkit/test_stop_loading.html";
     public static final String BLANK_TAG_URL = "webkit/blank_tag.html";
+    // A page with a link to an arbitrary page controlled by the test server (in this case,
+    // BLANK_PAGE_URL).
     public static final String PAGE_WITH_LINK_URL = "webkit/page_with_link.html";
-    public static final String URL_IN_PAGE_WITH_LINK = "http://foo.com/";
     // Not a real page, just triggers a 404 response.
     public static final String NON_EXISTENT_PAGE_URL = "webkit/generate_404.html";
     public static final String BAD_IMAGE_PAGE_URL = "webkit/test_bad_image_url.html";
