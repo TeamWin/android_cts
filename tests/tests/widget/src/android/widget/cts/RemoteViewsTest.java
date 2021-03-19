@@ -1525,30 +1525,6 @@ public class RemoteViewsTest {
         mRemoteViews.setViewId(100);
     }
 
-    @Test
-    public void testCanRecycleView() throws Throwable {
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
-
-        mActivityRule.runOnUiThread(() -> {
-            mResult = mRemoteViews.apply(mContext, null);
-        });
-
-        mRemoteViews.setViewId(3);
-        assertFalse(mRemoteViews.canRecycleView(mResult));
-
-        mRemoteViews.setViewId(View.NO_ID);
-        assertFalse(mRemoteViews.canRecycleView(mResult));
-
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
-        assertTrue(mRemoteViews.canRecycleView(mResult));
-
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout);
-        mRemoteViews.setViewId(2);
-        assertFalse(mRemoteViews.canRecycleView(mResult));
-    }
-
     private void createSampleImage(File imagefile, int resid) throws IOException {
         try (InputStream source = mContext.getResources().openRawResource(resid);
              OutputStream target = new FileOutputStream(imagefile)) {
