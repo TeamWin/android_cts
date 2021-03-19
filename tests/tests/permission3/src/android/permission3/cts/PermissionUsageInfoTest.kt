@@ -29,6 +29,7 @@ import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionId
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
@@ -54,6 +55,13 @@ class PermissionUsageInfoTest : BaseUsePermissionTest() {
         setOpMode(
             context.packageName, AppOpsManager.OPSTR_MOCK_LOCATION, AppOpsManager.MODE_ALLOWED
         )
+    }
+
+    @Before
+    fun assumeHandheld() {
+        assumeFalse(isAutomotive)
+        assumeFalse(isTv)
+        assumeFalse(isWatch)
     }
 
     @After
