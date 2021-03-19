@@ -226,7 +226,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                         .build());
     }
 
-    @FlakyTest(bugId = 137093665)
     @Test
     public void testSecurityLogging() throws Exception {
         // Backup stay awake setting because testGenerateLogs() will turn it off.
