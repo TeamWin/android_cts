@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Image processing utilities using openCV."""
 
 
 import logging
@@ -30,8 +31,8 @@ ANGLE_CHECK_TOL = 1  # degrees
 ANGLE_NUM_MIN = 10  # Minimum number of angles for find_angle() to be valid
 
 
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images',
-                          'ISO12233.png')
+TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
+CHART_FILE = os.path.join(TEST_IMG_DIR, 'ISO12233.png')
 CHART_HEIGHT = 13.5  # cm
 CHART_DISTANCE_RFOV = 31.0  # cm
 CHART_DISTANCE_WFOV = 22.0  # cm
@@ -62,8 +63,6 @@ SCALE_SUPER_TELE_IN_RFOV_BOX = 0.5
 
 SQUARE_AREA_MIN_REL = 0.05  # Minimum size for square relative to image area
 SQUARE_TOL = 0.1  # Square W vs H mismatch RTOL
-
-TEST_IMG_DIR = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images')
 
 VGA_HEIGHT = 480
 VGA_WIDTH = 640

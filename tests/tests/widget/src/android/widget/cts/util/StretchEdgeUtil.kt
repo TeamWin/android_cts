@@ -251,11 +251,11 @@ fun dragDownStretches(
             0,
             0,
             0,
-            90
+            300
     )
 
     // The blue should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 48) == Color.BLUE
+    return bitmap.getPixel(45, 51) == Color.BLUE
 }
 
 /**
@@ -271,12 +271,12 @@ fun dragRightStretches(
             view,
             0,
             0,
-            90,
+            300,
             0
     )
 
     // The blue should stretch beyond its normal dimensions
-    return bitmap.getPixel(52, 45) == Color.BLUE
+    return bitmap.getPixel(50, 45) == Color.BLUE
 }
 
 /**
@@ -293,11 +293,11 @@ fun dragUpStretches(
             0,
             89,
             0,
-            -90
+            -300
     )
 
     // The magenta should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 42) == Color.MAGENTA
+    return bitmap.getPixel(45, 39) == Color.MAGENTA
 }
 
 /**
@@ -313,12 +313,12 @@ fun dragLeftStretches(
             view,
             89,
             0,
-            -90,
+            -300,
             0
     )
 
     // The magenta should stretch beyond its normal dimensions
-    return bitmap.getPixel(38, 45) == Color.MAGENTA
+    return bitmap.getPixel(39, 45) == Color.MAGENTA
 }
 
 /**
@@ -335,11 +335,11 @@ fun dragDownTapAndHoldStretches(
             0,
             0,
             0,
-            150
+            300
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The blue should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 52) == Color.BLUE
+    return bitmap.getPixel(45, 50) == Color.BLUE
 }
 
 /**
@@ -355,12 +355,12 @@ fun dragRightTapAndHoldStretches(
             view,
             0,
             0,
-            150,
+            300,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The blue should stretch beyond its normal dimensions
-    return bitmap.getPixel(52, 45) == Color.BLUE
+    return bitmap.getPixel(50, 45) == Color.BLUE
 }
 
 /**
@@ -377,11 +377,11 @@ fun dragUpTapAndHoldStretches(
             0,
             89,
             0,
-            -150
+            -300
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The magenta should stretch beyond its normal dimensions
-    return bitmap.getPixel(45, 38) == Color.MAGENTA
+    return bitmap.getPixel(45, 39) == Color.MAGENTA
 }
 
 /**
@@ -397,10 +397,10 @@ fun dragLeftTapAndHoldStretches(
             view,
             89,
             0,
-            -150,
+            -300,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
 
     // The magenta should stretch beyond its normal dimensions
-    return bitmap.getPixel(38, 45) == Color.MAGENTA
+    return bitmap.getPixel(39, 45) == Color.MAGENTA
 }

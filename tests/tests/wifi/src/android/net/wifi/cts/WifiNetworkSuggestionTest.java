@@ -206,7 +206,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
                 () -> sWifiManager.getConnectionInfo().getNetworkId() == -1);
 
         // Clear any existing app state before each test.
-        if (WifiBuildCompat.isAtLeastS(sContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
         }
@@ -220,7 +220,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
         }
         mExecutorService.shutdownNow();
         // Clear any existing app state after each test.
-        if (WifiBuildCompat.isAtLeastS(sContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(sContext)) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> sWifiManager.removeAppState(myUid(), sContext.getPackageName()));
         }

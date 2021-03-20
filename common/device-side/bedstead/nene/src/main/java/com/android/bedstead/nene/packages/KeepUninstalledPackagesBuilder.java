@@ -16,15 +16,16 @@
 
 package com.android.bedstead.nene.packages;
 
-import android.content.Context;
+import static android.Manifest.permission.KEEP_UNINSTALLED_PACKAGES;
+
 import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.annotation.CheckResult;
 import androidx.annotation.RequiresApi;
-import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.permissions.PermissionContext;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,11 +40,11 @@ import java.util.stream.Collectors;
 @RequiresApi(Build.VERSION_CODES.S)
 public final class KeepUninstalledPackagesBuilder {
 
-    private final List<String> mPackagesToKeep = new ArrayList<>();
-    private final Packages mPackages;
+    private final List<String> mPackages = new ArrayList<>();
+    private final TestApis mTestApis;
 
-    KeepUninstalledPackagesBuilder(Packages packages) {
-        mPackages = packages;
+    KeepUninstalledPackagesBuilder(TestApis testApis) {
+        mTestApis = testApis;
     }
 
     /**
@@ -56,15 +57,13 @@ public final class KeepUninstalledPackagesBuilder {
         // TODO(scottjonathan): Investigate if we can make this backwards compatible by pulling the
         //  APK files and keeping them (either as a file or in memory) until needed to resolve or
         //  re-install
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        PackageManager packageManager = context.getPackageManager();
+        PackageManager packageManager =
+                mTestApis.context().instrumentedContext().getPackageManager();
 
-        // TODO(scottjonathan): Once we support permissions in Nene, use that call here
-
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            // Needs KEEP_UNINSTALLED_PACKAGES
-            packageManager.setKeepUninstalledPackages(mPackagesToKeep);
-        });
+        try (PermissionContext p =
+                    mTestApis.permissions().withPermission(KEEP_UNINSTALLED_PACKAGES)) {
+            packageManager.setKeepUninstalledPackages(mPackages);
+        }
     }
 
     /**
@@ -74,7 +73,7 @@ public final class KeepUninstalledPackagesBuilder {
      * any user.
      */
     public void clear() {
-        mPackagesToKeep.clear();
+        mPackages.clear();
         commit();
     }
 
@@ -83,7 +82,7 @@ public final class KeepUninstalledPackagesBuilder {
      */
     @CheckResult
     public KeepUninstalledPackagesBuilder add(PackageReference pkg) {
-        mPackagesToKeep.add(pkg.packageName());
+        mPackages.add(pkg.packageName());
         return this;
     }
 
@@ -92,7 +91,7 @@ public final class KeepUninstalledPackagesBuilder {
      */
     @CheckResult
     public KeepUninstalledPackagesBuilder add(String pkg) {
-        return add(mPackages.find(pkg));
+        return add(mTestApis.packages().find(pkg));
     }
 
     /**
@@ -111,6 +110,7 @@ public final class KeepUninstalledPackagesBuilder {
      */
     @CheckResult
     public KeepUninstalledPackagesBuilder addPackageNames(Collection<String> packages) {
-        return add(packages.stream().map(mPackages::find).collect(Collectors.toSet()));
+        return add(packages.stream().map(
+                (s) -> mTestApis.packages().find(s)).collect(Collectors.toSet()));
     }
 }
