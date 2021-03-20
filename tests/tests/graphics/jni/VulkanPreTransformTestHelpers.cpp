@@ -69,10 +69,6 @@ static const char* requiredDeviceExtensions[] = {
         "VK_KHR_swapchain",
 };
 
-static const char* blacklistedDeviceExtensions[] = {
-        "VK_KHR_performance_query",
-};
-
 static bool enumerateInstanceExtensions(std::vector<VkExtensionProperties>* extensions) {
     VkResult result;
 
@@ -194,11 +190,6 @@ VkTestResult DeviceInfo::init(JNIEnv* env, jobject jSurface) {
 
     std::vector<VkExtensionProperties> supportedDeviceExtensions;
     ASSERT(enumerateDeviceExtensions(mGpu, &supportedDeviceExtensions));
-
-    // Fail if the blacklisted extensions are advertised as supported
-    for (const auto extension : blacklistedDeviceExtensions) {
-        ASSERT(!hasExtension(extension, supportedDeviceExtensions));
-    }
 
     std::vector<const char*> enabledDeviceExtensions;
     for (const auto extension : requiredDeviceExtensions) {

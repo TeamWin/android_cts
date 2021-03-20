@@ -30,6 +30,7 @@ import android.telecom.CallDiagnostics;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 import android.telecom.TelecomManager;
+import android.telephony.CallQuality;
 import android.telephony.TelephonyManager;
 
 import java.util.concurrent.TimeUnit;
@@ -63,9 +64,12 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
-
+        if (mConnection != null ) {
+            mConnection.onDisconnect();
+            mConnection.destroy();
+        }
         TestUtils.setCallDiagnosticService(getInstrumentation(), "default");
+        super.tearDown();
     }
 
     /**
@@ -100,8 +104,6 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
                         Connection.EXTRA_AUDIO_CODEC) == Connection.AUDIO_CODEC_AMR_WB;
             }
         }, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Extras propagation");
-
-        mConnection.onDisconnect();
     }
 
     /**
@@ -132,10 +134,14 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         // Disconnect the first call.
         mConnection.onDisconnect();
         mConnection.destroy();
+        mConnection = null;
 
         mService.getCallChangeLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
         assertEquals(1, mService.getCalls().size());
+
+        connection.onDisconnect();
+        connection.destroy();
     }
 
 
@@ -164,8 +170,6 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         mService.getBluetoothCallQualityReportLatch().await(
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         assertEquals(report, mService.getBluetoothCallQualityReport());
-
-        mConnection.onDisconnect();
     }
 
     /**
@@ -326,6 +330,39 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
         assertCallState(mCall, Call.STATE_DISCONNECTED);
         assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getLabel());
         assertEquals(OVERRIDE_MESSAGE, mCall.getDetails().getDisconnectCause().getDescription());
+    }
+
+    /**
+     * Test call quality report received.
+     * @throws InterruptedException
+     */
+    public void testReceiveCallQualityReport() throws InterruptedException {
+        if (!shouldTestTelecom(mContext)) {
+            return;
+        }
+        setupCall();
+
+        // Fake out a call quality report.
+        android.telephony.CallQuality callQuality = new CallQuality(
+                android.telephony.CallQuality.CALL_QUALITY_EXCELLENT,
+                android.telephony.CallQuality.CALL_QUALITY_EXCELLENT,
+                60000, // duration
+                90210, // transmitted
+                90210, // received
+                0, // lost
+                0, // lost
+                0, // jitter
+                0, // jitter
+                10, // round trip
+                0); // codec
+        Bundle message = new Bundle();
+        message.putParcelable("android.telecom.extra.CALL_QUALITY_REPORT", callQuality);
+        mConnection.sendConnectionEvent("android.telecom.event.CALL_QUALITY_REPORT", message);
+
+        CtsCallDiagnosticService.CtsCallDiagnostics diagnosticCall = mService.getCalls().get(0);
+        diagnosticCall.getCallQualityReceivedLatch().await(
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        assertNotNull(diagnosticCall.getCallQuality());
     }
 
     /**

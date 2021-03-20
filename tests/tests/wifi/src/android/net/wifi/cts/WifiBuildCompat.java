@@ -27,11 +27,12 @@ import androidx.core.os.BuildCompat;
  * Wrapper class for checking the wifi module version.
  *
  * Wifi CTS tests for a dessert release can be run on older dessert releases as a part of MTS.
- * Since wifi module is optional, not all older dessert release will contain the wifi module from the
- * provided dessert release (which means we cannot use new wifi API's on those devices).
+ * Since wifi module is optional, not all older dessert release will contain the wifi module from
+ * the provided dessert release (which means we cannot use new wifi API's on those devices).
  *
  * <p>
- * This utility tries to help solve that problem by trying to check if the device is running atleast
+ * This utility tries to help solve that problem by trying to check if the device is running at
+ * least
  * <li> The provided dessert release using {@link BuildCompat}, OR</li>
  * <li> The wifi module from the provided dessert release on an older dessert release device</li>
  *
@@ -41,12 +42,11 @@ import androidx.core.os.BuildCompat;
  *
  * Note: This does not check for granular wifi module version codes, only that it is some version
  * of the module from the provided dessert release.
- *
  */
 public class WifiBuildCompat {
     private static final String WIFI_APEX_NAME = "com.android.wifi";
 
-    private static long WIFI_APEX_BASE_VERSION_CODE_FOR_S = 310000000;
+    private static final long WIFI_APEX_BASE_VERSION_CODE_FOR_S = 310000000;
 
     private static long getWifiApexVersionCode(@NonNull Context ctx) {
         PackageManager packageManager = ctx.getPackageManager();
@@ -66,7 +66,7 @@ public class WifiBuildCompat {
 
     private WifiBuildCompat() { }
 
-    public static boolean isAtLeastS(@NonNull Context ctx) {
+    public static boolean isPlatformOrWifiModuleAtLeastS(@NonNull Context ctx) {
         return BuildCompat.isAtLeastS()
                 || getWifiApexVersionCode(ctx) >= WIFI_APEX_BASE_VERSION_CODE_FOR_S;
     }

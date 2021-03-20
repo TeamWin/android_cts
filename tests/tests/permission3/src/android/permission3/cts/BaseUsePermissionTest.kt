@@ -436,7 +436,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         // Automotive doesn't support one time permissions, and thus
                         // won't show an "Ask every time" message
                         when (state) {
-                            PermissionState.ALLOWED -> R.string.allow
+                            PermissionState.ALLOWED ->
+                                if (showsForegroundOnlyButton(permission)) {
+                                    R.string.allow_foreground
+                                } else {
+                                    R.string.allow
+                                }
                             PermissionState.DENIED -> R.string.deny
                             PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
                         }

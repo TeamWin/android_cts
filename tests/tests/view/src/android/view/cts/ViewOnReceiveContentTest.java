@@ -17,18 +17,23 @@
 package android.view.cts;
 
 import static android.view.ContentInfo.SOURCE_CLIPBOARD;
+import static android.view.ContentInfo.SOURCE_DRAG_AND_DROP;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.content.ClipData;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.view.ContentInfo;
+import android.view.DragEvent;
 import android.view.OnReceiveContentListener;
 import android.view.View;
 
@@ -40,6 +45,10 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentMatcher;
+import org.mockito.stubbing.Answer;
+
+import java.util.Objects;
 
 /**
  * Tests for {@link View#performReceiveContent} and related code.
@@ -105,8 +114,8 @@ public class ViewOnReceiveContentTest {
     public void testPerformReceiveContent() {
         View view = new View(mActivity);
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
-        ContentInfo samplePayloadGif = sampleUriPayload("image/gif");
-        ContentInfo samplePayloadPdf = sampleUriPayload("application/pdf");
+        ContentInfo samplePayloadGif = sampleUriPayload(SOURCE_CLIPBOARD, "image/gif");
+        ContentInfo samplePayloadPdf = sampleUriPayload(SOURCE_CLIPBOARD, "application/pdf");
 
         // Calling performReceiveContent() returns the payload if there's no listener (default)
         assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
@@ -129,7 +138,7 @@ public class ViewOnReceiveContentTest {
     public void testOnReceiveContent() {
         View view = new View(mActivity);
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
-        ContentInfo samplePayloadGif = sampleUriPayload("image/gif");
+        ContentInfo samplePayloadGif = sampleUriPayload(SOURCE_CLIPBOARD, "image/gif");
 
         // Calling onReceiveContent() returns the payload if there's no listener
         assertThat(view.performReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
@@ -140,10 +149,112 @@ public class ViewOnReceiveContentTest {
         assertThat(view.onReceiveContent(samplePayloadGif)).isEqualTo(samplePayloadGif);
     }
 
-    private static ContentInfo sampleUriPayload(String ... mimeTypes) {
+    @Test
+    public void testOnDragEvent_noOnReceiveContentListener() {
+        View view = new View(mActivity);
+
+        DragEvent dragEvent = mock(DragEvent.class);
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DRAG_STARTED);
+        assertThat(view.onDragEvent(dragEvent)).isFalse();
+
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DROP);
+        assertThat(view.onDragEvent(dragEvent)).isFalse();
+    }
+
+    @Test
+    public void testOnDragEvent_withOnReceiveContentListener() {
+        View view = new View(mActivity);
+        String[] mimeTypes = new String[] {"text/*", "image/*", "video/mp4"};
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
+        when(mReceiver.onReceiveContent(any(), any())).thenReturn(null);
+
+        // For an ACTION_DRAG_STARTED, we expect true to be returned (no class to the listener yet).
+        DragEvent dragEvent = mock(DragEvent.class);
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DRAG_STARTED);
+        assertThat(view.onDragEvent(dragEvent)).isTrue();
+
+        // For an ACTION_DROP, we expect the listener to be invoked with the content from the drag
+        // event.
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DROP);
+        ClipData clip = new ClipData(
+                new ClipDescription("test", new String[] {"image/jpeg"}),
+                new ClipData.Item(Uri.parse("content://example/1")));
+        when(dragEvent.getClipData()).thenReturn(clip);
+        assertThat(view.onDragEvent(dragEvent)).isTrue();
+        verify(mReceiver).onReceiveContent(same(view), contentEq(clip, SOURCE_DRAG_AND_DROP, 0));
+    }
+
+    @Test
+    public void testOnDragEvent_withOnReceiveContentListener_noneOfTheContentAccepted() {
+        View view = new View(mActivity);
+        String[] mimeTypes = new String[] {"text/*", "image/*"};
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
+        when(mReceiver.onReceiveContent(same(view), any(ContentInfo.class))).thenAnswer(
+                (Answer<ContentInfo>) invocation -> invocation.getArgument(1));
+
+        // When the return value from OnReceiveContentListener.onReceiveContent is the same
+        // payload instance that was passed into it, View.onDragEvent should return false.
+        DragEvent dragEvent = mock(DragEvent.class);
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DROP);
+        ClipData clip = new ClipData(
+                new ClipDescription("test", new String[] {"video/mp4"}),
+                new ClipData.Item(Uri.parse("content://example/1")));
+        when(dragEvent.getClipData()).thenReturn(clip);
+        assertThat(view.onDragEvent(dragEvent)).isFalse();
+        verify(mReceiver).onReceiveContent(same(view), contentEq(clip, SOURCE_DRAG_AND_DROP, 0));
+    }
+
+    @Test
+    public void testOnDragEvent_withOnReceiveContentListener_someOfTheContentAccepted() {
+        View view = new View(mActivity);
+        String[] mimeTypes = new String[] {"text/*", "image/*"};
+        view.setOnReceiveContentListener(mimeTypes, mReceiver);
+        when(mReceiver.onReceiveContent(same(view), any(ContentInfo.class))).thenReturn(
+                sampleUriPayload(SOURCE_DRAG_AND_DROP, "video/mp4"));
+
+        // When the return value from OnReceiveContentListener.onReceiveContent is not the same
+        // payload instance that was passed into it, View.onDragEvent should return true.
+        DragEvent dragEvent = mock(DragEvent.class);
+        when(dragEvent.getAction()).thenReturn(DragEvent.ACTION_DROP);
+        ClipData clip = new ClipData(
+                new ClipDescription("test", new String[] {"video/mp4"}),
+                new ClipData.Item(Uri.parse("content://example/1")));
+        when(dragEvent.getClipData()).thenReturn(clip);
+        assertThat(view.onDragEvent(dragEvent)).isTrue();
+        verify(mReceiver).onReceiveContent(same(view), contentEq(clip, SOURCE_DRAG_AND_DROP, 0));
+    }
+
+    private static ContentInfo sampleUriPayload(int source, String ... mimeTypes) {
         ClipData clip = new ClipData(
                 new ClipDescription("test", mimeTypes),
                 new ClipData.Item(Uri.parse("content://example/1")));
-        return new ContentInfo.Builder(clip, SOURCE_CLIPBOARD).build();
+        return new ContentInfo.Builder(clip, source).build();
+    }
+
+    private static ContentInfo contentEq(ClipData clip, int source, int flags) {
+        return argThat(new ContentInfoArgumentMatcher(clip, source, flags));
+    }
+
+    private static class ContentInfoArgumentMatcher implements ArgumentMatcher<ContentInfo> {
+        private final ClipData mClip;
+        private final int mSource;
+        private final int mFlags;
+
+        private ContentInfoArgumentMatcher(ClipData clip, int source, int flags) {
+            mClip = clip;
+            mSource = source;
+            mFlags = flags;
+        }
+
+        @Override
+        public boolean matches(ContentInfo actual) {
+            ClipData.Item expectedItem = mClip.getItemAt(0);
+            ClipData.Item actualItem = actual.getClip().getItemAt(0);
+            return Objects.equals(expectedItem.getText(), actualItem.getText())
+                    && Objects.equals(expectedItem.getUri(), actualItem.getUri())
+                    && mSource == actual.getSource()
+                    && mFlags == actual.getFlags()
+                    && actual.getExtras() == null;
+        }
     }
 }

@@ -61,6 +61,7 @@ public class VulkanFeaturesTest {
     private static final int VULKAN_1_0 = 0x00400003; // 1.0.3
     private static final int VULKAN_1_1 = 0x00401000; // 1.1.0
 
+    private static final String VK_KHR_PERFORMANCE_QUERY = "VK_KHR_performance_query";
     private static final String VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME =
             "VK_ANDROID_external_memory_android_hardware_buffer";
     private static final int VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION = 2;
@@ -221,6 +222,16 @@ public class VulkanFeaturesTest {
             "but this device does not.",
             mVulkanHardwareVersion != null && mVulkanHardwareVersion.version >= VULKAN_1_0 &&
             mVulkanHardwareLevel != null && mVulkanHardwareLevel.version >= 0);
+    }
+
+    @Test
+    public void testVulkanBlockedExtensions() throws JSONException {
+        for (JSONObject device : mVulkanDevices) {
+            assertTrue("Device - " + device.getJSONObject("properties").getString("deviceName")
+                            + " supports extension " + VK_KHR_PERFORMANCE_QUERY
+                            + ". It is blocked and hence should not be supported",
+                    !hasExtension(device, VK_KHR_PERFORMANCE_QUERY, 0));
+        }
     }
 
     private JSONObject getBestDevice() throws JSONException {
