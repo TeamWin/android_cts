@@ -17,9 +17,13 @@ package com.android.bedstead.dpmwrapper;
 
 import android.app.ActivityManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Bundle;
 import android.os.UserHandle;
 import android.os.UserManager;
+
+import java.util.Set;
 
 final class Utils {
 
@@ -56,6 +60,38 @@ final class Utils {
         filter.actionsIterator().forEachRemaining((s) -> builder.append(s).append(","));
         builder.deleteCharAt(builder.length() - 1);
         return builder.append(']').toString();
+    }
+
+    public static String toString(Intent intent) {
+        StringBuilder builder = new StringBuilder("[Intent: action=");
+        String action = intent.getAction();
+        if (action == null) {
+            builder.append("null");
+        } else {
+            builder.append(action);
+        }
+        Set<String> categories = intent.getCategories();
+        if (categories == null || categories.isEmpty()) {
+            builder.append(", no_categories");
+        } else {
+            builder.append(", ").append(categories.size()).append(" categories: ")
+                    .append(categories);
+        }
+        Bundle extras = intent.getExtras();
+        builder.append(", ");
+        if (extras == null || extras.isEmpty()) {
+            builder.append("no_extras");
+        } else {
+            appendBundleExtras(builder, extras);
+        }
+        return builder.append(']').toString();
+    }
+
+    public static void appendBundleExtras(StringBuilder builder, Bundle bundle) {
+        builder.append(bundle.size()).append(" extras: ");
+        bundle.keySet().forEach(
+                (key) -> builder.append(key).append('=').append(bundle.get(key)).append(','));
+        builder.deleteCharAt(builder.length() - 1);
     }
 
     private Utils() {

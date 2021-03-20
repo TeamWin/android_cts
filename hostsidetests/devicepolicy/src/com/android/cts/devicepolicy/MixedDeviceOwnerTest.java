@@ -66,7 +66,10 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
-        grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mUserId);
+        if (isHeadlessSystemUserMode()) {
+            affiliateUsers(DEVICE_ADMIN_PKG, mDeviceOwnerUserId, mPrimaryUserId);
+            grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mPrimaryUserId);
+        }
     }
 
     @Override
@@ -213,7 +216,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
 
         assertMetricsLogged(getDevice(), () -> {
@@ -465,6 +467,19 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     public void testSuspendPackageWithPackageManager() throws Exception {
         ignoreOnHeadlessSystemUserMode("headless system user doesn't launch activities");
         super.testSuspendPackageWithPackageManager();
+    }
+
+    @Override
+    protected void runDeviceTestsAsUser(String pkgName, String testClassName, int userId)
+            throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId,
+                paramsForDeviceOwnerTest());
+    }
+
+    @Override
+    protected void executeDeviceTestMethod(String className, String testName) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId,
+                paramsForDeviceOwnerTest());
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {
