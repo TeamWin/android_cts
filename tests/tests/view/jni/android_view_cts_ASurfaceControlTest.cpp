@@ -54,7 +54,8 @@ static AHardwareBuffer* allocateBuffer(int32_t width, int32_t height) {
     desc.width = width;
     desc.height = height;
     desc.layers = 1;
-    desc.usage = AHARDWAREBUFFER_USAGE_COMPOSER_OVERLAY | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN;
+    desc.usage = AHARDWAREBUFFER_USAGE_COMPOSER_OVERLAY | AHARDWAREBUFFER_USAGE_CPU_WRITE_OFTEN |
+            AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
 
     AHardwareBuffer_allocate(&desc, &buffer);
