@@ -39,6 +39,9 @@ _GREEN = {'color': 'GREEN', 'RGGB': (_OFF, _SAT, _SAT, _OFF), 'RGB': (0, 1, 0)}
 _BLUE = {'color': 'BLUE', 'RGGB': (_OFF, _OFF, _OFF, _SAT), 'RGB': (0, 0, 1)}
 _COLORS_CHECKED_RGB = (_BLACK, _WHITE, _RED, _GREEN, _BLUE)
 _COLORS_CHECKED_MONO = (_BLACK, _WHITE)
+_COLORS_CHECKED_UPGRADE = (_BLACK,)
+_FULL_CHECK_FIRST_API_LEVEL = 31
+_SOLID_COLOR_TEST_PATTERN = 1
 
 
 def check_solid_color(img, exp_values):
@@ -83,14 +86,26 @@ class SolidColorTestPattern(its_base_test.ItsBaseTest):
         hidden_physical_id=self.hidden_physical_id) as cam:
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
-      camera_properties_utils.skip_unless(
-          camera_properties_utils.solid_color_test_pattern(props))
 
-      # Handle MONO cameras
-      if camera_properties_utils.mono_camera(props):
-        colors_checked = _COLORS_CHECKED_MONO
+      # Determine patterns to check based on API level
+      first_api_level = its_session_utils.get_first_api_level(self.dut.serial)
+      if first_api_level >= _FULL_CHECK_FIRST_API_LEVEL:
+        if camera_properties_utils.mono_camera(props):
+          colors_checked = _COLORS_CHECKED_MONO
+        else:
+          colors_checked = _COLORS_CHECKED_RGB
       else:
-        colors_checked = _COLORS_CHECKED_RGB
+        colors_checked = _COLORS_CHECKED_UPGRADE
+
+      # Determine if test is run or skipped
+      available_patterns = props['android.sensor.availableTestPatternModes']
+      if cam.is_camera_privacy_mode_supported():
+        if _SOLID_COLOR_TEST_PATTERN not in available_patterns:
+          raise AssertionError(
+              'SOLID_COLOR not in android.sensor.availableTestPatternModes.')
+      else:
+        camera_properties_utils.skip_unless(
+            _SOLID_COLOR_TEST_PATTERN in available_patterns)
 
       # Take extra frames if no per-frame control
       if camera_properties_utils.per_frame_control(props):

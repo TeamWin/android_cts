@@ -18,6 +18,7 @@ package com.android.cts.mockspellchecker
 import android.content.ComponentName
 import android.service.textservice.SpellCheckerService
 import android.util.Log
+import android.view.textservice.SentenceSuggestionsInfo
 import android.view.textservice.SuggestionsInfo
 import android.view.textservice.TextInfo
 import com.android.cts.mockspellchecker.MockSpellCheckerProto.MockSpellCheckerConfiguration
@@ -54,6 +55,34 @@ class MockSpellChecker : SpellCheckerService() {
         override fun onCreate() = withLog("MockSpellCheckerSession.onCreate") {
         }
 
+        override fun onGetSentenceSuggestionsMultiple(
+            textInfos: Array<out TextInfo>?,
+            suggestionsLimit: Int
+        ): Array<SentenceSuggestionsInfo> = withLog(
+                "MockSpellCheckerSession.onGetSuggestionsMultiple " +
+                        "${textInfos?.map { it.text }?.joinToString(":")}") {
+            if (textInfos == null) return emptyArray()
+            val configuration = MockSpellCheckerConfiguration.parseFrom(
+                    SharedPrefsProvider.get(contentResolver, KEY_CONFIGURATION))
+            if (configuration.matchSentence)
+                return textInfos.map { matchSentenceSuggestion(configuration, it) }.toTypedArray()
+            return super.onGetSentenceSuggestionsMultiple(textInfos, suggestionsLimit)
+        }
+
+        private fun matchSentenceSuggestion(
+            configuration: MockSpellCheckerConfiguration,
+            textInfo: TextInfo
+        ): SentenceSuggestionsInfo {
+            return configuration.suggestionRulesList.find { it.match == textInfo.text }
+                    ?.let {
+                        SentenceSuggestionsInfo(
+                                arrayOf(suggestionsInfo(it, textInfo.cookie, textInfo.sequence)),
+                                intArrayOf(0),
+                                intArrayOf(textInfo.text.length))
+                    }
+                    ?: SentenceSuggestionsInfo(emptyArray(), intArrayOf(), intArrayOf())
+        }
+
         override fun onGetSuggestions(
             textInfo: TextInfo?,
             suggestionsLimit: Int
@@ -69,9 +98,17 @@ class MockSpellChecker : SpellCheckerService() {
         }
 
         private fun suggestionsInfo(rule: SuggestionRule): SuggestionsInfo {
+            return suggestionsInfo(rule, 0, 0)
+        }
+
+        private fun suggestionsInfo(
+            rule: SuggestionRule,
+            cookie: Int,
+            sequence: Int
+        ): SuggestionsInfo {
             // Only use attrs in supportedAttributes
             val attrs = rule.attributes and supportedAttributes
-            return SuggestionsInfo(attrs, rule.suggestionsList.toTypedArray())
+            return SuggestionsInfo(attrs, rule.suggestionsList.toTypedArray(), cookie, sequence)
         }
 
         private fun emptySuggestionsInfo() = SuggestionsInfo(0, arrayOf())

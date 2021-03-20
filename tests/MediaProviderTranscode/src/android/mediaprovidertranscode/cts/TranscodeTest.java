@@ -58,6 +58,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class TranscodeTest {
+    private static final String TAG = "TranscodeTest";
     private static final File EXTERNAL_STORAGE_DIRECTORY
             = Environment.getExternalStorageDirectory();
     private static final File DIR_CAMERA
@@ -916,6 +917,100 @@ public class TranscodeTest {
                 pfdTranscodedContent.close();
             }
             modernFile.delete();
+        }
+    }
+
+    @Test
+    public void testTranscodeMultipleFilesConcurrently_mediumDurationMediumVolume() throws Exception {
+        ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[20];
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i] = new ModernFileOpenerThread(
+                    ModernFileOpenerThread.FileDurationSeconds.TWENTIES);
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].start();
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].join();
+            if (modernFileOpenerThreads[i].mException != null) {
+                throw new Exception("Failed ModernFileOpenerThread - " + i + ": "
+                        + modernFileOpenerThreads[i].mException.getMessage(),
+                        modernFileOpenerThreads[i].mException);
+            }
+        }
+    }
+
+    @Test
+    public void testTranscodeMultipleFilesConcurrently_lowDurationHighVolume() throws Exception {
+        ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[100];
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i] = new ModernFileOpenerThread(
+                    ModernFileOpenerThread.FileDurationSeconds.FEW);
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].start();
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].join();
+            if (modernFileOpenerThreads[i].mException != null) {
+                throw new Exception("Failed ModernFileOpenerThread - " + i + ": "
+                        + modernFileOpenerThreads[i].mException.getMessage(),
+                        modernFileOpenerThreads[i].mException);
+            }
+        }
+    }
+
+    private static final class ModernFileOpenerThread extends Thread {
+        private final FileDurationSeconds mFileDurationSeconds;
+        Throwable mException;
+
+        ModernFileOpenerThread(FileDurationSeconds fileDurationSeconds) {
+            mFileDurationSeconds = fileDurationSeconds;
+        }
+
+        @Override
+        public void run() {
+            try {
+                openFile();
+            } catch (Exception exception) {
+                mException = exception;
+            }
+        }
+
+        private void openFile() throws Exception {
+            String fileName = "TranscodeTestHEVC_" + System.nanoTime() + ".mp4";
+            File modernFile = new File(DIR_CAMERA, fileName);
+            ParcelFileDescriptor pfdTranscoded = null;
+            try {
+                switch (mFileDurationSeconds) {
+                    case FEW:
+                        TranscodeTestUtils.stageHEVCVideoFile(modernFile);
+                        break;
+                    case TWENTIES:
+                        TranscodeTestUtils.stageMediumHevcVideoFile(modernFile);
+                        break;
+                    default:
+                        throw new IllegalStateException(
+                                "Unknown mFileDurationSeconds: " + mFileDurationSeconds);
+                }
+                TranscodeTestUtils.enableTranscodingForPackage(getContext().getPackageName());
+                pfdTranscoded = open(modernFile, false);
+                assertTranscode(pfdTranscoded, true);
+            } finally {
+                if (pfdTranscoded != null) {
+                    pfdTranscoded.close();
+                }
+                modernFile.delete();
+            }
+        }
+
+        enum FileDurationSeconds {
+            FEW,
+            TWENTIES
         }
     }
 }

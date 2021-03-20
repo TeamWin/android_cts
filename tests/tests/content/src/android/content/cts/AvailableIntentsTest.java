@@ -446,6 +446,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    public void testRequestManageMedia() {
+        assertCanBeHandled(new Intent(Settings.ACTION_REQUEST_MANAGE_MEDIA));
+    }
+
     public void testInteractAcrossProfilesSettings() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MANAGED_PROFILES)) {
