@@ -23,9 +23,9 @@ import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 _CIRCLE_COLOR = 0  # [0: black, 255: white].
 _CIRCLE_MIN_AREA = 0.01  # 1% of image size.
@@ -221,10 +221,10 @@ def _find_raw_fov_reference(cam, req, props, log_path):
 
   # Find circle.
   img_raw *= 255  # cv2 needs images between [0,255].
-  circle_raw = cv2_image_processing_utils.find_circle(
+  circle_raw = opencv_processing_utils.find_circle(
       img_raw, img_name, _CIRCLE_MIN_AREA, _CIRCLE_COLOR)
-  cv2_image_processing_utils.append_circle_center_to_img(circle_raw, img_raw,
-                                                         img_name)
+  opencv_processing_utils.append_circle_center_to_img(circle_raw, img_raw,
+                                                      img_name)
 
   # Determine final return values.
   aspect_ratio_gt = circle_raw['w'] / circle_raw['h']
@@ -267,10 +267,10 @@ def _find_jpeg_fov_reference(cam, req, props, log_path):
   img *= 255  # cv2 works with [0,255] images.
   logging.debug('Captured JPEG %dx%d', w, h)
   img_name = '%s_jpeg_w%d_h%d.png' % (os.path.join(log_path, _NAME), w, h)
-  circle_jpg = cv2_image_processing_utils.find_circle(
+  circle_jpg = opencv_processing_utils.find_circle(
       img, img_name, _CIRCLE_MIN_AREA, _CIRCLE_COLOR)
-  cv2_image_processing_utils.append_circle_center_to_img(circle_jpg, img,
-                                                         img_name)
+  opencv_processing_utils.append_circle_center_to_img(circle_jpg, img,
+                                                      img_name)
 
   # Determine final return values.
   cc_ct_gt = {'hori': circle_jpg['x_offset'], 'vert': circle_jpg['y_offset']}
@@ -528,11 +528,11 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
           img *= 255  # cv2 uses [0, 255].
           img_name = '%s_%s_with_%s_w%d_h%d.png' % (
               os.path.join(log_path, _NAME), fmt_iter, fmt_cmpr, w_iter, h_iter)
-          circle = cv2_image_processing_utils.find_circle(
+          circle = opencv_processing_utils.find_circle(
               img, img_name, _CIRCLE_MIN_AREA, _CIRCLE_COLOR)
           if debug:
-            cv2_image_processing_utils.append_circle_center_to_img(circle, img,
-                                                                   img_name)
+            opencv_processing_utils.append_circle_center_to_img(circle, img,
+                                                                img_name)
 
           # Check pass/fail for fov coverage for all fmts in AR_CHECKED
           img /= 255  # image_processing_utils uses [0, 1].

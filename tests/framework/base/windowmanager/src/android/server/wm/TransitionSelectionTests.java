@@ -198,7 +198,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     @Test
     public void testCloseActivity_BothWallpaper_Translucent() {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
-                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
+                TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
 
     @Test
@@ -216,7 +216,7 @@ public class TransitionSelectionTests extends ActivityManagerTestBase {
     @Test
     public void testCloseTask_BothWallpaper_Translucent() {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
-                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
+                TRANSIT_WALLPAPER_INTRA_CLOSE);
     }
 
     //------------------------------------------------------------------------//

@@ -22,6 +22,7 @@ import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_B
 import static android.server.wm.app.Components.TestStartingWindowKeys.CONTAINS_CENTER_VIEW;
 import static android.server.wm.app.Components.TestStartingWindowKeys.GET_NIGHT_MODE_ACTIVITY_CHANGED;
 import static android.server.wm.app.Components.TestStartingWindowKeys.HANDLE_SPLASH_SCREEN_EXIT;
+import static android.server.wm.app.Components.TestStartingWindowKeys.ICON_BACKGROUND_COLOR;
 import static android.server.wm.app.Components.TestStartingWindowKeys.RECEIVE_SPLASH_SCREEN_EXIT;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_CREATE;
 import static android.server.wm.app.Components.TestStartingWindowKeys.REQUEST_HANDLE_EXIT_ON_RESUME;
@@ -61,10 +62,12 @@ public class HandleSplashScreenExitActivity extends Activity {
                 final boolean containsCenter = view.getIconView() != null;
                 final boolean containsBranding = view.getBrandingView() != null
                         && view.getBrandingView().getBackground() != null;
+                final int iconBackground = view.getIconBackgroundColor();
                 TestJournalProvider.putExtras(baseContext, HANDLE_SPLASH_SCREEN_EXIT, bundle -> {
                     bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
                     bundle.putBoolean(CONTAINS_CENTER_VIEW, containsCenter);
                     bundle.putBoolean(CONTAINS_BRANDING_VIEW, containsBranding);
+                    bundle.putInt(ICON_BACKGROUND_COLOR, iconBackground);
                 });
                 view.postDelayed(view::remove, 500);
             };

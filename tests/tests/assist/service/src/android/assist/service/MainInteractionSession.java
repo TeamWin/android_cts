@@ -149,6 +149,12 @@ public class MainInteractionSession extends VoiceInteractionSession {
     }
 
     @Override
+    public void onHandleAssist(AssistState state) {
+        mAssistData.putBoolean(Utils.ASSIST_IS_ACTIVITY_ID_NULL, state.getActivityId() == null);
+        super.onHandleAssist(state);
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     public void onHandleAssist(/*@Nullable */Bundle data, /*@Nullable*/ AssistStructure structure,
         /*@Nullable*/ AssistContent content) {
