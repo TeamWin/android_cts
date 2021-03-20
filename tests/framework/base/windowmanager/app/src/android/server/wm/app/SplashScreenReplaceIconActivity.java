@@ -45,6 +45,7 @@ public class SplashScreenReplaceIconActivity extends Activity {
         mSSM = getSplashScreen();
         if (getIntent().getBooleanExtra(REQUEST_HANDLE_EXIT_ON_CREATE, false)) {
             mSSM.setOnExitAnimationListener(mSplashScreenExitHandler);
+            SystemClock.sleep(500);
         }
         if (getIntent().getBooleanExtra(DELAY_RESUME, false)) {
             SystemClock.sleep(5000);

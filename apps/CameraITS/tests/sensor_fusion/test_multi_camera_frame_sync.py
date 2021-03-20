@@ -26,9 +26,9 @@ import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 import sensor_fusion_utils
 
 _ANGLE_90_MASK = 10  # (degrees) mask around 0/90 as rotated squares look same
@@ -161,8 +161,8 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
       req['android.lens.focusDistance'] = fd_chart
 
     # Capture YUVs
-    width = cv2_image_processing_utils.VGA_WIDTH
-    height = cv2_image_processing_utils.VGA_HEIGHT
+    width = opencv_processing_utils.VGA_WIDTH
+    height = opencv_processing_utils.VGA_HEIGHT
     out_surfaces = [{'format': 'yuv', 'width': width, 'height': height,
                      'physicalCamera': ids[0]},
                     {'format': 'yuv', 'width': width, 'height': height,
@@ -257,8 +257,8 @@ class MultiCameraFrameSyncTest(its_base_test.ItsBaseTest):
 
     # Compute angles in frame pairs
     frame_pairs_angles = [
-        [cv2_image_processing_utils.get_angle(p[0]),
-         cv2_image_processing_utils.get_angle(p[1])] for p in frame_pairs_gray]
+        [opencv_processing_utils.get_angle(p[0]),
+         opencv_processing_utils.get_angle(p[1])] for p in frame_pairs_gray]
 
     # Remove frames where not enough squares were detected.
     filtered_pairs_angles = _remove_frames_without_enough_squares(

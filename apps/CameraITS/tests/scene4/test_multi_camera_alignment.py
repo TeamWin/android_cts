@@ -23,9 +23,9 @@ import cv2
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 ALIGN_TOL_MM = 4.0  # mm
 ALIGN_TOL = 0.01  # multiplied by sensor diagonal to convert to pixels
@@ -108,19 +108,19 @@ def select_ids_to_test(ids, props, chart_distance):
     logging.debug('Camera: %s, FoV: %.2f, chart_distance: %.1fcm', i, fov,
                   chart_distance)
     # determine best combo with rig used or recommend different rig
-    if (cv2_image_processing_utils.FOV_THRESH_TELE < fov <
-        cv2_image_processing_utils.FOV_THRESH_WFOV):
+    if (opencv_processing_utils.FOV_THRESH_TELE < fov <
+        opencv_processing_utils.FOV_THRESH_WFOV):
       test_ids.append(i)  # RFoV camera
-    elif fov < cv2_image_processing_utils.FOV_THRESH_SUPER_TELE:
+    elif fov < opencv_processing_utils.FOV_THRESH_SUPER_TELE:
       logging.debug('Skipping camera. Not appropriate multi-camera testing.')
       continue  # super-TELE camera
-    elif (fov <= cv2_image_processing_utils.FOV_THRESH_TELE and
+    elif (fov <= opencv_processing_utils.FOV_THRESH_TELE and
           np.isclose(chart_distance,
-                     cv2_image_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1)):
+                     opencv_processing_utils.CHART_DISTANCE_RFOV, rtol=0.1)):
       test_ids.append(i)  # TELE camera in RFoV rig
-    elif (fov >= cv2_image_processing_utils.FOV_THRESH_WFOV and
+    elif (fov >= opencv_processing_utils.FOV_THRESH_WFOV and
           np.isclose(chart_distance,
-                     cv2_image_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1)):
+                     opencv_processing_utils.CHART_DISTANCE_WFOV, rtol=0.1)):
       test_ids.append(i)  # WFoV camera in WFoV rig
     else:
       logging.debug('Skipping camera. Not appropriate for test rig.')
@@ -492,7 +492,7 @@ class MultiCameraAlignmentTest(its_base_test.ItsBaseTest):
               os.path.join(log_path, NAME), fmt, i))
 
         # Find the circles in grayscale image
-        circle[i] = cv2_image_processing_utils.find_circle(
+        circle[i] = opencv_processing_utils.find_circle(
             img, '%s_%s_gray_%s.jpg' % (os.path.join(log_path, NAME), fmt, i),
             CIRCLE_MIN_AREA, CIRCLE_COLOR)
         logging.debug('Circle radius %s:  %.2f', format(i), circle[i]['r'])

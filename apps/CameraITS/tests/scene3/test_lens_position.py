@@ -21,10 +21,10 @@ import numpy as np
 import its_base_test
 import camera_properties_utils
 import capture_request_utils
-import cv2_image_processing_utils
 import error_util
 import image_processing_utils
 import its_session_utils
+import opencv_processing_utils
 
 FRAME_ATOL_MS = 10  # ms
 LENS_MOVING_STATE = 1
@@ -190,7 +190,7 @@ class LensPositionReportingTest(its_base_test.ItsBaseTest):
                                    self.chart_distance)
 
       # Initialize chart class and locate chart in scene
-      chart = cv2_image_processing_utils.Chart(
+      chart = opencv_processing_utils.Chart(
           cam, props, self.log_path, chart_loc=chart_loc_arg)
 
       # Initialize capture format
