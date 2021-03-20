@@ -177,7 +177,7 @@ public final class Packages {
     public KeepUninstalledPackagesBuilder keepUninstalledPackages() {
         Versions.requireS();
 
-        return new KeepUninstalledPackagesBuilder(this);
+        return new KeepUninstalledPackagesBuilder(mTestApis);
     }
 
     @Nullable

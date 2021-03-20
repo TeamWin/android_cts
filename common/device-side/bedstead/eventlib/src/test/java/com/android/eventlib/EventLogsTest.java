@@ -1200,8 +1200,6 @@ public class EventLogsTest {
         intent.putExtra("DATA", data);
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            InstrumentationRegistry.getInstrumentation()
-                    .getUiAutomation().adoptShellPermissionIdentity();
             sContext.startActivityAsUser(intent, user.userHandle());
         });
 
