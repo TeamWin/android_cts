@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.users;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.os.Build.VERSION.SDK_INT;
@@ -33,7 +34,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
-import com.android.compatibility.common.util.SystemUtil;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 
@@ -171,28 +172,27 @@ public class UserReferenceTest {
     @Test
     public void switchTo_userIsSwitched() {
         assumeTrue(
-                "Adopting Shell Permissions only works for Q+", SDK_INT >= Build.VERSION_CODES.Q);
-        // TODO(scottjonathan): In this case we can probably grant the permission through adb?
-
+                "INTERACT_ACROSS_USERS_FULL is only usable by tests on Q+",
+                SDK_INT >= Build.VERSION_CODES.Q);
         UserReference user = mTestApis.users().createUser().createAndStart();
-        try {
+
+        try (PermissionContext p =
+                     mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+
             mTestApis.packages().find(sContext.getPackageName()).install(user);
             user.switchTo();
 
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                // for INTERACT_ACROSS_USERS
-                Intent intent = new Intent();
-                intent.setPackage(sContext.getPackageName());
-                intent.setClassName(sContext.getPackageName(), TEST_ACTIVITY_NAME);
-                intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
-                sContext.startActivityAsUser(intent, user.userHandle());
+            Intent intent = new Intent();
+            intent.setPackage(sContext.getPackageName());
+            intent.setClassName(sContext.getPackageName(), TEST_ACTIVITY_NAME);
+            intent.setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_CLEAR_TASK);
+            sContext.startActivityAsUser(intent, user.userHandle());
 
-                EventLogs<ActivityCreatedEvent> logs =
-                        ActivityCreatedEvent.queryPackage(sContext.getPackageName())
-                                .whereActivity().className().isEqualTo(TEST_ACTIVITY_NAME)
-                                .onUser(user.userHandle());
-                assertThat(logs.poll()).isNotNull();
-            });
+            EventLogs<ActivityCreatedEvent> logs =
+                    ActivityCreatedEvent.queryPackage(sContext.getPackageName())
+                            .whereActivity().className().isEqualTo(TEST_ACTIVITY_NAME)
+                            .onUser(user.userHandle());
+            assertThat(logs.poll()).isNotNull();
         } finally {
             mTestApis.users().system().switchTo();
             user.remove();
