@@ -30,7 +30,7 @@ public class TrafficDescriptorTest {
     @Test
     public void testConstructorAndGetters() {
         TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
-        assertThat(td.getDnn()).isEqualTo(DNN);
+        assertThat(td.getDataNetworkName()).isEqualTo(DNN);
         assertThat(td.getOsAppId()).isEqualTo(OS_APP_ID);
     }
 
