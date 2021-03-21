@@ -50,7 +50,9 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 /**
  * Tests for {@link TranslationManager} related APIs.
@@ -114,40 +116,46 @@ public class TranslationManagerTest {
         final CountDownLatch translationLatch = new CountDownLatch(1);
         final AtomicReference<TranslationResponse> responseRef = new AtomicReference<>();
 
-        final Thread th = new Thread(() -> {
-            final Translator translator = manager.createTranslator(
-                    new TranslationSpec(Locale.ENGLISH.getLanguage(),
-                            TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(Locale.FRENCH.getLanguage(),
-                            TranslationSpec.DATA_FORMAT_TEXT));
-            try {
-                mServiceWatcher.waitOnConnected();
-            } catch (InterruptedException e) {
-                Log.w(TAG, "Exception waiting for onConnected");
+        final Translator translator = manager.createTranslator(
+                new TranslationSpec(Locale.ENGLISH.getLanguage(),
+                        TranslationSpec.DATA_FORMAT_TEXT),
+                new TranslationSpec(Locale.FRENCH.getLanguage(),
+                        TranslationSpec.DATA_FORMAT_TEXT));
+        try {
+            mServiceWatcher.waitOnConnected();
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Exception waiting for onConnected");
+        }
+        assertThat(translator.isDestroyed()).isFalse();
+        final Executor executor = new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
             }
-            assertThat(translator.isDestroyed()).isFalse();
-
-            final TranslationResponse response = translator.translate(
-                    new TranslationRequest.Builder()
-                            .addTranslationRequestValue(
-                                    TranslationRequestValue.forText("hello world"))
-                            .build());
-
-            sTranslationReplier.getNextTranslationRequest();
-
-            responseRef.set(response);
-            translationLatch.countDown();
-
-            translator.destroy();
-            assertThat(translator.isDestroyed()).isTrue();
-            try {
-                mServiceWatcher.waitOnDisconnected();
-            } catch (InterruptedException e) {
-                Log.w(TAG, "Exception waiting for onDisconnected");
+        };
+        final Consumer<TranslationResponse> callback = new Consumer<TranslationResponse>() {
+            @Override
+            public void accept(TranslationResponse translationResponse) {
+                responseRef.set(translationResponse);
+                translationLatch.countDown();
             }
-        });
+        };
 
-        th.start();
+        translator.translate(new TranslationRequest.Builder()
+                .addTranslationRequestValue(TranslationRequestValue.forText("hello world"))
+                .build(), executor, callback);
+
+        sTranslationReplier.getNextTranslationRequest();
+
+        translator.destroy();
+        assertThat(translator.isDestroyed()).isTrue();
+        try {
+            mServiceWatcher.waitOnDisconnected();
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Exception waiting for onDisconnected");
+        }
+
+        // Wait for translation to finish
         translationLatch.await();
         sTranslationReplier.assertNoUnhandledTranslationRequests();
 
@@ -157,6 +165,7 @@ public class TranslationManagerTest {
         assertThat(response).isNotNull();
         assertThat(response.getTranslationStatus())
                 .isEqualTo(TranslationResponse.TRANSLATION_STATUS_SUCCESS);
+        assertThat(response.isFinalResponse()).isTrue();
         assertThat(response.getTranslationResponseValues().size()).isEqualTo(1);
         assertThat(response.getViewTranslationResponses().size()).isEqualTo(0);
 

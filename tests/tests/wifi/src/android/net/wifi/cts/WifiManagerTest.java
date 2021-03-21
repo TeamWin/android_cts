@@ -666,8 +666,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
 
         for (int i = 0; i < testData.size(); i++) {
             for (int frequency : testData.valueAt(i)) {
-                assertEquals(frequency, ScanResult.convertChannelToFrequencyMhz(
-                      ScanResult.convertFrequencyMhzToChannel(frequency), testData.keyAt(i)));
+                assertEquals(frequency, ScanResult.convertChannelToFrequencyMhzIfSupported(
+                      ScanResult.convertFrequencyMhzToChannelIfSupported(frequency), testData.keyAt(i)));
             }
         }
     }
@@ -2129,7 +2129,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                     "SoftAp channel and state mismatch!!!", 5_000,
                     () -> {
                         executor.runAll();
-                        int sapChannel = ScanResult.convertFrequencyMhzToChannel(
+                        int sapChannel = ScanResult.convertFrequencyMhzToChannelIfSupported(
                                 callback.getCurrentSoftApInfo().getFrequency());
                         return WifiManager.WIFI_AP_STATE_ENABLED == callback.getCurrentState()
                                 && testBandsAndChannels.valueAt(0) == sapChannel;
