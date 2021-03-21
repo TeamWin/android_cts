@@ -122,6 +122,8 @@ public final class DevicePolicy {
             throw new NullPointerException();
         }
 
+        // TODO: use setDeviceOwner on S+
+
         ShellCommand.Builder command = ShellCommand.builderForUser(
                 user, "dpm set-device-owner")
                 .addOperand(deviceOwnerComponent.flattenToShortString())

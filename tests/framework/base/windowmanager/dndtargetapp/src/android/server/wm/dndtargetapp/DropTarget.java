@@ -30,6 +30,7 @@ import android.view.DragAndDropPermissions;
 import android.view.DragEvent;
 import android.view.OnReceiveContentListener;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class DropTarget extends Activity {
@@ -68,7 +69,12 @@ public class DropTarget extends Activity {
         setUpDropTarget("request_write", new OnDragUriWriteListener());
         setUpDropTarget("request_read_nested", new OnDragUriReadPrefixListener());
         setUpDropTarget("request_take_persistable", new OnDragUriTakePersistableListener());
-        setUpDropTarget("on_receive_content_listener", new UriReadOnReceiveContentListener());
+        setUpDropTarget("textview_on_receive_content_listener",
+                new UriReadOnReceiveContentListener());
+        setUpDropTarget("edittext_on_receive_content_listener",
+                new UriReadOnReceiveContentListener());
+        setUpDropTarget("linearlayout_on_receive_content_listener",
+                new UriReadOnReceiveContentListener());
     }
 
     private void setUpDropTarget(String mode, OnDragUriListener listener) {
@@ -84,14 +90,29 @@ public class DropTarget extends Activity {
         if (!mode.equals(getIntent().getStringExtra("mode"))) {
             return;
         }
-        // Use an EditText widget when testing OnReceiveContentListener, since a TextView must
-        // be editable in order to accept DragEvents by default.
-        TextView nonEditableTextView = findViewById(R.id.drag_target);
-        nonEditableTextView.setVisibility(View.GONE);
-        mTextView = findViewById(R.id.editable_drag_target);
-        mTextView.setVisibility(View.VISIBLE);
+        TextView defaultDropTarget = findViewById(R.id.drag_target);
+        String typeOfViewToTest = mode.substring(0, mode.indexOf('_'));
+        View dropTarget;
+        switch (typeOfViewToTest) {
+            case "textview":
+                mTextView = defaultDropTarget;
+                dropTarget = mTextView;
+                break;
+            case "edittext":
+                defaultDropTarget.setVisibility(View.GONE);
+                mTextView = findViewById(R.id.editable_drag_target);
+                dropTarget = mTextView;
+                break;
+            case "linearlayout":
+                defaultDropTarget.setVisibility(View.GONE);
+                mTextView = findViewById(R.id.textview_in_drag_target);
+                dropTarget = findViewById(R.id.linearlayout_drag_target);
+                break;
+            default: throw new IllegalArgumentException("Invalid mode: " + mode);
+        }
         mTextView.setText(mode);
-        mTextView.setOnReceiveContentListener(new String[] {"text/*", "image/*"}, listener);
+        dropTarget.setVisibility(View.VISIBLE);
+        dropTarget.setOnReceiveContentListener(new String[] {"text/*", "image/*"}, listener);
     }
 
     private String checkExtraValue(DragEvent event) {
