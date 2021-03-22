@@ -35,6 +35,7 @@ import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.media.metrics.LogSessionId;
 import android.os.PersistableBundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -2943,8 +2944,9 @@ public class AudioTrackTest {
                             .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                             .build())
                     .build();
-            audioTrack.setLogSessionId(null);               // should not throw.
-            audioTrack.setLogSessionId("0123456789abcdef"); // 16 char Base64Url id.
+            audioTrack.setLogSessionId(LogSessionId.LOG_SESSION_ID_NONE); // should not throw.
+            audioTrack.setLogSessionId(
+                    new LogSessionId("0123456789abcdef")); // 16 char Base64Url id.
 
             // write some data to generate a log entry.
             short data[] = new short[audioTrack.getSampleRate() / 2];
