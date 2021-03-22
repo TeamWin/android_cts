@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * HDMI CEC tests verifying CEC messages sent after startup (CEC 2.0 CTS Section 7.5)
+ * HDMI CEC tests verifying CEC messages sent after startup
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
@@ -50,11 +50,13 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     /**
+     * CEC 1.4
+     *
      * Tests that the device sends all the messages that should be sent on startup. It also ensures
      * that only the device only sends messages which are allowed by the spec.
      */
     @Test
-    public void cectVerifyStartupMessages() throws Exception {
+    public void cectVerifyStartupMessages_Cec14b() throws Exception {
         ITestDevice device = getDevice();
 
         List<CecOperand> expectedMessages = Collections.singletonList(
@@ -85,10 +87,8 @@ public final class HdmiCecStartupTest extends BaseHdmiCecCtsTest {
                 notPermittedMessages).isEmpty();
         assertWithMessage("Some necessary messages are missing").that(requiredMessages).hasSize(
                 expectedMessages.size());
-        assertWithMessage("Expected <Report Features> first").that(
-                requiredMessages.get(0)).isEqualTo(CecOperand.REPORT_FEATURES);
-        assertWithMessage("Expected <Report Physical Address> last").that(
-                requiredMessages.get(1)).isEqualTo(CecOperand.REPORT_PHYSICAL_ADDRESS);
+        assertWithMessage("Expected <Report Physical Address>").that(
+                requiredMessages.get(0)).isEqualTo(CecOperand.REPORT_PHYSICAL_ADDRESS);
     }
 
     /**
