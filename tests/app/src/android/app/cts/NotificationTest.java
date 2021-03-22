@@ -913,7 +913,7 @@ public class NotificationTest extends AndroidTestCase {
         final String contentDescription = "content description";
 
         final Notification.BigPictureStyle bigPictureStyle = new Notification.BigPictureStyle()
-                .bigPictureContentDescription(contentDescription);
+                .setContentDescription(contentDescription);
 
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setStyle(bigPictureStyle)
