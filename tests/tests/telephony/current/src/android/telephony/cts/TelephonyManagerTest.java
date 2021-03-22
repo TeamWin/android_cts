@@ -89,6 +89,7 @@ import android.telephony.ThermalMitigationRequest;
 import android.telephony.UiccCardInfo;
 import android.telephony.UiccSlotInfo;
 import android.telephony.data.ApnSetting;
+import android.telephony.data.SlicingConfig;
 import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
@@ -4515,6 +4516,20 @@ public class TelephonyManagerTest {
         int mode = allowed ? AppOpsManager.MODE_ALLOWED : AppOpsManager.opToDefaultMode(op);
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(
                 appOpsManager, (appOps) -> appOps.setUidMode(op, Process.myUid(), mode));
+    }
+
+    /**
+     * Verifies that {@link TelephonyManager#getNetworkSlicingConfiguration()} does not throw any
+     * exception
+     */
+    @Test
+    public void testGetNetworkSlicingConfiguration() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        CompletableFuture<SlicingConfig> resultFuture = new CompletableFuture<>();
+        ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
+                (tm) -> tm.getNetworkSlicingConfiguration(mSimpleExecutor, resultFuture::complete));
     }
 }
 
