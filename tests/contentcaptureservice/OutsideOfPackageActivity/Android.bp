@@ -24,7 +24,6 @@ android_test_helper_app {
     sdk_version: "current",
     static_libs: [
         "androidx.annotation_annotation",
-        "OutOfPackageDataSharingServiceAidl",
     ],
     srcs: ["src/**/*.java"],
     // Tag this module as a cts test artifact
