@@ -92,43 +92,13 @@ public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLess
     }
 
     @Test
-    public void testNotWhitelisted_byService_alreadyRunning() throws Exception {
-        IOutOfPackageDataSharingService service = getDataShareService();
-
-        enableService(NO_PACKAGES, NO_ACTIVITIES);
-
-        assertContentCaptureManagerAvailable(service, false);
-    }
-
-    @Test
     public void testWhitelisted_byService_alreadyRunning() throws Exception {
-        IOutOfPackageDataSharingService service = getDataShareService();
+        IOutOfProcessDataSharingService service = getDataShareService();
 
-        enableService(toSet(MY_SECOND_PACKAGE), NO_ACTIVITIES);
+        enableService(toSet(MY_PACKAGE), NO_ACTIVITIES);
 
         // Wait for update to propagate
         mUiDevice.waitForIdle();
-
-        assertContentCaptureManagerAvailable(service, true);
-    }
-
-    @Test
-    public void testRinseAndRepeat_alreadyRunning() throws Exception {
-        IOutOfPackageDataSharingService service = getDataShareService();
-
-        // No Package
-        final CtsContentCaptureService ccService = enableService(NO_PACKAGES, NO_ACTIVITIES);
-        assertThat(service.isContentCaptureManagerAvailable()).isEqualTo(false);
-
-        // Right package
-        ccService.setContentCaptureWhitelist(toSet(MY_SECOND_PACKAGE), NO_ACTIVITIES);
-        mUiDevice.waitForIdle();
-        assertThat(service.isContentCaptureManagerAvailable()).isEqualTo(true);
-
-        // Make sure no-package updates after killing (SystemServiceRegistry caches)
-        killService();
-        service = getDataShareService();
-        ccService.setContentCaptureWhitelist(NO_PACKAGES, NO_ACTIVITIES);
 
         assertContentCaptureManagerAvailable(service, true);
     }
@@ -158,7 +128,7 @@ public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLess
         launchActivityAndAssert(service, /* expectHasManager= */ false);
     }
 
-    private void assertContentCaptureManagerAvailable(IOutOfPackageDataSharingService service,
+    private void assertContentCaptureManagerAvailable(IOutOfProcessDataSharingService service,
             boolean isAvailable) throws Exception {
         try {
             assertThat(service.isContentCaptureManagerAvailable()).isEqualTo(isAvailable);
@@ -186,18 +156,18 @@ public class WhitelistTest extends AbstractContentCaptureIntegrationActivityLess
         }
     }
 
-    private IOutOfPackageDataSharingService getDataShareService() throws Exception {
+    private IOutOfProcessDataSharingService getDataShareService() throws Exception {
         Intent outsideService = new Intent();
         outsideService.setComponent(new ComponentName(
-                "android.contentcaptureservice.cts2",
-                "android.contentcaptureservice.cts2.OutOfPackageDataSharingService"
+                "android.contentcaptureservice.cts",
+                "android.contentcaptureservice.cts.OutOfProcessDataSharingService"
         ));
          IBinder service = mServiceRule.bindService(outsideService);
-        return IOutOfPackageDataSharingService.Stub.asInterface(service);
+        return IOutOfProcessDataSharingService.Stub.asInterface(service);
     }
 
     private void killService() {
         runShellCommand("am broadcast --receiver-foreground "
-                + "-n android.contentcaptureservice.cts2/.SelfDestructReceiver");
+                + "-n android.contentcaptureservice.cts/.SelfDestructReceiver");
     }
 }

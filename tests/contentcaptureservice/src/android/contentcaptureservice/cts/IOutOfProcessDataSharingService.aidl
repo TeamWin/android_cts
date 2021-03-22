@@ -14,6 +14,6 @@
 
 package android.contentcaptureservice.cts;
 
-interface IOutOfPackageDataSharingService {
+interface IOutOfProcessDataSharingService {
     boolean isContentCaptureManagerAvailable();
 }
