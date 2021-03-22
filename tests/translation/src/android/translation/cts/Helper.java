@@ -36,6 +36,19 @@ import androidx.test.uiautomator.Until;
 public final class Helper {
 
     private static final String TAG = "Helper";
+    public static final String ACTION_REGISTER_UI_TRANSLATION_CALLBACK =
+            "android.translation.cts.action.REGISTER_UI_TRANSLATION_CALLBACK";
+    public static final String ACTION_UNREGISTER_UI_TRANSLATION_CALLBACK =
+            "android.translation.cts.action.UNREGISTER_UI_TRANSLATION_CALLBACK";
+    public static final String ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_START =
+            "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_START";
+    public static final String ACTION_ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH =
+            "android.translation.cts.action.ASSERT_UI_TRANSLATION_CALLBACK_ON_FINISH";
+
+    public static final String EXTRA_FINISH_COMMAND = "finish_command";
+    public static final String EXTRA_SOURCE_LOCALE = "source_locale";
+    public static final String EXTRA_TARGET_LOCALE = "target_locale";
+    public static final String EXTRA_VERIFY_RESULT = "verify_result";
 
     /**
      * Sets the translation service temporarily.
@@ -124,5 +137,22 @@ public final class Helper {
         final UiObject2 foundObj = uiDevice.wait(
                         Until.findObject(By.res(resourcePackage, resourceId)), 5_000L);
         return foundObj;
+    }
+
+    static class Triple<T, U, V> {
+
+        private final T first;
+        private final U second;
+        private final V third;
+
+        public Triple(T first, U second, V third) {
+            this.first = first;
+            this.second = second;
+            this.third = third;
+        }
+
+        public T getFirst() { return first; }
+        public U getSecond() { return second; }
+        public V getThird() { return third; }
     }
 }
