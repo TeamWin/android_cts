@@ -16,14 +16,19 @@
 
 package android.media.metrics.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Context;
+import android.media.metrics.LogSessionId;
 import android.media.metrics.MediaMetricsManager;
 import android.media.metrics.NetworkEvent;
 import android.media.metrics.PlaybackErrorEvent;
 import android.media.metrics.PlaybackMetrics;
 import android.media.metrics.PlaybackSession;
 import android.media.metrics.PlaybackStateEvent;
+import android.media.metrics.RecordingSession;
 import android.media.metrics.TrackChangeEvent;
+import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -40,6 +45,7 @@ public class MediaMetricsAtomHostSideTests {
                 new PlaybackStateEvent.Builder()
                         .setTimeSinceCreatedMillis(1763L)
                         .setState(PlaybackStateEvent.STATE_JOINING_FOREGROUND)
+                        .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackStateEvent(e);
     }
@@ -52,9 +58,10 @@ public class MediaMetricsAtomHostSideTests {
         PlaybackErrorEvent e =
                 new PlaybackErrorEvent.Builder()
                         .setTimeSinceCreatedMillis(17630000L)
-                        .setErrorCode(PlaybackErrorEvent.ERROR_CODE_RUNTIME)
+                        .setErrorCode(PlaybackErrorEvent.ERROR_RUNTIME)
                         .setSubErrorCode(378)
                         .setException(new Exception("test exception"))
+                        .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackErrorEvent(e);
     }
@@ -88,6 +95,7 @@ public class MediaMetricsAtomHostSideTests {
                 new NetworkEvent.Builder()
                         .setTimeSinceCreatedMillis(3032L)
                         .setNetworkType(NetworkEvent.NETWORK_TYPE_WIFI)
+                        .setMetricsBundle(new Bundle())
                         .build();
         s.reportNetworkEvent(e);
     }
@@ -113,7 +121,32 @@ public class MediaMetricsAtomHostSideTests {
                         .setNetworkBytesRead(102400)
                         .setLocalBytesRead(2000)
                         .setNetworkTransferDurationMillis(6000)
+                        .setDrmSessionId(new byte[] {2, 3, 3, 10})
+                        .setMetricsBundle(new Bundle())
                         .build();
         s.reportPlaybackMetrics(e);
+    }
+
+    @Test
+    public void testSessionId() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        PlaybackSession s = manager.createPlaybackSession();
+
+        LogSessionId idObj = s.getSessionId();
+        assertThat(idObj).isNotEqualTo(null);
+        assertThat(idObj.getStringId().length()).isGreaterThan(0);
+    }
+
+    @Test
+    public void testRecordingSession() throws Exception {
+        Context context = InstrumentationRegistry.getContext();
+        MediaMetricsManager manager = context.getSystemService(MediaMetricsManager.class);
+        RecordingSession s = manager.createRecordingSession();
+
+        assertThat(s).isNotEqualTo(null);
+        LogSessionId idObj = s.getSessionId();
+        assertThat(idObj).isNotEqualTo(null);
+        assertThat(idObj.getStringId().length()).isGreaterThan(0);
     }
 }
