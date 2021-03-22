@@ -139,6 +139,7 @@ public class Utils {
     public static final String KEY_SERVICE_TYPE = "serviceType";
     public static final String KEY_TEST_EVENT = "testEvent";
     public static final String KEY_TEST_RESULT = "testResult";
+    public static final String KEY_TEST_FAKE_BINDER = "testFakeBinder";
 
     public static final String toBundleString(Bundle bundle) {
         if (bundle == null) {
