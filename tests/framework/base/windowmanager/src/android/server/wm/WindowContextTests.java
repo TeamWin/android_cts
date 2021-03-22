@@ -22,10 +22,12 @@ import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.content.ComponentCallbacks;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.IBinder;
 import android.platform.test.annotations.AppModeFull;
@@ -33,7 +35,12 @@ import android.platform.test.annotations.Presubmit;
 import android.view.View;
 import android.view.WindowManager;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Test;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests that verify the behavior of window context
@@ -98,5 +105,46 @@ public class WindowContextTests extends WindowContextTestBase {
         } finally {
             windowContext.unbindService(serviceConnection);
         }
+    }
+
+    /**
+     * Verify if the {@link ComponentCallbacks#onConfigurationChanged(Configuration)} callback
+     * is received when the window context configuration changes.
+     */
+    @Test
+    public void testWindowContextRegisterComponentCallbacks() throws Exception {
+        final TestComponentCallbacks callbacks = new TestComponentCallbacks();
+        final WindowManagerState.DisplayContent display = createManagedVirtualDisplaySession()
+                .setSimulateDisplay(true).createDisplay();
+        final Context windowContext = createWindowContext(display.mId);
+        final DisplayMetricsSession displayMetricsSession =
+                createManagedDisplayMetricsSession(display.mId);
+
+        windowContext.registerComponentCallbacks(callbacks);
+
+        callbacks.mLatch = new CountDownLatch(1);
+
+        displayMetricsSession.changeDisplayMetrics(1.2 /* sizeRatio */, 1.1 /* densityRatio */);
+
+        // verify if there is a gicallback from the window context configuration change.
+        assertTrue(callbacks.mLatch.await(4, TimeUnit.SECONDS));
+        Rect bounds = callbacks.mConfiguration.windowConfiguration.getBounds();
+        assertBoundsEquals(displayMetricsSession.getDisplayMetrics(), bounds);
+
+        windowContext.unregisterComponentCallbacks(callbacks);
+    }
+
+    private static class TestComponentCallbacks implements ComponentCallbacks {
+        private Configuration mConfiguration;
+        private CountDownLatch mLatch = new CountDownLatch(1);
+
+        @Override
+        public void onConfigurationChanged(@NonNull Configuration newConfig) {
+            mConfiguration = newConfig;
+            mLatch.countDown();
+        }
+
+        @Override
+        public void onLowMemory() {}
     }
 }
