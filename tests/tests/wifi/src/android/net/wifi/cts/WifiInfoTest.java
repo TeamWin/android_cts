@@ -31,7 +31,6 @@ import android.platform.test.annotations.AppModeFull;
 import android.telephony.SubscriptionManager;
 
 import androidx.core.os.BuildCompat;
-import androidx.test.filters.SdkSuppress;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -210,7 +209,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
         assertThat(wifiInfo.getRxLinkSpeedMbps()).isAtLeast(-1);
         assertThat(wifiInfo.getMaxSupportedTxLinkSpeedMbps()).isAtLeast(-1);
         assertThat(wifiInfo.getMaxSupportedRxLinkSpeedMbps()).isAtLeast(-1);
-        if (WifiBuildCompat.isAtLeastS(mContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
             assertThat(wifiInfo.getCurrentSecurityType()).isNotEqualTo(
                     WifiInfo.SECURITY_TYPE_UNKNOWN);
         }
@@ -266,7 +265,7 @@ public class WifiInfoTest extends WifiJUnit3TestBase {
      * @throws Exception
      */
     public void testWifiInfoCurrentSecurityType() throws Exception {
-        if (!WifiBuildCompat.isAtLeastS(mContext)) {
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
             return;
         }
         WifiInfo.Builder builder = new WifiInfo.Builder()

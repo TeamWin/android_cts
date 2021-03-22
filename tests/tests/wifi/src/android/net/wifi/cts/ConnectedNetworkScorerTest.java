@@ -127,7 +127,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
         mTestHelper.turnScreenOn();
 
         // Clear any existing app state before each test.
-        if (WifiBuildCompat.isAtLeastS(mContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }
