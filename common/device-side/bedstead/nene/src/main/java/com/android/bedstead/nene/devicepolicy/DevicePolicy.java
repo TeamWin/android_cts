@@ -16,19 +16,27 @@
 
 package com.android.bedstead.nene.devicepolicy;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 import static android.os.Build.VERSION.SDK_INT;
 
 import android.content.ComponentName;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.PackageReference;
+import com.android.bedstead.nene.permissions.PermissionContext;
+import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 
@@ -88,6 +96,15 @@ public final class DevicePolicy {
                 throw new NeneException(
                         "Could not set profile owner for user " + user
                                 + " as the package " + pkg + " is not installed");
+            }
+
+            PackageManager p = mTestApis.context().instrumentedContext().getPackageManager();
+            Intent intent = new Intent("android.app.action.DEVICE_ADMIN_ENABLED");
+            intent.setComponent(profileOwnerComponent);
+
+            if (!componentCanBeSetAsDeviceAdmin(profileOwnerComponent, user)) {
+                throw new NeneException("Could not set profile owner for user "
+                        + user + " as component " + profileOwnerComponent + " is not valid");
             }
 
             try {
@@ -154,6 +171,20 @@ public final class DevicePolicy {
                                 + " as the package " + pkg + " is not installed");
             }
 
+            if (!componentCanBeSetAsDeviceAdmin(deviceOwnerComponent, user)) {
+                throw new NeneException("Could not set device owner for user "
+                        + user + " as component " + deviceOwnerComponent + " is not valid");
+            }
+
+            Collection<User> users = mTestApis.users().all();
+
+            if (users.size() > 1) {
+                throw new NeneException("Could not set device owner for user "
+                        + user + " as there are already additional users on the device: " + users);
+            }
+
+            // TODO(scottjonathan): Check accounts
+
             try {
                 command.executeUntilValid();
             } catch (AdbException | InterruptedException e2) {
@@ -165,6 +196,21 @@ public final class DevicePolicy {
         return new DeviceOwner(user,
                 mTestApis.packages().find(
                         deviceOwnerComponent.getPackageName()), deviceOwnerComponent);
+    }
+
+    private boolean componentCanBeSetAsDeviceAdmin(ComponentName component, UserReference user) {
+        PackageManager packageManager =
+                mTestApis.context().instrumentedContext().getPackageManager();
+        Intent intent = new Intent("android.app.action.DEVICE_ADMIN_ENABLED");
+        intent.setComponent(component);
+
+        try (PermissionContext p =
+                     mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+            List<ResolveInfo> r =
+                    packageManager.queryBroadcastReceiversAsUser(
+                            intent, /* flags= */ 0, user.userHandle());
+            return (!r.isEmpty());
+        }
     }
 
     /**
