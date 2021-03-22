@@ -75,7 +75,7 @@ class TestAppInterface {
         cancelJobsIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         cancelJobsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.sendBroadcast(cancelJobsIntent);
-        mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
+        closeActivity();
         mContext.unregisterReceiver(mReceiver);
         mTestJobState.reset();
     }
@@ -112,6 +112,10 @@ class TestAppInterface {
         }
     }
 
+    void closeActivity() {
+        mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
+    }
+
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -124,6 +128,7 @@ class TestAppInterface {
                     synchronized (mTestJobState) {
                         mTestJobState.running = ACTION_JOB_STARTED.equals(intent.getAction());
                         mTestJobState.jobId = params.getJobId();
+                        mTestJobState.params = params;
                         if (intent.getBooleanExtra(EXTRA_REQUEST_JOB_UID_STATE, false)) {
                             mTestJobState.procState = intent.getIntExtra(JOB_PROC_STATE_KEY,
                                     ActivityManager.PROCESS_STATE_NONEXISTENT);
@@ -174,12 +179,19 @@ class TestAppInterface {
         return condition.isTrue();
     }
 
+    JobParameters getLastParams() {
+        synchronized (mTestJobState) {
+            return mTestJobState.params;
+        }
+    }
+
     private static final class TestJobState {
         int jobId;
         boolean running;
         int procState;
         int capabilities;
         int oomScoreAdj;
+        JobParameters params;
 
         TestJobState() {
             initState();
