@@ -146,7 +146,7 @@ public class RemoteViewsThemeColorsTest {
 
         // Add our host view to the activity behind this test. This is similar to how launchers
         // add widgets to the on-screen UI.
-        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
+        ViewGroup root = mActivityRule.getActivity().findViewById(R.id.remoteView_host);
         FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
@@ -158,8 +158,8 @@ public class RemoteViewsThemeColorsTest {
 
     private static List<Integer> generateColorList() {
         List<Integer> colors = new ArrayList<>();
-        for (int color = android.R.color.system_primary_0;
-                color <= android.R.color.system_neutral_1000; color++) {
+        for (int color = android.R.color.system_neutral1_0;
+                color <= android.R.color.system_accent3_1000; color++) {
             colors.add(color);
         }
         return colors;
