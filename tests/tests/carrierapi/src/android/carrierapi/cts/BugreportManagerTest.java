@@ -16,6 +16,8 @@
 
 package android.carrierapi.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
@@ -67,6 +69,9 @@ import java.util.concurrent.TimeUnit;
 public class BugreportManagerTest {
     private static final String TAG = "BugreportManagerTest";
 
+    // See BugreportManagerServiceImpl#BUGREPORT_SERVICE.
+    private static final String BUGREPORT_SERVICE = "bugreportd";
+
     private static final long BUGREPORT_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(10);
     private static final long UIAUTOMATOR_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
     // This value is defined in dumpstate.cpp:TELEPHONY_REPORT_USER_CONSENT_TIMEOUT_MS. Because the
@@ -101,6 +106,7 @@ public class BugreportManagerTest {
                 .isTrue();
         mBugreportManager = context.getSystemService(BugreportManager.class);
 
+        killCurrentBugreportIfRunning();
         mBugreportFile = createTempFile("bugreport_" + name.getMethodName(), ".zip");
         mBugreportFd = parcelFd(mBugreportFile);
         // Should never be written for anything a carrier app can trigger; several tests assert that
@@ -113,6 +119,7 @@ public class BugreportManagerTest {
     public void tearDown() throws Exception {
         FileUtils.closeQuietly(mBugreportFd);
         FileUtils.closeQuietly(mScreenshotFd);
+        killCurrentBugreportIfRunning();
     }
 
     @Test
@@ -332,6 +339,14 @@ public class BugreportManagerTest {
         public synchronized boolean hasEarlyReportFinished() {
             return mEarlyReportFinished;
         }
+    }
+
+    /**
+     * Kills the current bugreport if one is in progress to prevent failing test cases from
+     * cascading into other cases and causing flakes.
+     */
+    private static void killCurrentBugreportIfRunning() throws Exception {
+        runShellCommand("setprop ctl.stop " + BUGREPORT_SERVICE);
     }
 
     /** Allow/deny the consent dialog to sharing bugreport data, or just check existence. */
