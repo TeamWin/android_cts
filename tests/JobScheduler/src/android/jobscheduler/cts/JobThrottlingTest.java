@@ -497,13 +497,11 @@ public class JobThrottlingTest {
         assertFalse("New job started with battery saver ON",
                 mTestAppInterface.awaitJobStart(3_000));
 
-
         // Then make the UID active. Now the job should run.
         tempWhitelistTestApp(120_000);
         assertTrue("New job in uid-active app failed to start with battery saver OFF",
                 mTestAppInterface.awaitJobStart(120_000));
     }
-
 
     @Test
     public void testExpeditedJobBypassesBatterySaverOn() throws Exception {
@@ -697,7 +695,7 @@ public class JobThrottlingTest {
         removeTestAppFromTempWhitelist();
 
         // Ensure that we leave WiFi in its previous state.
-        if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
+        if (mHasWifi && mWifiManager.isWifiEnabled() != mInitialWiFiState) {
             try {
                 setWifiState(mInitialWiFiState, mCm, mWifiManager);
             } catch (AssertionFailedError e) {
