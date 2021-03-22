@@ -914,14 +914,15 @@ public class SubscriptionManagerTest {
     public void testSetAndGetD2DStatusSharing() {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
-        int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharing(mSubId);
-        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL_CONTACTS, mSubId);
+        int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharingPreference(mSubId);
+        mSm.setDeviceToDeviceStatusSharingPreference(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
+                mSubId);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
-                mSm.getDeviceToDeviceStatusSharing(mSubId));
-        mSm.setDeviceToDeviceStatusSharing(SubscriptionManager.D2D_SHARING_ALL, mSubId);
+                mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
+        mSm.setDeviceToDeviceStatusSharingPreference(SubscriptionManager.D2D_SHARING_ALL, mSubId);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL,
-                mSm.getDeviceToDeviceStatusSharing(mSubId));
-        mSm.setDeviceToDeviceStatusSharing(originalD2DStatusSharing, mSubId);
+                mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
+        mSm.setDeviceToDeviceStatusSharingPreference(originalD2DStatusSharing, mSubId);
         uiAutomation.dropShellPermissionIdentity();
     }
 
