@@ -568,11 +568,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         executeDeviceOwnerTest("SetLocationEnabledTest");
     }
 
-    @Test
-    public void testDeviceOwnerProvisioning() throws Exception {
-        executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
-    }
-
     /**
      *  Only allow provisioning flow to be disabled if Android TV device
      */
