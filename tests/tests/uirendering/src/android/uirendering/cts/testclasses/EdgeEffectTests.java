@@ -479,6 +479,20 @@ public class EdgeEffectTests extends ActivityTestBase {
         assertEquals(distanceAfterAnimation, edgeEffect.getDistance(), 0f);
     }
 
+    /**
+     * When an EdgeEffect with TYPE_STRETCH is drawn on a non-RecordingCanvas, the animation
+     * should immediately end.
+     */
+    @Test
+    public void testStretchOnBitmapCanvas() throws Throwable {
+        EdgeEffect edgeEffect = createEdgeEffectWithPull(EdgeEffect.TYPE_STRETCH);
+        Bitmap bitmap = Bitmap.createBitmap(WIDTH, HEIGHT, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        edgeEffect.draw(canvas);
+        assertTrue(edgeEffect.isFinished());
+        assertEquals(0f, edgeEffect.getDistance(), 0f);
+    }
+
     private EdgeEffect createEdgeEffectWithPull(int edgeEffectType) {
         EdgeEffect edgeEffect = new EdgeEffect(getContext());
         edgeEffect.setType(edgeEffectType);
