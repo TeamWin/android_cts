@@ -290,6 +290,52 @@ public class JobThrottlingTest {
                 mTestAppInterface.getLastParams().getStopReason());
     }
 
+    @Test
+    public void testEJStoppedWhenRestricted() throws Exception {
+        mTestAppInterface.scheduleJob(false, false, true);
+        runJob();
+        assertTrue("Job did not start after scheduling",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        setTestPackageRestricted(true);
+        assertTrue("Job did not stop after test app was restricted",
+                mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        assertEquals(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
+                mTestAppInterface.getLastParams().getStopReason());
+    }
+
+    @Test
+    public void testRestrictedEJStartedWhenUnrestricted() throws Exception {
+        setTestPackageRestricted(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        setTestPackageRestricted(false);
+        assertTrue("Job did not start when app was unrestricted",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testRestrictedEJAllowedWhenUidActive() throws Exception {
+        setTestPackageRestricted(true);
+        mTestAppInterface.scheduleJob(false, false, true);
+        assertFalse("Job started for restricted app",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        // Turn the screen on to ensure the app gets into the TOP state.
+        setScreenState(true);
+        mTestAppInterface.startAndKeepTestActivity(true);
+        assertTrue("Job did not start when app had an activity",
+                mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+
+        mTestAppInterface.closeActivity();
+        // Don't put full minute as the timeout to give some leeway with test timing/processing.
+        assertFalse("Job stopped within grace period after activity closed",
+                mTestAppInterface.awaitJobStop(55_000L));
+        assertTrue("Job did not stop after grace period ended",
+                mTestAppInterface.awaitJobStop(15_000L));
+        assertEquals(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
+                mTestAppInterface.getLastParams().getStopReason());
+    }
+
     @RequiresDevice // Emulators don't always have access to wifi/network
     @Test
     public void testBackgroundConnectivityJobsThrottled() throws Exception {
