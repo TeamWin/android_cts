@@ -321,7 +321,7 @@ public class ClipboardManagerTest {
         intent.setClassName(mContext.getPackageName(), clazz.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
-        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 5000);
+        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 15000);
     }
 
     private class ExpectedClipItem {
