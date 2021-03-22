@@ -38,6 +38,7 @@ import android.app.UiAutomation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Telephony.Threads;
 import android.service.notification.NotificationListenerService;
@@ -303,6 +304,26 @@ public class LegacyNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), false);
     }
 
+    @Test
+    public void testChannelDeletion_cancelReason() throws Exception {
+        assertEquals(Build.VERSION_CODES.O_MR1, mContext.getApplicationInfo().targetSdkVersion);
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+        mListener = TestNotificationListener.getInstance();
+
+        sendNotification(566, R.drawable.icon_black);
+
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+        String key = mListener.mPosted.get(0).getKey();
+
+        mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+
+        assertEquals(NotificationListenerService.REASON_CHANNEL_BANNED,
+                getCancellationReason(key));
+    }
+
     private void sendNotification(final int id, final int icon) throws Exception {
         sendNotification(id, null, icon);
     }
@@ -325,6 +346,20 @@ public class LegacyNotificationManagerTest {
                         .setGroup(groupKey)
                         .build();
         mNotificationManager.notify(id, notification);
+    }
+
+    private int getCancellationReason(String key) {
+        for (int tries = 3; tries-- > 0; ) {
+            if (mListener.mRemoved.containsKey(key)) {
+                return mListener.mRemoved.get(key);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return -1;
     }
 
     private void toggleNotificationPolicyAccess(String packageName,
