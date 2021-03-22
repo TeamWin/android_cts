@@ -21,6 +21,7 @@ import android.platform.test.annotations.FlakyTest;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -59,6 +60,7 @@ public class ManagedProfileProvisioningSingleAdminTest extends BaseDevicePolicyT
 
     @FlakyTest
     @Test
+    @Ignore("b/183395856 Figure out if it should be removed or converted to a device side test.")
     public void testEXTRA_PROVISIONING_DEVICE_ADMIN_PACKAGE_NAME() throws Exception {
         runDeviceTestsAsUser(SINGLE_ADMIN_PKG, ".ProvisioningSingleAdminTest",
                 "testManagedProfileProvisioning", mPrimaryUserId);
