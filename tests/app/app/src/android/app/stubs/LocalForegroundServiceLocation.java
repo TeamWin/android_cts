@@ -16,6 +16,7 @@
 
 package android.app.stubs;
 
+import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -63,8 +64,20 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
                         .setContentTitle(getNotificationTitle(mNotificationId))
                         .setSmallIcon(R.drawable.black)
                         .build();
-                startForeground(mNotificationId, notification);
+                try {
+                    startForeground(mNotificationId, notification);
+                } catch (ForegroundServiceStartNotAllowedException e) {
+                    Log.d(TAG, "startForeground gets an "
+                            + " ForegroundServiceStartNotAllowedException", e);
+                }
                 //assertEquals(type, getForegroundServiceType());
+                break;
+            case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION:
+                Log.d(TAG, "Stopping foreground removing notification");
+                stopForeground(true);
+                break;
+            case COMMAND_START_NO_FOREGROUND:
+                Log.d(TAG, "Starting without calling startForeground()");
                 break;
             default:
                 Log.e(TAG, "Unknown command: " + command);
