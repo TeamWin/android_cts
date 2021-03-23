@@ -809,6 +809,24 @@ public class PackageManagerShellCommandIncrementalTest {
         doTestInstallSysTrace(TEST_APK_PROFILEABLE);
     }
 
+    @LargeTest
+    @Test
+    public void testInstallSysTraceNoReadlogs() throws Exception {
+        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
+                "1");
+        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "0");
+
+        final int atraceDumpIterations = 30;
+        final int atraceDumpDelayMs = 100;
+        final String expected = "|page_read:";
+
+        // We don't expect any readlogs with 0sec interval.
+        assertFalse(
+                "Page reads (" + expected + ") were found in atrace dump",
+                checkSysTraceForSubstring(TEST_APK, expected, atraceDumpIterations,
+                        atraceDumpDelayMs));
+    }
+
     private boolean checkSysTraceForSubstring(String testApk, final String expected,
             int atraceDumpIterations, int atraceDumpDelayMs) throws Exception {
         final int installIterations = 3;
@@ -1094,6 +1112,9 @@ public class PackageManagerShellCommandIncrementalTest {
         assertEquals(null, getSplits(TEST_APP_PACKAGE));
         setDeviceProperty("incfs_default_timeouts", null);
         setDeviceProperty("known_digesters_list", null);
+        setSystemProperty("debug.incremental.enforce_readlogs_max_interval_for_system_dataloaders",
+                "0");
+        setSystemProperty("debug.incremental.readlogs_max_interval_sec", "10000");
         IoUtils.closeQuietly(mSession);
         mSession = null;
     }
@@ -1106,6 +1127,10 @@ public class PackageManagerShellCommandIncrementalTest {
         } finally {
             getUiAutomation().dropShellPermissionIdentity();
         }
+    }
+
+    private void setSystemProperty(String name, String value) throws Exception {
+        executeShellCommand("setprop " + name + " " + value);
     }
 
 }
