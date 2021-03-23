@@ -204,8 +204,10 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             }
         }.run();
         assertEquals(mainCallCount, mainWebViewClient.getShouldOverrideUrlLoadingCallCount());
-        assertEquals(
-            TestHtmlConstants.URL_IN_PAGE_WITH_LINK, childWebViewClient.getLastShouldOverrideUrl());
+        // PAGE_WITH_LINK_URL has a link to BLANK_PAGE_URL (an arbitrary page also controlled by the
+        // test server)
+        assertEquals(mWebServer.getAssetUrl(TestHtmlConstants.BLANK_PAGE_URL),
+                childWebViewClient.getLastShouldOverrideUrl());
     }
 
     private void clickOnLinkUsingJs(final String linkId, WebViewOnUiThread webViewOnUiThread) {
