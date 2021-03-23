@@ -18,10 +18,14 @@ package android.multiuser.cts;
 
 import static android.multiuser.cts.TestingUtils.getBooleanProperty;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.Manifest;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.UserInfo;
+import android.os.UserHandle;
 import android.os.UserManager;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -30,6 +34,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RunWith(JUnit4.class)
 public final class UserManagerTest {
@@ -70,4 +79,30 @@ public final class UserManagerTest {
     }
     // TODO(b/173541467): add testIsUserForeground_backgroundUser()
     // TODO(b/179163496): add testIsUserForeground_ tests for profile users
+
+    @Test
+    public void testCloneUser() throws Exception {
+        // Need CREATE_USERS permission to create user in test
+        mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
+                Manifest.permission.CREATE_USERS, Manifest.permission.INTERACT_ACROSS_USERS);
+        Set<String> disallowedPackages = new HashSet<String>();
+        UserHandle userHandle = mUserManager.createProfile(
+                "Clone user", UserManager.USER_TYPE_PROFILE_CLONE, disallowedPackages);
+        assertThat(userHandle).isNotNull();
+
+        final Context userContext = mContext.createPackageContextAsUser("system", 0,
+                userHandle);
+        assertThat(userContext.getSystemService(
+                UserManager.class).sharesMediaWithParent()).isTrue();
+
+        List<UserInfo> list = mUserManager.getUsers(true,
+                true, true);
+        List<UserInfo> cloneUsers = list.stream().filter(
+                user -> (user.id == userHandle.getIdentifier()
+                        && user.isCloneProfile()))
+                .collect(Collectors.toList());
+        assertThat(cloneUsers.size()).isEqualTo(1);
+        assertThat(mUserManager.removeUser(userHandle)).isTrue();
+        mInstrumentation.getUiAutomation().dropShellPermissionIdentity();
+    }
 }
