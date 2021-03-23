@@ -1108,8 +1108,8 @@ public class ImsServiceTest {
         capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
             int networkResp = 200;
             String reason = "";
-            listener.onPublish();
             cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
         });
 
         // Unregister the publish state callback
@@ -1252,8 +1252,8 @@ public class ImsServiceTest {
             pidfQueue.offer(pidfXml);
             int networkResp = 200;
             String reason = "";
-            listener.onPublish();
             cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
         });
 
         LinkedBlockingQueue<ImsRegistrationAttributes> mQueue = new LinkedBlockingQueue<>();
@@ -1383,8 +1383,8 @@ public class ImsServiceTest {
         capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
             int networkResp = 200;
             String reason = "OK";
-            listener.onPublish();
             cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
         });
 
         // IMS registers
@@ -1423,8 +1423,8 @@ public class ImsServiceTest {
             String reason = "";
             int reasonHeaderCause = 400;
             String reasonHeaderText = "Bad Request";
-            listener.onPublish();
             cb.onNetworkResponse(networkResp, reason, reasonHeaderCause, reasonHeaderText);
+            listener.onPublish();
         });
 
         // ImsService triggers to notify framework publish device's capabilities.
@@ -1478,8 +1478,8 @@ public class ImsServiceTest {
         capExchangeImpl.setPublishOperator((listener, pidfXml, cb) -> {
             int networkResp = 200;
             String reason = "OK";
-            listener.onPublish();
             cb.onNetworkResponse(networkResp, reason);
+            listener.onPublish();
         });
 
         // Register the callback to listen to the publish state changed
