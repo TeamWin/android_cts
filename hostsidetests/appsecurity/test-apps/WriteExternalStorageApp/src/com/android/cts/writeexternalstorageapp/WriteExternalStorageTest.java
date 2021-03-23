@@ -36,6 +36,7 @@ import android.system.Os;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.core.os.BuildCompat;
 import com.android.cts.externalstorageapp.CommonExternalStorageTest;
 
 import java.io.File;
@@ -263,6 +264,12 @@ public class WriteExternalStorageTest extends AndroidTestCase {
      * Verify that .nomedia is created correctly.
      */
     public void testVerifyNoMediaCreated() throws Exception {
+        boolean expectNoMediaFileExists = true;
+        if (BuildCompat.isAtLeastS()) {
+            // All package specific paths will be in app's mount namespace, and it cannot
+            // access its parent to check .nomedia file.
+            expectNoMediaFileExists = false;
+        }
         for (File file : getAllPackageSpecificPathsExceptMedia(getContext())) {
             deleteContents(file);
         }
@@ -290,9 +297,12 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                 path = path.getParentFile();
             }
 
-            if (!found) {
+            if (expectNoMediaFileExists && !found) {
                 fail("Missing .nomedia file above package-specific directory " + start
                         + "; gave up at " + path);
+            } else if (!expectNoMediaFileExists && found) {
+                fail(".nomedia file should not be exists due to app data isolation, but found " +
+                    " in package-specific directory " + start + "; gave up at " + path);
             }
         }
     }
@@ -309,6 +319,7 @@ public class WriteExternalStorageTest extends AndroidTestCase {
 
         final String userId = Integer.toString(android.os.Process.myUid() / 100000);
         final List<File> mountPaths = getMountPaths();
+        final String packageName = getContext().getPackageName();
         for (File path : mountPaths) {
             // Mount points could be multi-user aware, so try probing both top
             // level and user-specific directory.
@@ -326,6 +337,11 @@ public class WriteExternalStorageTest extends AndroidTestCase {
                             || path.getAbsolutePath().endsWith("/Android/obb")) {
                         assertDirNoWriteAccess(path);
                     } else {
+                        if (path.getAbsolutePath().endsWith(packageName)) {
+                            // It's package's own obb / data dir, it's not a normal mount point
+                            // and we don't need to check the access.
+                            continue;
+                        }
                         assertDirReadWriteAccess(path);
                         assertDirReadWriteAccess(buildCommonChildDirs(path));
                     }
