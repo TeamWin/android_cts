@@ -964,6 +964,28 @@ public class TranscodeTest {
         }
     }
 
+    @Test
+    public void testTranscodeMultipleFilesConcurrently_longDurationLowVolume() throws Exception {
+        ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[5];
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i] = new ModernFileOpenerThread(
+                    ModernFileOpenerThread.FileDurationSeconds.HUNDRED);
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].start();
+        }
+
+        for (int i = 0; i < modernFileOpenerThreads.length; ++i) {
+            modernFileOpenerThreads[i].join();
+            if (modernFileOpenerThreads[i].mException != null) {
+                throw new Exception("Failed ModernFileOpenerThread - " + i + ": "
+                        + modernFileOpenerThreads[i].mException.getMessage(),
+                        modernFileOpenerThreads[i].mException);
+            }
+        }
+    }
+
     private static final class ModernFileOpenerThread extends Thread {
         private final FileDurationSeconds mFileDurationSeconds;
         Throwable mException;
@@ -993,6 +1015,9 @@ public class TranscodeTest {
                     case TWENTIES:
                         TranscodeTestUtils.stageMediumHevcVideoFile(modernFile);
                         break;
+                    case HUNDRED:
+                        TranscodeTestUtils.stageLongHevcVideoFile(modernFile);
+                        break;
                     default:
                         throw new IllegalStateException(
                                 "Unknown mFileDurationSeconds: " + mFileDurationSeconds);
@@ -1010,7 +1035,8 @@ public class TranscodeTest {
 
         enum FileDurationSeconds {
             FEW,
-            TWENTIES
+            TWENTIES,
+            HUNDRED
         }
     }
 }
