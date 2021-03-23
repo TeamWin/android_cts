@@ -22,8 +22,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.service.translation.TranslationService;
 import android.util.Log;
+import android.view.translation.TranslationCapability;
+import android.view.translation.TranslationContext;
 import android.view.translation.TranslationRequest;
-import android.view.translation.TranslationRequestValue;
 import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationSpec;
 
@@ -34,12 +35,15 @@ import com.android.compatibility.common.util.RetryableException;
 import com.android.compatibility.common.util.Timeout;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Implementation of {@link TranslationService} used in CTS tests.
@@ -99,8 +103,8 @@ public class CtsTranslationService extends TranslationService {
     }
 
     @Override
-    public void onCreateTranslationSession(@NonNull TranslationSpec sourceSpec,
-            @NonNull TranslationSpec destSpec, int sessionId) {
+    public void onCreateTranslationSession(@NonNull TranslationContext translationContext,
+            int sessionId) {
         Log.v(TAG, "onCreateTranslationSession");
     }
 
@@ -118,6 +122,18 @@ public class CtsTranslationService extends TranslationService {
 
         mHandler.post(() -> sTranslationReplier.handleOnTranslationRequest(getApplicationContext(),
                 request, sessionId, cancellationSignal, callback));
+    }
+
+    @Override
+    public void onTranslationCapabilitiesRequest(int sourceFormat, int targetFormat,
+            @NonNull Consumer<Set<TranslationCapability>> callback) {
+        //TODO: Implement properly with replier?
+        final HashSet<TranslationCapability> capabilities = new HashSet<>();
+        capabilities.add(new TranslationCapability(TranslationCapability.STATE_ON_DEVICE,
+                new TranslationSpec("en", sourceFormat),
+                new TranslationSpec("es", targetFormat),
+                /* uiTranslationEnabled= */ true, 0));
+        callback.accept(capabilities);
     }
 
     @NonNull
