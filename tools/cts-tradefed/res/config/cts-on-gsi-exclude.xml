@@ -56,4 +56,7 @@
     <!-- No AccessibilityService -->
     <option name="compatibility:exclude-filter" value="CtsAccessibilityServiceTestCases android.accessibilityservice.cts" />
 
+    <!-- No Statsd -->
+    <option name="compatibility:exclude-filter" value="CtsStatsdHostTestCases" />
+
 </configuration>
