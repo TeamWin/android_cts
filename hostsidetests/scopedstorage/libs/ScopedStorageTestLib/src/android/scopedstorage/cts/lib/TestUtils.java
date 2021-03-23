@@ -46,6 +46,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -871,6 +872,54 @@ public class TestUtils {
         for (File file : oldFilesList != null ? oldFilesList : new File[0]) {
             assertThat(file.exists()).isTrue();
             assertThat(getFileRowIdFromDatabase(file)).isNotEqualTo(-1);
+        }
+    }
+
+    public static void assertMountMode(String packageName, int uid, int expectedMountMode) {
+        adoptShellPermissionIdentity("android.permission.WRITE_MEDIA_STORAGE");
+        try {
+            final StorageManager storageManager = getContext().getSystemService(
+                    StorageManager.class);
+            final int actualMountMode = storageManager.getExternalStorageMountMode(uid,
+                    packageName);
+            assertThat(actualMountMode).isEqualTo(expectedMountMode);
+        } finally {
+            dropShellPermissionIdentity();
+        }
+    }
+
+    public static void assertCanAccessPrivateAppAndroidDataDir(boolean canAccess,
+            TestApp testApp, String callingPackage, String fileName) throws Exception {
+        File[] dataDirs = getContext().getExternalFilesDirs(null);
+        canReadWriteFilesInDirs(dataDirs, canAccess, testApp, callingPackage, fileName);
+    }
+
+    public static void assertCanAccessPrivateAppAndroidObbDir(boolean canAccess,
+            TestApp testApp, String callingPackage, String fileName) throws Exception {
+        File[] obbDirs = getContext().getObbDirs();
+        canReadWriteFilesInDirs(obbDirs, canAccess, testApp, callingPackage, fileName);
+    }
+
+    private static void canReadWriteFilesInDirs(File[] dirs, boolean canAccess, TestApp testApp,
+            String callingPackage, String fileName) throws Exception {
+        for (File dir : dirs) {
+            final File otherAppExternalDataDir = new File(dir.getPath().replace(
+                    callingPackage, testApp.getPackageName()));
+            final File file = new File(otherAppExternalDataDir, fileName);
+            try {
+                assertThat(file.exists()).isFalse();
+
+                assertThat(createFileAs(testApp, file.getPath())).isTrue();
+                if (canAccess) {
+                    assertThat(file.canRead()).isTrue();
+                    assertThat(file.canWrite()).isTrue();
+                } else {
+                    assertThat(file.canRead()).isFalse();
+                    assertThat(file.canWrite()).isFalse();
+                }
+            } finally {
+                deleteFileAsNoThrow(testApp, file.getAbsolutePath());
+            }
         }
     }
 
