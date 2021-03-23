@@ -249,8 +249,7 @@ public class SystemMediaRouter2Test {
             }
         };
         mRouteCallbacks.add(routeCallback);
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         mService.addRoute(routeToAdd);
         assertTrue(addedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -277,8 +276,7 @@ public class SystemMediaRouter2Test {
             }
         };
         mRouteCallbacks.add(routeCallback);
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         mService.removeRoute(ROUTE_ID2);
         assertTrue(removedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -315,8 +313,7 @@ public class SystemMediaRouter2Test {
             }
         };
         mRouteCallbacks.add(routeCallback);
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         mSystemRouter2ForCts.setRouteVolume(routeToChangeVolume, targetVolume);
         assertTrue(changedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -358,8 +355,7 @@ public class SystemMediaRouter2Test {
             }
         };
 
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         try {
             mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, targetVolume, 0);
@@ -386,8 +382,7 @@ public class SystemMediaRouter2Test {
             }
         };
         mRouteCallbacks.add(routeCallback);
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         mAppRouter2.registerRouteCallback(mExecutor, mAppRouterPlaceHolderCallback,
                 new RouteDiscoveryPreference.Builder(testFeatures, true).build());
@@ -989,8 +984,7 @@ public class SystemMediaRouter2Test {
             }
         };
 
-        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback,
-                RouteDiscoveryPreference.EMPTY);
+        mSystemRouter2ForCts.registerRouteCallback(mExecutor, routeCallback);
 
         try {
             // Note: The routes can be added before registering the callback,
