@@ -116,17 +116,17 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertTrue(mDevicePolicyManager.isAdminActive(mComponent));
     }
 
-    public void testSetGetNetworkSlicingEnabled() {
+    public void testSetGetEnterpriseNetworkPreferenceEnabled() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping SetGetNetworkSlicingEnabled");
+            Log.w(TAG, "Skipping testSetGetEnterpriseNetworkPreferenceEnabled");
             return;
         }
         try {
             mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
             assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.setNetworkSlicingEnabled(true));
+                    () -> mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true));
             assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.isNetworkSlicingEnabled());
+                    () -> mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
         }  catch (SecurityException se) {
             Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
         } finally {

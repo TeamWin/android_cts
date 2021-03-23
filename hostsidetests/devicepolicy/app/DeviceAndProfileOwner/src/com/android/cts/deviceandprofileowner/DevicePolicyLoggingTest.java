@@ -186,9 +186,9 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, false);
     }
 
-    public void testSetNetworkSlicingEnabledLogged() {
-        mDevicePolicyManager.setNetworkSlicingEnabled(true);
-        mDevicePolicyManager.setNetworkSlicingEnabled(false);
+    public void testSetEnterpriseNetworkPreferenceEnabledLogged() {
+        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true);
+        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(false);
     }
 
     public void testDisallowAdjustVolumeMutedLogged() {
