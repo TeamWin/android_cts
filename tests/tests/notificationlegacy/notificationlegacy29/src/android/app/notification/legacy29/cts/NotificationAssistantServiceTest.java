@@ -25,6 +25,7 @@ import static junit.framework.TestCase.assertNotNull;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.app.Instrumentation;
 import android.app.Notification;
@@ -76,6 +77,10 @@ public class NotificationAssistantServiceTest {
     private StatusBarManager mStatusBarManager;
     private Context mContext;
     private UiAutomation mUi;
+
+    private boolean isWatch() {
+      return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
 
     @Before
     public void setUp() throws IOException {
@@ -556,6 +561,7 @@ public class NotificationAssistantServiceTest {
         if (isTelevision()) {
             return;
         }
+        assumeFalse("Status bar service not supported", isWatch());
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -587,6 +593,7 @@ public class NotificationAssistantServiceTest {
         if (isTelevision()) {
             return;
         }
+        assumeFalse("Status bar service not supported", isWatch());
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
@@ -612,6 +619,7 @@ public class NotificationAssistantServiceTest {
         if (isTelevision()) {
             return;
         }
+        assumeFalse("Status bar service not supported", isWatch());
         setUpListeners();
         turnScreenOn();
         mUi.adoptShellPermissionIdentity("android.permission.EXPAND_STATUS_BAR");
