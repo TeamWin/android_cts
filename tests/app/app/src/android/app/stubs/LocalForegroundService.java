@@ -67,7 +67,7 @@ public class LocalForegroundService extends LocalService {
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId) {
         String notificationChannelId = getNotificationChannelId();
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(new NotificationChannel(
@@ -129,6 +129,7 @@ public class LocalForegroundService extends LocalService {
         // Do parent's onStart at the end, so we don't race with the test code waiting for us to
         // execute.
         super.onStart(intent, startId);
+        return START_NOT_STICKY;
     }
 
     @Override
