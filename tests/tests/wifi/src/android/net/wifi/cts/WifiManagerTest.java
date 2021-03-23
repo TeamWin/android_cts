@@ -536,7 +536,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             return;
         }
         try {
-            mWifiManager.restartWifiSubsystem("CTS triggered");
+            mWifiManager.restartWifiSubsystem();
             fail("The restartWifiSubsystem should not succeed - privileged call");
         } catch (SecurityException e) {
             // expected
@@ -560,7 +560,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             mWifiManager.registerSubsystemRestartTrackingCallback(mExecutor,
                     mSubsystemRestartTrackingCallback);
             synchronized (mLock) {
-                mWifiManager.restartWifiSubsystem("CTS triggered");
+                mWifiManager.restartWifiSubsystem();
                 mLock.wait(TEST_WAIT_DURATION_MS);
             }
             assertEquals(mSubsystemRestartStatus, 1); // 1: restarting
