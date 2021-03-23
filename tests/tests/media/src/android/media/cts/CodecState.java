@@ -19,6 +19,7 @@ import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -419,5 +420,11 @@ public class CodecState {
             throw new UnsupportedOperationException("Cannot set surface on audio codec");
         }
         mCodec.setOutputSurface(surface);
+    }
+
+    public void setVideoPeek(boolean enable) {
+        Bundle parameters = new Bundle();
+        parameters.putInt(MediaCodec.PARAMETER_KEY_TUNNEL_PEEK, enable ? 1 : 0);
+        mCodec.setParameters(parameters);
     }
 }
