@@ -84,7 +84,7 @@ public class MediaExtractorHostSideTest extends BaseMediaHostSideTest {
     }
 
     public void testMediaMetricsPlaybackId() throws Exception {
-        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testPlaybackId");
+        runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, DEVICE_SIDE_TEST_CLASS, "testLogSessionId");
         assertThat(getMediaExtractorReportedPlaybackId()).isEqualTo("FakePlaybackId");
     }
 
