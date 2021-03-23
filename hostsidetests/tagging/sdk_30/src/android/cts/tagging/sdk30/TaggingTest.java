@@ -73,6 +73,7 @@ public class TaggingTest {
         mContext.startActivity(intent);
 
         assertTrue(receiver.await());
+        assertTrue(Utils.mistaggedKernelUaccessFails());
     }
 
     @Test
@@ -90,7 +91,7 @@ public class TaggingTest {
         mContext.startActivity(intent);
 
         assertTrue(receiver.await());
-        assertTrue(Utils.mistaggedKernelUaccessFails());
+        assertFalse(Utils.mistaggedKernelUaccessFails());
     }
 
     @Test

@@ -1339,16 +1339,17 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 new Condition() {
                     @Override
                     public Object expected() {
-                        return state;
+                        return true;
                     }
 
                     @Override
                     public Object actual() {
-                        return call.getState();
+                        return call.getState() == state && call.getDetails().getState() == state;
                     }
                 },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Call: " + call + " should be in state " + state
+                "Expected state: " + state + ", callState=" + call.getState() + ", detailState="
+                    + call.getDetails().getState()
         );
     }
 

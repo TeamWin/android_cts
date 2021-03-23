@@ -46,6 +46,7 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    additional_manifests: ["ProviderAndroidManifest.xml"],
     platform_apis: true,
 }
 

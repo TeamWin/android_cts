@@ -28,9 +28,11 @@ android_test {
         // TODO: remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
-        "OutOfPackageDataSharingServiceAidl",
     ],
-    srcs: ["src/**/*.java"],
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.aidl",
+    ],
     // Tag this module as a cts test artifact
     test_suites: [
         "cts",
