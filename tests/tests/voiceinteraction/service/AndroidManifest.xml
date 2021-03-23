@@ -79,7 +79,7 @@
         </service>
         <service android:name=".MainHotwordDetectionService"
             android:permission="android.permission.BIND_HOTWORD_DETECTION_SERVICE"
-            android:process=":remote"
+            android:isolatedProcess="true"
             android:exported="true">
         </service>
     </application>

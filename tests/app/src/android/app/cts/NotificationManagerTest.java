@@ -568,6 +568,20 @@ public class NotificationManagerTest extends AndroidTestCase {
         fail("Couldn't find posted notification with id= " + id);
     }
 
+    private int getCancellationReason(String key) {
+        for (int tries = 3; tries-- > 0; ) {
+            if (mListener.mRemoved.containsKey(key)) {
+                return mListener.mRemoved.get(key);
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return -1;
+    }
+
     private boolean checkNotificationExistence(int id, boolean shouldExist) {
         // notification is a bit asynchronous so it may take a few ms to appear in
         // getActiveNotifications()
@@ -4252,6 +4266,21 @@ public class NotificationManagerTest extends AndroidTestCase {
                         + Manifest.permission.MANAGE_NOTIFICATION_LISTENERS);
             }
         }
+    }
+
+    public void testChannelDeletion_cancelReason() throws Exception {
+        setUpNotifListener();
+
+        sendNotification(566, R.drawable.black);
+
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+        String key = mListener.mPosted.get(0).getKey();
+
+        mNotificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+
+        assertEquals(NotificationListenerService.REASON_CHANNEL_REMOVED,
+                getCancellationReason(key));
     }
 
     private static class EventCallback extends Handler {

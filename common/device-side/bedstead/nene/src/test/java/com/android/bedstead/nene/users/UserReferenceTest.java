@@ -30,8 +30,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -47,30 +45,29 @@ public class UserReferenceTest {
     private static final int NON_EXISTING_USER_ID = 10000;
     private static final int USER_ID = NON_EXISTING_USER_ID;
     private static final String USER_NAME = "userName";
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TEST_ACTIVITY_NAME = "com.android.bedstead.nene.test.Activity";
 
-    private final TestApis mTestApis = new TestApis();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     @Test
     public void id_returnsId() {
-        assertThat(mTestApis.users().find(USER_ID).id()).isEqualTo(USER_ID);
+        assertThat(sTestApis.users().find(USER_ID).id()).isEqualTo(USER_ID);
     }
 
     @Test
     public void userHandle_referencesId() {
-        assertThat(mTestApis.users().find(USER_ID).userHandle().getIdentifier()).isEqualTo(USER_ID);
+        assertThat(sTestApis.users().find(USER_ID).userHandle().getIdentifier()).isEqualTo(USER_ID);
     }
 
     @Test
     public void resolve_doesNotExist_returnsNull() {
-        assertThat(mTestApis.users().find(NON_EXISTING_USER_ID).resolve()).isNull();
+        assertThat(sTestApis.users().find(NON_EXISTING_USER_ID).resolve()).isNull();
     }
 
     @Test
     public void resolve_doesExist_returnsUser() {
-        UserReference userReference = mTestApis.users().createUser().create();
+        UserReference userReference = sTestApis.users().createUser().create();
 
         try {
             assertThat(userReference.resolve()).isNotNull();
@@ -81,7 +78,7 @@ public class UserReferenceTest {
 
     @Test
     public void resolve_doesExist_userHasCorrectDetails() {
-        UserReference userReference = mTestApis.users().createUser().name(USER_NAME).create();
+        UserReference userReference = sTestApis.users().createUser().name(USER_NAME).create();
 
         try {
             User user = userReference.resolve();
@@ -93,27 +90,27 @@ public class UserReferenceTest {
 
     @Test
     public void remove_userDoesNotExist_throwsException() {
-        assertThrows(NeneException.class, () -> mTestApis.users().find(USER_ID).remove());
+        assertThrows(NeneException.class, () -> sTestApis.users().find(USER_ID).remove());
     }
 
     @Test
     public void remove_userExists_removesUser() {
-        UserReference user = mTestApis.users().createUser().create();
+        UserReference user = sTestApis.users().createUser().create();
 
         user.remove();
 
-        assertThat(mTestApis.users().all()).doesNotContain(user);
+        assertThat(sTestApis.users().all()).doesNotContain(user);
     }
 
     @Test
     public void start_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
-                () -> mTestApis.users().find(NON_EXISTING_USER_ID).start());
+                () -> sTestApis.users().find(NON_EXISTING_USER_ID).start());
     }
 
     @Test
     public void start_userNotStarted_userIsStarted() {
-        UserReference user = mTestApis.users().createUser().create().stop();
+        UserReference user = sTestApis.users().createUser().create().stop();
 
         user.start();
 
@@ -126,7 +123,7 @@ public class UserReferenceTest {
 
     @Test
     public void start_userAlreadyStarted_doesNothing() {
-        UserReference user = mTestApis.users().createUser().createAndStart();
+        UserReference user = sTestApis.users().createUser().createAndStart();
 
         user.start();
 
@@ -140,12 +137,12 @@ public class UserReferenceTest {
     @Test
     public void stop_userDoesNotExist_throwsException() {
         assertThrows(NeneException.class,
-                () -> mTestApis.users().find(NON_EXISTING_USER_ID).stop());
+                () -> sTestApis.users().find(NON_EXISTING_USER_ID).stop());
     }
 
     @Test
     public void stop_userStarted_userIsStopped() {
-        UserReference user = mTestApis.users().createUser().createAndStart();
+        UserReference user = sTestApis.users().createUser().createAndStart();
 
         user.stop();
 
@@ -158,7 +155,7 @@ public class UserReferenceTest {
 
     @Test
     public void stop_userNotStarted_doesNothing() {
-        UserReference user = mTestApis.users().createUser().create().stop();
+        UserReference user = sTestApis.users().createUser().create().stop();
 
         user.stop();
 
@@ -174,12 +171,12 @@ public class UserReferenceTest {
         assumeTrue(
                 "INTERACT_ACROSS_USERS_FULL is only usable by tests on Q+",
                 SDK_INT >= Build.VERSION_CODES.Q);
-        UserReference user = mTestApis.users().createUser().createAndStart();
+        UserReference user = sTestApis.users().createUser().createAndStart();
 
         try (PermissionContext p =
-                     mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                     sTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
 
-            mTestApis.packages().find(sContext.getPackageName()).install(user);
+            sTestApis.packages().find(sContext.getPackageName()).install(user);
             user.switchTo();
 
             Intent intent = new Intent();
@@ -194,7 +191,7 @@ public class UserReferenceTest {
                             .onUser(user.userHandle());
             assertThat(logs.poll()).isNotNull();
         } finally {
-            mTestApis.users().system().switchTo();
+            sTestApis.users().system().switchTo();
             user.remove();
         }
     }
@@ -202,10 +199,10 @@ public class UserReferenceTest {
     @Test
     public void stop_isWorkProfileOfCurrentUser_stops() {
         UserType managedProfileType =
-                mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME);
-        UserReference profileUser = mTestApis.users().createUser()
+                sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME);
+        UserReference profileUser = sTestApis.users().createUser()
                 .type(managedProfileType)
-                .parent(mTestApis.users().instrumented())
+                .parent(sTestApis.users().instrumented())
                 .createAndStart();
 
         try {

@@ -658,6 +658,7 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getSubscriberId());
         mTelephonyManager.getLine1Number();
         mTelephonyManager.getNetworkOperator();
+        mTelephonyManager.getPhoneAccountHandle();
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
@@ -968,6 +969,15 @@ public class TelephonyManagerTest {
         PhoneAccountHandle handle =
                 new PhoneAccountHandle(new ComponentName("com.example.foo", "bar"), "baz");
         assertNull(mTelephonyManager.createForPhoneAccountHandle(handle));
+    }
+
+    @Test
+    public void testGetPhoneAccountHandle() {
+        TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
+        PhoneAccountHandle defaultAccount = telecomManager
+                .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
+        PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
+        assertEquals(phoneAccountHandle, defaultAccount);
     }
 
     /**

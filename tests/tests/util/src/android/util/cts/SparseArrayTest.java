@@ -16,6 +16,8 @@
 
 package android.util.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -140,7 +142,7 @@ public class SparseArrayTest {
         assertEquals(LENGTH, sparseArray.size());
 
         assertEquals(VALUE_FOR_NON_EXISTED_KEY,
-                     sparseArray.get(NON_EXISTED_KEY, VALUE_FOR_NON_EXISTED_KEY));
+                sparseArray.get(NON_EXISTED_KEY, VALUE_FOR_NON_EXISTED_KEY));
         assertNull(sparseArray.get(NON_EXISTED_KEY)); // the default value is null
 
         int size = sparseArray.size();
@@ -193,6 +195,27 @@ public class SparseArrayTest {
         assertEquals(40L, sparseArray.valueAt(1).longValue());
         assertEquals(20L, sparseArray.valueAt(2).longValue());
         assertEquals(Long.MIN_VALUE, sparseArray.valueAt(3).longValue());
+    }
+
+    @Test
+    public void testSet() {
+        SparseArray<String> first = new SparseArray<>();
+        first.put(0, "0");
+        first.put(1, "1");
+        first.put(2, "2");
+
+        SparseArray<String> second = new SparseArray<>();
+        second.set(2, "2");
+        second.set(0, "0");
+        second.set(1, "1");
+
+        assertThat(first.size()).isEqualTo(second.size());
+        assertThat(first.get(0)).isEqualTo(second.get(0));
+        assertThat(first.get(1)).isEqualTo(second.get(1));
+        assertThat(first.get(2)).isEqualTo(second.get(2));
+        assertThat(first.get(3, "-1")).isEqualTo(second.get(3, "-1"));
+
+        testContentEquals(first, second, SparseArray::contentEquals);
     }
 
     @Test
