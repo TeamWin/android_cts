@@ -37,6 +37,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import android.Manifest;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaRoute2Info;
@@ -77,6 +79,8 @@ import java.util.concurrent.TimeUnit;
 @NonMediaMainlineTest
 public class SystemMediaRouter2Test {
     private static final String TAG = "SystemMR2Test";
+
+    UiAutomation mUiAutomation;
     Context mContext;
     private MediaRouter2 mSystemRouter2ForCts;
     private MediaRouter2 mAppRouter2;
@@ -107,6 +111,9 @@ public class SystemMediaRouter2Test {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
+        mUiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        mUiAutomation.adoptShellPermissionIdentity(Manifest.permission.MODIFY_AUDIO_ROUTING);
+
         mExecutor = Executors.newSingleThreadExecutor();
         mAudioManager = (AudioManager) mContext.getSystemService(AUDIO_SERVICE);
         MediaRouter2TestActivity.startActivity(mContext);
@@ -154,6 +161,8 @@ public class SystemMediaRouter2Test {
         releaseAllSessions();
         // unregister callbacks
         clearCallbacks();
+
+        mUiAutomation.dropShellPermissionIdentity();
     }
 
     @Test
