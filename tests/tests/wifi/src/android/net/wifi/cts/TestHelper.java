@@ -266,6 +266,16 @@ public class TestHelper {
         }
     }
 
+    @NonNull
+    private WifiInfo getWifiInfo(@NonNull NetworkCapabilities networkCapabilities) {
+        if (BuildCompat.isAtLeastS()) {
+            // WifiInfo in transport info, only available in S.
+            return (WifiInfo) networkCapabilities.getTransportInfo();
+        } else {
+            return mWifiManager.getConnectionInfo();
+        }
+    }
+
     private static void assertConnectionEquals(@NonNull WifiConfiguration network,
             @NonNull WifiInfo wifiInfo) {
         assertThat(network.SSID).isEqualTo(wifiInfo.getSSID());
@@ -276,7 +286,6 @@ public class TestHelper {
         private final CountDownLatch mCountDownLatch;
         public boolean onSuccessCalled = false;
         public boolean onFailedCalled = false;
-        public int failureReason = -1;
 
         TestActionListener(CountDownLatch countDownLatch) {
             mCountDownLatch = countDownLatch;
@@ -336,8 +345,12 @@ public class TestHelper {
             assertThat(countDownLatchNr.await(
                     DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
             assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-            assertConnectionEquals(
-                    network, (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
+            final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
+            assertConnectionEquals(network, wifiInfo);
+            if (BuildCompat.isAtLeastS()) {
+                // User connections should always be primary.
+                assertThat(wifiInfo.isPrimary()).isTrue();
+            }
         } catch (Throwable e /* catch assertions & exceptions */) {
             // Unregister the network callback in case of any failure (since we don't end up
             // returning the network callback to the caller).
@@ -482,9 +495,18 @@ public class TestHelper {
                 assertThat(countDownLatch.await(
                         DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-                assertConnectionEquals(
-                        network,
-                        (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo());
+                final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
+                assertConnectionEquals(network, wifiInfo);
+                if (BuildCompat.isAtLeastS()) {
+                    // If STA concurrency for restricted connection is supported, this should not
+                    // be the primary connection.
+                    if (!restrictedNetworkCapabilities.isEmpty()
+                            && mWifiManager.isStaConcurrencyForRestrictedConnectionsSupported()) {
+                        assertThat(wifiInfo.isPrimary()).isFalse();
+                    } else {
+                        assertThat(wifiInfo.isPrimary()).isTrue();
+                    }
+                }
             } else {
                 // now wait for connection to timeout.
                 assertThat(countDownLatch.await(
@@ -670,15 +692,17 @@ public class TestHelper {
                 assertThat(testNetworkCallback.onUnavailableCalled).isTrue();
             } else {
                 assertThat(testNetworkCallback.onAvailableCalled).isTrue();
-                final WifiInfo wifiInfo;
-                if (BuildCompat.isAtLeastS()) {
-                    // WifiInfo in transport info, only available in S.
-                    wifiInfo =
-                            (WifiInfo) testNetworkCallback.networkCapabilities.getTransportInfo();
-                } else {
-                    wifiInfo = mWifiManager.getConnectionInfo();
-                }
+                final WifiInfo wifiInfo = getWifiInfo(testNetworkCallback.networkCapabilities);
                 assertConnectionEquals(network, wifiInfo);
+                if (BuildCompat.isAtLeastS()) {
+                    // If STA concurrency for local only connection is supported, this should not
+                    // be the primary connection.
+                    if (mWifiManager.isStaConcurrencyForLocalOnlyConnectionsSupported()) {
+                        assertThat(wifiInfo.isPrimary()).isFalse();
+                    } else {
+                        assertThat(wifiInfo.isPrimary()).isTrue();
+                    }
+                }
             }
         } catch (Throwable e /* catch assertions & exceptions */) {
             try {
