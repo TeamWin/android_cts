@@ -26,6 +26,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,6 +40,7 @@ public final class HotwordDetectionServiceBasicTest
     static final String TAG = "HotwordDetectionServiceBasicTest";
 
     @Test
+    @Ignore
     public void testHotwordDetectionService_validHotwordDetectionComponentName_triggerSuccess()
             throws Throwable {
         final BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
