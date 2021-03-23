@@ -25,6 +25,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -53,6 +54,22 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
 
     fun testWideIcon_inCollapsedState_canShowExact4By3() {
         val icon = Bitmap.createBitmap(400, 300, Bitmap.Config.ARGB_8888)
+        val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setLargeIcon(icon)
+                .createContentView()
+        checkIconView(views) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+        }
+    }
+
+    fun testWideIcon_inCollapsedState_canShowUriIcon() {
+        val uri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val icon = Icon.createWithContentUri(uri)
         val views = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_media_play)
                 .setContentTitle("Title")
@@ -217,6 +234,74 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    fun testBigPictureStyle_populatesExtrasCompatibly() {
+        val bitmap = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
+        val uri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val iconWithUri = Icon.createWithContentUri(uri)
+        val iconWithBitmap = Icon.createWithBitmap(bitmap)
+        val style = Notification.BigPictureStyle()
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(style)
+
+        style.bigPicture(bitmap)
+        builder.build().let {
+            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
+                    .isSameInstanceAs(bitmap)
+            assertThat(it.extras.get(Notification.EXTRA_PICTURE_ICON)).isNull()
+        }
+
+        style.bigPicture(iconWithUri)
+        builder.build().let {
+            assertThat(it.extras.get(Notification.EXTRA_PICTURE)).isNull()
+            assertThat(it.extras.getParcelable<Icon>(Notification.EXTRA_PICTURE_ICON))
+                    .isSameInstanceAs(iconWithUri)
+        }
+
+        style.bigPicture(iconWithBitmap)
+        builder.build().let {
+            assertThat(it.extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
+                    .isSameInstanceAs(bitmap)
+            assertThat(it.extras.get(Notification.EXTRA_PICTURE_ICON)).isNull()
+        }
+    }
+
+    fun testBigPictureStyle_bigPictureUriIcon() {
+        val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val pictureIcon = Icon.createWithContentUri(pictureUri)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(Notification.BigPictureStyle().bigPicture(pictureIcon))
+        checkViews(builder.createBigContentView()) {
+            val pictureView = requireViewByIdName<ImageView>("big_picture")
+            assertThat(pictureView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(pictureView.drawable.intrinsicWidth).isEqualTo(400)
+            assertThat(pictureView.drawable.intrinsicHeight).isEqualTo(300)
+        }
+    }
+
+    fun testPromoteBigPicture_withBigPictureUriIcon() {
+        val pictureUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val pictureIcon = Icon.createWithContentUri(pictureUri)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(Notification.BigPictureStyle()
+                        .bigPicture(pictureIcon)
+                        .showBigPictureWhenCollapsed(true)
+                )
+        checkIconView(builder.createContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(400)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(300)
+        }
+    }
+
     fun testPromoteBigPicture_withoutLargeIcon() {
         val picture = Bitmap.createBitmap(40, 30, Bitmap.Config.ARGB_8888)
         val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
@@ -294,6 +379,25 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
                     .of((iconView.height * 80 / 75).toFloat())
             assertThat(iconView.drawable.intrinsicWidth).isEqualTo(80)
             assertThat(iconView.drawable.intrinsicHeight).isEqualTo(75)
+        }
+        assertThat(builder.build().extras.getParcelable<Bitmap>(Notification.EXTRA_PICTURE))
+                .isSameInstanceAs(picture)
+    }
+
+    fun testBigPicture_withBigLargeIcon_withContentUri() {
+        val iconUri = Uri.parse("content://android.app.stubs.assets/picture_400_by_300.png")
+        val icon = Icon.createWithContentUri(iconUri)
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Title")
+                .setStyle(Notification.BigPictureStyle().bigLargeIcon(icon))
+        checkIconView(builder.createBigContentView()) { iconView ->
+            assertThat(iconView.visibility).isEqualTo(View.VISIBLE)
+            assertThat(iconView.width.toFloat())
+                    .isWithin(1f)
+                    .of((iconView.height * 4 / 3).toFloat())
+            assertThat(iconView.drawable.intrinsicWidth).isEqualTo(400)
+            assertThat(iconView.drawable.intrinsicHeight).isEqualTo(300)
         }
     }
 

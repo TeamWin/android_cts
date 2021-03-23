@@ -16,14 +16,16 @@
 
 package android.voiceinteraction.service;
 
-import android.content.Intent;
 import android.media.AudioFormat;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 import android.os.SharedMemory;
 import android.service.voice.HotwordDetectionService;
 import android.system.ErrnoException;
 import android.util.Log;
+import android.voiceinteraction.common.ICtsHotwordDetectionServiceCallback;
 import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
@@ -50,16 +52,26 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     public void onUpdateState(@Nullable Bundle options, @Nullable SharedMemory sharedMemory) {
         Log.d(TAG, "onUpdateState");
 
-        // TODO : Check the options data and sharedMemory data. It will also need to use the new
-        // mechanism instead of sendBroadcast to respond the test result when submitting isolated
-        // process patch.
+        ICtsHotwordDetectionServiceCallback callback = null;
+        if (options != null) {
+            IBinder binder = options.getBinder(Utils.KEY_TEST_FAKE_BINDER);
+            callback = ICtsHotwordDetectionServiceCallback.Stub.asInterface(binder);
+        }
+
+        if (callback == null) {
+            Log.w(TAG, "no callback to return the test result");
+            return;
+        }
 
         if (sharedMemory != null) {
             try {
                 sharedMemory.mapReadWrite();
-                broadcastIntentWithResult(
-                        Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                        Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY);
+                try {
+                    callback.onTestResult(
+                            Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY);
+                } catch (RemoteException e) {
+                    Log.d(TAG, "call onTestResult RemoteException : " + e);
+                }
                 return;
             } catch (ErrnoException e) {
                 // For read-only case
@@ -67,15 +79,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 sharedMemory.close();
             }
         }
-        broadcastIntentWithResult(Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
-    }
-
-    private void broadcastIntentWithResult(String intentName, int result) {
-        Intent intent = new Intent(intentName)
-                .addFlags(Intent.FLAG_RECEIVER_FOREGROUND | Intent.FLAG_RECEIVER_REGISTERED_ONLY)
-                .putExtra(Utils.KEY_TEST_RESULT, result);
-        Log.d(TAG, "broadcast intent = " + intent + ", result = " + result);
-        sendBroadcast(intent);
+        try {
+            callback.onTestResult(
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+        } catch (RemoteException e) {
+            Log.d(TAG, "call onTestResult RemoteException : " + e);
+        }
     }
 }

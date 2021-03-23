@@ -288,7 +288,7 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
             mConnectivityManager.unregisterNetworkCallback(mNrNetworkCallback);
         }
         // Clear any existing app state after each test.
-        if (WifiBuildCompat.isAtLeastS(mContext)) {
+        if (WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
             ShellIdentityUtils.invokeWithShellPermissions(
                     () -> mWifiManager.removeAppState(myUid(), mContext.getPackageName()));
         }

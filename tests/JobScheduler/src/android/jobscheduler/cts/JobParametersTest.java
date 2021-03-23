@@ -24,6 +24,10 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.PersistableBundle;
+import android.os.UserHandle;
+
+import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 /**
  * Tests related to JobParameters objects.
@@ -43,7 +47,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertEquals(clipData.getItemCount(), params.getClipData().getItemCount());
         assertEquals(clipData.getItemAt(0).getText(), params.getClipData().getItemAt(0).getText());
         assertEquals(grantFlags, params.getClipGrantFlags());
@@ -61,7 +65,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertTrue(persistableBundleEquals(pb, params.getExtras()));
     }
 
@@ -75,7 +79,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertTrue(params.isExpeditedJob());
 
         ji = new JobInfo.Builder(JOB_ID, kJobServiceComponent)
@@ -87,7 +91,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        params = kTestEnvironment.getLastJobParameters();
+        params = kTestEnvironment.getLastStartJobParameters();
         assertFalse(params.isExpeditedJob());
     }
 
@@ -100,11 +104,59 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertEquals(JOB_ID, params.getJobId());
     }
 
     // JobParameters.getNetwork() tested in ConnectivityConstraintTest.
+
+    public void testStopReason() throws Exception {
+        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent).build(),
+                JobParameters.STOP_REASON_TIMEOUT,
+                () -> SystemUtil.runShellCommand(getInstrumentation(),
+                        "cmd jobscheduler timeout"
+                                + " -u " + UserHandle.myUserId()
+                                + " " + kJobServiceComponent.getPackageName()
+                                + " " + JOB_ID));
+
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        BatteryUtils.runDumpsysBatteryUnplug();
+        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiresBatteryNotLow(true).build(),
+                JobParameters.STOP_REASON_CONSTRAINT_BATTERY_NOT_LOW,
+                () -> BatteryUtils.runDumpsysBatterySetLevel(5));
+
+        BatteryUtils.runDumpsysBatterySetPluggedIn(true);
+        BatteryUtils.runDumpsysBatterySetLevel(100);
+        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiresCharging(true).build(),
+                JobParameters.STOP_REASON_CONSTRAINT_CHARGING,
+                BatteryUtils::runDumpsysBatteryUnplug);
+
+        setStorageStateLow(false);
+        verifyStopReason(new JobInfo.Builder(JOB_ID, kJobServiceComponent)
+                        .setRequiresStorageNotLow(true).build(),
+                JobParameters.STOP_REASON_CONSTRAINT_STORAGE_NOT_LOW,
+                () -> setStorageStateLow(true));
+    }
+
+    private void verifyStopReason(JobInfo ji, int stopReason, ExceptionRunnable stopCode)
+            throws Exception {
+        kTestEnvironment.setExpectedExecutions(1);
+        kTestEnvironment.setContinueAfterStart();
+        kTestEnvironment.setExpectedStopped();
+        mJobScheduler.schedule(ji);
+        runSatisfiedJob(ji.getId());
+        assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
+
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
+        assertEquals(JobParameters.STOP_REASON_UNDEFINED, params.getStopReason());
+
+        stopCode.run();
+        assertTrue("Job didn't stop immediately", kTestEnvironment.awaitStopped());
+        params = kTestEnvironment.getLastStopJobParameters();
+        assertEquals(stopReason, params.getStopReason());
+    }
 
     public void testTransientExtras() throws Exception {
         final Bundle b = new Bundle();
@@ -118,7 +170,7 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         runSatisfiedJob(JOB_ID);
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
-        JobParameters params = kTestEnvironment.getLastJobParameters();
+        JobParameters params = kTestEnvironment.getLastStartJobParameters();
         assertEquals(b.size(), params.getTransientExtras().size());
         for (String key : b.keySet()) {
             assertEquals(b.get(key), params.getTransientExtras().get(key));
@@ -128,4 +180,8 @@ public class JobParametersTest extends BaseJobSchedulerTest {
     // JobParameters.getTriggeredContentAuthorities() tested in TriggerContentTest.
     // JobParameters.getTriggeredContentUris() tested in TriggerContentTest.
     // JobParameters.isOverrideDeadlineExpired() tested in TimingConstraintTest.
+
+    private interface ExceptionRunnable {
+        void run() throws Exception;
+    }
 }

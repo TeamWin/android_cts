@@ -50,6 +50,9 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
 
     static final String mInpPrefix = WorkDir.getMediaDirString();
     private final static int TEST_TIMING_TOLERANCE_MS = 150;
+    /** acceptable timeout for the time it takes for a prepared MediaPlayer to have an audio device
+     * selected and reported when starting to play */
+    private final static int PLAY_ROUTING_TIMING_TOLERANCE_MS = 500;
     private final static int TEST_TIMEOUT_SOUNDPOOL_LOAD_MS = 3000;
     private final static long MEDIAPLAYER_PREPARE_TIMEOUT_MS = 2000;
 
@@ -444,7 +447,8 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         mp.start();
 
         assertTrue("onPlaybackConfigChanged play and device called expected "
-                , callback.waitForCallbacks(2));
+                , callback.waitForCallbacks(2,
+                        TEST_TIMING_TOLERANCE_MS + PLAY_ROUTING_TIMING_TOLERANCE_MS));
         assertEquals("number of active players not expected",
                 // one more player active
                 activePlayerCount/*expected*/, callback.getNbConfigs());
@@ -496,10 +500,10 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
             mOnCalledMonitor.signal();
         }
 
-        public boolean waitForCallbacks(int calledCount) throws InterruptedException {
+        public boolean waitForCallbacks(int calledCount, long timeoutMs)
+                throws InterruptedException {
             int signalsCounted =
-                    mOnCalledMonitor.waitForCountedSignals(calledCount,
-                            calledCount*TEST_TIMING_TOLERANCE_MS);
+                    mOnCalledMonitor.waitForCountedSignals(calledCount, timeoutMs);
             return (signalsCounted == calledCount);
         }
     }

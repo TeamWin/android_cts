@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""CameraITS test that a capture result is returned from a manual capture.
+"""
 
 import pprint
 from mobly import test_runner

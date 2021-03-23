@@ -537,7 +537,7 @@ public class StagedInstallTest {
         int sessionId = stageSingleApk(Apex2DifferentPackageName).assertSuccessful().getSessionId();
         PackageInstaller.SessionInfo sessionInfo = waitForBroadcast(sessionId);
         assertThat(sessionInfo.getStagedSessionErrorMessage()).contains(
-                "It is forbidden to install new APEX packages.");
+                "INSTALL_FAILED_WRONG_INSTALLED_VERSION: Package Verification Result");
     }
 
     @Test

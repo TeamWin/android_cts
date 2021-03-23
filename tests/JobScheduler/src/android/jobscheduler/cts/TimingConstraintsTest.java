@@ -118,7 +118,7 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         mJobScheduler.schedule(deadlineJob);
         assertTrue("Failed to execute deadline job", kTestEnvironment.awaitExecution());
         assertTrue("Job does not show its deadline as expired",
-                kTestEnvironment.getLastJobParameters().isOverrideDeadlineExpired());
+                kTestEnvironment.getLastStartJobParameters().isOverrideDeadlineExpired());
     }
 
 
@@ -140,6 +140,6 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         assertTrue("Failed to execute non-deadline job", kTestEnvironment.awaitExecution());
         assertFalse("Job that ran early (unexpired) didn't have" +
                         " JobParameters#isOverrideDeadlineExpired=false",
-                kTestEnvironment.getLastJobParameters().isOverrideDeadlineExpired());
+                kTestEnvironment.getLastStartJobParameters().isOverrideDeadlineExpired());
     }
 }

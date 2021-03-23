@@ -118,7 +118,7 @@ public class DeviceOwnerPlusProfileOwnerTest extends BaseDevicePolicyTest {
      */
     @FlakyTest
     @Test
-    @Ignore
+    @Ignore("b/183395856 Migrate to a device side test.")
     public void testCannotAddManagedProfileViaManagedProvisioning()
             throws Exception {
         int profileUserId = provisionCorpOwnedManagedProfile();

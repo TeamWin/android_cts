@@ -65,6 +65,7 @@ import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.stub.CapabilityExchangeEventListener;
 import android.telephony.ims.stub.CapabilityExchangeEventListener.OptionsRequestCallback;
 import android.telephony.ims.stub.ImsFeatureConfiguration;
+import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 
@@ -89,6 +90,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -612,6 +614,7 @@ public class RcsUceAdapterTest {
 
         // Verify that the contact capability is received and the onCompleted is called.
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + sTestNumberUri, capability);
         verifyCapabilityResult(capability, sTestNumberUri, REQUEST_RESULT_FOUND, true, true);
         waitForResult(completeQueue);
 
@@ -999,12 +1002,15 @@ public class RcsUceAdapterTest {
 
         // Verify that all the three contact's capabilities are received
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact1, capability);
         verifyCapabilityResult(capability, contact1, REQUEST_RESULT_FOUND, true, true);
 
         capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact2, capability);
         verifyCapabilityResult(capability, contact2, REQUEST_RESULT_FOUND, true, false);
 
         capability = waitForResult(capabilityQueue);
+        assertNotNull("Capabilities were not received for contact: " + contact3, capability);
         verifyCapabilityResult(capability, contact3, REQUEST_RESULT_FOUND, false, false);
 
         // Verify the onCompleted is called
@@ -1121,15 +1127,15 @@ public class RcsUceAdapterTest {
 
         // Verify the callback "onCapabilitiesReceived" is called.
         RcsContactUceCapability capability = waitForResult(capabilityQueue);
-        // Verify the callback "onComplete" is called.
-        waitForResult(completeQueue);
         assertNotNull("RcsContactUceCapability should not be null", capability);
+        // Verify the callback "onComplete" is called.
+        assertNotNull(waitForResult(completeQueue));
         assertEquals(RcsContactUceCapability.SOURCE_TYPE_NETWORK, capability.getSourceType());
         assertEquals(sTestNumberUri, capability.getContactUri());
         assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND, capability.getRequestResult());
         assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
                 capability.getCapabilityMechanism());
-        List<String> resultFeatureTags = capability.getOptionsFeatureTags();
+        Set<String> resultFeatureTags = capability.getFeatureTags();
         assertEquals(featureTags.size(), resultFeatureTags.size());
         for (String featureTag : featureTags) {
             if (!resultFeatureTags.contains(featureTag)) {
@@ -1166,7 +1172,7 @@ public class RcsUceAdapterTest {
         assertEquals(RcsContactUceCapability.REQUEST_RESULT_FOUND, capability.getRequestResult());
         assertEquals(RcsContactUceCapability.CAPABILITY_MECHANISM_OPTIONS,
                 capability.getCapabilityMechanism());
-        resultFeatureTags = capability.getOptionsFeatureTags();
+        resultFeatureTags = capability.getFeatureTags();
         assertEquals(featureTags.size(), resultFeatureTags.size());
         for (String featureTag : featureTags) {
             if (!resultFeatureTags.contains(featureTag)) {
@@ -1229,7 +1235,7 @@ public class RcsUceAdapterTest {
                 sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
 
         final Uri contact = sTestContact2Uri;
-        List<String> remoteCapabilities = new ArrayList<>();
+        Set<String> remoteCapabilities = new ArraySet<>();
         remoteCapabilities.add(FEATURE_TAG_CHAT);
         remoteCapabilities.add(FEATURE_TAG_FILE_TRANSFER);
         remoteCapabilities.add(FEATURE_TAG_MMTEL_AUDIO_CALL);
@@ -1284,7 +1290,7 @@ public class RcsUceAdapterTest {
                 sServiceConnector.getCarrierService().getRcsFeature().getEventListener();
 
         final Uri contact = sTestNumberUri;
-        List<String> remoteCapabilities = new ArrayList<>();
+        Set<String> remoteCapabilities = new ArraySet<>();
         remoteCapabilities.add(FEATURE_TAG_CHAT);
         remoteCapabilities.add(FEATURE_TAG_FILE_TRANSFER);
         remoteCapabilities.add(FEATURE_TAG_MMTEL_AUDIO_CALL);

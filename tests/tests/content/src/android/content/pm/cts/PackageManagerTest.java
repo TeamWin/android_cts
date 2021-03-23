@@ -755,6 +755,19 @@ public class PackageManagerTest {
                 "android.permission.ACCESS_NETWORK_STATE",
                 "android.content.cts.permission.TEST_GRANTED");
 
+        // Check usesPermissionFlags
+        for (int i = 0; i < pkgInfo.requestedPermissions.length; i++) {
+            final String name = pkgInfo.requestedPermissions[i];
+            final int flags = pkgInfo.requestedPermissionsFlags[i];
+            final boolean neverForLocation = (flags
+                    & PackageInfo.REQUESTED_PERMISSION_NEVER_FOR_LOCATION) != 0;
+            if ("android.content.cts.permission.TEST_GRANTED".equals(name)) {
+                assertTrue(name + " with flags " + flags, neverForLocation);
+            } else {
+                assertFalse(name + " with flags " + flags, neverForLocation);
+            }
+        }
+
         // Check declared permissions
         PermissionInfo declaredPermission = (PermissionInfo) findPackageItemOrFail(
                 pkgInfo.permissions, CALL_ABROAD_PERMISSION_NAME);
