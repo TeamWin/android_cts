@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Random;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -89,6 +90,10 @@ public class TranscodeTest {
 
     @Before
     public void setUp() throws Exception {
+        Assume.assumeTrue(SystemProperties.getBoolean("sys.fuse.transcode_enabled", false));
+        // TODO(b/182846329): GSI doesn't support transcoding yet, maybe a transcoding issue
+        Assume.assumeFalse(SystemProperties.get("ro.product.system.device").contains("generic"));
+
         TranscodeTestUtils.pollForExternalStorageState();
         TranscodeTestUtils.grantPermission(getContext().getPackageName(),
                 Manifest.permission.READ_EXTERNAL_STORAGE);
