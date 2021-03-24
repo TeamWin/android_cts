@@ -1,0 +1,117 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.translation.cts.unittests;
+
+import static com.google.common.truth.Truth.assertThat;
+
+import static org.testng.Assert.assertThrows;
+
+import android.os.Parcel;
+import android.view.translation.TranslationCapability;
+import android.view.translation.TranslationContext;
+import android.view.translation.TranslationSpec;
+
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class TranslationCapabilityTest {
+
+    private final TranslationSpec sourceSpec =
+            new TranslationSpec("en", TranslationSpec.DATA_FORMAT_TEXT);
+    private final TranslationSpec targetSpec =
+            new TranslationSpec("es", TranslationSpec.DATA_FORMAT_TEXT);
+
+    @Test
+    public void testCapability_nullSpecs() {
+        assertThrows(NullPointerException.class,
+                () -> new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
+                        null, targetSpec, /* uiTranslationEnabled= */ true,
+                        /* supportedTranslationFlags= */ 0));
+        assertThrows(NullPointerException.class,
+                () -> new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
+                        sourceSpec, null,/* uiTranslationEnabled= */ true,
+                        /* supportedTranslationFlags= */ 0));
+    }
+
+    @Test
+    public void testCapability_validCapability() {
+        final TranslationCapability capability =
+                new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
+                        sourceSpec, targetSpec,/* uiTranslationEnabled= */ true,
+                        TranslationContext.FLAG_TRANSLITERATION);
+
+        assertThat(capability.getState())
+                .isEqualTo(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD);
+        assertThat(capability.getSupportedTranslationFlags())
+                .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
+        assertThat(capability.isUiTranslationEnabled()).isTrue();
+
+        assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(capability.getSourceSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+
+        assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(capability.getTargetSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+    }
+
+    @Test
+    public void testParceledCapability() {
+        final TranslationCapability capability =
+                new TranslationCapability(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD,
+                        sourceSpec, targetSpec,/* uiTranslationEnabled= */ true,
+                        TranslationContext.FLAG_TRANSLITERATION);
+
+        assertThat(capability.getState())
+                .isEqualTo(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD);
+        assertThat(capability.getSupportedTranslationFlags())
+                .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
+        assertThat(capability.isUiTranslationEnabled()).isTrue();
+
+        assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(capability.getSourceSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+
+        assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(capability.getTargetSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+
+        final Parcel parcel = Parcel.obtain();
+        capability.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        final TranslationCapability parceledCapability =
+                TranslationCapability.CREATOR.createFromParcel(parcel);
+        parcel.recycle();
+
+        assertThat(parceledCapability.getState())
+                .isEqualTo(TranslationCapability.STATE_AVAILABLE_TO_DOWNLOAD);
+        assertThat(parceledCapability.getSupportedTranslationFlags())
+                .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
+        assertThat(parceledCapability.isUiTranslationEnabled()).isTrue();
+
+        assertThat(parceledCapability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(parceledCapability.getSourceSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+
+        assertThat(parceledCapability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(parceledCapability.getTargetSpec().getDataFormat())
+                .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+    }
+}

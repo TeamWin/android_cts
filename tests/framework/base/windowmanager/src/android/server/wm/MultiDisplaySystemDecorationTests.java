@@ -619,6 +619,69 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
                 NOT_EXPECT_TIMEOUT);
     }
 
+    /**
+     * Test that the IME remains hidden with the {@link WindowManager#DISPLAY_IME_POLICY_HIDE} flag
+     * if the user taps the EditText on displays with no system decorations.
+     */
+    @Test
+    public void testDisplayPolicyImeHideImeNoSystemDecorations() throws Exception {
+        assumeTrue(MSG_NO_MOCK_IME, supportsInstallableIme());
+
+        final MockImeSession mockImeSession = createManagedMockImeSession(this);
+
+        // Launch Ime test activity on default display.
+        final TestActivitySession<ImeTestActivity2> defaultDisplaySession =
+                createManagedTestActivitySession();
+        defaultDisplaySession.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
+                DEFAULT_DISPLAY);
+
+        // Tap the EditText to start IME session.
+        final int[] location = new int[2];
+        EditText editText = defaultDisplaySession.getActivity().mEditText;
+        tapOnDisplayCenter(DEFAULT_DISPLAY);
+        editText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], DEFAULT_DISPLAY);
+
+        // Verify the activity shows soft input on the default display.
+        final ImeEventStream stream = mockImeSession.openEventStream();
+        waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
+                editorMatcher("onStartInput", editText.getPrivateImeOptions()),
+                event -> "showSoftInput".equals(event.getEventName()));
+
+        // Create a virtual display with the policy to hide the IME.
+        final DisplayContent newDisplay = createManagedVirtualDisplaySession()
+                .setShowSystemDecorations(false)
+                .setDisplayImePolicy(DISPLAY_IME_POLICY_HIDE)
+                .setSimulateDisplay(true)
+                .createDisplay();
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> assertTrue("Display should not support showing IME window",
+                        mTargetContext.getSystemService(WindowManager.class)
+                                .getDisplayImePolicy(newDisplay.mId)
+                                == DISPLAY_IME_POLICY_HIDE));
+
+        final TestActivitySession<ImeTestActivity> imeTestActivitySession =
+                createManagedTestActivitySession();
+
+        // Launch Ime test activity in virtual display.
+        imeTestActivitySession.launchTestActivityOnDisplay(ImeTestActivity.class,
+                newDisplay.mId);
+
+        // Tap the EditText on the virtual display.
+        editText = imeTestActivitySession.getActivity().mEditText;
+        tapOnDisplayCenter(newDisplay.mId);
+        editText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
+
+        final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
+
+        // Verify the activity does not show soft input.
+        notExpectEvent(stream, editorMatcher("onStartInput", editText.getPrivateImeOptions()),
+                TIMEOUT);
+        InputMethodVisibilityVerifier.expectImeInvisible(TIMEOUT);
+    }
+
     @Test
     public void testImeWindowCanShownWhenActivityMovedToDisplay() throws Exception {
         // If config_perDisplayFocusEnabled, the focus will not move even if touching on

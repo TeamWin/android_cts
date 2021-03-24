@@ -1003,7 +1003,7 @@
          the user confirmation dialog for the write request.
          <p>Protection level: signature|appop|preinstalled -->
     <permission android:name="android.permission.MANAGE_MEDIA"
-                android:protectionLevel="signature|appop|preinstalled" />
+        android:protectionLevel="signature|appop|preinstalled" />
 
     <!-- ====================================================================== -->
     <!-- Permissions for accessing the device location                          -->
@@ -1387,6 +1387,14 @@
         android:description="@string/permdesc_camera"
         android:backgroundPermission="android.permission.BACKGROUND_CAMERA"
         android:protectionLevel="dangerous|instant" />
+
+    <!-- Required to be able to discover and connect to nearby Bluetooth devices.
+         <p>Protection level: dangerous -->
+    <permission-group android:name="android.permission-group.NEARBY_DEVICES"
+        android:icon="@drawable/ic_qs_bluetooth"
+        android:label="@string/permgrouplab_nearby_devices"
+        android:description="@string/permgroupdesc_nearby_devices"
+        android:priority="750" />
 
     <!-- @SystemApi @TestApi Required to be able to access the camera device in the background.
          This permission is not intended to be held by apps.
@@ -1929,6 +1937,22 @@
         android:description="@string/permdesc_bluetooth"
         android:label="@string/permlab_bluetooth"
         android:protectionLevel="normal" />
+
+    <!-- Required to be able to discover and pair nearby Bluetooth devices.
+         <p>Protection level: dangerous -->
+    <permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:permissionGroup="android.permission-group.UNDEFINED"
+        android:description="@string/permdesc_bluetooth_scan"
+        android:label="@string/permlab_bluetooth_scan"
+        android:protectionLevel="dangerous" />
+
+    <!-- Required to be able to connect to paired Bluetooth devices.
+         <p>Protection level: dangerous -->
+    <permission android:name="android.permission.BLUETOOTH_CONNECT"
+        android:permissionGroup="android.permission-group.UNDEFINED"
+        android:description="@string/permdesc_bluetooth_connect"
+        android:label="@string/permlab_bluetooth_connect"
+        android:protectionLevel="dangerous" />
 
     <!-- @SystemApi @TestApi Allows an application to suspend other apps, which will prevent the
          user from using them until they are unsuspended.
@@ -3554,7 +3578,7 @@
          @hide
     -->
     <permission android:name="android.permission.GET_TOP_ACTIVITY_INFO"
-        android:protectionLevel="signature" />
+        android:protectionLevel="signature|recents" />
 
     <!-- Allows an application to retrieve the current state of keys and
          switches.
@@ -4909,6 +4933,11 @@
     <permission android:name="android.permission.SET_INITIAL_LOCK"
         android:protectionLevel="signature|setup"/>
 
+    <!-- @TestApi Allows applications to set and verify lockscreen credentials.
+        @hide -->
+    <permission android:name="android.permission.SET_AND_VERIFY_LOCKSCREEN_CREDENTIALS"
+                android:protectionLevel="signature"/>
+
     <!-- Allows managing (adding, removing) fingerprint templates. Reserved for the system. @hide -->
     <permission android:name="android.permission.MANAGE_FINGERPRINT"
         android:protectionLevel="signature|privileged" />
@@ -5446,6 +5475,8 @@
          intents}.
          <p>Protection level: normal -->
     <permission android:name="android.permission.USE_FULL_SCREEN_INTENT"
+                android:label="@string/permlab_fullScreenIntent"
+                android:description="@string/permdesc_fullScreenIntent"
                 android:protectionLevel="normal" />
 
     <!-- @SystemApi Allows requesting the framework broadcast the
@@ -5546,6 +5577,10 @@
     <permission android:name="android.permission.ACCESS_LOCUS_ID_USAGE_STATS"
                 android:protectionLevel="signature|appPredictor" />
 
+    <!-- @hide @SystemApi Allows an application to manage app hibernation state. -->
+    <permission android:name="android.permission.MANAGE_APP_HIBERNATION"
+        android:protectionLevel="signature|installer" />
+
     <!-- @hide @TestApi Allows apps to reset the state of {@link com.android.server.am.AppErrors}.
          <p>CTS tests will use UiAutomation.adoptShellPermissionIdentity() to gain access.  -->
     <permission android:name="android.permission.RESET_APP_ERRORS"
@@ -5607,10 +5642,6 @@
     <permission android:name="android.permission.SET_CLIP_SOURCE"
                 android:protectionLevel="signature|recents" />
 
-    <!-- @hide @SystemApi Allows the holder to manage app hibernation states for packages -->
-    <permission android:name="android.permission.MANAGE_APP_HIBERNATION"
-                android:protectionLevel="signature|installer" />
-
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
     <!-- Attribution for Country Detector. -->
@@ -5631,6 +5662,10 @@
     <!-- Attribution for Gnss Time Update service. -->
     <attribution android:tag="GnssTimeUpdateService"
                  android:label="@string/gnss_time_update_service"/>
+    <!-- Attribution for MusicRecognitionManagerService.
+         <p>Not for use by third-party applications.</p> -->
+    <attribution android:tag="MusicRecognitionManagerService"
+        android:label="@string/music_recognition_manager_service"/>
 
     <application android:process="system"
                  android:persistent="true"

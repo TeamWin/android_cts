@@ -116,6 +116,7 @@ android_test {
         ":CtsScopedStorageTestAppCLegacy",
     ]
 }
+
 android_test {
     name: "LegacyStorageTest",
     manifest: "legacy/AndroidManifest.xml",
@@ -129,6 +130,17 @@ android_test {
     java_resources: [
         ":CtsScopedStorageTestAppA",
     ]
+}
+
+android_test {
+    name: "SignatureStorageTest",
+    manifest: "signature/AndroidManifest.xml",
+    srcs: ["signature/src/**/*.java"],
+    static_libs: ["truth-prebuilt", "cts-scopedstorage-lib"],
+    compile_multilib: "both",
+    test_suites: ["general-tests", "mts", "cts"],
+    sdk_version: "test_current",
+    certificate: "platform",
 }
 
 java_test_host {

@@ -2809,6 +2809,40 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Tests {@link WifiManager#setVerboseLoggingLevel(int)}.
+     */
+    public void testSetVerboseLogging() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Boolean currState = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            currState = mWifiManager.isVerboseLoggingEnabled();
+
+            mWifiManager.setVerboseLoggingLevel(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED);
+            assertTrue(mWifiManager.isVerboseLoggingEnabled());
+            assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED,
+                    mWifiManager.getVerboseLoggingLevel());
+
+            mWifiManager.setVerboseLoggingLevel(WifiManager.VERBOSE_LOGGING_LEVEL_DISABLED);
+            assertFalse(mWifiManager.isVerboseLoggingEnabled());
+            assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_DISABLED,
+                    mWifiManager.getVerboseLoggingLevel());
+
+            mWifiManager.setVerboseLoggingLevel(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY);
+            assertTrue(mWifiManager.isVerboseLoggingEnabled());
+            assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY,
+                    mWifiManager.getVerboseLoggingLevel());
+        } finally {
+            if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Tests {@link WifiManager#factoryReset()} cannot be invoked from a non-privileged app.
      *
      * Note: This intentionally does not test the full reset functionality because it causes

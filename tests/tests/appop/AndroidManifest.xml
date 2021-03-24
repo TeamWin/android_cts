@@ -26,8 +26,10 @@
   <attribution android:tag="secondProxyAttribution" android:label="@string/dummyLabel" />
 
   <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-  <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
   <uses-permission android:name="android.permission.BLUETOOTH" />
+  <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+  <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+  <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
   <uses-permission android:name="android.permission.READ_LOGS" />
 
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

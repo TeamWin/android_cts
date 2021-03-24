@@ -13,21 +13,17 @@
   ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
--->
+  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.sensorratepermission.cts.resampling">
-
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-
-    <uses-sdk android:minSdkVersion="31" android:targetSdkVersion="31"/>
-
-    <application android:label="ResamplingTest">
-        <uses-library android:name="android.test.runner"/>
+          package="android.scopedstorage.cts.signature" >
+    <uses-permission android:name="android.permission.ACCESS_MTP" />
+    <application>
+        <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:functionalTest="true"
-                     android:targetPackage="android.sensorratepermission.cts.resampling"
-                     android:label="Two apps register listeners simultaneously"/>
+                     android:targetPackage="android.scopedstorage.cts.signature"
+                     android:label="Signature app tests for scoped storage"/>
+
 </manifest>
