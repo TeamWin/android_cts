@@ -59,6 +59,15 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
             .setDisableIsolatedStorage(true));
     }
 
+    /**
+     * Runs the given phase of SignatureStorageTest by calling into the device.
+     * Throws an exception if the test phase fails.
+     */
+    void runDeviceTestWithPlatformSignature(String phase) throws Exception {
+        assertThat(runDeviceTests("android.scopedstorage.cts.signature",
+                "android.scopedstorage.cts.signature.SignatureStorageTest", phase)).isTrue();
+    }
+
     private void setupExternalStorage() throws Exception {
         if (!mIsExternalStorageSetup) {
             runDeviceTest("setupExternalStorage");
@@ -146,6 +155,21 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
             denyAppOps("android:request_install_packages");
             revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
         }
+    }
+
+    @Test
+    public void testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs() throws Exception {
+        runDeviceTest("testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs");
+    }
+
+    @Test
+    public void testMTPAppWithPlatformSignatureCanAccessAndroidDirs() throws Exception {
+        runDeviceTestWithPlatformSignature("testMTPAppWithPlatformSignatureCanAccessAndroidDirs");
+    }
+
+    @Test
+    public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
+        runDeviceTest("testExternalStorageProviderAndDownloadsProvider");
     }
 
     @Test
@@ -318,12 +342,16 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
         }
     }
 
-    private void grantPermissions(String... perms) throws Exception {
+    private void grantPermissionsToPackage(String packageName, String... perms) throws Exception {
         int currentUserId = getCurrentUserId();
         for (String perm : perms) {
-            executeShellCommand("pm grant --user %d android.scopedstorage.cts %s",
-                    currentUserId, perm);
+            executeShellCommand("pm grant --user %d %s %s",
+                    currentUserId, packageName, perm);
         }
+    }
+
+    private void grantPermissions(String... perms) throws Exception {
+        grantPermissionsToPackage("android.scopedstorage.cts", perms);
     }
 
     private void revokePermissions(String... perms) throws Exception {
