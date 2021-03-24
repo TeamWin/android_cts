@@ -18,6 +18,7 @@ package android.permission.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.BLUETOOTH_CONNECT;
 import static android.Manifest.permission.BLUETOOTH_SCAN;
 import static android.permission.cts.PermissionUtils.grantPermission;
 import static android.permission.cts.PermissionUtils.install;
@@ -41,7 +42,6 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -111,27 +111,26 @@ public class NearbyDevicesPermissionTest {
         install(APK_BLUETOOTH_30);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
         grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
+        revokePermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
         revokePermission(TEST_APP_PKG, BLUETOOTH_SCAN);
-        assertScanBluetoothResult(Result.EMPTY);
+        assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermission31_Default() throws Throwable {
         install(APK_BLUETOOTH_31);
         assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermission31_GrantNearby() throws Throwable {
         install(APK_BLUETOOTH_31);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
         grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
-        assertScanBluetoothResult(Result.EXCEPTION);
+        assertScanBluetoothResult(Result.EMPTY);
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermission31_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_31);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
@@ -140,9 +139,9 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermission31_GrantNearby_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_31);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
         grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
         grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
@@ -150,22 +149,20 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermissionNeverForLocation31_Default() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
         assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantNearby() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
         grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
         assertScanBluetoothResult(Result.FILTERED);
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantLocation() throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
@@ -174,14 +171,60 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
-    @Ignore("Until ag/13973428 lands")
     public void testRequestBluetoothPermissionNeverForLocation31_GrantNearby_GrantLocation()
             throws Throwable {
         install(APK_BLUETOOTH_NEVER_FOR_LOCATION_31);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
         grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
         grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
         grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
         assertScanBluetoothResult(Result.FILTERED);
+    }
+
+    /**
+     * Verify that upgrading an app doesn't gain them any access to Bluetooth
+     * scan results; they'd always need to involve the user to gain permissions.
+     */
+    @Test
+    public void testRequestBluetoothPermission_Upgrade() throws Throwable {
+        install(APK_BLUETOOTH_30);
+        grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
+        grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
+        assertScanBluetoothResult(Result.FULL);
+
+        // Upgrading to target a new SDK level means they need to explicitly
+        // request the new runtime permission; by default it's denied
+        install(APK_BLUETOOTH_31);
+        assertScanBluetoothResult(Result.EXCEPTION);
+
+        // If the user does grant it, they can scan again
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
+        assertScanBluetoothResult(Result.FULL);
+    }
+
+    /**
+     * Verify that downgrading an app doesn't gain them any access to Bluetooth
+     * scan results; they'd always need to involve the user to gain permissions.
+     */
+    @Test
+    public void testRequestBluetoothPermission_Downgrade() throws Throwable {
+        install(APK_BLUETOOTH_31);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
+        grantPermission(TEST_APP_PKG, BLUETOOTH_SCAN);
+        grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
+        grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
+        assertScanBluetoothResult(Result.FULL);
+
+        // Revoking nearby permission means modern app can't scan
+        revokePermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
+        revokePermission(TEST_APP_PKG, BLUETOOTH_SCAN);
+        assertScanBluetoothResult(Result.EXCEPTION);
+
+        // And if they attempt to downgrade, confirm that they can't obtain the
+        // split-permission grant from the older non-runtime permissions
+        install(APK_BLUETOOTH_30);
+        assertScanBluetoothResult(Result.EXCEPTION);
     }
 
     private void assertScanBluetoothResult(Result expected) {
