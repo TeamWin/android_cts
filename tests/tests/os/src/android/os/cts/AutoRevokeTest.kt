@@ -412,9 +412,10 @@ fun waitFindSwitch(label: String): AccessibilityNodeInfo {
  */
 fun waitFindNode(
     matcher: Matcher<AccessibilityNodeInfo>,
-    failMsg: String? = null
+    failMsg: String? = null,
+    timeoutMs: Long = 10_000
 ): AccessibilityNodeInfo {
-    return getEventually {
+    return getEventually({
         val ui = UI_ROOT
         ui.depthFirstSearch { node ->
             matcher.matches(node)
@@ -426,7 +427,7 @@ fun waitFindNode(
                 appendLine("No view found matching $matcher:\n\n${uiDump(ui)}")
             }
         }
-    }
+    }, timeoutMs)
 }
 
 fun byTextIgnoreCase(txt: String): BySelector {
