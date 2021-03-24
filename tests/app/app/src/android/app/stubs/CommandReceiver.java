@@ -17,13 +17,13 @@
 package android.app.stubs;
 
 import android.app.ActivityManager;
+import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Parcel;
@@ -55,6 +55,8 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_START_CHILD_PROCESS = 15;
     public static final int COMMAND_STOP_CHILD_PROCESS = 16;
     public static final int COMMAND_WAIT_FOR_CHILD_PROCESS_GONE = 17;
+    public static final int COMMAND_START_SERVICE = 18;
+    public static final int COMMAND_STOP_SERVICE = 19;
 
     public static final int RESULT_CHILD_PROCESS_STARTED = IBinder.FIRST_CALL_TRANSACTION;
     public static final int RESULT_CHILD_PROCESS_STOPPED = IBinder.FIRST_CALL_TRANSACTION + 1;
@@ -108,14 +110,18 @@ public class CommandReceiver extends BroadcastReceiver {
             case COMMAND_START_FOREGROUND_SERVICE:
                 doStartForegroundService(context, intent);
                 break;
+            case COMMAND_START_SERVICE:
+                doStartService(context, intent);
+                break;
             case COMMAND_STOP_FOREGROUND_SERVICE:
-                doStopForegroundService(context, intent, FG_SERVICE_NAME);
+            case COMMAND_STOP_SERVICE:
+                doStopService(context, intent, FG_SERVICE_NAME);
                 break;
             case COMMAND_START_FOREGROUND_SERVICE_LOCATION:
                 doStartForegroundServiceWithType(context, intent);
                 break;
             case COMMAND_STOP_FOREGROUND_SERVICE_LOCATION:
-                doStopForegroundService(context, intent, FG_LOCATION_SERVICE_NAME);
+                doStopService(context, intent, FG_LOCATION_SERVICE_NAME);
                 break;
             case COMMAND_START_ALERT_SERVICE:
                 doStartAlertService(context);
@@ -176,12 +182,21 @@ public class CommandReceiver extends BroadcastReceiver {
         fgsIntent.putExtras(commandIntent);
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_SERVICE_NAME));
         int command = LocalForegroundService.COMMAND_START_FOREGROUND;
-        fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        fgsIntent.putExtras(LocalForegroundService.newCommand(command));
         try {
             context.startForegroundService(fgsIntent);
-        } catch (IllegalStateException e) {
-            Log.d(TAG, "startForegroundService gets an IllegalStateException", e);
+        } catch (ForegroundServiceStartNotAllowedException e) {
+            Log.d(TAG, "startForegroundService gets an "
+                    + " ForegroundServiceStartNotAllowedException", e);
         }
+    }
+
+    private void doStartService(Context context, Intent commandIntent) {
+        String targetPackage = getTargetPackage(commandIntent);
+        Intent fgsIntent = new Intent();
+        fgsIntent.putExtras(commandIntent);
+        fgsIntent.setComponent(new ComponentName(targetPackage, FG_SERVICE_NAME));
+        context.startService(fgsIntent);
     }
 
     private void doStartForegroundServiceWithType(Context context, Intent commandIntent) {
@@ -190,15 +205,16 @@ public class CommandReceiver extends BroadcastReceiver {
         fgsIntent.putExtras(commandIntent); // include the fg service type if any.
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
-        fgsIntent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        fgsIntent.putExtras(LocalForegroundService.newCommand(command));
         try {
             context.startForegroundService(fgsIntent);
-        } catch (IllegalStateException e) {
-            Log.d(TAG, "startForegroundService gets an IllegalStateException", e);
+        } catch (ForegroundServiceStartNotAllowedException e) {
+            Log.d(TAG, "startForegroundService gets an "
+                    + "ForegroundServiceStartNotAllowedException", e);
         }
     }
 
-    private void doStopForegroundService(Context context, Intent commandIntent,
+    private void doStopService(Context context, Intent commandIntent,
             String serviceName) {
         String targetPackage = getTargetPackage(commandIntent);
         Intent fgsIntent = new Intent();
@@ -246,7 +262,7 @@ public class CommandReceiver extends BroadcastReceiver {
         final Intent intent = new Intent().setComponent(
                 new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
-        intent.putExtras(LocalForegroundService.newCommand(new Binder(), command));
+        intent.putExtras(LocalForegroundService.newCommand(command));
         final PendingIntent pendingIntent = PendingIntent.getForegroundService(context, 0,
                 intent, PendingIntent.FLAG_IMMUTABLE);
         sPendingIntent.put(targetPackage, pendingIntent);
