@@ -111,6 +111,8 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -596,6 +598,7 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals(1, mWmState.countStacks(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD));
     }
 
+    @FlakyTest(bugId = 183538974)
     @Test
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         // Launch a test activity so that we have multiple fullscreen tasks
