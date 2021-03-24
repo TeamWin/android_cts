@@ -17,6 +17,7 @@
 package android.telephonyprovider.cts;
 
 import static android.provider.Telephony.ServiceStateTable.DATA_NETWORK_TYPE;
+import static android.provider.Telephony.ServiceStateTable.DATA_REG_STATE;
 import static android.provider.Telephony.ServiceStateTable.DUPLEX_MODE;
 import static android.provider.Telephony.ServiceStateTable.VOICE_REG_STATE;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
@@ -255,6 +256,58 @@ public class ServiceStateTest {
                 DUPLEX_MODE, oldSS, newSS, false /*expectChange*/);
     }
 
+    /**
+     * Verifies that the data reg state is valid and matches ServiceState#getDataRegState()
+     */
+    @Test
+    public void testGetDataRegState_query() {
+        try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                new String[]{DATA_REG_STATE}, null, null)) {
+            assertThat(cursor.getCount()).isEqualTo(1);
+            cursor.moveToNext();
+
+            int dataRegState = cursor.getInt(cursor.getColumnIndex(DATA_REG_STATE));
+            assertThat(dataRegState).isEqualTo(
+                    mTelephonyManager.getServiceState().getDataRegState());
+        }
+    }
+
+    /**
+     * Verifies that when data reg state did not change, the observer should not receive the
+     * notification.
+     */
+    @Test
+    public void testGetDataRegState_noChangeObserved() throws Exception {
+        ServiceState oldSS = new ServiceState();
+        oldSS.setStateOutOfService();
+        oldSS.setState(ServiceState.STATE_OUT_OF_SERVICE);
+
+        ServiceState copyOfOldSS = new ServiceState();
+        copyOfOldSS.setStateOutOfService();
+        copyOfOldSS.setState(ServiceState.STATE_OUT_OF_SERVICE);
+        // set additional fields which is not related to data reg state
+        copyOfOldSS.setChannelNumber(65536);
+        copyOfOldSS.setIsManualSelection(true);
+
+        verifyNotificationObservedWhenFieldChanged(
+                DATA_REG_STATE, oldSS, copyOfOldSS, false /*expectChange*/);
+    }
+
+    /**
+     * Verifies that when data reg state changed, the observer should receive the notification.
+     */
+    @Test
+    public void testGetDataRegState_changeObserved() throws Exception {
+        ServiceState oldSS = new ServiceState();
+        oldSS.setStateOutOfService();
+
+        ServiceState newSS = new ServiceState();
+        newSS.setStateOutOfService();
+        newSS.setStateOff();
+
+        verifyNotificationObservedWhenFieldChanged(
+                DATA_REG_STATE, oldSS, newSS, true /*expectChange*/);
+    }
 
     /**
      * Insert new ServiceState over the old ServiceState and expect the observer receiving the
