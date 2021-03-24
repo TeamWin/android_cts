@@ -23,6 +23,12 @@
 
     <object type="module_controller" class="com.android.tradefed.testtype.suite.module.Sdk30ModuleController" />
 
+    <!-- Keep screen on for Bluetooth scanning -->
+    <target_preparer class="com.android.tradefed.targetprep.DeviceSetup">
+        <option name="force-skip-system-props" value="true" /> <!-- avoid restarting device -->
+        <option name="screen-always-on" value="on" />
+    </target_preparer>
+
     <!-- Install main test suite apk -->
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -39,6 +45,9 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
         <option name="push" value="CtsAppThatRequestsPermissionAandC.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandC.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermission30.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission30.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermission31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermission31.apk" />
+        <option name="push" value="CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsBluetoothPermissionNeverForLocation31.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission16.apk" />
         <option name="push" value="CtsAppThatRequestsContactsPermission15.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission15.apk" />
         <option name="push" value="CtsAppThatRequestsContactsAndCallLogPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsAndCallLogPermission16.apk" />
