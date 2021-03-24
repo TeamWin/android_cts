@@ -152,7 +152,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         // Ensure that we leave WiFi in its previous state.
         if (mHasWifi) {
-            setMeteredState(mInitialWiFiSSID, mInitialWiFiMeteredState);
+            setWifiMeteredState(mInitialWiFiSSID, mInitialWiFiMeteredState);
             if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
                 try {
                     setWifiState(mInitialWiFiState, mCm, mWifiManager);
@@ -179,7 +179,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        setMeteredState(false);
+        setWifiMeteredState(false);
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -200,7 +200,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        setMeteredState(false);
+        setWifiMeteredState(false);
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -222,7 +222,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        setMeteredState(false);
+        setWifiMeteredState(false);
         setDataSaverEnabled(true);
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -265,7 +265,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!mHasWifi) {
             return;
         }
-        setMeteredState(true);
+        setWifiMeteredState(true);
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -336,7 +336,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         if (!mHasWifi) {
             return;
         }
-        setMeteredState(true);
+        setWifiMeteredState(true);
 
 
         kTestEnvironment.setExpectedExecutions(1);
@@ -356,7 +356,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     public void testCellularConstraintExecutedAndStopped_Foreground() throws Exception {
         if (mHasWifi) {
-            setMeteredState(true);
+            setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
             disconnectWifiToConnectToMobile();
         } else {
@@ -390,7 +390,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         if (mHasWifi) {
-            setMeteredState(true);
+            setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
             disconnectWifiToConnectToMobile();
         } else {
@@ -426,7 +426,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         if (mHasWifi) {
-            setMeteredState(true);
+            setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
             disconnectWifiToConnectToMobile();
         } else {
@@ -455,7 +455,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     public void testExpeditedJobExecutes_DataSaverOn() throws Exception {
         if (mHasWifi) {
-            setMeteredState(true);
+            setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
             disconnectWifiToConnectToMobile();
         } else {
@@ -485,7 +485,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             return;
         }
         if (mHasWifi) {
-            setMeteredState(true);
+            setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
             disconnectWifiToConnectToMobile();
         } else {
@@ -664,7 +664,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
             return;
         }
-        setMeteredState(false);
+        setWifiMeteredState(false);
 
         kTestEnvironment.setExpectedExecutions(0);
         mJobScheduler.schedule(
@@ -685,7 +685,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
             return;
         }
-        setMeteredState(true);
+        setWifiMeteredState(true);
 
         kTestEnvironment.setExpectedExecutions(0);
         mJobScheduler.schedule(
@@ -710,7 +710,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
             return;
         }
-        setMeteredState(false);
+        setWifiMeteredState(false);
 
         kTestEnvironment.setExpectedExecutions(0);
         mJobScheduler.schedule(
@@ -783,17 +783,18 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         return m.group(1);
     }
 
-    private void setMeteredState(boolean metered) {
-        setMeteredState(metered ? "true" : "false");
+    private void setWifiMeteredState(boolean metered) throws Exception {
+        if (metered) {
+            // Make sure unmetered cellular networks don't interfere.
+            setAirplaneMode(true);
+            setWifiState(true, mCm, mWifiManager);
+        }
+        final String ssid = getWifiSSID();
+        setWifiMeteredState(ssid, metered ? "true" : "false");
     }
 
     // metered should be "true", "false" or "none"
-    private void setMeteredState(String metered) {
-        final String ssid = getWifiSSID();
-        setMeteredState(ssid, metered);
-    }
-
-    private void setMeteredState(String ssid, String metered) {
+    private void setWifiMeteredState(String ssid, String metered) {
         if (metered.equals(getWifiMeteredStatus(ssid))) {
             return;
         }
@@ -872,7 +873,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * @see #mHasTelephony
      * @see #checkDeviceSupportsMobileData()
      */
-    private void disconnectWifiToConnectToMobile() throws InterruptedException {
+    private void disconnectWifiToConnectToMobile() throws Exception {
+        setAirplaneMode(false);
         if (mHasWifi && mWifiManager.isWifiEnabled()) {
             NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
             NetworkCapabilities nc = new NetworkCapabilities.Builder()
