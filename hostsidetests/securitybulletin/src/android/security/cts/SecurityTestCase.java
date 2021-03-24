@@ -20,6 +20,7 @@ import com.android.compatibility.common.util.MetricsReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.Option;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.IAbiReceiver;
@@ -68,6 +69,11 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
     private static Map<ITestDevice, String> sTestName = new HashMap<>();
     private static Map<ITestDevice, PocPusher> sPocPusher = new HashMap<>();
 
+    @Option(name = "set-kptr_restrict",
+            description = "If kptr_restrict should be set to 2 after every reboot")
+    private boolean setKptr_restrict = false;
+    private boolean ignoreKernelAddress = false;
+
     /**
      * Waits for device to be online, marks the most recent boottime of the device
      */
@@ -85,6 +91,17 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
 
         pocPusher.setDevice(getDevice()).setBuild(getBuild()).setAbi(getAbi());
         sPocPusher.put(getDevice(), pocPusher);
+
+        if (setKptr_restrict) {
+            if (getDevice().enableAdbRoot()) {
+                CLog.i("setting kptr_restrict to 2");
+                getDevice().executeShellCommand("echo 2 > /proc/sys/kernel/kptr_restrict");
+                getDevice().disableAdbRoot();
+            } else {
+                // not a rootable device
+                ignoreKernelAddress = true;
+            }
+        }
     }
 
     /**
@@ -160,6 +177,7 @@ public class SecurityTestCase extends BaseHostJUnit4Test {
      */
     public void assertNotKernelPointer(Callable<String> getPtrFunction, ITestDevice deviceToReboot)
             throws Exception {
+        assumeFalse("Cannot set kptr_restrict to 2, ignoring kptr test.", ignoreKernelAddress);
         String ptr = null;
         for (int i = 0; i < 4; i++) { // ~0.4% chance of false positive
             ptr = getPtrFunction.call();
