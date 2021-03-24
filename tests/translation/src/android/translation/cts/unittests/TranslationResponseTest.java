@@ -21,6 +21,7 @@ import static android.view.translation.TranslationResponseValue.STATUS_SUCCESS;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.os.Parcel;
+import android.util.SparseArray;
 import android.view.autofill.AutofillId;
 import android.view.translation.TranslationResponse;
 import android.view.translation.TranslationResponseValue;
@@ -30,6 +31,8 @@ import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
 
 @RunWith(AndroidJUnit4.class)
 public class TranslationResponseTest {
@@ -141,6 +144,34 @@ public class TranslationResponseTest {
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
                         .setViewTranslationResponse(0, mViewResponse)
                         .setTranslationResponseValue(0, mValue)
+                        .build();
+
+        assertThat(response.isFinalResponse()).isTrue();
+        assertThat(response.getTranslationResponseValues().size()).isEqualTo(1);
+        assertThat(response.getViewTranslationResponses().size()).isEqualTo(1);
+
+        final ViewTranslationResponse viewResponse =
+                response.getViewTranslationResponses().get(0);
+        assertThat(viewResponse.getAutofillId()).isEqualTo(new AutofillId(17));
+        assertThat(viewResponse.getKeys().size()).isEqualTo(1);
+        assertThat(viewResponse.getValue("sample id").getText()).isEqualTo("sample text");
+
+        final TranslationResponseValue value =
+                response.getTranslationResponseValues().get(0);
+        assertThat(value.getText()).isEqualTo("hello");
+    }
+
+    @Test
+    public void testBuilder_mixingSetters() {
+        final SparseArray<TranslationResponseValue> values = new SparseArray<>();
+        values.set(0, mValue);
+        final SparseArray<ViewTranslationResponse> responses = new SparseArray<>();
+        responses.set(0, mViewResponse);
+
+        final TranslationResponse response =
+                new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
+                        .setViewTranslationResponses(responses)
+                        .setTranslationResponseValues(values)
                         .build();
 
         assertThat(response.isFinalResponse()).isTrue();
