@@ -524,7 +524,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
 
             // Restart wifi subsystem.
-            mWifiManager.restartWifiSubsystem(null);
+            mWifiManager.restartWifiSubsystem();
             // Wait for the device to connect back.
             PollingCheck.check(
                     "Wifi not connected",
