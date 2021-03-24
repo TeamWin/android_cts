@@ -1465,6 +1465,71 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     }
 
     /**
+     * Check remosaic reprocessing capabilities. Check that ImageFormat.RAW_SENSOR is supported as
+     * input and output.
+     */
+    @Test
+    public void testRemosaicReprocessingCharacteristics() {
+        for (int i = 0; i < mAllCameraIds.length; i++) {
+            Log.i(TAG, "testRemosaicReprocessingCharacteristics: Testing camera ID " +
+                    mAllCameraIds[i]);
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supportsRemosaic = arrayContains(capabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING);
+            if (!supportsRemosaic) {
+                Log.i(TAG, "Remosaic reprocessing not supported by camera id " + i +
+                        " skipping test");
+                continue;
+            }
+            StreamConfigurationMap configs =
+                    c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION);
+            Integer maxNumInputStreams =
+                    c.get(CameraCharacteristics.REQUEST_MAX_NUM_INPUT_STREAMS);
+            int[] inputFormats = configs.getInputFormats();
+            int[] outputFormats = configs.getOutputFormats();
+
+            mCollector.expectTrue("Support reprocessing but max number of input stream is " +
+                    maxNumInputStreams, maxNumInputStreams != null && maxNumInputStreams > 0);
+
+            // Verify mandatory input formats are supported
+            mCollector.expectTrue("RAW_SENSOR input support needed for REMOSAIC reprocessing",
+                    arrayContains(inputFormats, ImageFormat.RAW_SENSOR));
+            // max capture stall must be reported if one of the reprocessing is supported.
+            final int MAX_ALLOWED_STALL_FRAMES = 4;
+            Integer maxCaptureStall = c.get(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL);
+            mCollector.expectTrue("max capture stall must be non-null and no larger than "
+                    + MAX_ALLOWED_STALL_FRAMES,
+                    maxCaptureStall != null && maxCaptureStall <= MAX_ALLOWED_STALL_FRAMES);
+
+            for (int input : inputFormats) {
+                // Verify mandatory output formats are supported
+                int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+
+                // Verify camera can output the reprocess input formats and sizes.
+                Size[] inputSizes = configs.getInputSizes(input);
+                Size[] outputSizes = configs.getOutputSizes(input);
+                Size[] highResOutputSizes = configs.getHighResolutionOutputSizes(input);
+                mCollector.expectTrue("no input size supported for format " + input,
+                        inputSizes.length > 0);
+                mCollector.expectTrue("no output size supported for format " + input,
+                        outputSizes.length > 0);
+
+                for (Size inputSize : inputSizes) {
+                    mCollector.expectTrue("Camera must be able to output the supported " +
+                            "reprocessing input size",
+                            arrayContains(outputSizes, inputSize) ||
+                            arrayContains(highResOutputSizes, inputSize));
+                }
+            }
+        }
+    }
+
+
+    /**
      * Check depth output capability
      */
     @Test

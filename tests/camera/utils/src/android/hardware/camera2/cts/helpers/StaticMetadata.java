@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
+import static android.hardware.camera2.CameraCharacteristics.*;
 
 /**
  * Helpers to get common static info out of the camera.
@@ -76,7 +77,7 @@ public class StaticMetadata {
 
     // Last defined capability enum, for iterating over all of them
     public static final int LAST_CAPABILITY_ENUM =
-            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_OFFLINE_PROCESSING;
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING;
 
     // Access via getAeModeName() to account for vendor extensions
     public static final String[] AE_MODE_NAMES = new String[] {
@@ -2230,6 +2231,23 @@ public class StaticMetadata {
     }
 
     /*
+     * Determine if camera device supports keys that must be supported by
+     * ULTRA_HIGH_RESOLUTION_SENSORs
+     *
+     * @return {@code true} if minimum set of keys are supported
+     */
+    public boolean areMaximumResolutionKeysSupported() {
+        return mCharacteristics.get(
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
+                mCharacteristics.get(
+                        SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
+                mCharacteristics.get(
+                        SENSOR_INFO_PIXEL_ARRAY_SIZE_MAXIMUM_RESOLUTION) != null &&
+                mCharacteristics.get(
+                        SCALER_STREAM_CONFIGURATION_MAP_MAXIMUM_RESOLUTION) != null;
+    }
+
+    /*
      * Determine if camera device support AWB lock control
      *
      * @return {@code true} if AWB lock control is supported
@@ -2425,6 +2443,16 @@ public class StaticMetadata {
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA));
     }
 
+    /**
+     * Check if this camera device is an ULTRA_HIGH_RESOLUTION_SENSOR
+     *
+     * @return true if this is an ultra high resolution sensor
+     */
+    public boolean isUltraHighResolutionSensor() {
+        List<Integer> availableCapabilities = getAvailableCapabilitiesChecked();
+        return (availableCapabilities.contains(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR));
+    }
     /**
      * Check if this camera device is a monochrome camera with Y8 support.
      *
