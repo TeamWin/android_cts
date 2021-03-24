@@ -460,6 +460,14 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             // Reset the scorer countdown latch for onStop
             countDownLatchScorer = new CountDownLatch(1);
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
+            if (BuildCompat.isAtLeastS()) {
+                // Notify status change and request a NUD check
+                scoreUpdateObserver.notifyStatusUpdate(
+                        connectedNetworkScorer.startSessionId, false);
+                scoreUpdateObserver.requestNudOperation(connectedNetworkScorer.startSessionId);
+                // Blocklist current AP with invalid session Id
+                scoreUpdateObserver.blocklistCurrentBssid(-1);
+            }
             // Now disconnect from the network.
             mWifiManager.disconnect();
             // Wait for it to be disconnected.
