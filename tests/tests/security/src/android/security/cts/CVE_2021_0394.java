@@ -18,7 +18,7 @@ package android.security.cts;
 
 import android.platform.test.annotations.RequiresDevice;
 import android.platform.test.annotations.SecurityTest;
-import android.support.test.runner.AndroidJUnit4;
+import androidx.test.runner.AndroidJUnit4;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 import static org.junit.Assert.assertFalse;
