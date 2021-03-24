@@ -21,18 +21,23 @@ import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSea
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.expectThrows;
+
 import android.annotation.NonNull;
 import android.app.appsearch.AppSearchEmail;
+import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSchema.PropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GlobalSearchSessionShim;
 import android.app.appsearch.PutDocumentsRequest;
+import android.app.appsearch.ReportSystemUsageRequest;
 import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.exceptions.AppSearchException;
 import android.content.Context;
 
 import androidx.test.core.app.ApplicationProvider;
@@ -42,11 +47,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public abstract class GlobalSearchSessionCtsTestBase {
     private AppSearchSessionShim mDb1;
@@ -617,5 +624,149 @@ public abstract class GlobalSearchSessionCtsTestBase {
                         .setSubject("testPut example")
                         .build();
         assertThat(documents).containsExactly(expected1, expected2);
+    }
+
+    @Test
+    public void testQuery_ResultGroupingLimits() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        mDb2.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index one document in 'namespace1' and one document in 'namespace2' into db1.
+        AppSearchEmail inEmail1 =
+                new AppSearchEmail.Builder("namespace1", "uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail1).build()));
+        AppSearchEmail inEmail2 =
+                new AppSearchEmail.Builder("namespace2", "uri2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail2).build()));
+
+        // Index one document in 'namespace1' and one document in 'namespace2' into db2.
+        AppSearchEmail inEmail3 =
+                new AppSearchEmail.Builder("namespace1", "uri3")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail3).build()));
+        AppSearchEmail inEmail4 =
+                new AppSearchEmail.Builder("namespace2", "uri4")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb2.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail4).build()));
+
+        // Query with per package result grouping. Only the last document 'email4' should be
+        // returned.
+        List<GenericDocument> documents =
+                snapshotResults(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_PACKAGE, /*resultLimit=*/ 1)
+                                .build());
+        assertThat(documents).containsExactly(inEmail4);
+
+        // Query with per namespace result grouping. Only the last document in each namespace should
+        // be returned ('email4' and 'email3').
+        documents =
+                snapshotResults(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_NAMESPACE, /*resultLimit=*/ 1)
+                                .build());
+        assertThat(documents).containsExactly(inEmail4, inEmail3);
+
+        // Query with per package and per namespace result grouping. Only the last document in each
+        // namespace should be returned ('email4' and 'email3').
+        documents =
+                snapshotResults(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_NAMESPACE
+                                                | SearchSpec.GROUPING_TYPE_PER_PACKAGE,
+                                        /*resultLimit=*/ 1)
+                                .build());
+        assertThat(documents).containsExactly(inEmail4, inEmail3);
+    }
+
+    @Test
+    @Ignore("TODO(b/183031844)")
+    public void testReportSystemUsage_ForbiddenFromNonSystem() throws Exception {
+        // Index a document
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        AppSearchEmail email1 =
+                new AppSearchEmail.Builder("namespace", "uri1")
+                        .setCreationTimestampMillis(1000)
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(email1).build()));
+
+        // Query
+        List<SearchResult> page;
+        try (SearchResultsShim results =
+                mGlobalAppSearchManager.search(
+                        "",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .addFilterSchemas(AppSearchEmail.SCHEMA_TYPE)
+                                .build())) {
+            page = results.getNextPage().get();
+        }
+        assertThat(page).isNotEmpty();
+        SearchResult firstResult = page.get(0);
+
+        ExecutionException exception =
+                expectThrows(
+                        ExecutionException.class,
+                        () ->
+                                mGlobalAppSearchManager
+                                        .reportSystemUsage(
+                                                new ReportSystemUsageRequest.Builder(
+                                                                firstResult.getPackageName(),
+                                                                firstResult.getDatabaseName(),
+                                                                firstResult
+                                                                        .getGenericDocument()
+                                                                        .getNamespace())
+                                                        .setUri(
+                                                                firstResult
+                                                                        .getGenericDocument()
+                                                                        .getUri())
+                                                        .build())
+                                        .get());
+        assertThat(exception).hasCauseThat().isInstanceOf(AppSearchException.class);
+        AppSearchException ase = (AppSearchException) exception.getCause();
+        assertThat(ase.getResultCode()).isEqualTo(AppSearchResult.RESULT_SECURITY_ERROR);
+        assertThat(ase)
+                .hasMessageThat()
+                .contains("com.android.cts.appsearch does not have access to report system usage");
     }
 }
