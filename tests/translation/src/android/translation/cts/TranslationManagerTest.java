@@ -16,14 +16,19 @@
 
 package android.translation.cts;
 
-import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Application;
 import android.app.Instrumentation;
+import android.app.PendingIntent;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
+import android.util.ArraySet;
 import android.util.Log;
+import android.view.translation.TranslationCapability;
+import android.view.translation.TranslationContext;
 import android.view.translation.TranslationManager;
 import android.view.translation.TranslationRequest;
 import android.view.translation.TranslationRequestValue;
@@ -32,10 +37,12 @@ import android.view.translation.TranslationResponseValue;
 import android.view.translation.TranslationSpec;
 import android.view.translation.Translator;
 
-import androidx.annotation.NonNull;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ActivitiesWatcher;
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
@@ -44,11 +51,10 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
@@ -78,6 +84,7 @@ public class TranslationManagerTest {
     private static final String TAG = "BasicTranslationTest";
 
     private CtsTranslationService.ServiceWatcher mServiceWatcher;
+    private ActivitiesWatcher mActivitiesWatcher;
 
     private static Instrumentation sInstrumentation;
     private static CtsTranslationService.TranslationReplier sTranslationReplier;
@@ -96,6 +103,10 @@ public class TranslationManagerTest {
     @After
     public void cleanup() {
         Helper.resetTemporaryTranslationService();
+        if (mActivitiesWatcher != null) {
+            final Application app = (Application) ApplicationProvider.getApplicationContext();
+            app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
+        }
     }
 
     @Test
@@ -116,23 +127,22 @@ public class TranslationManagerTest {
         final CountDownLatch translationLatch = new CountDownLatch(1);
         final AtomicReference<TranslationResponse> responseRef = new AtomicReference<>();
 
-        final Translator translator = manager.createTranslator(
+        final TranslationContext translationContext = new TranslationContext.Builder(
                 new TranslationSpec(Locale.ENGLISH.getLanguage(),
                         TranslationSpec.DATA_FORMAT_TEXT),
                 new TranslationSpec(Locale.FRENCH.getLanguage(),
-                        TranslationSpec.DATA_FORMAT_TEXT));
+                        TranslationSpec.DATA_FORMAT_TEXT))
+                .build();
+        final Translator translator = manager.createTranslator(translationContext);
+
         try {
             mServiceWatcher.waitOnConnected();
         } catch (InterruptedException e) {
             Log.w(TAG, "Exception waiting for onConnected");
         }
+
         assertThat(translator.isDestroyed()).isFalse();
-        final Executor executor = new Executor() {
-            @Override
-            public void execute(Runnable command) {
-                command.run();
-            }
-        };
+
         final Consumer<TranslationResponse> callback = new Consumer<TranslationResponse>() {
             @Override
             public void accept(TranslationResponse translationResponse) {
@@ -143,7 +153,7 @@ public class TranslationManagerTest {
 
         translator.translate(new TranslationRequest.Builder()
                 .addTranslationRequestValue(TranslationRequestValue.forText("hello world"))
-                .build(), executor, callback);
+                .build(), (r) -> r.run(), callback);
 
         sTranslationReplier.getNextTranslationRequest();
 
@@ -177,27 +187,61 @@ public class TranslationManagerTest {
     }
 
     @Test
-    public void testGetSupportedLocales() throws Exception{
+    public void testGetTranslationCapabilities() throws Exception{
         enableCtsTranslationService();
 
         final TranslationManager manager = sInstrumentation.getContext().getSystemService(
                 TranslationManager.class);
         final CountDownLatch latch = new CountDownLatch(1);
-        final AtomicReference<List<String>> resultRef = new AtomicReference<>();
+        final AtomicReference<Set<TranslationCapability>> resultRef =
+                new AtomicReference<>();
 
         final Thread th = new Thread(() -> {
-            final List<String> supportLocales = manager.getSupportedLocales();
-            // TODO(b/178651514): empty implementation not forward to service, should update tests
-            resultRef.set(supportLocales);
+            final Set<TranslationCapability> capabilities =
+                    manager.getTranslationCapabilities(TranslationSpec.DATA_FORMAT_TEXT,
+                            TranslationSpec.DATA_FORMAT_TEXT);
+            resultRef.set(capabilities);
             latch.countDown();
         });
         th.start();
         latch.await();
 
-        final List<String> supportLocales  = resultRef.get();
-        // TODO(b/178651514): empty implementation and has bug now. It will return null instead of
-        //  empty list
-        assertThat(supportLocales).isNull();
+        final ArraySet<TranslationCapability> capabilities = new ArraySet<>(resultRef.get());
+        assertThat(capabilities.size()).isEqualTo(1);
+        capabilities.forEach((capability) -> {
+            assertThat(capability.getState()).isEqualTo(TranslationCapability.STATE_ON_DEVICE);
+
+            assertThat(capability.getSupportedTranslationFlags()).isEqualTo(0);
+            assertThat(capability.isUiTranslationEnabled()).isTrue();
+            assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+            assertThat(capability.getSourceSpec().getDataFormat())
+                    .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+            assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+            assertThat(capability.getTargetSpec().getDataFormat())
+                    .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+        });
+    }
+
+    @Test
+    public void testGetTranslationSettingsActivityIntent() throws Exception{
+        enableCtsTranslationService();
+
+        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
+                TranslationManager.class);
+        final PendingIntent pendingIntent = manager.getTranslationSettingsActivityIntent();
+
+        assertThat(pendingIntent).isNotNull();
+        assertThat(pendingIntent.isImmutable()).isTrue();
+
+        // Start Settings Activity and verify if the expected Activity resumed
+        mActivitiesWatcher = new ActivitiesWatcher(5_000);
+        final Application app = (Application) ApplicationProvider.getApplicationContext();
+        app.registerActivityLifecycleCallbacks(mActivitiesWatcher);
+        final ActivityWatcher watcher = mActivitiesWatcher.watch(SimpleActivity.class);
+
+        pendingIntent.send();
+
+        watcher.waitFor(RESUMED);
     }
 
     protected void enableCtsTranslationService() {

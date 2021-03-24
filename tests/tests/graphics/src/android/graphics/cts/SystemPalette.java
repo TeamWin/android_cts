@@ -41,7 +41,8 @@ import java.util.List;
 @RunWith(AndroidJUnit4.class)
 public class SystemPalette {
 
-    private static final double MAX_CHROMA_DISTANCE = 0.1;
+    // Hue goes from 0 to 360
+    private static final int MAX_HUE_DISTANCE = 30;
 
     @Test
     public void testShades0and1000() {
@@ -71,35 +72,33 @@ public class SystemPalette {
                 getAllNeutral1Colors(context), getAllNeutral2Colors(context));
 
         for (int[] palette : allPalettes) {
-            for (int i = 2; i < palette.length; i++) {
+            for (int i = 2; i < palette.length - 1; i++) {
                 assertWithMessage("Color " + Integer.toHexString((palette[i - 1]))
-                        + " has different chroma compared to " + Integer.toHexString(palette[i]))
-                        .that(similarChroma(palette[i - 1], palette[i])).isTrue();
+                        + " has different chroma compared to " + Integer.toHexString(palette[i])
+                        + " for palette: " + Arrays.toString(palette))
+                        .that(similarHue(palette[i - 1], palette[i])).isTrue();
             }
         }
     }
 
     /**
-     * Compare if color A and B have similar color, in LAB space.
+     * Compare if color A and B have similar hue, in HSL space.
      *
      * @param colorA Color 1
      * @param colorB Color 2
      * @return True when colors have similar chroma.
      */
-    private boolean similarChroma(@ColorInt int colorA, @ColorInt int colorB) {
-        final double[] labColor1 = new double[3];
-        final double[] labColor2 = new double[3];
+    private boolean similarHue(@ColorInt int colorA, @ColorInt int colorB) {
+        final float[] hslColor1 = new float[3];
+        final float[] hslColor2 = new float[3];
 
-        ColorUtils.RGBToLAB(Color.red(colorA), Color.green(colorA), Color.blue(colorA), labColor1);
-        ColorUtils.RGBToLAB(Color.red(colorB), Color.green(colorB), Color.blue(colorB), labColor2);
+        ColorUtils.RGBToHSL(Color.red(colorA), Color.green(colorA), Color.blue(colorA), hslColor1);
+        ColorUtils.RGBToHSL(Color.red(colorB), Color.green(colorB), Color.blue(colorB), hslColor2);
 
-        labColor1[1] = (labColor1[1] + 128.0) / 256;
-        labColor1[2] = (labColor1[2] + 128.0) / 256;
-        labColor2[1] = (labColor2[1] + 128.0) / 256;
-        labColor2[2] = (labColor2[2] + 128.0) / 256;
+        float hue1 = Math.max(hslColor1[0], hslColor2[0]);
+        float hue2 = Math.min(hslColor1[0], hslColor2[0]);
 
-        return (Math.abs(labColor1[1] - labColor2[1]) < MAX_CHROMA_DISTANCE)
-                && (Math.abs(labColor1[2] - labColor2[2]) < MAX_CHROMA_DISTANCE);
+        return hue1 - hue2 < MAX_HUE_DISTANCE;
     }
 
     @Test

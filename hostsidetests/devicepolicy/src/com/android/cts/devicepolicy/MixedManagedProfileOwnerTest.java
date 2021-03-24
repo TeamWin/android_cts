@@ -138,19 +138,22 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testSetGetNetworkSlicingStatus() throws Exception {
-        executeDeviceTestMethod(".NetworkSlicingStatusTest", "testGetSetNetworkSlicingStatus");
+    public void testSetGetEnterpriseNetworkPreferenceStatus() throws Exception {
+        executeDeviceTestMethod(".testSetGetEnterpriseNetworkPreferenceStatus",
+                "testGetSetEnterpriseNetworkPreferenceStatus");
     }
 
     @Test
-    public void testSetNetworkSlicingStatusLogged() throws Exception {
+    public void testSetEnterpriseNetworkPreferenceStatusLogged() throws Exception {
         DevicePolicyEventLogVerifier.assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest",
-                    "testSetNetworkSlicingEnabledLogged");
-        }, new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_SLICING_ENABLED_VALUE)
+                    "testSetEnterpriseNetworkPreferenceEnabledLogged");
+        }, new DevicePolicyEventWrapper.Builder(
+                EventId.SET_ENTERPRISE_NETWORK_PREFERENCE_ENABLED_VALUE)
                 .setBoolean(true)
                 .build(),
-        new DevicePolicyEventWrapper.Builder(EventId.SET_NETWORK_SLICING_ENABLED_VALUE)
+        new DevicePolicyEventWrapper.Builder(
+                EventId.SET_ENTERPRISE_NETWORK_PREFERENCE_ENABLED_VALUE)
                 .setBoolean(false)
                 .build());
     }

@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 public class IntentSenderActivity extends Activity {
 
-    private static String TAG = "IntentSenderActivity";
+    private static final String TAG = IntentSenderActivity.class.getSimpleName();
 
     private final SynchronousQueue<Result> mResult = new SynchronousQueue<>();
 
