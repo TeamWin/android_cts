@@ -42,6 +42,7 @@ import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
+import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.appenumeration.cts.Constants.QUERIES_ACTIVITY_ACTION;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING;
 import static android.appenumeration.cts.Constants.QUERIES_NOTHING_PERM;
@@ -92,6 +93,7 @@ import static android.os.Process.INVALID_UID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItemInArray;
@@ -626,7 +628,7 @@ public class AppEnumerationTests {
     public void broadcastAdded_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_ADDED);
+                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ false);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             result.await();
@@ -640,7 +642,7 @@ public class AppEnumerationTests {
     public void broadcastAdded_visibleReceives() throws Exception {
         final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_ADDED);
+                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ false);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             Assert.assertEquals(TARGET_FILTERS,
@@ -654,7 +656,7 @@ public class AppEnumerationTests {
     public void broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             result.await();
@@ -668,7 +670,7 @@ public class AppEnumerationTests {
     public void broadcastRemoved_visibleReceives() throws Exception {
         final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             Assert.assertEquals(TARGET_FILTERS,
@@ -676,6 +678,27 @@ public class AppEnumerationTests {
         } catch (MissingBroadcastException e) {
             fail();
         }
+    }
+
+    @Test
+    public void broadcastSuspended_visibleReceives() throws Exception {
+        assertBroadcastSuspendedVisible(QUERIES_PACKAGE,
+                Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER),
+                Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER));
+    }
+
+    @Test
+    public void broadcastSuspended_notVisibleDoesNotReceive() throws Exception {
+        assertBroadcastSuspendedVisible(QUERIES_NOTHING,
+                Arrays.asList(),
+                Arrays.asList(TARGET_NO_API, TARGET_SYNCADAPTER));
+    }
+
+    @Test
+    public void broadcastSuspended_visibleReceivesAndNotVisibleDoesNotReceive() throws Exception {
+        assertBroadcastSuspendedVisible(QUERIES_ACTIVITY_ACTION,
+                Arrays.asList(TARGET_FILTERS),
+                Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
     }
 
     @Test
@@ -794,6 +817,24 @@ public class AppEnumerationTests {
         final String[] packageNames = commandMethod.apply(sourcePackageName);
         assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
                 packageNames, not(hasItemInArray(targetPackageName)));
+    }
+
+    private void assertBroadcastSuspendedVisible(String sourcePackageName,
+            List<String> expectedVisiblePackages, List<String> packagesToSuspend)
+            throws Exception {
+        final Bundle extras = new Bundle();
+        extras.putStringArray(Intent.EXTRA_PACKAGES, packagesToSuspend.toArray(new String[] {}));
+        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
+                /* targetUid */ INVALID_UID, extras, Constants.ACTION_AWAIT_PACKAGES_SUSPENDED,
+                /* waitForReady */ true);
+        try {
+            setPackagesSuspended(true, packagesToSuspend);
+            final String[] suspendedPackages = result.await().getStringArray(Intent.EXTRA_PACKAGES);
+            assertThat(suspendedPackages, arrayContainingInAnyOrder(
+                    expectedVisiblePackages.toArray()));
+        } finally {
+            setPackagesSuspended(false, packagesToSuspend);
+        }
     }
 
     private PackageInfo getPackageInfo(String sourcePackageName, String targetPackageName)
@@ -935,12 +976,24 @@ public class AppEnumerationTests {
                 .toArray(String[]::new);
     }
 
+    private void setPackagesSuspended(boolean suspend, List<String> packages) {
+        final StringBuilder cmd = new StringBuilder("pm ");
+        if (suspend) {
+            cmd.append("suspend");
+        } else {
+            cmd.append("unsuspend");
+        }
+        packages.stream().forEach(p -> cmd.append(" ").append(p));
+        runShellCommand(cmd.toString());
+    }
+
     interface Result {
         Bundle await() throws Exception;
     }
 
     private Result sendCommand(String sourcePackageName, @Nullable String targetPackageName,
-            int targetUid, @Nullable Parcelable intentExtra, String action) {
+            int targetUid, @Nullable Parcelable intentExtra, String action, boolean waitForReady)
+            throws Exception {
         final Intent intent = new Intent(action)
                 .setComponent(new ComponentName(sourcePackageName, ACTIVITY_CLASS_TEST))
                 // data uri unique to each activity start to ensure actual launch and not just
@@ -972,7 +1025,11 @@ public class AppEnumerationTests {
                 },
                 sResponseHandler);
         intent.putExtra(EXTRA_REMOTE_CALLBACK, callback);
-        InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
+        if (waitForReady) {
+            startAndWaitForCommandReady(intent);
+        } else {
+            InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
+        }
         return () -> {
             if (!latch.block(TimeUnit.SECONDS.toMillis(10))) {
                 throw new TimeoutException(
@@ -986,11 +1043,23 @@ public class AppEnumerationTests {
         };
     }
 
+    private void startAndWaitForCommandReady(Intent intent) throws Exception {
+        final ConditionVariable latchForReady = new ConditionVariable();
+        final RemoteCallback readyCallback = new RemoteCallback(bundle -> latchForReady.open(),
+                sResponseHandler);
+        intent.putExtra(EXTRA_REMOTE_READY_CALLBACK, readyCallback);
+        InstrumentationRegistry.getInstrumentation().getContext().startActivity(intent);
+        if (!latchForReady.block(TimeUnit.SECONDS.toMillis(10))) {
+            throw new TimeoutException(
+                    "Latch timed out while awiating a response from command " + intent.getAction());
+        }
+    }
+
     private Bundle sendCommandBlocking(String sourcePackageName, @Nullable String targetPackageName,
             @Nullable Parcelable intentExtra, String action)
             throws Exception {
         final Result result = sendCommand(sourcePackageName, targetPackageName,
-                /* targetUid */ INVALID_UID, intentExtra, action);
+                /* targetUid */ INVALID_UID, intentExtra, action, /* waitForReady */ false);
         return result.await();
     }
 
@@ -998,7 +1067,7 @@ public class AppEnumerationTests {
             @Nullable Parcelable intentExtra, String action)
             throws Exception {
         final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
-                targetUid, intentExtra, action);
+                targetUid, intentExtra, action, /* waitForReady */ false);
         return result.await();
     }
 }
