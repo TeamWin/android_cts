@@ -21,6 +21,7 @@ import static android.app.appsearch.AppSearchResult.RESULT_INVALID_SCHEMA;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.convertSearchResultsToDocuments;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
+import static com.android.server.appsearch.testing.AppSearchTestUtils.retrieveAllSearchResults;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -36,6 +37,7 @@ import android.app.appsearch.AppSearchSchema.StringPropertyConfig;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByUriRequest;
+import android.app.appsearch.GetSchemaResponse;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.RemoveByUriRequest;
 import android.app.appsearch.ReportUsageRequest;
@@ -43,6 +45,7 @@ import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchResultsShim;
 import android.app.appsearch.SearchSpec;
 import android.app.appsearch.SetSchemaRequest;
+import android.app.appsearch.StorageInfo;
 import android.app.appsearch.exceptions.AppSearchException;
 import android.content.Context;
 
@@ -161,10 +164,10 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
+    @Ignore("TODO(b/177266929)")
     public void testSetSchema_updateVersion() throws Exception {
-        AppSearchSchema oldSchema =
+        AppSearchSchema schema =
                 new AppSearchSchema.Builder("Email")
-                        .setVersion(1)
                         .addProperty(
                                 new StringPropertyConfig.Builder("subject")
                                         .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
@@ -181,34 +184,111 @@ public abstract class AppSearchSessionCtsTestBase {
                                         .build())
                         .build();
 
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(oldSchema).build()).get();
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(schema).setVersion(1).build())
+                .get();
 
-        Set<AppSearchSchema> actualSchemaTypes = mDb1.getSchema().get();
-        assertThat(actualSchemaTypes).containsExactly(oldSchema);
+        Set<AppSearchSchema> actualSchemaTypes = mDb1.getSchema().get().getSchemas();
+        assertThat(actualSchemaTypes).containsExactly(schema);
 
-        AppSearchSchema newSchema =
-                new AppSearchSchema.Builder("Email")
-                        .setVersion(2)
-                        .addProperty(
-                                new StringPropertyConfig.Builder("subject")
-                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(
-                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .build())
-                        .addProperty(
-                                new StringPropertyConfig.Builder("body")
-                                        .setCardinality(PropertyConfig.CARDINALITY_OPTIONAL)
-                                        .setIndexingType(
-                                                StringPropertyConfig.INDEXING_TYPE_PREFIXES)
-                                        .setTokenizerType(StringPropertyConfig.TOKENIZER_TYPE_PLAIN)
-                                        .build())
-                        .build();
+        // increase version number
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(schema).setVersion(2).build())
+                .get();
 
-        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(newSchema).build()).get();
+        GetSchemaResponse getSchemaResponse = mDb1.getSchema().get();
+        assertThat(getSchemaResponse.getSchemas()).containsExactly(schema);
+        assertThat(getSchemaResponse.getVersion()).isEqualTo(2);
+    }
 
-        actualSchemaTypes = mDb1.getSchema().get();
-        assertThat(actualSchemaTypes).containsExactly(newSchema);
+    @Test
+    public void testGetNamespaces() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        assertThat(mDb1.getNamespaces().get()).isEmpty();
+
+        // Index a document
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new AppSearchEmail.Builder("namespace1", "uri1").build())
+                                .build()));
+        assertThat(mDb1.getNamespaces().get()).containsExactly("namespace1");
+
+        // Index additional data
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new AppSearchEmail.Builder("namespace2", "uri1").build(),
+                                        new AppSearchEmail.Builder("namespace2", "uri2").build(),
+                                        new AppSearchEmail.Builder("namespace3", "uri1").build())
+                                .build()));
+        assertThat(mDb1.getNamespaces().get())
+                .containsExactly("namespace1", "namespace2", "namespace3");
+
+        // Remove namespace2/uri2 -- namespace2 should still exist because of namespace2/uri1
+        checkIsBatchResultSuccess(
+                mDb1.remove(new RemoveByUriRequest.Builder("namespace2").addUris("uri2").build()));
+        assertThat(mDb1.getNamespaces().get())
+                .containsExactly("namespace1", "namespace2", "namespace3");
+
+        // Remove namespace2/uri1 -- namespace2 should now be gone
+        checkIsBatchResultSuccess(
+                mDb1.remove(new RemoveByUriRequest.Builder("namespace2").addUris("uri1").build()));
+        assertThat(mDb1.getNamespaces().get()).containsExactly("namespace1", "namespace3");
+
+        // Make sure the list of namespaces is preserved after restart
+        mDb1.close();
+        mDb1 = createSearchSession(DB_NAME_1).get();
+        assertThat(mDb1.getNamespaces().get()).containsExactly("namespace1", "namespace3");
+    }
+
+    @Test
+    public void testGetNamespaces_dbIsolation() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        mDb2.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+        assertThat(mDb1.getNamespaces().get()).isEmpty();
+        assertThat(mDb2.getNamespaces().get()).isEmpty();
+
+        // Index documents
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new AppSearchEmail.Builder("namespace1_db1", "uri1")
+                                                .build())
+                                .build()));
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new AppSearchEmail.Builder("namespace2_db1", "uri1")
+                                                .build())
+                                .build()));
+        checkIsBatchResultSuccess(
+                mDb2.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(
+                                        new AppSearchEmail.Builder("namespace_db2", "uri1").build())
+                                .build()));
+        assertThat(mDb1.getNamespaces().get()).containsExactly("namespace1_db1", "namespace2_db1");
+        assertThat(mDb2.getNamespaces().get()).containsExactly("namespace_db2");
+
+        // Make sure the list of namespaces is preserved after restart
+        mDb1.close();
+        mDb1 = createSearchSession(DB_NAME_1).get();
+        assertThat(mDb1.getNamespaces().get()).containsExactly("namespace1_db1", "namespace2_db1");
+        assertThat(mDb2.getNamespaces().get()).containsExactly("namespace_db2");
+    }
+
+    @Test
+    public void testGetSchema_emptyDB() throws Exception {
+        GetSchemaResponse getSchemaResponse = mDb1.getSchema().get();
+        assertThat(getSchemaResponse.getVersion()).isEqualTo(0);
     }
 
     @Test
@@ -944,11 +1024,16 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                 .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
                                 .build());
-        List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
+        List<SearchResult> results = retrieveAllSearchResults(searchResults);
 
         // The email1 should be ranked higher because 'little' appears three times in email1 and
         // only once in email2.
-        assertThat(documents).containsExactly(email1, email2).inOrder();
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getGenericDocument()).isEqualTo(email1);
+        assertThat(results.get(0).getRankingSignal())
+                .isGreaterThan(results.get(1).getRankingSignal());
+        assertThat(results.get(1).getGenericDocument()).isEqualTo(email2);
+        assertThat(results.get(1).getRankingSignal()).isGreaterThan(0);
 
         // Query for "little OR stout". It should match both emails.
         searchResults =
@@ -958,11 +1043,16 @@ public abstract class AppSearchSessionCtsTestBase {
                                 .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                 .setRankingStrategy(SearchSpec.RANKING_STRATEGY_RELEVANCE_SCORE)
                                 .build());
-        documents = convertSearchResultsToDocuments(searchResults);
+        results = retrieveAllSearchResults(searchResults);
 
         // The email2 should be ranked higher because 'little' appears once and "stout", which is a
         // rarer term, appears once. email1 only has the three 'little' appearances.
-        assertThat(documents).containsExactly(email2, email1).inOrder();
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getGenericDocument()).isEqualTo(email2);
+        assertThat(results.get(0).getRankingSignal())
+                .isGreaterThan(results.get(1).getRankingSignal());
+        assertThat(results.get(1).getGenericDocument()).isEqualTo(email1);
+        assertThat(results.get(1).getRankingSignal()).isGreaterThan(0);
     }
 
     @Test
@@ -2562,7 +2652,7 @@ public abstract class AppSearchSessionCtsTestBase {
                                             new SearchSpec.Builder()
                                                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                                     .build()));
-            assertThat(e).hasMessageThat().contains("AppSearchSession has already been closed");
+            assertThat(e).hasMessageThat().contains("SearchSession has already been closed");
         } finally {
             // To clean the data that has been added in the test, need to re-open the session and
             // set an empty schema.
@@ -2591,47 +2681,52 @@ public abstract class AppSearchSessionCtsTestBase {
         mDb1.reportUsage(
                         new ReportUsageRequest.Builder("namespace")
                                 .setUri("uri1")
-                                .setUsageTimeMillis(10)
+                                .setUsageTimeMillis(1000)
                                 .build())
                 .get();
         mDb1.reportUsage(
                         new ReportUsageRequest.Builder("namespace")
                                 .setUri("uri1")
-                                .setUsageTimeMillis(20)
+                                .setUsageTimeMillis(2000)
                                 .build())
                 .get();
         mDb1.reportUsage(
                         new ReportUsageRequest.Builder("namespace")
                                 .setUri("uri1")
-                                .setUsageTimeMillis(30)
+                                .setUsageTimeMillis(3000)
                                 .build())
                 .get();
         mDb1.reportUsage(
                         new ReportUsageRequest.Builder("namespace")
                                 .setUri("uri2")
-                                .setUsageTimeMillis(100)
+                                .setUsageTimeMillis(10000)
                                 .build())
                 .get();
         mDb1.reportUsage(
                         new ReportUsageRequest.Builder("namespace")
                                 .setUri("uri2")
-                                .setUsageTimeMillis(200)
+                                .setUsageTimeMillis(20000)
                                 .build())
                 .get();
 
         // Query by number of usages
-        List<GenericDocument> documents =
-                convertSearchResultsToDocuments(
+        List<SearchResult> results =
+                retrieveAllSearchResults(
                         mDb1.search(
                                 "",
                                 new SearchSpec.Builder()
                                         .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
                                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                         .build()));
-        assertThat(documents).containsExactly(email1, email2).inOrder();
+        // Email 1 has three usages and email 2 has two usages.
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).getGenericDocument()).isEqualTo(email1);
+        assertThat(results.get(0).getRankingSignal()).isEqualTo(3);
+        assertThat(results.get(1).getGenericDocument()).isEqualTo(email2);
+        assertThat(results.get(1).getRankingSignal()).isEqualTo(2);
 
-        // Query by most recent usage
-        documents =
+        // Query by most recent usag.
+        List<GenericDocument> documents =
                 convertSearchResultsToDocuments(
                         mDb1.search(
                                 "",
@@ -2641,7 +2736,38 @@ public abstract class AppSearchSessionCtsTestBase {
                                                         .RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
                                         .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                                         .build()));
+        // TODO(b/182958600) Check the score for usage timestamp once b/182958600 is fixed.
         assertThat(documents).containsExactly(email2, email1).inOrder();
+    }
+
+    @Test
+    @Ignore("TODO(b/182909475)")
+    public void testGetStorageInfo() throws Exception {
+        StorageInfo storageInfo = mDb1.getStorageInfo().get();
+        assertThat(storageInfo.getSizeBytes()).isEqualTo(0);
+
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Still no storage space attributed with just a schema
+        storageInfo = mDb1.getStorageInfo().get();
+        assertThat(storageInfo.getSizeBytes()).isEqualTo(0);
+
+        // Index two documents.
+        AppSearchEmail email1 = new AppSearchEmail.Builder("namespace1", "uri1").build();
+        AppSearchEmail email2 = new AppSearchEmail.Builder("namespace1", "uri2").build();
+        AppSearchEmail email3 = new AppSearchEmail.Builder("namespace2", "uri1").build();
+        checkIsBatchResultSuccess(
+                mDb1.put(
+                        new PutDocumentsRequest.Builder()
+                                .addGenericDocuments(email1, email2, email3)
+                                .build()));
+
+        // Non-zero size now
+        storageInfo = mDb1.getStorageInfo().get();
+        assertThat(storageInfo.getSizeBytes()).isGreaterThan(0);
+        assertThat(storageInfo.getAliveDocumentsCount()).isEqualTo(3);
+        assertThat(storageInfo.getAliveNamespacesCount()).isEqualTo(2);
     }
 
     @Test
@@ -2670,5 +2796,91 @@ public abstract class AppSearchSessionCtsTestBase {
 
         // The future returned from maybeFlush will be set as a void or an Exception on error.
         mDb1.maybeFlush().get();
+    }
+
+    @Test
+    public void testQuery_ResultGroupingLimits() throws Exception {
+        // Schema registration
+        mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
+                .get();
+
+        // Index four documents.
+        AppSearchEmail inEmail1 =
+                new AppSearchEmail.Builder("namespace1", "uri1")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail1).build()));
+        AppSearchEmail inEmail2 =
+                new AppSearchEmail.Builder("namespace1", "uri2")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail2).build()));
+        AppSearchEmail inEmail3 =
+                new AppSearchEmail.Builder("namespace2", "uri3")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail3).build()));
+        AppSearchEmail inEmail4 =
+                new AppSearchEmail.Builder("namespace2", "uri4")
+                        .setFrom("from@example.com")
+                        .setTo("to1@example.com", "to2@example.com")
+                        .setSubject("testPut example")
+                        .setBody("This is the body of the testPut email")
+                        .build();
+        checkIsBatchResultSuccess(
+                mDb1.put(new PutDocumentsRequest.Builder().addGenericDocuments(inEmail4).build()));
+
+        // Query with per package result grouping. Only the last document 'email4' should be
+        // returned.
+        SearchResultsShim searchResults =
+                mDb1.search(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_PACKAGE, /*resultLimit=*/ 1)
+                                .build());
+        List<GenericDocument> documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail4);
+
+        // Query with per namespace result grouping. Only the last document in each namespace should
+        // be returned ('email4' and 'email2').
+        searchResults =
+                mDb1.search(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_NAMESPACE, /*resultLimit=*/ 1)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail4, inEmail2);
+
+        // Query with per package and per namespace result grouping. Only the last document in each
+        // namespace should be returned ('email4' and 'email2').
+        searchResults =
+                mDb1.search(
+                        "body",
+                        new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
+                                .setResultGrouping(
+                                        SearchSpec.GROUPING_TYPE_PER_NAMESPACE
+                                                | SearchSpec.GROUPING_TYPE_PER_PACKAGE,
+                                        /*resultLimit=*/ 1)
+                                .build());
+        documents = convertSearchResultsToDocuments(searchResults);
+        assertThat(documents).containsExactly(inEmail4, inEmail2);
     }
 }
