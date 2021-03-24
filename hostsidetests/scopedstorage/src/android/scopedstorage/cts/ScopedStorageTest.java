@@ -18,9 +18,12 @@ package android.scopedstorage.cts;
 
 import static android.scopedstorage.cts.lib.TestUtils.BYTES_DATA1;
 import static android.scopedstorage.cts.lib.TestUtils.adoptShellPermissionIdentity;
+import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidDataDir;
+import static android.scopedstorage.cts.lib.TestUtils.assertCanAccessPrivateAppAndroidObbDir;
 import static android.scopedstorage.cts.lib.TestUtils.assertCanRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
+import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 import static android.scopedstorage.cts.lib.TestUtils.canReadAndWriteAs;
@@ -73,10 +76,13 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.WallpaperManager;
+import android.content.pm.ProviderInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeInstant;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -154,25 +160,10 @@ public class ScopedStorageTest {
      */
     @Test
     public void testCheckInstallerAppAccessToObbDirs() throws Exception {
-        File[] obbDirs = getContext().getObbDirs();
-        for (File obbDir : obbDirs) {
-            final File otherAppExternalObbDir = new File(obbDir.getPath().replace(
-                    THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
-            final File file = new File(otherAppExternalObbDir, NONMEDIA_FILE_NAME);
-            try {
-                assertThat(file.exists()).isFalse();
-
-                assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
-                assertFileAccess_readWrite(file);
-
-                assertThat(file.delete()).isTrue();
-                assertThat(file.exists()).isFalse();
-                assertThat(file.createNewFile()).isTrue();
-                assertThat(file.exists()).isTrue();
-            } finally {
-                deleteFileAsNoThrow(APP_B_NO_PERMS, file.getAbsolutePath());
-            }
-        }
+        assertCanAccessPrivateAppAndroidObbDir(true /*canAccess*/, APP_B_NO_PERMS,
+                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
+        final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
+        assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
     }
 
     /**
@@ -180,20 +171,37 @@ public class ScopedStorageTest {
      */
     @Test
     public void testCheckInstallerAppCannotAccessDataDirs() throws Exception {
-        File[] dataDirs = getContext().getExternalFilesDirs(null);
-        for (File dataDir : dataDirs) {
-            final File otherAppExternalDataDir = new File(dataDir.getPath().replace(
-                    THIS_PACKAGE_NAME, APP_B_NO_PERMS.getPackageName()));
-            final File file = new File(otherAppExternalDataDir, NONMEDIA_FILE_NAME);
-            try {
-                assertThat(file.exists()).isFalse();
+        assertCanAccessPrivateAppAndroidDataDir(false /*canAccess*/, APP_B_NO_PERMS,
+                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
+        final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
+        assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
+    }
 
-                assertThat(createFileAs(APP_B_NO_PERMS, file.getPath())).isTrue();
-                assertCannotReadOrWrite(file);
-            } finally {
-                deleteFileAsNoThrow(APP_B_NO_PERMS, file.getAbsolutePath());
-            }
-        }
+    @Test
+    public void testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs() throws Exception {
+        // TODO(b/183377919): Grant ACCESS_MTP permission via Shell
+        assertCanAccessPrivateAppAndroidDataDir(false /*canAccess*/, APP_B_NO_PERMS,
+                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
+        assertCanAccessPrivateAppAndroidObbDir(false /*canAccess*/, APP_B_NO_PERMS,
+                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
+    }
+
+    /**
+     * Test mount modes for ExternalStorageProvider and DownloadsProvider.
+     */
+    @Test
+    public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
+        assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
+        assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
+    }
+
+    private void assertWritableMountModeForProvider(String auth) {
+        final ProviderInfo provider = getContext().getPackageManager()
+                .resolveContentProvider(auth, 0);
+        int uid = provider.applicationInfo.uid;
+        final String packageName = provider.applicationInfo.packageName;
+
+        assertMountMode(packageName, uid, StorageManager.MOUNT_MODE_EXTERNAL_ANDROID_WRITABLE);
     }
 
     @Test
