@@ -74,7 +74,6 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
-    private static final String FEATURE_BACKUP = "android.software.backup";
     private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
@@ -693,10 +692,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         assumeTrue("device doesn't support multiple users", mSupportsMultiUser);
     }
 
-    protected final void assumeHasBackupFeature() throws DeviceNotAvailableException {
-        assumeHasDeviceFeature(FEATURE_BACKUP);
-    }
-
     protected final void assumeHasWifiFeature() throws DeviceNotAvailableException {
         assumeHasDeviceFeature(FEATURE_WIFI);
     }
@@ -1184,6 +1179,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         final String result = device
                 .executeShellCommand("getprop ro.fw.mu.headless_system_user").trim();
         return "true".equalsIgnoreCase(result);
+    }
+
+    protected void ignoreOnHeadlessSystemUserMode(String reason)
+            throws DeviceNotAvailableException {
+        assumeFalse("Skipping test on headless system user mode. Reason: " + reason,
+                isHeadlessSystemUserMode());
     }
 
     protected void grantDpmWrapperPermissions(String deviceAdminPkg, int userId) throws Exception {
