@@ -113,7 +113,7 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
 
     protected int getTargetApiLevel() throws Exception {
         final PackageManager pm = mContext.getPackageManager();
-        final PackageInfo pi = pm.getPackageInfo(mContext.getPackageName(), /* flags =*/ 0);
+        final PackageInfo pi = pm.getPackageInfo(mContext.getPackageName(), /* flags= */ 0);
         return pi.applicationInfo.targetSdkVersion;
     }
 
