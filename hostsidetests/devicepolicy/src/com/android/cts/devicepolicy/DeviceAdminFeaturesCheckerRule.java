@@ -18,6 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static org.junit.Assume.assumeTrue;
 
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -40,6 +41,7 @@ import java.util.List;
  */
 public final class DeviceAdminFeaturesCheckerRule implements TestRule {
 
+    public static final String FEATURE_BACKUP = "android.software.backup";
     public static final String FEATURE_DEVICE_ADMIN = "android.software.device_admin";
     public static final String FEATURE_MANAGED_USERS = "android.software.managed_users";
 
@@ -75,14 +77,18 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
                 requiredFeatures.add(FEATURE_DEVICE_ADMIN);
 
                 // Method annotations
-                addAdditionalFeatures(requiredFeatures, description
+                addRequiredAdditionalFeatures(requiredFeatures, description
                         .getAnnotation(RequiresAdditionalFeatures.class));
+                addRequiredManagedUsersFeature(requiredFeatures, testDevice, description
+                        .getAnnotation(RequiresProfileOwnerSupport.class));
 
                 // Class annotations
                 Class<?> clazz = description.getTestClass();
                 while (clazz != Object.class) {
-                    addAdditionalFeatures(requiredFeatures,
+                    addRequiredAdditionalFeatures(requiredFeatures,
                             clazz.getAnnotation(RequiresAdditionalFeatures.class));
+                    addRequiredManagedUsersFeature(requiredFeatures, testDevice,
+                            clazz.getAnnotation(RequiresProfileOwnerSupport.class));
                     clazz = clazz.getSuperclass();
                 }
 
@@ -115,13 +121,27 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
                 base.evaluate();
             }
 
-            private void addAdditionalFeatures(List<String> requiredFeatures,
+            private void addRequiredAdditionalFeatures(List<String> requiredFeatures,
                     RequiresAdditionalFeatures annotation) {
                 if (annotation == null) return;
 
                 for (String additionalFeature : annotation.value()) {
                     requiredFeatures.add(additionalFeature);
                 }
+            }
+
+            private void addRequiredManagedUsersFeature(List<String> requiredFeatures,
+                    ITestDevice testDevice, RequiresProfileOwnerSupport annotation)
+                    throws DeviceNotAvailableException {
+                if (annotation == null) return;
+
+                if (BaseDevicePolicyTest.isHeadlessSystemUserMode(testDevice)) {
+                    CLog.i("Not requiring feature %s on headless system user mode",
+                            FEATURE_MANAGED_USERS);
+                    return;
+                }
+
+                requiredFeatures.add(FEATURE_MANAGED_USERS);
             }
         };
     }
@@ -136,6 +156,9 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
     /**
      * Used to annotate a test method that should run if when the device doesn't have the features
      * required by the test class.
+     *
+     * <p><b>NOTE: </b>it doesn't work when used on overridden test methods (as {@code JUnit} will
+     * only return the annotations of the superclass method).
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD})
@@ -144,11 +167,33 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
 
     /**
      * Sets additional required features for a given test class or method.
+     *
+     * <p><b>NOTE: </b>it doesn't work when used on overridden test methods (as {@code JUnit} will
+     * only return the annotations of the superclass method).
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.TYPE, ElementType.METHOD})
     public static @interface RequiresAdditionalFeatures {
         String[] value();
+    }
+
+
+    // TODO(b/183105338): remove annotation if FEATURE_MANAGED_USERS is split into separate features
+    // for profile owner and managed profile support.
+    /**
+     * Used to annotated a test method or class that requires profile owner support.
+     *
+     * <p>Traditionally, these tests were looking for the {@code FEATURE_MANAGE_USERS} feature, but
+     * on headless system mode devices a profile owner is created in the current user when the
+     * device owner is set on system user, even if the device doesn't support the feature - this
+     * annotation takes care of both cases.
+     *
+     * <p><b>NOTE: </b>it doesn't work when used on overridden test methods (as {@code JUnit} will
+     * only return the annotations of the superclass method).
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE, ElementType.METHOD})
+    public static @interface RequiresProfileOwnerSupport {
     }
 
     /**

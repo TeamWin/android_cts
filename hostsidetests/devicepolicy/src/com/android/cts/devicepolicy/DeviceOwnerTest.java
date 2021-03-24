@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_BACKUP;
 import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
@@ -599,11 +600,10 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         }
     }
 
+    // The backup service cannot be enabled if the backup feature is not supported.
+    @RequiresAdditionalFeatures({FEATURE_BACKUP})
     @Test
     public void testBackupServiceEnabling() throws Exception {
-        assumeHasBackupFeature();
-        // The backup service cannot be enabled if the backup feature is not supported.
-
         executeDeviceTestMethod(".BackupServicePoliciesTest",
                 "testEnablingAndDisablingBackupService");
     }
