@@ -2688,6 +2688,16 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(BUBBLE_PREFERENCE_ALL, mNotificationManager.getBubblePreference());
     }
 
+    public void testAreBubblesEnabled() throws Exception {
+        setBubblesGlobal(true);
+        assertTrue(mNotificationManager.areBubblesEnabled());
+    }
+
+    public void testAreBubblesEnabled_false() throws Exception {
+        setBubblesGlobal(false);
+        assertFalse(mNotificationManager.areBubblesEnabled());
+    }
+
     public void testNotificationIcon() {
         int id = 6000;
 
