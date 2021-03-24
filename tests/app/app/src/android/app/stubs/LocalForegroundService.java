@@ -16,12 +16,14 @@
 
 package android.app.stubs;
 
+import android.app.ForegroundServiceStartNotAllowedException;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -35,7 +37,7 @@ import com.android.compatibility.common.util.IBinderParcelable;
 public class LocalForegroundService extends LocalService {
 
     private static final String TAG = "LocalForegroundService";
-    protected static final String EXTRA_COMMAND = "LocalForegroundService.command";
+    public static final String EXTRA_COMMAND = "LocalForegroundService.command";
     public static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
     public static String ACTION_START_FGS_RESULT =
             "android.app.stubs.LocalForegroundService.RESULT";
@@ -90,7 +92,12 @@ public class LocalForegroundService extends LocalService {
                                 .setSmallIcon(R.drawable.black)
                                 .setShowForegroundImmediately(showNow)
                                 .build();
-                startForeground(mNotificationId, notification);
+                try {
+                    startForeground(mNotificationId, notification);
+                } catch (ForegroundServiceStartNotAllowedException e) {
+                    Log.d(TAG, "startForeground gets an "
+                            + " ForegroundServiceStartNotAllowedException", e);
+                }
                 break;
             }
             case COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION:
@@ -133,6 +140,13 @@ public class LocalForegroundService extends LocalService {
     public static Bundle newCommand(IBinder stateReceiver, int command) {
         Bundle bundle = new Bundle();
         bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(stateReceiver));
+        bundle.putInt(EXTRA_COMMAND, command);
+        return bundle;
+    }
+
+    public static Bundle newCommand(int command) {
+        Bundle bundle = new Bundle();
+        bundle.putParcelable(LocalService.REPORT_OBJ_NAME, new IBinderParcelable(new Binder()));
         bundle.putInt(EXTRA_COMMAND, command);
         return bundle;
     }
