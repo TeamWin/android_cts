@@ -1116,6 +1116,118 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
+     * Verify that {@link WifiManager#addetworkPrivileged} throws a SecurityException when called
+     * by a normal app.
+     */
+    public void testAddNetworkPrivilegedNotAllowedForNormalApps() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        try {
+            WifiConfiguration newOpenNetwork = new WifiConfiguration();
+            newOpenNetwork.SSID = "\"" + TEST_SSID_UNQUOTED + "\"";
+            mWifiManager.addNetworkPrivileged(newOpenNetwork);
+            fail("A normal app should not be able to call this API.");
+        } catch (SecurityException e) {
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#addetworkPrivileged} throws an exception when null is the input.
+     */
+    public void testAddNetworkPrivilegedBadInput() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.addNetworkPrivileged(null);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#addetworkPrivileged} returns the proper failure status code
+     * when adding an enterprise config with mandatory fields not filled in.
+     */
+    public void testAddNetworkPrivilegedFailureBadEnterpriseConfig() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            WifiConfiguration wifiConfiguration = new WifiConfiguration();
+            wifiConfiguration.SSID = SSID1;
+            wifiConfiguration.setSecurityParams(WifiConfiguration.SECURITY_TYPE_EAP_WPA3_ENTERPRISE);
+            wifiConfiguration.enterpriseConfig.setEapMethod(WifiEnterpriseConfig.Eap.TTLS);
+            WifiManager.AddNetworkResult result =
+                    mWifiManager.addNetworkPrivileged(wifiConfiguration);
+            assertEquals(WifiManager.AddNetworkResult.STATUS_INVALID_CONFIGURATION_ENTERPRISE,
+                    result.statusCode);
+            assertEquals(-1, result.networkId);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Verify {@link WifiManager#addetworkPrivileged} works properly when the calling app has
+     * permissions.
+     */
+    public void testAddNetworkPrivilegedSuccess() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        if (!WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext)) {
+            // Skip the test if wifi module version is older than S.
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            WifiConfiguration newOpenNetwork = new WifiConfiguration();
+            newOpenNetwork.SSID = "\"" + TEST_SSID_UNQUOTED + "\"";
+            WifiManager.AddNetworkResult result = mWifiManager.addNetworkPrivileged(newOpenNetwork);
+            assertEquals(WifiManager.AddNetworkResult.STATUS_SUCCESS, result.statusCode);
+            assertTrue(result.networkId >= 0);
+            List<WifiConfiguration> configuredNetworks = mWifiManager.getConfiguredNetworks();
+            boolean found = false;
+            for (WifiConfiguration config : configuredNetworks) {
+                if (config.networkId == result.networkId
+                        && config.SSID.equals(newOpenNetwork.SSID)) {
+                    found = true;
+                    break;
+                }
+            }
+            assertTrue("addNetworkPrivileged returns success but the network is not found", found);
+            mWifiManager.removeNetwork(result.networkId);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
      * Verify that applications can only have one registered LocalOnlyHotspot request at a time.
      *
      * Note: Location mode must be enabled for this test.
