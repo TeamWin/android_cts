@@ -16,11 +16,15 @@
 
 package android.net.wifi.cts;
 
-import android.internal.wifi.WifiAnnotations;
 import android.net.wifi.CoexUnsafeChannel;
 import android.net.wifi.WifiScanner;
 import android.test.AndroidTestCase;
 
+import androidx.test.filters.SdkSuppress;
+
+// TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+//  Build.VERSION_CODES.S
+@SdkSuppress(minSdkVersion = 31, codeName = "S")
 public class CoexUnsafeChannelTest extends AndroidTestCase {
     final static int TEST_BAND = WifiScanner.WIFI_BAND_24_GHZ;
     final static int TEST_CHANNEL = 6;
