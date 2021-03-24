@@ -621,6 +621,70 @@ public class TextViewOnReceiveContentTest {
         assertTextAndSelection("Hello", -1, -1);
     }
 
+    /**
+     * This test checks the edge case where a {@link TextView} starts as non-editable and becomes
+     * editable during dragging. The test simulates this scenario by setting up an editable
+     * {@link TextView}, clearing its focus and then injecting an
+     * {@link DragEvent#ACTION_DRAG_LOCATION} event without a prior
+     * {@link DragEvent#ACTION_DRAG_STARTED} or {@link DragEvent#ACTION_DRAG_ENTERED} event.
+     */
+    @UiThreadTest
+    @Test
+    public void testDragAndDrop_nonEditableTextViewChangedToEditable_actionDragLocation()
+            throws Exception {
+        // Setup an editable TextView and assert that its insertion controller is enabled.
+        initTextViewForEditing("Test drag and drop", 4);
+        assertThat(mTextView.getEditorForTesting().getInsertionController()).isNotNull();
+
+        // Focus on another view and assert that the TextView we are going to test doesn't have
+        // focus (but still has its insertion controller enabled).
+        TextView anotherTextView = mActivity.findViewById(R.id.textview_singleLine);
+        anotherTextView.setTextIsSelectable(true);
+        anotherTextView.requestFocus();
+        assertThat(mTextView.hasFocus()).isFalse();
+        assertThat(mTextView.getEditorForTesting().getInsertionController()).isNotNull();
+
+        // Trigger an ACTION_DRAG_LOCATION event without any prior drag events. The TextView should
+        // still gracefully handle the event and update its cursor position for the event's
+        // location.
+        DragEvent dragEvent = createDragEvent(DragEvent.ACTION_DRAG_LOCATION, mTextView.getX(),
+                mTextView.getY(), null);
+        assertThat(mTextView.onDragEvent(dragEvent)).isTrue();
+        assertTextAndCursorPosition("Test drag and drop", 0);
+    }
+
+    /**
+     * This test checks the edge case where a {@link TextView} starts as non-editable and becomes
+     * editable during dragging. The test simulates this scenario by setting up an editable
+     * {@link TextView}, clearing its focus and then injecting an
+     * {@link DragEvent#ACTION_DROP} event without a prior
+     * {@link DragEvent#ACTION_DRAG_STARTED} or {@link DragEvent#ACTION_DRAG_ENTERED} or
+     * {@link DragEvent#ACTION_DRAG_LOCATION} event.
+     */
+    @UiThreadTest
+    @Test
+    public void testDragAndDrop_nonEditableTextViewChangedToEditable_actionDrop() throws Exception {
+        // Setup an editable TextView and assert that its insertion controller is enabled.
+        initTextViewForEditing("Test drag and drop", 4);
+        assertThat(mTextView.getEditorForTesting().getInsertionController()).isNotNull();
+
+        // Focus on another view and assert that the TextView we are going to test doesn't have
+        // focus (but still has its insertion controller enabled).
+        TextView anotherTextView = mActivity.findViewById(R.id.textview_singleLine);
+        anotherTextView.setTextIsSelectable(true);
+        anotherTextView.requestFocus();
+        assertThat(mTextView.hasFocus()).isFalse();
+        assertThat(mTextView.getEditorForTesting().getInsertionController()).isNotNull();
+
+        // Trigger an ACTION_DROP event without any prior drag events. The TextView should still
+        // gracefully handle the event and accept the drop.
+        ClipData clip = ClipData.newPlainText("test", "Hi ");
+        DragEvent dragEvent = createDragEvent(DragEvent.ACTION_DROP, mTextView.getX(),
+                mTextView.getY(), clip);
+        assertThat(mTextView.onDragEvent(dragEvent)).isTrue();
+        assertTextAndCursorPosition("Hi Test drag and drop", 3);
+    }
+
     @UiThreadTest
     @Test
     public void testDragAndDrop_customReceiver_unsupportedMimeType() throws Exception {
