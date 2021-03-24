@@ -400,3 +400,71 @@ class Transcode extends CodecTranscoderTestBase implements Callable<Double> {
         return doTranscode();
     }
 }
+
+class TranscodeLoad extends Transcode {
+    private final LoadStatus mLoadStatus;
+
+    private long mMaxPts;
+    private long mBasePts;
+
+    TranscodeLoad(String mime, String testFile, String decoderName, String encoderName,
+            LoadStatus loadStatus) {
+        super(mime, testFile, decoderName, encoderName, false);
+        mLoadStatus = loadStatus;
+        mMaxPts = 0;
+        mBasePts = 0;
+    }
+
+    @Override
+    void configureCodec(MediaFormat decFormat, MediaFormat encFormat, boolean isAsync,
+            boolean signalEOSWithLastFrame) {
+        decFormat.setInteger(MediaFormat.KEY_PRIORITY, 1);
+        encFormat.setInteger(MediaFormat.KEY_PRIORITY, 1);
+        resetContext(isAsync, signalEOSWithLastFrame);
+        mAsyncHandleEncoder.setCallBack(mEncoder, isAsync);
+        mEncoder.configure(encFormat, null, MediaCodec.CONFIGURE_FLAG_ENCODE, null);
+        if (mEncoder.getInputFormat().containsKey(MediaFormat.KEY_LATENCY)) {
+            mReviseLatency = true;
+            mLatency = mEncoder.getInputFormat().getInteger(MediaFormat.KEY_LATENCY);
+        }
+        mSurface = mEncoder.createInputSurface();
+        assertTrue("Surface is not valid", mSurface.isValid());
+        mAsyncHandleDecoder.setCallBack(mDecoder, isAsync);
+        mDecoder.configure(decFormat, mSurface, null, 0);
+    }
+
+    @Override
+    void enqueueDecoderInput(int bufferIndex) {
+        if (mExtractor.getSampleSize() < 0) {
+            enqueueDecoderEOS(bufferIndex);
+        } else {
+            ByteBuffer inputBuffer = mDecoder.getInputBuffer(bufferIndex);
+            int size = mExtractor.readSampleData(inputBuffer, 0);
+            long pts = mExtractor.getSampleTime();
+            mMaxPts = Math.max(mMaxPts, mBasePts + pts);
+            int extractorFlags = mExtractor.getSampleFlags();
+            int codecFlags = 0;
+            if ((extractorFlags & MediaExtractor.SAMPLE_FLAG_SYNC) != 0) {
+                codecFlags |= MediaCodec.BUFFER_FLAG_KEY_FRAME;
+            }
+            mDecoder.queueInputBuffer(bufferIndex, 0, size, mBasePts + pts, codecFlags);
+            if (size > 0 && (codecFlags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) == 0) {
+                mDecInputCount++;
+            }
+            if (!mExtractor.advance() && !mLoadStatus.isLoadFinished()) {
+                mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+                mBasePts = mMaxPts + 1000000L;
+            }
+        }
+    }
+}
+
+class LoadStatus {
+    private boolean mLoadFinished;
+
+    public LoadStatus() { mLoadFinished = false; }
+
+    public synchronized void setLoadFinished() { mLoadFinished = true; }
+
+    public synchronized boolean isLoadFinished() { return mLoadFinished; }
+}
