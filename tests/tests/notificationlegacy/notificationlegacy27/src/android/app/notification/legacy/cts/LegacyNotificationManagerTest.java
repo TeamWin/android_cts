@@ -35,6 +35,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.content.pm.PackageManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -239,21 +240,28 @@ public class LegacyNotificationManagerTest {
 
     @Test
     public void testResetListenerHints_singleListener() throws Exception {
-        toggleListenerAccess(TestNotificationListener.getId(),
-                InstrumentationRegistry.getInstrumentation(), true);
-        Thread.sleep(500); // wait for listener to be allowed
+      int conditionValue = 0;
+      int condition = NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS;
 
-        mListener = TestNotificationListener.getInstance();
-        Assert.assertNotNull(mListener);
+      toggleListenerAccess(
+          TestNotificationListener.getId(), InstrumentationRegistry.getInstrumentation(), true);
+      Thread.sleep(500); // wait for listener to be allowed
 
-        mListener.requestListenerHints(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS);
+      mListener = TestNotificationListener.getInstance();
+      Assert.assertNotNull(mListener);
+      /*In case of wear os we have some default disable listener registered*/
+      if (isWatch()) {
+        condition |= NotificationListenerService.HINT_HOST_DISABLE_NOTIFICATION_EFFECTS;
+        conditionValue = mListener.getCurrentListenerHints();
+      }
 
-        assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS,
-                mListener.getCurrentListenerHints());
+      mListener.requestListenerHints(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS);
 
-        mListener.clearRequestedListenerHints();
+      assertEquals(condition, mListener.getCurrentListenerHints());
 
-        assertEquals(0, mListener.getCurrentListenerHints());
+      mListener.clearRequestedListenerHints();
+
+      assertEquals(conditionValue, mListener.getCurrentListenerHints());
     }
 
     @Test
@@ -279,8 +287,11 @@ public class LegacyNotificationManagerTest {
                 mListener.getCurrentListenerHints());
 
         mSecondaryListener.clearRequestedListenerHints();
-        assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS,
-                mSecondaryListener.getCurrentListenerHints());
+        /*In case of wear os we have some default disable listener registered*/
+        if (!isWatch()) {
+          assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS,
+              mSecondaryListener.getCurrentListenerHints());
+        }
     }
 
     @Test
@@ -419,5 +430,9 @@ public class LegacyNotificationManagerTest {
         } finally {
             uiAutomation.destroy();
         }
+    }
+
+    private boolean isWatch() {
+      return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
