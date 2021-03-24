@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.net.wifi.cts;
+
+import android.internal.wifi.WifiAnnotations;
+import android.net.wifi.CoexUnsafeChannel;
+import android.net.wifi.WifiScanner;
+import android.test.AndroidTestCase;
+
+public class CoexUnsafeChannelTest extends AndroidTestCase {
+    final static int TEST_BAND = WifiScanner.WIFI_BAND_24_GHZ;
+    final static int TEST_CHANNEL = 6;
+    final static int TEST_POWER_CAP_DBM = -50;
+
+    public void testNoPowerCapConstructor() {
+        CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL);
+
+        assertEquals(unsafeChannel.getBand(), TEST_BAND);
+        assertEquals(unsafeChannel.getChannel(), TEST_CHANNEL);
+        assertFalse(unsafeChannel.isPowerCapAvailable());
+    }
+
+    public void testPowerCapConstructor() {
+        CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL,
+                TEST_POWER_CAP_DBM);
+
+        assertEquals(unsafeChannel.getBand(), TEST_BAND);
+        assertEquals(unsafeChannel.getChannel(), TEST_CHANNEL);
+        assertTrue(unsafeChannel.isPowerCapAvailable());
+        assertEquals(unsafeChannel.getPowerCapDbm(), TEST_POWER_CAP_DBM);
+    }
+
+    public void testSetPowerCap() {
+        CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL);
+
+        unsafeChannel.setPowerCapDbm(TEST_POWER_CAP_DBM);
+
+        assertEquals(unsafeChannel.getPowerCapDbm(), TEST_POWER_CAP_DBM);
+    }
+}

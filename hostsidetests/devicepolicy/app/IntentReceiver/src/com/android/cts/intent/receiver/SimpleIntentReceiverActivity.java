@@ -28,7 +28,7 @@ import android.util.Log;
  * running in a managed profile.
  */
 public class SimpleIntentReceiverActivity extends Activity {
-    private static final String TAG = "SimpleIntentReceiverActivity";
+    private static final String TAG = SimpleIntentReceiverActivity.class.getSimpleName();
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -41,8 +41,14 @@ public class SimpleIntentReceiverActivity extends Activity {
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
         boolean inManagedProfile = dpm.isProfileOwnerApp("com.android.cts.managedprofile");
 
-        Log.i(TAG, "activity " + className + " started on user " + getUserId()
-                + ", is in managed profile: " + inManagedProfile);
+        try {
+            Log.i(TAG, "activity " + className + " started on user " + getUserId()
+                    + ", is in managed profile: " + inManagedProfile);
+        } catch (NoSuchMethodError e) {
+            // TODO(b/183427655): figure out why it's failing...
+            Log.i(TAG, "activity " + className + ", is in managed profile: " + inManagedProfile
+                    + " (could not infer user id: " + e + ")");
+        }
         Intent result = new Intent();
         result.putExtra("extra_receiver_class", className);
         result.putExtra("extra_in_managed_profile", inManagedProfile);

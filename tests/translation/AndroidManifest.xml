@@ -37,6 +37,10 @@
             <intent-filter>
                 <action android:name="android.service.translation.TranslationService"/>
             </intent-filter>
+            <meta-data
+                android:name="android.translation_service"
+                android:resource="@xml/translation_config">
+            </meta-data>
         </service>
         <service android:name=".CtsContentCaptureService"
                  android:label="CtsContentCaptureService"

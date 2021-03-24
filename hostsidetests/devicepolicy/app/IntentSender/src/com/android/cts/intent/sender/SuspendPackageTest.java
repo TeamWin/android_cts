@@ -97,19 +97,22 @@ public class SuspendPackageTest extends InstrumentationTestCase {
         Intent intent = new Intent();
         intent.setClassName(INTENT_RECEIVER_PKG, TARGET_ACTIVITY_NAME);
         if (!temporarilySkipActivityLaunch()) {
-            Log.d(TAG, "assertPackageSuspended(suspended=" + suspended
-                    + ", customDialog=" + customDialog + "): getting result for activity " + intent
-                    + " on user " + mContext.getUserId());
             Intent result = mActivity.getResult(intent);
+            Log.d(TAG, "assertPackageSuspended(suspended=" + suspended
+                    + ", customDialog=" + customDialog + "): result for activity "
+                    + INTENT_RECEIVER_PKG + "/" + TARGET_ACTIVITY_NAME + " on user "
+                    + mContext.getUserId() + ": " + result);
             if (suspended) {
                 if (customDialog) {
                     dismissCustomDialog();
                 } else {
                     dismissPolicyTransparencyDialog();
                 }
-                assertWithMessage("result for activitiy %s", intent).that(result).isNull();
+                assertWithMessage("result for activitiy %s while suspended", intent).that(result)
+                        .isNull();
             } else {
-                assertWithMessage("result for activitiy %s", intent).that(result).isNotNull();
+                assertWithMessage("result for activitiy %s while NOT suspended", intent)
+                        .that(result).isNotNull();
             }
         }
         // No matter if it is suspended or not, we should be able to resolve the activity.

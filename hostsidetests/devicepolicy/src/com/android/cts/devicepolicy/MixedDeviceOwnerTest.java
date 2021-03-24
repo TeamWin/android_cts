@@ -424,7 +424,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
-    @Ignore("b/158735247")
     @Test
     public void testAdminControlOverSensorPermissionGrantsDefault() throws Exception {
         // In Device Owner mode, by default, admin should be able to grant sensors-related

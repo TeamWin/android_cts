@@ -3664,7 +3664,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     /**
      * Test tunneled video playback flush if supported
-
+     *
      * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
      */
     private void testTunneledVideoFlush(String mimeType, String videoName) throws Exception {
@@ -3715,6 +3715,76 @@ public class DecoderTest extends MediaPlayerTestBase {
      */
     public void testTunneledVideoFlushVp9() throws Exception {
         testTunneledVideoFlush(MediaFormat.MIMETYPE_VIDEO_VP9,
+                "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
+    }
+
+    /**
+     * Test tunneled video peek if supported
+     *
+     * TODO(b/182915887): Test all the codecs advertised by the DUT for the provided test content
+     */
+    private void testTunneledVideoPeek(String mimeType, String videoName) throws Exception {
+        if (!isVideoFeatureSupported(mimeType,
+                CodecCapabilities.FEATURE_TunneledPlayback)) {
+            MediaUtils.skipTest(
+                    TAG,
+                    "No tunneled video playback codec found for MIME " + mimeType);
+            return;
+        }
+
+        AudioManager am = (AudioManager)mContext.getSystemService(Context.AUDIO_SERVICE);
+        mMediaCodecPlayer = new MediaCodecTunneledPlayer(
+                getActivity().getSurfaceHolder(), true, am.generateAudioSessionId());
+
+        Uri mediaUri = Uri.fromFile(new File(mInpPrefix, videoName));
+        mMediaCodecPlayer.setAudioDataSource(mediaUri, null);
+        mMediaCodecPlayer.setVideoDataSource(mediaUri, null);
+        mMediaCodecPlayer.setVideoPeek(true);
+        assertTrue("MediaCodecPlayer.start() failed!", mMediaCodecPlayer.start());
+        assertTrue("MediaCodecPlayer.prepare() failed!", mMediaCodecPlayer.prepare());
+
+        // starts video playback
+        mMediaCodecPlayer.startThread();
+
+        final long durationMs = mMediaCodecPlayer.getDuration();
+        final long timeOutMs = System.currentTimeMillis() + durationMs + 5 * 1000; // add 5 sec
+        while (!mMediaCodecPlayer.isEnded()) {
+            // Log.d(TAG, "currentPosition: " + mMediaCodecPlayer.getCurrentPosition()
+            //         + "  duration: " + mMediaCodecPlayer.getDuration());
+            assertTrue("Tunneled video playback timeout exceeded",
+                    timeOutMs > System.currentTimeMillis());
+            Thread.sleep(SLEEP_TIME_MS);
+            if (mMediaCodecPlayer.getCurrentPosition() >= mMediaCodecPlayer.getDuration()) {
+                Log.d(TAG, "testTunneledVideoPlayback -- current pos = " +
+                        mMediaCodecPlayer.getCurrentPosition() +
+                        ">= duration = " + mMediaCodecPlayer.getDuration());
+                break;
+            }
+        }
+        // mMediaCodecPlayer.reset() handled in TearDown();
+    }
+
+    /**
+     * Test tunneled video peek with HEVC if supported
+     */
+    public void testTunneledVideoPeekHevc() throws Exception {
+        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_HEVC,
+                "video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz.mkv");
+    }
+
+    /**
+     * Test tunneled video peek with AVC if supported
+     */
+    public void testTunneledVideoPeekAvc() throws Exception {
+        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_AVC,
+                "video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz.mp4");
+    }
+
+    /**
+     * Test tunneled video peek with VP9 if supported
+     */
+    public void testTunneledVideoPeekVp9() throws Exception {
+        testTunneledVideoPeek(MediaFormat.MIMETYPE_VIDEO_VP9,
                 "bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz.webm");
     }
 

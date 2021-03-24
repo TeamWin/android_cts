@@ -18,7 +18,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.car.cts.app">
 
+    <uses-permission android:name="android.car.permission.CAR_POWER"/>
+    <uses-permission android:name="android.car.permission.READ_CAR_POWER_POLICY"/>
+    <uses-permission android:name="android.permission.READ_LOGS"/>
+    <uses-permission android:name="android.permission.STORAGE_INTERNAL"/>
+
     <application>
+        <activity android:name=".PowerPolicyTestActivity"
+            android:launchMode="singleTask"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
         <activity android:name=".SimpleActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
