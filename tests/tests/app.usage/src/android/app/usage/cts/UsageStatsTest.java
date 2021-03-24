@@ -59,6 +59,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
+import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -213,7 +214,7 @@ public class UsageStatsTest {
     private void launchSubActivity(Class<? extends Activity> clazz) {
         final Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName(mTargetPackage, clazz.getName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
         mUiDevice.wait(Until.hasObject(By.clazz(clazz)), TIMEOUT);
     }
@@ -1146,7 +1147,11 @@ public class UsageStatsTest {
             SparseArray<AggrAllEventsData> baseAggr = getAggrEventData();
 
             // First test -- put device to sleep and make sure we see this event.
-            mUiDevice.sleep();
+            if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+              mUiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
+            } else {
+              mUiDevice.sleep();
+            }
 
             // Do we have one event, going in to non-interactive mode?
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 1);
