@@ -50,6 +50,7 @@
         <option name="push" value="CtsAppThatRequestsStoragePermission28.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsStoragePermission28.apk" />
         <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission28.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission28.apk" />
         <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission29.apk" />
+        <option name="push" value="CtsAppThatRequestsMicCamera.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsMicCamera.apk" />
         <option name="push" value="CtsAppThatAccessesLocationOnCommand.apk->/data/local/tmp/cts/permissions/CtsAppThatAccessesLocationOnCommand.apk" />
         <option name="push" value="AppThatDoesNotHaveBgLocationAccess.apk->/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk" />
         <option name="push" value="CtsAppWithSharedUidThatRequestsPermissions.apk->/data/local/tmp/cts/permissions/CtsAppWithSharedUidThatRequestsPermissions.apk" />
@@ -85,6 +86,7 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestpermission" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestnopermission" />
+        <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestsmiccamera" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.AdversarialPermissionDefinerApp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.VictimPermissionDefinerApp" />
         <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.userapp" />
