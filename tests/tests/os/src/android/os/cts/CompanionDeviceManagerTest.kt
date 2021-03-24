@@ -165,11 +165,12 @@ class CompanionDeviceManagerTest : InstrumentationTestCase() {
         val device = getEventually({
             click("Associate")
             waitFindNode(hasIdThat(containsString("device_list")),
-                    failMsg = "Test requires a discoverable bluetooth device nearby")
+                    failMsg = "Test requires a discoverable bluetooth device nearby",
+                    timeoutMs = 5_000)
                     .children
                     .find { it.className == TextView::class.java.name }
                     .assertNotNull { "Empty device list" }
-        }, 30_000)
+        }, 60_000)
         device!!.click()
 
         eventually {
