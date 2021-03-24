@@ -20,17 +20,6 @@ import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import static org.junit.Assert.assertTrue;
 
-import androidx.test.filters.RequiresDevice;
-import androidx.test.rule.ActivityTestRule;
-import androidx.test.runner.AndroidJUnit4;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.runner.RunWith;
-
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
@@ -49,6 +38,19 @@ import android.view.cts.surfacevalidator.PixelChecker;
 import android.view.cts.surfacevalidator.PixelColor;
 import android.view.cts.surfacevalidator.SurfaceControlTestCase;
 
+import androidx.test.filters.RequiresDevice;
+import androidx.test.rule.ActivityTestRule;
+import androidx.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized.Parameter;
+import org.junit.runners.Parameterized.Parameters;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -57,6 +59,13 @@ import java.util.Set;
 public class ASurfaceControlTest {
     static {
         System.loadLibrary("ctsview_jni");
+    }
+
+    @Parameter(0) public boolean mTestSetGeometry;
+
+    @Parameters
+    public static Object[] data() {
+        return new Boolean[] {false, true};
     }
 
     private static final String TAG = ASurfaceControlTest.class.getSimpleName();
@@ -209,9 +218,16 @@ public class ASurfaceControlTest {
         public void setGeometry(long surfaceControl, long surfaceTransaction, int srcLeft,
                 int srcTop, int srcRight, int srcBottom, int dstLeft, int dstTop, int dstRight,
                 int dstBottom, int transform) {
-            nSurfaceTransaction_setGeometry(
-                    surfaceControl, surfaceTransaction, srcLeft, srcTop, srcRight, srcBottom,
-                    dstLeft, dstTop, dstRight, dstBottom, transform);
+            if (mTestSetGeometry) {
+                nSurfaceTransaction_setGeometry(surfaceControl, surfaceTransaction, srcLeft, srcTop,
+                        srcRight, srcBottom, dstLeft, dstTop, dstRight, dstBottom, transform);
+            } else {
+                nSurfaceTransaction_setPosition(
+                        surfaceControl, surfaceTransaction, dstLeft, dstTop, dstRight, dstBottom);
+                nSurfaceTransaction_setTransform(surfaceControl, surfaceTransaction, transform);
+                nSurfaceTransaction_setSourceRect(
+                        surfaceControl, surfaceTransaction, srcLeft, srcTop, srcRight, srcBottom);
+            }
         }
 
         public void setGeometry(long surfaceControl, int srcLeft, int srcTop, int srcRight,
@@ -1596,6 +1612,12 @@ public class ASurfaceControlTest {
     private static native void nSurfaceTransaction_setGeometry(
             long surfaceControl, long surfaceTransaction, int srcRight, int srcTop, int srcLeft,
             int srcBottom, int dstRight, int dstTop, int dstLeft, int dstBottom, int transform);
+    private static native void nSurfaceTransaction_setSourceRect(long surfaceControl,
+            long surfaceTransaction, int srcRight, int srcTop, int srcLeft, int srcBottom);
+    private static native void nSurfaceTransaction_setPosition(long surfaceControl,
+            long surfaceTransaction, int dstRight, int dstTop, int dstLeft, int dstBottom);
+    private static native void nSurfaceTransaction_setTransform(
+            long surfaceControl, long surfaceTransaction, int transform);
     private static native void nSurfaceTransaction_setDamageRegion(
             long surfaceControl, long surfaceTransaction, int right, int top, int left, int bottom);
     private static native void nSurfaceTransaction_setZOrder(
