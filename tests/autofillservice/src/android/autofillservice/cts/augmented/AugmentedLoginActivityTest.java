@@ -67,6 +67,8 @@ import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
+import androidx.test.filters.FlakyTest;
+
 import org.junit.Test;
 
 import java.util.Set;
@@ -330,7 +332,7 @@ public class AugmentedLoginActivityTest
         mAugmentedUiBot.assertUiGone();
     }
 
-    @Presubmit
+    @FlakyTest(bugId = 162372863) // Re-add @Presubmit after fixing.
     @Test
     public void testAutoFill_augmentedFillRequestCancelled() throws Exception {
         // Set services
