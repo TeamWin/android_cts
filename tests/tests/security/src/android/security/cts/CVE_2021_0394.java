@@ -16,12 +16,12 @@
 
 package android.security.cts;
 
-import static org.junit.Assert.assertFalse;
-
 import android.platform.test.annotations.SecurityTest;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(AndroidJUnit4.class)
 public class CVE_2021_0394 {
@@ -34,6 +34,9 @@ public class CVE_2021_0394 {
      */
     @SecurityTest(minPatchLevel = "2021-03")
     @Test
+    @RequiresDevice
+    // emulators always have checkJNI enabled which causes the test
+    // to abort the VM while passing invalid input to NewStringUTF
     public void testPocCVE_2021_0394() throws Exception {
         assertFalse(poc());
     }
