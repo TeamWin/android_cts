@@ -107,12 +107,17 @@ public class TestUtils {
             "android.scopedstorage.cts.can_read_and_write";
     public static final String READDIR_QUERY = "android.scopedstorage.cts.readdir";
     public static final String SETATTR_QUERY = "android.scopedstorage.cts.setattr";
+    public static final String CHECK_DATABASE_ROW_EXISTS_QUERY =
+            "android.scopedstorage.cts.check_database_row_exists";
+    public static final String RENAME_FILE_QUERY = "android.scopedstorage.cts.renamefile";
 
     public static final String STR_DATA1 = "Just some random text";
     public static final String STR_DATA2 = "More arbitrary stuff";
 
     public static final byte[] BYTES_DATA1 = STR_DATA1.getBytes();
     public static final byte[] BYTES_DATA2 = STR_DATA2.getBytes();
+
+    public static final String RENAME_FILE_PARAMS_SEPARATOR = ";";
 
     // Root of external storage
     private static File sExternalStorageDirectory = Environment.getExternalStorageDirectory();
@@ -296,6 +301,30 @@ public class TestUtils {
             throws Exception {
         String actionName = forWrite ? CAN_OPEN_FILE_FOR_WRITE_QUERY : CAN_OPEN_FILE_FOR_READ_QUERY;
         return getResultFromTestApp(testApp, file.getPath(), actionName);
+    }
+
+    /**
+     * Makes the given {@code testApp} rename give {@code src} to {@code dst}.
+     *
+     * The method concatenates source and destination paths while sending the request to
+     * {@code testApp}. Hence, {@link TestUtils#RENAME_FILE_PARAMS_SEPARATOR} shouldn't be used
+     * in path names.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean renameFileAs(TestApp testApp, File src, File dst) throws Exception {
+        final String paths = String.format("%s%s%s",
+                src.getAbsolutePath(), RENAME_FILE_PARAMS_SEPARATOR, dst.getAbsolutePath());
+        return getResultFromTestApp(testApp, paths, RENAME_FILE_QUERY);
+    }
+
+    /**
+     * Makes the given {@code testApp} check if a database row exists for given {@code file}
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean checkDatabaseRowExistsAs(TestApp testApp, File file) throws Exception {
+        return getResultFromTestApp(testApp, file.getPath(), CHECK_DATABASE_ROW_EXISTS_QUERY);
     }
 
     public static Uri insertFileFromExternalMedia(boolean useRelative) throws IOException {
@@ -579,8 +608,16 @@ public class TestUtils {
      * entry in the database. Returns {@code -1} if file is not found.
      */
     public static int getFileRowIdFromDatabase(@NonNull File file) {
+        return getFileRowIdFromDatabase(getContentResolver(), file);
+    }
+
+    /**
+     * Queries given {@link ContentResolver} for a file and returns the corresponding row ID for
+     * its entry in the database. Returns {@code -1} if file is not found.
+     */
+    public static int getFileRowIdFromDatabase(ContentResolver cr, @NonNull File file) {
         int id = -1;
-        try (Cursor c = queryFile(file, MediaStore.MediaColumns._ID)) {
+        try (Cursor c = queryFile(cr, file, MediaStore.MediaColumns._ID)) {
             if (c.moveToFirst()) {
                 id = c.getInt(0);
             }
@@ -624,7 +661,8 @@ public class TestUtils {
      */
     @NonNull
     public static Cursor queryVideoFile(File file, String... projection) {
-        return queryFile(MediaStore.Video.Media.getContentUri(sStorageVolumeName), file,
+        return queryFile(getContentResolver(),
+                MediaStore.Video.Media.getContentUri(sStorageVolumeName), file,
                 /*includePending*/ true, projection);
     }
 
@@ -634,7 +672,8 @@ public class TestUtils {
      */
     @NonNull
     public static Cursor queryImageFile(File file, String... projection) {
-        return queryFile(MediaStore.Images.Media.getContentUri(sStorageVolumeName), file,
+        return queryFile(getContentResolver(),
+                MediaStore.Images.Media.getContentUri(sStorageVolumeName), file,
                 /*includePending*/ true, projection);
     }
 
@@ -1282,19 +1321,25 @@ public class TestUtils {
      */
     @NonNull
     public static Cursor queryFileExcludingPending(@NonNull File file, String... projection) {
-        return queryFile(MediaStore.Files.getContentUri(sStorageVolumeName), file,
-                /*includePending*/ false, projection);
+        return queryFile(getContentResolver(), MediaStore.Files.getContentUri(sStorageVolumeName),
+                file, /*includePending*/ false, projection);
+    }
+
+    @NonNull
+    public static Cursor queryFile(ContentResolver cr, @NonNull File file, String... projection) {
+        return queryFile(cr, MediaStore.Files.getContentUri(sStorageVolumeName),
+                file, /*includePending*/ true, projection);
     }
 
     @NonNull
     public static Cursor queryFile(@NonNull File file, String... projection) {
-        return queryFile(MediaStore.Files.getContentUri(sStorageVolumeName), file,
-                /*includePending*/ true, projection);
+        return queryFile(getContentResolver(), MediaStore.Files.getContentUri(sStorageVolumeName),
+                file, /*includePending*/ true, projection);
     }
 
     @NonNull
-    private static Cursor queryFile(@NonNull Uri uri, @NonNull File file, boolean includePending,
-            String... projection) {
+    private static Cursor queryFile(ContentResolver cr, @NonNull Uri uri, @NonNull File file,
+            boolean includePending, String... projection) {
         Bundle queryArgs = new Bundle();
         queryArgs.putString(ContentResolver.QUERY_ARG_SQL_SELECTION,
                 MediaStore.MediaColumns.DATA + " = ?");
@@ -1308,7 +1353,7 @@ public class TestUtils {
             queryArgs.putInt(MediaStore.QUERY_ARG_MATCH_PENDING, MediaStore.MATCH_EXCLUDE);
         }
 
-        final Cursor c = getContentResolver().query(uri, projection, queryArgs, null);
+        final Cursor c = cr.query(uri, projection, queryArgs, null);
         assertThat(c).isNotNull();
         return c;
     }
