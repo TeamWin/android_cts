@@ -43,11 +43,11 @@ final class DevicePolicyManagerWrapper
         int userId = context.getUserId();
         DevicePolicyManager spy = sSpies.get(context);
         if (spy != null) {
-            Log.d(TAG, "get(): returning cached spy for user " + userId);
+            Log.d(TAG, "getWrapper(): returning cached spy for user " + userId);
             return spy;
         }
 
-        Log.d(TAG, "get(): creating spy for user " + context.getUserId());
+        Log.d(TAG, "getWrapper(): creating spy for user " + context.getUserId());
         spy = Mockito.spy(dpm);
 
         // TODO(b/176993670): ideally there should be a way to automatically mock all DPM methods,
@@ -148,6 +148,9 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).getEndUserSessionMessage(any());
             doAnswer(answer).when(spy).setEndUserSessionMessage(any(), any());
 
+            // Used by SuspendPackageTest
+            doAnswer(answer).when(spy).getPolicyExemptApps();
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
@@ -155,8 +158,8 @@ final class DevicePolicyManagerWrapper
         }
 
         sSpies.put(context, spy);
-        Log.d(TAG, "get(): returning new spy for context " + context + " and user "
-                + userId);
+        Log.d(TAG, "getWrapper(): returning new spy for context " + context  + " ("
+                + context.getPackageName() + ")" + " and user " + userId);
 
         return spy;
     }
