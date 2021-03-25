@@ -55,6 +55,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -533,7 +534,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, int userId)
             throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
+        runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId);
     }
 
     protected void runDeviceTestsAsUser(
@@ -1198,6 +1199,20 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + "broadcasts to user 0", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
                 userId, deviceAdminPkg);
+    }
+
+    /**
+     * Generates instrumentation arguments that indicate the device-side test is exercising device
+     * owner APIs.
+     *
+     * <p>This is needed for hostside tests that use the same class hierarchy for both device and
+     * profile owner tests, as on headless system user mode the test side must decide whether to
+     * use its "local DPC" or wrap the calls to the system user DPC.
+     */
+    protected static Map<String, String> paramsForDeviceOwnerTest() {
+        Map<String, String> params = new HashMap<>();
+        params.put("admin_type", "DeviceOwner");
+        return params;
     }
 
     boolean isTv() throws DeviceNotAvailableException {

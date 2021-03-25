@@ -15,6 +15,8 @@
  */
 package com.android.cts.deviceandprofileowner;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -30,7 +32,12 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.BasicAdminReceiver;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -49,6 +56,13 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
 
         static final String EXTRA_NETWORK_LOGS_BATCH_TOKEN =
                 "com.android.cts.deviceandprofileowner.extra.NETWORK_LOGS_BATCH_TOKEN";
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
+
+            super.onReceive(context, intent);
+        }
 
         @Override
         public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
@@ -89,7 +103,7 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
     protected boolean mHasSecureLockScreen;
     static CountDownLatch mOnPasswordExpiryTimeoutCalled;
 
-    private final String mTag = getClass().getSimpleName();
+    protected final String mTag = getClass().getSimpleName();
 
     @Override
     protected void setUp() throws Exception {
@@ -97,18 +111,36 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
 
         mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
-        assertNotNull(mDevicePolicyManager);
+        assertWithMessage("dpm").that(mDevicePolicyManager).isNotNull();
 
         mUserManager = mContext.getSystemService(UserManager.class);
-        assertNotNull(mUserManager);
+        assertWithMessage("userManager").that(mUserManager).isNotNull();
 
         mHasSecureLockScreen = mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN);
 
-        assertTrue(mDevicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT));
-        assertTrue("App is neither device nor profile owner",
-                mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME) ||
-                mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME));
+
+        boolean isActiveAdmin = mDevicePolicyManager.isAdminActive(ADMIN_RECEIVER_COMPONENT);
+        boolean isProfileOwner = mDevicePolicyManager.isProfileOwnerApp(PACKAGE_NAME);
+        boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
+        boolean isDeviceOwnerTest = "DeviceOwner"
+                .equals(InstrumentationRegistry.getArguments().getString("admin_type"));
+        Log.d(mTag, "setup() on user " + mContext.getUserId() + ": package=" + PACKAGE_NAME
+                + ", adminReceiverComponent=" + ADMIN_RECEIVER_COMPONENT
+                + ", isActiveAdmin=" + isActiveAdmin + ", isProfileOwner=" + isProfileOwner
+                + ", isDeviceOwner=" + isDeviceOwner + ", isDeviceOwnerTest=" + isDeviceOwnerTest);
+
+        assertWithMessage("active admin for %s", ADMIN_RECEIVER_COMPONENT).that(isActiveAdmin)
+                .isTrue();
+
+        assertWithMessage("profile owner or device owner for %s", PACKAGE_NAME)
+                .that(isProfileOwner || isDeviceOwner).isTrue();
+
+        if (isDeviceOwnerTest) {
+            mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
+                    BasicAdminReceiver.class);
+            Log.d(mTag, "mDevicePolicyManager after DPMWrapper call: " + mDevicePolicyManager);
+        }
     }
 
     protected int getTargetApiLevel() throws Exception {
@@ -142,12 +174,14 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
                 break;
             }
         }
-        assertTrue("User should have been unlocked", mUserManager.isUserUnlocked());
+        assertWithMessage("user unlocked").that(mUserManager.isUserUnlocked()).isTrue();
     }
 
     protected void assertPasswordSufficiency(boolean expectPasswordSufficient) {
         waitUntilUserUnlocked();
-        assertEquals(expectPasswordSufficient, mDevicePolicyManager.isActivePasswordSufficient());
+        assertWithMessage("isActivePasswordSufficient()")
+                .that(mDevicePolicyManager.isActivePasswordSufficient())
+                .isEqualTo(expectPasswordSufficient);
     }
 
     protected boolean isDeviceOwner() {
