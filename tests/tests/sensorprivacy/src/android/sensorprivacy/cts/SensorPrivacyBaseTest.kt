@@ -35,6 +35,7 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.regex.Pattern
 
 abstract class SensorPrivacyBaseTest(
     val feature: String,
@@ -85,7 +86,8 @@ abstract class SensorPrivacyBaseTest(
             intent.putExtra(extra, true)
         }
         context.startActivity(intent)
-        UiAutomatorUtils.waitFindObject(By.text("Turn on")).click()
+        UiAutomatorUtils.waitFindObject(By.text(
+                Pattern.compile("Turn on", Pattern.CASE_INSENSITIVE))).click()
         SystemUtil.eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
