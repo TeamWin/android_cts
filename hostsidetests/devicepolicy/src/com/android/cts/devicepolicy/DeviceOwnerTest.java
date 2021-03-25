@@ -895,26 +895,22 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                 "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testListForegroundAffiliatedUsers_notAffiliated() throws Exception {
         assumeCanCreateAdditionalUsers(1);
         int userId = createUser();
         switchUser(userId);
 
-        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
-                "testListForegroundAffiliatedUsers_empty");
+        executeListForegroundAffiliatedUsersTest("testListForegroundAffiliatedUsers_empty");
     }
 
-    // TODO(b/132260693): Instrumentation run failed due to 'Process crashed'
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @Test
     public void testListForegroundAffiliatedUsers_affiliated() throws Exception {
         assumeCanCreateAdditionalUsers(1);
         int userId = createAffiliatedSecondaryUser();
         switchUser(userId);
 
-        executeDeviceTestMethod(".ListForegroundAffiliatedUsersTest",
+        executeListForegroundAffiliatedUsersTest(
                 "testListForegroundAffiliatedUsers_onlyForegroundUser");
     }
 
@@ -960,6 +956,13 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
         // be always running (otherwise, the test case would crash on headless system user mode if
         // the current user is switched out)
         executeDeviceOwnerTestMethod(".CreateAndManageUserTest", testMethod);
+    }
+
+    private void executeListForegroundAffiliatedUsersTest(String testMethod) throws Exception {
+        // These test must be run on device owner user, as it's the only user that's guaranteed  to
+        // be always running (otherwise, the test case would crash on headless system user mode if
+        // the current user is switched out)
+        executeDeviceOwnerTestMethod(".ListForegroundAffiliatedUsersTest", testMethod);
     }
 
     private void assertNewUserStopped() throws Exception {
