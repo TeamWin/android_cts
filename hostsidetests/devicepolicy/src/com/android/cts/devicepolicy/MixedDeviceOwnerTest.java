@@ -57,6 +57,10 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         mUserId = mPrimaryUserId;
 
+        CLog.i("%s.setUp(): mUserId=%d, mPrimaryUserId=%d, mInitialUserId=%d, "
+                + "mDeviceOwnerUserId=%d", getClass(), mUserId, mPrimaryUserId, mInitialUserId,
+                mDeviceOwnerUserId);
+
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId,
                 /*expectFailure= */ false);
@@ -470,6 +474,17 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Override
+    public void testApplicationHidden() throws Exception {
+        if (isHeadlessSystemUserMode()) {
+            // Must run on user 0 because the test has a broadcast receiver that listen to packages
+            // added / removed intents
+            mUserId = mDeviceOwnerUserId;
+            CLog.d("testApplicationHidden(): setting mUserId as %d before running it", mUserId);
+        }
+        super.testApplicationHidden();
+    }
+
+    @Override
     protected void runDeviceTestsAsUser(String pkgName, String testClassName, int userId)
             throws DeviceNotAvailableException {
         runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId,
@@ -480,6 +495,11 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId,
                 paramsForDeviceOwnerTest());
+    }
+
+    @Override
+    protected void executeDeviceTestClass(String className) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {

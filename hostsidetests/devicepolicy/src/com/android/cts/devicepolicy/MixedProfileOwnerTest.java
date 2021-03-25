@@ -22,6 +22,8 @@ import static org.junit.Assert.fail;
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
 
+import com.android.tradefed.log.LogUtil.CLog;
+
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -29,13 +31,17 @@ import org.junit.Test;
  * Set of tests for pure (non-managed) profile owner use cases that also apply to device owners.
  * Tests that should be run identically in both cases are added in DeviceAndProfileOwnerTest.
  */
-public class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
+public final class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         mUserId = mPrimaryUserId;
+
+        CLog.i("%s.setUp(): mUserId=%d, mPrimaryUserId=%d, mInitialUserId=%d, "
+                + "mDeviceOwnerUserId=%d", getClass(), mUserId, mPrimaryUserId, mInitialUserId,
+                mDeviceOwnerUserId);
 
         installAppAsUser(DEVICE_ADMIN_APK, mUserId);
         if (!setProfileOwner(
