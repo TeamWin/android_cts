@@ -263,7 +263,7 @@ public class ClipboardManagerTest {
 
         // Press the home button to unfocus the app.
         mUiDevice.pressHome();
-        mUiDevice.wait(Until.gone(By.clazz(MockActivity.class)), 5000);
+        mUiDevice.wait(Until.gone(By.pkg(MockActivity.class.getPackageName())), 5000);
 
         // We should see an empty clipboard now.
         assertFalse(mClipboardManager.hasPrimaryClip());
@@ -280,7 +280,6 @@ public class ClipboardManagerTest {
 
         // Launch an activity to get back in focus.
         launchActivity(MockActivity.class);
-
 
         // Verify clipboard access is restored.
         assertNotNull(mClipboardManager.getPrimaryClip());
@@ -321,7 +320,7 @@ public class ClipboardManagerTest {
         intent.setClassName(mContext.getPackageName(), clazz.getName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mContext.startActivity(intent);
-        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 15000);
+        mUiDevice.wait(Until.hasObject(By.pkg(clazz.getPackageName())), 15000);
     }
 
     private class ExpectedClipItem {
