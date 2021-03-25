@@ -90,6 +90,13 @@ public class CipherTest extends AndroidTestCase {
 
     private static String[] EXPECTED_ALGORITHMS = BASE_EXPECTED_ALGORITHMS;
 
+    // For tests of behavior largely unrelated to the selected algorithm, such as
+    // unlockedDeviceRequired
+    private static final String[] BASIC_ALGORITHMS = {
+            "AES/GCM/NoPadding",
+            "RSA/ECB/OAEPWithSHA-256AndMGF1Padding",
+    };
+
     static {
       if (TestUtils.supports3DES()) {
         EXPECTED_ALGORITHMS = ObjectArrays
@@ -531,25 +538,37 @@ public class CipherTest extends AndroidTestCase {
         }
 
         try (DeviceLockSession dl = new DeviceLockSession()) {
+            dl.performDeviceLock();
             KeyguardManager keyguardManager = (KeyguardManager)getContext()
                 .getSystemService(Context.KEYGUARD_SERVICE);
 
             Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
             assertNotNull(provider);
             final byte[] originalPlaintext = EmptyArray.BYTE;
-            for (String algorithm : EXPECTED_ALGORITHMS) {
-                // Normally we would test all combinations of algorithms and key sizes, but the
-                // semi-manual locking and unlocking this requires takes way too long if we try to
-                // go through all of those. Other tests check all the key sizes, so we don't need to
-                // duplicate all that work.
-                for (ImportedKey key : importKatKeys(
-                        algorithm,
-                        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
-                        false, isUnlockedDeviceRequired, isUserAuthRequired)) {
+            // Normally we would test all combinations of algorithms and key sizes, but the
+            // semi-manual locking and unlocking this requires takes way too long if we try to
+            // go through all of those. Other tests check all the key sizes, so we don't need to
+            // duplicate all that work.
+            for (String algorithm : BASIC_ALGORITHMS) {
+                for (boolean createWhileLocked : new boolean[]{false, true}) {
                     try {
+                        if (createWhileLocked) {
+                            dl.performDeviceLock();
+                        } else {
+                            dl.performDeviceUnlock();
+                        }
+                        // Test just a single key in the collection
+                        ImportedKey key = importKatKeys(
+                                algorithm,
+                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                                false, isUnlockedDeviceRequired,
+                                isUserAuthRequired).iterator().next();
+                        if (createWhileLocked) {
+                            dl.performDeviceUnlock();
+                        }
                         Key encryptionKey = key.getKeystoreBackedEncryptionKey();
                         byte[] plaintext = truncatePlaintextIfNecessary(
-                               algorithm, encryptionKey, originalPlaintext);
+                                algorithm, encryptionKey, originalPlaintext);
                         if (plaintext == null) {
                             // Key is too short to encrypt anything using this transformation
                             continue;
@@ -561,32 +580,39 @@ public class CipherTest extends AndroidTestCase {
                         byte[] ciphertext = cipher.doFinal(plaintext);
                         byte[] expectedPlaintext = plaintext;
                         if ("RSA/ECB/NoPadding".equalsIgnoreCase(algorithm)) {
-                            // RSA decryption without padding left-pads resulting plaintext with NUL
-                            // bytes to the length of RSA modulus.
-                            int modulusLengthBytes = (TestUtils.getKeySizeBits(encryptionKey) + 7) / 8;
+                            // RSA decryption without padding left-pads resulting plaintext
+                            // with NUL bytes to the length of RSA modulus.
+                            int modulusLengthBytes = (TestUtils.getKeySizeBits(encryptionKey)
+                                    + 7) / 8;
                             expectedPlaintext = TestUtils.leftPadWithZeroBytes(
-                                   expectedPlaintext, modulusLengthBytes);
+                                    expectedPlaintext, modulusLengthBytes);
                         }
 
                         dl.performDeviceLock();
 
                         // Attempt to decrypt the data with the device locked.
                         cipher = Cipher.getInstance(algorithm, provider);
-                        assertFalse(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
+                        assertFalse(
+                                isDecryptValid(expectedPlaintext, ciphertext, cipher, params,
+                                        key));
 
                         // Then attempt to decrypt the data with the device unlocked
                         // This should succeed
                         dl.performDeviceUnlock();
                         cipher = Cipher.getInstance(algorithm, provider);
-                        assertTrue(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
+                        assertTrue(isDecryptValid(expectedPlaintext, ciphertext, cipher, params,
+                                key));
+
+                        // Ensure a second decryption also succeeds
+                        cipher = Cipher.getInstance(algorithm, provider);
+                        assertTrue(isDecryptValid(expectedPlaintext, ciphertext, cipher, params,
+                                key));
                     } catch (Throwable e) {
                         throw new RuntimeException(
-                              "Failed for " + algorithm + " with key " + key.getAlias(),
-                               e);
+                                "Failed on createWhileLocked " + createWhileLocked + " for " +
+                                        algorithm,
+                                e);
                     }
-                    // We don't know the underlying type of this collection, so just break out of
-                    // the iterator loop.
-                    break;
                 }
             }
         }
