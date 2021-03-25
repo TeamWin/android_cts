@@ -33,6 +33,7 @@ import static com.android.server.biometrics.nano.BiometricServiceStateProto.STAT
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -70,6 +71,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.security.InvalidAlgorithmParameterException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -337,6 +339,53 @@ public class BiometricServiceTest extends BiometricTestBase {
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(prop.getSensorId())){
                 enrollForSensor(session, prop.getSensorId());
+            }
+        }
+    }
+
+    @Test
+    public void testGenerateKeyWithoutDeviceCredential_throwsException() {
+        assertThrows("Key shouldn't be generatable before device credentials are enrolled",
+                Exception.class,
+                () -> Utils.generateBiometricBoundKey("keyBeforeCredentialEnrolled"));
+    }
+
+    @Test
+    public void testGenerateKeyWithoutBiometricEnrolled_throwsInvalidAlgorithmParameterException()
+            throws Exception {
+        try (CredentialSession session = new CredentialSession()){
+            session.setCredential();
+            assertThrows("Key shouldn't be generatable before biometrics are enrolled",
+                    InvalidAlgorithmParameterException.class,
+                    () -> Utils.generateBiometricBoundKey("keyBeforeBiometricEnrolled"));
+        }
+    }
+
+    @Test
+    public void testGenerateKeyWhenCredentialAndBiometricEnrolled() throws Exception {
+        try (CredentialSession credentialSession = new CredentialSession()) {
+            credentialSession.setCredential();
+
+            for (SensorProperties prop : mSensorProperties) {
+                final String keyName = "key" + prop.getSensorId();
+                Log.d(TAG, "Testing sensor: " + prop + ", key name: " + keyName);
+
+                try (BiometricTestSession session =
+                             mBiometricManager.createTestSession(prop.getSensorId())) {
+                    waitForAllUnenrolled();
+                    enrollForSensor(session, prop.getSensorId());
+                    if (prop.getSensorStrength() == SensorProperties.STRENGTH_STRONG) {
+                        Utils.generateBiometricBoundKey(keyName);
+                        // We can test initializing the key, which in this case is a Cipher.
+                        // However, authenticating it and using it is not testable, since that
+                        // requires a real authentication from the TEE or equivalent.
+                        BiometricPrompt.CryptoObject crypto = Utils.initializeCryptoObject(keyName);
+                    } else {
+                        assertThrows("Key shouldn't be generatable with non-strong biometrics",
+                                InvalidAlgorithmParameterException.class,
+                                () -> Utils.generateBiometricBoundKey(keyName));
+                    }
+                }
             }
         }
     }
