@@ -130,4 +130,21 @@ public class WifiConfigurationTest extends WifiJUnit3TestBase {
             // empty
         }
     }
+
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    // Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testSetGetDeletionPriority() throws Exception {
+        WifiConfiguration configuration = new WifiConfiguration();
+
+        assertEquals(0, configuration.getDeletionPriority());
+        try {
+            configuration.setDeletionPriority(-1);
+            fail("Expected IllegalArgumentException exception");
+        } catch(IllegalArgumentException e) {
+            // empty
+        }
+        configuration.setDeletionPriority(1);
+        assertEquals(1, configuration.getDeletionPriority());
+    }
 }
