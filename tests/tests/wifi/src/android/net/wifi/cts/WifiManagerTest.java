@@ -1874,7 +1874,9 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Bssid set dodesn't support for tethered hotspot
         SoftApConfiguration currentConfig = mWifiManager.getSoftApConfiguration();
         compareSoftApConfiguration(targetConfig, currentConfig);
-        assertTrue(currentConfig.isUserConfiguration());
+        if (BuildCompat.isAtLeastS()) {
+            assertTrue(currentConfig.isUserConfiguration());
+        }
     }
 
     private void compareSoftApConfiguration(SoftApConfiguration currentConfig,
