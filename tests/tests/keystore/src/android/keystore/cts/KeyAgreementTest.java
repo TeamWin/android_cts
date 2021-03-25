@@ -18,10 +18,12 @@ package android.keystore.cts;
 
 import java.security.GeneralSecurityException;
 import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.KeyAgreement;
 
@@ -29,8 +31,11 @@ import junit.framework.TestCase;
 
 import org.junit.Assert;
 
+import android.content.Context;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.security.keystore.KeyInfo;
+import androidx.test.InstrumentationRegistry;
 
 public class KeyAgreementTest extends TestCase {
     private static final String PRIVATE_KEY_ALIAS = "TemporaryPrivateKey";
@@ -139,7 +144,31 @@ public class KeyAgreementTest extends TestCase {
         kpg.initialize(
                 new KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_AGREE_KEY).build());
 
-        return kpg.generateKeyPair();
+        KeyPair kp = kpg.generateKeyPair();
+
+        KeyFactory factory = KeyFactory.getInstance(kp.getPrivate().getAlgorithm(),
+                "AndroidKeyStore");
+        KeyInfo keyInfo = null;
+        try {
+            keyInfo = factory.getKeySpec(kp.getPrivate(), KeyInfo.class);
+        } catch (InvalidKeySpecException e) {
+            // Not an Android KeyStore key.
+            fail("Unable to get KeyInfo for created key.");
+        }
+
+        // ECDH is only implemented in Secure Hardware if KeyMint is available.
+        int level = keyInfo.getSecurityLevel();
+        Context context = InstrumentationRegistry.getTargetContext();
+        if (TestUtils.getFeatureVersionKeystore(context) >= Attestation.KM_VERSION_KEYMINT_1) {
+            Assert.assertTrue(
+                level == KeyProperties.SECURITY_LEVEL_TRUSTED_ENVIRONMENT ||
+                level == KeyProperties.SECURITY_LEVEL_UNKNOWN_SECURE);
+        } else {
+            Assert.assertEquals(keyInfo.getSecurityLevel(),
+                    KeyProperties.SECURITY_LEVEL_SOFTWARE);
+        }
+
+        return kp;
     }
 
     private static KeyPair generateEphemeralServerKeyPair() throws GeneralSecurityException {
