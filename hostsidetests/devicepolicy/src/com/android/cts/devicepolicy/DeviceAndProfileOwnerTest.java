@@ -720,6 +720,11 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testApplicationHidden_cannotHidePolicyExemptApps() throws Exception {
+        executeDeviceTestMethod(".ApplicationHiddenTest", "testCannotHidePolicyExemptApps");
+    }
+
+    @Test
     public void testAccountManagement_deviceAndProfileOwnerAlwaysAllowed() throws Exception {
         installAppAsUser(ACCOUNT_MANAGEMENT_APK, mUserId);
         executeDeviceTestClass(".AllowedAccountManagementTest");
