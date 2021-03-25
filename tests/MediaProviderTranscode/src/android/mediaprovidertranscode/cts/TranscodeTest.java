@@ -97,9 +97,11 @@ public class TranscodeTest {
 
     @Before
     public void setUp() throws Exception {
-        Assume.assumeTrue(SystemProperties.getBoolean("sys.fuse.transcode_enabled", false));
-        // TODO(b/182846329): GSI doesn't support transcoding yet, maybe a transcoding issue
-        Assume.assumeFalse(SystemProperties.get("ro.product.system.device").contains("generic"));
+        Assume.assumeTrue("Media transcoding disabled",
+                SystemProperties.getBoolean("sys.fuse.transcode_enabled", false));
+        // TODO(b/182846329): GSI doesn't support transcoding yet
+        Assume.assumeFalse(
+                "Using GSI", SystemProperties.get("ro.build.product").contains("generic"));
 
         TranscodeTestUtils.pollForExternalStorageState();
         TranscodeTestUtils.grantPermission(getContext().getPackageName(),
