@@ -18,6 +18,7 @@ package android.keystore.cts;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.pm.FeatureInfo;
 import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
@@ -81,6 +82,54 @@ abstract class TestUtils extends Assert {
     static final long DAY_IN_MILLIS = 1000 * 60 * 60 * 24;
 
     private TestUtils() {}
+
+    // Returns 0 if not implemented. Otherwise returns the feature version.
+    //
+    static int getFeatureVersionKeystore(Context appContext) {
+        PackageManager pm = appContext.getPackageManager();
+
+        int featureVersionFromPm = 0;
+        if (pm.hasSystemFeature(PackageManager.FEATURE_HARDWARE_KEYSTORE)) {
+            FeatureInfo info = null;
+            FeatureInfo[] infos = pm.getSystemAvailableFeatures();
+            for (int n = 0; n < infos.length; n++) {
+                FeatureInfo i = infos[n];
+                if (i.name.equals(PackageManager.FEATURE_HARDWARE_KEYSTORE)) {
+                    info = i;
+                    break;
+                }
+            }
+            if (info != null) {
+                featureVersionFromPm = info.version;
+            }
+        }
+
+        return featureVersionFromPm;
+    }
+
+    // Returns 0 if not implemented. Otherwise returns the feature version.
+    //
+    static int getFeatureVersionKeystoreStrongBox(Context appContext) {
+        PackageManager pm = appContext.getPackageManager();
+
+        int featureVersionFromPm = 0;
+        if (pm.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+            FeatureInfo info = null;
+            FeatureInfo[] infos = pm.getSystemAvailableFeatures();
+            for (int n = 0; n < infos.length; n++) {
+                FeatureInfo i = infos[n];
+                if (i.name.equals(PackageManager.FEATURE_STRONGBOX_KEYSTORE)) {
+                    info = i;
+                    break;
+                }
+            }
+            if (info != null) {
+                featureVersionFromPm = info.version;
+            }
+        }
+
+        return featureVersionFromPm;
+    }
 
     /**
      * Returns whether 3DES KeyStore tests should run on this device. 3DES support was added in

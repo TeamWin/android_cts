@@ -54,6 +54,7 @@ import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertNotEquals;
 
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -294,6 +295,103 @@ public class KeyAttestationTest extends AndroidTestCase {
 
             X509Certificate attestationCert = (X509Certificate) certificates[0];
             checkDeviceLocked(Attestation.loadFromCertificate(attestationCert));
+        } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
+    public void testAttestationKmVersionMatchesFeatureVersion() throws Exception {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
+            return;
+
+        String keystoreAlias = "test_key";
+        Date now = new Date();
+        Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
+        Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
+        KeyGenParameterSpec.Builder builder =
+            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                    .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                    .setAttestationChallenge(new byte[128])
+                    .setKeyValidityStart(now)
+                    .setKeyValidityForOriginationEnd(originationEnd)
+                    .setKeyValidityForConsumptionEnd(consumptionEnd);
+
+        generateKeyPair(KEY_ALGORITHM_EC, builder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try {
+            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
+            verifyCertificateChain(certificates, false /* expectStrongBox */);
+            X509Certificate attestationCert = (X509Certificate) certificates[0];
+            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
+            int kmVersionFromAttestation = attestation.keymasterVersion;
+            int keyStoreFeatureVersion = TestUtils.getFeatureVersionKeystore(getContext());
+
+            // Feature Version is required on devices launching with Android 12 (API Level
+            // 31) but may be reported on devices launching with an earlier version. If it's
+            // present, it must match what is reported in attestation.
+            int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
+            if (firstApiLevel >= 31) {
+                assertNotEquals(0, keyStoreFeatureVersion);
+            }
+            if (keyStoreFeatureVersion != 0) {
+                assertEquals(kmVersionFromAttestation, keyStoreFeatureVersion);
+            }
+        } finally {
+            keyStore.deleteEntry(keystoreAlias);
+        }
+    }
+
+    public void testAttestationKmVersionMatchesFeatureVersionStrongBox() throws Exception {
+        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_PC))
+            return;
+
+        int keyStoreFeatureVersionStrongBox =
+                TestUtils.getFeatureVersionKeystoreStrongBox(getContext());
+
+        if (!TestUtils.hasStrongBox(getContext())) {
+            // If there's no StrongBox, ensure there's no feature version for it.
+            assertEquals(0, keyStoreFeatureVersionStrongBox);
+            return;
+        }
+
+        String keystoreAlias = "test_key";
+        Date now = new Date();
+        Date originationEnd = new Date(now.getTime() + ORIGINATION_TIME_OFFSET);
+        Date consumptionEnd = new Date(now.getTime() + CONSUMPTION_TIME_OFFSET);
+        KeyGenParameterSpec.Builder builder =
+            new KeyGenParameterSpec.Builder(keystoreAlias, PURPOSE_SIGN)
+                    .setAlgorithmParameterSpec(new ECGenParameterSpec("secp256r1"))
+                    .setAttestationChallenge(new byte[128])
+                    .setKeyValidityStart(now)
+                    .setKeyValidityForOriginationEnd(originationEnd)
+                    .setKeyValidityForConsumptionEnd(consumptionEnd)
+                    .setIsStrongBoxBacked(true);
+
+        generateKeyPair(KEY_ALGORITHM_EC, builder.build());
+
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+
+        try {
+            Certificate certificates[] = keyStore.getCertificateChain(keystoreAlias);
+            verifyCertificateChain(certificates, true /* expectStrongBox */);
+            X509Certificate attestationCert = (X509Certificate) certificates[0];
+            Attestation attestation = Attestation.loadFromCertificate(attestationCert);
+            int kmVersionFromAttestation = attestation.keymasterVersion;
+
+            // Feature Version is required on devices launching with Android 12 (API Level
+            // 31) but may be reported on devices launching with an earlier version. If it's
+            // present, it must match what is reported in attestation.
+            int firstApiLevel = SystemProperties.getInt("ro.product.first_api_level", 0);
+            if (firstApiLevel >= 31) {
+                assertNotEquals(0, keyStoreFeatureVersionStrongBox);
+            }
+            if (keyStoreFeatureVersionStrongBox != 0) {
+                assertEquals(kmVersionFromAttestation, keyStoreFeatureVersionStrongBox);
+            }
         } finally {
             keyStore.deleteEntry(keystoreAlias);
         }
