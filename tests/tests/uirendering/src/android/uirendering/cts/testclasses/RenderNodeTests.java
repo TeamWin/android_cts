@@ -658,6 +658,52 @@ public class RenderNodeTests extends ActivityTestBase {
     }
 
     @Test
+    public void testBlurRenderEffectImplicitInput() {
+        final int blurRadius = 10;
+        final Rect fullBounds = new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        final Rect insetBounds = new Rect(blurRadius, blurRadius, TEST_WIDTH - blurRadius,
+                TEST_HEIGHT - blurRadius);
+
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setRenderEffect(
+                RenderEffect.createBlurEffect(
+                        blurRadius,
+                        blurRadius,
+                        Shader.TileMode.DECAL
+                )
+        );
+        renderNode.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        {
+            Canvas canvas = renderNode.beginRecording();
+            Paint paint = new Paint();
+            paint.setColor(Color.WHITE);
+            canvas.drawRect(fullBounds, paint);
+
+            paint.setColor(Color.BLUE);
+
+            canvas.drawRect(insetBounds, paint);
+            renderNode.endRecording();
+        }
+
+        final Rect unblurredBounds = new Rect(insetBounds);
+        unblurredBounds.inset(blurRadius, blurRadius);
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(
+                        new RegionVerifier()
+                                .addVerifier(
+                                        unblurredBounds,
+                                        new ColorVerifier(Color.BLUE))
+                                .addVerifier(
+                                        fullBounds,
+                                        new BlurPixelVerifier(Color.BLUE, Color.WHITE)
+                                )
+            );
+    }
+
+    @Test
     public void testBlurRenderEffect() {
         final int blurRadius = 10;
         final Rect fullBounds = new Rect(0, 0, TEST_WIDTH, TEST_HEIGHT);
