@@ -26,6 +26,8 @@ message SuggestionRule {
   optional string match = 1;
   optional int32 attributes = 2;
   repeated string suggestions = 3;
+  optional int32 start_offset = 4;
+  optional int32 length = 5;
 }
 
 // Represents a MockSpellChecker configuration.

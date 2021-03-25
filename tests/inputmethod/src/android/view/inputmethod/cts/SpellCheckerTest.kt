@@ -443,6 +443,49 @@ class SpellCheckerTest : EndToEndImeTestBase() {
         }
     }
 
+    @Test
+    fun removePreviousSuggestion() {
+        // Set up two rules:
+        // - Matches the sentence "Wrong context word?" and marks "word" as grammar error.
+        // - Matches the sentence "Correct context word?" and marks "word" as in-vocabulary.
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .setMatchSentence(true)
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("Wrong context word?")
+                                .addSuggestions("suggestion")
+                                .setStartOffset(14)
+                                .setLength(4)
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_GRAMMAR_ERROR)
+                ).addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("Correct context word?")
+                                .setStartOffset(16)
+                                .setLength(4)
+                                .setAttributes(RESULT_ATTR_IN_THE_DICTIONARY)
+                ).build()
+        MockImeSession.create(context).use { session ->
+            MockSpellCheckerClient.create(context, configuration).use { client ->
+                val (_, editText) = startTestActivity()
+                CtsTouchUtils.emulateTapOnViewCenter(instrumentation, null, editText)
+                waitOnMainUntil({ editText.hasFocus() }, TIMEOUT)
+                InputMethodVisibilityVerifier.expectImeVisible(TIMEOUT)
+                session.callCommitText("Wrong context word", 1)
+                session.callCommitText("?", 1)
+                waitOnMainUntil({
+                    findSuggestionSpanWithFlags(editText, FLAG_GRAMMAR_ERROR) != null
+                }, TIMEOUT)
+                // Change "Wrong" to "Correct" and then trigger spell check.
+                session.callSetSelection(0, 5) // Select "Wrong"
+                session.callCommitText("Correct", 1)
+                session.callPerformSpellCheck()
+                waitOnMainUntil({
+                    findSuggestionSpanWithFlags(editText, FLAG_GRAMMAR_ERROR) == null
+                }, TIMEOUT)
+            }
+        }
+    }
+
     private fun findSuggestionSpanWithFlags(editText: EditText, flags: Int): SuggestionSpan? =
             getSuggestionSpans(editText).find { (it.flags and flags) == flags }
 
