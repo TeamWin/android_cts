@@ -24,11 +24,11 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.set;
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
+import android.app.PendingIntent;
 import android.app.appsearch.AppSearchManager;
 import android.app.appsearch.SearchResult;
 import android.app.appsearch.SearchSpec;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -2243,6 +2243,47 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         } finally {
             file.delete();
         }
+    }
+
+    public void testGetShortcutIntent_ReturnPendingIntentForLauncher() throws Exception {
+        // Create s1 as a floating pinned shortcut.
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(
+                    makeShortcut("s1"))));
+            getManager().updateShortcutVisibility(
+                    mPackageContext2.getPackageName(), new byte[] {100}, true);
+        });
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
+            final PendingIntent intent = getLauncherApps().getShortcutIntent(
+                    mPackageContext1.getPackageName(), "s1", null, getUserHandle());
+            assertNotNull(intent);
+            assertFalse(intent.isImmutable());
+            assertEquals(mPackageContext1.getPackageName(), intent.getCreatorPackage());
+            assertEquals(getUserHandle(), intent.getCreatorUserHandle());
+        });
+    }
+
+    public void testGetShortcutIntent_ThrowsSecurityExceptionForNonLauncher() throws Exception {
+        // Create s1 as a floating pinned shortcut.
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            assertTrue(getManager().setDynamicShortcuts(list(makeShortcut("s1"))));
+        });
+
+        setDefaultLauncher(getInstrumentation(), mLauncherContext1);
+
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
+            boolean securityExceptionThrown = false;
+            try {
+                getLauncherApps().getShortcutIntent(
+                        mPackageContext1.getPackageName(), "s1", null, getUserHandle());
+            } catch (SecurityException e) {
+                securityExceptionThrown = true;
+            }
+            assertTrue(securityExceptionThrown);
+        });
     }
 
     // TODO Test auto rank adjustment.
