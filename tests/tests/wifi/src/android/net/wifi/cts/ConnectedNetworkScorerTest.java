@@ -273,6 +273,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                             WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
                     assertThat(statsEntry.getChannelUtilizationRatio()).isIn(Range.closed(0, 255));
                     assertThat(statsEntry.getRateStats()).isNotNull();
+                    assertThat(statsEntry.getWifiLinkLayerRadioStats()).isNotNull();
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())
@@ -523,7 +524,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             connectedNetworkScorer.resetCountDownLatch(countDownLatchScorer);
 
             // Restart wifi subsystem.
-            mWifiManager.restartWifiSubsystem(null);
+            mWifiManager.restartWifiSubsystem();
             // Wait for the device to connect back.
             PollingCheck.check(
                     "Wifi not connected",

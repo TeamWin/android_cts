@@ -28,6 +28,7 @@ import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.app.AppOpsManager.MODE_IGNORED
+import android.app.AppOpsManager.OPSTR_PICTURE_IN_PICTURE
 import android.app.AppOpsManager.OPSTR_READ_CALENDAR
 import android.app.AppOpsManager.OPSTR_RECORD_AUDIO
 import android.app.AppOpsManager.OPSTR_WIFI_SCAN
@@ -510,33 +511,33 @@ class AppOpsTest {
     fun testNonHistoricalStatePersistence() {
         // Put a package and uid level data
         runWithShellPermissionIdentity {
-            mAppOps.setMode(OPSTR_RECORD_AUDIO, Process.myUid(),
+            mAppOps.setMode(OPSTR_PICTURE_IN_PICTURE, Process.myUid(),
                     mOpPackageName, MODE_IGNORED)
-            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), MODE_ERRORED)
+            mAppOps.setUidMode(OPSTR_PICTURE_IN_PICTURE, Process.myUid(), MODE_ERRORED)
 
             // Write the data to disk and read it
             mAppOps.reloadNonHistoricalState()
         }
 
         // Verify the uid state is preserved
-        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO,
+        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_PICTURE_IN_PICTURE,
                 Process.myUid(), mOpPackageName), MODE_ERRORED)
 
         runWithShellPermissionIdentity {
             // Clear the uid state
-            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(),
-                    AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO))
+            mAppOps.setUidMode(OPSTR_PICTURE_IN_PICTURE, Process.myUid(),
+                    AppOpsManager.opToDefaultMode(OPSTR_PICTURE_IN_PICTURE))
         }
 
         // Verify the package state is preserved
-        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_RECORD_AUDIO,
+        assertSame(mAppOps.unsafeCheckOpNoThrow(OPSTR_PICTURE_IN_PICTURE,
                 Process.myUid(), mOpPackageName), MODE_IGNORED)
 
         runWithShellPermissionIdentity {
             // Clear the uid state
-            val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_RECORD_AUDIO)
-            mAppOps.setUidMode(OPSTR_RECORD_AUDIO, Process.myUid(), defaultMode)
-            mAppOps.setMode(OPSTR_RECORD_AUDIO, Process.myUid(),
+            val defaultMode = AppOpsManager.opToDefaultMode(OPSTR_PICTURE_IN_PICTURE)
+            mAppOps.setUidMode(OPSTR_PICTURE_IN_PICTURE, Process.myUid(), defaultMode)
+            mAppOps.setMode(OPSTR_PICTURE_IN_PICTURE, Process.myUid(),
                     mOpPackageName, defaultMode)
         }
     }

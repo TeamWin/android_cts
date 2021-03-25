@@ -209,7 +209,8 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                         AVCProfileConstrainedBaseline, AVCProfileConstrainedHigh});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_HEVC,
                 new int[]{HEVCProfileMain, HEVCProfileMain10, HEVCProfileMainStill,
-                        HEVCProfileMain10HDR10, HEVCProfileMain10HDR10Plus});
+                          // TODO: test HDR profiles once they are supported by MediaMuxer
+                          /* HEVCProfileMain10HDR10, HEVCProfileMain10HDR10Plus */});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_H263,
                 new int[]{H263ProfileBaseline, H263ProfileH320Coding,
                         H263ProfileBackwardCompatible, H263ProfileISWV2, H263ProfileISWV3,
@@ -229,8 +230,9 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP8, new int[]{VP8ProfileMain});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_VP9, new int[]{VP9Profile0, VP9Profile1});
         mProfileMap.put(MediaFormat.MIMETYPE_VIDEO_AV1,
-                new int[]{AV1ProfileMain8, AV1ProfileMain10, AV1ProfileMain10HDR10,
-                        AV1ProfileMain10HDR10Plus});
+                new int[]{AV1ProfileMain8, AV1ProfileMain10,
+                          // TODO: test HDR profiles once they are supported by MediaMuxer
+                          /* AV1ProfileMain10HDR10, AV1ProfileMain10HDR10Plus */});
         mProfileMap.put(MediaFormat.MIMETYPE_AUDIO_AAC,
                 new int[]{AACObjectMain, AACObjectLC, AACObjectSSR, AACObjectLTP, AACObjectHE,
                         AACObjectScalable, AACObjectERLC, AACObjectERScalable, AACObjectLD,

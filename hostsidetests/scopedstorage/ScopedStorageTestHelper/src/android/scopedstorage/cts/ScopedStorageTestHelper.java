@@ -20,6 +20,7 @@ import static android.scopedstorage.cts.lib.RedactionTestHelper.getExifMetadata;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CAN_READ_WRITE_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.CHECK_DATABASE_ROW_EXISTS_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.CREATE_IMAGE_ENTRY_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.DELETE_FILE_QUERY;
@@ -30,8 +31,11 @@ import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_READ_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.OPEN_FILE_FOR_WRITE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.QUERY_TYPE;
 import static android.scopedstorage.cts.lib.TestUtils.READDIR_QUERY;
+import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_PARAMS_SEPARATOR;
+import static android.scopedstorage.cts.lib.TestUtils.RENAME_FILE_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.SETATTR_QUERY;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
+import static android.scopedstorage.cts.lib.TestUtils.getFileRowIdFromDatabase;
 import static android.scopedstorage.cts.lib.TestUtils.getImageContentUri;
 
 import android.app.Activity;
@@ -93,6 +97,12 @@ public class ScopedStorageTestHelper extends Activity {
                     break;
                 case CREATE_IMAGE_ENTRY_QUERY:
                     returnIntent = createImageEntry(queryType);
+                    break;
+                case RENAME_FILE_QUERY:
+                    returnIntent = renameFile(queryType);
+                    break;
+                case CHECK_DATABASE_ROW_EXISTS_QUERY:
+                    returnIntent = checkDatabaseRowExists(queryType);
                     break;
                 case "null":
                 default:
@@ -211,6 +221,36 @@ public class ScopedStorageTestHelper extends Activity {
             }
         } else {
             throw new IllegalStateException(queryType + ": File path not set from launcher app");
+        }
+    }
+
+    private Intent renameFile(String queryType) {
+        if (getIntent().hasExtra(INTENT_EXTRA_PATH)) {
+            String[] paths = getIntent().getStringExtra(INTENT_EXTRA_PATH)
+                    .split(RENAME_FILE_PARAMS_SEPARATOR);
+            File src = new File(paths[0]);
+            File dst = new File(paths[1]);
+            boolean result = src.renameTo(dst);
+            final Intent intent = new Intent(queryType);
+            intent.putExtra(queryType, result);
+            return intent;
+        } else {
+            throw new IllegalStateException(
+                    queryType + ": File paths not set from launcher app");
+        }
+    }
+
+    private Intent checkDatabaseRowExists(String queryType) {
+        if (getIntent().hasExtra(INTENT_EXTRA_PATH)) {
+            final String filePath = getIntent().getStringExtra(INTENT_EXTRA_PATH);
+            boolean result =
+                    getFileRowIdFromDatabase(getContentResolver(), new File(filePath)) != -1;
+            final Intent intent = new Intent(queryType);
+            intent.putExtra(queryType, result);
+            return intent;
+        } else {
+            throw new IllegalStateException(
+                    queryType + ": File path not set from launcher app");
         }
     }
 

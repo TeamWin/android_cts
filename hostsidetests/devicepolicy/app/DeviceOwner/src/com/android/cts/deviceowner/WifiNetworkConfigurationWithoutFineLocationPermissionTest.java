@@ -23,10 +23,13 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.SystemClock;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.WifiConfigCreator;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends BaseDeviceOwnerTest {
     private static final String TAG = "WifiNetworkConfigurationWithoutFineLocationPermissionTest";
@@ -34,6 +37,10 @@ public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends B
     // Unique SSID to use for this test (max SSID length is 32)
     private static final String NETWORK_SSID = "com.android.cts.abcdefghijklmnop";
     private static final int INVALID_NETWORK_ID = -1;
+
+    // Time duration to allow before assuming that a WiFi operation failed and ceasing to wait.
+    private static final long UPDATE_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(5);
+    private static final long UPDATE_INTERVAL_MS = TimeUnit.SECONDS.toMillis(1);
 
     private WifiManager mWifiManager;
     private WifiConfigCreator mWifiConfigCreator;
@@ -44,6 +51,12 @@ public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends B
 
         mWifiConfigCreator = new WifiConfigCreator(getContext());
         mWifiManager = getContext().getSystemService(WifiManager.class);
+        // WiFi is supposed to be a prerequisite of CTS but sometimes it's not enabled
+        // for some unknown reason. Check it here just in case.
+        if (!mWifiManager.isWifiEnabled()) {
+            SystemUtil.runShellCommand("svc wifi enable");
+            awaitWifiEnabled();
+        }
     }
 
     public void testAddAndRetrieveCallerConfiguredNetworks() throws Exception {
@@ -62,5 +75,17 @@ public class WifiNetworkConfigurationWithoutFineLocationPermissionTest extends B
         } finally {
             mWifiManager.removeNetwork(netId);
         }
+    }
+
+    private void awaitWifiEnabled()  {
+        for (int probes = 0; probes * UPDATE_INTERVAL_MS <= UPDATE_TIMEOUT_MS; probes++) {
+            if (probes != 0) {
+                SystemClock.sleep(UPDATE_INTERVAL_MS);
+            }
+            if (mWifiManager.isWifiEnabled()) {
+                return;
+            }
+        }
+        fail("Waited too long for wifi enabled");
     }
 }

@@ -17,6 +17,8 @@
 package android.telephonyprovider.cts;
 
 import static android.provider.Telephony.ServiceStateTable.DATA_NETWORK_TYPE;
+import static android.provider.Telephony.ServiceStateTable.DATA_REG_STATE;
+import static android.provider.Telephony.ServiceStateTable.DUPLEX_MODE;
 import static android.provider.Telephony.ServiceStateTable.VOICE_REG_STATE;
 import static android.telephony.NetworkRegistrationInfo.REGISTRATION_STATE_HOME;
 
@@ -212,6 +214,99 @@ public class ServiceStateTest {
 
         verifyNotificationObservedWhenFieldChanged(
                 DATA_NETWORK_TYPE, oldSS, newSS, true /*expectChange*/);
+    }
+
+    /**
+     * Verifies that the duplex mode is valid and matches ServiceState#getDuplexMode().
+     */
+    @Test
+    public void testGetDuplexMode_query() {
+        try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                new String[]{DUPLEX_MODE}, null, null)) {
+            assertThat(cursor.getCount()).isEqualTo(1);
+            cursor.moveToNext();
+
+            int duplexMode = cursor.getInt(cursor.getColumnIndex(DUPLEX_MODE));
+            assertThat(duplexMode).isEqualTo(mTelephonyManager.getServiceState().getDuplexMode());
+        }
+    }
+
+    /**
+     * Verifies that even we have duplex mode change, the observer should not receive the
+     * notification (duplex mode is a poll-only field).
+     */
+    @Test
+    public void testGetDuplexMode_noChangeObserved() throws Exception {
+        ServiceState oldSS = new ServiceState();
+        oldSS.setStateOutOfService();
+
+        ServiceState newSS = new ServiceState();
+        newSS.setStateOutOfService();
+
+        // Add NRI to trigger SS with duplex mode updated
+        NetworkRegistrationInfo nri = new NetworkRegistrationInfo.Builder()
+                .setDomain(NetworkRegistrationInfo.DOMAIN_PS)
+                .setTransportType(AccessNetworkConstants.TRANSPORT_TYPE_WWAN)
+                .setAccessNetworkTechnology(TelephonyManager.NETWORK_TYPE_LTE)
+                .build();
+        newSS.addNetworkRegistrationInfo(nri);
+        newSS.setChannelNumber(65536); // EutranBand.BAND_65, DUPLEX_MODE_FDD
+
+        verifyNotificationObservedWhenFieldChanged(
+                DUPLEX_MODE, oldSS, newSS, false /*expectChange*/);
+    }
+
+    /**
+     * Verifies that the data reg state is valid and matches ServiceState#getDataRegState()
+     */
+    @Test
+    public void testGetDataRegState_query() {
+        try (Cursor cursor = mContentResolver.query(Telephony.ServiceStateTable.CONTENT_URI,
+                new String[]{DATA_REG_STATE}, null, null)) {
+            assertThat(cursor.getCount()).isEqualTo(1);
+            cursor.moveToNext();
+
+            int dataRegState = cursor.getInt(cursor.getColumnIndex(DATA_REG_STATE));
+            assertThat(dataRegState).isEqualTo(
+                    mTelephonyManager.getServiceState().getDataRegState());
+        }
+    }
+
+    /**
+     * Verifies that when data reg state did not change, the observer should not receive the
+     * notification.
+     */
+    @Test
+    public void testGetDataRegState_noChangeObserved() throws Exception {
+        ServiceState oldSS = new ServiceState();
+        oldSS.setStateOutOfService();
+        oldSS.setState(ServiceState.STATE_OUT_OF_SERVICE);
+
+        ServiceState copyOfOldSS = new ServiceState();
+        copyOfOldSS.setStateOutOfService();
+        copyOfOldSS.setState(ServiceState.STATE_OUT_OF_SERVICE);
+        // set additional fields which is not related to data reg state
+        copyOfOldSS.setChannelNumber(65536);
+        copyOfOldSS.setIsManualSelection(true);
+
+        verifyNotificationObservedWhenFieldChanged(
+                DATA_REG_STATE, oldSS, copyOfOldSS, false /*expectChange*/);
+    }
+
+    /**
+     * Verifies that when data reg state changed, the observer should receive the notification.
+     */
+    @Test
+    public void testGetDataRegState_changeObserved() throws Exception {
+        ServiceState oldSS = new ServiceState();
+        oldSS.setStateOutOfService();
+
+        ServiceState newSS = new ServiceState();
+        newSS.setStateOutOfService();
+        newSS.setStateOff();
+
+        verifyNotificationObservedWhenFieldChanged(
+                DATA_REG_STATE, oldSS, newSS, true /*expectChange*/);
     }
 
     /**
