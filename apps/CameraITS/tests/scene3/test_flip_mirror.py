@@ -29,9 +29,6 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
-
-CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'test_images',
-                          'ISO12233.png')
 CHART_ORIENTATIONS = ['nominal', 'flip', 'mirror', 'rotate']
 NAME = os.path.splitext(os.path.basename(__file__))[0]
 PATCH_H = 0.5  # center 50%
@@ -61,7 +58,7 @@ def test_flip_mirror_impl(cam, props, fmt, chart, debug, log_path):
   mono_camera = camera_properties_utils.mono_camera(props)
 
   # get a local copy of the chart template
-  template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
+  template = cv2.imread(opencv_processing_utils.CHART_FILE, cv2.IMREAD_ANYDEPTH)
 
   # take img, crop chart, scale and prep for cv2 template match
   s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
