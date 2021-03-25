@@ -100,6 +100,7 @@ public final class TestMeasurementUtil {
             String testTag) {
         // If device does not have a GPS, skip the test.
         if (!TestUtils.deviceHasGpsFeature(testLocationManager.getContext())) {
+            Log.i(TAG, "Skip the test since GPS is not supported on the device.");
             return false;
         }
 
