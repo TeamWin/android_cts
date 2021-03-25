@@ -73,6 +73,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Base class for Telecom CTS tests that require a {@link CtsConnectionService} and
@@ -778,20 +779,32 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
     }
 
     MockConnection verifyConnectionForOutgoingCall(Uri address) {
-        try {
-            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                    TimeUnit.MILLISECONDS)) {
-                fail("No outgoing call connection requested by Telecom");
-            }
-        } catch (InterruptedException e) {
-            Log.i(TAG, "Test interrupted!");
+        if (!connectionService.waitForEvent(
+                MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION)) {
+            fail("No outgoing call connection requested by Telecom");
         }
-
         assertThat("Telecom should create outgoing connection for outgoing call",
                 connectionService.outgoingConnections.size(), not(equalTo(0)));
+
+        // There is a subtle race condition in ConnectionService.  When onCreateIncomingConnection
+        // or onCreateOutgoingConnection completes, ConnectionService then adds the connection to
+        // the list of tracked connections.  It's very possible for the lock to be released and
+        // the connection to have not yet been added to the connection list yet.
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+                                              @Override
+                                              public Object expected() {
+                                                  return true;
+                                              }
+
+                                              @Override
+                                              public Object actual() {
+                                                  return getConnection(address) != null;
+                                              }
+                                          },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected call from number " + address);
         Connection connection = getConnection(address);
-        assertNotNull("Could not find outgoing connection in list of active connections.",
-                connection);
+
         if (connection instanceof MockConnection) {
             if (connectionService.outgoingConnections.contains(connection)) {
                 return (MockConnection) connection;
