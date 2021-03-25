@@ -15,6 +15,8 @@
  */
 package com.android.bedstead.dpmwrapper;
 
+import static android.Manifest.permission.INTERACT_ACROSS_USERS;
+
 import static com.android.bedstead.dpmwrapper.DataFormatter.addArg;
 import static com.android.bedstead.dpmwrapper.DataFormatter.getArg;
 import static com.android.bedstead.dpmwrapper.Utils.ACTION_WRAPPED_MANAGER_CALL;
@@ -29,18 +31,22 @@ import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.UserHandle;
 import android.os.UserManager;
-import android.util.DebugUtils;
 import android.util.Log;
 
 import org.mockito.stubbing.Answer;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +64,7 @@ public final class TestAppSystemServiceFactory {
 
     private static final String TAG = TestAppSystemServiceFactory.class.getSimpleName();
 
+    private static final int RESULT_NOT_SENT_TO_ANY_RECEIVER = 108;
     static final int RESULT_OK = 42;
     static final int RESULT_EXCEPTION = 666;
 
@@ -68,6 +75,10 @@ public final class TestAppSystemServiceFactory {
     private static final HandlerThread HANDLER_THREAD = new HandlerThread(TAG + "HandlerThread");
 
     private static Handler sHandler;
+
+    // Caches whether the package declares the required receiver (otherwise each test would be
+    // querying package manager, which is expensive)
+    private static final HashMap<String, Boolean> sHasRequiredReceiver = new HashMap<>();
 
     /**
      * Gets the proper {@link DevicePolicyManager} instance to be used by the test.
@@ -85,8 +96,45 @@ public final class TestAppSystemServiceFactory {
         return getSystemService(context, WifiManager.class, receiverClass);
     }
 
+    private static void assertHasRequiredReceiver(Context context) {
+        String packageName = context.getPackageName();
+        Boolean hasIt = sHasRequiredReceiver.get(packageName);
+        if (hasIt != null && hasIt) {
+            return;
+        }
+        PackageManager pm = context.getPackageManager();
+        Class<?> targetClass = TestAppCallbacksReceiver.class;
+        PackageInfo packageInfo;
+        try {
+            packageInfo = pm.getPackageInfo(packageName, PackageManager.GET_RECEIVERS);
+        } catch (NameNotFoundException e) {
+            Log.wtf(TAG, "Could not get receivers for " + packageName);
+            return;
+        }
+
+        if (packageInfo.receivers != null) {
+            for (ActivityInfo receiver : packageInfo.receivers) {
+                Class<?> receiverClass = null;
+                try {
+                    receiverClass = Class.forName(receiver.name);
+                } catch (ClassNotFoundException e) {
+                    Log.e(TAG, "Invalid receiver class on manifest: " + receiver.name);
+                    continue;
+                }
+                if (TestAppCallbacksReceiver.class.isAssignableFrom(receiverClass)) {
+                    Log.d(TAG, "Found " + receiverClass + " on " + packageName);
+                    sHasRequiredReceiver.put(packageName, Boolean.TRUE);
+                    return;
+                }
+            }
+        }
+        fail("Package " + packageName + " doesn't have a " + TestAppCallbacksReceiver.class
+                + " receiver - did you add it to the manifest?");
+    }
+
     private static <T> T getSystemService(Context context, Class<T> serviceClass,
             Class<? extends DeviceAdminReceiver> receiverClass) {
+        assertHasRequiredReceiver(context);
 
         ServiceManagerWrapper<T> wrapper = null;
         Class<?> wrappedClass;
@@ -159,17 +207,24 @@ public final class TestAppSystemServiceFactory {
 
             };
             if (VERBOSE) {
-                Log.v(TAG, "Sending ordered broadcast from user " + userId + " to user "
-                        + UserHandle.SYSTEM);
+                Log.v(TAG, "Sending ordered broadcast (" + Utils.toString(intent) + ") from user "
+                        + userId + " to user " + UserHandle.SYSTEM);
             }
 
             // NOTE: method below used to be wrapped under runWithShellPermissionIdentity() to get
-            // INTERACT_ACROSS_USER permission, but that's not needed anymore (as the permission
+            // INTERACT_ACROSS_USERS permission, but that's not needed anymore (as the permission
             // is granted by the test. Besides, this class is now also used by DO apps that are not
             // instrumented, so it was removed
+            if (context.checkSelfPermission(INTERACT_ACROSS_USERS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                fail("Package " + context.getPackageName() + " doesn't have "
+                        + INTERACT_ACROSS_USERS + " - did you add it to the manifest and called "
+                        + "grantDpmWrapper() in the host-side test?");
+            }
             context.sendOrderedBroadcastAsUser(intent,
                     UserHandle.SYSTEM, /* permission= */ null, myReceiver, sHandler,
-                    /* initialCode= */ 0, /* initialData= */ null, /* initialExtras= */ null);
+                    RESULT_NOT_SENT_TO_ANY_RECEIVER, /* initialData= */ null,
+                    /* initialExtras= */ null);
 
             if (VERBOSE) {
                 Log.d(TAG, "Waiting up to " + TIMEOUT_MS + "ms for response on "
@@ -180,8 +235,8 @@ public final class TestAppSystemServiceFactory {
             }
 
             Result result = resultRef.get();
-
-            Log.d(TAG, "Got result on user " + userId + ": " + resultCodeToString(result.code));
+            Log.d(TAG, "Received result on user " + userId + ". Code: "
+                    + resultCodeToString(result.code));
 
             if (VERBOSE) {
                 // Some results - like network logging events - are quite large
@@ -194,6 +249,11 @@ public final class TestAppSystemServiceFactory {
                 case RESULT_EXCEPTION:
                     Exception e = (Exception) result.value;
                     throw (e instanceof InvocationTargetException) ? e.getCause() : e;
+                case RESULT_NOT_SENT_TO_ANY_RECEIVER:
+                    fail("Didn't receive result from ordered broadcast - did you override "
+                            + receiverClassName + ".onReceive() to call "
+                            + "DeviceOwnerHelper.runManagerMethod()?");
+                    return null;
                 default:
                     fail("Received invalid result for method %s: %s", methodName, result);
                     return null;
@@ -206,8 +266,18 @@ public final class TestAppSystemServiceFactory {
 
     }
 
-    private static String resultCodeToString(int code) {
-        return DebugUtils.constantToString(DevicePolicyManagerWrapper.class, "RESULT_", code);
+    static String resultCodeToString(int code) {
+        // Can't use DebugUtils.constantToString() because some valus are private
+        switch (code) {
+            case RESULT_NOT_SENT_TO_ANY_RECEIVER:
+                return "RESULT_NOT_SENT_TO_ANY_RECEIVER";
+            case RESULT_OK:
+                return "RESULT_OK";
+            case RESULT_EXCEPTION:
+                return "RESULT_EXCEPTION";
+            default:
+                return "RESULT_UNKNOWN:" + code;
+        }
     }
 
     private static void fail(String template, Object... args) {
