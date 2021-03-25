@@ -70,6 +70,9 @@ _GROUPED_SCENES = {
         'scene2': ['scene2_a', 'scene2_b', 'scene2_c', 'scene2_d', 'scene2_e']
 }
 
+# Scenes that have to be run manually regardless of configuration
+_MANUAL_SCENES = ['scene5']
+
 # Tests run in more than 1 scene.
 # List is created of type ['scene_source', 'test_to_be_repeated']
 # for the test run in current scene.
@@ -222,7 +225,6 @@ def check_manual_scenes(device_id, camera_id, scene, out_path):
     scene: Name of the scene to copy image files.
     out_path: output file location
   """
-  logging.info('No chart tablet defined. Manual testing.')
   with its_session_utils.ItsSession(
       device_id=device_id,
       camera_id=camera_id) as cam:
@@ -390,7 +392,17 @@ def main():
     tablet_id = get_device_serial_number('tablet', config_file_contents)
   else:
     tablet_id = None
-  auto_scene_switch = tablet_id is not None
+  # Prepend 'scene' if not specified at cmd line
+  for i, s in enumerate(scenes):
+    if not s.startswith('scene') and not s.startswith('sensor_fusion'):
+      scenes[i] = f'scene{s}'
+
+  # Determine if manual run
+  if tablet_id is not None and not set(scenes).intersection(_MANUAL_SCENES):
+    auto_scene_switch = True
+  else:
+    auto_scene_switch = False
+    logging.info('Manual testing: no tablet defined or testing scene5.')
 
   # Run through all scenes if user does not supply one and config file doesn't
   # have specific scene name listed.
@@ -407,14 +419,8 @@ def main():
       elif s in _GROUPED_SCENES:
         expand_scene(s, temp_scenes)
       else:
-        scene_str = 'scene' + s
-        if scene_str in possible_scenes:
-          temp_scenes.append(scene_str)
-        elif scene_str in _GROUPED_SCENES:
-          expand_scene(scene_str, temp_scenes)
-        else:
-          valid_scenes = False
-          raise ValueError(f'Unknown scene specified: {s}')
+        valid_scenes = False
+        raise ValueError(f'Unknown scene specified: {s}')
 
     # assign temp_scenes back to scenes and remove duplicates
     scenes = sorted(set(temp_scenes), key=temp_scenes.index)
