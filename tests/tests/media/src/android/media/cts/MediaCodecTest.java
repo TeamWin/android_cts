@@ -125,6 +125,8 @@ public class MediaCodecTest extends AndroidTestCase {
     private static final int DECODING_TIMEOUT_MS = 10000;
 
     private static boolean mIsAtLeastR = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R);
+    private static boolean mIsAtLeastS = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.S);
+
     /**
      * Tests:
      * <br> Exceptions for MediaCodec factory methods
@@ -381,6 +383,38 @@ public class MediaCodecTest extends AndroidTestCase {
             logMediaCodecException(e);
             fail("stop should not return MediaCodec.CodecException on wrong state");
         } catch (IllegalStateException e) { // expected
+        }
+        try {
+            codec.getSupportedVendorParameters();
+            fail("getSupportedVendorParameters should throw IllegalStateException" +
+                    " when in Uninitialized state");
+        } catch (IllegalStateException e) { // expected
+        } catch (Exception e) {
+            fail("unexpected exception: " + e.toString());
+        }
+        try {
+            codec.getParameterDescriptor("");
+            fail("getParameterDescriptor should throw IllegalStateException" +
+                    " when in Uninitialized state");
+        } catch (IllegalStateException e) { // expected
+        } catch (Exception e) {
+            fail("unexpected exception: " + e.toString());
+        }
+        try {
+            codec.subscribeToVendorParameters(List.of(""));
+            fail("subscribeToVendorParameters should throw IllegalStateException" +
+                    " when in Uninitialized state");
+        } catch (IllegalStateException e) { // expected
+        } catch (Exception e) {
+            fail("unexpected exception: " + e.toString());
+        }
+        try {
+            codec.unsubscribeFromVendorParameters(List.of(""));
+            fail("unsubscribeFromVendorParameters should throw IllegalStateException" +
+                    " when in Uninitialized state");
+        } catch (IllegalStateException e) { // expected
+        } catch (Exception e) {
+            fail("unexpected exception: " + e.toString());
         }
 
         if (mIsAtLeastR) {
@@ -2778,6 +2812,82 @@ public class MediaCodecTest extends AndroidTestCase {
             if (codec != null) {
                 codec.stop();
                 codec.release();
+            }
+        }
+    }
+
+    public void testVendorParameters() {
+        if (!MediaUtils.check(mIsAtLeastS, "test needs Android 12")) {
+            return;
+        }
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isAlias()) {
+                continue;
+            }
+            MediaCodec codec = null;
+            try {
+                codec = MediaCodec.createByCodecName(info.getName());
+                List<String> vendorParams = codec.getSupportedVendorParameters();
+                if (VERBOSE) {
+                    Log.d(TAG, "vendor params supported by " + info.getName() + ": " +
+                            vendorParams.toString());
+                }
+                for (String name : vendorParams) {
+                    MediaCodec.ParameterDescriptor desc = codec.getParameterDescriptor(name);
+                    assertNotNull(name + " is in the list of supported parameters, so the codec" +
+                            " should be able to describe it.", desc);
+                    assertEquals("name differs from the name in the descriptor",
+                            name, desc.getName());
+                    if (VERBOSE) {
+                        Log.d(TAG, name + " is of type " + desc.getType());
+                    }
+                }
+                codec.subscribeToVendorParameters(vendorParams);
+
+                // Build a MediaFormat that makes sense to the codec.
+                String type = info.getSupportedTypes()[0];
+                MediaFormat format = null;
+                CodecCapabilities caps = info.getCapabilitiesForType(type);
+                AudioCapabilities audioCaps = caps.getAudioCapabilities();
+                VideoCapabilities videoCaps = caps.getVideoCapabilities();
+                if (audioCaps != null) {
+                    format = MediaFormat.createAudioFormat(
+                            type,
+                            audioCaps.getMaxInputChannelCount(),
+                            audioCaps.getSupportedSampleRateRanges()[0].getLower());
+                    if (info.isEncoder()) {
+                        format.setInteger(MediaFormat.KEY_BIT_RATE, AUDIO_BIT_RATE);
+                    }
+                } else if (videoCaps != null) {
+                    int width = videoCaps.getSupportedWidths().getLower();
+                    int height = videoCaps.getSupportedHeightsFor(width).getLower();
+                    format = MediaFormat.createVideoFormat(type, width, height);
+                    if (info.isEncoder()) {
+                        format.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
+                        format.setInteger(MediaFormat.KEY_FRAME_RATE, 30);
+                        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
+                        format.setInteger(
+                                MediaFormat.KEY_COLOR_FORMAT,
+                                CodecCapabilities.COLOR_FormatYUV420Flexible);
+                    }
+                } else {
+                    Log.i(TAG, info.getName() + " is in neither audio nor video domain; skipped");
+                    codec.release();
+                    continue;
+                }
+                codec.configure(
+                        format, null, null,
+                        info.isEncoder() ? MediaCodec.CONFIGURE_FLAG_ENCODE : 0);
+                codec.start();
+                codec.unsubscribeFromVendorParameters(vendorParams);
+                codec.stop();
+            } catch (Exception e) {
+                throw new RuntimeException("codec name: " + info.getName(), e);
+            } finally {
+                if (codec != null) {
+                    codec.release();
+                }
             }
         }
     }
