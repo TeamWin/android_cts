@@ -39,6 +39,16 @@ public abstract class Attestation {
     public static final int KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT = 1;
     public static final int KM_SECURITY_LEVEL_STRONG_BOX = 2;
 
+    // Known KeyMaster/KeyMint versions. This is the version number
+    // which appear in the keymasterVersion field.
+    public static final int KM_VERSION_KEYMASTER_1 = 10;
+    public static final int KM_VERSION_KEYMASTER_1_1 = 11;
+    public static final int KM_VERSION_KEYMASTER_2 = 20;
+    public static final int KM_VERSION_KEYMASTER_3 = 30;
+    public static final int KM_VERSION_KEYMASTER_4 = 40;
+    public static final int KM_VERSION_KEYMASTER_4_1 = 41;
+    public static final int KM_VERSION_KEYMINT_1 = 100;
+
     int attestationVersion;
     int keymasterVersion;
     int keymasterSecurityLevel;
@@ -107,6 +117,7 @@ public abstract class Attestation {
 
     public abstract RootOfTrust getRootOfTrust();
 
+    // Returns one of the KM_VERSION_* values define above.
     public int getKeymasterVersion() {
         return keymasterVersion;
     }
