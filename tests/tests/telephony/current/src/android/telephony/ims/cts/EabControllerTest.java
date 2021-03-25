@@ -178,12 +178,12 @@ public class EabControllerTest {
         }
         sServiceConnector = null;
 
+        overrideCarrierConfig(null);
+
         if (sReceiver != null) {
             InstrumentationRegistry.getInstrumentation().getContext().unregisterReceiver(sReceiver);
             sReceiver = null;
         }
-
-        overrideCarrierConfig(null);
     }
 
     @Before
