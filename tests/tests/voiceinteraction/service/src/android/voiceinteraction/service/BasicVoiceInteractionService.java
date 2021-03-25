@@ -19,14 +19,12 @@ package android.voiceinteraction.service;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.content.Intent;
-import android.os.Bundle;
-import android.os.RemoteException;
+import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
 import android.service.voice.VoiceInteractionService;
 import android.system.ErrnoException;
 import android.util.Log;
-import android.voiceinteraction.common.ICtsHotwordDetectionServiceCallback;
 import android.voiceinteraction.common.Utils;
 
 import java.nio.ByteBuffer;
@@ -39,6 +37,8 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
     // TODO: (b/182236586) Refactor the voice interaction service logic
     static final String TAG = "BasicVoiceInteractionService";
 
+    public static String KEY_FAKE_DATA = "fakeData";
+    public static String VALUE_FAKE_DATA = "fakeData";
     public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[] {1, 2, 3};
 
     private boolean mReady = false;
@@ -76,7 +76,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         try {
             createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Google",
                     Locale.forLanguageTag("en-US"),
-                    createFakeBundleData(),
+                    createFakePersistableBundleData(),
                     createFakeSharedMemoryData(),
                     new AlwaysOnHotwordDetector.Callback() {
                         @Override
@@ -137,21 +137,10 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         }
     }
 
-    private Bundle createFakeBundleData() {
+    private PersistableBundle createFakePersistableBundleData() {
         // TODO : Add more data for testing
-        Bundle bundle = new Bundle();
-        bundle.putByteArray("fakeData", FAKE_BYTE_ARRAY_DATA);
-        ICtsHotwordDetectionServiceCallback callback =
-                new ICtsHotwordDetectionServiceCallback.Stub() {
-            @Override
-            public void onTestResult(int result) throws RemoteException {
-                Log.d(TAG, "onTestResult result = " + result);
-                broadcastIntentWithResult(
-                        Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
-                        result);
-            }
-        };
-        bundle.putBinder(Utils.KEY_TEST_FAKE_BINDER, callback.asBinder());
-        return bundle;
+        PersistableBundle persistableBundle = new PersistableBundle();
+        persistableBundle.putString(KEY_FAKE_DATA, VALUE_FAKE_DATA);
+        return persistableBundle;
     }
 }

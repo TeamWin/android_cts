@@ -35,6 +35,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:networkSecurityConfig="@xml/network_security_config"
@@ -129,6 +131,11 @@
                 <action android:name="android.app.action.BIND_SECONDARY_LOCKSCREEN_SERVICE" />
             </intent-filter>
         </service>
+
+        <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
+             android:exported="true">
+        </receiver>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"

@@ -36,6 +36,7 @@ import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
 import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
+import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
 import static android.content.pm.PackageManager.CERT_INPUT_RAW_X509;
 import static android.os.Process.INVALID_UID;
@@ -68,6 +69,9 @@ import android.os.RemoteCallback;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class TestActivity extends Activity {
 
@@ -87,6 +91,7 @@ public class TestActivity extends Activity {
         backgroundHandler = new Handler(backgroundThread.getLooper());
         super.onCreate(savedInstanceState);
         handleIntent(getIntent());
+        onCommandReady(getIntent());
     }
 
     @Override
@@ -184,11 +189,23 @@ public class TestActivity extends Activity {
                 bindService(remoteCallback, packageName);
             } else if (Constants.ACTION_GET_SYNCADAPTER_TYPES.equals(action)) {
                 sendSyncAdapterTypes(remoteCallback);
+            } else if (Constants.ACTION_AWAIT_PACKAGES_SUSPENDED.equals(action)) {
+                final String[] awaitPackages = intent.getBundleExtra(EXTRA_DATA)
+                        .getStringArray(Intent.EXTRA_PACKAGES);
+                awaitSuspendedPackagesBroadcast(remoteCallback, Arrays.asList(awaitPackages),
+                        Intent.ACTION_PACKAGES_SUSPENDED, TIMEOUT_MS);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
         } catch (Exception e) {
             sendError(remoteCallback, e);
+        }
+    }
+
+    private void onCommandReady(Intent intent) {
+        final RemoteCallback callback = intent.getParcelableExtra(EXTRA_REMOTE_READY_CALLBACK);
+        if (callback != null) {
+            callback.sendResult(null);
         }
     }
 
@@ -212,6 +229,34 @@ public class TestActivity extends Activity {
                 () -> sendError(remoteCallback,
                         new MissingBroadcastException(action, timeoutMs)),
                 token, timeoutMs);
+    }
+
+    private void awaitSuspendedPackagesBroadcast(RemoteCallback remoteCallback,
+            List<String> awaitList, String action, long timeoutMs) {
+        final IntentFilter filter = new IntentFilter(action);
+        final ArrayList<String> suspendedList = new ArrayList<>();
+        final Object token = new Object();
+        final Runnable sendResult = () -> {
+            final Bundle result = new Bundle();
+            result.putStringArray(Intent.EXTRA_PACKAGES, suspendedList.toArray(new String[] {}));
+            remoteCallback.sendResult(result);
+            finish();
+        };
+        registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                final Bundle extras = intent.getExtras();
+                final String[] changedList = extras.getStringArray(
+                        Intent.EXTRA_CHANGED_PACKAGE_LIST);
+                suspendedList.addAll(Arrays.stream(changedList).filter(
+                        p -> awaitList.contains(p)).collect(Collectors.toList()));
+                if (suspendedList.size() == awaitList.size()) {
+                    mainHandler.removeCallbacksAndMessages(token);
+                    sendResult.run();
+                }
+            }
+        }, filter);
+        mainHandler.postDelayed(() -> sendResult.run(), token, timeoutMs);
     }
 
     private void sendGetInstalledPackages(RemoteCallback remoteCallback, int flags) {

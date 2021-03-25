@@ -18,8 +18,6 @@ package {
 
 java_library {
     name: "CtsVoiceInteractionCommon",
-    srcs: ["src/**/*.java",
-           "src/**/*.aidl"
-    ],
+    srcs: ["src/**/*.java"],
     sdk_version: "current",
 }

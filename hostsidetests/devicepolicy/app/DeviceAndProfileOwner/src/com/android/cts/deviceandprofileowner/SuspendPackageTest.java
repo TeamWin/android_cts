@@ -24,6 +24,8 @@ import android.content.pm.SuspendDialogInfo;
 import android.util.Log;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 public class SuspendPackageTest extends BaseDeviceAdminTest {
 
@@ -88,8 +90,25 @@ public class SuspendPackageTest extends BaseDeviceAdminTest {
         String[] notHandledPackages = setSuspendedPackages(/* suspend= */ true,
                 launcherPackage, dpcPackage);
         // no package should be handled.
-        assertWithMessage("not handled pacakges").that(notHandledPackages).asList()
+        assertWithMessage("not handled packages").that(notHandledPackages).asList()
                 .containsExactly(launcherPackage, dpcPackage);
+
+        Set<String> exemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        if (exemptApps.isEmpty()) {
+            Log.v(TAG, "testSuspendNotSuspendablePackages(): no exempt apps");
+            return;
+        }
+
+        Log.v(TAG, "testSuspendNotSuspendablePackages(): testing exempt apps: " + exemptApps);
+        notHandledPackages = setSuspendedPackages(/* suspend= */ true, exemptApps);
+        assertWithMessage("exempt apps not suspended").that(notHandledPackages).asList()
+            .containsExactlyElementsIn(exemptApps);
+    }
+
+    private String[] setSuspendedPackages(boolean suspend, Collection<String> pkgs) {
+        String[] pkgsArray = new String[pkgs.size()];
+        pkgs.toArray(pkgsArray);
+        return setSuspendedPackages(suspend, pkgsArray);
     }
 
     private String[] setSuspendedPackages(boolean suspend, String... pkgs) {

@@ -89,7 +89,7 @@ public class MainInteractionService extends VoiceInteractionService {
                         " it is not set as the current voice interaction service");
             }
         } else {
-            showSession(args, VoiceInteractionSession.SHOW_WITH_ASSIST);
+            showSession(args, 0);
         }
     }
 

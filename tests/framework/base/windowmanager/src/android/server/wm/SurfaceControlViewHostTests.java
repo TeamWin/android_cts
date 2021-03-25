@@ -19,6 +19,7 @@ package android.server.wm;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
 import static android.server.wm.UiDeviceUtils.pressUnlockButton;
 import static android.server.wm.UiDeviceUtils.pressWakeupButton;
+import static android.view.SurfaceControlViewHost.*;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 import static android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
 import static org.junit.Assert.assertEquals;
@@ -376,5 +377,60 @@ public class SurfaceControlViewHostTests implements SurfaceHolder.Callback {
         assertWindowFocused(mEmbeddedView, false);
         // assert host has focus
         assertWindowFocused(mSurfaceView, true);
+    }
+
+    private static class SurfaceCreatedCallback implements SurfaceHolder.Callback {
+        private final CountDownLatch mSurfaceCreated;
+        SurfaceCreatedCallback(CountDownLatch latch) {
+            mSurfaceCreated = latch;
+        }
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            mSurfaceCreated.countDown();
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {}
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {}
+    }
+
+    @Test
+    public void testCanCopySurfacePackage() throws Throwable {
+        // Create a surface view and wait for its surface to be created.
+        CountDownLatch surfaceCreated = new CountDownLatch(1);
+        mActivityRule.runOnUiThread(() -> {
+            final FrameLayout content = new FrameLayout(mActivity);
+            mSurfaceView = new SurfaceView(mActivity);
+            mSurfaceView.setZOrderOnTop(true);
+            content.addView(mSurfaceView, new FrameLayout.LayoutParams(
+                    DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT, Gravity.LEFT | Gravity.TOP));
+            mActivity.setContentView(content, new ViewGroup.LayoutParams(DEFAULT_SURFACE_VIEW_WIDTH, DEFAULT_SURFACE_VIEW_HEIGHT));
+            mSurfaceView.getHolder().addCallback(new SurfaceCreatedCallback(surfaceCreated));
+
+            // Create an embedded view.
+            mVr = new SurfaceControlViewHost(mActivity, mActivity.getDisplay(),
+                    mSurfaceView.getHostToken());
+            mEmbeddedView = new Button(mActivity);
+            mEmbeddedView.setOnClickListener((View v) -> mClicked = true);
+            mVr.setView(mEmbeddedView, mEmbeddedViewWidth, mEmbeddedViewHeight);
+
+        });
+        surfaceCreated.await();
+
+        // Make a copy of the SurfacePackage and release the original package.
+        SurfacePackage surfacePackage = mVr.getSurfacePackage();
+        SurfacePackage copy = new SurfacePackage(surfacePackage);
+        surfacePackage.release();
+        mSurfaceView.setChildSurfacePackage(copy);
+
+        mInstrumentation.waitForIdleSync();
+        waitUntilEmbeddedViewDrawn();
+
+        // Check if SurfacePackage copy remains valid even though the original package has
+        // been released.
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mActivityRule, mSurfaceView);
+        assertTrue(mClicked);
     }
 }

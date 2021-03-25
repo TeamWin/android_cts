@@ -39,6 +39,7 @@ import android.media.MediaSyncEvent;
 import android.media.MicrophoneDirection;
 import android.media.MicrophoneInfo;
 import android.media.cts.AudioRecordingConfigurationTest.MyAudioRecordingCallback;
+import android.media.metrics.LogSessionId;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -1822,8 +1823,9 @@ public class AudioRecordTest {
                             .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
                             .build())
                     .build();
-            audioRecord.setLogSessionId(null);               // should not throw.
-            audioRecord.setLogSessionId("0123456789abcdef"); // 16 char Base64Url id.
+            audioRecord.setLogSessionId(LogSessionId.LOG_SESSION_ID_NONE); // should not throw.
+            audioRecord.setLogSessionId(
+                    new LogSessionId("0123456789abcdef")); // 16 char Base64Url id.
 
             // record some data to generate a log entry.
             short data[] = new short[audioRecord.getSampleRate() / 2];
