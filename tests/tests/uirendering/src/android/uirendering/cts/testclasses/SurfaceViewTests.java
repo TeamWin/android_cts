@@ -36,6 +36,7 @@ import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
@@ -46,8 +47,10 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
+// TODO(b/182584062): remove @RequiresDevice and @SkipPresubmit.
+@RequiresDevice
 @LargeTest
-@SkipPresubmit // TODO: Figure out what's going on with this b/134716377
+@SkipPresubmit
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 
