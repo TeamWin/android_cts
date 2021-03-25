@@ -26,6 +26,7 @@ import static com.android.utils.blob.Utils.runShellCmd;
 import static com.android.utils.blob.Utils.triggerIdleMaintenance;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.testng.Assert.assertThrows;
 
@@ -121,6 +122,8 @@ public class BlobStoreManagerTest {
     private BlobStoreManager mBlobStoreManager;
 
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
+    private static final long DELTA_BYTES = 100 * 1024L;
 
     @Before
     public void setUp() {
@@ -1024,10 +1027,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // 'partialFileSize' bytes were written, verify the size increase.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(partialFileSize);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(partialFileSize);
+        assertSizeBytesMostlyEquals(partialFileSize,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(partialFileSize,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         // Complete writing data.
         final long totalFileSize = blobData.getFileSize();
@@ -1042,10 +1045,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // 'totalFileSize' bytes were written so far, verify the size increase.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(totalFileSize);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(totalFileSize);
+        assertSizeBytesMostlyEquals(totalFileSize,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(totalFileSize,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         // Commit the session.
         try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
@@ -1064,10 +1067,10 @@ public class BlobStoreManagerTest {
 
         // Session was committed but no one else is using it, verify the size increase stays
         // the same as earlier.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(totalFileSize);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(totalFileSize);
+        assertSizeBytesMostlyEquals(totalFileSize,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(totalFileSize,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         releaseLease(mContext, blobData.getBlobHandle());
         assertNoLeasedBlobs(mBlobStoreManager);
@@ -1078,10 +1081,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // No leases on the blob, so it should not be attributed.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(0L);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(0L);
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
     }
 
     @Test
@@ -1110,10 +1113,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // No leases on the blob, so it should not be attributed.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(0L);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(0L);
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         final TestServiceConnection serviceConnection = bindToHelperService(HELPER_PKG);
         final ICommandReceiver commandReceiver = serviceConnection.getCommandReceiver();
@@ -1126,12 +1129,10 @@ public class BlobStoreManagerTest {
             StorageStats afterStatsForHelperPkg = commandReceiver.queryStatsForPackage();
             StorageStats afterStatsForHelperUid = commandReceiver.queryStatsForUid();
 
-            assertThat(
-                    afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes())
-                    .isEqualTo(blobData.getFileSize());
-            assertThat(
-                    afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes())
-                    .isEqualTo(blobData.getFileSize());
+            assertSizeBytesMostlyEquals(blobData.getFileSize(),
+                    afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes());
+            assertSizeBytesMostlyEquals(blobData.getFileSize(),
+                    afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes());
 
             afterStatsForPkg = storageStatsManager
                     .queryStatsForPackage(UUID_DEFAULT, mContext.getPackageName(),
@@ -1140,10 +1141,10 @@ public class BlobStoreManagerTest {
                     .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
             // There shouldn't be no change in stats for this package
-            assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                    .isEqualTo(0L);
-            assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                    .isEqualTo(0L);
+            assertSizeBytesMostlyEquals(0L,
+                    afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+            assertSizeBytesMostlyEquals(0L,
+                    afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
             commandReceiver.releaseLease(blobData.getBlobHandle());
 
@@ -1151,12 +1152,10 @@ public class BlobStoreManagerTest {
             afterStatsForHelperUid = commandReceiver.queryStatsForUid();
 
             // Lease is released, so it should not be attributed anymore.
-            assertThat(
-                    afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes())
-                    .isEqualTo(0L);
-            assertThat(
-                    afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes())
-                    .isEqualTo(0L);
+            assertSizeBytesMostlyEquals(0L,
+                    afterStatsForHelperPkg.getDataBytes() - beforeStatsForHelperPkg.getDataBytes());
+            assertSizeBytesMostlyEquals(0L,
+                    afterStatsForHelperUid.getDataBytes() - beforeStatsForHelperUid.getDataBytes());
         } finally {
             serviceConnection.unbind();
         }
@@ -1182,10 +1181,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // No leases on the blob, so it should not be attributed.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(0L);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(0L);
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         final long leaseExpiryDurationMs = TimeUnit.SECONDS.toMillis(5);
         acquireLease(mContext, blobData.getBlobHandle(), R.string.test_desc,
@@ -1197,10 +1196,10 @@ public class BlobStoreManagerTest {
         afterStatsForUid = storageStatsManager
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(blobData.getFileSize());
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(blobData.getFileSize());
+        assertSizeBytesMostlyEquals(blobData.getFileSize(),
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(blobData.getFileSize(),
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         waitForLeaseExpiration(
                 Math.abs(leaseExpiryDurationMs - (System.currentTimeMillis() - startTimeMs)),
@@ -1212,10 +1211,10 @@ public class BlobStoreManagerTest {
                 .queryStatsForUid(UUID_DEFAULT, Process.myUid());
 
         // Lease is expired, so it should not be attributed anymore.
-        assertThat(afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes())
-                .isEqualTo(0L);
-        assertThat(afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes())
-                .isEqualTo(0L);
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForPkg.getDataBytes() - beforeStatsForPkg.getDataBytes());
+        assertSizeBytesMostlyEquals(0L,
+                afterStatsForUid.getDataBytes() - beforeStatsForUid.getDataBytes());
 
         blobData.delete();
     }
@@ -1814,6 +1813,12 @@ public class BlobStoreManagerTest {
                 () -> commandReceiver.acquireLease(blobData.getBlobHandle()));
         assertThrows(SecurityException.class,
                 () -> commandReceiver.openBlob(blobData.getBlobHandle()));
+    }
+
+    private void assertSizeBytesMostlyEquals(long expected, long actual) {
+        assertWithMessage("expected:" + expected + "; actual:" + actual)
+                .that(Math.abs(expected - actual))
+                .isLessThan(DELTA_BYTES);
     }
 
     private void waitForLeaseExpiration(long waitDurationMs, BlobHandle leasedBlob)
