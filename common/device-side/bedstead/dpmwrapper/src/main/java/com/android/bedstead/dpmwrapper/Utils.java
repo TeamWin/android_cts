@@ -25,7 +25,10 @@ import android.os.UserManager;
 
 import java.util.Set;
 
-final class Utils {
+/**
+ * Generic helpers.
+ */
+public final class Utils {
 
     static final boolean VERBOSE = false;
 
@@ -62,6 +65,9 @@ final class Utils {
         return builder.append(']').toString();
     }
 
+    /**
+     * Gets a more detailed description of an intent (for example, including extras).
+     */
     public static String toString(Intent intent) {
         StringBuilder builder = new StringBuilder("[Intent: action=");
         String action = intent.getAction();
