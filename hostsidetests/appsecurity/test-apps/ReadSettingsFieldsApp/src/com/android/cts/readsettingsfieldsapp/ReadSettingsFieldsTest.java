@@ -29,6 +29,9 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
             try {
                 Settings.Secure.getString(getContext().getContentResolver(), key);
             } catch (SecurityException ex) {
+                if (isSettingsDeprecated(ex)) {
+                    continue;
+                }
                 fail("Reading public Secure settings key <" + key + "> should not raise exception! "
                         + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
             }
@@ -40,6 +43,9 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
             try {
                 Settings.System.getString(getContext().getContentResolver(), key);
             } catch (SecurityException ex) {
+                if (isSettingsDeprecated(ex)) {
+                    continue;
+                }
                 fail("Reading public System settings key <" + key + "> should not raise exception! "
                         + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
             }
@@ -51,6 +57,9 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
             try {
                 Settings.Global.getString(getContext().getContentResolver(), key);
             } catch (SecurityException ex) {
+                if (isSettingsDeprecated(ex)) {
+                    continue;
+                }
                 fail("Reading public Global settings key <" + key + "> should not raise exception! "
                         + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
             }
@@ -73,6 +82,10 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
         } catch (IllegalAccessException ignored) {
         }
         return publicSettingsKeys;
+    }
+
+    private boolean isSettingsDeprecated(SecurityException ex) {
+        return ex.getMessage().contains("is deprecated and no longer accessible");
     }
 
     public void testSecureSomeHiddenSettingsKeysAreReadable() {
