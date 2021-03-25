@@ -21,6 +21,7 @@ import static androidx.test.InstrumentationRegistry.getContext;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertFileContent;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.assertTranscode;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.installAppWithStoragePermissions;
+import static android.mediaprovidertranscode.cts.TranscodeTestUtils.isAppIoBlocked;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.open;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.openFileAs;
 import static android.mediaprovidertranscode.cts.TranscodeTestUtils.uninstallApp;
@@ -37,7 +38,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemProperties;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.os.UserHandle;
 import android.provider.MediaStore;
 
@@ -49,7 +53,9 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
+import java.util.UUID;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -1042,6 +1048,60 @@ public class TranscodeTest {
             FEW,
             TWENTIES,
             HUNDRED
+        }
+    }
+
+    /**
+     * Tests {@link StorageManager#isAppIoBlocked}
+     * @throws Exception
+     */
+    @Test
+    public void test_IsAppIoBlocked() throws Exception {
+        File modernFile = new File(DIR_CAMERA, HEVC_FILE_NAME);
+        StorageManager sm = getContext().getSystemService(StorageManager.class);
+        StorageVolume vol = sm.getStorageVolume(modernFile);
+        UUID uuid = vol.getStorageUuid();
+        try {
+            TranscodeTestUtils.stageHEVCVideoFile(modernFile);
+            ParcelFileDescriptor pfdOriginal = open(modernFile, false);
+
+            TranscodeTestUtils.enableTranscodingForPackage(getContext().getPackageName());
+            ParcelFileDescriptor pfdTranscoded = open(modernFile, false);
+
+            assertFalse(isAppIoBlocked(sm, uuid));
+
+            Optional<Boolean> success = Optional.of(true);
+            Thread transcodeThread = new Thread(() -> {
+                try {
+                    assertFileContent(modernFile, modernFile, pfdOriginal, pfdTranscoded, false);
+                } catch (Exception e) {
+                    success.of(false);
+                }
+            });
+            transcodeThread.start();
+
+            // Check in a loop if app IO is blocked cos there might be a delay between read(2)
+            // and when the transcoding is scheduled
+            int timeLeftMs = 5000;
+            int sleepMs = 100;
+            boolean appIoBlocked = false;
+            while (timeLeftMs > 0) {
+                if (isAppIoBlocked(sm, uuid)) {
+                    appIoBlocked = true;
+                    break;
+                }
+                timeLeftMs -= sleepMs;
+                Thread.sleep(sleepMs);
+            }
+            assertTrue(appIoBlocked);
+
+            // Wait for transcoding to finish successfully
+            transcodeThread.join();
+            assertTrue(success.get());
+
+            assertFalse(isAppIoBlocked(sm, uuid));
+        } finally {
+            modernFile.delete();
         }
     }
 }
