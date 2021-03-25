@@ -122,6 +122,10 @@ public class WifiRttTest extends TestBase {
                     result.getMacAddress().toString(), testAp.BSSID);
             assertNull("Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
                     + i, result.getPeerHandle());
+            if (BuildCompat.isAtLeastS()) {
+                assertTrue("Wi-Fi RTT results: should be a 802.11MC measurement",
+                        result.is80211mcMeasurement());
+            }
 
             allResults.add(result);
             int status = result.getStatus();
@@ -223,16 +227,17 @@ public class WifiRttTest extends TestBase {
                         + "your test setup includes them!", testAp);
 
         RangingRequest.Builder builder = new RangingRequest.Builder();
-        for (int i = 0; i < RangingRequest.getMaxPeers() - 2; ++i) {
-            builder.addAccessPoint(testAp);
-        }
-
         List<ScanResult> scanResults = new ArrayList<>();
-        scanResults.add(testAp);
-        scanResults.add(testAp);
-        scanResults.add(testAp);
-
+        for (int i = 0; i < RangingRequest.getMaxPeers() - 2; ++i) {
+            scanResults.add(testAp);
+        }
         builder.addAccessPoints(scanResults);
+
+        if (BuildCompat.isAtLeastS()) {
+            builder.addNon80211mcCapableAccessPoints(List.of(testAp, testAp, testAp));
+        } else {
+            builder.addAccessPoints(List.of(testAp, testAp, testAp));
+        }
 
         try {
             mWifiRttManager.startRanging(builder.build(), mExecutor, new ResultCallback());
@@ -499,6 +504,8 @@ public class WifiRttTest extends TestBase {
             assertNull(
                     "Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
                             + i, result.getPeerHandle());
+            assertFalse("Wi-Fi RTT results: should not be a 802.11MC measurement",
+                    result.is80211mcMeasurement());
 
             allResults.add(result);
             int status = result.getStatus();
