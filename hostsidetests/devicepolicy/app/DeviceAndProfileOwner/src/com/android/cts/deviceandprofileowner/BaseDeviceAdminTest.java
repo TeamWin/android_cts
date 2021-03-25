@@ -17,11 +17,13 @@ package com.android.cts.deviceandprofileowner;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.annotation.NonNull;
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -57,6 +59,13 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
         static final String EXTRA_NETWORK_LOGS_BATCH_TOKEN =
                 "com.android.cts.deviceandprofileowner.extra.NETWORK_LOGS_BATCH_TOKEN";
 
+        // Shared preference used to coordinate compliance acknowledgement test.
+        static final String COMPLIANCE_ACK_PREF_NAME = "compliance-pref";
+        // Shared preference key controlling whether to use default callback implementation.
+        static final String COMPLIANCE_ACK_PREF_KEY_OVERRIDE = "compliance-pref-override";
+        // Shared preference key to save broadcast receipt.
+        static final String COMPLIANCE_ACK_PREF_KEY_BCAST_RECEIVED = "compliance-pref-bcast";
+
         @Override
         public void onReceive(Context context, Intent intent) {
             if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
@@ -90,6 +99,19 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
             Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
             batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);
             context.sendBroadcast(batchIntent);
+        }
+
+        @Override
+        public void onComplianceAcknowledgementRequired(
+                @NonNull Context context, @NonNull Intent intent) {
+            final SharedPreferences pref =
+                    context.getSharedPreferences(COMPLIANCE_ACK_PREF_NAME, Context.MODE_PRIVATE);
+            // Record the broadcast receipt.
+            pref.edit().putBoolean(COMPLIANCE_ACK_PREF_KEY_BCAST_RECEIVED, true).commit();
+            // Call the default implementation unless instructed otherwise.
+            if (!pref.getBoolean(COMPLIANCE_ACK_PREF_KEY_OVERRIDE, false)) {
+                super.onComplianceAcknowledgementRequired(context, intent);
+            }
         }
     }
 
