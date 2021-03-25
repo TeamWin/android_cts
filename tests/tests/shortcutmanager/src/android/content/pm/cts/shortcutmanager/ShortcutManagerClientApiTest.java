@@ -1472,7 +1472,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                             final Set<String> shortcuts =
                                     new ArraySet<>(results.size());
                             for (SearchResult result : results) {
-                                shortcuts.add(result.getDocument().getUri());
+                                shortcuts.add(result.getGenericDocument().getUri());
                             }
                             final Set<String> expected = new ArraySet<>(3);
                             expected.add("s1");
