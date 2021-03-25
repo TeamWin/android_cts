@@ -178,10 +178,15 @@ public final class TestAppSystemServiceFactory {
             if (!latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
                 fail("Ordered broadcast for %s() not received in %dms", methodName, TIMEOUT_MS);
             }
-            if (VERBOSE) Log.d(TAG, "Got response");
 
             Result result = resultRef.get();
-            Log.d(TAG, "Received result on user " + userId + ": " + result);
+
+            Log.d(TAG, "Got result on user " + userId + ": " + resultCodeToString(result.code));
+
+            if (VERBOSE) {
+                // Some results - like network logging events - are quite large
+                Log.v(TAG, "Result: " + result);
+            }
 
             switch (result.code) {
                 case RESULT_OK:
@@ -190,7 +195,7 @@ public final class TestAppSystemServiceFactory {
                     Exception e = (Exception) result.value;
                     throw (e instanceof InvocationTargetException) ? e.getCause() : e;
                 default:
-                    fail("Received invalid result: %s", result);
+                    fail("Received invalid result for method %s: %s", methodName, result);
                     return null;
             }
         };

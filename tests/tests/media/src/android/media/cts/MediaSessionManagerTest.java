@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static android.Manifest.permission.MEDIA_CONTENT_CONTROL;
+
 import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -36,7 +38,6 @@ import android.os.Looper;
 import android.os.Process;
 import android.test.InstrumentationTestCase;
 import android.test.UiThreadTest;
-import android.util.Log;
 import android.view.KeyEvent;
 
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
@@ -63,6 +65,7 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         super.tearDown();
     }
 
@@ -74,6 +77,15 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
             // Expected
         }
         // TODO enable a notification listener, test again, disable, test again
+    }
+
+    public void testGetMediaKeyEventSession() throws Exception {
+        try {
+            mSessionManager.getMediaKeyEventSession();
+            fail("Expected security exception for call to getMediaKeyEventSession");
+        } catch (SecurityException ex) {
+            // Expected
+        }
     }
 
     @UiThreadTest
@@ -525,6 +537,23 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
         public void resetCountDownLatch() {
             mCountDownLatch = new CountDownLatch(1);
+        }
+    }
+
+    private class MediaKeyEventSessionListener
+            implements MediaSessionManager.OnMediaKeyEventSessionChangedListener {
+        final CountDownLatch mCountDownLatch;
+        MediaSession.Token mSessionToken;
+
+        MediaKeyEventSessionListener() {
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        @Override
+        public void onMediaKeyEventSessionChanged(String packageName,
+                MediaSession.Token sessionToken) {
+            mCountDownLatch.countDown();
+            mSessionToken = sessionToken;
         }
     }
 

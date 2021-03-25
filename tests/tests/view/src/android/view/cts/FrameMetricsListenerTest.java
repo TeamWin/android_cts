@@ -209,8 +209,11 @@ public class FrameMetricsListenerTest {
         assertTrue(intended_vsync < now);
         assertTrue(vsync < now);
         assertTrue(vsync >= intended_vsync);
+
+        // swapBuffers and gpuDuration may happen in parallel, so instead of counting both we need
+        // to take the longer of the two.
         assertTrue(totalDuration >= unknownDelay + input + animation + layoutMeasure + draw + sync
-                + commandIssue + swapBuffers + gpuDuration);
+                + commandIssue + Math.max(gpuDuration, swapBuffers));
 
         // This is the only boolean metric so far
         final long firstDrawFrameMetric = frameMetrics.getMetric(FrameMetrics.FIRST_DRAW_FRAME);

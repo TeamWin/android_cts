@@ -45,11 +45,11 @@ import java.util.concurrent.ExecutionException;
  * For schema migration, we have 4 factors
  * A. is ForceOverride set to true?
  * B. is the schema change backwards compatible?
- * C. did any versions change?
+ * C. is shouldTrigger return true?
  * D. is there a migration triggered for each incompatible type and no deleted types?
  * If B is true then D could never be false, so that will give us 12 combinations.
  *
- *                                Trigger       Delete      first            second
+ *                                Trigger       Delete      First            Second
  * A      B       C       D       Migration     Types       SetSchema        SetSchema
  * TRUE   TRUE    TRUE    TRUE    Yes                       succeeds         succeeds(noop)
  * TRUE   TRUE    FALSE   TRUE                              succeeds         succeeds(noop)
@@ -61,27 +61,54 @@ import java.util.concurrent.ExecutionException;
  * FALSE  TRUE    FALSE   TRUE                              succeeds         succeeds(noop)
  * FALSE  FALSE   TRUE    TRUE    Yes                       fail             succeeds
  * FALSE  FALSE   TRUE    FALSE   Yes                       fail             throw error
- * FALSE  FALSE   FALSE   FALSE                             fail             throw error
+ * FALSE  FALSE   FALSE   TRUE    Impossible case, migrators are inactivity
  * FALSE  FALSE   FALSE   FALSE                             fail             throw error
  */
 // TODO(b/178060626) add a platform version of this test
 public abstract class AppSearchSchemaMigrationCtsTestBase {
 
     private static final String DB_NAME = "";
-    private static final Migrator NO_OP_MIGRATOR =
+    private static final long DOCUMENT_CREATION_TIME = 12345L;
+    private static final Migrator ACTIVE_NOOP_MIGRATOR =
             new Migrator() {
+                @Override
+                public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                    return true;
+                }
+
                 @NonNull
                 @Override
                 public GenericDocument onUpgrade(
-                        int currentVersion, int targetVersion, @NonNull GenericDocument document) {
-                    return null;
+                        int currentVersion, int finalVersion, @NonNull GenericDocument document) {
+                    return document;
                 }
 
                 @NonNull
                 @Override
                 public GenericDocument onDowngrade(
-                        int currentVersion, int targetVersion, @NonNull GenericDocument document) {
-                    return null;
+                        int currentVersion, int finalVersion, @NonNull GenericDocument document) {
+                    return document;
+                }
+            };
+    private static final Migrator INACTIVE_MIGRATOR =
+            new Migrator() {
+                @Override
+                public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                    return false;
+                }
+
+                @NonNull
+                @Override
+                public GenericDocument onUpgrade(
+                        int currentVersion, int finalVersion, @NonNull GenericDocument document) {
+                    return document;
+                }
+
+                @NonNull
+                @Override
+                public GenericDocument onDowngrade(
+                        int currentVersion, int finalVersion, @NonNull GenericDocument document) {
+                    return document;
                 }
             };
 
@@ -116,6 +143,19 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 .setForceOverride(true)
                                 .build())
                 .get();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "uri0", "testSchema")
+                        .setPropertyString("subject", "testPut example1")
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                        .build();
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(doc)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("uri0", null);
+        assertThat(result.getFailures()).isEmpty();
     }
 
     @After
@@ -129,7 +169,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create a backwards compatible schema and update the version
         AppSearchSchema B_C_Schema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -146,8 +185,9 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(B_C_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
                                 .setForceOverride(true)
+                                .setVersion(2) // upgrade version
                                 .build())
                 .get();
     }
@@ -173,7 +213,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(B_NC_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
                                 .setForceOverride(true)
                                 .build())
                 .get();
@@ -182,16 +222,14 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
     @Test
     public void testSchemaMigration_A_NB_C_D() throws Exception {
         // create a backwards incompatible schema and update the version
-        AppSearchSchema NB_C_Schema =
-                new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
-                        .build();
+        AppSearchSchema NB_C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(NB_C_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
                                 .setForceOverride(true)
+                                .setVersion(2) // upgrade version
                                 .build())
                 .get();
     }
@@ -199,16 +237,14 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
     @Test
     public void testSchemaMigration_A_NB_C_ND() throws Exception {
         // create a backwards incompatible schema and update the version
-        AppSearchSchema NB_C_Schema =
-                new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
-                        .build();
+        AppSearchSchema NB_C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(NB_C_Schema)
-                                .setMigrator("nonexistSchema", NO_OP_MIGRATOR) // ND
+                                .setMigrator("testSchema", INACTIVE_MIGRATOR) // ND
                                 .setForceOverride(true)
+                                .setVersion(2) // upgrade version
                                 .build())
                 .get();
     }
@@ -221,7 +257,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(NB_NC_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
                                 .setForceOverride(true)
                                 .build())
                 .get();
@@ -235,7 +271,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas($B_$C_Schema)
-                                .setMigrator("nonexistSchema", NO_OP_MIGRATOR) // ND
+                                .setMigrator("testSchema", INACTIVE_MIGRATOR) // ND
                                 .setForceOverride(true)
                                 .build())
                 .get();
@@ -246,7 +282,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create a backwards compatible schema and update the version
         AppSearchSchema B_C_Schema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -263,7 +298,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(B_C_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
+                                .setVersion(2) // upgrade version
                                 .build())
                 .get();
     }
@@ -289,7 +325,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(B_NC_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
                                 .setForceOverride(true)
                                 .build())
                 .get();
@@ -298,15 +334,13 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
     @Test
     public void testSchemaMigration_NA_NB_C_D() throws Exception {
         // create a backwards incompatible schema and update the version
-        AppSearchSchema NB_C_Schema =
-                new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
-                        .build();
+        AppSearchSchema NB_C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(NB_C_Schema)
-                                .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                .setMigrator("testSchema", ACTIVE_NOOP_MIGRATOR)
+                                .setVersion(2) // upgrade version
                                 .build())
                 .get();
     }
@@ -314,10 +348,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
     @Test
     public void testSchemaMigration_NA_NB_C_ND() throws Exception {
         // create a backwards incompatible schema and update the version
-        AppSearchSchema $B_C_Schema =
-                new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
-                        .build();
+        AppSearchSchema $B_C_Schema = new AppSearchSchema.Builder("testSchema").build();
 
         ExecutionException exception =
                 expectThrows(
@@ -327,26 +358,9 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 new SetSchemaRequest.Builder()
                                                         .addSchemas($B_C_Schema)
                                                         .setMigrator(
-                                                                "nonexistSchema",
-                                                                NO_OP_MIGRATOR) // ND
-                                                        .build())
-                                        .get());
-        assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
-    }
-
-    @Test
-    public void testSchemaMigration_NA_NB_NC_D() throws Exception {
-        // create a backwards incompatible schema but don't update the version
-        AppSearchSchema $B_$C_Schema = new AppSearchSchema.Builder("testSchema").build();
-
-        ExecutionException exception =
-                expectThrows(
-                        ExecutionException.class,
-                        () ->
-                                mDb.setSchema(
-                                                new SetSchemaRequest.Builder()
-                                                        .addSchemas($B_$C_Schema)
-                                                        .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                                                "testSchema",
+                                                                INACTIVE_MIGRATOR) // ND
+                                                        .setVersion(2) // upgrade version
                                                         .build())
                                         .get());
         assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
@@ -365,8 +379,8 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 new SetSchemaRequest.Builder()
                                                         .addSchemas($B_$C_Schema)
                                                         .setMigrator(
-                                                                "nonexistSchema",
-                                                                NO_OP_MIGRATOR) // ND
+                                                                "testSchema",
+                                                                INACTIVE_MIGRATOR) // ND
                                                         .build())
                                         .get());
         assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
@@ -429,7 +443,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create new schema type and upgrade the version number
         AppSearchSchema newSchema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // upgrade version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -448,11 +461,16 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
 
         Migrator migrator =
                 new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return currentVersion != finalVersion;
+                    }
+
                     @NonNull
                     @Override
                     public GenericDocument onUpgrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         if (document.getUri().equals("uri2")) {
                             return new GenericDocument.Builder<>(
@@ -469,7 +487,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                         document.getUri(),
                                         document.getSchemaType())
                                 .setPropertyString("subject", "testPut example1 migrated")
-                                .setCreationTimestampMillis(12345L)
+                                .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
                                 .build();
                     }
 
@@ -477,7 +495,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                     @Override
                     public GenericDocument onDowngrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Downgrade should not be triggered for this test");
@@ -489,6 +507,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(newSchema)
                                         .setMigrator("testSchema", migrator)
+                                        .setVersion(2) // upgrade version
                                         .build())
                         .get();
 
@@ -503,7 +522,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         GenericDocument expected =
                 new GenericDocument.Builder<>("namespace", "uri1", "testSchema")
                         .setPropertyString("subject", "testPut example1 migrated")
-                        .setCreationTimestampMillis(12345L)
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
                         .build();
         assertThat(doGet(mDb, "namespace", "uri1")).containsExactly(expected);
 
@@ -542,12 +561,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 AppSearchSchema.StringPropertyConfig
                                                         .TOKENIZER_TYPE_PLAIN)
                                         .build())
-                        .setVersion(3)
                         .build();
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(schema)
                                 .setForceOverride(true)
+                                .setVersion(3)
                                 .build())
                 .get();
 
@@ -569,7 +588,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create new schema type and upgrade the version number
         AppSearchSchema newSchema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(1) // downgrade version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -586,11 +604,16 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // set the new schema to AppSearch
         Migrator migrator =
                 new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return currentVersion != finalVersion;
+                    }
+
                     @NonNull
                     @Override
                     public GenericDocument onUpgrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Upgrade should not be triggered for this test");
@@ -600,14 +623,14 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                     @Override
                     public GenericDocument onDowngrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         return new GenericDocument.Builder<>(
                                         document.getNamespace(),
                                         document.getUri(),
                                         document.getSchemaType())
                                 .setPropertyString("subject", "testPut example1 migrated")
-                                .setCreationTimestampMillis(12345L)
+                                .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
                                 .build();
                     }
                 };
@@ -617,11 +640,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(newSchema)
                                         .setMigrator("testSchema", migrator)
+                                        .setVersion(1) // downgrade version
                                         .build())
                         .get();
 
         // Check the schema has been saved
-        assertThat(mDb.getSchema().get()).containsExactly(newSchema);
+        assertThat(mDb.getSchema().get().getSchemas()).containsExactly(newSchema);
 
         assertThat(setSchemaResponse.getDeletedTypes()).isEmpty();
         assertThat(setSchemaResponse.getIncompatibleTypes()).containsExactly("testSchema");
@@ -631,7 +655,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         GenericDocument expected =
                 new GenericDocument.Builder<>("namespace", "uri1", "testSchema")
                         .setPropertyString("subject", "testPut example1 migrated")
-                        .setCreationTimestampMillis(12345L)
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
                         .build();
         assertThat(doGet(mDb, "namespace", "uri1")).containsExactly(expected);
     }
@@ -662,12 +686,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 AppSearchSchema.StringPropertyConfig
                                                         .TOKENIZER_TYPE_PLAIN)
                                         .build())
-                        .setVersion(3)
                         .build();
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(schema)
                                 .setForceOverride(true)
+                                .setVersion(3)
                                 .build())
                 .get();
 
@@ -689,7 +713,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create new schema type with the same version number
         AppSearchSchema newSchema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(3) // same version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -706,11 +729,17 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // set the new schema to AppSearch
         Migrator migrator =
                 new Migrator() {
+
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return currentVersion != finalVersion;
+                    }
+
                     @NonNull
                     @Override
                     public GenericDocument onUpgrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Upgrade should not be triggered for this test");
@@ -720,7 +749,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                     @Override
                     public GenericDocument onDowngrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Downgrade should not be triggered for this test");
@@ -736,6 +765,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 new SetSchemaRequest.Builder()
                                                         .addSchemas(newSchema)
                                                         .setMigrator("testSchema", migrator)
+                                                        .setVersion(3) // same version
                                                         .build())
                                         .get());
         assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
@@ -746,11 +776,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 new SetSchemaRequest.Builder()
                                         .addSchemas(newSchema)
                                         .setMigrator("testSchema", migrator)
+                                        .setVersion(3) // same version
                                         .setForceOverride(true)
                                         .build())
                         .get();
 
-        assertThat(mDb.getSchema().get()).containsExactly(newSchema);
+        assertThat(mDb.getSchema().get().getSchemas()).containsExactly(newSchema);
 
         assertThat(setSchemaResponse.getDeletedTypes()).isEmpty();
         assertThat(setSchemaResponse.getIncompatibleTypes()).containsExactly("testSchema");
@@ -783,12 +814,12 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 AppSearchSchema.StringPropertyConfig
                                                         .TOKENIZER_TYPE_PLAIN)
                                         .build())
-                        .setVersion(2)
                         .build();
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(schema)
                                 .setForceOverride(true)
+                                .setVersion(2)
                                 .build())
                 .get();
 
@@ -810,7 +841,6 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
         // create new schema type and upgrade the version number
         AppSearchSchema newSchema =
                 new AppSearchSchema.Builder("testSchema")
-                        .setVersion(4) // upgrade version
                         .addProperty(
                                 new AppSearchSchema.StringPropertyConfig.Builder("subject")
                                         .setCardinality(
@@ -826,12 +856,18 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
 
         // Set start version to be 3 means we won't trigger migration for 2.
         Migrator migrator =
-                new Migrator(3) {
+                new Migrator() {
+
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return currentVersion > 2 && currentVersion != finalVersion;
+                    }
+
                     @NonNull
                     @Override
                     public GenericDocument onUpgrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Upgrade should not be triggered for this test");
@@ -841,7 +877,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                     @Override
                     public GenericDocument onDowngrade(
                             int currentVersion,
-                            int targetVersion,
+                            int finalVersion,
                             @NonNull GenericDocument document) {
                         throw new IllegalStateException(
                                 "Downgrade should not be triggered for this test");
@@ -857,15 +893,16 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                                 new SetSchemaRequest.Builder()
                                                         .addSchemas(newSchema)
                                                         .setMigrator("testSchema", migrator)
+                                                        .setVersion(4) // upgrade version
                                                         .build())
                                         .get());
         assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
     }
 
     @Test
-    public void testSchemaMigration_nonexistent() throws Exception {
-        // set first version of the schema to AppSearch
-        AppSearchSchema schema = new AppSearchSchema.Builder("testSchema").build();
+    public void testSchemaMigration_sourceToNowhere() throws Exception {
+        // set the source schema to AppSearch
+        AppSearchSchema schema = new AppSearchSchema.Builder("sourceSchema").build();
         mDb.setSchema(
                         new SetSchemaRequest.Builder()
                                 .addSchemas(schema)
@@ -873,33 +910,406 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                                 .build())
                 .get();
 
-        // SetSchema with migrator and forceOverride=false but new schema.
+        // save a doc to the source type
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "uri1", "sourceSchema")
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                        .build();
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(doc)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("uri1", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        Migrator migrator_sourceToNowhere =
+                new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return true;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onUpgrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return new GenericDocument.Builder<>(
+                                        "zombieNamespace", "zombieUri", "nonExistSchema")
+                                .build();
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onDowngrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+                };
+
+        // SetSchema with forceOverride=false
+        // Source type exist, destination type doesn't exist.
         ExecutionException exception =
                 expectThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
-                                                        .setMigrator("testSchema", NO_OP_MIGRATOR)
-                                                        .build())
+                                                        .setMigrator(
+                                                                "sourceSchema",
+                                                                migrator_sourceToNowhere)
+                                                        .setVersion(2)
+                                                        .build()) // upgrade version
                                         .get());
-        assertThat(exception).hasMessageThat().contains("Schema is incompatible.");
+        assertThat(exception)
+                .hasMessageThat()
+                .contains(
+                        "Receive a migrated document with schema type: nonExistSchema. "
+                                + "But the schema types doesn't exist in the request");
 
-        // SetSchema with migrator and forceOverride=true but new schema.
+        // SetSchema with forceOverride=true
+        // Source type exist, destination type doesn't exist.
         exception =
                 expectThrows(
                         ExecutionException.class,
                         () ->
                                 mDb.setSchema(
                                                 new SetSchemaRequest.Builder()
-                                                        .setMigrator("testSchema", NO_OP_MIGRATOR)
+                                                        .setMigrator(
+                                                                "sourceSchema",
+                                                                migrator_sourceToNowhere)
                                                         .setForceOverride(true)
-                                                        .build())
+                                                        .setVersion(2)
+                                                        .build()) // upgrade version
                                         .get());
         assertThat(exception)
                 .hasMessageThat()
                 .contains(
-                        "Receive a migrator for schema type : testSchema, "
-                                + "but the schema doesn't exist in the request.");
+                        "Receive a migrated document with schema type: nonExistSchema. "
+                                + "But the schema types doesn't exist in the request");
+    }
+
+    @Test
+    public void testSchemaMigration_nowhereToDestination() throws Exception {
+        // set the destination schema to AppSearch
+        AppSearchSchema destinationSchema =
+                new AppSearchSchema.Builder("destinationSchema").build();
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(destinationSchema)
+                                .setForceOverride(true)
+                                .build())
+                .get();
+
+        Migrator migrator_nowhereToDestination =
+                new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return true;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onUpgrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onDowngrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+                };
+
+        // Source type doesn't exist, destination type exist. Since source type doesn't exist,
+        // no matter force override or not, the migrator won't be invoked
+        // SetSchema with forceOverride=false
+        SetSchemaResponse setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .addSchemas(destinationSchema)
+                                        .setMigrator(
+                                                "nonExistSchema", migrator_nowhereToDestination)
+                                        .setVersion(2) //  upgrade version
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getMigratedTypes()).isEmpty();
+
+        // SetSchema with forceOverride=true
+        setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .addSchemas(destinationSchema)
+                                        .setMigrator(
+                                                "nonExistSchema", migrator_nowhereToDestination)
+                                        .setVersion(2) //  upgrade version
+                                        .setForceOverride(true)
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getMigratedTypes()).isEmpty();
+    }
+
+    @Test
+    public void testSchemaMigration_nowhereToNowhere() throws Exception {
+        // set empty schema
+        mDb.setSchema(new SetSchemaRequest.Builder().setForceOverride(true).build()).get();
+        Migrator migrator_nowhereToNowhere =
+                new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return true;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onUpgrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onDowngrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+                };
+
+        // Source type doesn't exist, destination type exist. Since source type doesn't exist,
+        // no matter force override or not, the migrator won't be invoked
+        // SetSchema with forceOverride=false
+        SetSchemaResponse setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
+                                        .setVersion(2) //  upgrade version
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getMigratedTypes()).isEmpty();
+
+        // SetSchema with forceOverride=true
+        setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .setMigrator("nonExistSchema", migrator_nowhereToNowhere)
+                                        .setVersion(2) //  upgrade version
+                                        .setForceOverride(true)
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getMigratedTypes()).isEmpty();
+    }
+
+    @Test
+    public void testSchemaMigration_toAnotherType() throws Exception {
+        // set the source schema to AppSearch
+        AppSearchSchema sourceSchema = new AppSearchSchema.Builder("sourceSchema").build();
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(sourceSchema)
+                                .setForceOverride(true)
+                                .build())
+                .get();
+
+        // save a doc to the source type
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "uri1", "sourceSchema").build();
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(doc)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("uri1", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        // create the destination type and migrator
+        AppSearchSchema destinationSchema =
+                new AppSearchSchema.Builder("destinationSchema").build();
+        Migrator migrator =
+                new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return true;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onUpgrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return new GenericDocument.Builder<>(
+                                        "namespace", document.getUri(), "destinationSchema")
+                                .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                                .build();
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onDowngrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+                };
+
+        // SetSchema with forceOverride=false and increase overall version
+        SetSchemaResponse setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .addSchemas(destinationSchema)
+                                        .setMigrator("sourceSchema", migrator)
+                                        .setForceOverride(false)
+                                        .setVersion(2) //  upgrade version
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getDeletedTypes()).containsExactly("sourceSchema");
+        assertThat(setSchemaResponse.getIncompatibleTypes()).isEmpty();
+        assertThat(setSchemaResponse.getMigratedTypes()).containsExactly("sourceSchema");
+
+        // Check successfully migrate the doc to the destination type
+        GenericDocument expected =
+                new GenericDocument.Builder<>("namespace", "uri1", "destinationSchema")
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                        .build();
+        assertThat(doGet(mDb, "namespace", "uri1")).containsExactly(expected);
+    }
+
+    @Test
+    public void testSchemaMigration_toMultipleDestinationType() throws Exception {
+        // set the source schema to AppSearch
+        AppSearchSchema sourceSchema =
+                new AppSearchSchema.Builder("Person")
+                        .addProperty(
+                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                        .setCardinality(
+                                                AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+        mDb.setSchema(
+                        new SetSchemaRequest.Builder()
+                                .addSchemas(sourceSchema)
+                                .setForceOverride(true)
+                                .build())
+                .get();
+
+        // save a child and an adult to the Person type
+        GenericDocument childDoc =
+                new GenericDocument.Builder<>("namespace", "Person1", "Person")
+                        .setPropertyLong("Age", 6)
+                        .build();
+        GenericDocument adultDoc =
+                new GenericDocument.Builder<>("namespace", "Person2", "Person")
+                        .setPropertyLong("Age", 36)
+                        .build();
+        AppSearchBatchResult<String, Void> result =
+                checkIsBatchResultSuccess(
+                        mDb.put(
+                                new PutDocumentsRequest.Builder()
+                                        .addGenericDocuments(childDoc, adultDoc)
+                                        .build()));
+        assertThat(result.getSuccesses()).containsExactly("Person1", null, "Person2", null);
+        assertThat(result.getFailures()).isEmpty();
+
+        // create the migrator
+        Migrator migrator =
+                new Migrator() {
+                    @Override
+                    public boolean shouldMigrate(int currentVersion, int finalVersion) {
+                        return true;
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onUpgrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        if (document.getPropertyLong("Age") < 21) {
+                            return new GenericDocument.Builder<>("namespace", "child-uri", "Child")
+                                    .setPropertyLong("Age", document.getPropertyLong("Age"))
+                                    .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                                    .build();
+                        } else {
+                            return new GenericDocument.Builder<>("namespace", "adult-uri", "Adult")
+                                    .setPropertyLong("Age", document.getPropertyLong("Age"))
+                                    .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                                    .build();
+                        }
+                    }
+
+                    @NonNull
+                    @Override
+                    public GenericDocument onDowngrade(
+                            int currentVersion,
+                            int finalVersion,
+                            @NonNull GenericDocument document) {
+                        return document;
+                    }
+                };
+
+        // create adult and child schema
+        AppSearchSchema adultSchema =
+                new AppSearchSchema.Builder("Adult")
+                        .addProperty(
+                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                        .setCardinality(
+                                                AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+        AppSearchSchema childSchema =
+                new AppSearchSchema.Builder("Child")
+                        .addProperty(
+                                new AppSearchSchema.Int64PropertyConfig.Builder("Age")
+                                        .setCardinality(
+                                                AppSearchSchema.PropertyConfig.CARDINALITY_REQUIRED)
+                                        .build())
+                        .build();
+
+        // SetSchema with forceOverride=false and increase overall version
+        SetSchemaResponse setSchemaResponse =
+                mDb.setSchema(
+                                new SetSchemaRequest.Builder()
+                                        .addSchemas(adultSchema, childSchema)
+                                        .setMigrator("Person", migrator)
+                                        .setForceOverride(false)
+                                        .setVersion(2) //  upgrade version
+                                        .build())
+                        .get();
+        assertThat(setSchemaResponse.getDeletedTypes()).containsExactly("Person");
+        assertThat(setSchemaResponse.getIncompatibleTypes()).isEmpty();
+        assertThat(setSchemaResponse.getMigratedTypes()).containsExactly("Person");
+
+        // Check successfully migrate the child doc
+        GenericDocument expectedInChild =
+                new GenericDocument.Builder<>("namespace", "child-uri", "Child")
+                        .setPropertyLong("Age", 6)
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                        .build();
+        assertThat(doGet(mDb, "namespace", "child-uri")).containsExactly(expectedInChild);
+
+        // Check successfully migrate the adult doc
+        GenericDocument expectedInAdult =
+                new GenericDocument.Builder<>("namespace", "adult-uri", "Adult")
+                        .setPropertyLong("Age", 36)
+                        .setCreationTimestampMillis(DOCUMENT_CREATION_TIME)
+                        .build();
+        assertThat(doGet(mDb, "namespace", "adult-uri")).containsExactly(expectedInAdult);
     }
 }

@@ -16,9 +16,13 @@
 
 package android.translation.cts;
 
+import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
+
 import static com.google.common.truth.Truth.assertThat;
 
+import android.app.Application;
 import android.app.Instrumentation;
+import android.app.PendingIntent;
 import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
@@ -34,8 +38,11 @@ import android.view.translation.TranslationSpec;
 import android.view.translation.Translator;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.ActivitiesWatcher;
+import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
@@ -77,6 +84,7 @@ public class TranslationManagerTest {
     private static final String TAG = "BasicTranslationTest";
 
     private CtsTranslationService.ServiceWatcher mServiceWatcher;
+    private ActivitiesWatcher mActivitiesWatcher;
 
     private static Instrumentation sInstrumentation;
     private static CtsTranslationService.TranslationReplier sTranslationReplier;
@@ -95,6 +103,10 @@ public class TranslationManagerTest {
     @After
     public void cleanup() {
         Helper.resetTemporaryTranslationService();
+        if (mActivitiesWatcher != null) {
+            final Application app = (Application) ApplicationProvider.getApplicationContext();
+            app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
+        }
     }
 
     @Test
@@ -208,6 +220,28 @@ public class TranslationManagerTest {
             assertThat(capability.getTargetSpec().getDataFormat())
                     .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
         });
+    }
+
+    @Test
+    public void testGetTranslationSettingsActivityIntent() throws Exception{
+        enableCtsTranslationService();
+
+        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
+                TranslationManager.class);
+        final PendingIntent pendingIntent = manager.getTranslationSettingsActivityIntent();
+
+        assertThat(pendingIntent).isNotNull();
+        assertThat(pendingIntent.isImmutable()).isTrue();
+
+        // Start Settings Activity and verify if the expected Activity resumed
+        mActivitiesWatcher = new ActivitiesWatcher(5_000);
+        final Application app = (Application) ApplicationProvider.getApplicationContext();
+        app.registerActivityLifecycleCallbacks(mActivitiesWatcher);
+        final ActivityWatcher watcher = mActivitiesWatcher.watch(SimpleActivity.class);
+
+        pendingIntent.send();
+
+        watcher.waitFor(RESUMED);
     }
 
     protected void enableCtsTranslationService() {

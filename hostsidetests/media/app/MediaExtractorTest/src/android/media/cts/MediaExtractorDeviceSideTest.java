@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.MediaExtractor;
+import android.media.metrics.LogSessionId;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -69,15 +70,16 @@ public class MediaExtractorDeviceSideTest {
     }
 
     @Test
-    public void testPlaybackId() throws Exception {
+    public void testLogSessionId() throws Exception {
         MediaExtractor mediaExtractor = new MediaExtractor();
         AssetManager assetManager =
                 InstrumentationRegistry.getInstrumentation().getContext().getAssets();
         try (AssetFileDescriptor fileDescriptor = assetManager.openFd(SAMPLE_PATH)) {
             mediaExtractor.setDataSource(fileDescriptor);
-            assertThat(mediaExtractor.getPlaybackId()).isEqualTo("");
-            mediaExtractor.setPlaybackId("FakePlaybackId");
-            assertThat(mediaExtractor.getPlaybackId()).isEqualTo("FakePlaybackId");
+            assertThat(mediaExtractor.getLogSessionId())
+                    .isEqualTo(LogSessionId.LOG_SESSION_ID_NONE);
+            mediaExtractor.setLogSessionId(new LogSessionId("FakePlaybackId"));
+            assertThat(mediaExtractor.getLogSessionId().getStringId()).isEqualTo("FakePlaybackId");
         } finally {
             mediaExtractor.release();
         }

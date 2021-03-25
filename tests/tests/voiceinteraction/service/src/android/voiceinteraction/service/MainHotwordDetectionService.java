@@ -17,16 +17,13 @@
 package android.voiceinteraction.service;
 
 import android.media.AudioFormat;
-import android.os.Bundle;
-import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
-import android.os.RemoteException;
+import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.HotwordDetectionService;
 import android.system.ErrnoException;
+import android.text.TextUtils;
 import android.util.Log;
-import android.voiceinteraction.common.ICtsHotwordDetectionServiceCallback;
-import android.voiceinteraction.common.Utils;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -49,29 +46,22 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     }
 
     @Override
-    public void onUpdateState(@Nullable Bundle options, @Nullable SharedMemory sharedMemory) {
+    public void onUpdateState(@Nullable PersistableBundle options,
+            @Nullable SharedMemory sharedMemory) {
         Log.d(TAG, "onUpdateState");
 
-        ICtsHotwordDetectionServiceCallback callback = null;
         if (options != null) {
-            IBinder binder = options.getBinder(Utils.KEY_TEST_FAKE_BINDER);
-            callback = ICtsHotwordDetectionServiceCallback.Stub.asInterface(binder);
-        }
-
-        if (callback == null) {
-            Log.w(TAG, "no callback to return the test result");
-            return;
+            String fakeData = options.getString(BasicVoiceInteractionService.KEY_FAKE_DATA);
+            if (!TextUtils.equals(fakeData, BasicVoiceInteractionService.VALUE_FAKE_DATA)) {
+                Log.d(TAG, "options : data is not the same");
+                return;
+            }
         }
 
         if (sharedMemory != null) {
             try {
                 sharedMemory.mapReadWrite();
-                try {
-                    callback.onTestResult(
-                            Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SHARED_MEMORY_NOT_READ_ONLY);
-                } catch (RemoteException e) {
-                    Log.d(TAG, "call onTestResult RemoteException : " + e);
-                }
+                Log.d(TAG, "sharedMemory : is not read-only");
                 return;
             } catch (ErrnoException e) {
                 // For read-only case
@@ -79,11 +69,7 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 sharedMemory.close();
             }
         }
-        try {
-            callback.onTestResult(
-                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
-        } catch (RemoteException e) {
-            Log.d(TAG, "call onTestResult RemoteException : " + e);
-        }
+        // Report success
+        Log.d(TAG, "onUpdateState success");
     }
 }

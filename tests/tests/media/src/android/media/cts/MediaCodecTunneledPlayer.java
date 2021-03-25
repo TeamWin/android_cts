@@ -503,4 +503,13 @@ public class MediaCodecTunneledPlayer implements MediaTimeProvider {
         return (int)((positionUs + 500) / 1000);
     }
 
+    public void setVideoPeek(boolean enable) {
+        if (mVideoCodecStates == null || !(mState == STATE_IDLE || mState == STATE_PAUSED)) {
+            return;
+        }
+
+        for (CodecState state: mVideoCodecStates.values()) {
+            state.setVideoPeek(enable);
+        }
+    }
 }
