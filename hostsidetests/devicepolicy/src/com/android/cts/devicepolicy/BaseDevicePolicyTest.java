@@ -312,7 +312,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void installAppAsUser(String appFileName, boolean grantPermissions,
             boolean dontKillApp, int userId)
                     throws FileNotFoundException, DeviceNotAvailableException {
-        CLog.e("Installing app " + appFileName + " for user " + userId);
+        CLog.e("Installing app %s for user %d", appFileName, userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         List<String> extraArgs = new LinkedList<>();
         extraArgs.add("-t");
