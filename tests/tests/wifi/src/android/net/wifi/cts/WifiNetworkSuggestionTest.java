@@ -738,6 +738,7 @@ public class WifiNetworkSuggestionTest extends WifiJUnit4TestBase {
             assertFalse(suggestion.isOemPrivate());
             assertEquals(TEST_PRIORITY_GROUP, suggestion.getPriorityGroup());
             assertEquals(TEST_SUB_ID, suggestion.getSubscriptionId());
+            assertEquals(TelephonyManager.UNKNOWN_CARRIER_ID, suggestion.getCarrierId());
         }
     }
 
