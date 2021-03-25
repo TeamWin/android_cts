@@ -359,7 +359,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         final int MIN_RESULT_COUNT = 3;
 
         // Set up outputs
-        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        // List of {OutputConfiguration, whether stream is ultra high resolution}
+        List<Pair<OutputConfiguration, Boolean>> outputConfigAndInfos = new ArrayList<>();
         List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
         List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
         List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
@@ -370,17 +371,23 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
         CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(), privTargets,
                 jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, depth16Targets,
-                outputConfigs, MIN_RESULT_COUNT, substituteY8, substituteHeic, physicalCameraId,
-                mHandler);
+                outputConfigAndInfos, MIN_RESULT_COUNT, substituteY8, substituteHeic,
+                physicalCameraId, mHandler);
 
         boolean haveSession = false;
         try {
             CaptureRequest.Builder requestBuilder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-            for (OutputConfiguration c : outputConfigs) {
-                requestBuilder.addTarget(c.getSurface());
+            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+
+            for (Pair<OutputConfiguration, Boolean> c : outputConfigAndInfos) {
+                if (maxResolution == c.second) {
+                    requestBuilder.addTarget(c.first.getSurface());
+                }
+                outputConfigs.add(c.first);
             }
+
             if (maxResolution) {
                 requestBuilder.set(CaptureRequest.SENSOR_PIXEL_MODE,
                         CameraMetadata.SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION);
@@ -581,7 +588,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> heicTargets = new ArrayList<>();
         List<ImageReader> depth16Targets = new ArrayList<>();
         ArrayList<Surface> outputSurfaces = new ArrayList<>();
-        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        List<Pair<OutputConfiguration, Boolean>> outputConfigInfos = new ArrayList<>();
         ImageReader inputReader = null;
         ImageWriter inputWriter = null;
         SimpleImageReaderListener inputReaderListener = new SimpleImageReaderListener();
@@ -623,12 +630,14 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
             CameraTestUtils.setupConfigurationTargets(mandatoryStreamInfos, privTargets,
                     jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets,
-                    depth16Targets, outputConfigs, NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,
-                    substituteHeic, null/*overridePhysicalCameraId*/, mHandler);
+                    depth16Targets, outputConfigInfos, NUM_REPROCESS_CAPTURES_PER_CONFIG,
+                    substituteY8, substituteHeic, null/*overridePhysicalCameraId*/, mHandler);
 
-            outputSurfaces.ensureCapacity(outputConfigs.size());
-            for (OutputConfiguration config : outputConfigs) {
-                outputSurfaces.add(config.getSurface());
+            outputSurfaces.ensureCapacity(outputConfigInfos.size());
+            for (Pair<OutputConfiguration, Boolean> c : outputConfigInfos) {
+                if (c.second == maxResolution) {
+                    outputSurfaces.add(c.first.getSurface());
+                }
             }
 
             InputConfiguration inputConfig = new InputConfiguration(inputSizes.get(0).getWidth(),
@@ -2162,7 +2171,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         // the first stream configuration entry will contain the input format and size
         // as well as the first matching output.
         int streamCount = combination.length / 2;
-        ArrayList<Pair<Pair<Integer, Boolean>, Size>> currentCombination =
+
+        List<Pair<Pair<Integer, Boolean>, Size>> currentCombination =
                 new ArrayList<Pair<Pair<Integer, Boolean>, Size>>(streamCount);
         for (int i = 0; i < combination.length; i += 2) {
             if (isInput && (i == 0)) {
