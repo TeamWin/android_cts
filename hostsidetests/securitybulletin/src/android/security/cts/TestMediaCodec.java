@@ -139,16 +139,6 @@ public class TestMediaCodec extends SecurityTestCase {
                 AdbUtils.TMP_PATH + inputFiles[0], inputFiles, AdbUtils.TMP_PATH, getDevice());
     }
 
-    /**
-     * b/68299873
-     **/
-    @Test
-    @SecurityTest(minPatchLevel = "2018-01")
-    public void testPocCVE_2017_13190() throws Exception {
-        pocPusher.only32();
-        AdbUtils.runPocAssertNoCrashesNotVulnerable("CVE-2017-13190", null, null, AdbUtils.TMP_PATH,
-                getDevice());
-    }
 
     /**
      * b/33966031
