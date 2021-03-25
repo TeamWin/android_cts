@@ -18,6 +18,7 @@ package android.net.wifi.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import static android.net.wifi.WifiAvailableChannel.OP_MODE_STA;
 import static android.net.wifi.WifiConfiguration.INVALID_NETWORK_ID;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_SOFTAP;
 import static android.net.wifi.WifiManager.COEX_RESTRICTION_WIFI_AWARE;
@@ -4192,5 +4193,79 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             uiAutomation.dropShellPermissionIdentity();
         }
         assertTrue(mWifiManager.isCarrierNetworkOffloadEnabled(TEST_SUB_ID, false));
+    }
+
+   /**
+     * Test that {@link WifiManager#getUsableChannels(int, int)},
+     * {@link WifiManager#getAllowedChannels(int, int)}
+     * throws UnsupportedOperationException if the release is older than S.
+     */
+    // TODO(b/167575586): Wait for S SDK finalization before changing
+    // to `maxSdkVersion = Build.VERSION_CODES.R`
+    @SdkSuppress(maxSdkVersion = -1, codeName = "REL")
+    public void testGetAllowedUsableChannelsOnROrOlder() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        try {
+            mWifiManager.getAllowedChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            fail("getAllowedChannels Expected to fail - UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {}
+
+        try {
+            mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+            fail("getUsableChannels Expected to fail - UnsupportedOperationException");
+        } catch (UnsupportedOperationException ex) {}
+    }
+
+    /**
+     * Tests {@link WifiManager#getAllowedChannels(int, int))} does not crash
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetAllowedChannels() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // The below API only works with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.getAllowedChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+        } catch (UnsupportedOperationException ex) {
+            //expected if the device does not support this API
+        } catch (Exception ex) {
+            fail("getAllowedChannels unexpected Exception");
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Tests {@link WifiManager#getUsableChannels(int, int))} does not crash.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testGetUsableChannels() throws Exception {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        // The below API only works with privileged permissions (obtained via shell identity
+        // for test)
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            mWifiManager.getUsableChannels(WIFI_BAND_24_GHZ, OP_MODE_STA);
+        } catch (UnsupportedOperationException ex) {
+            //expected if the device does not support this API
+        } catch (Exception ex) {
+            fail("getUsableChannels unexpected Exception");
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
     }
 }
