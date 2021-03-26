@@ -155,9 +155,7 @@ public class Change {
             && Objects.equals(this.changeName, that.changeName)
             && this.sinceSdk == that.sinceSdk
             && this.disabled == that.disabled
-            && this.loggingOnly == that.loggingOnly
-            && this.hasRawOverrides == that.hasRawOverrides
-            && this.hasOverrides == that.hasOverrides;
+            && this.loggingOnly == that.loggingOnly;
     }
 
     @Override

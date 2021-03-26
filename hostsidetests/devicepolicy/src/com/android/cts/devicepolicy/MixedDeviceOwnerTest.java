@@ -16,7 +16,6 @@
 
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
 import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
 
 import static org.junit.Assert.fail;
@@ -29,7 +28,6 @@ import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
-import org.junit.AssumptionViolatedException;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -59,6 +57,10 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
         mUserId = mPrimaryUserId;
 
+        CLog.i("%s.setUp(): mUserId=%d, mPrimaryUserId=%d, mInitialUserId=%d, "
+                + "mDeviceOwnerUserId=%d", getClass(), mUserId, mPrimaryUserId, mInitialUserId,
+                mDeviceOwnerUserId);
+
         installAppAsUser(DEVICE_ADMIN_APK, mDeviceOwnerUserId);
         mDeviceOwnerSet = setDeviceOwner(DEVICE_ADMIN_COMPONENT_FLATTENED, mDeviceOwnerUserId,
                 /*expectFailure= */ false);
@@ -68,7 +70,10 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
             getDevice().uninstallPackage(DEVICE_ADMIN_PKG);
             fail("Failed to set device owner on user " + mDeviceOwnerUserId);
         }
-        grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mUserId);
+        if (isHeadlessSystemUserMode()) {
+            affiliateUsers(DEVICE_ADMIN_PKG, mDeviceOwnerUserId, mPrimaryUserId);
+            grantDpmWrapperPermissions(DEVICE_ADMIN_PKG, mPrimaryUserId);
+        }
     }
 
     @Override
@@ -215,7 +220,6 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testLockScreenInfo() throws Exception {
-
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".LockScreenInfoTest", mUserId);
 
         assertMetricsLogged(getDevice(), () -> {
@@ -459,32 +463,43 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Override
     public void testSuspendPackage() throws Exception {
-        assumeTestIsNotRedundant();
-
+        ignoreOnHeadlessSystemUserMode("headless system user doesn't launch activities");
         super.testSuspendPackage();
     }
 
     @Override
     public void testSuspendPackageWithPackageManager() throws Exception {
-        assumeTestIsNotRedundant();
-
+        ignoreOnHeadlessSystemUserMode("headless system user doesn't launch activities");
         super.testSuspendPackageWithPackageManager();
     }
 
-    /**
-     * Checks whether this test should be skipped because it's redundant.
-     *
-     * <p>For example, {@code setPackagesSuspended()} is meaningless when called from device owner
-     * on headless system user mode as that API suspends activities and the system user runs in the
-     * background for that type of user. In real-life, the DPC would only use that API in the PO, so
-     * in theory it wouldn't need to be tested by this class, as it would be tested by
-     * {@link MixedProfileOwnerTest}, but that will only happen if the device supports managed user.
-     */
-    private void assumeTestIsNotRedundant() throws DeviceNotAvailableException {
-        if (isHeadlessSystemUserMode() && hasDeviceFeature(FEATURE_MANAGED_USERS)) {
-            throw new AssumptionViolatedException("Redundant test on headless system user mode "
-                    + "because it will be tested by the equivalent PO test");
+    @Override
+    public void testApplicationHidden() throws Exception {
+        if (isHeadlessSystemUserMode()) {
+            // Must run on user 0 because the test has a broadcast receiver that listen to packages
+            // added / removed intents
+            mUserId = mDeviceOwnerUserId;
+            CLog.d("testApplicationHidden(): setting mUserId as %d before running it", mUserId);
         }
+        super.testApplicationHidden();
+    }
+
+    @Override
+    protected void runDeviceTestsAsUser(String pkgName, String testClassName, int userId)
+            throws DeviceNotAvailableException {
+        runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId,
+                paramsForDeviceOwnerTest());
+    }
+
+    @Override
+    protected void executeDeviceTestMethod(String className, String testName) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId,
+                paramsForDeviceOwnerTest());
+    }
+
+    @Override
+    protected void executeDeviceTestClass(String className) throws Exception {
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
 
     private void configureNotificationListener() throws DeviceNotAvailableException {

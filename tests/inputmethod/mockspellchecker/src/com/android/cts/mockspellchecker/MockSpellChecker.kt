@@ -77,8 +77,8 @@ class MockSpellChecker : SpellCheckerService() {
                     ?.let {
                         SentenceSuggestionsInfo(
                                 arrayOf(suggestionsInfo(it, textInfo.cookie, textInfo.sequence)),
-                                intArrayOf(0),
-                                intArrayOf(textInfo.text.length))
+                                intArrayOf(if (it.hasStartOffset()) it.startOffset else 0),
+                                intArrayOf(if (it.hasLength()) it.length else textInfo.text.length))
                     }
                     ?: SentenceSuggestionsInfo(emptyArray(), intArrayOf(), intArrayOf())
         }

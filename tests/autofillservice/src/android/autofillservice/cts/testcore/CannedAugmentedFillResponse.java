@@ -18,6 +18,8 @@ package android.autofillservice.cts.testcore;
 import static android.autofillservice.cts.testcore.AugmentedHelper.getContentDescriptionForUi;
 
 import android.autofillservice.cts.R;
+import android.content.ClipData;
+import android.content.ClipDescription;
 import android.content.Context;
 import android.content.IntentSender;
 import android.os.Bundle;
@@ -193,6 +195,16 @@ public final class CannedAugmentedFillResponse {
                     datasetBuilder.setAuthentication(dataset.mAuthentication);
                 }
                 list.add(datasetBuilder.build());
+            } else if (dataset.getContent() != null) {
+                Pair<AutofillId, ClipData> fieldContent = dataset.getContent();
+                InlinePresentation inlinePresentation = Helper.createInlinePresentation(
+                        fieldContent.second.getDescription().getLabel().toString());
+                android.service.autofill.Dataset realDataset =
+                        new android.service.autofill.Dataset.Builder(inlinePresentation)
+                                .setContent(fieldContent.first, fieldContent.second)
+                                .setAuthentication(dataset.mAuthentication)
+                                .build();
+                list.add(realDataset);
             }
         }
         return new FillResponse.Builder().setInlineSuggestions(list).setClientState(
@@ -281,6 +293,7 @@ public final class CannedAugmentedFillResponse {
         private final Map<AutofillId, InlinePresentation> mFieldPresentationById;
         private final String mPresentation;
         private final AutofillValue mOnlyFieldValue;
+        private final Pair<AutofillId, ClipData> mFieldContent;
         private final IntentSender mAuthentication;
 
         private Dataset(@NonNull Builder builder) {
@@ -288,6 +301,8 @@ public final class CannedAugmentedFillResponse {
             mPresentation = builder.mPresentation;
             mOnlyFieldValue = builder.mOnlyFieldValue;
             mFieldPresentationById = builder.mFieldPresentationById;
+            mFieldContent = (builder.mFieldIdForContent == null) ? null
+                    : Pair.create(builder.mFieldIdForContent, builder.mFieldContent);
             this.mAuthentication = builder.mAuthentication;
         }
 
@@ -303,12 +318,18 @@ public final class CannedAugmentedFillResponse {
             return mOnlyFieldValue;
         }
 
+        @Nullable
+        public Pair<AutofillId, ClipData> getContent() {
+            return mFieldContent;
+        }
+
         @Override
         public String toString() {
             return "Dataset: [presentation=" + mPresentation
-                    + ", onlyField=" + mOnlyFieldValue
-                    + ", fields=" + mFieldValuesById
-                    + ", auth=" + mAuthentication
+                    + (mOnlyFieldValue == null ? "" : ", onlyField=" + mOnlyFieldValue)
+                    + (mFieldValuesById.isEmpty() ? "" : ", fields=" + mFieldValuesById)
+                    + (mFieldContent == null ? "" : ", content=" + mFieldContent)
+                    + (mAuthentication == null ? "" : ", auth=" + mAuthentication)
                     + "]";
         }
 
@@ -319,6 +340,8 @@ public final class CannedAugmentedFillResponse {
 
             private final String mPresentation;
             private AutofillValue mOnlyFieldValue;
+            private AutofillId mFieldIdForContent;
+            private ClipData mFieldContent;
             private IntentSender mAuthentication;
 
             public Builder(@NonNull String presentation) {
@@ -329,8 +352,9 @@ public final class CannedAugmentedFillResponse {
              * Sets the value that will be autofilled on the field with {@code id}.
              */
             public Builder setField(@NonNull AutofillId id, @NonNull String text) {
-                if (mOnlyFieldValue != null) {
-                    throw new IllegalStateException("already called setOnlyField()");
+                if (mOnlyFieldValue != null || mFieldIdForContent != null) {
+                    throw new IllegalStateException(
+                            "already called setOnlyField() or setContent()");
                 }
                 mFieldValuesById.put(id, AutofillValue.forText(text));
                 return this;
@@ -341,8 +365,9 @@ public final class CannedAugmentedFillResponse {
              */
             public Builder setField(@NonNull AutofillId id, @NonNull String text,
                     @NonNull InlinePresentation presentation) {
-                if (mOnlyFieldValue != null) {
-                    throw new IllegalStateException("already called setOnlyField()");
+                if (mOnlyFieldValue != null || mFieldIdForContent != null) {
+                    throw new IllegalStateException(
+                            "already called setOnlyField() or setContent()");
                 }
                 mFieldValuesById.put(id, AutofillValue.forText(text));
                 mFieldPresentationById.put(id, presentation);
@@ -355,10 +380,29 @@ public final class CannedAugmentedFillResponse {
              * <p>Used when the test case doesn't know the autofill id of the focused field.
              */
             public Builder setOnlyField(@NonNull String text) {
-                if (!mFieldValuesById.isEmpty()) {
-                    throw new IllegalStateException("already called setField()");
+                if (!mFieldValuesById.isEmpty() || mFieldIdForContent != null) {
+                    throw new IllegalStateException("already called setField() or setContent()");
                 }
                 mOnlyFieldValue = AutofillValue.forText(text);
+                return this;
+            }
+
+            /**
+             * Sets the content that will be autofilled on the field with {@code id}.
+             *
+             * <p>The {@link ClipDescription#getLabel() label} of the passed-in {@link ClipData}
+             * will be used as the chip title (the text displayed in the inline suggestion chip).
+             *
+             * <p>For a given field, either a {@link AutofillValue value} or content can be filled,
+             * but not both. Furthermore, when filling content, only a single field can be filled.
+             */
+            @NonNull
+            public Builder setContent(@NonNull AutofillId id, @Nullable ClipData content) {
+                if (!mFieldValuesById.isEmpty() || mOnlyFieldValue != null) {
+                    throw new IllegalStateException("already called setField() or setOnlyField()");
+                }
+                mFieldIdForContent = id;
+                mFieldContent = content;
                 return this;
             }
 

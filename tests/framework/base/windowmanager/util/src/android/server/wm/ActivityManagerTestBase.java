@@ -1971,7 +1971,7 @@ public abstract class ActivityManagerTestBase {
     /** Assert the activity is either relaunched or received configuration changed. */
     static List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
             boolean relaunched) {
-        final String name = activitySession.getName();
+        final String name = activitySession.getName().flattenToShortString();
         final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
         String failedReason = checkActivityIsRelaunchedOrConfigurationChanged(
                 name, callbackHistory, relaunched);
@@ -2202,6 +2202,7 @@ public abstract class ActivityManagerTestBase {
         private int mIntentFlags;
         private Bundle mExtras;
         private LaunchInjector mLaunchInjector;
+        private ActivitySessionClient mActivitySessionClient;
 
         private enum LauncherType {
             INSTRUMENTATION, LAUNCHING_ACTIVITY, BROADCAST_RECEIVER
@@ -2327,6 +2328,11 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setActivitySessionClient(ActivitySessionClient sessionClient) {
+            mActivitySessionClient = sessionClient;
+            return this;
+        }
+
         @Override
         public boolean shouldWaitForLaunched() {
             return mWaitForLaunched;
@@ -2357,6 +2363,13 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void execute() {
+            if (mActivitySessionClient != null) {
+                final ActivitySessionClient client = mActivitySessionClient;
+                // Clear the session client so its startActivity can call the real execute().
+                mActivitySessionClient = null;
+                client.startActivity(this);
+                return;
+            }
             switch (mLauncherType) {
                 case INSTRUMENTATION:
                     if (mWithShellPermission) {

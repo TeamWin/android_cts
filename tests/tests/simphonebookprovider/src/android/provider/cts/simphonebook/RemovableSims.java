@@ -74,7 +74,10 @@ class RemovableSims {
         Map<Integer, List<SubscriptionInfo>> subscriptionsByCardId = allSubscriptions.stream()
                 .collect(Collectors.groupingBy(SubscriptionInfo::getCardId));
         for (UiccCardInfo cardInfo : uiccCards) {
-            if (!cardInfo.isRemovable() || cardInfo.isEuicc()) {
+            // On GSI builds the eUICC won't be loaded but its card info will still be returned
+            // and so it will have UNINITIALIZED_CARD_ID permanently.
+            if (!cardInfo.isRemovable() || cardInfo.isEuicc() ||
+                    cardInfo.getCardId() == TelephonyManager.UNINITIALIZED_CARD_ID) {
                 continue;
             }
             mRemovableSimSlotCount++;

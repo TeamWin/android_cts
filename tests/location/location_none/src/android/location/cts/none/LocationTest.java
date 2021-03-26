@@ -443,6 +443,14 @@ public class LocationTest {
     }
 
     @Test
+    public void testSetMock() {
+        Location location = new Location("");
+        assertFalse(location.isMock());
+        location.setMock(true);
+        assertTrue(location.isMock());
+    }
+
+    @Test
     public void testSet() {
         Location location = new Location("");
 
