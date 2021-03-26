@@ -43,5 +43,10 @@
              android:exported="true"/>
         <activity android:name=".SecondBackgroundActivity"
              android:exported="true"/>
+        <activity android:name=".RelaunchingActivity"
+                  android:exported="true"/>
+        <activity android:name=".PipActivity"
+                  android:exported="true"
+                  android:supportsPictureInPicture="true"/>
     </application>
 </manifest>
