@@ -22,6 +22,7 @@ import static android.server.wm.app.Components.PipActivity.ACTION_FINISH;
 import static android.server.wm.app.Components.PipActivity.ACTION_MOVE_TO_BACK;
 import static android.server.wm.app.Components.PipActivity.ACTION_ON_PIP_REQUESTED;
 import static android.server.wm.app.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
+import static android.server.wm.app.Components.PipActivity.ACTION_UPDATE_PIP_STATE;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ALLOW_AUTO_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.wm.app.Components.PipActivity.EXTRA_DISMISS_KEYGUARD;
@@ -39,15 +40,19 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATI
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_CALLBACK;
+import static android.server.wm.app.Components.PipActivity.EXTRA_SET_PIP_STASHED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_IS_SEAMLESS_RESIZE_ENABLED;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
+import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.PictureInPictureUiState;
 import android.app.RemoteAction;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -58,6 +63,7 @@ import android.content.res.Configuration;
 import android.graphics.drawable.Icon;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.server.wm.CommandSession;
 import android.util.Log;
@@ -69,6 +75,7 @@ import java.util.List;
 public class PipActivity extends AbstractLifecycleLogActivity {
 
     private boolean mEnteredPictureInPicture;
+    private RemoteCallback mCb;
 
     private Handler mHandler = new Handler();
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -81,6 +88,11 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         break;
                     case ACTION_MOVE_TO_BACK:
                         moveTaskToBack(false /* nonRoot */);
+                        break;
+                    case ACTION_UPDATE_PIP_STATE:
+                        mCb = (RemoteCallback) intent.getExtras().get(EXTRA_SET_PIP_CALLBACK);
+                        boolean stashed = intent.getBooleanExtra(EXTRA_SET_PIP_STASHED, false);
+                        onPictureInPictureUiStateChanged(new PictureInPictureUiState(stashed));
                         break;
                     case ACTION_EXPAND_PIP:
                         // Trigger the activity to expand
@@ -224,6 +236,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         filter.addAction(ACTION_ENTER_PIP);
         filter.addAction(ACTION_MOVE_TO_BACK);
         filter.addAction(ACTION_EXPAND_PIP);
+        filter.addAction(ACTION_UPDATE_PIP_STATE);
         filter.addAction(ACTION_SET_REQUESTED_ORIENTATION);
         filter.addAction(ACTION_FINISH);
         filter.addAction(ACTION_ON_PIP_REQUESTED);
@@ -316,6 +329,13 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         if (isInPictureInPictureMode) {
             mEnteredPictureInPicture = true;
         }
+    }
+
+    @Override
+    public void onPictureInPictureUiStateChanged(PictureInPictureUiState pipState) {
+        Bundle res = new Bundle();
+        res.putBoolean(PIP_CALLBACK_RESULT_KEY, pipState.isStashed());
+        mCb.sendResult(res);
     }
 
     @Override
