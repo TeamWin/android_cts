@@ -597,6 +597,11 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_QUALITY);
         waiverKeys.add(CaptureResult.JPEG_THUMBNAIL_SIZE);
 
+        if (!staticInfo.isUltraHighResolutionSensor()) {
+            waiverKeys.add(CaptureResult.SENSOR_PIXEL_MODE);
+            waiverKeys.add(CaptureResult.SENSOR_RAW_BINNING_FACTOR_USED);
+        }
+
         // Keys only present when corresponding control is on are being
         // verified in its own functional test
         // Only present in certain tonemap mode. Test in CaptureRequestTest.
@@ -1041,6 +1046,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.SENSOR_ROLLING_SHUTTER_SKEW);
         resultKeys.add(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
         resultKeys.add(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL);
+        resultKeys.add(CaptureResult.SENSOR_PIXEL_MODE);
+        resultKeys.add(CaptureResult.SENSOR_RAW_BINNING_FACTOR_USED);
         resultKeys.add(CaptureResult.SHADING_MODE);
         resultKeys.add(CaptureResult.STATISTICS_FACE_DETECT_MODE);
         resultKeys.add(CaptureResult.STATISTICS_HOT_PIXEL_MAP_MODE);

@@ -15,19 +15,21 @@
  */
 package com.android.cts.devicepolicy;
 
-import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_MANAGED_USERS;
+import static com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.FEATURE_BACKUP;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresProfileOwnerSupport;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
 
 import org.junit.Test;
 
 /**
  * Host side tests for profile owner.  Run the CtsProfileOwnerApp device side test.
  */
-@RequiresAdditionalFeatures({FEATURE_MANAGED_USERS})
+@RequiresProfileOwnerSupport
 public class ProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String PROFILE_OWNER_PKG = "com.android.cts.profileowner";
     private static final String PROFILE_OWNER_APK = "CtsProfileOwnerApp.apk";
@@ -55,25 +57,27 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
     public void testManagement() throws Exception {
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
     public void testAdminActionBookkeeping() throws Exception {
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
     public void testAppUsageObserver() throws Exception {
         executeProfileOwnerTest("AppUsageObserverTest");
     }
 
+    // The backup service cannot be enabled if the backup feature is not supported.
+    @RequiresAdditionalFeatures({FEATURE_BACKUP})
     @Test
     public void testBackupServiceEnabling() throws Exception {
-        // The backup service cannot be enabled if the backup feature is not supported.
-        assumeHasBackupFeature();
-
         executeProfileOwnerTest("BackupServicePoliciesTest");
     }
 

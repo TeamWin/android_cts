@@ -26,15 +26,6 @@
 
         <uses-library android:name="android.test.runner"/>
 
-        <activity android:name="android.view.inputmethod.cts.InputMethodCtsActivity"
-             android:label="InputMethodCtsActivity"
-             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
-            </intent-filter>
-        </activity>
-
         <activity android:name="android.view.inputmethod.cts.util.TestActivity"
              android:label="TestActivity"
              android:exported="true">

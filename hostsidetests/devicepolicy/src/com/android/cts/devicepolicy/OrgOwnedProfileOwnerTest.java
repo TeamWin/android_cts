@@ -72,6 +72,13 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     public static final String SUSPENSION_CHECKER_CLASS =
             "com.android.cts.suspensionchecker.ActivityLaunchTest";
 
+    private static final String ACTION_ACKNOWLEDGEMENT_REQUIRED =
+            "com.android.cts.deviceandprofileowner.action.ACKNOWLEDGEMENT_REQUIRED";
+    private static final String ACTION_ARGUMENT = "broadcast-action";
+
+    private static final String USER_IS_NOT_STARTED = "User is not started";
+    private static final long USER_STOP_TIMEOUT_SEC = 30;
+
     protected int mUserId;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
     private static final String CALLED_FROM_PARENT = "calledFromParent";
@@ -620,6 +627,72 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
+    public void testWorkProfileMaximumTimeOff_complianceRequiredBroadcastDefault()
+            throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        // Very long timeout, won't be triggered
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                "testSetManagedProfileMaximumTimeOff1Year", mUserId);
+
+        final String defaultLauncher = getDefaultLauncher();
+        try {
+            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
+            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
+            toggleQuietMode(true);
+            waitForUserStopped(mUserId);
+            toggleQuietMode(false);
+            waitForUserUnlock(mUserId);
+            // Ensure the DPC has handled the broadcast
+            waitForBroadcastIdle();
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testComplianceAcknowledgementRequiredReceived", mUserId);
+
+            // Ensure that the default onComplianceAcknowledgementRequired acknowledged compliance.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testComplianceAcknowledgementNotRequired", mUserId);
+
+        } finally {
+            setAndStartLauncher(defaultLauncher);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testClearComplianceSharedPreference", mUserId);
+        }
+    }
+
+    @Test
+    public void testWorkProfileMaximumTimeOff_complianceRequiredBroadcastOverride()
+            throws Exception {
+        installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+        // Very long timeout, won't be triggered
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                "testSetManagedProfileMaximumTimeOff1Year", mUserId);
+        // Set shared preference that instructs the receiver to NOT call default implementation.
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                "testSetOverrideOnComplianceAcknowledgementRequired", mUserId);
+
+        final String defaultLauncher = getDefaultLauncher();
+        try {
+            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
+            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
+            toggleQuietMode(true);
+            waitForUserStopped(mUserId);
+            toggleQuietMode(false);
+            waitForUserUnlock(mUserId);
+            // Ensure the DPC has handled the broadcast
+            waitForBroadcastIdle();
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testComplianceAcknowledgementRequiredReceived", mUserId);
+
+            // Ensure compliance wasn't acknowledged automatically, acknowledge explicitly.
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testAcknowledgeCompliance", mUserId);
+        } finally {
+            setAndStartLauncher(defaultLauncher);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                    "testClearComplianceSharedPreference", mUserId);
+        }
+    }
+
+    @Test
     public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
@@ -732,5 +805,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                 "cmd package set-home-activity --user %d %s", mPrimaryUserId, component));
         assertTrue("failed to set home activity", output.contains("Success"));
         executeShellCommand("am start -W -n " + component);
+    }
+
+    private void waitForUserStopped(int userId) throws Exception {
+        waitForOutput("User is not unlocked.",
+                String.format("am get-started-user-state %d", userId),
+                s -> s.startsWith(USER_IS_NOT_STARTED), USER_STOP_TIMEOUT_SEC);
     }
 }

@@ -512,7 +512,7 @@ public abstract class AppSearchSchemaMigrationCtsTestBase {
                         .get();
 
         // Check the schema has been saved
-        assertThat(mDb.getSchema().get()).containsExactly(newSchema);
+        assertThat(mDb.getSchema().get().getSchemas()).containsExactly(newSchema);
 
         assertThat(setSchemaResponse.getDeletedTypes()).isEmpty();
         assertThat(setSchemaResponse.getIncompatibleTypes()).containsExactly("testSchema");
