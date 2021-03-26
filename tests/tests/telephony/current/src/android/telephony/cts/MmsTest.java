@@ -148,14 +148,11 @@ public class MmsTest {
             synchronized(mLock) {
                 final long startTime = SystemClock.elapsedRealtime();
                 long waitTime = timeout;
-                while (waitTime > 0) {
+                while (!mDone && waitTime > 0) {
                     try {
                         mLock.wait(waitTime);
                     } catch (InterruptedException e) {
                         // Ignore
-                    }
-                    if (mDone) {
-                        break;
                     }
                     waitTime = timeout - (SystemClock.elapsedRealtime() - startTime);
                 }
@@ -183,15 +180,6 @@ public class MmsTest {
         }
 
         Log.i(TAG, "testSendMmsMessage");
-        // Prime the MmsService so that MMS config is loaded
-        final SmsManager smsManager = SmsManager.getDefault();
-        smsManager.getCarrierConfigValues();
-        // MMS config is loaded asynchronously. Wait a bit so it will be loaded.
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            // Ignore
-        }
 
         final Context context = getContext();
         // Register sent receiver
@@ -213,7 +201,7 @@ public class MmsTest {
         // Send
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 0, new Intent(ACTION_MMS_SENT), 0);
-        smsManager.sendMultimediaMessage(context,
+        SmsManager.getDefault().sendMultimediaMessage(context,
                 contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent);
         assertTrue(mSentReceiver.waitForSuccess(SENT_TIMEOUT));
         sendFile.delete();
