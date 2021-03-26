@@ -295,7 +295,7 @@ public class EdgeEffectTests extends ActivityTestBase {
     public void testStretchTop() {
         RenderNode renderNode = drawStretchEffect(1f, 1f, 0f);
         Rect innerRect = new Rect(0, 0, WIDTH, HEIGHT / 2 + 1);
-        Rect outerRect = new Rect(0, HEIGHT / 2 + 5, WIDTH, HEIGHT);
+        Rect outerRect = new Rect(0, HEIGHT / 2 + 10, WIDTH, HEIGHT);
         createTest()
                 .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
                     canvas.drawRenderNode(renderNode);

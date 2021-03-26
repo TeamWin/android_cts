@@ -20,10 +20,13 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.location.cts.common.GnssTestCase;
 import android.location.cts.common.SoftAssert;
+import android.location.cts.common.TestGnssMeasurementListener;
 import android.location.cts.common.TestLocationListener;
 import android.location.cts.common.TestLocationManager;
 import android.location.cts.common.TestMeasurementUtil;
 import android.util.Log;
+
+import junit.framework.Assert;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,12 +51,10 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
 
     // Maximum time drift between elapsedRealtime (Android SystemClock time) and utcTime (gps
     // time calculated from the chipset).
-    private static final long MAX_TIME_DRIFT_MILLIS = 1000;
+    private static final long MAX_TIME_DRIFT_MILLIS = 100;
 
     // Minimum time interval between fixes in milliseconds.
     private static final int[] FIX_INTERVALS_MILLIS = {0, 1000, 5000, 15000};
-
-    private static final int MSG_TIMEOUT = 1;
 
     // Timing failures on first NUM_IGNORED_UPDATES updates are ignored.
     private static final int NUM_IGNORED_UPDATES = 2;
@@ -85,6 +86,9 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         super.tearDown();
     }
 
+    /**
+     * Tests the location update intervals are within expected thresholds.
+     */
     public void testLocationUpdatesAtVariousIntervals() throws Exception {
         if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
             return;
@@ -92,6 +96,24 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
 
         for (int fixIntervalMillis : FIX_INTERVALS_MILLIS) {
             testLocationUpdatesAtInterval(fixIntervalMillis);
+        }
+    }
+
+    /**
+     * Tests the time differences between GPS time and elapsedRealtime are bounded.
+     */
+    public void testTimeDriftBetweenUtcTimeAndElapsedRealtime() throws Exception {
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager, TAG)) {
+            return;
+        }
+
+        if (TestMeasurementUtil.isAutomotiveDevice(getContext())) {
+            Log.i(TAG, "Test is being skipped because the system has the AUTOMOTIVE feature.");
+            return;
+        }
+
+        for (int fixIntervalMillis : FIX_INTERVALS_MILLIS) {
+            testUtcToElapsedRealtimeDriftAtInterval(fixIntervalMillis);
         }
     }
 
@@ -118,7 +140,62 @@ public class GnssLocationUpdateIntervalTest extends GnssTestCase {
         List<Location> activeLocations = activeLocationListener.getReceivedLocationList();
         List<Location> passiveLocations = passiveLocationListener.getReceivedLocationList();
         validateLocationUpdateInterval(activeLocations, passiveLocations, fixIntervalMillis);
-        validateTimeDriftBetweenUtcTimeAndElapsedRealtime(activeLocations);
+    }
+
+    /**
+     * Tests the time drift of (gpsTime - elapsedTime) for locations requested with interval
+     * {@code fixIntervalMillis}.
+     */
+    private void testUtcToElapsedRealtimeDriftAtInterval(int fixIntervalMillis) throws Exception {
+        Log.i(TAG,
+                "testGpsToElapsedRealtimeDriftAtInterval. fixIntervalMillis: " + fixIntervalMillis);
+
+        TestLocationListener locationListener = new TestLocationListener(
+                LOCATION_TO_COLLECT_COUNT);
+        mTestLocationManager.requestLocationUpdates(locationListener, fixIntervalMillis);
+
+        // Warm up the GNSS engine by
+        //   if hasBiasUncertainty == true, wait until biasUncertainty < 1ms,
+        //   else, wait for a few location fixes.
+        TestGnssMeasurementListener measurementListener = new TestGnssMeasurementListener(TAG);
+        mTestLocationManager.registerGnssMeasurementCallback(measurementListener);
+        boolean success;
+        try {
+            // Wait until biasUncertainty < 1ms.
+            success = measurementListener.awaitSmallBiasUncertainty();
+            if (success) {
+                Log.i(TAG, "Successfully warmed up GNSS by getting < 1ms biasUncertainty.");
+            }
+        } finally {
+            mTestLocationManager.unregisterGnssMeasurementCallback(measurementListener);
+        }
+
+        try {
+            if (!success) {
+                // Wait for locations for warm-up.
+                success = locationListener.await(
+                        fixIntervalMillis * LOCATION_TO_COLLECT_COUNT);
+                Assert.assertTrue("Time elapsed without getting enough location fixes for"
+                        + " warm-up. Possibly, the test has been run deep indoors."
+                        + " Consider retrying test outdoors.", success);
+                Log.i(TAG, "Successfully warmed up GNSS by getting "
+                        + LOCATION_TO_COLLECT_COUNT + " locations.");
+            }
+
+            locationListener.clearReceivedLocationsAndResetCounter(LOCATION_TO_COLLECT_COUNT);
+            // Wait for locations for time drift check.
+            success = locationListener.await(
+                    (fixIntervalMillis * LOCATION_TO_COLLECT_COUNT) + TIMEOUT_IN_SEC);
+            Assert.assertTrue("Time elapsed without getting enough location fixes."
+                    + " Possibly, the test has been run deep indoors."
+                    + " Consider retrying test outdoors.", success);
+
+        } finally {
+            mTestLocationManager.removeLocationUpdates(locationListener);
+        }
+
+        List<Location> locations = locationListener.getReceivedLocationList();
+        validateTimeDriftBetweenUtcTimeAndElapsedRealtime(locations);
     }
 
     private static void validateTimeDriftBetweenUtcTimeAndElapsedRealtime(

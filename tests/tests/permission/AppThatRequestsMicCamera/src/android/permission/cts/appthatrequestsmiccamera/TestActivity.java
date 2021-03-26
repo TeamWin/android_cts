@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2019 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package android.view.inputmethod.cts;
+package android.permission.cts.appthatrequestsmiccamera;
 
 import android.app.Activity;
-import android.os.Bundle;
 
-public class InputMethodCtsActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-        setContentView(R.layout.inputmethod_edittext);
-    }
+public class TestActivity extends Activity {
 }

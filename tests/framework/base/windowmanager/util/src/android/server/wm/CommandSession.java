@@ -95,6 +95,7 @@ public final class CommandSession {
     private static final String COMMAND_TAKE_CALLBACK_HISTORY = EXTRA_PREFIX
             + "command_take_callback_history";
     private static final String COMMAND_WAIT_IDLE = EXTRA_PREFIX + "command_wait_idle";
+    private static final String COMMAND_GET_NAME = EXTRA_PREFIX + "command_get_name";
     private static final String COMMAND_DISPLAY_ACCESS_CHECK =
             EXTRA_PREFIX + "display_access_check";
 
@@ -231,15 +232,15 @@ public final class CommandSession {
         }
 
         /** Get a name to represent this session by the original launch intent if possible. */
-        public String getName() {
+        public ComponentName getName() {
             if (mOriginalLaunchIntent != null) {
                 final ComponentName componentName = mOriginalLaunchIntent.getComponent();
                 if (componentName != null) {
-                    return componentName.flattenToShortString();
+                    return componentName;
                 }
-                return mOriginalLaunchIntent.toString();
             }
-            return "Activity";
+            return sendCommandAndWaitReply(COMMAND_GET_NAME, null /* data */)
+                    .getParcelable(COMMAND_GET_NAME);
         }
 
         public boolean isUidAccesibleOnDisplay() {
@@ -480,6 +481,13 @@ public final class CommandSession {
             session.mOriginalLaunchIntent = intent;
         }
 
+        public ActivitySession getLastStartedSession() {
+            if (mSessions.isEmpty()) {
+                throw new IllegalStateException("No started sessions");
+            }
+            return mSessions.valueAt(mSessions.size() - 1);
+        }
+
         private void ensureNotClosed() {
             if (mClosed) {
                 throw new IllegalStateException("This session client is closed.");
@@ -537,10 +545,12 @@ public final class CommandSession {
 
     /** The host receives command from the test client. */
     public static class ActivitySessionHost extends BroadcastReceiver {
-        private final CommandReceiver mCallback;
         private final Context mContext;
         private final String mClientId;
         private final String mHostId;
+        private CommandReceiver mCallback;
+        /** The intents received when the host activity is relaunching. */
+        private ArrayList<Intent> mPendingIntents;
 
         ActivitySessionHost(Context context, String hostId, String clientId,
                 CommandReceiver callback) {
@@ -557,7 +567,18 @@ public final class CommandSession {
                 Log.i(TAG, mHostId + "(" + mContext.getClass().getSimpleName()
                         + ") receives " + commandIntentToString(intent));
             }
-            mCallback.receiveCommand(intent.getStringExtra(KEY_COMMAND), intent.getExtras());
+            if (mCallback == null) {
+                if (mPendingIntents == null) {
+                    mPendingIntents = new ArrayList<>();
+                }
+                mPendingIntents.add(intent);
+                return;
+            }
+            dispatchCommand(mCallback, intent);
+        }
+
+        private static void dispatchCommand(CommandReceiver callback, Intent intent) {
+            callback.receiveCommand(intent.getStringExtra(KEY_COMMAND), intent.getExtras());
         }
 
         void reply(String command, Bundle data) {
@@ -572,7 +593,17 @@ public final class CommandSession {
             }
         }
 
-        void destory() {
+        void setCallback(CommandReceiver callback) {
+            if (mPendingIntents != null && mCallback == null && callback != null) {
+                for (Intent intent : mPendingIntents) {
+                    dispatchCommand(callback, intent);
+                }
+                mPendingIntents = null;
+            }
+            mCallback = callback;
+        }
+
+        void destroy() {
             mContext.unregisterReceiver(this);
         }
     }
@@ -664,23 +695,40 @@ public final class CommandSession {
                 if (sCommandStorage == null) {
                     sCommandStorage = new CommandStorage();
                 }
-                mReceiver = new ActivitySessionHost(this /* context */, hostId, clientId,
-                        this /* callback */);
+                final Object receiver = getLastNonConfigurationInstance();
+                if (receiver instanceof ActivitySessionHost) {
+                    mReceiver = (ActivitySessionHost) receiver;
+                    mReceiver.setCallback(this);
+                } else {
+                    mReceiver = new ActivitySessionHost(getApplicationContext(), hostId, clientId,
+                            this /* callback */);
+                }
             }
         }
 
         @Override
         protected void onDestroy() {
             super.onDestroy();
-            if (mReceiver != null) {
-                if (!isChangingConfigurations()) {
-                    sCommandStorage.clear(getHostId());
+            if (isChangingConfigurations()) {
+                // Detach the callback if the activity is relaunching. The callback will be
+                // associated again in onCreate.
+                if (mReceiver != null) {
+                    mReceiver.setCallback(null);
                 }
-                mReceiver.destory();
+            } else if (mReceiver != null) {
+                // Clean up for real removal.
+                sCommandStorage.clear(getHostId());
+                mReceiver.destroy();
+                mReceiver = null;
             }
             if (mTestJournalClient != null) {
                 mTestJournalClient.close();
             }
+        }
+
+        @Override
+        public Object onRetainNonConfigurationInstance() {
+            return mReceiver;
         }
 
         @Override
@@ -798,6 +846,13 @@ public final class CommandSession {
                 case COMMAND_WAIT_IDLE:
                     runWhenIdle(() -> reply(command));
                     break;
+
+                case COMMAND_GET_NAME: {
+                    final Bundle result = new Bundle();
+                    result.putParcelable(COMMAND_GET_NAME, getComponentName());
+                    reply(COMMAND_GET_NAME, result);
+                    break;
+                }
 
                 case COMMAND_DISPLAY_ACCESS_CHECK:
                     final Bundle result = new Bundle();

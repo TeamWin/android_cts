@@ -55,6 +55,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -74,7 +75,6 @@ import javax.annotation.Nullable;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
-    private static final String FEATURE_BACKUP = "android.software.backup";
     private static final String FEATURE_BLUETOOTH = "android.hardware.bluetooth";
     private static final String FEATURE_CAMERA = "android.hardware.camera";
     private static final String FEATURE_CONNECTION_SERVICE = "android.software.connectionservice";
@@ -312,7 +312,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void installAppAsUser(String appFileName, boolean grantPermissions,
             boolean dontKillApp, int userId)
                     throws FileNotFoundException, DeviceNotAvailableException {
-        CLog.e("Installing app " + appFileName + " for user " + userId);
+        CLog.e("Installing app %s for user %d", appFileName, userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         List<String> extraArgs = new LinkedList<>();
         extraArgs.add("-t");
@@ -534,7 +534,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void runDeviceTestsAsUser(
             String pkgName, @Nullable String testClassName, int userId)
             throws DeviceNotAvailableException {
-        runDeviceTestsAsUser(pkgName, testClassName, null /*testMethodName*/, userId);
+        runDeviceTestsAsUser(pkgName, testClassName, /* testMethodName= */ null, userId);
     }
 
     protected void runDeviceTestsAsUser(
@@ -691,10 +691,6 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
 
     protected final void assumeSupportsMultiUser() throws DeviceNotAvailableException {
         assumeTrue("device doesn't support multiple users", mSupportsMultiUser);
-    }
-
-    protected final void assumeHasBackupFeature() throws DeviceNotAvailableException {
-        assumeHasDeviceFeature(FEATURE_BACKUP);
     }
 
     protected final void assumeHasWifiFeature() throws DeviceNotAvailableException {
@@ -1186,6 +1182,12 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         return "true".equalsIgnoreCase(result);
     }
 
+    protected void ignoreOnHeadlessSystemUserMode(String reason)
+            throws DeviceNotAvailableException {
+        assumeFalse("Skipping test on headless system user mode. Reason: " + reason,
+                isHeadlessSystemUserMode());
+    }
+
     protected void grantDpmWrapperPermissions(String deviceAdminPkg, int userId) throws Exception {
         // TODO(b/176993670): INTERACT_ACROSS_USERS is needed by DevicePolicyManagerWrapper to
         // get the current user; the permission is available on mDeviceOwnerUserId because it
@@ -1197,6 +1199,20 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + "broadcasts to user 0", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
                 userId, deviceAdminPkg);
+    }
+
+    /**
+     * Generates instrumentation arguments that indicate the device-side test is exercising device
+     * owner APIs.
+     *
+     * <p>This is needed for hostside tests that use the same class hierarchy for both device and
+     * profile owner tests, as on headless system user mode the test side must decide whether to
+     * use its "local DPC" or wrap the calls to the system user DPC.
+     */
+    protected static Map<String, String> paramsForDeviceOwnerTest() {
+        Map<String, String> params = new HashMap<>();
+        params.put("admin_type", "DeviceOwner");
+        return params;
     }
 
     boolean isTv() throws DeviceNotAvailableException {

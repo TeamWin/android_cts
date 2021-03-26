@@ -136,9 +136,15 @@ public final class DeviceOwnerHelper {
         // Handle some special cases first...
 
         // Methods that use CharSequence instead of String
-        if (methodName.equals("wipeData") && parameterTypes.length == 2) {
-            return clazz.getDeclaredMethod(methodName,
-                    new Class<?>[] { int.class, CharSequence.class });
+        if (parameterTypes.length == 2) {
+            switch (methodName) {
+                case "wipeData":
+                    return clazz.getDeclaredMethod(methodName,
+                            new Class<?>[] { int.class, CharSequence.class });
+                case "setDeviceOwnerLockScreenInfo":
+                    return clazz.getDeclaredMethod(methodName,
+                            new Class<?>[] { ComponentName.class, CharSequence.class });
+            }
         }
         if ((methodName.equals("setStartUserSessionMessage")
                 || methodName.equals("setEndUserSessionMessage"))) {
@@ -195,14 +201,16 @@ public final class DeviceOwnerHelper {
     }
 
     private static void sendResult(DeviceAdminReceiver receiver, Object result) {
-        if (VERBOSE) {
-            Log.v(TAG, "Sending '" + result + "' to " + receiver + " on " + Thread.currentThread());
-        }
         sendNoLog(receiver, RESULT_OK, result);
         if (VERBOSE) Log.v(TAG, "Sent");
     }
 
     private static void sendNoLog(DeviceAdminReceiver receiver, int code, Object result) {
+        if (VERBOSE) {
+            Log.v(TAG, "Sending " + TestAppSystemServiceFactory.resultCodeToString(code)
+                    + " (result='" + result + "') to " + receiver + " on "
+                    + Thread.currentThread());
+        }
         receiver.setResultCode(code);
         if (result != null) {
             Intent intent = new Intent();

@@ -423,6 +423,7 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
 
             case REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING:
             case REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING:
+            case REQUEST_AVAILABLE_CAPABILITIES_REMOSAIC_REPROCESSING:
                 // Tested in ExtendedCameraCharacteristicsTest
                 return;
             case REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT:
@@ -442,6 +443,14 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
                         !mStaticInfo.areKeysAvailable(
                                 CameraCharacteristics.SCALER_DEFAULT_SECURE_IMAGE_SIZE));
                 }
+                return;
+            case REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR:
+                resultKeys.add(CaptureResult.SENSOR_RAW_BINNING_FACTOR_USED);
+                resultKeys.add(CaptureResult.SENSOR_PIXEL_MODE);
+                requestKeys.add(CaptureRequest.SENSOR_PIXEL_MODE);
+                additionalRequirements.add(new Pair<String, Boolean>(
+                        "Must support maximum resolution keys",
+                        mStaticInfo.areMaximumResolutionKeysSupported()));
                 return;
             default:
                 capabilityName = "Unknown";

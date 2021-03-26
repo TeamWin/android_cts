@@ -37,7 +37,6 @@ DEVICE_INFO_ACTIVITIES += \
   $(DEVICE_INFO_PACKAGE).MediaDeviceInfo \
   $(DEVICE_INFO_PACKAGE).MemoryDeviceInfo \
   $(DEVICE_INFO_PACKAGE).PackageDeviceInfo \
-  $(DEVICE_INFO_PACKAGE).PropertyDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ScreenDeviceInfo \
   $(DEVICE_INFO_PACKAGE).StorageDeviceInfo \
   $(DEVICE_INFO_PACKAGE).UserDeviceInfo \

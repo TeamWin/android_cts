@@ -43,7 +43,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemClock;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
 import android.system.Os;
 import android.system.OsConstants;
@@ -65,6 +68,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.util.Arrays;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -461,6 +465,17 @@ public class TranscodeTestUtils {
             assertTrue(message, readDuration > TimeUnit.MILLISECONDS.toNanos(100));
         } else {
             assertTrue(message, readDuration < TimeUnit.MILLISECONDS.toNanos(10));
+        }
+    }
+
+    public static boolean isAppIoBlocked(StorageManager sm, UUID uuid) {
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.adoptShellPermissionIdentity("android.permission.WRITE_MEDIA_STORAGE");
+        try {
+            return sm.isAppIoBlocked(uuid, Process.myUid(), Process.myTid(),
+                    StorageManager.APP_IO_BLOCKED_REASON_TRANSCODING);
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
         }
     }
 }

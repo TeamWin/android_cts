@@ -38,6 +38,9 @@
     <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
 
+    <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS"/>
+
     <!-- Add a network security config that trusts user added CAs for tests -->
     <application android:networkSecurityConfig="@xml/network_security_config"
          android:testOnly="true">
@@ -113,6 +116,11 @@
             <intent-filter>
                 <action android:name="com.android.cts.deviceandprofileowner.WIPE_DATA"/>
             </intent-filter>
+        </receiver>
+
+        <!--  TODO(b/176993670): remove if DpmWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
+             android:exported="true">
         </receiver>
 
         <service android:name=".NotificationListener"
