@@ -175,6 +175,7 @@ public final class Users {
      * <p>If there is more than one user of the given type and parent, {@link NeneException} will
      * be thrown.
      */
+    @Nullable
     public UserReference findProfileOfType(UserType userType, UserReference parent) {
         Set<UserReference> profiles = findProfilesOfType(userType, parent);
 

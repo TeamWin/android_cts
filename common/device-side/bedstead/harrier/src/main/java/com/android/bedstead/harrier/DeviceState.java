@@ -19,7 +19,7 @@ package com.android.bedstead.harrier;
 import static com.android.bedstead.nene.users.UserType.MANAGED_PROFILE_TYPE_NAME;
 import static com.android.bedstead.nene.users.UserType.SECONDARY_USER_TYPE_NAME;
 
-import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -45,6 +45,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -135,7 +136,8 @@ public final class DeviceState implements TestRule {
                 EnsureHasWorkProfile ensureHasWorkAnnotation =
                         description.getAnnotation(EnsureHasWorkProfile.class);
                 if (ensureHasWorkAnnotation != null) {
-                    ensureHasWorkProfile(
+                    ensureHasProfile(
+                            MANAGED_PROFILE_TYPE_NAME,
                             /* installTestApp= */ ensureHasWorkAnnotation.installTestApp(),
                             /* forUser= */ ensureHasWorkAnnotation.forUser()
                     );
@@ -143,14 +145,16 @@ public final class DeviceState implements TestRule {
                 EnsureHasNoWorkProfile ensureHasNoWorkAnnotation =
                         description.getAnnotation(EnsureHasNoWorkProfile.class);
                 if (ensureHasNoWorkAnnotation != null) {
-                    ensureHasNoWorkProfile(
+                    ensureHasNoProfile(
+                            MANAGED_PROFILE_TYPE_NAME,
                             /* forUser= */ ensureHasNoWorkAnnotation.forUser()
                     );
                 }
                 EnsureHasTvProfile ensureHasTvProfileAnnotation =
                         description.getAnnotation(EnsureHasTvProfile.class);
                 if (ensureHasTvProfileAnnotation != null) {
-                    ensureHasTvProfile(
+                    ensureHasProfile(
+                            TV_PROFILE_TYPE_NAME,
                             /* installTestApp= */ ensureHasTvProfileAnnotation.installTestApp(),
                             /* forUser= */ ensureHasTvProfileAnnotation.forUser()
                     );
@@ -158,7 +162,8 @@ public final class DeviceState implements TestRule {
                 EnsureHasNoTvProfile ensureHasNoTvProfileAnnotation =
                         description.getAnnotation(EnsureHasNoTvProfile.class);
                 if (ensureHasNoTvProfileAnnotation != null) {
-                    ensureHasNoTvProfile(
+                    ensureHasNoProfile(
+                            TV_PROFILE_TYPE_NAME,
                             /* forUser= */ ensureHasNoTvProfileAnnotation.forUser()
                     );
                 }
@@ -179,6 +184,14 @@ public final class DeviceState implements TestRule {
                 if (requireFeaturesAnnotation != null) {
                     for (String feature: requireFeaturesAnnotation.value()) {
                         requireFeature(feature, requireFeaturesAnnotation.failureMode());
+                    }
+                }
+                RequireUserSupported requireUserSupportedAnnotation =
+                        description.getAnnotation(RequireUserSupported.class);
+                if (requireUserSupportedAnnotation != null) {
+                    for (String userType: requireUserSupportedAnnotation.value()) {
+                        requireUserSupported(
+                                userType, requireUserSupportedAnnotation.failureMode());
                     }
                 }
 
@@ -205,20 +218,31 @@ public final class DeviceState implements TestRule {
     }
 
     private void requireFeature(String feature, FailureMode failureMode) {
+        checkFailOrSkip("Device must have feature " + feature,
+                sTestApis.packages().features().contains(feature), failureMode);
+    }
+
+    private com.android.bedstead.nene.users.UserType requireUserSupported(
+            String userType, FailureMode failureMode) {
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                sTestApis.users().supportedType(userType);
+
+        checkFailOrSkip(
+                "Device must support user type " + userType
+                + " only supports: " + sTestApis.users().supportedTypes(),
+                resolvedUserType != null, failureMode);
+
+        return resolvedUserType;
+    }
+
+    private void checkFailOrSkip(String message, boolean value, FailureMode failureMode) {
         if (failureMode.equals(FailureMode.FAIL)) {
-            assertThat(sTestApis.packages().features().contains(feature)).isTrue();
+            assertWithMessage(message).that(value).isTrue();
         } else if (failureMode.equals(FailureMode.SKIP)) {
-            assumeTrue("Device must have feature " + feature,
-                    sTestApis.packages().features().contains(feature));
+            assumeTrue(message, value);
         } else {
             throw new IllegalStateException("Unknown failure mode: " + failureMode);
         }
-    }
-
-    private void requireUserSupported(String userType) {
-        assumeTrue("Device must support user type " + userType
-                + " only supports: " + sTestApis.users().supportedTypes(),
-                sTestApis.users().supportedType(userType) != null);
     }
 
     public enum UserType {
@@ -234,7 +258,8 @@ public final class DeviceState implements TestRule {
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private UserReference mSecondaryUser = null;
-    private final Map<UserReference, UserReference> mWorkProfiles = new HashMap<>();
+    private final Map<com.android.bedstead.nene.users.UserType, Map<UserReference, UserReference>>
+            mProfiles = new HashMap<>();
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
     private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
@@ -273,36 +298,75 @@ public final class DeviceState implements TestRule {
      * @throws IllegalStateException if there is no harrier-managed work profile for the given user
      */
     public UserReference workProfile(UserReference forUser) {
-        if (!mWorkProfiles.containsKey(forUser)) {
-            throw new IllegalStateException(
-                    "No harrier-managed work profile. This method should only be used when Harrier "
-                            + "has been used to create the work profile.");
-        }
-
-        return mWorkProfiles.get(forUser);
+        return profile(MANAGED_PROFILE_TYPE_NAME, forUser);
     }
 
-    public boolean isRunningOnWorkProfile() {
+    private UserReference profile(String profileType, UserReference forUser) {
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                sTestApis.users().supportedType(profileType);
+
+        if (resolvedUserType == null) {
+            throw new IllegalStateException("Can not have a profile of type " + forUser
+                    + " as they are not supported on this device");
+        }
+
+        return profile(resolvedUserType, forUser);
+    }
+
+    private UserReference profile(
+            com.android.bedstead.nene.users.UserType userType, UserReference forUser) {
+        if (userType == null || forUser == null) {
+            throw new NullPointerException();
+        }
+
+        if (!mProfiles.containsKey(userType) || !mProfiles.get(userType).containsKey(forUser)) {
+            throw new IllegalStateException(
+                    "No harrier-managed profile of type " + userType + ". This method should only"
+                            + " be used when Harrier has been used to create the profile.");
+        }
+
+        return mProfiles.get(userType).get(forUser);
+    }
+
+    private boolean isRunningOnWorkProfile() {
         return sTestApis.users().instrumented()
                 .resolve().type().name().equals(MANAGED_PROFILE_TYPE_NAME);
     }
 
-    @Nullable
+    /**
+     * Get the {@link UserReference} of the tv profile for the current user
+     *
+     * <p>This should only be used to get tv profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed tv profile
+     */
     public UserReference tvProfile() {
         return tvProfile(/* forUser= */ UserType.CURRENT_USER);
     }
 
-    @Nullable
+    /**
+     * Get the {@link UserReference} of the tv profile.
+     *
+     * <p>This should only be used to get tv profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed tv profile
+     */
     public UserReference tvProfile(UserType forUser) {
         return tvProfile(resolveUserTypeToUser(forUser));
     }
 
-    @Nullable
+    /**
+     * Get the {@link UserReference} of the tv profile.
+     *
+     * <p>This should only be used to get tv profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed tv profile
+     */
     public UserReference tvProfile(UserReference forUser) {
-        return sTestApis.users().all().stream()
-                .filter(u ->
-                        forUser.equals(u.parent()) && u.type().name().equals(TV_PROFILE_TYPE_NAME))
-                .findFirst().orElse(null);
+        return profile(TV_PROFILE_TYPE_NAME, forUser);
     }
 
     public boolean isRunningOnTvProfile() {
@@ -356,85 +420,60 @@ public final class DeviceState implements TestRule {
                 .collect(Collectors.toSet());
     }
 
-    private UserReference ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
+    private UserReference ensureHasProfile(
+            String profileType, boolean installTestApp, UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
-        requireUserSupported(MANAGED_PROFILE_TYPE_NAME);
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                requireUserSupported(profileType, FailureMode.SKIP);
 
         UserReference forUserReference = resolveUserTypeToUser(forUser);
 
-        UserReference workProfile =
-                sTestApis.users().findProfileOfType(
-                        sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
-                        forUserReference);
-        if (workProfile == null) {
-            workProfile = createWorkProfile(forUserReference);
+        UserReference profile =
+                sTestApis.users().findProfileOfType(resolvedUserType, forUserReference);
+        if (profile == null) {
+            profile = createProfile(resolvedUserType, forUserReference);
         }
 
-        workProfile.start();
+        profile.start();
 
         if (installTestApp) {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .install(workProfile);
+            sTestApis.packages().find(sContext.getPackageName()).install(profile);
         } else {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .uninstall(workProfile);
+            sTestApis.packages().find(sContext.getPackageName()).uninstall(profile);
         }
 
-        mWorkProfiles.put(forUserReference, workProfile);
-        return workProfile;
+        if (!mProfiles.containsKey(resolvedUserType)) {
+            mProfiles.put(resolvedUserType, new HashMap<>());
+        }
+
+        mProfiles.get(resolvedUserType).put(forUserReference, profile);
+
+        return profile;
     }
 
-    private void ensureHasNoWorkProfile(UserType forUser) {
+    private void ensureHasNoProfile(String profileType, UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
 
         UserReference forUserReference = resolveUserTypeToUser(forUser);
+        com.android.bedstead.nene.users.UserType resolvedProfileType =
+                sTestApis.users().supportedType(profileType);
 
-        UserReference workProfile =
+        if (resolvedProfileType == null) {
+            // These profile types don't exist so there can't be any
+            return;
+        }
+
+        UserReference profile =
                 sTestApis.users().findProfileOfType(
-                        sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                        resolvedProfileType,
                         forUserReference);
-        if (workProfile != null) {
-            removeAndRecordUser(workProfile.resolve());
-        }
-    }
-
-    public void ensureHasTvProfile(boolean installTestApp, UserType forUser) {
-        requireUserSupported(TV_PROFILE_TYPE_NAME);
-
-        UserReference forUserReference = resolveUserTypeToUser(forUser);
-
-        UserReference tvProfile = tvProfile(forUserReference);
-        if (tvProfile == null) {
-            tvProfile = createTvProfile(forUserReference);
-        }
-
-        tvProfile.start();
-
-        if (installTestApp) {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .install(tvProfile);
-        } else {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .uninstall(tvProfile);
-        }
-    }
-
-    /**
-     * Ensure that there is no TV profile.
-     */
-    public void ensureHasNoTvProfile(UserType forUser) {
-        requireFeature("android.software.managed_users", FailureMode.SKIP);
-
-        UserReference forUserReference = resolveUserTypeToUser(forUser);
-
-        UserReference tvProfile = tvProfile(forUserReference);
-        if (tvProfile != null) {
-            removeAndRecordUser(tvProfile.resolve());
+        if (profile != null) {
+            removeAndRecordUser(profile.resolve());
         }
     }
 
     private void ensureHasSecondaryUser(boolean installTestApp) {
-        requireUserSupported(SECONDARY_USER_TYPE_NAME);
+        requireUserSupported(SECONDARY_USER_TYPE_NAME, FailureMode.SKIP);
 
         Collection<UserReference> secondaryUsers = secondaryUsers();
 
@@ -456,8 +495,6 @@ public final class DeviceState implements TestRule {
      * Ensure that there is no secondary user.
      */
     private void ensureHasNoSecondaryUser() {
-        requireUserSupported(SECONDARY_USER_TYPE_NAME);
-
         for (UserReference secondaryUser : secondaryUsers()) {
             removeAndRecordUser(secondaryUser.resolve());
         }
@@ -524,7 +561,7 @@ public final class DeviceState implements TestRule {
     }
 
     private void teardownNonShareableState() {
-        mWorkProfiles.clear();
+        mProfiles.clear();
         mSecondaryUser = null;
 
         for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
@@ -547,31 +584,18 @@ public final class DeviceState implements TestRule {
         mRemovedUsers.clear();
     }
 
-    private UserReference createWorkProfile(UserReference parent) {
+    private UserReference createProfile(
+            com.android.bedstead.nene.users.UserType profileType, UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
             UserReference user = sTestApis.users().createUser()
                     .parent(parent)
-                    .type(sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
+                    .type(profileType)
                     .createAndStart();
             mCreatedUsers.add(user);
             return user;
         } catch (NeneException e) {
-            throw new IllegalStateException("Error creating work profile", e);
-        }
-    }
-
-    private UserReference createTvProfile(UserReference parent) {
-        requireCanSupportAdditionalUser();
-        try {
-            UserReference user = sTestApis.users().createUser()
-                    .parent(parent)
-                    .type(sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
-                    .createAndStart();
-            mCreatedUsers.add(user);
-            return user;
-        } catch (NeneException e) {
-            throw new IllegalStateException("Error creating tv profile", e);
+            throw new IllegalStateException("Error creating profile of type " + profileType, e);
         }
     }
 
