@@ -35,6 +35,8 @@ import static android.os.Process.myUid;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -90,6 +92,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
     private ConnectivityManager mConnectivityManager;
     private UiDevice mUiDevice;
     private TestHelper mTestHelper;
+    private TelephonyManager mTelephonyManager;
 
     private boolean mWasVerboseLoggingEnabled;
 
@@ -143,6 +146,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                 "Wifi not connected",
                 WIFI_CONNECT_TIMEOUT_MILLIS,
                 () -> mWifiManager.getConnectionInfo().getNetworkId() != -1);
+        mTelephonyManager = mContext.getSystemService(TelephonyManager.class);
     }
 
     @After
@@ -272,6 +276,15 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     assertThat(statsEntry.getContentionTimeStats(
                             WME_ACCESS_CATEGORY_VO).getContentionNumSamples()).isAtLeast(0);
                     assertThat(statsEntry.getChannelUtilizationRatio()).isIn(Range.closed(0, 255));
+                    if (mTelephonyManager != null) {
+                        boolean isCellularDataAvailable =
+                                mTelephonyManager.getDataState() == TelephonyManager.DATA_CONNECTED;
+                        assertEquals(isCellularDataAvailable, statsEntry.isCellularDataAvailable());
+                    } else {
+                        assertFalse(statsEntry.isCellularDataAvailable());
+                    }
+                    statsEntry.isWifiScoringEnabled();
+                    statsEntry.isThroughputSufficient();
                     assertThat(statsEntry.getRateStats()).isNotNull();
                     assertThat(statsEntry.getWifiLinkLayerRadioStats()).isNotNull();
                 }
