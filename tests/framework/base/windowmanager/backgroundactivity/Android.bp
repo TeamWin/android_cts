@@ -27,6 +27,7 @@ android_test {
     sdk_version: "test_current",
 
     static_libs: [
+        "androidx.appcompat_appcompat",
         "androidx.test.rules",
         "cts-wm-util",
         "cts-wm-app-base",
