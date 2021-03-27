@@ -39,13 +39,16 @@ public class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback 
     // Timeout in sec for count down latch wait
     private static final int STATUS_TIMEOUT_IN_SEC = 10;
     private static final int MEAS_TIMEOUT_IN_SEC = 75;
+    private static final int BIAS_UNCERTAINTY_TIMEOUT_IN_SEC = 10;
     private static final int C_TO_N0_THRESHOLD_DB_HZ = 18;
+    private static final double BIAS_UNCERTAINTY_THRESHOLD_NANOS = 1e6; // 1 millisecond
     private volatile int mStatus = -1;
 
     private final String mTag;
     private final List<GnssMeasurementsEvent> mMeasurementsEvents;
     private final CountDownLatch mCountDownLatch;
     private final CountDownLatch mCountDownLatchStatus;
+    private final CountDownLatch mCountDownLatchBiasUncertainty;
 
     /**
     * Constructor for TestGnssMeasurementListener
@@ -74,6 +77,7 @@ public class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback 
         mTag = tag;
         mCountDownLatch = new CountDownLatch(eventsToCollect);
         mCountDownLatchStatus = new CountDownLatch(1);
+        mCountDownLatchBiasUncertainty = new CountDownLatch(1);
         mMeasurementsEvents = new ArrayList<>(eventsToCollect);
         this.filterByEventSize = filterByEventSize;
     }
@@ -121,6 +125,12 @@ public class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback 
                 }
                 mCountDownLatch.countDown();
             }
+            GnssClock gnssClock = event.getClock();
+            if (gnssClock.hasBiasUncertaintyNanos()) {
+                if (gnssClock.getBiasUncertaintyNanos() < BIAS_UNCERTAINTY_THRESHOLD_NANOS) {
+                    mCountDownLatchBiasUncertainty.countDown();
+                }
+            }
         }
     }
 
@@ -138,6 +148,12 @@ public class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback 
         return TestUtils.waitFor(mCountDownLatch, MEAS_TIMEOUT_IN_SEC);
     }
 
+    /**
+     * Wait until {@link GnssClock#getBiasUncertaintyNanos()} ()} becomes small enough.
+     */
+    public boolean awaitSmallBiasUncertainty() throws InterruptedException {
+        return TestUtils.waitFor(mCountDownLatchBiasUncertainty, BIAS_UNCERTAINTY_TIMEOUT_IN_SEC);
+    }
 
     /**
      * @return {@code true} if the state of the test ensures that data is expected to be collected,

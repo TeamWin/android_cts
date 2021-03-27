@@ -65,7 +65,7 @@ def _calc_color_plane_ratios(img_rgb):
 
 def _create_block_center_vals(block_center):
   """Create lists of x and y values for sub-block centers."""
-  num_sample = int(numpy.asscalar((1-block_center*2)/_BLOCK_R/2 + 1))
+  num_sample = int(((1-block_center*2)/_BLOCK_R/2 + 1).item())
   center_xs = numpy.concatenate(
       (numpy.arange(block_center, 1-block_center+_BLOCK_R, _BLOCK_R*2),
        block_center*numpy.ones((num_sample-1)),
@@ -154,12 +154,11 @@ class LensShadingAndColorUniformityTest(its_base_test.ItsBaseTest):
 
       if camera_properties_utils.read_3a(props):
         # Converge 3A and get the estimates.
-        sens, exp, awb_gains, awb_xform, focus = cam.do_3a(
+        sens, exp, awb_gains, awb_xform, _ = cam.do_3a(
             get_results=True, do_af=False, lock_ae=True, lock_awb=True)
         logging.debug('AE sensitivity: %d, exp: %dms', sens, exp*_NSEC_TO_MSEC)
         logging.debug('AWB gains: %s', str(awb_gains))
         logging.debug('AWB transform: %s', str(awb_xform))
-        logging.debug('AF distance: %.2f', focus)
 
       req = capture_request_utils.auto_capture_request()
       w, h = capture_request_utils.get_available_output_sizes('yuv', props)[0]
