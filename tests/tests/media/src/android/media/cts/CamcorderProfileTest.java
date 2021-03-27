@@ -22,6 +22,7 @@ import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
+import android.media.EncoderProfiles;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -110,6 +111,57 @@ public class CamcorderProfileTest extends AndroidTestCase {
         assertTrue(isSizeSupported(profile.videoFrameWidth,
                                    profile.videoFrameHeight,
                                    videoSizes));
+    }
+
+    private void checkAllProfiles(EncoderProfiles allProfiles, CamcorderProfile profile,
+                                  List<Size> videoSizes) {
+        Log.v(TAG, String.format("profile: duration=%d, quality=%d, " +
+            "fileFormat=%d, videoCodec=%d, videoBitRate=%d, videoFrameRate=%d, " +
+            "videoFrameWidth=%d, videoFrameHeight=%d, audioCodec=%d, " +
+            "audioBitRate=%d, audioSampleRate=%d, audioChannels=%d",
+            profile.duration,
+            profile.quality,
+            profile.fileFormat,
+            profile.videoCodec,
+            profile.videoBitRate,
+            profile.videoFrameRate,
+            profile.videoFrameWidth,
+            profile.videoFrameHeight,
+            profile.audioCodec,
+            profile.audioBitRate,
+            profile.audioSampleRate,
+            profile.audioChannels));
+        // generic fields must match the corresponding CamcorderProfile
+        assertEquals(profile.duration, allProfiles.getDurationSeconds());
+        assertEquals(profile.fileFormat, allProfiles.getFileFormat());
+        boolean first = true;
+        for (EncoderProfiles.VideoProfile videoProfile : allProfiles.getVideoProfiles()) {
+            if (first) {
+                // the first profile must be the default profile which must match
+                // the corresponding CamcorderProfile
+                assertEquals(profile.videoCodec, videoProfile.getCodec());
+                assertEquals(profile.videoBitRate, videoProfile.getBitrate());
+                assertEquals(profile.videoFrameRate, videoProfile.getFrameRate());
+                first = false;
+            }
+            // all profiles must be the same size
+            assertEquals(profile.videoFrameWidth, videoProfile.getWidth());
+            assertEquals(profile.videoFrameHeight, videoProfile.getHeight());
+            assertTrue(videoProfile.getMediaType() != null);
+        }
+        first = true;
+        for (EncoderProfiles.AudioProfile audioProfile : allProfiles.getAudioProfiles()) {
+            if (first) {
+                // the first profile must be the default profile which must match
+                // the corresponding CamcorderProfile
+                assertEquals(profile.audioCodec, audioProfile.getCodec());
+                assertEquals(profile.audioBitRate, audioProfile.getBitrate());
+                assertEquals(profile.audioSampleRate, audioProfile.getSampleRate());
+                assertEquals(profile.audioChannels, audioProfile.getChannels());
+                first = false;
+            }
+            assertTrue(audioProfile.getMediaType() != null);
+        }
     }
 
     private void assertProfileEquals(CamcorderProfile expectedProfile,
@@ -279,6 +331,11 @@ public class CamcorderProfileTest extends AndroidTestCase {
                 }
                 CamcorderProfile profile = getWithOptionalId(quality, cameraId);
                 checkProfile(profile, videoSizesToCheck);
+                if (cameraId >= 0) {
+                    EncoderProfiles allProfiles =
+                        CamcorderProfile.getAll(String.valueOf(cameraId), quality);
+                    checkAllProfiles(allProfiles, profile, videoSizesToCheck);
+                }
             }
         }
 

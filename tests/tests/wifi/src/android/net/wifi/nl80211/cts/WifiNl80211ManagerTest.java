@@ -29,6 +29,7 @@ import android.net.wifi.WifiManager;
 import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.WifiNl80211Manager;
 
+import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -134,6 +135,9 @@ public class WifiNl80211ManagerTest {
         } catch (Exception ignore) {}
     }
 
+    // TODO(b/167575586): Wait for S SDK finalization to change minSdkVersion to
+    //  Build.VERSION_CODES.S
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
     @Test
     public void testCountryCodeChangeListener() {
         TestCountryCodeChangeListener testCountryCodeChangeListener =

@@ -35,6 +35,7 @@ import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStrea
 import android.hardware.camera2.params.SessionConfiguration;
 import android.media.ImageReader;
 import android.util.Log;
+import android.util.Pair;
 import android.view.Surface;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
@@ -245,12 +246,18 @@ public class ConcurrentCameraTest extends Camera2ConcurrentAndroidTestCase {
             CameraTestInfo info = mCameraTestInfos.get(testSample.cameraId);
             assertTrue("CameraTestInfo not found for camera id " + testSample.cameraId,
                     info != null);
+            // List of {OutputConfiguration, whether stream is ultra high resolution}
+            List<Pair<OutputConfiguration, Boolean>> outputConfigAndInfos = new ArrayList<>();
             CameraTestUtils.setupConfigurationTargets(
                 testSample.combination.getStreamsInformation(), testSample.privTargets,
                 testSample.jpegTargets, testSample.yuvTargets, testSample.y8Targets,
                 testSample.rawTargets, testSample.heicTargets, testSample.depth16Targets,
-                testSample.outputConfigs, MIN_RESULT_COUNT, testSample.substituteY8,
+                outputConfigAndInfos, MIN_RESULT_COUNT, testSample.substituteY8,
                 /*substituteHEIC*/false, /*physicalCameraId*/null, mHandler);
+            for (Pair<OutputConfiguration, Boolean> c : outputConfigAndInfos) {
+                // We don't use MAXIMUM_RESOLUTION mandatory configs here. Ignore c.second.
+                testSample.outputConfigs.add(c.first);
+            }
 
             try {
                 checkSessionConfigurationSupported(info.mCamera, mHandler, testSample.outputConfigs,

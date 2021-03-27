@@ -216,7 +216,8 @@ public class CameraTestUtils extends Assert {
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
             List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
             List<ImageReader> rawTargets, List<ImageReader> heicTargets,
-            List<ImageReader> depth16Targets, List<OutputConfiguration> outputConfigs,
+            List<ImageReader> depth16Targets,
+            List<Pair<OutputConfiguration, Boolean>> outputConfigs,
             int numBuffers, boolean substituteY8, boolean substituteHeic,
             String overridePhysicalCameraId, Handler handler) {
 
@@ -236,7 +237,7 @@ public class CameraTestUtils extends Assert {
             Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
             availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
             Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
-
+            boolean isUltraHighResolution = streamInfo.isUltraHighResolution();
             switch (format) {
                 case ImageFormat.PRIVATE: {
                     SurfaceTexture target = new SurfaceTexture(/*random int*/1);
@@ -245,7 +246,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     privTargets.add(target);
                     break;
                 }
@@ -257,7 +258,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     jpegTargets.add(target);
                     break;
                 }
@@ -269,7 +270,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     yuvTargets.add(target);
                     break;
                 }
@@ -281,7 +282,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     y8Targets.add(target);
                     break;
                 }
@@ -297,7 +298,7 @@ public class CameraTestUtils extends Assert {
                         if (overridePhysicalCameraId != null) {
                             config.setPhysicalCameraId(overridePhysicalCameraId);
                         }
-                        outputConfigs.add(config);
+                        outputConfigs.add(Pair.create(config, isUltraHighResolution));
                         rawTargets.add(target);
                     }
                     break;
@@ -310,7 +311,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     heicTargets.add(target);
                     break;
                 }
@@ -322,7 +323,7 @@ public class CameraTestUtils extends Assert {
                     if (overridePhysicalCameraId != null) {
                         config.setPhysicalCameraId(overridePhysicalCameraId);
                     }
-                    outputConfigs.add(config);
+                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
                     depth16Targets.add(target);
                     break;
                 }
