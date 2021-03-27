@@ -34,7 +34,6 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -44,6 +43,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -129,12 +129,20 @@ public final class DeviceState implements TestRule {
                     EnsureHasProfileAnnotation ensureHasProfileAnnotation =
                             annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
                     if (ensureHasProfileAnnotation != null) {
-                        UserType userType = (UserType) annotation.annotationType()
+                        UserType forUser = (UserType) annotation.annotationType()
                                 .getMethod("forUser").invoke(annotation);
                         boolean installTestApp = (boolean) annotation.annotationType()
                                 .getMethod("installTestApp").invoke(annotation);
                             ensureHasProfile(
-                                    ensureHasProfileAnnotation.value(), installTestApp, userType);
+                                    ensureHasProfileAnnotation.value(), installTestApp, forUser);
+                    }
+
+                    EnsureHasUserAnnotation ensureHasUserAnnotation =
+                            annotationType.getAnnotation(EnsureHasUserAnnotation.class);
+                    if (ensureHasUserAnnotation != null) {
+                        boolean installTestApp = (boolean) annotation.getClass()
+                                .getMethod("installTestApp").invoke(annotation);
+                        ensureHasUser(ensureHasUserAnnotation.value(), installTestApp);
                     }
                 }
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
@@ -152,14 +160,6 @@ public final class DeviceState implements TestRule {
                 if (description.getAnnotation(RequireRunOnTvProfile.class) != null) {
                     assumeTrue("@RequireRunOnTvProfile tests only run on TV profile",
                             isRunningOnTvProfile());
-                }
-                EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
-                        description.getAnnotation(EnsureHasSecondaryUser.class);
-                if (ensureHasSecondaryUserAnnotation != null) {
-                    ensureHasUser(
-                            SECONDARY_USER_TYPE_NAME,
-                            /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
-                    );
                 }
                 EnsureHasNoSecondaryUser ensureHasNoSecondaryUserAnnotation =
                         description.getAnnotation(EnsureHasNoSecondaryUser.class);
