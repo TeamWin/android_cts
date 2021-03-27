@@ -32,17 +32,17 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
     @Override
-    public void onDetectFromDspSource(
+    public void onDetect(
             @NonNull ParcelFileDescriptor audioStream,
             @NonNull AudioFormat audioFormat,
             long timeoutMillis,
-            @NonNull DspHotwordDetectionCallback callback) {
+            @NonNull Callback callback) {
         Log.d(TAG, "onDetectFromDspSource");
         if (callback == null) {
             Log.w(TAG, "callback is null");
             return;
         }
-        callback.onDetected();
+        callback.onDetected(null);
     }
 
     @Override
