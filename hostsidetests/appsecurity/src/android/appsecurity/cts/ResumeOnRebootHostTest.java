@@ -98,6 +98,9 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int[] users = Utils.prepareSingleUser(getDevice());
         int initialUser = users[0];
 
+        // Clean up the server based parameters for HAL based test.
+        deviceCleanupServerBasedParameter();
+
         try {
             installTestPackages();
 
@@ -136,6 +139,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int initialUser = users[0];
 
         int managedUserId = createManagedProfile(initialUser);
+
+        deviceCleanupServerBasedParameter();
 
         try {
             // Set up test app and secure lock screens
@@ -179,6 +184,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int[] users = Utils.prepareMultipleUsers(getDevice(), 2);
         int initialUser = users[0];
         int secondaryUser = users[1];
+
+        deviceCleanupServerBasedParameter();
 
         try {
             // Set up test app and secure lock screens
@@ -234,6 +241,8 @@ public class ResumeOnRebootHostTest extends BaseHostJUnit4Test {
         int[] users = Utils.prepareMultipleUsers(getDevice(), 2);
         int initialUser = users[0];
         int secondaryUser = users[1];
+
+        deviceCleanupServerBasedParameter();
 
         try {
             installTestPackages();
