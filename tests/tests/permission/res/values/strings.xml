@@ -19,5 +19,4 @@
     <string name="perm_c">Permission C</string>
     <string name="perm_group_b">Permission group B</string>
     <string name="perm_group_c">Permission group B</string>
-    <string name="attr_label">attribution label</string>
 </resources>
