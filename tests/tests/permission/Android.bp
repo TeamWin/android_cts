@@ -42,7 +42,6 @@ android_test {
         // TODO(b/175251166): remove once Android migrates to JUnit 4.12,
         // which provides assertThrows
         "testng",
-        "mockito-target-extended-minus-junit4",
     ],
     jni_libs: [
         "libctspermission_jni",
