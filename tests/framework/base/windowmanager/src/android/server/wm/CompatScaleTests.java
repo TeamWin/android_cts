@@ -58,9 +58,10 @@ public class CompatScaleTests extends ActivityManagerTestBase {
     public static Iterable<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "DOWNSCALE_50", 0.5f },
-                { "DOWNSCALE_62_5", 0.625f },
-                { "DOWNSCALE_75", 0.75f },
-                { "DOWNSCALE_87_5", 0.875f },
+                { "DOWNSCALE_60", 0.6f },
+                { "DOWNSCALE_70", 0.7f },
+                { "DOWNSCALE_80", 0.8f },
+                { "DOWNSCALE_90", 0.9f },
         });
     }
 
