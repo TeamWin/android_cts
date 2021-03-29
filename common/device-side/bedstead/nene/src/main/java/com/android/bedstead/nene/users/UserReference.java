@@ -32,9 +32,6 @@ import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.annotation.Nullable;
 
 /**
@@ -157,13 +154,8 @@ public abstract class UserReference implements AutoCloseable {
      */
     public UserReference switchTo() {
         try {
-            // TODO(scottjonathan): This will only work when either the user being foregrounded or
-            //  the user being backgrounded is the user running the test. We should support this
-            //  when this is not the case.
-            List<String> intents = new ArrayList<>();
-            intents.add(Intent.ACTION_USER_FOREGROUND);
             BlockingBroadcastReceiver broadcastReceiver =
-                    new BlockingBroadcastReceiver(sContext, intents,
+                    new BlockingBroadcastReceiver(sContext, Intent.ACTION_USER_FOREGROUND,
                             (intent) ->((UserHandle)
                                     intent.getParcelableExtra(Intent.EXTRA_USER))
                                     .getIdentifier() == mId);
