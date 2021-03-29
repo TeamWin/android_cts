@@ -29,9 +29,7 @@ import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
 import static org.junit.Assert.assertEquals;
 
-import android.app.UiAutomation;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
@@ -69,11 +67,6 @@ public class NearbyDevicesPermissionTest {
     private enum Result {
         UNKNOWN, EXCEPTION, EMPTY, FILTERED, FULL
     }
-
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getTargetContext();
-    private static final UiAutomation sUiAutomation =
-            InstrumentationRegistry.getInstrumentation().getUiAutomation();
 
     @BeforeClass
     public static void enableTestMode() {

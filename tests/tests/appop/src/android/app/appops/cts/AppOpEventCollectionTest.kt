@@ -30,6 +30,7 @@ import android.app.AppOpsManager.UID_STATE_TOP
 import android.content.Intent
 import android.content.Intent.ACTION_INSTALL_PACKAGE
 import android.net.Uri
+import android.os.Process
 import android.os.SystemClock
 import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
@@ -41,15 +42,17 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.lang.Thread.sleep
+import java.util.concurrent.atomic.AtomicLong
 
 private const val BACKGROUND_PACKAGE = "android.app.appops.cts.appinbackground"
+private const val SHELL_PACKAGE_NAME = "com.android.shell"
 
 class AppOpEventCollectionTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
 
-    private val myUid = android.os.Process.myUid()
+    private val myUid = Process.myUid()
     private val myPackage = context.packageName
     private val otherPkg: String
     private val otherUid: Int
@@ -222,30 +225,35 @@ class AppOpEventCollectionTest {
         val before = System.currentTimeMillis()
 
         // Using the shell identity causes a trusted proxy note
+        val afterTrusted = AtomicLong()
         runWithShellPermissionIdentity {
             appOpsManager.noteProxyOp(OPSTR_WIFI_SCAN, myPackage, myUid, null, null)
+            afterTrusted.set(System.currentTimeMillis())
+            appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
         }
-        val afterTrusted = System.currentTimeMillis()
 
         // Make sure timestamps are distinct
         sleep(1)
 
-        // self note
-        appOpsManager.noteOp(OPSTR_WIFI_SCAN, myUid, myPackage, null, null)
         val after = System.currentTimeMillis()
 
-        val opEntry = getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!
+        val opEntry = getOpEntry(Process.SHELL_UID, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY))
-            .isIn(before..afterTrusted)
-        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterTrusted..after)
-        assertThat(opEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY)).isIn(before..afterTrusted)
-        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF)).isIn(afterTrusted..after)
+            .isIn(before..afterTrusted.get())
+        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_SELF))
+                .isIn(afterTrusted.get()..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXY))
+                .isIn(before..afterTrusted.get())
+        assertThat(opEntry.getLastAccessTime(OP_FLAG_SELF))
+                .isIn(afterTrusted.get()..after)
 
         // When asked for any flags, the second access overrides the first
-        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(afterTrusted..after)
-        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL)).isIn(afterTrusted..after)
+        assertThat(attributionOpEntry.getLastAccessTime(OP_FLAGS_ALL))
+                .isIn(afterTrusted.get()..after)
+        assertThat(opEntry.getLastAccessTime(OP_FLAGS_ALL))
+                .isIn(afterTrusted.get()..after)
     }
 
     @Test
@@ -294,12 +302,13 @@ class AppOpEventCollectionTest {
         val attributionOpEntry = opEntry.attributedOpEntries[null]!!
 
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
-            .isEqualTo(myPackage)
+            .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
-            .isEqualTo(myPackage)
+            .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid)
-            .isEqualTo(myUid)
-        assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(myUid)
+            .isEqualTo(Process.SHELL_UID)
+        assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(
+                Process.SHELL_UID)
 
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_UNTRUSTED_PROXIED)?.packageName)
             .isEqualTo(myPackage)
@@ -340,13 +349,13 @@ class AppOpEventCollectionTest {
         with(getOpEntry(otherUid, otherPkg, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[null]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)!!
-                .packageName).isEqualTo(myPackage)
+                .packageName).isEqualTo(SHELL_PACKAGE_NAME)
             assertThat(attributedOpEntries[null]?.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)!!
                 .attributionTag).isEqualTo(firstTag)
             assertThat(isRunning).isTrue()
         }
 
-        with(getOpEntry(myUid, myPackage, OPSTR_WIFI_SCAN)!!) {
+        with(getOpEntry(Process.SHELL_UID, SHELL_PACKAGE_NAME, OPSTR_WIFI_SCAN)!!) {
             assertThat(attributedOpEntries[firstTag]!!.isRunning).isTrue()
             assertThat(attributedOpEntries[firstTag]!!
                 .getLastProxyInfo(OP_FLAGS_ALL)).isNull()
@@ -363,12 +372,13 @@ class AppOpEventCollectionTest {
         assertThat(attributionOpEntry.getLastAccessTime(OP_FLAG_TRUSTED_PROXIED))
             .isIn(beforeTrusted..afterTrusted)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
-            .isEqualTo(myPackage)
+            .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.packageName)
-            .isEqualTo(myPackage)
+            .isEqualTo(SHELL_PACKAGE_NAME)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid)
-            .isEqualTo(myUid)
-        assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(myUid)
+            .isEqualTo(Process.SHELL_UID)
+        assertThat(opEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.uid).isEqualTo(
+                Process.SHELL_UID)
         assertThat(attributionOpEntry.getLastProxyInfo(OP_FLAG_TRUSTED_PROXIED)?.attributionTag)
             .isEqualTo(firstTag)
     }

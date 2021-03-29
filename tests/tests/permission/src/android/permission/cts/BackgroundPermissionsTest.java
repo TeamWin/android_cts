@@ -88,10 +88,11 @@ public class BackgroundPermissionsTest {
         for (int i = 0; i < numPermissions; i++) {
             PermissionInfo permission = pkg.permissions[i];
 
-            // background permissions must be dangerous or ungrantable
+            // background permissions must be dangerous or ungrantable or role
             if ((permission.getProtection() & PROTECTION_DANGEROUS) != 0
                     || (permission.getProtection() == PROTECTION_INTERNAL
-                            && permission.getProtectionFlags() == 0)) {
+                            && (permission.getProtectionFlags() == 0
+                    || permission.getProtectionFlags() == PermissionInfo.PROTECTION_FLAG_ROLE))) {
                 potentialBackgroundPermissionsToGroup.put(permission.name, permission.group);
             }
         }
