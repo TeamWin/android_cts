@@ -30,11 +30,21 @@
         <process android:process=":CrashMemtagAsync"
                  android:memtagMode="async" />
         <process android:process=":CrashProcess" />
+        <process android:process=":HeapZeroInitProcess"
+                 android:nativeHeapZeroInitialized="true" />
+        <process android:process=":HeapZeroInitMemtagAsyncProcess"
+                 android:memtagMode="async"
+                 android:nativeHeapZeroInitialized="true" />
       </processes>
+
+      <activity android:name=".TestActivity" />
 
       <activity android:name=".CrashActivity" android:process=":CrashProcess" />
       <activity android:name=".CrashMemtagSyncActivity" android:process=":CrashMemtagSync" />
       <activity android:name=".CrashMemtagAsyncActivity" android:process=":CrashMemtagAsync" />
+      <activity android:name=".HeapZeroInitActivity" android:process=":HeapZeroInitProcess" />
+      <activity android:name=".HeapZeroInitMemtagAsyncActivity"
+                android:process=":HeapZeroInitMemtagAsyncProcess" />
     </application>
 
     <instrumentation
