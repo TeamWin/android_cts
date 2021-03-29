@@ -2121,7 +2121,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .forShortcutWithId("s4x", si -> assertEquals(2, si.getRank()));
         });
 
-        // Push more shortcuts.
+        // Push when limit is reached.
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(makeShortcuts(makeIds("s", 1, 15))));
             assertWith(getManager().getDynamicShortcuts())
@@ -2145,8 +2145,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
-                    .haveIds(makeIds("s", 1, 16))
-                    .forShortcutWithId("s1", si -> assertEquals(15, si.getRank()))
+                    .haveIds(makeIds("s", 2, 16))
                     .forShortcutWithId("s2", si -> assertEquals(1, si.getRank()))
                     .forShortcutWithId("s15", si -> assertEquals(14, si.getRank()))
                     .forShortcutWithId("s16", si -> assertEquals(0, si.getRank()));
@@ -2156,11 +2155,10 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
-                    .haveIds(makeIds("s", 1, 17))
-                    .forShortcutWithId("s2", si -> assertEquals(14, si.getRank()))
+                    .haveIds(makeIds("s", 3, 17))
                     .forShortcutWithId("s3", si -> assertEquals(1, si.getRank()))
                     .forShortcutWithId("s16", si -> assertEquals(0, si.getRank()))
-                    .forShortcutWithId("s17", si -> assertEquals(16, si.getRank()));
+                    .forShortcutWithId("s17", si -> assertEquals(14, si.getRank()));
         });
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
@@ -2176,10 +2174,10 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
-                    .haveIds(makeIds("s", 1, 18))
+                    .haveIds(makeIds("s", 4, 18))
                     .forShortcutWithId("s4", si -> assertEquals(2, si.getRank()))
                     .forShortcutWithId("s16", si -> assertEquals(1, si.getRank()))
-                    .forShortcutWithId("s17", si -> assertEquals(17, si.getRank()))
+                    .forShortcutWithId("s17", si -> assertEquals(14, si.getRank()))
                     .forShortcutWithId("s18", si -> assertEquals(0, si.getRank()));
 
             assertWith(getManager().getPinnedShortcuts())
