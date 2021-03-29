@@ -27,11 +27,13 @@ import android.telecom.PhoneAccount;
 import android.telecom.TelecomManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyUtils;
 import android.telephony.emergency.EmergencyNumber;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,6 +59,13 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
         mTelecomManager =
                 (TelecomManager) getContext().getSystemService(Context.TELECOM_SERVICE);
         assertNotNull(mTelecomManager);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                TelephonyUtils.CTS_APP_PACKAGE,
+                TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
     }
 
     public static void grantUserReadPhoneStatePermission() {
@@ -98,14 +107,30 @@ public class TelephonyManagerReadPhoneStatePermissionTest {
      * isModemEnabledForSlot(int slotIndex)
      * isMultiSimSupported()
      * doesSwitchMultiSimConfigTriggerReboot()
+     * getCallState() (when compat fwk enables enforcement)
+     * getCallStateForSubscription() (when compat fwk enables enforcement)
      */
     @Test
-    public void testTelephonyManagersAPIsRequiringReadPhoneStatePermissions() {
+    public void testTelephonyManagersAPIsRequiringReadPhoneStatePermissions() throws Exception {
         if (!mHasTelephony) {
             return;
         }
 
         grantUserReadPhoneStatePermission();
+
+        try {
+            // We must ensure that compat fwk enables READ_PHONE_STATE enforcement
+            TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE,
+                    TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+            mTelephonyManager.getCallState();
+            mTelephonyManager.getCallStateForSubscription();
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getCallState and TelephonyManager#getCallStateForSubscription "
+                    + "must not throw a SecurityException because READ_PHONE_STATE permission is "
+                    + "granted and TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
+                    + "enabled.");
+        }
 
         int subId = mTelephonyManager.getSubscriptionId();
 

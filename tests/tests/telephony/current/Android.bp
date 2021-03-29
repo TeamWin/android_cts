@@ -78,3 +78,11 @@ android_test {
         "cts-tradefed",
     ],
 }
+
+filegroup {
+    name: "cts-telephony-utils",
+    srcs: [
+        "src/android/telephony/cts/TelephonyUtils.java",
+    ]
+}
+
