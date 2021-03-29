@@ -21,8 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.FlakyTest;
 
-import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
-
 import org.junit.Test;
 
 /**
@@ -99,8 +97,6 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    // TODO(b/174158829): this test is currently failing on headless system mode
-    @TemporaryIgnoreOnHeadlessSystemUserMode
     @FlakyTest
     @Test
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
