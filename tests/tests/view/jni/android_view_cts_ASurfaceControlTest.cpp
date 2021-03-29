@@ -296,26 +296,33 @@ void SurfaceTransaction_setGeometry(JNIEnv* /*env*/, jclass,
             reinterpret_cast<ASurfaceControl*>(surfaceControl), src, dst, transform);
 }
 
-void SurfaceTransaction_setSourceRect(JNIEnv* /*env*/, jclass, jlong surfaceControl,
-                                      jlong surfaceTransaction, jint srcLeft, jint srcTop,
-                                      jint srcRight, jint srcBottom) {
-    const ARect src{srcLeft, srcTop, srcRight, srcBottom};
-    ASurfaceTransaction_setSourceRect(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
-                                      reinterpret_cast<ASurfaceControl*>(surfaceControl), src);
+void SurfaceTransaction_setCrop(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                jlong surfaceTransaction, jint left, jint top, jint right,
+                                jint bottom) {
+    const ARect crop{left, top, right, bottom};
+    ASurfaceTransaction_setCrop(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                reinterpret_cast<ASurfaceControl*>(surfaceControl), crop);
 }
 
 void SurfaceTransaction_setPosition(JNIEnv* /*env*/, jclass, jlong surfaceControl,
-                                    jlong surfaceTransaction, jint dstLeft, jint dstTop,
-                                    jint dstRight, jint dstBottom) {
-    const ARect dst{dstLeft, dstTop, dstRight, dstBottom};
+                                    jlong surfaceTransaction, jint x, jint y) {
     ASurfaceTransaction_setPosition(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
-                                    reinterpret_cast<ASurfaceControl*>(surfaceControl), dst);
+                                    reinterpret_cast<ASurfaceControl*>(surfaceControl), x, y);
 }
 
-void SurfaceTransaction_setTransform(JNIEnv* /*env*/, jclass, jlong surfaceControl,
-                                     jlong surfaceTransaction, jint transform) {
-    ASurfaceTransaction_setTransform(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
-                                     reinterpret_cast<ASurfaceControl*>(surfaceControl), transform);
+void SurfaceTransaction_setBufferTransform(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                           jlong surfaceTransaction, jint transform) {
+    ASurfaceTransaction_setBufferTransform(reinterpret_cast<ASurfaceTransaction*>(
+                                                   surfaceTransaction),
+                                           reinterpret_cast<ASurfaceControl*>(surfaceControl),
+                                           transform);
+}
+
+void SurfaceTransaction_setScale(JNIEnv* /*env*/, jclass, jlong surfaceControl,
+                                 jlong surfaceTransaction, jfloat xScale, jfloat yScale) {
+    ASurfaceTransaction_setScale(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                 reinterpret_cast<ASurfaceControl*>(surfaceControl), xScale,
+                                 yScale);
 }
 
 void SurfaceTransaction_setDamageRegion(JNIEnv* /*env*/, jclass,
@@ -538,7 +545,7 @@ void SurfaceTransaction_setOnCompleteCallback(JNIEnv* env, jclass, jlong surface
                                       CallbackListenerWrapper::transactionCallbackThunk);
 }
 
-const std::array<JNINativeMethod, 24> JNI_METHODS = {{
+const std::array<JNINativeMethod, 28> JNI_METHODS = {{
         {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
         {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
         {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
@@ -573,6 +580,11 @@ const std::array<JNINativeMethod, 24> JNI_METHODS = {{
         {"nSurfaceTransaction_setOnCompleteCallback",
          "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCompleteCallback},
+        {"nSurfaceTransaction_setCrop", "(JJIIII)V", (void*)SurfaceTransaction_setCrop},
+        {"nSurfaceTransaction_setPosition", "(JJII)V", (void*)SurfaceTransaction_setPosition},
+        {"nSurfaceTransaction_setBufferTransform", "(JJI)V",
+         (void*)SurfaceTransaction_setBufferTransform},
+        {"nSurfaceTransaction_setScale", "(JJFF)V", (void*)SurfaceTransaction_setScale},
 }};
 
 }  // anonymous namespace
