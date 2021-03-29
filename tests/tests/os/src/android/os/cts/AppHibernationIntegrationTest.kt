@@ -28,14 +28,12 @@ import androidx.test.InstrumentationRegistry
 import androidx.test.runner.AndroidJUnit4
 import com.android.compatibility.common.util.SystemUtil.runShellCommandOrThrow
 import org.hamcrest.CoreMatchers
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-
-private const val APK_PATH_S_APP = "/data/local/tmp/cts/os/CtsAutoRevokeSApp.apk"
-private const val APK_PACKAGE_NAME_S_APP = "android.os.cts.autorevokesapp"
 
 /**
  * Integration test for app hibernation.
@@ -93,6 +91,32 @@ class AppHibernationIntegrationTest {
                         .click()
                     waitFindObject(By.text(APK_PACKAGE_NAME_S_APP))
                 }
+            }
+        }
+    }
+
+    @Test
+    fun testPreSVersionUnusedApp_doesntGetForceStopped() {
+        withUnusedThresholdMs(1) {
+            withApp(APK_PATH_R_APP, APK_PACKAGE_NAME_R_APP) {
+                // Use app
+                startApp(APK_PACKAGE_NAME_R_APP)
+                Thread.sleep(WAIT_TIME_MS)
+                runShellCommandOrThrow("input keyevent KEYCODE_BACK")
+                runShellCommandOrThrow("input keyevent KEYCODE_BACK")
+                Thread.sleep(WAIT_TIME_MS)
+                runShellCommandOrThrow("am kill $APK_PACKAGE_NAME_R_APP")
+                Thread.sleep(WAIT_TIME_MS)
+
+                // Run job
+                runAppHibernationJob(context, LOG_TAG)
+                Thread.sleep(WAIT_TIME_MS)
+
+                // Verify
+                val ai =
+                    packageManager.getApplicationInfo(APK_PACKAGE_NAME_R_APP, 0 /* flags */)
+                val stopped = ((ai.flags and ApplicationInfo.FLAG_STOPPED) != 0)
+                assertFalse(stopped)
             }
         }
     }
