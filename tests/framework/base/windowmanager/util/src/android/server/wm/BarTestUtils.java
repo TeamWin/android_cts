@@ -21,12 +21,15 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Insets;
 import android.util.Log;
 import android.view.WindowInsets;
+import android.view.WindowMetrics;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
@@ -41,6 +44,20 @@ import org.junit.AssumptionViolatedException;
 public final class BarTestUtils {
 
     private BarTestUtils() {
+    }
+
+    public static void assumeStatusBarContainsCutout(ActivityTestRule<?> rule) {
+        final boolean[] statusBarContainsCutout = {false};
+        getInstrumentation().runOnMainSync(() -> {
+            final WindowMetrics metrics =
+                    rule.getActivity().getWindowManager().getCurrentWindowMetrics();
+            final WindowInsets windowInsets = metrics.getWindowInsets();
+            final Insets insetsCutout = windowInsets.getInsets(WindowInsets.Type.displayCutout());
+            final Insets insetsStatusBar = windowInsets.getInsets(WindowInsets.Type.statusBars());
+            final Insets min = Insets.min(insetsCutout, insetsStatusBar);
+            statusBarContainsCutout[0] = !Insets.NONE.equals(min);
+        });
+        assumeTrue(statusBarContainsCutout[0]);
     }
 
     public static void assumeHasColoredStatusBar(ActivityTestRule<?> rule) {
