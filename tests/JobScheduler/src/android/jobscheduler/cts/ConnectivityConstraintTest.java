@@ -143,9 +143,6 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         // Restore initial restrict background data usage policy
         setDataSaverEnabled(mInitialRestrictBackground);
 
-        // Restore initial airplane mode status
-        setAirplaneMode(mInitialAirplaneMode);
-
         // Restore initial restricted bucket setting.
         Settings.Global.putString(mContext.getContentResolver(),
                 Settings.Global.ENABLE_RESTRICTED_BUCKET, mInitialRestrictedBucketEnabled);
@@ -162,6 +159,10 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 }
             }
         }
+
+        // Restore initial airplane mode status. Do it after setting wifi in case wifi was
+        // originally metered.
+        setAirplaneMode(mInitialAirplaneMode);
 
         super.tearDown();
     }
