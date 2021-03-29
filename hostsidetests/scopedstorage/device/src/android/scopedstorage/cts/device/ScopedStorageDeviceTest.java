@@ -119,6 +119,7 @@ import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -2788,6 +2789,99 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             img.delete();
         }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_file() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+
+        try {
+            assertUriIsUnredacted(img);
+
+            final Cursor redactedUriCursor = getRedactedCursor(redactedUri);
+            File file = new File(
+                    getStringFromCursor(redactedUriCursor, MediaStore.MediaColumns.DATA));
+            ExifInterface redactedExifInf = new ExifInterface(file);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_write() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+
+        try {
+            assertThrows(UnsupportedOperationException.class,
+                    () -> getContentResolver().openFileDescriptor(redactedUri,
+                            "w"));
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_inputstream() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        try {
+            assertUriIsUnredacted(img);
+
+            InputStream is = getContentResolver().openInputStream(redactedUri);
+            ExifInterface redactedExifInf = new ExifInterface(is);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_read() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        try {
+            assertUriIsUnredacted(img);
+
+            FileDescriptor fd = getContentResolver().openFileDescriptor(redactedUri,
+                    "r").getFileDescriptor();
+            ExifInterface redactedExifInf = new ExifInterface(fd);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    private void assertUriIsUnredacted(File img) throws Exception {
+        final ExifInterface exifInterface = new ExifInterface(img);
+        assertNotEquals(exifInterface.getGpsDateTime(), -1);
+
+        float[] latLong = new float[]{0, 0};
+        exifInterface.getLatLong(latLong);
+        assertNotEquals(latLong[0], 0);
+        assertNotEquals(latLong[1], 0);
+    }
+
+    private void assertUriIsRedacted(ExifInterface redactedExifInf) {
+        assertEquals(redactedExifInf.getGpsDateTime(), -1);
+        float[] latLong = new float[]{0, 0};
+        redactedExifInf.getLatLong(latLong);
+        assertEquals(latLong[0], 0.0, 0.0);
+        assertEquals(latLong[1], 0.0, 0.0);
+    }
+
+    private Cursor getRedactedCursor(Uri redactedUri) {
+        Cursor redactedUriCursor = getContentResolver().query(redactedUri, null, null, null);
+        assertNotNull(redactedUriCursor);
+        assertThat(redactedUriCursor.moveToFirst()).isTrue();
+
+        return redactedUriCursor;
     }
 
     private String getStringFromCursor(Cursor c, String colName) {
