@@ -72,6 +72,7 @@ import android.platform.test.annotations.AppModeFull
 import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
+import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
@@ -187,14 +188,17 @@ class AppOpsLoggingTest {
         appOpsManager.setOnOpNotedCallback(Executor { it.run() },
                 object : OnOpNotedCallback() {
                     override fun onNoted(op: SyncNotedAppOp) {
+                        Log.i("OPALA", "sync op: $, stack: $".format(op, Throwable().stackTrace))
                         noted.add(op to Throwable().stackTrace)
                     }
 
                     override fun onSelfNoted(op: SyncNotedAppOp) {
+                        Log.i("OPALA", "self op: $, stack: $".format(op, Throwable().stackTrace))
                         selfNoted.add(op to Throwable().stackTrace)
                     }
 
                     override fun onAsyncNoted(asyncOp: AsyncNotedAppOp) {
+                        Log.i("OPALA", "async op: $".format(asyncOp))
                         asyncNoted.add(asyncOp)
                     }
                 })
