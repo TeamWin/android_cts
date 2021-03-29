@@ -22,6 +22,7 @@ import android.content.Intent;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
+import android.service.voice.HotwordDetectionService;
 import android.service.voice.VoiceInteractionService;
 import android.system.ErrnoException;
 import android.util.Log;
@@ -103,6 +104,11 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         public void onRecognitionResumed() {
                             Log.i(TAG, "onRecognitionResumed");
                         }
+
+                        @Override
+                        public void onHotwordDetectionServiceInitialized(int status) {
+                            verifyHotwordDetectionServiceInitializedStatus(status);
+                        }
                     });
         } catch (IllegalStateException e) {
             Log.w(TAG, "callCreateAlwaysOnHotwordDetector() exception: " + e);
@@ -142,5 +148,13 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         PersistableBundle persistableBundle = new PersistableBundle();
         persistableBundle.putString(KEY_FAKE_DATA, VALUE_FAKE_DATA);
         return persistableBundle;
+    }
+
+    private void verifyHotwordDetectionServiceInitializedStatus(int status) {
+        if (status == HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
+            broadcastIntentWithResult(
+                    Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
+                    Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
+        }
     }
 }
