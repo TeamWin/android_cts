@@ -56,7 +56,6 @@ import org.junit.runner.RunWith;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -133,7 +132,7 @@ public class TranslationManagerTest {
                 new TranslationSpec(Locale.FRENCH.getLanguage(),
                         TranslationSpec.DATA_FORMAT_TEXT))
                 .build();
-        final Translator translator = manager.createTranslator(translationContext);
+        final Translator translator = manager.createOnDeviceTranslator(translationContext);
 
         try {
             mServiceWatcher.waitOnConnected();
@@ -198,7 +197,7 @@ public class TranslationManagerTest {
 
         final Thread th = new Thread(() -> {
             final Set<TranslationCapability> capabilities =
-                    manager.getTranslationCapabilities(TranslationSpec.DATA_FORMAT_TEXT,
+                    manager.getOnDeviceTranslationCapabilities(TranslationSpec.DATA_FORMAT_TEXT,
                             TranslationSpec.DATA_FORMAT_TEXT);
             resultRef.set(capabilities);
             latch.countDown();
@@ -228,7 +227,7 @@ public class TranslationManagerTest {
 
         final TranslationManager manager = sInstrumentation.getContext().getSystemService(
                 TranslationManager.class);
-        final PendingIntent pendingIntent = manager.getTranslationSettingsActivityIntent();
+        final PendingIntent pendingIntent = manager.getOnDeviceTranslationSettingsActivityIntent();
 
         assertThat(pendingIntent).isNotNull();
         assertThat(pendingIntent.isImmutable()).isTrue();
