@@ -2852,7 +2852,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
         } else {
             // Tested in LegacyNotificationManager20Test
-            if (checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
                 fail("Notification should have been cancelled for targetSdk below L.  targetSdk="
                         + mContext.getApplicationInfo().targetSdkVersion);
             }

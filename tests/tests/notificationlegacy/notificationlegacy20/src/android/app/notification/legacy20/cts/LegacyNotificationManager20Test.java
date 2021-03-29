@@ -102,7 +102,7 @@ public class LegacyNotificationManager20Test {
 
         mListener.cancelNotification(sbn.getPackageName(), sbn.getTag(), sbn.getId());
         if (mContext.getApplicationInfo().targetSdkVersion < Build.VERSION_CODES.LOLLIPOP) {
-            if (checkNotificationExistence(notificationId, /*shouldExist=*/ true)) {
+            if (!checkNotificationExistence(notificationId, /*shouldExist=*/ false)) {
                 fail("Failed to cancel notification. targetSdk="
                         + mContext.getApplicationInfo().targetSdkVersion);
             }
