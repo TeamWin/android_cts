@@ -270,6 +270,12 @@ public class TestUtils {
             .setExtras(SELF_MANAGED_ACCOUNT_4_EXTRAS)
             .build();
 
+    /**
+     * See {@link TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION}
+     */
+    public static final String ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING =
+            "ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION ";
+
     private static final String COMMAND_SET_CALL_DIAGNOSTIC_SERVICE =
             "telecom set-call-diagnostic-service ";
 
@@ -304,6 +310,8 @@ public class TestUtils {
 
     private static final String COMMAND_SET_TEST_EMERGENCY_PHONE_ACCOUNT_PACKAGE_NAME_FILTER =
             "telecom set-test-emergency-phone-account-package-filter ";
+
+    private static final String COMMAND_AM_COMPAT = "am compat ";
 
     public static final String MERGE_CALLER_NAME = "calls-merged";
     public static final String SWAP_CALLER_NAME = "calls-swapped";
@@ -437,6 +445,24 @@ public class TestUtils {
     public static void clearTestEmergencyPhoneAccountPackageFilter(
             Instrumentation instr) throws Exception {
         executeShellCommand(instr, COMMAND_SET_TEST_EMERGENCY_PHONE_ACCOUNT_PACKAGE_NAME_FILTER);
+    }
+
+    public static void enableCompatCommand(Instrumentation instr,
+            String commandName) throws Exception {
+        String cmd = COMMAND_AM_COMPAT + "enable  --no-kill " + commandName + PACKAGE;
+        executeShellCommand(instr, cmd);
+    }
+
+    public static void disableCompatCommand(Instrumentation instr,
+            String commandName) throws Exception {
+        String cmd = COMMAND_AM_COMPAT + "disable  --no-kill " + commandName + PACKAGE;
+        executeShellCommand(instr, cmd);
+    }
+
+    public static void resetCompatCommand(Instrumentation instr,
+            String commandName) throws Exception {
+        String cmd = COMMAND_AM_COMPAT + "reset  --no-kill " + commandName + PACKAGE;
+        executeShellCommand(instr, cmd);
     }
 
     /**
