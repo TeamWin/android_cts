@@ -137,6 +137,11 @@ public class LegacyStorageHostTest extends BaseHostTestCase {
     }
 
     @Test
+    public void testInsertHiddenFile() throws Exception {
+        runDeviceTest("testInsertHiddenFile");
+    }
+
+    @Test
     public void testCanRename_hasRW() throws Exception {
         runDeviceTest("testCanRename_hasRW");
     }
