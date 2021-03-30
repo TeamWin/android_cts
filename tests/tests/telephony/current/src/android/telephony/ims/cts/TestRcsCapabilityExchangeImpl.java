@@ -24,7 +24,6 @@ import android.util.Log;
 
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executor;
 
 /**
  * A implementation class of RcsCapabilityExchangeImplBase for the TestRcsFeature.
@@ -63,10 +62,8 @@ public class TestRcsCapabilityExchangeImpl extends RcsCapabilityExchangeImplBase
 
     /**
      * Create a new RcsCapabilityExchangeImplBase instance.
-     * @param executor The executor that remote calls from the framework will be called on.
      */
-    public TestRcsCapabilityExchangeImpl(Executor executor, DeviceCapPublishListener listener) {
-        super(executor);
+    public TestRcsCapabilityExchangeImpl(DeviceCapPublishListener listener) {
         mPublishListener = listener;
     }
 
