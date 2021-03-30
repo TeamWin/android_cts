@@ -370,6 +370,7 @@ public class TelephonyManagerTest {
     }
 
     private void saveAllowedNetworkTypesForAllReasons() {
+        if (!hasCellular()) return;
         mIsAllowedNetworkTypeChanged = false;
         if (mAllowedNetworkTypesList == null) {
             mAllowedNetworkTypesList = new HashMap<>();
@@ -1408,6 +1409,10 @@ public class TelephonyManagerTest {
 
     @Test
     public void testGetPhoneCapabilityAndVerify() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG,"skipping test that requires Telephony");
+            return;
+        }
         boolean is5gStandalone = getContext().getResources().getBoolean(
                 com.android.internal.R.bool.config_telephony5gStandalone);
         boolean is5gNonStandalone = getContext().getResources().getBoolean(
