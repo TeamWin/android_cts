@@ -82,18 +82,24 @@ public class TestRcsFeature extends RcsFeature {
 
     public RcsCapabilityExchangeImplBase createCapabilityExchangeImpl(Executor executor,
             CapabilityExchangeEventListener listener) {
+        return createCapabilityExchangeImpl(listener);
+    }
+
+    @Override
+    public RcsCapabilityExchangeImplBase createCapabilityExchangeImpl(
+            CapabilityExchangeEventListener listener) {
         if (ImsUtils.VDBG) {
             Log.d(TAG, "TestRcsFeature.createCapabilityExchangeImpl called");
         }
         mCapEventListener = listener;
-        mCapExchangeImpl = new TestRcsCapabilityExchangeImpl(executor, mDeviceCapPublishListener);
+        mCapExchangeImpl = new TestRcsCapabilityExchangeImpl(mDeviceCapPublishListener);
         mRcsCapabilitySetListener.onSet();
         return mCapExchangeImpl;
     }
 
-    public void removeCapabilityExchangeImpl(RcsCapabilityExchangeImplBase capExchangeImpl) {
+    public void destroyCapabilityExchangeImpl(RcsCapabilityExchangeImplBase capExchangeImpl) {
         if (ImsUtils.VDBG) {
-            Log.d(TAG, "TestRcsFeature.removeCapabilityExchangeImpl called");
+            Log.d(TAG, "TestRcsFeature.destroyCapabilityExchangeImpl called");
         }
         mRcsCapabilitySetListener.onSet();
     }
