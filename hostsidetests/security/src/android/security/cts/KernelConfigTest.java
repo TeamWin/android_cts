@@ -16,25 +16,30 @@
 
 package android.security.cts;
 
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-import com.android.tradefed.testtype.IBuildReceiver;
-import com.android.tradefed.testtype.IDeviceTest;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CpuFeatures;
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.lang.String;
-import java.util.stream.Collectors;
-import java.util.Set;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -42,7 +47,8 @@ import java.util.zip.GZIPInputStream;
  *
  * These tests analyze /proc/config.gz to verify that certain kernel config options are set.
  */
-public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class KernelConfigTest extends BaseHostJUnit4Test {
 
     private static final Map<ITestDevice, HashSet<String>> cachedConfigGzSet = new HashMap<>(1);
 
@@ -51,26 +57,12 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
     private ITestDevice mDevice;
     private IBuildInfo mBuild;
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setBuild(IBuildInfo build) {
-        mBuild = build;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void setDevice(ITestDevice device) {
-        super.setDevice(device);
-        mDevice = device;
-    }
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        // Assumes every test in this file asserts a requirement of CDD section 9.
+        assumeSecurityModelCompat();
+        mDevice = getDevice();
+        mBuild = getBuild();
         configSet = getDeviceConfig(mDevice, cachedConfigGzSet);
     }
 
@@ -110,6 +102,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigStackProtectorStrong() throws Exception {
         assertTrue("Linux kernel must have Stack Protector enabled: " +
                 "CONFIG_STACKPROTECTOR_STRONG=y or CONFIG_CC_STACKPROTECTOR_STRONG=y",
@@ -124,6 +117,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigROData() throws Exception {
         if (configSet.contains("CONFIG_UH_RKP=y"))
             return;
@@ -148,6 +142,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigHardenedUsercopy() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
@@ -163,6 +158,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigPAN() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
             return;
@@ -291,6 +287,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigHardwareMitigations() throws Exception {
         String mitigations[];
 
@@ -319,6 +316,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * @throws Exception
      */
     @CddTest(requirement="9.7")
+    @Test
     public void testConfigDisableUsermodehelper() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 30) {
             return;
@@ -374,6 +372,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      * Test that the kernel enables fs-verity and its built-in signature support.
      */
     @CddTest(requirement="9.10")
+    @Test
     public void testConfigFsVerity() throws Exception {
         if (PropertyUtil.getFirstApiLevel(mDevice) < 30 &&
                 PropertyUtil.getPropertyInt(mDevice, "ro.apk_verity.mode") != 2) {
@@ -384,5 +383,10 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
         assertTrue("Linux kernel must have fs-verity's builtin signature enabled: "
                 + "CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y",
                 configSet.contains("CONFIG_FS_VERITY_BUILTIN_SIGNATURES=y"));
+    }
+
+    private void assumeSecurityModelCompat() throws Exception {
+        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
     }
 }

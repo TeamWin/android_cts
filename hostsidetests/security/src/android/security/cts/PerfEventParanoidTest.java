@@ -15,16 +15,25 @@
  */
 package android.security.cts;
 
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Tests permission/security controls of the perf_event_open syscall.
  */
-public class PerfEventParanoidTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class PerfEventParanoidTest extends BaseHostJUnit4Test {
 
     // A reference to the device under test.
     private ITestDevice mDevice;
@@ -34,14 +43,15 @@ public class PerfEventParanoidTest extends DeviceTestCase {
 
     private static final int ANDROID_R_API_LEVEL = 30;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mDevice = getDevice();
     }
 
     @CddTest(requirement="9.7")
+    @Test
     public void testPerfEventRestricted() throws DeviceNotAvailableException {
+        assumeSecurityModelCompat();
         // Property set to "1" if init detected that the kernel has the perf_event_open SELinux
         // hooks, otherwise left unset.
         long lsmHookPropValue = mDevice.getIntProperty(PERF_EVENT_LSM_SYSPROP, 0);
@@ -73,5 +83,10 @@ public class PerfEventParanoidTest extends DeviceTestCase {
                         + ", paranoid=" + paranoidOut);
             }
         }
+    }
+
+    private void assumeSecurityModelCompat() throws DeviceNotAvailableException {
+        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                getDevice().hasFeature("feature:android.hardware.security.model.compatible"));
     }
 }
