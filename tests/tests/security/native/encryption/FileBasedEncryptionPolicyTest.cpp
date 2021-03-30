@@ -26,6 +26,8 @@
 #include <cutils/properties.h>
 #include <gtest/gtest.h>
 
+#include "utils.h"
+
 // Non-upstream encryption modes that are used on some devices.
 #define FSCRYPT_MODE_AES_256_HEH 126
 #define FSCRYPT_MODE_PRIVATE 127
@@ -199,6 +201,11 @@ static void validateEncryptionFlags(int flags) {
 // fstab has the correct fileencryption= option for the userdata partition.  See
 // https://source.android.com/security/encryption/file-based.html
 TEST(FileBasedEncryptionPolicyTest, allowedPolicy) {
+    if(!deviceSupportsFeature("android.hardware.security.model.compatible")) {
+        GTEST_SKIP()
+            << "Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.";
+        return;
+    }
     int first_api_level = getFirstApiLevel();
     struct fscrypt_get_policy_ex_arg arg;
     int res;
