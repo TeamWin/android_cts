@@ -247,15 +247,10 @@
     <!-- Strings for BiometricTest -->
     <string name="biometric_test">Biometric Tests</string>
 
-    <string name="biometric_test_category_generic">0) Generic Tests</string>
     <string name="biometric_test_category_credential">1) Credential Tests</string>
     <string name="biometric_test_category_strong">2) Strong Biometric Tests</string>
     <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
     <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
-
-    <string name="biometric_test_sensor_configuration_label">0a: Sensor Configuration Test</string>
-    <string name="biometric_test_sensor_configuration_instructions">This test checks that the device configuration is valid</string>
-    <string name="biometric_test_sensor_configuration_button">Start test</string>
 
     <string name="biometric_test_credential_not_enrolled_label">1a: Credential Not Enrolled Tests</string>
     <string name="biometric_test_credential_not_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
