@@ -983,6 +983,31 @@ public class BiometricServiceTest extends BiometricTestBase {
         }
     }
 
+    @Test
+    public void testBiometricsRemovedWhenCredentialRemoved() throws Exception {
+        // Manually keep track of sessions and do not use autocloseable, since we do not want the
+        // test session to automatically cleanup and remove enrollments once we leave scope.
+        final List<BiometricTestSession> biometricSessions = new ArrayList<>();
+
+        try (CredentialSession session = new CredentialSession()) {
+            session.setCredential();
+            for (SensorProperties prop : mSensorProperties) {
+                BiometricTestSession biometricSession =
+                        mBiometricManager.createTestSession(prop.getSensorId());
+                biometricSessions.add(biometricSession);
+                enrollForSensor(biometricSession, prop.getSensorId());
+            }
+        }
+
+        // All biometrics should now be removed, since CredentialSession removes device credential
+        // after losing scope.
+        waitForAllUnenrolled();
+        // In case any additional cleanup needs to be done in the future, aside from un-enrollment
+        for (BiometricTestSession session : biometricSessions) {
+            session.close();
+        }
+    }
+
     @Override
     protected SensorStates getSensorStates() throws Exception {
         return getCurrentState().mSensorStates;
