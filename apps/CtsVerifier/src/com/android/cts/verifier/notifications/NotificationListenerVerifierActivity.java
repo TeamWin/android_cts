@@ -1865,6 +1865,15 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         }
 
         @Override
+        protected void setUp() {
+            // note: it's expected that the '0' type will be ignored since we've specified a
+            // type in the manifest
+            ArrayList<String> pkgs = new ArrayList<>();
+            pkgs.add("com.android.settings");
+            MockListener.getInstance().migrateNotificationFilter(0, pkgs);
+        }
+
+        @Override
         boolean autoStart() {
             return true;
         }
