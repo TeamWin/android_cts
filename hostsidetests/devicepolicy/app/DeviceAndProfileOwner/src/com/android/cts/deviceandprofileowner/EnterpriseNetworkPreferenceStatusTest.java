@@ -19,8 +19,8 @@ package com.android.cts.deviceandprofileowner;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class NetworkSlicingStatusTest extends BaseDeviceAdminTest {
-    private static final String TAG = "NetworkSlicingStatusTest";
+public class EnterpriseNetworkPreferenceStatusTest extends BaseDeviceAdminTest {
+    private static final String TAG = "EnterpriseNetworkPreferenceStatusTest";
 
     @Override
     public void setUp() throws Exception {
