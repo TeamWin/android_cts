@@ -29,35 +29,6 @@ import static org.junit.Assert.*;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class Poc17_05 extends SecurityTestCase {
 
-    /**
-     *  b/34277115
-     */
-    @Test
-    @SecurityTest(minPatchLevel = "2017-05")
-    public void testPocCVE_2017_0630() throws Exception {
-        if (containsDriver(getDevice(), "/sys/kernel/debug/tracing/printk_formats")) {
-            String printkFormats = AdbUtils.runCommandLine(
-                    "cat /sys/kernel/debug/tracing/printk_formats", getDevice());
-            String[] pointerStrings = printkFormats.split("\n");
-            assertNotKernelPointer(new Callable<String>() {
-                int index;
-                @Override
-                public String call() {
-                  for (; index < pointerStrings.length; index++) {
-                      String line = pointerStrings[index];
-                      String pattern = "0x";
-                      int startIndex = line.indexOf(pattern);
-                      if (startIndex == -1) {
-                          continue;
-                      }
-                      return line.substring(startIndex + pattern.length());
-                  }
-                  return null;
-                }
-            }, null);
-        }
-    }
-
     /*
      * CVE-2016-5862
      */
