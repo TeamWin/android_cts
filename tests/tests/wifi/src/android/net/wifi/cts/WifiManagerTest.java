@@ -2402,11 +2402,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             synchronized (mLock) {
                 onAvailableCalled = true;
                 this.network = network;
+            }
+        }
+
+        @Override
+        public void onCapabilitiesChanged(Network network,
+                NetworkCapabilities networkCapabilities) {
+            synchronized (mLock) {
                 this.networkCapabilities = networkCapabilities;
                 mLock.notify();
             }
