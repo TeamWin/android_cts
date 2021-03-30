@@ -961,8 +961,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             // Available doesn't mean it's the active network. We need to check that separately.
             checkActiveNetwork();
         }
