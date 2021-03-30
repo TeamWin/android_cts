@@ -37,11 +37,16 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
@@ -214,7 +219,49 @@ public class BiometricServiceTest extends BiometricTestBase {
         fail("Some sensors still have enrollments. State: " + getCurrentState());
     }
 
-    private void showBiometricPromptAndAuth(@NonNull BiometricTestSession session, int sensorId,
+    /**
+     * Shows a BiometricPrompt that specifies {@link Authenticators#DEVICE_CREDENTIAL}.
+     */
+    private void showCredentialOnlyBiometricPrompt(
+            @NonNull BiometricPrompt.AuthenticationCallback callback) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL)
+                .setAllowBackgroundAuthentication(true)
+                .build();
+
+        prompt.authenticate(new CancellationSignal(), executor, callback);
+    }
+
+    /**
+     * SHows a BiometricPrompt that sets
+     * {@link BiometricPrompt.Builder#setDeviceCredentialAllowed(boolean)} to true.
+     */
+    private void showDeviceCredentialAllowedBiometricPrompt(
+            @NonNull BiometricPrompt.AuthenticationCallback callback) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setDeviceCredentialAllowed(true)
+                .setAllowBackgroundAuthentication(true)
+                .build();
+
+        prompt.authenticate(new CancellationSignal(), executor, callback);
+    }
+
+    /**
+     * Shows the default BiometricPrompt (sensors meeting BIOMETRIC_WEAK) with a negative button,
+     * and fakes successful authentication via TestApis.
+     */
+    private void showDefaultBiometricPromptAndAuth(@NonNull BiometricTestSession session,
+            int sensorId,
             int userId) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
@@ -596,6 +643,39 @@ public class BiometricServiceTest extends BiometricTestBase {
         assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
     }
 
+    /**
+     * When device credential is not enrolled, check the behavior for
+     * 1) BiometricManager#canAuthenticate(DEVICE_CREDENTIAL)
+     * 2) BiometricPrompt#setAllowedAuthenticators(DEVICE_CREDENTIAL)
+     * 3) @deprecated BiometricPrompt#setDeviceCredentialAllowed(true)
+     */
+    @Test
+    public void testWhenCredentialNotEnrolled() throws Exception {
+        // First case above
+        final int result = mBiometricManager.canAuthenticate(Authenticators.DEVICE_CREDENTIAL);
+        assertEquals(BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED, result);
+
+        // Second case above
+        BiometricPrompt.AuthenticationCallback callback =
+                mock(BiometricPrompt.AuthenticationCallback.class);
+        showCredentialOnlyBiometricPrompt(callback);
+        mInstrumentation.waitForIdleSync();
+        waitForIdleService();
+        verify(callback).onAuthenticationError(
+                eq(BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL),
+                any());
+
+        // Third case above. Since the deprecated API is intended to allow credential in addition
+        // to biometrics, we should be receiving BIOMETRIC_ERROR_NO_BIOMETRICS.
+        callback = mock(BiometricPrompt.AuthenticationCallback.class);
+        showDeviceCredentialAllowedBiometricPrompt(callback);
+        mInstrumentation.waitForIdleSync();
+        waitForIdleService();
+        verify(callback).onAuthenticationError(
+                eq(BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS),
+                any());
+    }
+
     @Test
     public void testBiometricOrCredential_credentialButtonInvoked_biometricEnrolled()
             throws Exception {
@@ -906,7 +986,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         state = getCurrentStateAndClearSchedulerLog();
 
         // Request authentication with the specified sensorId that was passed in
-        showBiometricPromptAndAuth(session, sensorId, userId);
+        showDefaultBiometricPromptAndAuth(session, sensorId, userId);
 
         // Check that all eligible sensors have resetLockout in their scheduler history
         state = getCurrentState();
@@ -969,7 +1049,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         BiometricServiceState state = getCurrentStateAndClearSchedulerLog();
 
         // Request authentication with the specified sensorId that was passed in
-        showBiometricPromptAndAuth(session, sensorId, userId);
+        showDefaultBiometricPromptAndAuth(session, sensorId, userId);
 
         // Check that no other sensors have resetLockout in their queue
         for (SensorProperties prop : mSensorProperties) {
