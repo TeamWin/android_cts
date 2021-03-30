@@ -205,7 +205,8 @@ public class ChoreographerNativeTest {
                                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             });
             mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
-            initialMatchContentFrameRate = mDisplayManager.getRefreshRateSwitchingType();
+            initialMatchContentFrameRate = toSwitchingType(
+                    mDisplayManager.getMatchContentFrameRateUserPreference());
             mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
             nativeTestRefreshRateCallbacksAreSyncedWithDisplayManager();
         } finally {
@@ -236,6 +237,17 @@ public class ChoreographerNativeTest {
         });
     }
 
-
+    private int toSwitchingType(int matchContentFrameRateUserPreference) {
+        switch (matchContentFrameRateUserPreference) {
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_NEVER:
+                return DisplayManager.SWITCHING_TYPE_NONE;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_SEAMLESSS_ONLY:
+                return DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_ALWAYS:
+                return DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS;
+            default:
+                return -1;
+        }
+    }
 
 }
