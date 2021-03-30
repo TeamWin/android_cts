@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,19 @@
  * limitations under the License.
  */
 
-package android.permission.cts.appthatrequestsmiccamera;
+package android.cts.tagging.sdk30;
 
 import android.app.Activity;
+import android.cts.tagging.Utils;
+import android.os.Bundle;
+import android.util.Log;
 
-public class TestActivity extends Activity {
+public class HeapZeroInitMemtagAsyncActivity extends Activity {
+    @Override
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        boolean result = Utils.heapIsZeroInitialized();
+        setResult(RESULT_FIRST_USER + (result ? 1 : 0));
+        finish();
+    }
 }

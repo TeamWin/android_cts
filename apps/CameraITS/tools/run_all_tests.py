@@ -394,7 +394,8 @@ def main():
     tablet_id = None
   # Prepend 'scene' if not specified at cmd line
   for i, s in enumerate(scenes):
-    if not s.startswith('scene') and not s.startswith('sensor_fusion'):
+    if (not s.startswith('scene') and
+        not s.startswith(('sensor_fusion', '<scene-name>'))):
       scenes[i] = f'scene{s}'
 
   # Determine if manual run
