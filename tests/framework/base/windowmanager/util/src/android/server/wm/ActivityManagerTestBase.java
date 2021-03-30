@@ -174,6 +174,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -1960,7 +1961,9 @@ public abstract class ActivityManagerTestBase {
 
     /** Assert the activity is either relaunched or received configuration changed. */
     static void assertActivityLifecycle(ComponentName activityName, boolean relaunched) {
-        Condition.<String>waitForResult(activityName + " relaunched", condition -> condition
+        Condition.<String>waitForResult(
+                activityName + (relaunched ? " relaunched" : " config changed"),
+                condition -> condition
                 .setResultSupplier(() -> checkActivityIsRelaunchedOrConfigurationChanged(
                         getActivityName(activityName),
                         TestJournalContainer.get(activityName).callbacks, relaunched))
@@ -2020,13 +2023,14 @@ public abstract class ActivityManagerTestBase {
     private static final Pattern sUiModeLockedPattern =
             Pattern.compile("mUiModeLocked=(true|false)");
 
-    @Nullable
+    @NonNull
     SizeInfo getLastReportedSizesForActivity(ComponentName activityName) {
         return Condition.waitForResult("sizes of " + activityName + " to be reported",
                 condition -> condition.setResultSupplier(() -> {
                     final ConfigInfo info = TestJournalContainer.get(activityName).lastConfigInfo;
                     return info != null ? info.sizeInfo : null;
-                }).setResultValidator(sizeInfo -> sizeInfo != null));
+                }).setResultValidator(Objects::nonNull).setOnFailure(unusedResult ->
+                        fail("No config reported from " + activityName)));
     }
 
     /** Check if a device has display cutout. */
