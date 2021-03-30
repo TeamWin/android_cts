@@ -48,8 +48,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -59,13 +57,6 @@ import java.util.Set;
 public class ASurfaceControlTest {
     static {
         System.loadLibrary("ctsview_jni");
-    }
-
-    @Parameter(0) public boolean mTestSetGeometry;
-
-    @Parameters
-    public static Object[] data() {
-        return new Boolean[] {false, true};
     }
 
     private static final String TAG = ASurfaceControlTest.class.getSimpleName();
@@ -218,16 +209,8 @@ public class ASurfaceControlTest {
         public void setGeometry(long surfaceControl, long surfaceTransaction, int srcLeft,
                 int srcTop, int srcRight, int srcBottom, int dstLeft, int dstTop, int dstRight,
                 int dstBottom, int transform) {
-            if (mTestSetGeometry) {
-                nSurfaceTransaction_setGeometry(surfaceControl, surfaceTransaction, srcLeft, srcTop,
-                        srcRight, srcBottom, dstLeft, dstTop, dstRight, dstBottom, transform);
-            } else {
-                nSurfaceTransaction_setPosition(
-                        surfaceControl, surfaceTransaction, dstLeft, dstTop, dstRight, dstBottom);
-                nSurfaceTransaction_setTransform(surfaceControl, surfaceTransaction, transform);
-                nSurfaceTransaction_setSourceRect(
-                        surfaceControl, surfaceTransaction, srcLeft, srcTop, srcRight, srcBottom);
-            }
+            nSurfaceTransaction_setGeometry(surfaceControl, surfaceTransaction, srcLeft, srcTop,
+                    srcRight, srcBottom, dstLeft, dstTop, dstRight, dstBottom, transform);
         }
 
         public void setGeometry(long surfaceControl, int srcLeft, int srcTop, int srcRight,
