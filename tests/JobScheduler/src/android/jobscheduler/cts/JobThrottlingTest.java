@@ -217,6 +217,10 @@ public class JobThrottlingTest {
         assertTrue("Job did not stop on entering doze",
                 mTestAppInterface.awaitJobStop(DEFAULT_WAIT_TIMEOUT));
         Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        // The adb command will force idle even with the screen on, so we need to turn Doze off
+        // explicitly.
+        toggleDozeState(false);
+        // Turn the screen on to ensure the test app ends up in TOP.
         setScreenState(true);
         mTestAppInterface.startAndKeepTestActivity();
         assertTrue("Job for foreground app did not start immediately when device exited doze",

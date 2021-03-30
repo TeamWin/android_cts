@@ -18,6 +18,7 @@ package android.telephony.cts;
 
 import android.app.Instrumentation;
 import android.os.ParcelFileDescriptor;
+import android.telecom.TelecomManager;
 import android.telephony.TelephonyManager;
 
 import java.io.BufferedReader;
@@ -29,6 +30,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.BooleanSupplier;
 
 public class TelephonyUtils {
+
+    /**
+     * See {@link TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION}
+     */
+    public static final String ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING =
+            "ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION";
+
     private static final String COMMAND_ADD_TEST_EMERGENCY_NUMBER =
             "cmd phone emergency-number-test-mode -a ";
 
@@ -39,6 +47,11 @@ public class TelephonyUtils {
 
     private static final String COMMAND_FLUSH_TELEPHONY_METRICS =
             "/system/bin/dumpsys activity service TelephonyDebugService --metricsproto";
+
+    private static final String COMMAND_AM_COMPAT = "am compat ";
+
+    public static final String CTS_APP_PACKAGE = "android.telephony.cts";
+    public static final String CTS_APP_PACKAGE2 = "android.telephony2.cts";
 
     private static final char[] HEX_DIGITS = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
             'A', 'B', 'C', 'D', 'E', 'F' };
@@ -59,6 +72,24 @@ public class TelephonyUtils {
 
     public static void flushTelephonyMetrics(Instrumentation instr) throws Exception {
         executeShellCommand(instr, COMMAND_FLUSH_TELEPHONY_METRICS);
+    }
+
+    public static void enableCompatCommand(Instrumentation instr, String pkgName,
+            String commandName) throws Exception {
+        executeShellCommand(instr, COMMAND_AM_COMPAT + "enable  --no-kill " + commandName + " "
+                + pkgName);
+    }
+
+    public static void disableCompatCommand(Instrumentation instr, String pkgName,
+            String commandName) throws Exception {
+        executeShellCommand(instr, COMMAND_AM_COMPAT + "disable  --no-kill " + commandName + " "
+                + pkgName);
+    }
+
+    public static void resetCompatCommand(Instrumentation instr, String pkgName,
+            String commandName) throws Exception {
+        executeShellCommand(instr, COMMAND_AM_COMPAT + "reset  --no-kill " + commandName + " "
+                + pkgName);
     }
 
     public static boolean isSkt(TelephonyManager telephonyManager) {

@@ -18,14 +18,18 @@ package android.telephony2.cts;
 
 import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyCallback;
 import android.telephony.TelephonyManager;
+import android.telephony.cts.TelephonyUtils;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
@@ -75,7 +79,9 @@ public class CallStateListenerPermissionTest {
         assertNotNull(telephonyManager);
 
         MyTelephonyCallback callback = new MyTelephonyCallback();
-        telephonyManager.registerTelephonyCallback(mSimpleExecutor, callback);
+        runWithShellPermissionIdentity(
+                () -> telephonyManager.registerTelephonyCallback(mSimpleExecutor, callback));
+
 
         try {
             mCallStateReceivedLatch.await(10000, TimeUnit.MILLISECONDS);
@@ -84,5 +90,63 @@ public class CallStateListenerPermissionTest {
         }
 
         assertTrue(mReceivedCallback);
+    }
+
+    /**
+     * Test Call State listener requires READ_PHONE_STATE for API 31+.
+     */
+    @Test
+    public void testCallStatePermission() throws Exception {
+        if (!mContext.getPackageManager().hasSystemFeature(FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        TelephonyManager telephonyManager = mContext.getSystemService(TelephonyManager.class);
+        assertNotNull(telephonyManager);
+        MyTelephonyCallback callback = new MyTelephonyCallback();
+
+        try {
+            TelephonyUtils.enableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE2,
+                    TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+            try {
+                telephonyManager.registerTelephonyCallback(mSimpleExecutor, callback);
+                fail("TelephonyCallback.CallStateListener must require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is enabled.");
+            } catch (SecurityException e) {
+                // Expected
+            }
+            try {
+                telephonyManager.listen(new PhoneStateListener(Runnable::run),
+                        PhoneStateListener.LISTEN_CALL_STATE);
+                fail("PhoneStateListener#onCallStateChanged must require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is enabled.");
+            } catch (SecurityException e) {
+                // Expected
+            }
+
+            TelephonyUtils.disableCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE2,
+                    TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+            try {
+                telephonyManager.registerTelephonyCallback(mSimpleExecutor, callback);
+            } catch (SecurityException e) {
+                fail("TelephonyCallback.CallStateListener must not require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
+                        + "disabled.");
+            }
+            try {
+                telephonyManager.listen(new PhoneStateListener(Runnable::run),
+                        PhoneStateListener.LISTEN_CALL_STATE);
+            } catch (SecurityException e) {
+                fail("PhoneStateListener#onCallStateChanged must not require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
+                        + "disabled.");
+            }
+        } finally {
+            TelephonyUtils.resetCompatCommand(InstrumentationRegistry.getInstrumentation(),
+                    TelephonyUtils.CTS_APP_PACKAGE2,
+                    TelephonyUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+        }
     }
 }
