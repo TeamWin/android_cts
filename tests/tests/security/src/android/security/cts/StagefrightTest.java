@@ -1162,6 +1162,14 @@ public class StagefrightTest {
      ***********************************************************/
 
     @Test
+    @SecurityTest(minPatchLevel = "2019-07")
+    public void testStagefright_cve_2019_2107() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.cve_2019_2107_framelen);
+        doStagefrightTestRawBlob(R.raw.cve_2019_2107_hevc, "video/hevc", 1920,
+                1080, frameSizes);
+    }
+
+    @Test
     @SecurityTest(minPatchLevel = "2019-04")
     public void testStagefright_cve_2019_2245() throws Exception {
         doStagefrightTest(R.raw.cve_2019_2245);
