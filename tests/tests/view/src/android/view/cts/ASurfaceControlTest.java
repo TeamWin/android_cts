@@ -20,9 +20,6 @@ import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
 import static org.junit.Assert.assertTrue;
 
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
-import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -30,9 +27,6 @@ import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.animation.LinearInterpolator;
-import android.view.cts.surfacevalidator.AnimationFactory;
 import android.view.cts.surfacevalidator.CapturedActivity;
 import android.view.cts.surfacevalidator.MultiFramePixelChecker;
 import android.view.cts.surfacevalidator.PixelChecker;
@@ -87,8 +81,6 @@ public class ASurfaceControlTest {
 
     private static final int DEFAULT_LAYOUT_WIDTH = 100;
     private static final int DEFAULT_LAYOUT_HEIGHT = 100;
-    private static final int DEFAULT_BUFFER_WIDTH = 640;
-    private static final int DEFAULT_BUFFER_HEIGHT = 480;
 
     @Rule
     public ActivityTestRule<CapturedActivity> mActivityRule =
@@ -382,35 +374,15 @@ public class ASurfaceControlTest {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // AnimationFactories
-    ///////////////////////////////////////////////////////////////////////////
-
-    private static ValueAnimator makeInfinite(ValueAnimator a) {
-        a.setRepeatMode(ObjectAnimator.REVERSE);
-        a.setRepeatCount(ObjectAnimator.INFINITE);
-        a.setDuration(200);
-        a.setInterpolator(new LinearInterpolator());
-        return a;
-    }
-
-    private static AnimationFactory sTranslateAnimationFactory = view -> {
-        PropertyValuesHolder pvhX = PropertyValuesHolder.ofFloat(View.TRANSLATION_X, 10f, 30f);
-        PropertyValuesHolder pvhY = PropertyValuesHolder.ofFloat(View.TRANSLATION_Y, 10f, 30f);
-        return makeInfinite(ObjectAnimator.ofPropertyValuesHolder(view, pvhX, pvhY));
-    };
-
-    ///////////////////////////////////////////////////////////////////////////
     // Tests
     ///////////////////////////////////////////////////////////////////////////
 
     private void verifyTest(SurfaceHolder.Callback callback, PixelChecker pixelChecker)
                 throws Throwable {
-        mActivity.verifyTest(new SurfaceControlTestCase(callback, sTranslateAnimationFactory,
-                                                 pixelChecker,
-                                                 DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                                                 DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT,
-                                                 false /* checkSurfaceViewBoundsOnly */),
-                mName);
+        mActivity.verifyTest(
+                new SurfaceControlTestCase(callback, null, pixelChecker, DEFAULT_LAYOUT_WIDTH,
+                        DEFAULT_LAYOUT_HEIGHT, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                        false /* checkSurfaceViewBoundsOnly */), mName);
     }
 
     @Test
@@ -674,7 +646,6 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, 0, 0, 640, 480, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
@@ -695,7 +666,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, 64, 48, 320, 240, 0);
+                        setGeometry(surfaceControl, 0, 0, 100, 100, 10, 10, 50, 50, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //1600
@@ -717,7 +688,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
-                        setGeometry(childSurfaceControl, 0, 0, 100, 100, 64, 48, 320, 240, 0);
+                        setGeometry(childSurfaceControl, 0, 0, 100, 100, 10, 10, 50, 50, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //1600
@@ -738,7 +709,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, -100, -100, 740, 580, 0);
+                        setGeometry(surfaceControl, 0, 0, 100, 100, -100, -100, 200, 200, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
@@ -760,7 +731,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
-                        setGeometry(childSurfaceControl, 0, 0, 100, 100, -100, -100, 740, 580, 0);
+                        setGeometry(childSurfaceControl, 0, 0, 100, 100, -100, -100, 200, 200, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
@@ -781,7 +752,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, -32, -24, 320, 240, 0);
+                        setGeometry(surfaceControl, 0, 0, 100, 100, -32, -24, 50, 50, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //2500
@@ -802,7 +773,7 @@ public class ASurfaceControlTest {
 
                         setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.RED);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, 320, 240, 704, 504, 0);
+                        setGeometry(surfaceControl, 0, 0, 100, 100, 50, 50, 110, 105, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //2500
@@ -825,8 +796,8 @@ public class ASurfaceControlTest {
                                 PixelColor.RED);
                         setSolidBuffer(surfaceControl2, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                                 PixelColor.BLUE);
-                        setGeometry(surfaceControl1, 0, 0, 100, 100, 64, 48, 192, 192, 0);
-                        setGeometry(surfaceControl2, 0, 0, 100, 100, 448, 96, 576, 240, 0);
+                        setGeometry(surfaceControl1, 0, 0, 100, 100, 10, 10, 30, 40, 0);
+                        setGeometry(surfaceControl2, 0, 0, 100, 100, 70, 20, 90, 50, 0);
                     }
                 };
         verifyTest(callback,
@@ -855,7 +826,6 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, 0, 0, 100, 100, 0, 0, 640, 480, 0);
                     }
                 };
         verifyTest(callback,
@@ -898,7 +868,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, 10, 10, 90, 90, 0, 0, 640, 480, 0);
+                        setGeometry(surfaceControl, 10, 10, 90, 90, 0, 0, 100, 100, 0);
                     }
                 };
         verifyTest(callback,
@@ -942,7 +912,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 640, 480, 0);
+                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100, 0);
                     }
                 },
                 new PixelChecker(PixelColor.MAGENTA) { //5000
@@ -963,7 +933,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, -50, -50, 150, 150, 0, 0, 640, 480, 0);
+                        setGeometry(surfaceControl, -50, -50, 150, 150, 0, 0, 100, 100, 0);
                     }
                 };
         verifyTest(callback,
@@ -1007,7 +977,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, -50, -50, 50, 50, 0, 0, 640, 480, 0);
+                        setGeometry(surfaceControl, -50, -50, 50, 50, 0, 0, 100, 100, 0);
                     }
                 },
                 new PixelChecker(PixelColor.RED) { //10000
@@ -1029,7 +999,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 640, 480,
+                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100,
                                     /*NATIVE_WINDOW_TRANSFORM_FLIP_H*/ 1);
                     }
                 },
@@ -1052,7 +1022,7 @@ public class ASurfaceControlTest {
                         setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
                                 PixelColor.MAGENTA, PixelColor.GREEN);
-                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 640, 480,
+                        setGeometry(surfaceControl, 60, 10, 90, 90, 0, 0, 100, 100,
                                     /*NATIVE_WINDOW_TRANSFORM_ROT_180*/ 3);
                     }
                 },
@@ -1426,8 +1396,8 @@ public class ASurfaceControlTest {
                         long parentSurfaceControl2 = createFromWindow(holder.getSurface());
                         long childSurfaceControl = create(parentSurfaceControl1);
 
-                        setGeometry(parentSurfaceControl1, 0, 0, 100, 100, 0, 0, 160, 480, 0);
-                        setGeometry(parentSurfaceControl2, 0, 0, 100, 100, 160, 0, 640, 480, 0);
+                        setGeometry(parentSurfaceControl1, 0, 0, 100, 100, 0, 0, 25, 100, 0);
+                        setGeometry(parentSurfaceControl2, 0, 0, 100, 100, 25, 0, 100, 100, 0);
 
                         setSolidBuffer(childSurfaceControl, DEFAULT_LAYOUT_WIDTH,
                                 DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
@@ -1701,7 +1671,7 @@ public class ASurfaceControlTest {
         mActivity.verifyTest(new SurfaceControlTestCase(callback, null /* animation factory */,
                         pixelChecker,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT,
+                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                         true /* checkSurfaceViewBoundsOnly */),
                 mName);
     }
@@ -1734,7 +1704,7 @@ public class ASurfaceControlTest {
                         null /* animation factory */,
                         pixelChecker,
                         DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
-                        DEFAULT_BUFFER_WIDTH, DEFAULT_BUFFER_HEIGHT,
+                        DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
                         true /* checkSurfaceViewBoundsOnly */));
 
         assertTrue(result.passFrames > 0);
