@@ -35,6 +35,7 @@ import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.wm.app.Components;
 import android.view.Surface;
+import android.content.res.Resources;
 
 import androidx.test.filters.FlakyTest;
 
@@ -64,7 +65,9 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     }
 
     @Before
-    public void setDreamEnabled() {
+    public void setup() {
+        assumeTrue("Skipping test: no dream support", supportsDream());
+
         mDefaultDreamServiceEnabled =
                 Settings.Secure.getInt(mContext.getContentResolver(),
                                 "screensaver_enabled", 1) != 0;
@@ -76,7 +79,7 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
     }
 
     @After
-    public void resetDreamEnabled()  {
+    public void reset()  {
         if (!mDefaultDreamServiceEnabled) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 Settings.Secure.putInt(mContext.getContentResolver(), "screensaver_enabled", 0);
@@ -111,6 +114,11 @@ public class DreamManagerServiceTests extends ActivityManagerTestBase {
         return SystemUtil.runWithShellPermissionIdentity(() -> {
             return dreamer.isDreaming();
         });
+    }
+
+    private boolean supportsDream() {
+        return mContext.getResources().getBoolean(
+                Resources.getSystem().getIdentifier("config_dreamsSupported", "bool", "android"));
     }
 
     private void assertDreamActivityGone() {
