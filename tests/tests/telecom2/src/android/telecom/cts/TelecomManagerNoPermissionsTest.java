@@ -19,7 +19,6 @@ package android.telecom.cts;
 import android.content.Context;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
-import android.text.TextUtils;
 
 /**
  * Verifies correct operation of TelecomManager APIs when the correct permissions have not been
@@ -36,6 +35,7 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
         if (!TestUtils.shouldTestTelecom(mContext)) {
             return;
         }
+        TestUtils.PACKAGE = mContext.getPackageName();
         mTelecomManager = (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
     }
 
@@ -52,6 +52,41 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
             mTelecomManager.endCall();
             fail("Shouldn't be able to call endCall without permission grant.");
         } catch (SecurityException se) {
+        }
+    }
+
+    public void testCallStateCompatPermissions() throws Exception {
+        if (!TestUtils.shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        try {
+            TelecomManager tm = mContext.getSystemService(TelecomManager.class);
+            assertNotNull(tm);
+
+            TestUtils.enableCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+            try {
+
+                tm.getCallState();
+                fail("TelecomManager#getCallState must require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is enabled");
+            } catch (SecurityException e) {
+                // expected
+            }
+
+            TestUtils.disableCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+            try {
+                tm.getCallState();
+            } catch (SecurityException e) {
+                fail("TelecomManager#getCallState must not require READ_PHONE_STATE when "
+                        + "TelecomManager#ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION is "
+                        + "disabled.");
+            }
+        } finally {
+            TestUtils.resetCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
         }
     }
 }

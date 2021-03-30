@@ -17,6 +17,7 @@
 package android.scopedstorage.cts.device;
 
 import static android.app.AppOpsManager.permissionToOp;
+import static android.database.Cursor.FIELD_TYPE_BLOB;
 import static android.os.ParcelFileDescriptor.MODE_CREATE;
 import static android.os.ParcelFileDescriptor.MODE_READ_WRITE;
 import static android.os.SystemProperties.getBoolean;
@@ -111,12 +112,15 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import android.Manifest;
 import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -2711,6 +2715,204 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         } finally {
             files.forEach(file -> file.delete());
         }
+    }
+
+    @Test
+    public void testQueryOnRedactionUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri uri = MediaStore.scanFile(getContentResolver(), img);
+        final Uri redactedUri = MediaStore.getRedactedUri(getContentResolver(), uri);
+        final Cursor uriCursor = getContentResolver().query(uri, null, null, null);
+        final String redactedUriDir = ".transforms/synthetic/redacted";
+        final String redactedUriDirAbsolutePath =
+                Environment.getExternalStorageDirectory() + "/" + redactedUriDir;
+        try {
+            assertNotNull(uriCursor);
+            assertThat(uriCursor.moveToFirst()).isTrue();
+
+            final Cursor redactedUriCursor = getContentResolver().query(redactedUri, null, null,
+                    null);
+            assertNotNull(redactedUriCursor);
+            assertThat(redactedUriCursor.moveToFirst()).isTrue();
+
+            assertEquals(redactedUriCursor.getColumnCount(), uriCursor.getColumnCount());
+
+            final String data = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DATA);
+            final String redactedUriId = redactedUri.getLastPathSegment();
+            assertEquals(redactedUriDirAbsolutePath + "/" + redactedUriId, data);
+
+            final String name = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DISPLAY_NAME);
+            assertEquals(redactedUriId, name);
+
+            final String relativePath = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.RELATIVE_PATH);
+            assertEquals(redactedUriDir, relativePath);
+
+            final String bucketDisplayName = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.BUCKET_DISPLAY_NAME);
+            assertEquals(redactedUriDir, bucketDisplayName);
+
+            final String docId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.DOCUMENT_ID);
+            assertNull(docId);
+
+            final String insId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.INSTANCE_ID);
+            assertNull(insId);
+
+            final String bucId = getStringFromCursor(redactedUriCursor,
+                    MediaStore.MediaColumns.BUCKET_ID);
+            assertNull(bucId);
+
+            final Collection<String> updatedCols = Arrays.asList(MediaStore.MediaColumns._ID,
+                    MediaStore.MediaColumns.DISPLAY_NAME,
+                    MediaStore.MediaColumns.RELATIVE_PATH,
+                    MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+                    MediaStore.MediaColumns.DATA,
+                    MediaStore.MediaColumns.DOCUMENT_ID,
+                    MediaStore.MediaColumns.INSTANCE_ID,
+                    MediaStore.MediaColumns.BUCKET_ID);
+            for (String colName : uriCursor.getColumnNames()) {
+                if (!updatedCols.contains(colName)) {
+                    if (uriCursor.getType(uriCursor.getColumnIndex(colName)) == FIELD_TYPE_BLOB) {
+                        assertThat(
+                                Arrays.equals(uriCursor.getBlob(uriCursor.getColumnIndex(colName)),
+                                        redactedUriCursor.getBlob(redactedUriCursor.getColumnIndex(
+                                                colName)))).isTrue();
+                    } else {
+                        assertEquals(getStringFromCursor(uriCursor, colName),
+                                getStringFromCursor(redactedUriCursor, colName));
+                    }
+                }
+            }
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testGrantUriPermissionsForRedactedUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            getContext().grantUriPermission(APP_B_NO_PERMS.getPackageName(), redactedUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            assertThrows(SecurityException.class, () ->
+                    getContext().grantUriPermission(APP_B_NO_PERMS.getPackageName(), redactedUri,
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testDisallowedOperationsOnRedactedUri() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            ContentValues cv = new ContentValues();
+            cv.put(MediaStore.MediaColumns.DATE_ADDED, 1);
+            assertEquals(0, getContentResolver().update(redactedUri, new ContentValues(),
+                    new Bundle()));
+            assertEquals(0, getContentResolver().delete(redactedUri, new Bundle()));
+        } finally {
+            img.delete();
+        }
+    }
+
+
+    @Test
+    public void testOpenOnRedactionUri_file() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            assertUriIsUnredacted(img);
+
+            final Cursor redactedUriCursor = getRedactedCursor(redactedUri);
+            File file = new File(
+                    getStringFromCursor(redactedUriCursor, MediaStore.MediaColumns.DATA));
+            ExifInterface redactedExifInf = new ExifInterface(file);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_write() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            assertThrows(UnsupportedOperationException.class,
+                    () -> getContentResolver().openFileDescriptor(redactedUri,
+                            "w"));
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_inputstream() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            assertUriIsUnredacted(img);
+
+            InputStream is = getContentResolver().openInputStream(redactedUri);
+            ExifInterface redactedExifInf = new ExifInterface(is);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    @Test
+    public void testOpenOnRedactionUri_read() throws Exception {
+        final File img = stageImageFileWithMetadata(IMAGE_FILE_NAME);
+        final Uri redactedUri = getRedactedUri(img);
+        try {
+            assertUriIsUnredacted(img);
+
+            FileDescriptor fd = getContentResolver().openFileDescriptor(redactedUri,
+                    "r").getFileDescriptor();
+            ExifInterface redactedExifInf = new ExifInterface(fd);
+            assertUriIsRedacted(redactedExifInf);
+        } finally {
+            img.delete();
+        }
+    }
+
+    private Uri getRedactedUri(File file) {
+        final Uri uri = MediaStore.scanFile(getContentResolver(), file);
+        return MediaStore.getRedactedUri(getContentResolver(), uri);
+    }
+
+    private void assertUriIsUnredacted(File img) throws Exception {
+        final ExifInterface exifInterface = new ExifInterface(img);
+        assertNotEquals(exifInterface.getGpsDateTime(), -1);
+
+        float[] latLong = new float[]{0, 0};
+        exifInterface.getLatLong(latLong);
+        assertNotEquals(latLong[0], 0);
+        assertNotEquals(latLong[1], 0);
+    }
+
+    private void assertUriIsRedacted(ExifInterface redactedExifInf) {
+        assertEquals(redactedExifInf.getGpsDateTime(), -1);
+        float[] latLong = new float[]{0, 0};
+        redactedExifInf.getLatLong(latLong);
+        assertEquals(latLong[0], 0.0, 0.0);
+        assertEquals(latLong[1], 0.0, 0.0);
+    }
+
+    private Cursor getRedactedCursor(Uri redactedUri) {
+        Cursor redactedUriCursor = getContentResolver().query(redactedUri, null, null, null);
+        assertNotNull(redactedUriCursor);
+        assertThat(redactedUriCursor.moveToFirst()).isTrue();
+
+        return redactedUriCursor;
     }
 
     private String getStringFromCursor(Cursor c, String colName) {

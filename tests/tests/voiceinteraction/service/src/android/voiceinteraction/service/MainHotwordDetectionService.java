@@ -28,6 +28,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.function.IntConsumer;
+
 public class MainHotwordDetectionService extends HotwordDetectionService {
     static final String TAG = "MainHotwordDetectionService";
 
@@ -46,8 +48,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
     }
 
     @Override
-    public void onUpdateState(@Nullable PersistableBundle options,
-            @Nullable SharedMemory sharedMemory) {
+    public void onUpdateState(
+            @Nullable PersistableBundle options,
+            @Nullable SharedMemory sharedMemory,
+            long callbackTimeoutMillis,
+            @Nullable IntConsumer statusCallback) {
         Log.d(TAG, "onUpdateState");
 
         if (options != null) {
@@ -69,7 +74,11 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
                 sharedMemory.close();
             }
         }
+
         // Report success
         Log.d(TAG, "onUpdateState success");
+        if (statusCallback != null) {
+            statusCallback.accept(INITIALIZATION_STATUS_SUCCESS);
+        }
     }
 }

@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2019 The Android Open Source Project
+// Copyright (C) 2021 The Android Open Source Project
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,16 +18,24 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
-android_test_helper_app {
-    name: "CtsAppThatRequestsMicCamera",
-    defaults: ["cts_defaults"],
-    sdk_version: "current",
-    // Tag this module as a cts test artifact
+android_test {
+    name: "CtsPermission5TestCases",
+    sdk_version: "test_current",
+    srcs: [
+        "src/**/*.kt",
+    ],
+    static_libs: [
+        "compatibility-device-util-axt",
+        "truth-prebuilt",
+        "ctstestrunner-axt",
+    ],
+    data: [
+        ":CtsBlamedPermissionApp",
+        ":CtsBlamedPermissionApp2",
+    ],
     test_suites: [
         "cts",
         "general-tests",
         "mts",
     ],
-
-    srcs: ["src/**/*.java"],
 }

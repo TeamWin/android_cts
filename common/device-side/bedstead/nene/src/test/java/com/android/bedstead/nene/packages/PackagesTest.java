@@ -45,6 +45,8 @@ public class PackagesTest {
     private static final String TEST_APP_PACKAGE_NAME =
             "com.android.bedstead.nene.testapps.TestApp1";
     private static final File TEST_APP_APK_FILE = new File("/data/local/tmp/NeneTestApp1.apk");
+    private static final File NON_EXISTING_APK_FILE =
+            new File("/data/local/tmp/ThisApkDoesNotExist.apk");
     private static final byte[] TEST_APP_BYTES = loadBytes(TEST_APP_APK_FILE);
 
     private final TestApis mTestApis = new TestApis();
@@ -109,27 +111,31 @@ public class PackagesTest {
 
     @Test
     public void installedForUser_containsPackageInstalledForUser() {
-        mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
         try {
-            assertThat(mTestApis.packages().installedForUser(mUser)).contains(mTestAppReference);
+            assertThat(mTestApis.packages().installedForUser(mUser)).contains(packageReference);
         } finally {
-            mTestAppReference.uninstall(mUser);
+            packageReference.uninstall(mUser);
         }
     }
 
     @Test
     public void installedForUser_doesNotContainPackageNotInstalledForUser() {
-        UserReference otherUser = mTestApis.users().createUser().create();
-        mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
-        try {
+        try (UserReference otherUser = mTestApis.users().createUser().create()) {
             assertThat(mTestApis.packages().installedForUser(otherUser))
-                    .doesNotContain(mTestAppReference);
+                    .doesNotContain(packageReference);
         } finally {
-            mTestAppReference.uninstall(mUser);
-            otherUser.remove();
+            packageReference.uninstall(mUser);
         }
+    }
+
+    @Test
+    public void install_nonExistingPackage_throwsException() {
+        assertThrows(NeneException.class,
+                () -> mTestApis.packages().install(mUser, NON_EXISTING_APK_FILE));
     }
 
     @Test
@@ -158,35 +164,38 @@ public class PackagesTest {
 
     @Test
     public void install_instrumentedUser_isInstalled() {
-        mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_APK_FILE);
+        PackageReference packageReference =
+                mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_APK_FILE);
 
         try {
-            assertThat(mTestAppReference.resolve().installedOnUsers())
+            assertThat(packageReference.resolve().installedOnUsers())
                     .contains(mTestApis.users().instrumented());
         } finally {
-            mTestAppReference.uninstall(mTestApis.users().instrumented());
+            packageReference.uninstall(mTestApis.users().instrumented());
         }
     }
 
     @Test
     public void install_byteArray_instrumentedUser_isInstalled() {
-        mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_BYTES);
+        PackageReference packageReference =
+                mTestApis.packages().install(mTestApis.users().instrumented(), TEST_APP_BYTES);
 
         try {
-            assertThat(mTestAppReference.resolve().installedOnUsers())
+            assertThat(packageReference.resolve().installedOnUsers())
                     .contains(mTestApis.users().instrumented());
         } finally {
-            mTestAppReference.uninstall(mTestApis.users().instrumented());
+            packageReference.uninstall(mTestApis.users().instrumented());
         }
     }
 
     @Test
     public void install_differentUser_isInstalled() {
         UserReference user = mTestApis.users().createUser().createAndStart();
-        mTestApis.packages().install(user, TEST_APP_APK_FILE);
+        PackageReference packageReference =
+                mTestApis.packages().install(user, TEST_APP_APK_FILE);
 
         try {
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(user);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(user);
         } finally {
             user.remove();
         }
@@ -195,10 +204,10 @@ public class PackagesTest {
     @Test
     public void install_byteArray_differentUser_isInstalled() {
         UserReference user = mTestApis.users().createUser().createAndStart();
-        mTestApis.packages().install(user, TEST_APP_BYTES);
+        PackageReference packageReference = mTestApis.packages().install(user, TEST_APP_BYTES);
 
         try {
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(user);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(user);
         } finally {
             user.remove();
         }
@@ -242,55 +251,60 @@ public class PackagesTest {
 
     @Test
     public void install_alreadyInstalledForUser_installs() {
-        mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
         try {
-            mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(mUser);
+            packageReference = mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
         } finally {
-            mTestAppReference.uninstall(mUser);
+            packageReference.uninstall(mUser);
         }
     }
 
     @Test
     public void install_byteArray_alreadyInstalledForUser_installs() {
-        mTestApis.packages().install(mUser, TEST_APP_BYTES);
+        PackageReference packageReference = mTestApis.packages().install(mUser, TEST_APP_BYTES);
 
         try {
-            mTestApis.packages().install(mUser, TEST_APP_BYTES);
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(mUser);
+            packageReference = mTestApis.packages().install(mUser, TEST_APP_BYTES);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
         } finally {
-            mTestAppReference.uninstall(mUser);
+            packageReference.uninstall(mUser);
         }
     }
 
     @Test
     public void install_alreadyInstalledOnOtherUser_installs() {
-        UserReference otherUser = mTestApis.users().createUser().createAndStart();
-        try {
+        PackageReference packageReference = null;
+
+        try (UserReference otherUser = mTestApis.users().createUser().createAndStart()) {
             mTestApis.packages().install(otherUser, TEST_APP_APK_FILE);
 
-            mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
+            packageReference =
+                    mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
 
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(mUser);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
         } finally {
-            mTestAppReference.uninstall(mUser);
-            otherUser.remove();
+            if (packageReference != null) {
+                packageReference.uninstall(mUser);
+            }
         }
     }
 
     @Test
     public void install_byteArray_alreadyInstalledOnOtherUser_installs() {
-        UserReference otherUser = mTestApis.users().createUser().createAndStart();
-        try {
+        PackageReference packageReference = null;
+
+        try (UserReference otherUser = mTestApis.users().createUser().createAndStart()) {
             mTestApis.packages().install(otherUser, TEST_APP_BYTES);
 
-            mTestApis.packages().install(mUser, TEST_APP_BYTES);
+            packageReference = mTestApis.packages().install(mUser, TEST_APP_BYTES);
 
-            assertThat(mTestAppReference.resolve().installedOnUsers()).contains(mUser);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
         } finally {
-            mTestAppReference.uninstall(mUser);
-            otherUser.remove();
+            if (packageReference != null) {
+                packageReference.uninstall(mUser);
+            }
         }
     }
 

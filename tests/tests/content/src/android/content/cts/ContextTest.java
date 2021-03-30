@@ -26,6 +26,7 @@ import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.WallpaperManager;
 import android.content.ActivityNotFoundException;
+import android.content.AttributionSource;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -206,12 +207,17 @@ public class ContextTest extends AndroidTestCase {
     public void testContextParams() throws Exception {
         final ContextParams params = new ContextParams.Builder()
                 .setAttributionTag("foo")
-                .setReceiverPackage("bar", "baz")
-                .setRenouncedPermissions(new HashSet<>(Arrays.asList(GRANTED_PERMISSION))).build();
+                .setNextAttributionSource(new AttributionSource.Builder(1)
+                        .setPackageName("bar")
+                        .setAttributionTag("baz")
+                        .build())
+                .setRenouncedPermissions(new HashSet<>(Arrays.asList(GRANTED_PERMISSION)))
+                .build();
 
         assertEquals("foo", params.getAttributionTag());
-        assertEquals("bar", params.getReceiverPackage());
-        assertEquals("baz", params.getReceiverAttributionTag());
+        assertEquals(1, params.getNextAttributionSource().getUid());
+        assertEquals("bar", params.getNextAttributionSource().getPackageName());
+        assertEquals("baz", params.getNextAttributionSource().getAttributionTag());
         assertEquals(new HashSet<>(Arrays.asList(GRANTED_PERMISSION)),
                 params.getRenouncedPermissions());
     }
@@ -248,7 +254,7 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(PERMISSION_DENIED, attrib.checkSelfPermission(NOT_GRANTED_PERMISSION));
 
         // But still granted on parent context
-        assertNull(mContext.getParams().getRenouncedPermissions());
+        assertNotNull(mContext.getParams().getRenouncedPermissions());
         assertEquals(PERMISSION_GRANTED, mContext.checkSelfPermission(GRANTED_PERMISSION));
         assertEquals(PERMISSION_DENIED, mContext.checkSelfPermission(NOT_GRANTED_PERMISSION));
     }
