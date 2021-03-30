@@ -221,6 +221,10 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
     private static final String OPSTR_MANAGE_EXTERNAL_STORAGE =
             permissionToOp(Manifest.permission.MANAGE_EXTERNAL_STORAGE);
 
+    private static final String TRANSFORMS_DIR = ".transforms";
+    private static final String TRANSFORMS_TRANSCODE_DIR = TRANSFORMS_DIR + "/" + "transcode";
+    private static final String TRANSFORMS_SYNTHETIC_DIR = TRANSFORMS_DIR + "/" + "synthetic";
+
     @Parameter(0)
     public String mVolumeName;
 
@@ -2884,6 +2888,32 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         }
     }
 
+    @Test
+    public void testTransformsDirFileOperations() throws Exception {
+        final String path = Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_DIR;
+        final File file = new File(path);
+        assertThat(file.exists()).isTrue();
+        testTransformsDirCommon(file);
+    }
+
+    @Test
+    public void testTransformsSyntheticDirFileOperations() throws Exception {
+        final String path =
+                Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_SYNTHETIC_DIR;
+        final File file = new File(path);
+        assertThat(file.exists()).isTrue();
+        testTransformsDirCommon(file);
+    }
+
+    @Test
+    public void testTransformsTranscodeDirFileOperations() throws Exception {
+        final String path =
+                Environment.getExternalStorageDirectory() + "/" + TRANSFORMS_TRANSCODE_DIR;
+        final File file = new File(path);
+        assertThat(file.exists()).isFalse();
+        testTransformsDirCommon(file);
+    }
+
     private Uri getRedactedUri(File file) {
         final Uri uri = MediaStore.scanFile(getContentResolver(), file);
         return MediaStore.getRedactedUri(getContentResolver(), uri);
@@ -2913,6 +2943,19 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         assertThat(redactedUriCursor.moveToFirst()).isTrue();
 
         return redactedUriCursor;
+    }
+
+    private boolean canRenameFile(File file) {
+        return file.renameTo(new File(file.getAbsolutePath() + "test"));
+    }
+
+    private void testTransformsDirCommon(File file) throws Exception {
+        assertThat(file.delete()).isFalse();
+        assertThat(canRenameFile(file)).isFalse();
+
+        final File newFile = new File(file.getAbsolutePath(), "test");
+        assertThat(newFile.mkdir()).isFalse();
+        assertThrows(IOException.class, () -> newFile.createNewFile());
     }
 
     private String getStringFromCursor(Cursor c, String colName) {
