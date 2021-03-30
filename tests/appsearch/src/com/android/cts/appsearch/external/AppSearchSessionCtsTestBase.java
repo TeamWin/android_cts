@@ -2741,7 +2741,6 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
-    @Ignore("TODO(b/182909475)")
     public void testGetStorageInfo() throws Exception {
         StorageInfo storageInfo = mDb1.getStorageInfo().get();
         assertThat(storageInfo.getSizeBytes()).isEqualTo(0);
