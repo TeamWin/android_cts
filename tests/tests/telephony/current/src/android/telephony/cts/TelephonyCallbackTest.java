@@ -1334,6 +1334,11 @@ public class TelephonyCallbackTest {
 
     @Test
     public void testOnAllowedNetworkTypesChangedByRegisterPhoneStateListener() throws Throwable {
+        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
+            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
+            return;
+        }
+
         assertFalse(mOnAllowedNetworkTypesChangedCalled);
 
         mHandler.post(() -> {

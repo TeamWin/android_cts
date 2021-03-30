@@ -948,6 +948,8 @@ public class SubscriptionManagerTest {
 
     @Test
     public void testSetAndGetD2DStatusSharing() {
+        if (!isSupported()) return;
+
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharingPreference(mSubId);
