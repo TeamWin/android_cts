@@ -43,6 +43,7 @@ import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.SystemClock;
 import android.permission.cts.PermissionUtils;
 import android.provider.DeviceConfig;
 import android.provider.Settings;
@@ -208,6 +209,8 @@ public class ActivityManagerApi29Test {
     @Ignore("because ag/13230961, FGS started in instrumentation are not subject to while-in-use "
             + "restriction")
     public void testFgsLocationWithAppOps() throws Exception {
+        // Sleep 12 seconds to let BAL grace period expire.
+        SystemClock.sleep(12000);
         // Start a foreground service with location
         startSimpleService();
         // Wait for state and capability change.
@@ -261,6 +264,8 @@ public class ActivityManagerApi29Test {
 
         waiter = new WaitForBroadcast(sInstrumentation.getTargetContext());
         waiter.prepare(ACTION_SERVICE_START_RESULT);
+        // Sleep 12 seconds to let BAL grace period expire.
+        SystemClock.sleep(12000);
         startSimpleService();
         waiter.doWait(WAITFOR_MSEC);
 
@@ -314,6 +319,8 @@ public class ActivityManagerApi29Test {
     @Ignore("because ag/13230961, FGS started in instrumentation are not subject to while-in-use "
             + "restriction")
     public void testCameraWithAppOps() throws Exception {
+        // Sleep 12 seconds to let BAL grace period expire.
+        SystemClock.sleep(12000);
         startSimpleService();
         // Wait for state and capability change.
         mUidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE,
