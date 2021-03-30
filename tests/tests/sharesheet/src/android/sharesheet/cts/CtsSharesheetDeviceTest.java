@@ -217,7 +217,7 @@ public class CtsSharesheetDeviceTest {
             showsApplicationLabel();
             showsAppAndActivityLabel();
             showsAppAndIntentFilterLabel();
-            isChooserTargetServiceDirectShareEnabled();
+            isChooserTargetServiceDirectShareDisabled();
 
             // Must be run last, partial completion closes the Sharesheet
             firesIntentSenderWithExtraChosenComponent();
@@ -410,19 +410,16 @@ public class CtsSharesheetDeviceTest {
     /**
      * Tests API behavior compliance for ChooserTargetService
      */
-    public void isChooserTargetServiceDirectShareEnabled() {
+    public void isChooserTargetServiceDirectShareDisabled() {
         // ChooserTargets can take time to load. To account for this:
         // * All non-test ChooserTargetServices shouldn't be loaded because of blacklist
         // * waitAndAssert operations have lengthy timeout periods
         // * Last time to run in suite so prior operations reduce wait time
 
-        if (mActivityManager.isLowRamDevice()) {
-            // Ensure direct share is disabled on low ram devices
-            waitAndAssertNoTextContains(mChooserTargetServiceLabel);
-        } else {
-            // Ensure direct share is enabled
-            waitAndAssertTextContains(mChooserTargetServiceLabel);
-        }
+
+    	// ChooserTargetService was deprecated as of API level 30, results should not
+    	// appear in the list of results.
+    	waitAndAssertNoTextContains(mChooserTargetServiceLabel);
     }
 
     /**
