@@ -169,8 +169,10 @@ public class TestConfiguration {
 
     static final LayoutInfo[] LAYOUTS = {
             new LayoutInfo(R.layout.button, "button"),
-            new LayoutInfo(R.layout.button, "button_pressed",
-                    new ViewPressedModifier()),
+            // Temporarily remove tests for pressed Button widget. The Material ripple is in
+            // flux, so this is going to be failing frequently on Material until it stablizes.
+            //new LayoutInfo(R.layout.button, "button_pressed",
+            //        new ViewPressedModifier()),
             new LayoutInfo(R.layout.checkbox, "checkbox"),
             new LayoutInfo(R.layout.checkbox, "checkbox_checked",
                     new ViewCheckedModifier()),
