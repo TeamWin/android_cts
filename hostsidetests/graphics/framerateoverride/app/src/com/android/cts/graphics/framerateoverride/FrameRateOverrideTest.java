@@ -79,7 +79,8 @@ public final class FrameRateOverrideTest {
                         Manifest.permission.OVERRIDE_DISPLAY_MODE_REQUESTS);
 
         mDisplayManager = mActivityRule.getActivity().getSystemService(DisplayManager.class);
-        mInitialMatchContentFrameRate = mDisplayManager.getRefreshRateSwitchingType();
+        mInitialMatchContentFrameRate = toSwitchingType(
+                mDisplayManager.getMatchContentFrameRateUserPreference());
         mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
         boolean changeIsEnabled =
@@ -94,6 +95,19 @@ public final class FrameRateOverrideTest {
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(false);
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .dropShellPermissionIdentity();
+    }
+
+    private int toSwitchingType(int matchContentFrameRateUserPreference) {
+        switch (matchContentFrameRateUserPreference) {
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_NEVER:
+                return DisplayManager.SWITCHING_TYPE_NONE;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_SEAMLESSS_ONLY:
+                return DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_ALWAYS:
+                return DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS;
+            default:
+                return -1;
+        }
     }
 
     private void setMode(Display.Mode mode) {
