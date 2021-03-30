@@ -16,7 +16,6 @@
 
 package android.jobscheduler.cts;
 
-import static android.net.ConnectivityDiagnosticsManager.persistableBundleEquals;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED;
 
@@ -153,7 +152,10 @@ public class JobInfoTest extends BaseJobSchedulerTest {
                 .setPersisted(true)
                 .setExtras(pb)
                 .build();
-        assertTrue(persistableBundleEquals(pb, ji.getExtras()));
+        final PersistableBundle extras = ji.getExtras();
+        assertNotNull(extras);
+        assertEquals(1, extras.keySet().size());
+        assertEquals(42, extras.getInt("random_key"));
         // Confirm JobScheduler accepts the JobInfo object.
         mJobScheduler.schedule(ji);
     }
