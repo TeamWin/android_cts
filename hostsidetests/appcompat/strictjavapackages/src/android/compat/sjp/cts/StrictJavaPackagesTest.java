@@ -41,6 +41,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -48,8 +49,10 @@ import java.util.Set;
 
 import org.jf.dexlib2.DexFileFactory;
 import org.jf.dexlib2.Opcodes;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.DexFile;
 import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.iface.MultiDexContainer;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -127,7 +130,54 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Landroid/hardware/contexthub/V1_0/PhysicalSensor;",
             "Landroid/hardware/contexthub/V1_0/Result;",
             "Landroid/hardware/contexthub/V1_0/SensorType;",
-            "Landroid/hardware/contexthub/V1_0/TransactionResult;"
+            "Landroid/hardware/contexthub/V1_0/TransactionResult;",
+            "Landroid/hardware/usb/gadget/V1_0/GadgetFunction;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Proxy;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Stub;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Proxy;",
+            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Stub;",
+            "Landroid/hardware/usb/gadget/V1_0/Status;",
+            "Landroid/os/IDumpstate;",
+            "Landroid/os/IDumpstate$Default;",
+            "Landroid/os/IDumpstate$Stub;",
+            "Landroid/os/IDumpstate$Stub$Proxy;",
+            "Landroid/os/IDumpstateListener;",
+            "Landroid/os/IDumpstateListener$Default;",
+            "Landroid/os/IDumpstateListener$Stub;",
+            "Landroid/os/IDumpstateListener$Stub$Proxy;",
+            "Landroid/os/IInstalld;",
+            "Landroid/os/IInstalld$Default;",
+            "Landroid/os/IInstalld$Stub;",
+            "Landroid/os/IInstalld$Stub$Proxy;",
+            "Landroid/os/IStoraged;",
+            "Landroid/os/IStoraged$Default;",
+            "Landroid/os/IStoraged$Stub;",
+            "Landroid/os/IStoraged$Stub$Proxy;",
+            "Landroid/os/IVold;",
+            "Landroid/os/IVold$Default;",
+            "Landroid/os/IVold$Stub;",
+            "Landroid/os/IVold$Stub$Proxy;",
+            "Landroid/os/IVoldListener;",
+            "Landroid/os/IVoldListener$Default;",
+            "Landroid/os/IVoldListener$Stub;",
+            "Landroid/os/IVoldListener$Stub$Proxy;",
+            "Landroid/os/IVoldMountCallback;",
+            "Landroid/os/IVoldMountCallback$Default;",
+            "Landroid/os/IVoldMountCallback$Stub;",
+            "Landroid/os/IVoldMountCallback$Stub$Proxy;",
+            "Landroid/os/IVoldTaskListener;",
+            "Landroid/os/IVoldTaskListener$Default;",
+            "Landroid/os/IVoldTaskListener$Stub;",
+            "Landroid/os/IVoldTaskListener$Stub$Proxy;",
+            "Landroid/os/storage/CrateMetadata;",
+            "Landroid/os/storage/CrateMetadata$1;",
+            "Landroid/view/LayerMetadataKey;",
+            "Lcom/android/internal/annotations/GuardedBy;",
+            "Lcom/android/internal/annotations/Immutable;",
+            "Lcom/android/internal/annotations/VisibleForTesting;",
+            "Lcom/android/internal/annotations/VisibleForTesting$Visibility;"
         );
 
     /**
@@ -138,7 +188,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> bcpJarFiles = pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH");
-            checkClassDuplicatesMatchWhitelist(bcpJarFiles, ImmutableSet.of());
+            checkClassDuplicatesMatchAllowlist(bcpJarFiles, ImmutableSet.of());
         });
     }
 
@@ -151,7 +201,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> sscpJarFiles =
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
-            checkClassDuplicatesMatchWhitelist(sscpJarFiles, ImmutableSet.of());
+            checkClassDuplicatesMatchAllowlist(sscpJarFiles, ImmutableSet.of());
         });
     }
 
@@ -167,7 +217,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
                 pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
             );
-            checkClassDuplicatesMatchWhitelist(allJarFiles, BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
+            checkClassDuplicatesMatchAllowlist(allJarFiles, BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
         });
     }
 
@@ -241,10 +291,15 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         final Multimap<String, DeviceFile> allClasses = HashMultimap.create();
         final Multimap<String, DeviceFile> duplicateClasses = HashMultimap.create();
         for (DeviceFile deviceFile : jars) {
-            final DexFile dexFile =
-                    DexFileFactory.loadDexFile(deviceFile.hostPath, Opcodes.getDefault());
-            for (ClassDef classDef : dexFile.getClasses()) {
-                allClasses.put(classDef.getType(), deviceFile);
+            final File jarFile = new File(deviceFile.hostPath);
+            final MultiDexContainer<? extends DexBackedDexFile> container =
+                    DexFileFactory.loadDexContainer(jarFile, Opcodes.getDefault());
+            final List<String> entryNames = container.getDexEntryNames();
+            for (String entryName : entryNames) {
+                final DexFile dexFile = container.getEntry(entryName);
+                for (ClassDef classDef : dexFile.getClasses()) {
+                    allClasses.put(classDef.getType(), deviceFile);
+                }
             }
         }
         for (Entry<String, Collection<DeviceFile>> entry : allClasses.asMap().entrySet()) {
@@ -259,13 +314,16 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     }
 
     /**
-     * Checks that the duplicate classes in a set of jars exactly match a given whitelist.
+     * Checks that the duplicate classes in a set of jars exactly match a given allowlist.
      */
-    private void checkClassDuplicatesMatchWhitelist(Set<DeviceFile> jars, Set<String> whitelist)
+    private void checkClassDuplicatesMatchAllowlist(Set<DeviceFile> jars, Set<String> allowlist)
             throws Exception {
         // Collect classes which appear in at least two distinct jar files.
         Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
-        assertThat(duplicateClasses.keySet()).isEqualTo(whitelist);
+        Set<String> deniedClasses = new HashSet<>();
+        deniedClasses.addAll(duplicateClasses.keySet());
+        deniedClasses.removeAll(allowlist);
+        assertThat(deniedClasses).isEmpty();
     }
 
     /**
