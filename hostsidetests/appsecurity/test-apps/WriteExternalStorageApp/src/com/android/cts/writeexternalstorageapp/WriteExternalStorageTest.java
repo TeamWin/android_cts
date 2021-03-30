@@ -16,6 +16,8 @@
 
 package com.android.cts.writeexternalstorageapp;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.TAG;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
@@ -32,6 +34,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.write
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
+import android.support.test.uiautomator.UiDevice;
 import android.system.Os;
 import android.test.AndroidTestCase;
 import android.util.Log;
@@ -42,6 +45,7 @@ import com.android.cts.externalstorageapp.CommonExternalStorageTest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
@@ -260,12 +264,17 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         }
     }
 
+    private boolean isFuseDataIsolationIsEnabled() throws IOException {
+        return UiDevice.getInstance(getInstrumentation()).executeShellCommand(
+                "getprop persist.sys.vold_app_data_isolation_enabled").trim().equals("true");
+    }
+
     /**
      * Verify that .nomedia is created correctly.
      */
     public void testVerifyNoMediaCreated() throws Exception {
         boolean expectNoMediaFileExists = true;
-        if (BuildCompat.isAtLeastS()) {
+        if (BuildCompat.isAtLeastS() && isFuseDataIsolationIsEnabled()) {
             // All package specific paths will be in app's mount namespace, and it cannot
             // access its parent to check .nomedia file.
             expectNoMediaFileExists = false;
