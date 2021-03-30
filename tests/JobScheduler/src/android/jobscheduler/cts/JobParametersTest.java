@@ -16,8 +16,6 @@
 
 package android.jobscheduler.cts;
 
-import static android.net.ConnectivityDiagnosticsManager.persistableBundleEquals;
-
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.ClipData;
@@ -66,7 +64,10 @@ public class JobParametersTest extends BaseJobSchedulerTest {
         assertTrue("Job didn't fire immediately", kTestEnvironment.awaitExecution());
 
         JobParameters params = kTestEnvironment.getLastStartJobParameters();
-        assertTrue(persistableBundleEquals(pb, params.getExtras()));
+        final PersistableBundle extras = params.getExtras();
+        assertNotNull(extras);
+        assertEquals(1, extras.keySet().size());
+        assertEquals(42, extras.getInt("random_key"));
     }
 
     public void testExpedited() throws Exception {
