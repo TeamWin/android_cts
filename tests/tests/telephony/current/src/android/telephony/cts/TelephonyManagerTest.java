@@ -670,7 +670,9 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getSubscriberId());
         mTelephonyManager.getLine1Number();
         mTelephonyManager.getNetworkOperator();
-        mTelephonyManager.getPhoneAccountHandle();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getPhoneAccountHandle(),
+                "android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE");
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
@@ -988,7 +990,10 @@ public class TelephonyManagerTest {
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
-        PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
+        PhoneAccountHandle phoneAccountHandle = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager,
+                (tm) -> tm.getPhoneAccountHandle(),
+                "android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE");
         assertEquals(phoneAccountHandle, defaultAccount);
     }
 
