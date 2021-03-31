@@ -3748,9 +3748,14 @@ public class TelephonyManagerTest {
 
         long arbitraryCompletionWindowSecs = 1L;
 
+        boolean isDataThrottlingSupported = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.isRadioInterfaceCapabilitySupported(
+                        TelephonyManager.CAPABILITY_THERMAL_MITIGATION_DATA_THROTTLING));
 
-        // Test a proper data throttling thermal mitigation request.
-        int thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
+        int thermalMitigationResult = -1;
+        if (isDataThrottlingSupported) {
+            // Test a proper data throttling thermal mitigation request.
+            thermalMitigationResult = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager, (tm) -> tm.sendThermalMitigationRequest(
                         new ThermalMitigationRequest.Builder()
                                 .setThermalMitigationAction(ThermalMitigationRequest
@@ -3761,8 +3766,7 @@ public class TelephonyManagerTest {
                                         .setCompletionDurationMillis(arbitraryCompletionWindowSecs)
                                         .build())
                                 .build()));
-        // Only verify the result for supported devices on IRadio 1.6+
-        if (mRadioVersion >= RADIO_HAL_VERSION_1_6) {
+
             assertEquals(thermalMitigationResult,
                     TelephonyManager.THERMAL_MITIGATION_RESULT_SUCCESS);
         }
