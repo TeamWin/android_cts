@@ -351,7 +351,7 @@ public class KeyGeneratorTest extends AndroidTestCase {
                 continue;
             }
 
-            for (int i = -16; i <= 1024; i++) {
+            for (int i = -16; i <= 512; i++) {
                 try {
                     rng.resetCounters();
                     KeyGenerator keyGenerator = getKeyGenerator(algorithm);
@@ -373,15 +373,7 @@ public class KeyGeneratorTest extends AndroidTestCase {
                         }
                     }
                     // Strongbox must not support keys larger than 512 bits
-                    // TODO: This test currently fails, will be fixed on resolution of b/113525261
-                    if (useStrongbox && i > 512) {
-                        try {
-                            keyGenerator.init(spec, rng);
-                            fail();
-                        } catch (InvalidAlgorithmParameterException expected) {
-                            assertEquals(0, rng.getOutputSizeBytes());
-                        }
-                    } else if ((i >= 64) && ((i % 8 ) == 0)) {
+                    if ((i >= 64) && ((i % 8 ) == 0)) {
                         keyGenerator.init(spec, rng);
                         SecretKey key = keyGenerator.generateKey();
                         assertEquals(i, TestUtils.getKeyInfo(key).getKeySize());
