@@ -362,6 +362,33 @@ public class LegacyStorageTest {
     }
 
     /**
+     * Test that URI returned on inserting hidden file is valid after scan.
+     */
+    @Test
+    public void testInsertHiddenFile() throws Exception {
+        pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, /*granted*/ true);
+        final File dcimDir = getDcimDir();
+        final String hiddenImageFileName = ".hidden" + IMAGE_FILE_NAME;
+        final File hiddenImageFile = new File(dcimDir, hiddenImageFileName);
+        try {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.MediaColumns.DATA, hiddenImageFile.getAbsolutePath());
+            Uri uri = getContentResolver().insert(getImageContentUri(), values);
+            try (OutputStream fos = getContentResolver().openOutputStream(uri, "rw")) {
+                fos.write(BYTES_DATA1);
+            }
+            MediaStore.scanFile(getContentResolver(), hiddenImageFile);
+            final String[] projection = {MediaStore.MediaColumns.DISPLAY_NAME};
+            try (Cursor c = getContentResolver().query(uri, projection, null, null, null)) {
+                assertThat(c.moveToFirst()).isTrue();
+                assertThat(c.getString(0)).isEqualTo(hiddenImageFileName);
+            }
+        } finally {
+            hiddenImageFile.delete();
+        }
+    }
+
+    /**
      * Test that rename for legacy app with WRITE_EXTERNAL_STORAGE permission bypasses rename
      * restrictions imposed by MediaProvider
      */

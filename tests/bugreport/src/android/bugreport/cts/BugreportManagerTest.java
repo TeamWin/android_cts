@@ -85,6 +85,7 @@ public class BugreportManagerTest {
         assertThat(bp.getMode()).isEqualTo(expected_mode);
     }
 
+    @LargeTest
     @Test
     public void testTelephonyBugreport() throws Exception {
         Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_TELEPHONY);

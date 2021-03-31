@@ -69,7 +69,7 @@ public class DelegateTestUtils {
      */
     public static class NetworkLogsReceiver extends DelegatedAdminReceiver {
 
-        private static final long TIMEOUT_MIN = 1;
+        private static final long TIMEOUT_MIN = 3;
 
         static CountDownLatch sBatchCountDown;
         static ArrayList<NetworkEvent> sNetworkEvents = new ArrayList<>();

@@ -17,14 +17,13 @@
 package android.compat.sjp.cts;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assume.assumeTrue;
+
 import static java.util.stream.Collectors.toSet;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
-
 import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -32,190 +31,197 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.Sets;
+
+import org.jf.dexlib2.DexFileFactory;
+import org.jf.dexlib2.Opcodes;
+import org.jf.dexlib2.dexbacked.DexBackedDexFile;
+import org.jf.dexlib2.iface.ClassDef;
+import org.jf.dexlib2.iface.DexFile;
+import org.jf.dexlib2.iface.MultiDexContainer;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.dexlib2.iface.DexFile;
-import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.MultiDexContainer;
-
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
+/**
+ * Tests for detecting no duplicate class files are present on BOOTCLASSPATH and
+ * SYSTEMSERVERCLASSPATH.
+ *
+ * <p>Duplicate class files are not safe as some of the jars on *CLASSPATH are updated outside of
+ * the main dessert release cycle; they also contribute to unnecessary disk space usage.
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
+public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
+
     private static final long ADB_TIMEOUT_MILLIS = 10000L;
+
     /**
      * This is the list of classes that are currently duplicated and should be addressed.
      *
      * <p> DO NOT ADD CLASSES TO THIS LIST!
      */
     private static final Set<String> BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST =
-        ImmutableSet.of(
-            "Landroid/annotation/AnyThread;",
-            "Landroid/annotation/AppIdInt;",
-            "Landroid/annotation/CallSuper;",
-            "Landroid/annotation/CallbackExecutor;",
-            "Landroid/annotation/CheckResult;",
-            "Landroid/annotation/CurrentTimeMillisLong;",
-            "Landroid/annotation/Hide;",
-            "Landroid/annotation/IntDef;",
-            "Landroid/annotation/IntRange;",
-            "Landroid/annotation/LongDef;",
-            "Landroid/annotation/MainThread;",
-            "Landroid/annotation/NonNull;",
-            "Landroid/annotation/Nullable;",
-            "Landroid/annotation/RequiresPermission;",
-            "Landroid/annotation/RequiresPermission$Read;",
-            "Landroid/annotation/RequiresPermission$Write;",
-            "Landroid/annotation/SdkConstant;",
-            "Landroid/annotation/SdkConstant$SdkConstantType;",
-            "Landroid/annotation/StringDef;",
-            "Landroid/annotation/SuppressLint;",
-            "Landroid/annotation/SystemApi;",
-            "Landroid/annotation/SystemApi$Client;",
-            "Landroid/annotation/SystemApi$Container;",
-            "Landroid/annotation/SystemService;",
-            "Landroid/annotation/TestApi;",
-            "Landroid/annotation/UserIdInt;",
-            "Landroid/annotation/WorkerThread;",
-            "Landroid/gsi/AvbPublicKey;",
-            "Landroid/gsi/AvbPublicKey$1;",
-            "Landroid/gsi/GsiProgress;",
-            "Landroid/gsi/GsiProgress$1;",
-            "Landroid/gsi/IGsiService;",
-            "Landroid/gsi/IGsiService$Default;",
-            "Landroid/gsi/IGsiService$Stub;",
-            "Landroid/gsi/IGsiService$Stub$Proxy;",
-            "Landroid/gsi/IGsiServiceCallback;",
-            "Landroid/gsi/IGsiServiceCallback$Default;",
-            "Landroid/gsi/IGsiServiceCallback$Stub;",
-            "Landroid/gsi/IGsiServiceCallback$Stub$Proxy;",
-            "Landroid/gsi/IImageService;",
-            "Landroid/gsi/IImageService$Default;",
-            "Landroid/gsi/IImageService$Stub;",
-            "Landroid/gsi/IImageService$Stub$Proxy;",
-            "Landroid/gsi/IProgressCallback;",
-            "Landroid/gsi/IProgressCallback$Default;",
-            "Landroid/gsi/IProgressCallback$Stub;",
-            "Landroid/gsi/IProgressCallback$Stub$Proxy;",
-            "Landroid/gsi/MappedImage;",
-            "Landroid/gsi/MappedImage$1;",
-            "Landroid/hardware/contexthub/V1_0/AsyncEventType;",
-            "Landroid/hardware/contexthub/V1_0/ContextHub;",
-            "Landroid/hardware/contexthub/V1_0/ContextHubMsg;",
-            "Landroid/hardware/contexthub/V1_0/HostEndPoint;",
-            "Landroid/hardware/contexthub/V1_0/HubAppInfo;",
-            "Landroid/hardware/contexthub/V1_0/HubMemoryFlag;",
-            "Landroid/hardware/contexthub/V1_0/HubMemoryType;",
-            "Landroid/hardware/contexthub/V1_0/IContexthub;",
-            "Landroid/hardware/contexthub/V1_0/IContexthub$Proxy;",
-            "Landroid/hardware/contexthub/V1_0/IContexthub$Stub;",
-            "Landroid/hardware/contexthub/V1_0/IContexthubCallback;",
-            "Landroid/hardware/contexthub/V1_0/IContexthubCallback$Proxy;",
-            "Landroid/hardware/contexthub/V1_0/IContexthubCallback$Stub;",
-            "Landroid/hardware/contexthub/V1_0/MemRange;",
-            "Landroid/hardware/contexthub/V1_0/NanoAppBinary;",
-            "Landroid/hardware/contexthub/V1_0/NanoAppFlags;",
-            "Landroid/hardware/contexthub/V1_0/PhysicalSensor;",
-            "Landroid/hardware/contexthub/V1_0/Result;",
-            "Landroid/hardware/contexthub/V1_0/SensorType;",
-            "Landroid/hardware/contexthub/V1_0/TransactionResult;",
-            "Landroid/hardware/usb/gadget/V1_0/GadgetFunction;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Proxy;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Stub;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Proxy;",
-            "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Stub;",
-            "Landroid/hardware/usb/gadget/V1_0/Status;",
-            "Landroid/os/IDumpstate;",
-            "Landroid/os/IDumpstate$Default;",
-            "Landroid/os/IDumpstate$Stub;",
-            "Landroid/os/IDumpstate$Stub$Proxy;",
-            "Landroid/os/IDumpstateListener;",
-            "Landroid/os/IDumpstateListener$Default;",
-            "Landroid/os/IDumpstateListener$Stub;",
-            "Landroid/os/IDumpstateListener$Stub$Proxy;",
-            "Landroid/os/IInstalld;",
-            "Landroid/os/IInstalld$Default;",
-            "Landroid/os/IInstalld$Stub;",
-            "Landroid/os/IInstalld$Stub$Proxy;",
-            "Landroid/os/IStoraged;",
-            "Landroid/os/IStoraged$Default;",
-            "Landroid/os/IStoraged$Stub;",
-            "Landroid/os/IStoraged$Stub$Proxy;",
-            "Landroid/os/IVold;",
-            "Landroid/os/IVold$Default;",
-            "Landroid/os/IVold$Stub;",
-            "Landroid/os/IVold$Stub$Proxy;",
-            "Landroid/os/IVoldListener;",
-            "Landroid/os/IVoldListener$Default;",
-            "Landroid/os/IVoldListener$Stub;",
-            "Landroid/os/IVoldListener$Stub$Proxy;",
-            "Landroid/os/IVoldMountCallback;",
-            "Landroid/os/IVoldMountCallback$Default;",
-            "Landroid/os/IVoldMountCallback$Stub;",
-            "Landroid/os/IVoldMountCallback$Stub$Proxy;",
-            "Landroid/os/IVoldTaskListener;",
-            "Landroid/os/IVoldTaskListener$Default;",
-            "Landroid/os/IVoldTaskListener$Stub;",
-            "Landroid/os/IVoldTaskListener$Stub$Proxy;",
-            "Landroid/os/storage/CrateMetadata;",
-            "Landroid/os/storage/CrateMetadata$1;",
-            "Landroid/view/LayerMetadataKey;",
-            "Lcom/android/internal/annotations/GuardedBy;",
-            "Lcom/android/internal/annotations/Immutable;",
-            "Lcom/android/internal/annotations/VisibleForTesting;",
-            "Lcom/android/internal/annotations/VisibleForTesting$Visibility;",
-            // TODO(b/173649240): due to an oversight, some new overlaps slipped through in S.
-            "Landroid/hardware/usb/gadget/V1_1/IUsbGadget;",
-            "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Proxy;",
-            "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Stub;",
-            "Landroid/hardware/usb/gadget/V1_2/GadgetFunction;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadget;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadget$Proxy;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadget$Stub;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback$Proxy;",
-            "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback$Stub;",
-            "Landroid/hardware/usb/gadget/V1_2/UsbSpeed;",
-            "Landroid/os/BlockUntrustedTouchesMode;",
-            "Landroid/os/CreateAppDataArgs;",
-            "Landroid/os/CreateAppDataArgs$1;",
-            "Landroid/os/CreateAppDataResult;",
-            "Landroid/os/CreateAppDataResult$1;",
-            "Landroid/os/IInputConstants;",
-            "Landroid/os/IInputConstants$Default;",
-            "Landroid/os/IInputConstants$Stub;",
-            "Landroid/os/IInputConstants$Stub$Proxy;",
-            "Landroid/os/InputEventInjectionResult;",
-            "Landroid/os/InputEventInjectionSync;",
-            "Landroid/os/TouchOcclusionMode;",
-            "Lcom/android/internal/protolog/common/BitmaskConversionException;",
-            "Lcom/android/internal/protolog/common/InvalidFormatStringException;",
-            "Lcom/android/internal/protolog/common/IProtoLogGroup;",
-            "Lcom/android/internal/protolog/common/LogDataType;",
-            "Lcom/android/internal/protolog/common/ProtoLog;",
-            "Lcom/android/internal/protolog/ProtoLogImpl;",
-            "Lcom/android/internal/protolog/ProtoLogViewerConfigReader;",
-            "Lcom/android/internal/util/FrameworkStatsLog;"
-        );
+            ImmutableSet.of(
+                    "Landroid/annotation/AnyThread;",
+                    "Landroid/annotation/AppIdInt;",
+                    "Landroid/annotation/CallSuper;",
+                    "Landroid/annotation/CallbackExecutor;",
+                    "Landroid/annotation/CheckResult;",
+                    "Landroid/annotation/CurrentTimeMillisLong;",
+                    "Landroid/annotation/Hide;",
+                    "Landroid/annotation/IntDef;",
+                    "Landroid/annotation/IntRange;",
+                    "Landroid/annotation/LongDef;",
+                    "Landroid/annotation/MainThread;",
+                    "Landroid/annotation/NonNull;",
+                    "Landroid/annotation/Nullable;",
+                    "Landroid/annotation/RequiresPermission;",
+                    "Landroid/annotation/RequiresPermission$Read;",
+                    "Landroid/annotation/RequiresPermission$Write;",
+                    "Landroid/annotation/SdkConstant;",
+                    "Landroid/annotation/SdkConstant$SdkConstantType;",
+                    "Landroid/annotation/StringDef;",
+                    "Landroid/annotation/SuppressLint;",
+                    "Landroid/annotation/SystemApi;",
+                    "Landroid/annotation/SystemApi$Client;",
+                    "Landroid/annotation/SystemApi$Container;",
+                    "Landroid/annotation/SystemService;",
+                    "Landroid/annotation/TestApi;",
+                    "Landroid/annotation/UserIdInt;",
+                    "Landroid/annotation/WorkerThread;",
+                    "Landroid/gsi/AvbPublicKey;",
+                    "Landroid/gsi/AvbPublicKey$1;",
+                    "Landroid/gsi/GsiProgress;",
+                    "Landroid/gsi/GsiProgress$1;",
+                    "Landroid/gsi/IGsiService;",
+                    "Landroid/gsi/IGsiService$Default;",
+                    "Landroid/gsi/IGsiService$Stub;",
+                    "Landroid/gsi/IGsiService$Stub$Proxy;",
+                    "Landroid/gsi/IGsiServiceCallback;",
+                    "Landroid/gsi/IGsiServiceCallback$Default;",
+                    "Landroid/gsi/IGsiServiceCallback$Stub;",
+                    "Landroid/gsi/IGsiServiceCallback$Stub$Proxy;",
+                    "Landroid/gsi/IImageService;",
+                    "Landroid/gsi/IImageService$Default;",
+                    "Landroid/gsi/IImageService$Stub;",
+                    "Landroid/gsi/IImageService$Stub$Proxy;",
+                    "Landroid/gsi/IProgressCallback;",
+                    "Landroid/gsi/IProgressCallback$Default;",
+                    "Landroid/gsi/IProgressCallback$Stub;",
+                    "Landroid/gsi/IProgressCallback$Stub$Proxy;",
+                    "Landroid/gsi/MappedImage;",
+                    "Landroid/gsi/MappedImage$1;",
+                    "Landroid/hardware/contexthub/V1_0/AsyncEventType;",
+                    "Landroid/hardware/contexthub/V1_0/ContextHub;",
+                    "Landroid/hardware/contexthub/V1_0/ContextHubMsg;",
+                    "Landroid/hardware/contexthub/V1_0/HostEndPoint;",
+                    "Landroid/hardware/contexthub/V1_0/HubAppInfo;",
+                    "Landroid/hardware/contexthub/V1_0/HubMemoryFlag;",
+                    "Landroid/hardware/contexthub/V1_0/HubMemoryType;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthub;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthub$Proxy;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthub$Stub;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthubCallback;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthubCallback$Proxy;",
+                    "Landroid/hardware/contexthub/V1_0/IContexthubCallback$Stub;",
+                    "Landroid/hardware/contexthub/V1_0/MemRange;",
+                    "Landroid/hardware/contexthub/V1_0/NanoAppBinary;",
+                    "Landroid/hardware/contexthub/V1_0/NanoAppFlags;",
+                    "Landroid/hardware/contexthub/V1_0/PhysicalSensor;",
+                    "Landroid/hardware/contexthub/V1_0/Result;",
+                    "Landroid/hardware/contexthub/V1_0/SensorType;",
+                    "Landroid/hardware/contexthub/V1_0/TransactionResult;",
+                    "Landroid/hardware/usb/gadget/V1_0/GadgetFunction;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadget;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Proxy;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadget$Stub;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Proxy;",
+                    "Landroid/hardware/usb/gadget/V1_0/IUsbGadgetCallback$Stub;",
+                    "Landroid/hardware/usb/gadget/V1_0/Status;",
+                    "Landroid/os/IDumpstate;",
+                    "Landroid/os/IDumpstate$Default;",
+                    "Landroid/os/IDumpstate$Stub;",
+                    "Landroid/os/IDumpstate$Stub$Proxy;",
+                    "Landroid/os/IDumpstateListener;",
+                    "Landroid/os/IDumpstateListener$Default;",
+                    "Landroid/os/IDumpstateListener$Stub;",
+                    "Landroid/os/IDumpstateListener$Stub$Proxy;",
+                    "Landroid/os/IInstalld;",
+                    "Landroid/os/IInstalld$Default;",
+                    "Landroid/os/IInstalld$Stub;",
+                    "Landroid/os/IInstalld$Stub$Proxy;",
+                    "Landroid/os/IStoraged;",
+                    "Landroid/os/IStoraged$Default;",
+                    "Landroid/os/IStoraged$Stub;",
+                    "Landroid/os/IStoraged$Stub$Proxy;",
+                    "Landroid/os/IVold;",
+                    "Landroid/os/IVold$Default;",
+                    "Landroid/os/IVold$Stub;",
+                    "Landroid/os/IVold$Stub$Proxy;",
+                    "Landroid/os/IVoldListener;",
+                    "Landroid/os/IVoldListener$Default;",
+                    "Landroid/os/IVoldListener$Stub;",
+                    "Landroid/os/IVoldListener$Stub$Proxy;",
+                    "Landroid/os/IVoldMountCallback;",
+                    "Landroid/os/IVoldMountCallback$Default;",
+                    "Landroid/os/IVoldMountCallback$Stub;",
+                    "Landroid/os/IVoldMountCallback$Stub$Proxy;",
+                    "Landroid/os/IVoldTaskListener;",
+                    "Landroid/os/IVoldTaskListener$Default;",
+                    "Landroid/os/IVoldTaskListener$Stub;",
+                    "Landroid/os/IVoldTaskListener$Stub$Proxy;",
+                    "Landroid/os/storage/CrateMetadata;",
+                    "Landroid/os/storage/CrateMetadata$1;",
+                    "Landroid/view/LayerMetadataKey;",
+                    "Lcom/android/internal/annotations/GuardedBy;",
+                    "Lcom/android/internal/annotations/Immutable;",
+                    "Lcom/android/internal/annotations/VisibleForTesting;",
+                    "Lcom/android/internal/annotations/VisibleForTesting$Visibility;",
+                    // TODO(b/173649240): due to an oversight, some new overlaps slipped through
+                    // in S.
+                    "Landroid/hardware/usb/gadget/V1_1/IUsbGadget;",
+                    "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Proxy;",
+                    "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Stub;",
+                    "Landroid/hardware/usb/gadget/V1_2/GadgetFunction;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadget;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadget$Proxy;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadget$Stub;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback$Proxy;",
+                    "Landroid/hardware/usb/gadget/V1_2/IUsbGadgetCallback$Stub;",
+                    "Landroid/hardware/usb/gadget/V1_2/UsbSpeed;",
+                    "Landroid/os/BlockUntrustedTouchesMode;",
+                    "Landroid/os/CreateAppDataArgs;",
+                    "Landroid/os/CreateAppDataArgs$1;",
+                    "Landroid/os/CreateAppDataResult;",
+                    "Landroid/os/CreateAppDataResult$1;",
+                    "Landroid/os/IInputConstants;",
+                    "Landroid/os/IInputConstants$Default;",
+                    "Landroid/os/IInputConstants$Stub;",
+                    "Landroid/os/IInputConstants$Stub$Proxy;",
+                    "Landroid/os/InputEventInjectionResult;",
+                    "Landroid/os/InputEventInjectionSync;",
+                    "Landroid/os/TouchOcclusionMode;",
+                    "Lcom/android/internal/protolog/common/BitmaskConversionException;",
+                    "Lcom/android/internal/protolog/common/InvalidFormatStringException;",
+                    "Lcom/android/internal/protolog/common/IProtoLogGroup;",
+                    "Lcom/android/internal/protolog/common/LogDataType;",
+                    "Lcom/android/internal/protolog/common/ProtoLog;",
+                    "Lcom/android/internal/protolog/ProtoLogImpl;",
+                    "Lcom/android/internal/protolog/ProtoLogViewerConfigReader;",
+                    "Lcom/android/internal/util/FrameworkStatsLog;"
+            );
 
     /**
      * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH.
@@ -237,7 +243,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> sscpJarFiles =
-                pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
+                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
             checkClassDuplicatesMatchAllowlist(sscpJarFiles, ImmutableSet.of());
         });
     }
@@ -251,8 +257,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> allJarFiles = Sets.union(
-                pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
-                pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
+                    pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
+                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
             );
             checkClassDuplicatesMatchAllowlist(allJarFiles, BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
         });
@@ -276,7 +282,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     public void testSystemServerClasspath_nonDuplicateApexJarClasses() throws Exception {
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> sscpJarFiles =
-                pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
+                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
             checkClassDuplicatesNotInApexJars(sscpJarFiles);
         });
     }
@@ -290,8 +296,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             throws Exception {
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> allJarFiles = Sets.union(
-                pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
-                pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
+                    pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
+                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
             );
             checkClassDuplicatesNotInApexJars(allJarFiles);
         });
@@ -300,7 +306,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     private String getEnvVariable(String var) {
         try {
             return getDevice().executeShellCommand("echo $" + var).trim();
-        } catch(DeviceNotAvailableException e) {
+        } catch (DeviceNotAvailableException e) {
             throw new RuntimeException(e);
         }
     }
@@ -320,11 +326,12 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
 
     /**
      * Gets the duplicate classes within a list of jar files.
-     * @param jars  A list of jar files.
-     * @return  A multimap with the class name as a key and the jar files as a value.
+     *
+     * @param jars A list of jar files.
+     * @return A multimap with the class name as a key and the jar files as a value.
      */
     private Multimap<String, DeviceFile> getDuplicateClasses(Set<DeviceFile> jars)
-                throws Exception {
+            throws Exception {
         final Multimap<String, DeviceFile> allClasses = HashMultimap.create();
         final Multimap<String, DeviceFile> duplicateClasses = HashMultimap.create();
         for (DeviceFile deviceFile : jars) {
@@ -342,7 +349,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         for (Entry<String, Collection<DeviceFile>> entry : allClasses.asMap().entrySet()) {
             if (entry.getValue().size() > 1) {
                 CLog.i("Class %s is duplicated in %s", entry.getKey(),
-                    entry.getValue().stream().map(x -> x.getJarName()).collect(toSet()));
+                        entry.getValue().stream().map(DeviceFile::getJarName).collect(toSet()));
 
                 duplicateClasses.putAll(entry.getKey(), entry.getValue());
             }
@@ -357,10 +364,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             throws Exception {
         // Collect classes which appear in at least two distinct jar files.
         Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
-        Set<String> deniedClasses = new HashSet<>();
-        deniedClasses.addAll(duplicateClasses.keySet());
-        deniedClasses.removeAll(allowlist);
-        assertThat(deniedClasses).isEmpty();
+
+        allowlist.forEach(duplicateClasses::removeAll);
+
+        assertThat(duplicateClasses).isEmpty();
     }
 
     /**
@@ -368,30 +375,26 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
      */
     private void checkClassDuplicatesNotInApexJars(Set<DeviceFile> jars)
             throws Exception {
-        final Multimap<String, DeviceFile> jarClasses = getDuplicateClasses(jars);
-        for (Entry<String, Collection<DeviceFile>> entry : jarClasses.asMap().entrySet()) {
-            final String className = entry.getKey();
-            final Collection<DeviceFile> filesWithClass = entry.getValue();
-            // Check that jars that define the same class are not part of apexes.
-            for (DeviceFile jarFile : filesWithClass) {
-                assertWithMessage("%s is available in: %s, of which %s is an APEX jar",
-                                    className, filesWithClass, jarFile.devicePath)
-                .that(jarFile.devicePath.startsWith("/apex/"))
-                .isFalse();
-            }
-        }
+        final Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
+
+        Multimap<String, DeviceFile> duplicateClassesInApex =
+                Multimaps.filterValues(duplicateClasses,
+                        jar -> jar.devicePath.startsWith("/apex/"));
+
+        assertThat(duplicateClassesInApex).isEmpty();
     }
 
     /**
      * Retrieve jar files from the device, based on an env variable.
-     * @param tmpDir    The temporary directory where the file will be dumped.
-     * @param variable  The environment variable containing the colon separated jar files.
-     * @return  A {@link java.util.Set} with the pulled {@link DeviceFile} instances.
-    */
+     *
+     * @param tmpDir   The temporary directory where the file will be dumped.
+     * @param variable The environment variable containing the colon separated jar files.
+     * @return A {@link java.util.Set} with the pulled {@link DeviceFile} instances.
+     */
     private Set<DeviceFile> pullJarsFromEnvVariable(File tmpDir, String variable) {
-        return Arrays.asList(getEnvVariable(variable).split(":")).stream()
-            .map(fileName -> pullFromDevice(fileName, tmpDir))
-            .collect(toSet());
+        return Arrays.stream(getEnvVariable(variable).split(":"))
+                .map(fileName -> pullFromDevice(fileName, tmpDir))
+                .collect(toSet());
     }
 
     private void runWithTempDir(TempDirRunnable runnable) throws Exception {
@@ -404,7 +407,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     }
 
     private interface TempDirRunnable {
-        public void runWithTempDir(File tempDir) throws Exception;
+        void runWithTempDir(File tempDir) throws Exception;
     }
 
     /**
@@ -415,6 +418,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
     private static final class DeviceFile {
         public final String devicePath;
         public final String hostPath;
+
         public DeviceFile(String devicePath, String hostPath) {
             this.devicePath = devicePath;
             this.hostPath = hostPath;
@@ -437,7 +441,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             }
             DeviceFile that = (DeviceFile) other;
             return Objects.equals(this.devicePath, that.devicePath)
-            && Objects.equals(this.hostPath, that.hostPath);
+                    && Objects.equals(this.hostPath, that.hostPath);
         }
 
         @Override
@@ -447,7 +451,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
 
         @Override
         public String toString() {
-            return String.format("DeviceFile(devicePath=%s,hostPath=%s)", devicePath, hostPath);
+            return String.format("DeviceFile(%s)", devicePath);
         }
     }
 }

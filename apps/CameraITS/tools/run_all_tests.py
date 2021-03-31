@@ -191,7 +191,7 @@ def report_result(device_id, camera_id, results):
   cmd = (f"{adb} shell am broadcast -a {ACTION_ITS_RESULT} --es {EXTRA_VERSION}"
          f" {CURRENT_ITS_VERSION} --es {EXTRA_CAMERA_ID} {camera_id} --es "
          f"{EXTRA_RESULTS} \'{json_results}\'")
-  if len(cmd) > 4095:
+  if len(cmd) > 8000:
     logging.info('ITS command string might be too long! len:%s', len(cmd))
   run(cmd)
 

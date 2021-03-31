@@ -16,20 +16,30 @@
 
 package android.security.cts;
 
+import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
+
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.SecurityTest;
+import android.util.Log;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PropertyUtil;
 
-import android.platform.test.annotations.AppModeFull;
-import android.platform.test.annotations.SecurityTest;
-import android.test.AndroidTestCase;
-import junit.framework.TestCase;
-
-import android.os.Build;
-import android.util.Log;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 @SecurityTest
-public class EncryptionTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class EncryptionTest {
     static {
         System.loadLibrary("ctssecurity_jni");
     }
@@ -37,6 +47,15 @@ public class EncryptionTest extends AndroidTestCase {
     private static final String TAG = "EncryptionTest";
 
     private static native boolean aesIsFast();
+
+    @Before
+    public void setUp() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        // Assumes every test in this file asserts a requirement of CDD section 9.
+        assumeTrue("Skipping test: FEATURE_SECURITY_MODEL_COMPATIBLE missing.",
+                context.getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE));
+    }
 
     private void handleUnencryptedDevice() {
         // Prior to Android M, encryption wasn't required at all.
@@ -83,6 +102,7 @@ public class EncryptionTest extends AndroidTestCase {
     // to instant apps
     @AppModeFull
     @CddTest(requirement="9.9.2/C-0-1,C-0-2,C-0-3")
+    @Test
     public void testEncryption() throws Exception {
         if ("encrypted".equals(PropertyUtil.getProperty("ro.crypto.state"))) {
             handleEncryptedDevice();

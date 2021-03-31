@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -637,6 +638,68 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                     transcodeCompleteSemaphore.release();
                 });
         assertNotNull(session);
+
+        AtomicInteger progressUpdateCount = new AtomicInteger(0);
+
+        // Set progress update executor and use the same executor as result listener.
+        session.setOnProgressUpdateListener(listenerExecutor,
+                new TranscodingSession.OnProgressUpdateListener() {
+                    int mPreviousProgress = 0;
+
+                    @Override
+                    public void onProgressUpdate(TranscodingSession session, int newProgress) {
+                        assertTrue("Invalid proress update", newProgress > mPreviousProgress);
+                        assertTrue("Invalid proress update", newProgress <= 100);
+                        mPreviousProgress = newProgress;
+                        progressUpdateCount.getAndIncrement();
+                        Log.i(TAG, "Get progress update " + newProgress);
+                    }
+                });
+
+        boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
+                TRANSCODE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        assertTrue("Transcode failed to complete in time.", finishedOnTime);
+        assertTrue("Failed to receive at least 10 progress updates",
+                progressUpdateCount.get() > 10);
+    }
+
+    public void testAddingClientUids() throws Exception {
+        if (shouldSkip()) {
+            return;
+        }
+        Log.d(TAG, "Starting: testTranscodingProgressUpdate");
+
+        Semaphore transcodeCompleteSemaphore = new Semaphore(0);
+
+        // Create a file Uri: file:///data/user/0/android.media.mediatranscoding.cts/cache/HevcTranscode.mp4
+        Uri destinationUri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
+                + mContext.getCacheDir().getAbsolutePath() + "/HevcTranscode.mp4");
+
+        VideoTranscodingRequest request =
+                new VideoTranscodingRequest.Builder(mSourceHEVCVideoUri, destinationUri,
+                        createMediaFormat())
+                        .build();
+        Executor listenerExecutor = Executors.newSingleThreadExecutor();
+
+        TranscodingSession session = mMediaTranscodeManager.enqueueRequest(request,
+                listenerExecutor,
+                TranscodingSession -> {
+                    Log.d(TAG,
+                            "Transcoding completed with result: " + TranscodingSession.getResult());
+                    assertEquals(TranscodingSession.RESULT_SUCCESS, TranscodingSession.getResult());
+                    transcodeCompleteSemaphore.release();
+                });
+        assertNotNull(session);
+
+        session.addClientUid(1898 /* test_uid */);
+        session.addClientUid(1899 /* test_uid */);
+        session.addClientUid(1900 /* test_uid */);
+
+        List<Integer> uids = session.getClientUids();
+        assertTrue(uids.size() == 4);  // At least 4 uid included the original request uid.
+        assertTrue(uids.contains(1898));
+        assertTrue(uids.contains(1899));
+        assertTrue(uids.contains(1900));
 
         AtomicInteger progressUpdateCount = new AtomicInteger(0);
 

@@ -62,7 +62,8 @@ public class MatchContentFrameRateTest {
         mDisplayManager = activity.getSystemService(DisplayManager.class);
         mDisplayManager.setShouldAlwaysRespectAppRequestedMode(true);
 
-        mInitialMatchContentFrameRate = mDisplayManager.getRefreshRateSwitchingType();
+        mInitialMatchContentFrameRate = toSwitchingType(
+                mDisplayManager.getMatchContentFrameRateUserPreference());
     }
 
     @After
@@ -74,8 +75,8 @@ public class MatchContentFrameRateTest {
     @Test
     public void testMatchContentFramerate_None() throws InterruptedException {
         mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_NONE);
-        assertEquals(DisplayManager.SWITCHING_TYPE_NONE,
-                mDisplayManager.getRefreshRateSwitchingType());
+        assertEquals(DisplayManager.MATCH_CONTENT_FRAMERATE_NEVER,
+                mDisplayManager.getMatchContentFrameRateUserPreference());
 
         FrameRateCtsActivity activity = mActivityRule.getActivity();
         activity.testMatchContentFramerate_None();
@@ -84,8 +85,8 @@ public class MatchContentFrameRateTest {
     @Test
     public void testMatchContentFramerate_Auto() throws InterruptedException {
         mDisplayManager.setRefreshRateSwitchingType(DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS);
-        assertEquals(DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS,
-                mDisplayManager.getRefreshRateSwitchingType());
+        assertEquals(DisplayManager.MATCH_CONTENT_FRAMERATE_SEAMLESSS_ONLY,
+                mDisplayManager.getMatchContentFrameRateUserPreference());
 
         FrameRateCtsActivity activity = mActivityRule.getActivity();
         activity.testMatchContentFramerate_Auto();
@@ -95,9 +96,23 @@ public class MatchContentFrameRateTest {
     public void testMatchContentFramerate_Always() throws InterruptedException {
         mDisplayManager.setRefreshRateSwitchingType(
                 DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS);
-        assertEquals(DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS,
-                mDisplayManager.getRefreshRateSwitchingType());
+        assertEquals(DisplayManager.MATCH_CONTENT_FRAMERATE_ALWAYS,
+                mDisplayManager.getMatchContentFrameRateUserPreference());
         FrameRateCtsActivity activity = mActivityRule.getActivity();
         activity.testMatchContentFramerate_Always();
     }
+
+    private int toSwitchingType(int matchContentFrameRateUserPreference) {
+        switch (matchContentFrameRateUserPreference) {
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_NEVER:
+                return DisplayManager.SWITCHING_TYPE_NONE;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_SEAMLESSS_ONLY:
+                return DisplayManager.SWITCHING_TYPE_WITHIN_GROUPS;
+            case DisplayManager.MATCH_CONTENT_FRAMERATE_ALWAYS:
+                return DisplayManager.SWITCHING_TYPE_ACROSS_AND_WITHIN_GROUPS;
+            default:
+                return -1;
+        }
+    }
+
 }

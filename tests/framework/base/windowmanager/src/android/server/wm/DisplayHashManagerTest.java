@@ -20,6 +20,7 @@ import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_BOUNDS;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_INVALID_HASH_ALGORITHM;
 import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_NOT_VISIBLE_ON_SCREEN;
+import static android.view.displayhash.DisplayHashResultCallback.DISPLAY_HASH_ERROR_TOO_MANY_REQUESTS;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -49,6 +50,9 @@ import androidx.annotation.NonNull;
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -97,6 +101,14 @@ public class DisplayHashManagerTest {
         mFirstHashAlgorithm = algorithms.iterator().next();
         mExecutor = context.getMainExecutor();
         mSyncDisplayHashResultCallback = new SyncDisplayHashResultCallback();
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mDisplayHashManager.setDisplayHashThrottlingEnabled(false));
+    }
+
+    @After
+    public void tearDown() {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mDisplayHashManager.setDisplayHashThrottlingEnabled(true));
     }
 
     @Test
@@ -337,6 +349,31 @@ public class DisplayHashManagerTest {
         assertEquals(boundsInWindow, verifiedDisplayHash.getBoundsInWindow());
         assertEquals(hashAlgorithm, verifiedDisplayHash.getHashAlgorithm());
         assertArrayEquals(imageHash, verifiedDisplayHash.getImageHash());
+    }
+
+    @Test
+    public void testGenerateDisplayHash_Throttle() {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mDisplayHashManager.setDisplayHashThrottlingEnabled(true));
+
+        mInstrumentation.runOnMainSync(() -> {
+            final RelativeLayout.LayoutParams p = new RelativeLayout.LayoutParams(mTestViewSize.x,
+                    mTestViewSize.y);
+            mTestView = new View(mActivity);
+            mTestView.setBackgroundColor(Color.BLUE);
+            mMainView.addView(mTestView, p);
+            mMainView.invalidate();
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+                mSyncDisplayHashResultCallback);
+        // Generate a second display hash right away.
+        mSyncDisplayHashResultCallback.reset();
+        mTestView.generateDisplayHash(mFirstHashAlgorithm, null, mExecutor,
+                mSyncDisplayHashResultCallback);
+        int errorCode = mSyncDisplayHashResultCallback.getError();
+        assertEquals(DISPLAY_HASH_ERROR_TOO_MANY_REQUESTS, errorCode);
     }
 
     private DisplayHash generateDisplayHash(Rect bounds) {

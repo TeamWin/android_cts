@@ -32,20 +32,18 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.Set;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class SystemFontsCanonicalNameTest {
-    private static final String SYSTEM_FONT_DIR = "/system/fonts";
-
+public class SystemFontsUniqueNameTest {
     private static final int SFNT_VERSION_1 = 0x00010000;
     private static final int SFNT_VERSION_OTTO = 0x4F54544F;
     private static final int TTC_TAG = 0x74746366;
-    private static final int CFF_TAG = 0x43464620;
-    private static final int CFF2_TAG = 0x43464632;
     private static final int NAME_TAG = 0x6E616D65;
 
-    private static String getCanonicalName(File file) throws IOException {
+    private static String getPostScriptName(File file) throws IOException {
         try (FileInputStream fis = new FileInputStream(file)) {
             final FileChannel fc = fis.getChannel();
             long size = fc.size();
@@ -54,40 +52,26 @@ public class SystemFontsCanonicalNameTest {
 
             int magicNumber = buffer.getInt(0);
 
-            boolean isCollection;
             int fontOffset = 0;
             if (magicNumber == TTC_TAG) {
-                isCollection = true;
-
                 fontOffset = buffer.getInt(12);  // 0th offset
                 magicNumber = buffer.getInt(fontOffset);
                 if (magicNumber != SFNT_VERSION_1 && magicNumber != SFNT_VERSION_OTTO) {
                     throw new IOException("Unknown magic number at 0th font: #" + magicNumber);
                 }
-            } else if (magicNumber == SFNT_VERSION_1 || magicNumber == SFNT_VERSION_OTTO) {
-                isCollection = false;
-            } else {
+            } else if (magicNumber != SFNT_VERSION_1 && magicNumber != SFNT_VERSION_OTTO) {
                 throw new IOException("Unknown magic number: #" + magicNumber);
             }
 
             int numTables = buffer.getShort(fontOffset + 4);  // offset to number of table
-            boolean isType1Font = false;
             int nameTableOffset = 0;
             for (int i = 0; i < numTables; ++i) {
                 int tableEntryOffset = fontOffset + 12 + i * 16;
                 int tableTag = buffer.getInt(tableEntryOffset);
-                if (tableTag == CFF_TAG || tableTag == CFF2_TAG) {
-                    isType1Font = true;
-                } else if (tableTag == NAME_TAG) {
+                if (tableTag == NAME_TAG) {
                     nameTableOffset = buffer.getInt(tableEntryOffset + 8);
+                    break;
                 }
-            }
-
-            String ext;
-            if (isCollection) {
-                ext = isType1Font ? ".otc" : ".ttc";
-            } else {
-                ext = isType1Font ? ".otf" : ".ttf";
             }
 
             if (nameTableOffset == 0) {
@@ -111,8 +95,7 @@ public class SystemFontsCanonicalNameTest {
                     slice.position(nameTableOffset + storageOffset + stringOffset);
                     slice.get(name);
                     // encoded in UTF-16BE for platform ID = 3
-                    String psName = new String(name, StandardCharsets.UTF_16BE);
-                    return psName + ext;
+                    return new String(name, StandardCharsets.UTF_16BE);
                 }
             }
         }
@@ -120,14 +103,20 @@ public class SystemFontsCanonicalNameTest {
     }
 
     @Test
-    public void canonicalName() throws IOException {
-        for (Font font : SystemFonts.getAvailableFonts()) {
-            if (!font.getFile().getAbsolutePath().startsWith(SYSTEM_FONT_DIR)) {
-                continue;  // Only check font files installed in system directory.
-            }
+    public void uniquePostScript() throws IOException {
+        Set<String> set = new HashSet<>();
+        Set<File> seenFile = new HashSet<>();
 
-            String canonicalName = getCanonicalName(font.getFile());
-            assertThat(font.getFile().getName()).isEqualTo(canonicalName);
+        for (Font font : SystemFonts.getAvailableFonts()) {
+            if (seenFile.contains(font.getFile())) {
+                continue;
+            }
+            String psName = getPostScriptName(font.getFile());
+            assertThat(psName).isNotNull();
+            assertThat(set).doesNotContain(psName);
+
+            seenFile.add(font.getFile());
+            set.add(psName);
         }
     }
 }
