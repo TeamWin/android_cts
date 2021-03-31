@@ -43,6 +43,13 @@ import org.hamcrest.Matchers
 import org.junit.Assert.assertThat
 import java.io.InputStream
 
+const val APK_PATH_S_APP = "/data/local/tmp/cts/os/CtsAutoRevokeSApp.apk"
+const val APK_PACKAGE_NAME_S_APP = "android.os.cts.autorevokesapp"
+const val APK_PATH_R_APP = "/data/local/tmp/cts/os/CtsAutoRevokeRApp.apk"
+const val APK_PACKAGE_NAME_R_APP = "android.os.cts.autorevokerapp"
+const val APK_PATH_Q_APP = "/data/local/tmp/cts/os/CtsAutoRevokeQApp.apk"
+const val APK_PACKAGE_NAME_Q_APP = "android.os.cts.autorevokeqapp"
+
 fun runAppHibernationJob(context: Context, tag: String) {
     val logcat = Logcat()
 
