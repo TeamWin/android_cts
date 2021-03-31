@@ -42,6 +42,11 @@
             </intent-filter>
         </receiver>
 
+        <!--  TODO(b/176993670): remove if DpmWrapperManagerWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
+            android:exported="true">
+        </receiver>
+
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
