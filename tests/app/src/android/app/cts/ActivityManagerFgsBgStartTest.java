@@ -1418,6 +1418,59 @@ public class ActivityManagerFgsBgStartTest {
         }
     }
 
+    /**
+     * Test OP_ACTIVATE_VPN and OP_ACTIVATE_PLATFORM_VPN are exempted from BG-FGS-launch
+     * restriction.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsStartVpn() throws Exception {
+        testFgsStartVpnInternal("ACTIVATE_VPN");
+        testFgsStartVpnInternal("ACTIVATE_PLATFORM_VPN");
+    }
+
+    private void testFgsStartVpnInternal(String vpnAppOp) throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        try {
+            // Enable the FGS background startForeground() restriction.
+            enableFgsRestriction(true, true, null);
+            // Start FGS in BG state.
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            // APP1 does not enter FGS state
+            try {
+                waiter.doWait(WAITFOR_MSEC);
+                fail("Service should not enter foreground service state");
+            } catch (Exception e) {
+            }
+
+            setAppOp(PACKAGE_NAME_APP1, vpnAppOp, true);
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            // Now it can start FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+            // Stop the FGS.
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_STOP_FOREGROUND_SERVICE,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, null);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+        } finally {
+            uid1Watcher.finish();
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "appops reset " + PACKAGE_NAME_APP1);
+        }
+    }
 
     /**
      * Turn on the FGS BG-launch restriction. DeviceConfig can turn on restriction on the whole
@@ -1480,5 +1533,11 @@ public class ActivityManagerFgsBgStartTest {
                             Integer.toString(timeoutMs), false);
                 }
         );
+    }
+
+    private void setAppOp(String packageName, String opStr, boolean allow) throws Exception {
+        CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                "appops set " + packageName + " " + opStr + " "
+                        + (allow ? "allow" : "deny"));
     }
 }
