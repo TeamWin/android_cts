@@ -427,18 +427,21 @@ public class FrameRateOverrideTestActivity extends Activity {
 
         Log.i(TAG, String.format("Setting Frame Rate to %.2f with default compatibility",
                 halfFrameRate));
-        mSurface.setFrameRate(halfFrameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT, true);
+        mSurface.setFrameRate(halfFrameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
         waitForRefreshRateChange(halfFrameRate);
         frameRateObserver.observe(initialRefreshRate, halfFrameRate, "setFrameRate(default)");
 
         Log.i(TAG, String.format("Setting Frame Rate to %.2f with fixed source compatibility",
                 halfFrameRate));
-        mSurface.setFrameRate(halfFrameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE, true);
+        mSurface.setFrameRate(halfFrameRate, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE,
+                Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
         waitForRefreshRateChange(halfFrameRate);
         frameRateObserver.observe(initialRefreshRate, halfFrameRate, "setFrameRate(fixed source)");
 
         Log.i(TAG, "Resetting Frame Rate setting");
-        mSurface.setFrameRate(0, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT, true);
+        mSurface.setFrameRate(0, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
+                Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
         waitForRefreshRateChange(initialRefreshRate);
         frameRateObserver.observe(initialRefreshRate, initialRefreshRate, "Reset");
     }
