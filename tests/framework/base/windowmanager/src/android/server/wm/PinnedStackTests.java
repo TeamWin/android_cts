@@ -111,8 +111,6 @@ import android.server.wm.settings.SettingsSession;
 import android.util.Log;
 import android.util.Size;
 
-import androidx.test.filters.FlakyTest;
-
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -598,7 +596,6 @@ public class PinnedStackTests extends ActivityManagerTestBase {
         assertEquals(1, mWmState.countStacks(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD));
     }
 
-    @FlakyTest(bugId = 183538974)
     @Test
     public void testDisallowMultipleTasksInPinnedStack() throws Exception {
         // Launch a test activity so that we have multiple fullscreen tasks
@@ -606,13 +603,13 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Launch first PIP activity
         launchActivity(PIP_ACTIVITY);
-        int windowingMode = mWmState.getTaskByActivity(PIP_ACTIVITY).getWindowingMode();
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         int defaultDisplayWindowingMode = getDefaultDisplayWindowingMode(PIP_ACTIVITY);
 
         // Launch second PIP activity
         launchActivity(PIP_ACTIVITY2, extraString(EXTRA_ENTER_PIP, "true"));
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY2);
 
         final ActivityTask pinnedStack = getPinnedStack();
         assertEquals(0, pinnedStack.getTasks().size());
