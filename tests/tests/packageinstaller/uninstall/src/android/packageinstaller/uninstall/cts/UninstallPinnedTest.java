@@ -145,7 +145,7 @@ public class UninstallPinnedTest {
     private void pinActivity(ComponentName component) {
         mWmState.computeState();
 
-        int stackId = mWmState.getStackIdByActivity(component);
+        int stackId = mWmState.getRootTaskIdByActivity(component);
 
         runWithShellPermissionIdentity(() -> {
             mActivityTaskManager.startSystemLockTaskMode(

@@ -86,10 +86,6 @@
              android:resizeableActivity="false"
              android:screenOrientation="portrait"/>
 
-        <activity android:name="android.server.wm.ActivityManagerTestBase$SideActivity"
-             android:resizeableActivity="true"
-             android:taskAffinity="nobody.but.SideActivity"/>
-
         <activity android:name="android.server.wm.ActivityManagerTestBase$ConfigChangeHandlingActivity"
              android:resizeableActivity="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
@@ -99,6 +95,9 @@
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ThirdActivity"/>
+
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SideActivity"
+                  android:taskAffinity="nobody.but.SideActivity"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
              android:theme="@android:style/Theme.Translucent.NoTitleBar"/>

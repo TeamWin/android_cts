@@ -85,35 +85,28 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
         assumeTrue(supportsSecureLock());
         assumeTrue(supportsSplitScreenMultiWindow());
 
-        // TODO(b/149338177): Fix test to pass with organizer API.
-        mUseTaskOrganizer = false;
-
+        final Activity secondaryActivity = launchActivityAndWait(SideActivity.class);
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
-
-        // Launch second activity to side
-        final Activity secondActivity = new Launcher(SecondActivity.class)
-                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
-                .launch();
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, secondaryActivity);
 
         // Show and hide lock screen
         getLifecycleLog().clear();
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential().gotoKeyguard();
             waitAndAssertActivityStates(state(firstActivity, ON_STOP));
-            waitAndAssertActivityStates(state(secondActivity, ON_STOP));
+            waitAndAssertActivityStates(state(secondaryActivity, ON_STOP));
 
             LifecycleVerifier.assertResumeToStopSequence(FirstActivity.class, getLifecycleLog());
-            LifecycleVerifier.assertResumeToStopSequence(SecondActivity.class, getLifecycleLog());
+            LifecycleVerifier.assertResumeToStopSequence(SideActivity.class, getLifecycleLog());
             getLifecycleLog().clear();
         } // keyguard hidden
 
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME),
-                state(secondActivity, ON_RESUME));
+                state(secondaryActivity, ON_RESUME));
         LifecycleVerifier.assertRestartAndResumeSequence(FirstActivity.class, getLifecycleLog());
-        LifecycleVerifier.assertRestartAndResumeSequence(SecondActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertRestartAndResumeSequence(SideActivity.class, getLifecycleLog());
     }
 
     @Test

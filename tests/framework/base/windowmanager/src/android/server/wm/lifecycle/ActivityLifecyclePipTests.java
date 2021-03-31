@@ -213,12 +213,15 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     public void testSplitScreenBelowPip() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
-        // TODO(b/149338177): Fix test to pass with organizer API.
-        mUseTaskOrganizer = false;
         // Launch Pip-capable activity and enter Pip immediately
         new Launcher(PipActivity.class)
                 .setExpectedState(ON_PAUSE)
                 .setExtraFlags(EXTRA_ENTER_PIP)
+                .launch();
+
+        // Launch an activity that will be moved to split-screen secondary
+        final Activity sideActivity = new Launcher(ThirdActivity.class)
+                .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
 
         // Launch first activity
@@ -229,9 +232,7 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
-        // TODO(b/123013403): will fail with callback tracking enabled - delivers extra
-        // MULTI_WINDOW_MODE_CHANGED
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
         LifecycleVerifier.assertEmptySequence(PipActivity.class, getLifecycleLog(),
                 "launchBelow");
 
@@ -250,13 +251,14 @@ public class ActivityLifecyclePipTests extends ActivityLifecycleClientTestBase {
     public void testPipAboveSplitScreen() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
-        // TODO(b/149338177): Fix test to pass with organizer API.
-        mUseTaskOrganizer = false;
+        // Launch an activity that will be moved to split-screen secondary
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(FirstActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
 
         // Launch second activity to side
         final Activity secondActivity = new Launcher(SecondActivity.class)

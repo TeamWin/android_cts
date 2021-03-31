@@ -442,6 +442,10 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
     public static class ThirdActivity extends LifecycleTrackingActivity {
     }
 
+    // Test activity
+    public static class SideActivity extends LifecycleTrackingActivity {
+    }
+
     // Translucent test activity
     public static class TranslucentActivity extends LifecycleTrackingActivity {
     }
@@ -740,12 +744,15 @@ public class ActivityLifecycleClientTestBase extends MultiDisplayTestBase {
         return new ComponentName(getInstrumentation().getContext(), activity);
     }
 
-    void moveTaskToPrimarySplitScreenAndVerify(Activity activity) {
+    void moveTaskToPrimarySplitScreenAndVerify(Activity primaryActivity,
+            Activity secondaryActivity) throws Exception {
         getLifecycleLog().clear();
 
-        moveTaskToPrimarySplitScreen(activity.getTaskId(), true /* showSideActivity */);
+        mWmState.computeState(secondaryActivity.getComponentName());
+        moveActivitiesToSplitScreen(primaryActivity.getComponentName(),
+                secondaryActivity.getComponentName());
 
-        final Class<? extends Activity> activityClass = activity.getClass();
+        final Class<? extends Activity> activityClass = primaryActivity.getClass();
 
         final List<LifecycleLog.ActivityCallback> expectedTransitions =
                 new ArrayList<LifecycleLog.ActivityCallback>(
