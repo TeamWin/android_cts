@@ -55,7 +55,7 @@ import java.util.Objects;
  */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class ViewOnReceiveContentTest {
+public class ViewReceiveContentTest {
     @Rule
     public ActivityTestRule<ViewTestCtsActivity> mActivityRule = new ActivityTestRule<>(
             ViewTestCtsActivity.class);
@@ -74,24 +74,24 @@ public class ViewOnReceiveContentTest {
         View view = new View(mActivity);
 
         // MIME types are null by default
-        assertThat(view.getOnReceiveContentMimeTypes()).isNull();
+        assertThat(view.getReceiveContentMimeTypes()).isNull();
 
         // Setting MIME types with a non-null callback works
         String[] mimeTypes = new String[] {"image/*", "video/mp4"};
         view.setOnReceiveContentListener(mimeTypes, mReceiver);
-        assertThat(view.getOnReceiveContentMimeTypes()).isEqualTo(mimeTypes);
+        assertThat(view.getReceiveContentMimeTypes()).isEqualTo(mimeTypes);
 
         // Setting null MIME types and null callback works
         view.setOnReceiveContentListener(null, null);
-        assertThat(view.getOnReceiveContentMimeTypes()).isNull();
+        assertThat(view.getReceiveContentMimeTypes()).isNull();
 
         // Setting empty MIME types and null callback works
         view.setOnReceiveContentListener(new String[0], null);
-        assertThat(view.getOnReceiveContentMimeTypes()).isNull();
+        assertThat(view.getReceiveContentMimeTypes()).isNull();
 
         // Setting MIME types with a null callback works
         view.setOnReceiveContentListener(mimeTypes, null);
-        assertThat(view.getOnReceiveContentMimeTypes()).isEqualTo(mimeTypes);
+        assertThat(view.getReceiveContentMimeTypes()).isEqualTo(mimeTypes);
 
         // Setting null or empty MIME types with a non-null callback is not allowed
         try {
