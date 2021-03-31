@@ -38,21 +38,22 @@ public class Change {
     public int sinceSdk;
     public boolean disabled;
     public boolean loggingOnly;
+    public boolean overridable;
     public boolean hasRawOverrides;
     public boolean hasOverrides;
-
     public String rawOverrideStr;
     public String overridesStr;
 
     private Change(long changeId, String changeName, int sinceSdk,
-            boolean disabled, boolean loggingOnly, boolean hasRawOverrides,
-            boolean hasOverrides, String rawOverrideStr,
-            String overridesStr) {
+            boolean disabled, boolean loggingOnly, boolean overridable,
+            boolean hasRawOverrides, boolean hasOverrides,
+            String rawOverrideStr, String overridesStr) {
         this.changeId = changeId;
         this.changeName = changeName;
         this.sinceSdk = sinceSdk;
         this.disabled = disabled;
         this.loggingOnly = loggingOnly;
+        this.overridable = overridable;
         this.hasRawOverrides = hasRawOverrides;
         this.hasOverrides = hasOverrides;
         this.rawOverrideStr = rawOverrideStr;
@@ -65,9 +66,9 @@ public class Change {
         int sinceSdk = -1;
         boolean disabled = false;
         boolean loggingOnly = false;
+        boolean overridable = false;
         boolean hasRawOverrides = false;
         boolean hasOverrides = false;
-
         String rawOverridesStr = null;
         String overridesStr = null;
 
@@ -104,7 +105,10 @@ public class Change {
             hasRawOverrides = true;
             rawOverridesStr = matcher.group("rawOverrides");
         }
-        return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly,
+        if (matcher.group("overridable") != null) {
+            overridable = true;
+        }
+        return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly, overridable,
                           hasRawOverrides, hasOverrides, rawOverridesStr,
                           overridesStr);
     }
@@ -133,8 +137,13 @@ public class Change {
         if (element.hasAttribute("loggingOnly")) {
             loggingOnly = true;
         }
-        return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly, false, false,
-                          null, null);
+        boolean overridable = false;
+        if (element.hasAttribute("overridable")) {
+            overridable = true;
+        }
+        return new Change(changeId, changeName, sinceSdk, disabled, loggingOnly, overridable,
+                /* hasRawOverrides= */ false, /* hasOverrides= */ false,
+                /* rawOverridesStr= */ null, /* overridesStr= */null);
     }
 
     @Override
@@ -155,7 +164,8 @@ public class Change {
             && Objects.equals(this.changeName, that.changeName)
             && this.sinceSdk == that.sinceSdk
             && this.disabled == that.disabled
-            && this.loggingOnly == that.loggingOnly;
+            && this.loggingOnly == that.loggingOnly
+            && this.overridable == that.overridable;
     }
 
     @Override
@@ -171,15 +181,18 @@ public class Change {
         if (disabled) {
             sb.append("; disabled");
         }
+        if (hasOverrides) {
+            sb.append("; packageOverrides={");
+            sb.append(overridesStr);
+            sb.append("}");
+        }
         if (hasRawOverrides) {
             sb.append("; rawOverrides={");
             sb.append(rawOverrideStr);
             sb.append("}");
         }
-        if (hasOverrides) {
-            sb.append("; packageOverrides={");
-            sb.append(overridesStr);
-            sb.append("}");
+        if (overridable) {
+            sb.append("; overridable");
         }
         sb.append(")");
         return sb.toString();
