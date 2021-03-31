@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.translation.TranslationRequestValue;
 import android.view.translation.ViewTranslationRequest;
@@ -37,6 +38,19 @@ public class ViewTranslationRequestTest {
     @Test
     public void testBuilder_nullAutofillId() {
         assertThrows(NullPointerException.class, () -> new ViewTranslationRequest.Builder(null));
+    }
+
+    @Test
+    public void testBuilderVirtualAutofillId_validSetText() {
+        final ViewTranslationRequest request =
+                new ViewTranslationRequest.Builder(mAutofillId, /* virtualChildId= */ 12345L)
+                        .setValue("sample id", TranslationRequestValue.forText("sample text"))
+                        .build();
+
+        assertThat(request.getAutofillId()).isEqualTo(new AutofillId(mAutofillId, 12345L, 0));
+        assertThat(request.getKeys().size()).isEqualTo(1);
+        assertThat(request.getKeys()).containsExactly("sample id");
+        assertThat(request.getValue("sample id").getText()).isEqualTo("sample text");
     }
 
     @Test
