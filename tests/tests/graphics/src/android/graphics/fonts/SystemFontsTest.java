@@ -61,16 +61,22 @@ public class SystemFontsTest {
         for (Font font : availableFonts) {
             assertNotNull("System font must provide file path to the font file.", font.getFile());
 
-            // The system font must be read-only file.
-            assertTrue(font.getFile().exists());
-            assertTrue(font.getFile().isFile());
-            assertTrue(font.getFile().canRead());
-            assertFalse(font.getFile().canExecute());
-            assertFalse(font.getFile().canWrite());
-
-            // The system font must be in read-only file system
             final String absPath = font.getFile().getAbsolutePath();
-            assertTrue((Os.statvfs(absPath).f_flag & OsConstants.ST_RDONLY) != 0);
+
+            // The system font must be read-only file.
+            assertTrue(absPath + " must exists", font.getFile().exists());
+            assertTrue(absPath + " must be a file", font.getFile().isFile());
+            assertTrue(absPath + " must be readable", font.getFile().canRead());
+            assertFalse(absPath + " must not executable", font.getFile().canExecute());
+            assertFalse(absPath + " must not writable", font.getFile().canWrite());
+
+            // The update font files will be in /data directory which is not usually under the
+            // read-only file system.
+            if (!absPath.startsWith("/data/fonts/")) {
+                // The system font must be in read-only file system.
+                assertTrue(absPath + " is not in the read-only file system.",
+                        (Os.statvfs(absPath).f_flag & OsConstants.ST_RDONLY) != 0);
+            }
         }
     }
 
