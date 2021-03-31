@@ -30,11 +30,9 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
-import android.annotation.Nullable;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -762,4 +760,36 @@ public class TestHelper {
                         mConnectivityManager.getNetworkCapabilities(n).hasTransport(TRANSPORT_WIFI))
                 .count();
     }
+
+    /**
+     * Registers a network callback for internet connectivity via wifi and asserts that a network
+     * is available within {@link #DURATION_NETWORK_CONNECTION_MILLIS}.
+     *
+     * @throws Exception
+     */
+    public void assertWifiInternetConnectionAvailable() throws Exception {
+        CountDownLatch countDownLatchNr = new CountDownLatch(1);
+        TestNetworkCallback testNetworkCallback = createTestNetworkCallback(countDownLatchNr);
+        try {
+            // File a callback for wifi network.
+            mConnectivityManager.registerNetworkCallback(
+                    new NetworkRequest.Builder()
+                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+                            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                            // Needed to ensure that the restricted concurrent connection does not
+                            // match this request.
+                            .addUnwantedCapability(NET_CAPABILITY_OEM_PAID)
+                            .addUnwantedCapability(NET_CAPABILITY_OEM_PRIVATE)
+                            .build(),
+                    testNetworkCallback);
+            // Wait for connection to complete & ensure we are connected to some network capable
+            // of providing internet access.
+            assertThat(countDownLatchNr.await(
+                    DURATION_NETWORK_CONNECTION_MILLIS, TimeUnit.MILLISECONDS)).isTrue();
+            assertThat(testNetworkCallback.onAvailableCalled).isTrue();
+        } finally {
+            mConnectivityManager.unregisterNetworkCallback(testNetworkCallback);
+        }
+    }
+
 }
