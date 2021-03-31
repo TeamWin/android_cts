@@ -36,11 +36,7 @@
                     {
                         "name": "android.server.wm.cts/android.server.wm.intent.Activities$SingleInstanceActivity",
                         "state": "RESUMED"
-                    }
-                ]
-            },
-            {
-                "activities": [
+                    },
                     {
                         "name": "android.server.wm.cts/android.server.wm.intent.Activities$TaskAffinity1Activity",
                         "state": "STOPPED"
@@ -48,5 +44,6 @@
                 ]
             }
         ]
+
     }
 }
