@@ -43,7 +43,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
 import android.os.Looper;
 import android.os.PersistableBundle;
 import android.platform.test.annotations.SecurityTest;
@@ -107,9 +106,7 @@ public class CarrierConfigManagerTest {
      * the device supports cellular data.
      */
     private boolean hasTelephony() {
-        ConnectivityManager mgr =
-                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        return mgr.isNetworkSupported(ConnectivityManager.TYPE_MOBILE);
+        return mTelephonyManager.isDataCapable();
     }
 
     private boolean isSimCardPresent() {
