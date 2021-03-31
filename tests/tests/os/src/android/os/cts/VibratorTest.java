@@ -18,6 +18,7 @@ package android.os.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -93,7 +94,8 @@ public class VibratorTest {
     };
 
     private Vibrator mVibrator;
-    @Mock private OnVibratorStateChangedListener mStateListener;
+    @Mock
+    private OnVibratorStateChangedListener mStateListener;
 
     @Before
     public void setUp() {
@@ -270,6 +272,20 @@ public class VibratorTest {
         // We don't really have a way to test if the device supports each effect or not.
         mVibrator.areAllPrimitivesSupported(PRIMITIVE_EFFECTS);
         assertTrue(mVibrator.areAllPrimitivesSupported());
+    }
+
+    @Test
+    public void testVibratorPrimitivesDurations() {
+        int[] durations = mVibrator.getPrimitiveDurations(PRIMITIVE_EFFECTS);
+        boolean[] supported = mVibrator.arePrimitivesSupported(PRIMITIVE_EFFECTS);
+        assertEquals(PRIMITIVE_EFFECTS.length, durations.length);
+        for (int i = 0; i < durations.length; i++) {
+            assertEquals("Primitive " + PRIMITIVE_EFFECTS[i]
+                            + " expected to have " + (supported[i] ? "positive" : "zero")
+                            + " duration, found " + durations[i] + "ms",
+                    supported[i], durations[i] > 0);
+        }
+        assertEquals(0, mVibrator.getPrimitiveDurations().length);
     }
 
     @Test
