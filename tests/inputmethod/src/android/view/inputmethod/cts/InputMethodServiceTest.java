@@ -58,6 +58,7 @@ import android.view.inputmethod.InputConnectionWrapper;
 import android.view.inputmethod.InputMethodManager;
 import android.view.inputmethod.cts.util.EndToEndImeTestBase;
 import android.view.inputmethod.cts.util.TestActivity;
+import android.view.inputmethod.cts.util.TestActivity2;
 import android.view.inputmethod.cts.util.TestUtils;
 import android.view.inputmethod.cts.util.TestWebView;
 import android.view.inputmethod.cts.util.UnlockScreenRule;
@@ -69,6 +70,7 @@ import androidx.test.filters.MediumTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.SystemUtil;
 import com.android.cts.mockime.ImeCommand;
 import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
@@ -80,6 +82,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -95,6 +98,10 @@ import java.util.function.Predicate;
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(20);
     private static final long EXPECTED_TIMEOUT = TimeUnit.SECONDS.toMillis(2);
+
+    private static final String ERASE_FONT_SCALE_CMD = "settings delete system font_scale";
+    // 1.2 is an arbitrary value.
+    private static final String PUT_FONT_SCALE_CMD = "settings put system font_scale 1.2";
 
     @Rule
     public final UnlockScreenRule mUnlockScreenRule = new UnlockScreenRule();
@@ -120,19 +127,26 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     private TestActivity createTestActivity(final int windowFlags) {
-        return TestActivity.startSync(activity -> {
-            final LinearLayout layout = new LinearLayout(activity);
-            layout.setOrientation(LinearLayout.VERTICAL);
-
-            final EditText editText = new EditText(activity);
-            editText.setText("Editable");
-            layout.addView(editText);
-            editText.requestFocus();
-
-            activity.getWindow().setSoftInputMode(windowFlags);
-            return layout;
-        });
+        return TestActivity.startSync(activity -> createLayout(windowFlags, activity));
     }
+
+    private TestActivity createTestActivity2(final int windowFlags) {
+        return TestActivity2.startSync(activity -> createLayout(windowFlags, activity));
+    }
+
+    private LinearLayout createLayout(final int windowFlags, final Activity activity) {
+        final LinearLayout layout = new LinearLayout(activity);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        final EditText editText = new EditText(activity);
+        editText.setText("Editable");
+        layout.addView(editText);
+        editText.requestFocus();
+
+        activity.getWindow().setSoftInputMode(windowFlags);
+        return layout;
+    }
+
 
     @Test
     public void verifyLayoutInflaterContext() throws Exception {
@@ -247,6 +261,73 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     View.VISIBLE, TIMEOUT);
 
             expectImeVisible(TIMEOUT);
+        }
+    }
+
+    @Test
+    public void testHandlesConfigChanges() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getInstrumentation().getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            // Case 1: Activity handles configChanges="fontScale"
+            createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
+            // MockIme handles fontScale. Make sure changing fontScale doesn't restart IME.
+            enableFontScale();
+            expectImeVisible(TIMEOUT);
+            // Make sure IME was not restarted.
+            notExpectEvent(stream, event -> "onCreate".equals(event.getEventName()),
+                    EXPECTED_TIMEOUT);
+            notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    EXPECTED_TIMEOUT);
+
+            eraseFontScale();
+
+            // Case 2: Activity *doesn't* handle configChanges="fontScale" and restarts.
+            final Activity activity = createTestActivity2(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            // MockIme handles fontScale. Make sure changing fontScale doesn't restart IME.
+            enableFontScale();
+            expectImeVisible(TIMEOUT);
+            // Make sure IME was not restarted.
+            notExpectEvent(stream, event -> "onCreate".equals(event.getEventName()),
+                    EXPECTED_TIMEOUT);
+            notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
+                    EXPECTED_TIMEOUT);
+        } finally {
+            eraseFontScale();
+        }
+    }
+
+    /**
+     * Font scale is a global configuration.
+     * This function will apply font scale changes.
+     */
+    private void enableFontScale() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            SystemUtil.runShellCommand(instrumentation, PUT_FONT_SCALE_CMD);
+            instrumentation.waitForIdleSync();
+        } catch (IOException io) {
+            fail("Couldn't apply font scale.");
+        }
+    }
+
+    /**
+     * Font scale is a global configuration.
+     * This function will apply font scale changes.
+     */
+    private void eraseFontScale() {
+        try {
+            final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+            SystemUtil.runShellCommand(instrumentation, ERASE_FONT_SCALE_CMD);
+            instrumentation.waitForIdleSync();
+        } catch (IOException io) {
+            fail("Couldn't apply font scale.");
         }
     }
 
