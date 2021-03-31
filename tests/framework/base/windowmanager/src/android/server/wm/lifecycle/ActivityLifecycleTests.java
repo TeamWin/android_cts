@@ -160,7 +160,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
         final ComponentName firstActivityName = getComponentName(FirstActivity.class);
         mWmState.computeState(firstActivityName);
-        int firstActivityStack = mWmState.getStackIdByActivity(firstActivityName);
+        int firstActivityStack = mWmState.getRootTaskIdByActivity(firstActivityName);
 
         // Move translucent activity into the stack with the first activity
         getLifecycleLog().clear();

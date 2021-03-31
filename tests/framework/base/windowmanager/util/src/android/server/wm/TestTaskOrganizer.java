@@ -224,7 +224,7 @@ public class TestTaskOrganizer extends TaskOrganizer {
         });
     }
 
-    void setLaunchRoot(int taskId) {
+    public void setLaunchRoot(int taskId) {
         NestedShellPermission.run(() -> {
             synchronized (this) {
                 final WindowContainerTransaction t = new WindowContainerTransaction()
@@ -236,6 +236,10 @@ public class TestTaskOrganizer extends TaskOrganizer {
     }
 
     void dismissedSplitScreen() {
+        dismissedSplitScreen(false /* primaryOnTop */);
+    }
+
+    void dismissedSplitScreen(boolean primaryOnTop) {
         synchronized (this) {
             NestedShellPermission.run(() -> {
                 final WindowContainerTransaction t = new WindowContainerTransaction()
@@ -248,13 +252,13 @@ public class TestTaskOrganizer extends TaskOrganizer {
                                 null,
                                 null)
                         .reparentTasks(
-                                mRootPrimary.getToken(),
+                                primaryOnTop ? mRootSecondary.getToken() : mRootPrimary.getToken(),
                                 null /* newParent */,
                                 CONTROLLED_WINDOWING_MODES,
                                 CONTROLLED_ACTIVITY_TYPES,
                                 true /* onTop */)
                         .reparentTasks(
-                                mRootSecondary.getToken(),
+                                primaryOnTop ? mRootPrimary.getToken() : mRootSecondary.getToken(),
                                 null /* newParent */,
                                 CONTROLLED_WINDOWING_MODES,
                                 CONTROLLED_ACTIVITY_TYPES,
@@ -298,11 +302,11 @@ public class TestTaskOrganizer extends TaskOrganizer {
         return mSecondaryChildrenTaskIds.size();
     }
 
-    int getPrimarySplitTaskId() {
+    public int getPrimarySplitTaskId() {
         return mRootPrimary != null ? mRootPrimary.taskId : INVALID_TASK_ID;
     }
 
-    int getSecondarySplitTaskId() {
+    public int getSecondarySplitTaskId() {
         return mRootSecondary != null ? mRootSecondary.taskId : INVALID_TASK_ID;
     }
 

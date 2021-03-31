@@ -45,7 +45,7 @@ public class MinimalPostProcessingTests extends ActivityManagerTestBase {
         }
         mWmState.waitForValidState(name);
 
-        final int stackId = mWmState.getStackIdByActivity(name);
+        final int stackId = mWmState.getRootTaskIdByActivity(name);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
 
