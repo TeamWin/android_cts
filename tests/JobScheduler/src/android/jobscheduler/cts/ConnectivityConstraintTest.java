@@ -15,12 +15,15 @@
  */
 package android.jobscheduler.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED;
+import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+
 import android.annotation.TargetApi;
 import android.app.job.JobInfo;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
@@ -490,9 +493,11 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     static void setWifiState(final boolean enable,
             final ConnectivityManager cm, final WifiManager wm) throws InterruptedException {
         if (enable != isWiFiConnected(cm, wm)) {
-            NetworkRequest nr = new NetworkRequest.Builder().addCapability(
-                    NetworkCapabilities.NET_CAPABILITY_NOT_METERED).build();
-            NetworkTracker tracker = new NetworkTracker(false, enable, cm);
+            NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
+            NetworkCapabilities nc = new NetworkCapabilities.Builder()
+                    .addTransportType(TRANSPORT_WIFI)
+                    .build();
+            NetworkTracker tracker = new NetworkTracker(nc, enable, cm);
             cm.registerNetworkCallback(nr, tracker);
 
             if (enable) {
@@ -515,7 +520,16 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     private static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
-        return wm.isWifiEnabled() && cm.getActiveNetwork() != null && !cm.isActiveNetworkMetered();
+        if (!wm.isWifiEnabled()) {
+            return false;
+        }
+        final Network network = cm.getActiveNetwork();
+        if (network == null) {
+            return false;
+        }
+        final NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
+        return networkCapabilities != null && networkCapabilities.hasTransport(TRANSPORT_WIFI)
+                && networkCapabilities.hasCapability(NET_CAPABILITY_NOT_SUSPENDED);
     }
 
     /**
@@ -528,8 +542,11 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      */
     private void disconnectWifiToConnectToMobile() throws InterruptedException {
         if (mHasWifi && mWifiManager.isWifiEnabled()) {
-            NetworkRequest nr = new NetworkRequest.Builder().build();
-            NetworkTracker tracker = new NetworkTracker(true, true, mCm);
+            NetworkRequest nr = new NetworkRequest.Builder().clearCapabilities().build();
+            NetworkCapabilities nc = new NetworkCapabilities.Builder()
+                    .addTransportType(TRANSPORT_CELLULAR)
+                    .build();
+            NetworkTracker tracker = new NetworkTracker(nc, true, mCm);
             mCm.registerNetworkCallback(nr, tracker);
 
             disconnectFromWifi();
@@ -556,7 +573,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         private final CountDownLatch mReceiveLatch = new CountDownLatch(1);
 
-        private final boolean mNetworkMetered;
+        private final NetworkCapabilities mExpectedCapabilities;
 
         private final boolean mExpectedConnected;
 
@@ -569,16 +586,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
             }
         };
 
-        private NetworkTracker(boolean networkMetered, boolean expectedConnected,
+        private NetworkTracker(NetworkCapabilities expectedCapabilities, boolean expectedConnected,
                 ConnectivityManager cm) {
-            mNetworkMetered = networkMetered;
+            mExpectedCapabilities = expectedCapabilities;
             mExpectedConnected = expectedConnected;
             mCm = cm;
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             // Available doesn't mean it's the active network. We need to check that separately.
             checkActiveNetwork();
         }
@@ -594,20 +610,23 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
 
         private void checkActiveNetwork() {
+            mHandler.removeMessages(MSG_CHECK_ACTIVE_NETWORK);
             if (mReceiveLatch.getCount() == 0) {
                 return;
             }
 
+            Network activeNetwork = mCm.getActiveNetwork();
             if (mExpectedConnected) {
-                if (mCm.getActiveNetwork() != null
-                        && mNetworkMetered == mCm.isActiveNetworkMetered()) {
+                if (activeNetwork != null && mExpectedCapabilities.satisfiedByNetworkCapabilities(
+                        mCm.getNetworkCapabilities(activeNetwork))) {
                     mReceiveLatch.countDown();
                 } else {
                     mHandler.sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
                 }
             } else {
-                if (mCm.getActiveNetwork() != null
-                        && mNetworkMetered != mCm.isActiveNetworkMetered()) {
+                if (activeNetwork != null
+                        || !mExpectedCapabilities.satisfiedByNetworkCapabilities(
+                        mCm.getNetworkCapabilities(activeNetwork))) {
                     mReceiveLatch.countDown();
                 } else {
                     mHandler.sendEmptyMessageDelayed(MSG_CHECK_ACTIVE_NETWORK, 5000);
