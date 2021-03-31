@@ -23,6 +23,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.annotation.NonNull;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.MacAddress;
@@ -224,6 +225,15 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                 });
     }
 
+    private static void enableAllSavedNetworks(@NonNull WifiManager wifiManager) {
+        ShellIdentityUtils.invokeWithShellPermissions(
+                () -> {
+                    for (WifiConfiguration savedNetwork : wifiManager.getConfiguredNetworks()) {
+                        wifiManager.enableNetwork(savedNetwork.networkId, false);
+                    }
+                });
+    }
+
     @AfterClass
     public static void tearDownClass() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
@@ -237,12 +247,8 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
         }
 
         // Re-enable networks.
-        ShellIdentityUtils.invokeWithShellPermissions(
-                () -> {
-                    for (WifiConfiguration savedNetwork : wifiManager.getConfiguredNetworks()) {
-                        wifiManager.enableNetwork(savedNetwork.networkId, false);
-                    }
-                });
+        enableAllSavedNetworks(wifiManager);
+
         ShellIdentityUtils.invokeWithShellPermissions(
                 () -> wifiManager.setScanThrottleEnabled(sWasScanThrottleEnabled));
         ShellIdentityUtils.invokeWithShellPermissions(
@@ -378,6 +384,33 @@ public class WifiNetworkSpecifierTest extends WifiJUnit4TestBase {
                         mTestNetwork)
                         .build();
         testUserRejectionWithSpecifier(specifier);
+    }
+
+    /**
+     * Tests the entire connection flow using a specific SSID in the specifier and ensure that the
+     * device auto connects back to some saved network or suggestions in range of the device (that
+     * can provide internet connectivity) when the request is released.
+     */
+    @Test
+    public void testEnsureAutoConnectToInternetConnectionOnRelease() throws Exception {
+        WifiNetworkSpecifier specifier =
+                TestHelper.createSpecifierBuilderWithCredentialFromSavedNetwork(
+                        mTestNetwork)
+                        .build();
+        testSuccessfulConnectionWithSpecifier(specifier);
+
+        // Now release the network request.
+        mConnectivityManager.unregisterNetworkCallback(mNrNetworkCallback);
+        mNrNetworkCallback = null;
+
+        // Enable all saved networks on the device
+        enableAllSavedNetworks(mWifiManager);
+
+        // Wait for the device to auto-connect back to some saved or suggested network (which can
+        // provide internet connectivity.
+        // Note: On devices with concurrency support, this may return true immediately (since the
+        // internet connection may be present concurrently).
+        mTestHelper.assertWifiInternetConnectionAvailable();
     }
 
     /**
