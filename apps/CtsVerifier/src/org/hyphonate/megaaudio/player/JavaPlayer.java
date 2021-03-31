@@ -17,6 +17,7 @@ package org.hyphonate.megaaudio.player;
 
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.util.Log;
 
@@ -196,6 +197,15 @@ public class JavaPlayer extends Player {
         return OK;
     }
 
+    /**
+     * Gets a timestamp from the audio stream
+     * @param timestamp
+     * @return
+     */
+    public boolean getTimestamp(AudioTimestamp timestamp) {
+        return mPlaying ? mAudioTrack.getTimestamp(timestamp) : false;
+    }
+
     //
     // StreamPlayerRunnable
     //
@@ -212,6 +222,8 @@ public class JavaPlayer extends Player {
             mAudioTrack.play();
             while (mPlaying) {
                 mAudioSource.pull(mAudioBuffer, mNumBufferFrames, mChannelCount);
+
+                onPull();
 
                 int numSamplesWritten = mAudioTrack.write(
                         mAudioBuffer,0, numBufferSamples, AudioTrack.WRITE_BLOCKING);

@@ -25,21 +25,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <RadioGroup
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-            <RadioButton
-                android:id="@+id/tap2toneJavaApiBtn"
-                android:text="@string/audio_general_JavaApi"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-            <RadioButton
-                android:id="@+id/tap2toneNativeApiBtn"
-                android:text="@string/audio_general_NativeApi"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </RadioGroup>
+        <include layout="@layout/audio_java_native_api_buttons" />
 
         <LinearLayout
             android:layout_width="match_parent"

@@ -15,6 +15,8 @@
  */
 package org.hyphonate.megaaudio.player;
 
+import android.media.AudioTimestamp;
+
 public class OboePlayer extends Player {
     boolean mPlaying;
 
@@ -87,6 +89,15 @@ public class OboePlayer extends Player {
         return stopN(mNativePlayer);
     }
 
+    /**
+     * Gets a timestamp from the audio stream
+     * @param timestamp
+     * @return
+     */
+    public boolean getTimestamp(AudioTimestamp timestamp) {
+        return getTimestampN(mNativePlayer, timestamp);
+    }
+
     private native long allocNativePlayer(long nativeSource, int playerSubtype);
 
     private native int setupStreamN(long nativePlayer, int channelCount, int sampleRate, int routeDeviceId);
@@ -98,4 +109,6 @@ public class OboePlayer extends Player {
     private native int getBufferFrameCountN(long mNativePlayer);
 
     private native int getRoutedDeviceIdN(long nativePlayer);
+
+    private native boolean getTimestampN(long nativePlayer, AudioTimestamp timestamp);
 }

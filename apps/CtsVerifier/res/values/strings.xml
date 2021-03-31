@@ -5037,7 +5037,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
-     <string name="audio_loopback_info">
+    <string name="audio_loopback_info">
           This test requires some form of audio loopback. This can be either:\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a 3.5mm headset jack.\n
           - a <a href="https://source.android.com/devices/audio/latency/loopback">Loopback Plug</a>  connected to a USB audio adapter.\n
@@ -5061,7 +5061,16 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_loopback_test_btn">Test</string>
     <string name="audio_loopback_results_text">Results...</string>
 
-   <!-- Audio Frequency Line Test -->
+    <!-- Audio Loopback Latency Test -->
+    <string name="audio_coldstart_out_latency_test">Audio Cold Start Output Latency Test</string>
+    <string name="audio_coldstart_in_latency_test">Audio Cold Start Input Latency Test</string>
+
+    <string name="audio_coldstart_output_info">Info Here</string>
+    <string name="audio_coldstart_input_info">Info Here</string>
+    <string name="audio_coldstart_outputlbl">Output Cold Start Latency</string>
+    <string name="audio_coldstart_inputlbl">Input Cold Start Latency</string>
+
+    <!-- Audio Frequency Line Test -->
     <string name="audio_frequency_line_test">Audio Frequency Line Test</string>
     <string name="audio_frequency_line_info">
         The system will measure the frequency response of the left and right line outputs,
