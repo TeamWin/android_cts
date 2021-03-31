@@ -242,9 +242,13 @@ public class TestHelper {
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             onAvailableCalled = true;
+        }
+
+        @Override
+        public void onCapabilitiesChanged(Network network,
+                NetworkCapabilities networkCapabilities) {
             this.networkCapabilities = networkCapabilities;
             mCountDownLatch.countDown();
         }

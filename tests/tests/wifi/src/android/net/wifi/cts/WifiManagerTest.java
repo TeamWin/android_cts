@@ -738,12 +738,13 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
     }
 
-    public class TestWifiVerboseLoggingStatusCallback extends
-            WifiManager.WifiVerboseLoggingStatusCallback {
+    public class TestWifiVerboseLoggingStatusChangedListener implements
+            WifiManager.WifiVerboseLoggingStatusChangedListener {
         public int numCalls;
         public boolean status;
+
         @Override
-        public void onStatusChanged(boolean enabled) {
+        public void onWifiVerboseLoggingStatusChanged(boolean enabled) {
             numCalls++;
             status = enabled;
         }
@@ -2401,11 +2402,17 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             synchronized (mLock) {
                 onAvailableCalled = true;
                 this.network = network;
+            }
+        }
+
+        @Override
+        public void onCapabilitiesChanged(Network network,
+                NetworkCapabilities networkCapabilities) {
+            synchronized (mLock) {
                 this.networkCapabilities = networkCapabilities;
                 mLock.notify();
             }
@@ -2900,25 +2907,34 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         Boolean currState = null;
-        TestWifiVerboseLoggingStatusCallback callback =
-                new TestWifiVerboseLoggingStatusCallback();
+        TestWifiVerboseLoggingStatusChangedListener listener =
+                WifiBuildCompat.isPlatformOrWifiModuleAtLeastS(mContext) ?
+                new TestWifiVerboseLoggingStatusChangedListener() : null;
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            mWifiManager.registerWifiVerboseLoggingStatusCallback(mExecutor, callback);
+            if (listener != null) {
+                mWifiManager.addWifiVerboseLoggingStatusChangedListener(mExecutor, listener);
+            }
             currState = mWifiManager.isVerboseLoggingEnabled();
             boolean newState = !currState;
-            assertEquals(0, callback.numCalls);
+            if (listener != null) {
+                assertEquals(0, listener.numCalls);
+            }
             mWifiManager.setVerboseLoggingEnabled(newState);
             PollingCheck.check(
                     "Wifi settings toggle failed!",
                     DURATION_SETTINGS_TOGGLE,
                     () -> mWifiManager.isVerboseLoggingEnabled() == newState);
             assertEquals(newState, mWifiManager.isVerboseLoggingEnabled());
-            assertEquals(newState, callback.status);
-            assertEquals(1, callback.numCalls);
+            if (listener != null) {
+                assertEquals(newState, listener.status);
+                assertEquals(1, listener.numCalls);
+            }
         } finally {
             if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
-            mWifiManager.unregisterWifiVerboseLoggingStatusCallback(callback);
+            if (listener != null) {
+                mWifiManager.removeWifiVerboseLoggingStatusChangedListener(listener);
+            }
             uiAutomation.dropShellPermissionIdentity();
         }
     }

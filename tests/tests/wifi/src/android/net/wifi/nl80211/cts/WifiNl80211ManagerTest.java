@@ -28,6 +28,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.net.wifi.cts.WifiFeature;
 import android.net.wifi.nl80211.WifiNl80211Manager;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.filters.SdkSuppress;
 import androidx.test.filters.SmallTest;
@@ -46,6 +47,7 @@ import java.util.concurrent.Executor;
 /** CTS tests for {@link WifiNl80211Manager}. */
 @SmallTest
 @RunWith(AndroidJUnit4.class)
+@AppModeFull(reason = "Cannot get WifiManager/WifiNl80211Manager in instant app mode")
 public class WifiNl80211ManagerTest {
 
     private Context mContext;
