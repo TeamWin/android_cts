@@ -56,6 +56,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.platform.test.annotations.Presubmit;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.UiDeviceUtils;
@@ -85,7 +86,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 
 @Presubmit
-public class BiometricServiceTest extends BiometricTestBase {
+public class BiometricServiceTest extends ActivityManagerTestBase {
 
     private static final String TAG = "BiometricServiceTest";
     private static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
@@ -150,6 +151,10 @@ public class BiometricServiceTest extends BiometricTestBase {
         assertNotNull(button);
         Log.d(TAG, "Clicking button: " + id);
         button.click();
+    }
+
+    private SensorStates getSensorStates() throws Exception {
+        return getCurrentState().mSensorStates;
     }
 
     private void waitForState(@BiometricServiceState.AuthSessionState int state) throws Exception {
@@ -295,7 +300,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
     @NonNull
     private static BiometricCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
-        waitFor("Waiting for authentication callback",
+        Utils.waitFor("Waiting for authentication callback",
                 () -> journal.extras.containsKey(BiometricCallbackHelper.KEY));
 
         final Bundle bundle = journal.extras.getBundle(BiometricCallbackHelper.KEY);
@@ -341,7 +346,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         mInstrumentation.waitForIdleSync();
 
         try {
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
         } catch (Exception e) {
             Log.e(TAG, "Exception when waiting for idle", e);
         }
@@ -369,7 +374,7 @@ public class BiometricServiceTest extends BiometricTestBase {
 
         // Authentication lifecycle is done
         try {
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
         } catch (Exception e) {
             Log.e(TAG, "Exception when waiting for idle", e);
         }
@@ -468,11 +473,11 @@ public class BiometricServiceTest extends BiometricTestBase {
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForBusySensor(sensorId);
+        Utils.waitForBusySensor(sensorId, this::getSensorStates);
 
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
 
         final BiometricServiceState state = getCurrentState();
         assertEquals("Sensor: " + sensorId + " should have exactly one enrollment",
@@ -660,7 +665,7 @@ public class BiometricServiceTest extends BiometricTestBase {
                 mock(BiometricPrompt.AuthenticationCallback.class);
         showCredentialOnlyBiometricPrompt(callback);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
         verify(callback).onAuthenticationError(
                 eq(BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL),
                 any());
@@ -670,7 +675,7 @@ public class BiometricServiceTest extends BiometricTestBase {
         callback = mock(BiometricPrompt.AuthenticationCallback.class);
         showDeviceCredentialAllowedBiometricPrompt(callback);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
         verify(callback).onAuthenticationError(
                 eq(BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS),
                 any());
@@ -882,7 +887,7 @@ public class BiometricServiceTest extends BiometricTestBase {
             final BiometricServiceState clearState = getCurrentStateAndClearSchedulerLog();
             credentialSession.verifyCredential();
 
-            waitFor("Waiting for password verification and resetLockout completion", () -> {
+            Utils.waitFor("Waiting for password verification and resetLockout completion", () -> {
                 try {
                     BiometricServiceState state = getCurrentState();
                     // All sensors have processed exactly one resetLockout request. Use a boolean
@@ -1086,10 +1091,5 @@ public class BiometricServiceTest extends BiometricTestBase {
         for (BiometricTestSession session : biometricSessions) {
             session.close();
         }
-    }
-
-    @Override
-    protected SensorStates getSensorStates() throws Exception {
-        return getCurrentState().mSensorStates;
     }
 }
