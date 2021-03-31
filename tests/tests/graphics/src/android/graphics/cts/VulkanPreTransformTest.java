@@ -120,6 +120,7 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
+        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(true);
         sActivity.finish();
         sActivity = null;
@@ -134,6 +135,7 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
+        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(false);
         sActivity.finish();
         sActivity = null;
