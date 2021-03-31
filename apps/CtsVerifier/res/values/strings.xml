@@ -252,14 +252,6 @@
     <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
     <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
 
-    <string name="biometric_test_credential_not_enrolled_label">1a: Credential Not Enrolled Tests</string>
-    <string name="biometric_test_credential_not_enrolled_instructions">This test checks that the BiometricManager/BiometricPrompt
-        APIs return results consistent with credential (PIN/Pattern/Password) state. Before starting this test, please ensure that you do
-        NOT have a credential set up.</string>
-    <string name="biometric_test_credential_not_enrolled_bm_button">Check BiometricManager</string>
-    <string name="biometric_test_credential_not_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
-    <string name="biometric_test_credential_not_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
-
     <string name="biometric_test_credential_enrolled_label">1b: Credential Enrolled Tests</string>
     <string name="biometric_test_credential_enrolled_instructions">This test checks that apps are able to request credential enrollment, and that the BiometricManager/BiometricPrompt
         APIs return results consistent with credential (PIN/Pattern/Password) state.</string>
