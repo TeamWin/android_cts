@@ -48,6 +48,7 @@ import android.view.Surface;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -2320,6 +2321,8 @@ public class BitmapTest {
         }
     }
 
+    // TODO(b/182521420): remove @RequiresDevice.
+    @RequiresDevice
     @Test
     @LargeTest
     public void testDrawingHardwareBitmapNotLeaking() {

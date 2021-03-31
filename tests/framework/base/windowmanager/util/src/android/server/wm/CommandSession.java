@@ -564,7 +564,10 @@ public final class CommandSession {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (DEBUG) {
-                Log.i(TAG, mHostId + "(" + mContext.getClass().getSimpleName()
+                Log.i(TAG, mHostId + "("
+                        + (mCallback != null
+                                ? mCallback.getClass().getName()
+                                : mContext.getClass().getName())
                         + ") receives " + commandIntentToString(intent));
             }
             if (mCallback == null) {

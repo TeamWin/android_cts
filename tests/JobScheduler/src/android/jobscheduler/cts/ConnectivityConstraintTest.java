@@ -918,7 +918,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 "cmd connectivity airplane-mode " + (on ? "enable" : "disable"));
         airplaneModeBroadcastAsserter.assertCalled("Didn't get airplane mode changed broadcast",
                 15 /* 15 seconds */);
-        waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60_000,
+        waitUntil("Networks didn't change to " + (!on ? " on" : " off"), 60 /* seconds */,
                 () -> {
                     if (on) {
                         return mCm.getActiveNetwork() == null
@@ -961,8 +961,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
 
         @Override
-        public void onAvailable(Network network, NetworkCapabilities networkCapabilities,
-                LinkProperties linkProperties, boolean blocked) {
+        public void onAvailable(Network network) {
             // Available doesn't mean it's the active network. We need to check that separately.
             checkActiveNetwork();
         }
