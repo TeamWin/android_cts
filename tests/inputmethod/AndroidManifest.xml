@@ -28,7 +28,16 @@
 
         <activity android:name="android.view.inputmethod.cts.util.TestActivity"
              android:label="TestActivity"
+             android:configChanges="fontScale"
              android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
+            </intent-filter>
+        </activity>
+        <activity android:name="android.view.inputmethod.cts.util.TestActivity2"
+                  android:label="TestActivity2"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
@@ -37,6 +46,7 @@
 
         <activity android:name="android.view.inputmethod.cts.util.StateInitializeActivity"
              android:label="StateInitializeActivity"
+             android:configChanges="fontScale"
              android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
