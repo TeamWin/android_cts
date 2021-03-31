@@ -87,7 +87,7 @@ import java.util.Objects;
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
-public class TextViewOnReceiveContentTest {
+public class TextViewReceiveContentTest {
     public static final Uri SAMPLE_CONTENT_URI = Uri.parse("content://com.example/path");
     @Rule
     public ActivityTestRule<TextViewCtsActivity> mActivityRule =
