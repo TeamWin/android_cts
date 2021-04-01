@@ -21,6 +21,16 @@
 
     <application android:useEmbeddedDex="true">
         <activity android:name=".EmptyActivity"/>
+
+      <service
+            android:name=".IsolatedService"
+            android:isolatedProcess="true"
+            android:useAppZygote="true" />
+      <uses-library android:name="android.test.runner" />
     </application>
+
+    <instrumentation
+        android:name="androidx.test.runner.AndroidJUnitRunner"
+        android:targetPackage="com.android.cts.useembeddeddex" />
 
 </manifest>
