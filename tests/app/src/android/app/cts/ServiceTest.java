@@ -33,6 +33,7 @@ import android.app.stubs.LaunchpadActivity;
 import android.app.stubs.LocalDeniedService;
 import android.app.stubs.LocalForegroundService;
 import android.app.stubs.LocalGrantedService;
+import android.app.stubs.LocalPhoneCallService;
 import android.app.stubs.LocalService;
 import android.app.stubs.LocalStoppedService;
 import android.app.stubs.NullService;
@@ -98,6 +99,7 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mLocalService;
     private Intent mLocalDeniedService;
     private Intent mLocalForegroundService;
+    private Intent mLocalPhoneCallService;
     private Intent mLocalGrantedService;
     private Intent mLocalService_ApplicationHasPermission;
     private Intent mLocalService_ApplicationDoesNotHavePermission;
@@ -700,6 +702,7 @@ public class ServiceTest extends ActivityTestsBase {
         mExternalService = new Intent();
         mExternalService.setComponent(ComponentName.unflattenFromString(EXTERNAL_SERVICE_COMPONENT));
         mLocalForegroundService = new Intent(mContext, LocalForegroundService.class);
+        mLocalPhoneCallService = new Intent(mContext, LocalPhoneCallService.class);
         mLocalDeniedService = new Intent(mContext, LocalDeniedService.class);
         mLocalGrantedService = new Intent(mContext, LocalGrantedService.class);
         mLocalService_ApplicationHasPermission = new Intent(
@@ -895,10 +898,18 @@ public class ServiceTest extends ActivityTestsBase {
       mContext.unbindService(conn);
     }
 
+    private Intent foregroundServiceIntent(Intent intent, int command) {
+        return new Intent(intent)
+                .putExtras(LocalForegroundService.newCommand(mStateReceiver, command));
+    }
+
     /* Just the Intent for a foreground service */
     private Intent foregroundServiceIntent(int command) {
-        return new Intent(mLocalForegroundService)
-                .putExtras(LocalForegroundService.newCommand(mStateReceiver, command));
+        return foregroundServiceIntent(mLocalForegroundService, command);
+    }
+
+    private void startForegroundService(Intent intent, int command) {
+        mContext.startService(foregroundServiceIntent(intent, command));
     }
 
     private void startForegroundService(int command) {
@@ -1155,7 +1166,20 @@ public class ServiceTest extends ActivityTestsBase {
         mExpectedServiceState = STATE_DESTROY;
         mContext.stopService(mLocalForegroundService);
         waitForResultOrThrow(DELAY, "service to be destroyed");
+    }
 
+    public void testForegroundService_typeImmediateNotification() throws Exception {
+        // expect that an FGS with phoneCall type has its notification displayed
+        // immediately even without explicit request by the app
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(mLocalPhoneCallService,
+                COMMAND_START_FOREGROUND_DEFER_NOTIFICATION);
+        waitForResultOrThrow(DELAY, "phoneCall service to start");
+        assertNotification(1, LocalPhoneCallService.getNotificationTitle(1));
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalPhoneCallService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
     }
 
     public void testForegroundService_deferredNotification() throws Exception {
