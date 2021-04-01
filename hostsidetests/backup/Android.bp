@@ -21,7 +21,7 @@ java_test_host {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     libs: [
         "cts-tradefed",

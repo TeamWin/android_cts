@@ -34,7 +34,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "sharingapp1/AndroidManifest.xml",
 }
@@ -61,7 +61,7 @@ android_test_helper_app {
         "cts",
         "vts10",
         "general-tests",
-        "mts",
+        "mts-permission",
     ],
     manifest: "sharingapp2/AndroidManifest.xml",
 }
