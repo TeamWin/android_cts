@@ -44,6 +44,7 @@ import android.Manifest.permission.RECEIVE_WAP_PUSH
 import android.Manifest.permission.RECORD_AUDIO
 import android.Manifest.permission.SEND_SMS
 import android.Manifest.permission.USE_SIP
+import android.Manifest.permission.UWB_RANGING;
 import android.Manifest.permission.WRITE_CALENDAR
 import android.Manifest.permission.WRITE_CALL_LOG
 import android.Manifest.permission.WRITE_CONTACTS
@@ -149,6 +150,7 @@ class RuntimePermissionProperties {
         // runtime permission
         expectedPerms.add(BLUETOOTH_CONNECT)
         expectedPerms.add(BLUETOOTH_SCAN)
+        expectedPerms.add(UWB_RANGING)
 
         assertThat(expectedPerms).containsExactlyElementsIn(platformRuntimePerms.map { it.name })
     }
