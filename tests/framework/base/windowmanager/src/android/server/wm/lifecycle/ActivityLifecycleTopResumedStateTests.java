@@ -77,8 +77,6 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        // TODO(b/149338177): Fix test to pass with organizer API.
-        mUseTaskOrganizer = false;
     }
 
     @Test
@@ -286,22 +284,28 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionLostWhenDocked() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch an activity that will be moved to split-screen secondary
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
     }
 
     @Test
     public void testTopPositionSwitchToAnotherVisibleActivity() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch side activity
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
@@ -317,14 +321,18 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionSwitchBetweenVisibleActivities() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch side activity
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         final Activity secondActivity = new Launcher(SingleTopActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
@@ -453,14 +461,18 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionSwitchOnTap() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch side activity
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Activity firstActivity = launchActivityAndWait(CallbackTrackingActivity.class);
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         final Activity secondActivity = new Launcher(SingleTopActivity.class)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
                 .launch();
@@ -496,6 +508,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionSwitchOnTapSlowDifferentProcess() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch side activity
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Intent slowTopReleaseIntent = new Intent();
         slowTopReleaseIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
@@ -506,10 +521,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Class<? extends Activity> firstActivityClass = firstActivity.getClass();
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(firstActivity);
+        moveTaskToPrimarySplitScreenAndVerify(firstActivity, sideActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         final Class<? extends Activity> secondActivityClass =
                 SecondProcessCallbackTrackingActivity.class;
         final ComponentName secondActivityComponent =
@@ -557,6 +573,9 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
     public void testTopPositionSwitchOnTapTimeoutDifferentProcess() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
+        // Launch side activity
+        final Activity sideActivity = launchActivityAndWait(SideActivity.class);
+
         // Launch first activity
         final Intent slowTopReleaseIntent = new Intent();
         slowTopReleaseIntent.putExtra(SlowActivity.EXTRA_CONTROL_FLAGS,
@@ -567,10 +586,11 @@ public class ActivityLifecycleTopResumedStateTests extends ActivityLifecycleClie
         final Class<? extends Activity> slowActivityClass = slowActivity.getClass();
 
         // Enter split screen
-        moveTaskToPrimarySplitScreenAndVerify(slowActivity);
+        moveTaskToPrimarySplitScreenAndVerify(slowActivity, sideActivity);
 
         // Launch second activity to side
         getLifecycleLog().clear();
+        mTaskOrganizer.setLaunchRoot(mTaskOrganizer.getSecondarySplitTaskId());
         final Class<? extends Activity> secondActivityClass =
                 SecondProcessCallbackTrackingActivity.class;
         final ComponentName secondActivityComponent =

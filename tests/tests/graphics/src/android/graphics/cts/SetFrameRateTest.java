@@ -20,6 +20,7 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.UiAutomation;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceControl;
 
 import androidx.test.filters.MediumTest;
@@ -74,25 +75,25 @@ public class SetFrameRateTest {
     @Test
     public void testExactFrameRateMatch_Seamless() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
-        activity.testExactFrameRateMatch(/*shouldBeSeamless*/ true);
+        activity.testExactFrameRateMatch(Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
     }
 
     @Test
     public void testExactFrameRateMatch_NonSeamless() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
-        activity.testExactFrameRateMatch(/*shouldBeSeamless*/ false);
+        activity.testExactFrameRateMatch(Surface.CHANGE_FRAME_RATE_ALWAYS);
     }
 
     @Test
     public void testFixedSource_Seamless() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
-        activity.testFixedSource(/*shouldBeSeamless*/ true);
+        activity.testFixedSource(Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
     }
 
     @Test
     public void testFixedSource_NonSeamless() throws InterruptedException {
         FrameRateCtsActivity activity = mActivityRule.getActivity();
-        activity.testFixedSource(/*shouldBeSeamless*/ false);
+        activity.testFixedSource(Surface.CHANGE_FRAME_RATE_ALWAYS);
     }
 
     @Test

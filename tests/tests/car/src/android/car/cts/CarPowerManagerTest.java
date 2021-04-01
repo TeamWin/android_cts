@@ -92,7 +92,7 @@ public final class CarPowerManagerTest extends CarApiTestBase {
         assertWithMessage("Removed audio listener's current policy")
                 .that(listenerAudioTwo.getCurrentPolicyId(NO_WAIT)).isNull();
         assertWithMessage("Added Wifi listener's current policy ID")
-                .that(listenerWifi.getCurrentPolicyId(NO_WAIT)).isEqualTo(policyId);
+                .that(listenerWifi.getCurrentPolicyId(LISTENER_WAIT_TIME_MS)).isEqualTo(policyId);
         makeSureExecutorReady();
         assertWithMessage("Added location listener's current policy")
                 .that(listenerLocation.getCurrentPolicyId(NO_WAIT)).isNull();

@@ -19,7 +19,6 @@ package android.compat.sjp.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
-import static java.util.stream.Collectors.toSet;
 
 import static java.util.stream.Collectors.toSet;
 
@@ -75,10 +74,14 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             ImmutableSet.of(
                     "Landroid/annotation/AnyThread;",
                     "Landroid/annotation/AppIdInt;",
-                    "Landroid/annotation/CallSuper;",
+                    "Landroid/annotation/BytesLong;",
                     "Landroid/annotation/CallbackExecutor;",
+                    "Landroid/annotation/CallSuper;",
                     "Landroid/annotation/CheckResult;",
                     "Landroid/annotation/CurrentTimeMillisLong;",
+                    "Landroid/annotation/CurrentTimeSecondsLong;",
+                    "Landroid/annotation/DrawableRes;",
+                    "Landroid/annotation/DurationMillisLong;",
                     "Landroid/annotation/Hide;",
                     "Landroid/annotation/IntDef;",
                     "Landroid/annotation/IntRange;",
@@ -189,7 +192,8 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Lcom/android/internal/annotations/Immutable;",
                     "Lcom/android/internal/annotations/VisibleForTesting;",
                     "Lcom/android/internal/annotations/VisibleForTesting$Visibility;",
-                    // TODO(b/173649240): due to an oversight, some new overlaps slipped through in S.
+                    // TODO(b/173649240): due to an oversight, some new overlaps slipped through
+                    // in S.
                     "Landroid/hardware/usb/gadget/V1_1/IUsbGadget;",
                     "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Proxy;",
                     "Landroid/hardware/usb/gadget/V1_1/IUsbGadget$Stub;",
@@ -350,6 +354,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
             if (entry.getValue().size() > 1) {
                 CLog.i("Class %s is duplicated in %s", entry.getKey(),
                         entry.getValue().stream().map(DeviceFile::getJarName).collect(toSet()));
+
                 duplicateClasses.putAll(entry.getKey(), entry.getValue());
             }
         }

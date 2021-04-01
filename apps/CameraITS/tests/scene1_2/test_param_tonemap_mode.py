@@ -123,8 +123,8 @@ class ParamTonemapModeTest(its_base_test.ItsBaseTest):
       for i in range(_NUM_COLORS-1):
         if rgb_ratios[i+1]-rgb_ratios[i] < _MIN_RGB_RATIO_DIFF:
           raise AssertionError(
-              f'RGB ratios {i+1}: {rgb_ratios[i+1]}.4f, {i}: '
-              f'{rgb_ratios[i]}.4f, ATOL: {_MIN_RGB_RATIO_DIFF}')
+              f'RGB ratios {i+1}: {rgb_ratios[i+1]:.4f}, {i}: '
+              f'{rgb_ratios[i]:.4f}, ATOL: {_MIN_RGB_RATIO_DIFF}')
 
       # Test 2
       means_2 = []
@@ -145,7 +145,7 @@ class ParamTonemapModeTest(its_base_test.ItsBaseTest):
       # assert proper behavior
       for i, ch in enumerate(_COLORS):
         if abs(rgb_diffs[i]) > _MAX_RGB_MEANS_DIFF:
-          raise AssertionError(f'{ch} rgb_diffs: {rgb_diffs[i]}.4f, '
+          raise AssertionError(f'{ch} rgb_diffs: {rgb_diffs[i]:.4f}, '
                                f'THRESH: {_MAX_RGB_MEANS_DIFF}')
 
 if __name__ == '__main__':

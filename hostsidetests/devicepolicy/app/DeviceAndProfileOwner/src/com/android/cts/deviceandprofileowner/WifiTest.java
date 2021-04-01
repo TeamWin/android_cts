@@ -96,7 +96,7 @@ public class WifiTest extends BaseDeviceAdminTest {
 
         mNetId = mWm.addNetwork(config);
 
-        assertTrue(mNetId != -1);
+        assertNotEquals(-1, mNetId);
     }
 
     public void testAddNetworkWithKeychainKey_notGranted() throws Exception {
@@ -105,7 +105,7 @@ public class WifiTest extends BaseDeviceAdminTest {
 
         mNetId = mWm.addNetwork(config);
 
-        assertNotEquals(-1, mNetId);
+        assertEquals(-1, mNetId);
     }
 
     public void testAddNetworkSuggestionWithKeychainKey_granted() throws Exception {
