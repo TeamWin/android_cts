@@ -25,9 +25,11 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_IDLE;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_PENDING_CONFIRM;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_STARTED_UI_SHOWING;
+import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_SHOWING_DEVICE_CREDENTIAL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -196,6 +198,37 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         }
     }
 
+    protected void successfullyEnterCredential() throws Exception {
+        waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
+        BiometricServiceState state = getCurrentState();
+        assertTrue(state.toString(), state.mSensorStates.areAllSensorsIdle());
+        assertEquals(state.toString(), STATE_SHOWING_DEVICE_CREDENTIAL, state.mState);
+
+        // Wait for any animations to complete. Ideally, this should be reflected in
+        // STATE_SHOWING_DEVICE_CREDENTIAL, but SysUI and BiometricService are different processes
+        // so we'd need to add some additional plumbing. We can improve this in the future.
+        Thread.sleep(1000);
+
+        // Enter credential. AuthSession done, authentication callback received
+        final UiObject2 passwordField = findView(VIEW_ID_PASSWORD_FIELD);
+        Log.d(TAG, "Focusing, entering, submitting credential");
+        passwordField.click();
+        passwordField.setText(LOCK_CREDENTIAL);
+        mDevice.pressEnter();
+        waitForState(STATE_AUTH_IDLE);
+
+        state = getCurrentState();
+        assertEquals(state.toString(), STATE_AUTH_IDLE, state.mState);
+    }
+
+    protected void cancelAuthentication(@NonNull CancellationSignal cancel) throws Exception {
+        cancel.cancel();
+        mInstrumentation.waitForIdleSync();
+        waitForState(STATE_AUTH_IDLE);
+        BiometricServiceState state = getCurrentState();
+        assertEquals("Not idle after requesting cancellation", state.mState, STATE_AUTH_IDLE);
+    }
+
     protected void waitForAllUnenrolled() throws Exception {
         for (int i = 0; i < 20; i++) {
             if (anyEnrollmentsExist()) {
@@ -212,7 +245,9 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
      * Shows a BiometricPrompt that specifies {@link Authenticators#DEVICE_CREDENTIAL}.
      */
     protected void showCredentialOnlyBiometricPrompt(
-            @NonNull BiometricPrompt.AuthenticationCallback callback) {
+            @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull CancellationSignal cancellationSignal,
+            boolean shouldShow) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
         final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
@@ -223,7 +258,16 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                 .setAllowBackgroundAuthentication(true)
                 .build();
 
-        prompt.authenticate(new CancellationSignal(), executor, callback);
+        prompt.authenticate(cancellationSignal, executor, callback);
+
+        mInstrumentation.waitForIdleSync();
+        if (shouldShow) {
+            waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
+            BiometricServiceState state = getCurrentState();
+            assertEquals(state.toString(), STATE_SHOWING_DEVICE_CREDENTIAL, state.mState);
+        } else {
+            Utils.waitForIdleService(this::getSensorStates);
+        }
     }
 
     /**
@@ -231,7 +275,9 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
      * {@link BiometricPrompt.Builder#setDeviceCredentialAllowed(boolean)} to true.
      */
     protected void showDeviceCredentialAllowedBiometricPrompt(
-            @NonNull BiometricPrompt.AuthenticationCallback callback) {
+            @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull CancellationSignal cancellationSignal,
+            boolean shouldShow) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
         final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
@@ -242,7 +288,16 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                 .setAllowBackgroundAuthentication(true)
                 .build();
 
-        prompt.authenticate(new CancellationSignal(), executor, callback);
+        prompt.authenticate(cancellationSignal, executor, callback);
+
+        mInstrumentation.waitForIdleSync();
+        if (shouldShow) {
+            waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
+            BiometricServiceState state = getCurrentState();
+            assertEquals(state.toString(), STATE_SHOWING_DEVICE_CREDENTIAL, state.mState);
+        } else {
+            Utils.waitForIdleService(this::getSensorStates);
+        }
     }
 
     /**
