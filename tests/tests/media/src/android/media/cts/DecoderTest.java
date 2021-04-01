@@ -66,6 +66,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
@@ -873,6 +876,45 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    private static List<Integer> getHdmiDeviceType()
+            throws InvocationTargetException, IllegalAccessException, ClassNotFoundException,
+            NoSuchMethodException {
+        Method getStringMethod =
+                ClassLoader.getSystemClassLoader()
+                        .loadClass("android.os.SystemProperties")
+                        .getMethod("get", String.class);
+        String deviceTypesStr = (String) getStringMethod.invoke(null, "ro.hdmi.device_type");
+        if (deviceTypesStr.equals("")) {
+            return new ArrayList<>();
+        }
+        return Arrays.stream(deviceTypesStr.split(","))
+                .map(Integer::parseInt)
+                .collect(Collectors.toList());
+    }
+
+    private boolean isPanelTvDisplaySupportsHdr10plus()
+        throws Exception {
+        DisplayManager displayManager = mContext.getSystemService(DisplayManager.class);
+        Display display = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
+        int hdrTypes[] = display.getHdrCapabilities().getSupportedHdrTypes();
+        if (hdrTypes.length > 0) {
+            boolean bDisplaySupportHDR10Plus = false;
+            for (int type : hdrTypes) {
+                if(type == Display.HdrCapabilities.HDR_TYPE_HDR10_PLUS){
+                    bDisplaySupportHDR10Plus = true;
+                }
+            }
+
+            final int DEVICE_TYPE_HDMI_DISPLAY = 0;
+            boolean isPanelTvOrDisplay = getHdmiDeviceType().contains(DEVICE_TYPE_HDMI_DISPLAY);
+
+            if (!bDisplaySupportHDR10Plus && isPanelTvOrDisplay) {
+                MediaUtils.skipTest("Display does not support HDR10+ (HDR_TYPE_HDR10_PLUS)");
+                return false;
+            }
+        }
+        return true;
+    }
     public void testVp9HdrStaticMetadata() throws Exception {
         final String staticInfo =
                 "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
@@ -933,6 +975,11 @@ public class DecoderTest extends MediaPlayerTestBase {
                 "90 02 aa 58 05 ca d0 0c  0a f8 16 83 18 9c 18 00" +
                 "40 78 13 64 d5 7c 2e 2c  c3 59 de 79 6e c3 c2 00" ,
         };
+
+        if(!isPanelTvDisplaySupportsHdr10plus()){
+            return;
+        }
+
         testHdrMetadata(R.raw.video_bikes_hdr10plus,
                 staticInfo, dynamicInfo, true /*metadataInContainer*/);
     }
@@ -963,6 +1010,12 @@ public class DecoderTest extends MediaPlayerTestBase {
                 "90 03 9a 58 0b 6a d0 23  2a f8 40 8b 18 9c 18 00" +
                 "40 78 13 64 cf 78 ed cc  bf 5a de f9 8e c7 c3 00"
         };
+
+        if(!isPanelTvDisplaySupportsHdr10plus()){
+            return;
+        }
+
+
         testHdrMetadata(R.raw.video_h265_hdr10plus,
                 staticInfo, dynamicInfo, false /*metadataInContainer*/);
     }
