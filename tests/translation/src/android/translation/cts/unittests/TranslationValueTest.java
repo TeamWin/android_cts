@@ -57,4 +57,28 @@ public class TranslationValueTest {
         assertThat(value.getStatusCode()).isEqualTo(TranslationResponseValue.STATUS_ERROR);
         assertThat(value.getText()).isNull();
     }
+
+    @Test
+    public void testTranslationResponseValue_validDictionary() {
+        final TranslationResponseValue value = new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                .setDictionaryDescription("definition")
+                .build();
+
+        assertThat(value.getStatusCode()).isEqualTo(STATUS_SUCCESS);
+        assertThat(value.getText()).isNull();
+        assertThat(value.getDictionaryDescription()).isEqualTo("definition");
+        assertThat(value.getTransliteration()).isNull();
+    }
+
+    @Test
+    public void testTranslationResponseValue_validTransliteration() {
+        final TranslationResponseValue value = new TranslationResponseValue.Builder(STATUS_SUCCESS)
+                .setTransliteration("pronunciation")
+                .build();
+
+        assertThat(value.getStatusCode()).isEqualTo(STATUS_SUCCESS);
+        assertThat(value.getText()).isNull();
+        assertThat(value.getDictionaryDescription()).isNull();
+        assertThat(value.getTransliteration()).isEqualTo("pronunciation");
+    }
 }

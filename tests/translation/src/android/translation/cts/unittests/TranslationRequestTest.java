@@ -29,6 +29,8 @@ import androidx.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+
 @RunWith(AndroidJUnit4.class)
 public class TranslationRequestTest {
 
@@ -64,6 +66,44 @@ public class TranslationRequestTest {
 
         assertThat(request.getTranslationRequestValues().size()).isEqualTo(1);
         assertThat(request.getViewTranslationRequests().size()).isEqualTo(0);
+
+        final TranslationRequestValue value =
+                request.getTranslationRequestValues().get(0);
+        assertThat(value.getText()).isEqualTo("hello");
+    }
+
+    @Test
+    public void testBuilder_validFlags() {
+        final TranslationRequest request = new TranslationRequest.Builder()
+                .setFlags(TranslationRequest.FLAG_PARTIAL_RESPONSES)
+                .build();
+
+        assertThat(request.getFlags()).isEqualTo(TranslationRequest.FLAG_PARTIAL_RESPONSES);
+        assertThat(request.getTranslationRequestValues().size()).isEqualTo(0);
+        assertThat(request.getViewTranslationRequests().size()).isEqualTo(0);
+    }
+
+    @Test
+    public void testBuilder_mixingSetters() {
+        final ArrayList<TranslationRequestValue> values = new ArrayList<>();
+        values.add(mValue);
+        final ArrayList<ViewTranslationRequest> requests = new ArrayList<>();
+        requests.add(mRequest);
+
+        final TranslationRequest request = new TranslationRequest.Builder()
+                .setTranslationRequestValues(values)
+                .setViewTranslationRequests(requests)
+                .build();
+
+        assertThat(request.getTranslationRequestValues().size()).isEqualTo(1);
+        assertThat(request.getViewTranslationRequests().size()).isEqualTo(1);
+
+        final ViewTranslationRequest viewRequest =
+                request.getViewTranslationRequests().get(0);
+        assertThat(viewRequest.getAutofillId()).isEqualTo(new AutofillId(17));
+        assertThat(viewRequest.getKeys().size()).isEqualTo(1);
+        assertThat(viewRequest.getKeys()).containsExactly("sample id");
+        assertThat(viewRequest.getValue("sample id").getText()).isEqualTo("sample text");
 
         final TranslationRequestValue value =
                 request.getTranslationRequestValues().get(0);
