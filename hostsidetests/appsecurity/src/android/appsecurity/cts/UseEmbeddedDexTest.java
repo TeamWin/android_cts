@@ -47,6 +47,13 @@ public final class UseEmbeddedDexTest extends BaseAppSecurityTest {
     }
 
     @Test
+    public void testIsolatedService() throws Exception {
+        new InstallMultiple().addFile(APK_CANONICAL).run();
+        getDevice().executeShellCommand("cmd package compile -f -m speed " + PACKAGE_NAME);
+        runDeviceTests(PACKAGE_NAME, PACKAGE_NAME + ".EmbeddedDexTest", "testIsolatedService");
+    }
+
+    @Test
     public void testBadInstallWithCompressedDex() throws Exception {
         new InstallMultiple().addFile(APK_DEX_COMPRESSED).runExpectingFailure();
     }
