@@ -276,8 +276,6 @@
     <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
     <!-- Rejecting does not end the authentication lifecycle -->
     <string name="biometric_test_reject_first">Reject, then authenticate</string>
-    <!-- Negative button callback is received -->
-    <string name="biometric_test_negative_button_button">Test Negative Button</string>
     <!-- ERROR_CANCELED is received -->
     <string name="biometric_test_cancellation_button">Test CancellationSignal</string>
 
