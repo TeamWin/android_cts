@@ -32,7 +32,7 @@ import java.net.URISyntaxException;
 public class IntentLaunchActivity extends Activity {
     private static final String TAG = "IntentLaunchActivity";
 
-    private static final String EXTRA_INNER_INTENT = "inner-intent";
+    protected static final String EXTRA_INNER_INTENT = "inner-intent";
     private static final String EXTRA_INNER_INTENT_URI_STRING = "inner-intent-uri-string";
 
     private static final String ACTION_UNSAFE_INTENT_LAUNCH = "android.os.cts.UNSAFE_INTENT_LAUNCH";
