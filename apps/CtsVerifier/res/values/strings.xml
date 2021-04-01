@@ -5740,4 +5740,11 @@ Follow the instructions on the screen to measure the frequency response for the 
       5. Ensure that each engine can be selected.
     </string>
     <string name="tts_accessibility_settings_button">Go To Accessibility Settings</string>
+
+    <!-- Strings for SecurityModeFeatureVerifierActivity test -->
+    <string name="security_mode_feature_verifier_test">SecurityModeFeatureVerifier Test</string>
+    <string name="security_mode_feature_verifier_instructions">This test verifies that the PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE feature is present.</string>
+    <string name="handheld_or_tablet_text_before_test">Is this a handheld or tablet device?</string>
+    <string name="handheld_or_tablet_yes">Yes</string>
+    <string name="handheld_or_tablet_not_applicable">Not applicable</string>
 </resources>
