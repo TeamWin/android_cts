@@ -254,7 +254,7 @@
     <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
     <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
 
-    <string name="biometric_test_credential_crypto_label">1c: Credential Crypto</string>
+    <string name="biometric_test_credential_crypto_label">1a: Credential Crypto</string>
     <string name="biometric_test_credential_crypto_instructions">This test checks that PIN/Pattern/Password successfully unlocks the relevant KeyStore operations. Please
         ensure that you have a PIN/Pattern/Password set up.</string>
     <string name="biometric_test_credential_crypto_timed_key_strongbox">Create and unlock timed key (StrongBox)</string>
@@ -293,7 +293,6 @@
     <string name="biometric_test_strong_check_and_enroll_button">Start enrollment</string>
     <string name="biometric_test_strong_authenticate_no_strongbox_button">Authenticate Crypto (without StrongBox)</string>
     <string name="biometric_test_strong_authenticate_strongbox_button">Authenticate Crypto (with StrongBox)</string>
-    <string name="biometric_test_strong_authenticate_ui_button">Authenticate Crypto UI</string>
     <string name="biometric_test_strong_authenticate_invalidated_button">Authenticate Key Invalidated</string>
     <string name="biometric_test_strong_authenticate_invalidated_instruction_title">Instructions</string>
     <string name="biometric_test_strong_authenticate_invalidated_instruction_contents">Before starting the next test, please add another enrollment to your strong biometric sensor. If only one enrollment is supported, please remove the current enrollment, then enroll.</string>
@@ -305,7 +304,6 @@
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
         when authentication is invoked.</string>
     <string name="biometric_test_weak_enroll">Start enrollment</string>
-    <string name="biometric_test_weak_authenticate">Authenticate</string>
     <string name="biometric_test_weak_authenticate_time_based_keys">Authenticate attempt time-based keys</string>
 
     <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Cipher, Credential</string>

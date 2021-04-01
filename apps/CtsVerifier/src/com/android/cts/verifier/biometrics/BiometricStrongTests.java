@@ -69,7 +69,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private Button mCheckAndEnrollButton;
     private Button mAuthenticateWithoutStrongBoxButton;
     private Button mAuthenticateWithStrongBoxButton;
-    private Button mAuthenticateUIButton;
     private Button mAuthenticateCredential1Button; // setDeviceCredentialAllowed(true), biometric
     private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
     private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
@@ -81,7 +80,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
 
     private boolean mAuthenticateWithoutStrongBoxPassed;
     private boolean mAuthenticateWithStrongBoxPassed;
-    private boolean mAuthenticateUIPassed;
     private boolean mAuthenticateCredential1Passed;
     private boolean mAuthenticateCredential2Passed;
     private boolean mAuthenticateCredential3Passed;
@@ -106,7 +104,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
             mCheckAndEnrollButton.setEnabled(false);
             mAuthenticateWithoutStrongBoxButton.setEnabled(true);
             mAuthenticateWithStrongBoxButton.setEnabled(true);
-            mAuthenticateUIButton.setEnabled(true);
             mAuthenticateCredential1Button.setEnabled(true);
             mAuthenticateCredential2Button.setEnabled(true);
             mAuthenticateCredential3Button.setEnabled(true);
@@ -129,7 +126,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mCheckAndEnrollButton = findViewById(R.id.check_and_enroll_button);
         mAuthenticateWithoutStrongBoxButton = findViewById(R.id.authenticate_no_strongbox_button);
         mAuthenticateWithStrongBoxButton = findViewById(R.id.authenticate_strongbox_button);
-        mAuthenticateUIButton = findViewById(R.id.authenticate_ui_button);
         mAuthenticateCredential1Button = findViewById(
                 R.id.authenticate_credential_setDeviceCredentialAllowed_biometric_button);
         mAuthenticateCredential2Button = findViewById(
@@ -164,18 +160,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mAuthenticateWithStrongBoxButton.setOnClickListener((view) -> {
             testBiometricBoundEncryption(KEY_NAME_STRONGBOX, PAYLOAD,
                     true /* useStrongBox */);
-        });
-
-        mAuthenticateUIButton.setOnClickListener((view) -> {
-            final Utils.VerifyRandomContents contents = new Utils.VerifyRandomContents(this) {
-                @Override
-                void onVerificationSucceeded() {
-                    mAuthenticateUIPassed = true;
-                    mAuthenticateUIButton.setEnabled(false);
-                    updatePassButton();
-                }
-            };
-            testBiometricUI(contents, Authenticators.BIOMETRIC_STRONG);
         });
 
         mAuthenticateCredential1Button.setOnClickListener((view) -> {
@@ -276,7 +260,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
         // completed, let's allow onPause (allow tester to go into settings multiple times if
         // needed).
         if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mAuthenticateUIPassed && mAuthenticateCredential1Passed
+                && mAuthenticateCredential1Passed
                 && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
                 && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed
                 && mNegativeButtonPassed && mCancellationButtonPassed) {
@@ -368,7 +352,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
 
     private void updatePassButton() {
         if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mAuthenticateUIPassed && mAuthenticateCredential1Passed
+                && mAuthenticateCredential1Passed
                 && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
                 && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed
                 && mNegativeButtonPassed && mCancellationButtonPassed) {

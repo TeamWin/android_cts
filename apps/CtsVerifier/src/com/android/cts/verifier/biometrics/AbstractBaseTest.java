@@ -141,52 +141,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         startActivityForResult(enrollIntent, requestCode);
     }
 
-    void testBiometricUI(Utils.VerifyRandomContents contents, int allowedAuthenticators) {
-        Utils.showInstructionDialog(this,
-                R.string.biometric_test_ui_instruction_dialog_title,
-                R.string.biometric_test_ui_instruction_dialog_contents,
-                R.string.biometric_test_ui_instruction_dialog_continue,
-                (dialog, which) -> {
-            if (which == DialogInterface.BUTTON_POSITIVE) {
-                // Create the BiometricPrompt with the above random numbers
-                final BiometricPrompt.Builder builder =
-                        new BiometricPrompt.Builder(this);
-                builder.setAllowedAuthenticators(allowedAuthenticators);
-                builder.setTitle("Title: " + contents.mRandomTitle);
-                builder.setSubtitle("Subtitle: " + contents.mRandomSubtitle);
-                builder.setDescription("Description: " + contents.mRandomDescription);
-                builder.setNegativeButton("Negative Button: "
-                                + contents.mRandomNegativeButtonText, mExecutor,
-                        (dialog1, which1) -> {
-                            // Ignore
-                        });
-                final BiometricPrompt prompt = builder.build();
-
-                // When authentication succeeds, check that the values entered by the
-                // tester match the generated values.
-                prompt.authenticate(new CancellationSignal(), mExecutor,
-                        new BiometricPrompt.AuthenticationCallback() {
-                            @Override
-                            public void onAuthenticationSucceeded(
-                                    BiometricPrompt.AuthenticationResult result) {
-                                final int authenticationType = result.getAuthenticationType();
-                                if (authenticationType !=
-                                        BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC) {
-                                    showToastAndLog("Unexpected authenticationType: "
-                                            + authenticationType);
-                                    return;
-                                }
-
-                                Utils.showUIVerificationDialog(AbstractBaseTest.this,
-                                        R.string.biometric_test_ui_verification_dialog_title,
-                                        R.string.biometric_test_ui_verification_dialog_check,
-                                        contents);
-                            }
-                        });
-            }
-        });
-    }
-
     /**
      * When both credential and biometrics are enrolled, check that the user is able to
      * authenticate with biometric.

@@ -23,7 +23,6 @@ import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricPrompt.AuthenticationCallback;
 import android.hardware.biometrics.BiometricPrompt.AuthenticationResult;
-import android.hardware.biometrics.BiometricPrompt.CryptoObject;
 import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.provider.Settings;
@@ -32,8 +31,6 @@ import android.util.Log;
 import android.widget.Button;
 
 import com.android.cts.verifier.R;
-
-import javax.crypto.Cipher;
 
 /**
  * On devices without a weak biometric, ensure that the
@@ -53,7 +50,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
     private static final String TAG = "BiometricWeakTests";
 
     private Button mEnrollButton;
-    private Button mAuthenticateButton;
     private Button mAuthenticateTimeBasedKeysButton;
     private Button mAuthenticateCredential1Button; // setDeviceCredentialAllowed(true), biometric
     private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
@@ -63,7 +59,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
     private Button mNegativeButtonButton;
     private Button mCancellationButton;
 
-    private boolean mAuthenticatePassed;
     private boolean mAuthenticateTimeBasedKeysPassed;
     private boolean mAuthenticateCredential1Passed;
     private boolean mAuthenticateCredential2Passed;
@@ -86,7 +81,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         getPassButton().setEnabled(false);
 
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
-        mAuthenticateButton = findViewById(R.id.biometric_test_weak_authenticate_button);
         mAuthenticateTimeBasedKeysButton = findViewById(
                 R.id.biometric_test_weak_authenticate_time_based_keys_button);
         mAuthenticateCredential1Button = findViewById(
@@ -103,57 +97,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mEnrollButton.setOnClickListener((view) -> {
             checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
                     new int[]{Authenticators.BIOMETRIC_WEAK, Authenticators.BIOMETRIC_STRONG});
-        });
-
-        // Note: This button is running multiple sub-tests. This is to prevent misleading results
-        // that could be caused by switching biometric sensors between tests.
-        // TODO: The test does not allow for onPause to occur. This can be split up now.
-        mAuthenticateButton.setOnClickListener((view) -> {
-            // Note: Since enrollment request with Authenticators.BIOMETRIC_WEAK requests enrollment
-            // for Weak "or stronger", it's possible that the user was asked to enroll a Strong
-            // biometric. Thus, generation of keys may or may not pass - both are valid outcomes.
-
-            // Check that requesting authentication with WEAK + CryptoObject throws
-            // IllegalArgumentException. Note that we're using a CryptoObject without an actual
-            // MAC/Signature/Cipher due to the above.
-            final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-            builder.setAllowedAuthenticators(Authenticators.BIOMETRIC_WEAK);
-            builder.setTitle("This UI should never get shown");
-            builder.setNegativeButton("Cancel", mExecutor, (dialog, which) -> {
-                // Ignore
-            });
-            final CryptoObject dummyCrypto = new CryptoObject((Cipher) null);
-            final BiometricPrompt prompt = builder.build();
-
-            boolean exceptionCaught = false;
-            try {
-                prompt.authenticate(dummyCrypto, new CancellationSignal(), mExecutor,
-                        new AuthenticationCallback() {
-                            // Ignore
-                        });
-            } catch (IllegalArgumentException e) {
-                // Expected
-                exceptionCaught = true;
-                Log.d(TAG, "IllegalArgumentException: " + e);
-            }
-
-            if (!exceptionCaught) {
-                showToastAndLog("Authenticating with BIOMETRIC_WEAK and Crypto is not a valid"
-                        + " combination");
-                return;
-            }
-
-            // Check that requesting authentication with WEAK works, and that the UI presents the
-            // fields set through its public APIs
-            final Utils.VerifyRandomContents contents = new Utils.VerifyRandomContents(this) {
-                @Override
-                void onVerificationSucceeded() {
-                    mAuthenticatePassed = true;
-                    mAuthenticateButton.setEnabled(false);
-                    updatePassButton();
-                }
-            };
-            testBiometricUI(contents, Authenticators.BIOMETRIC_WEAK);
         });
 
         // The above test already enforces that authenticate(CryptoObject) throws an exception if
@@ -345,7 +288,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
     }
 
     private void updatePassButton() {
-        if (mAuthenticatePassed && mAuthenticateTimeBasedKeysPassed
+        if (mAuthenticateTimeBasedKeysPassed
                 && mAuthenticateCredential1Passed && mAuthenticateCredential2Passed
                 && mAuthenticateCredential3Passed && mCheckInvalidInputsPassed
                 && mRejectThenAuthenticatePassed
@@ -362,7 +305,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         if (biometricStatus == BiometricManager.BIOMETRIC_SUCCESS) {
             showToastAndLog("Successfully enrolled, please continue the test");
             mEnrollButton.setEnabled(false);
-            mAuthenticateButton.setEnabled(true);
             mAuthenticateTimeBasedKeysButton.setEnabled(true);
             mAuthenticateCredential1Button.setEnabled(true);
             mAuthenticateCredential2Button.setEnabled(true);
