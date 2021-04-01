@@ -99,14 +99,14 @@ private fun dragAndExecute(
             screenY,
             deltaX,
             deltaY,
-            50,
-            10,
+            160,
+            20,
             object : EventInjectionListener {
                 private var mNumEvents = 0
                 override fun onDownInjected(xOnScreen: Int, yOnScreen: Int) {}
                 override fun onMoveInjected(xOnScreen: IntArray, yOnScreen: IntArray) {
                     mNumEvents++
-                    if (mNumEvents == 10) {
+                    if (mNumEvents == 20) {
                         onFinalMove()
                     }
                 }
@@ -203,15 +203,15 @@ private fun dragHoldAndCapture(
                 onUp = {
                     // Now press
                     CtsTouchUtils.injectDownEvent(instrumentation.getUiAutomation(),
-                            SystemClock.uptimeMillis(), screenX,
-                            screenY, null)
+                            SystemClock.uptimeMillis(), screenX + viewX,
+                            screenY + viewY, null)
 
                     val downInjected = AnimationUtils.currentAnimationTimeMillis()
 
                     // The receding time is based on the spring, but 100 ms should be soon
                     // enough that the animation is within the beginning and it shouldn't have
                     // receded far yet.
-                    if (downInjected - lastMotion < 100) {
+                    if (downInjected - lastMotion < 50) {
                         // Now make sure that we wait until the release should normally have finished:
                         sleepAnimationTime(600)
 
@@ -228,7 +228,7 @@ private fun dragHoldAndCapture(
 
         CtsTouchUtils.injectUpEvent(instrumentation.getUiAutomation(),
                 SystemClock.uptimeMillis(), false,
-                screenX, screenY, null)
+                screenX + viewX, screenY + viewY, null)
 
         if (bitmap != null) {
             return bitmap // success!
@@ -248,8 +248,8 @@ fun dragDownStretches(
     val bitmap = dragAndCapture(
             activityRule,
             view,
-            0,
-            0,
+            45,
+            20,
             0,
             300
     )
@@ -269,8 +269,8 @@ fun dragRightStretches(
     val bitmap = dragAndCapture(
             activityRule,
             view,
-            0,
-            0,
+            20,
+            45,
             300,
             0
     )
@@ -290,8 +290,8 @@ fun dragUpStretches(
     val bitmap = dragAndCapture(
             activityRule,
             view,
-            0,
-            89,
+            45,
+            70,
             0,
             -300
     )
@@ -311,8 +311,8 @@ fun dragLeftStretches(
     val bitmap = dragAndCapture(
             activityRule,
             view,
-            89,
-            0,
+            70,
+            45,
             -300,
             0
     )
@@ -332,8 +332,8 @@ fun dragDownTapAndHoldStretches(
     val bitmap = dragHoldAndCapture(
             activityRule,
             view,
-            0,
-            0,
+            45,
+            20,
             0,
             300
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
@@ -353,8 +353,8 @@ fun dragRightTapAndHoldStretches(
     val bitmap = dragHoldAndCapture(
             activityRule,
             view,
-            0,
-            0,
+            20,
+            45,
             300,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
@@ -374,8 +374,8 @@ fun dragUpTapAndHoldStretches(
     val bitmap = dragHoldAndCapture(
             activityRule,
             view,
-            0,
-            89,
+            45,
+            70,
             0,
             -300
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake
@@ -395,8 +395,8 @@ fun dragLeftTapAndHoldStretches(
     val bitmap = dragHoldAndCapture(
             activityRule,
             view,
-            89,
-            0,
+            70,
+            45,
             -300,
             0
     ) ?: return true // when timing fails to get a bitmap, don't treat it as a flake

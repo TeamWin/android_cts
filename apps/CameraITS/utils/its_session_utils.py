@@ -46,7 +46,7 @@ _VALIDATE_LIGHTING_REGIONS = {
     'bottom-right': (1-_VALIDATE_LIGHTING_PATCH_W,
                      1-_VALIDATE_LIGHTING_PATCH_H),
 }
-_VALIDATE_LIGHTING_THRESH = 0.1  # Determined empirically from scene[1:6] tests
+_VALIDATE_LIGHTING_THRESH = 0.05  # Determined empirically from scene[1:6] tests
 
 
 class ItsSession(object):
@@ -1162,14 +1162,15 @@ def load_scene(cam, props, scene, tablet, chart_distance):
     cap = cam.do_capture(
         capture_request_utils.auto_capture_request(), cam.CAP_YUV)
     y_plane, _, _ = image_processing_utils.convert_capture_to_planes(cap)
-    validate_lighting(y_plane)
+    validate_lighting(y_plane, scene)
 
 
-def validate_lighting(y_plane):
+def validate_lighting(y_plane, scene):
   """Validates the lighting level in scene corners based on empirical values.
 
   Args:
     y_plane: Y plane of YUV image
+    scene: scene name
   Returns:
     boolean True if lighting validated, else raise AssertionError
   """
@@ -1185,6 +1186,7 @@ def validate_lighting(y_plane):
     if y_mean > _VALIDATE_LIGHTING_THRESH:
       logging.debug('Lights ON in test rig.')
       return True
+  image_processing_utils.write_image(y_plane, f'validate_lighting_{scene}.jpg')
   raise AssertionError('Lights OFF in test rig. Please turn ON and retry.')
 
 

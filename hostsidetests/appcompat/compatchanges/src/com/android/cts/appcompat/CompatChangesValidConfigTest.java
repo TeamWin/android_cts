@@ -17,6 +17,7 @@
 package com.android.cts.appcompat;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.compat.cts.Change;
 import android.compat.cts.CompatChangeGatingTestCase;
@@ -32,8 +33,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCase {
@@ -48,8 +47,9 @@ public final class CompatChangesValidConfigTest extends CompatChangeGatingTestCa
      */
     public void testNoOverrides() throws Exception {
         for (Change c : getOnDeviceCompatConfig()) {
-            if (!OVERRIDES_ALLOWLIST.contains(c.changeName)) {
-                assertThat(c.hasOverrides).isFalse();
+            if (!OVERRIDES_ALLOWLIST.contains(c.changeName) && !c.overridable) {
+                assertWithMessage("Change should not have overrides: " + c)
+                        .that(c.hasOverrides).isFalse();
             }
         }
     }

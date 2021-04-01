@@ -67,9 +67,10 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     for (uint32_t i = 0; i < 120; ++i) {
         ret = renderer.drawFrame();
         if (setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
-            ASSERT(ret == VK_TEST_SUCCESS, "Failed to draw frame");
+            ASSERT(ret == VK_TEST_SUCCESS, "Failed to draw frame(%u) ret(%d)", i, (int)ret);
         } else {
-            ASSERT(ret == VK_TEST_SUCCESS_SUBOPTIMAL, "Failed to draw suboptimal frame");
+            ASSERT(ret == VK_TEST_SUCCESS_SUBOPTIMAL, "Failed to draw suboptimal frame(%u) ret(%d)",
+                   i, (int)ret);
         }
     }
 

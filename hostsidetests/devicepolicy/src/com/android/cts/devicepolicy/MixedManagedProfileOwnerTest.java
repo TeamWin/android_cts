@@ -139,7 +139,7 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
     @Test
     public void testSetGetEnterpriseNetworkPreferenceStatus() throws Exception {
-        executeDeviceTestMethod(".testSetGetEnterpriseNetworkPreferenceStatus",
+        executeDeviceTestMethod(".EnterpriseNetworkPreferenceStatusTest",
                 "testGetSetEnterpriseNetworkPreferenceStatus");
     }
 

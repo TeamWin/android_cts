@@ -45,7 +45,6 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Parcel;
-import android.os.RemoteException;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
@@ -244,8 +243,7 @@ public class UsageStatsTest {
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
         final long startTime = System.currentTimeMillis();
-        final Class clazz = Activities.ActivityOne.class;
-        launchSubActivity(clazz);
+        launchSubActivity(Activities.ActivityOne.class);
         final long endTime = System.currentTimeMillis();
 
         final Map<String, UsageStats> map = mUsageStatsManager.queryAndAggregateUsageStats(
@@ -256,6 +254,25 @@ public class UsageStatsTest {
         assertLessThan(startTime, lastTimeComponentUsed);
         assertLessThan(lastTimeComponentUsed, endTime);
     }
+
+    @AppModeFull(reason = "No usage events access in instant apps")
+    @Test
+    public void testLastTimeComponentUsedGlobal_launchActivity() throws Exception {
+        mUiDevice.wakeUp();
+        dismissKeyguard();
+
+        final long startDay = System.currentTimeMillis() / TimeUnit.DAYS.toMillis(1)
+                * TimeUnit.DAYS.toMillis(1);
+        launchSubActivity(Activities.ActivityOne.class);
+        final long endDay = System.currentTimeMillis() / TimeUnit.DAYS.toMillis(1)
+                * TimeUnit.DAYS.toMillis(1);
+
+        final long lastTimeAnyComponentUsed =
+                mUsageStatsManager.getLastTimeAnyComponentUsed(mTargetPackage);
+        assertLessThanOrEqual(startDay, lastTimeAnyComponentUsed);
+        assertLessThanOrEqual(lastTimeAnyComponentUsed, endDay);
+    }
+
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
