@@ -57,6 +57,8 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final int COMMAND_WAIT_FOR_CHILD_PROCESS_GONE = 17;
     public static final int COMMAND_START_SERVICE = 18;
     public static final int COMMAND_STOP_SERVICE = 19;
+    public static final int COMMAND_START_FOREGROUND_SERVICE_STICKY = 20;
+    public static final int COMMAND_STOP_FOREGROUND_SERVICE_STICKY = 21;
 
     public static final int RESULT_CHILD_PROCESS_STARTED = IBinder.FIRST_CALL_TRANSACTION;
     public static final int RESULT_CHILD_PROCESS_STOPPED = IBinder.FIRST_CALL_TRANSACTION + 1;
@@ -74,6 +76,8 @@ public class CommandReceiver extends BroadcastReceiver {
     public static final String FG_SERVICE_NAME = "android.app.stubs.LocalForegroundService";
     public static final String FG_LOCATION_SERVICE_NAME =
             "android.app.stubs.LocalForegroundServiceLocation";
+    public static final String FG_STICKY_SERVICE_NAME =
+            "android.app.stubs.LocalForegroundServiceSticky";
 
     public static final String ACTIVITY_NAME = "android.app.stubs.SimpleActivity";
 
@@ -122,6 +126,12 @@ public class CommandReceiver extends BroadcastReceiver {
                 break;
             case COMMAND_STOP_FOREGROUND_SERVICE_LOCATION:
                 doStopService(context, intent, FG_LOCATION_SERVICE_NAME);
+                break;
+            case COMMAND_START_FOREGROUND_SERVICE_STICKY:
+                doStartForegroundServiceSticky(context, intent);
+                break;
+            case COMMAND_STOP_FOREGROUND_SERVICE_STICKY:
+                doStopService(context, intent, FG_STICKY_SERVICE_NAME);
                 break;
             case COMMAND_START_ALERT_SERVICE:
                 doStartAlertService(context);
@@ -205,6 +215,21 @@ public class CommandReceiver extends BroadcastReceiver {
         fgsIntent.putExtras(commandIntent); // include the fg service type if any.
         fgsIntent.setComponent(new ComponentName(targetPackage, FG_LOCATION_SERVICE_NAME));
         int command = LocalForegroundServiceLocation.COMMAND_START_FOREGROUND_WITH_TYPE;
+        fgsIntent.putExtras(LocalForegroundService.newCommand(command));
+        try {
+            context.startForegroundService(fgsIntent);
+        } catch (ForegroundServiceStartNotAllowedException e) {
+            Log.d(TAG, "startForegroundService gets an "
+                    + "ForegroundServiceStartNotAllowedException", e);
+        }
+    }
+
+    private void doStartForegroundServiceSticky(Context context, Intent commandIntent) {
+        String targetPackage = getTargetPackage(commandIntent);
+        Intent fgsIntent = new Intent();
+        fgsIntent.putExtras(commandIntent);
+        fgsIntent.setComponent(new ComponentName(targetPackage, FG_STICKY_SERVICE_NAME));
+        int command = LocalForegroundService.COMMAND_START_FOREGROUND;
         fgsIntent.putExtras(LocalForegroundService.newCommand(command));
         try {
             context.startForegroundService(fgsIntent);
