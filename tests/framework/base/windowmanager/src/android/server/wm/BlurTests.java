@@ -60,11 +60,11 @@ public class BlurTests extends ActivityManagerTestBase {
     @Before
     public void setUp() {
         assumeTrue(supportsBlur());
-        assumeTrue(usesSkiaRenderEngine());
         mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
         launchActivity(BACKGROUND_IMAGE_ACTIVITY);
         mWmState.waitForValidState(BACKGROUND_IMAGE_ACTIVITY);
         verifyOnlyBackgroundImageVisible();
+        assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
     }
 
     @After
