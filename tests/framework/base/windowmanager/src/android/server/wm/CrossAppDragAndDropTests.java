@@ -129,7 +129,6 @@ public class CrossAppDragAndDropTests extends ActivityManagerTestBase {
         mTargetLogTag = TARGET_LOG_TAG + mSessionId;
 
         cleanupState();
-        mUseTaskOrganizer = false;
     }
 
     @After

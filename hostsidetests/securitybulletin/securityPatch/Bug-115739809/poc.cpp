@@ -167,6 +167,24 @@ static void sanitizeMessage(const InputMessage& msg, InputMessage* outMsg) {
             outMsg->body.drag.y = msg.body.drag.y;
             break;
         }
+        case InputMessage::Type::TIMELINE: {
+            outMsg->body.timeline.eventId = msg.body.timeline.eventId;
+            outMsg->body.timeline.graphicsTimeline = msg.body.timeline.graphicsTimeline;
+            break;
+        }
+    }
+}
+
+static void makeMessageValid(InputMessage& msg) {
+    InputMessage::Type type = msg.header.type;
+    if (type == InputMessage::Type::MOTION) {
+        // Message is considered invalid if it has more than MAX_POINTERS pointers.
+        msg.body.motion.pointerCount = MAX_POINTERS;
+    }
+    if (type == InputMessage::Type::TIMELINE) {
+        // Message is considered invalid if presentTime <= gpuCompletedTime
+        msg.body.timeline.graphicsTimeline[GraphicsTimeline::GPU_COMPLETED_TIME] = 10;
+        msg.body.timeline.graphicsTimeline[GraphicsTimeline::PRESENT_TIME] = 20;
     }
 }
 
@@ -179,9 +197,7 @@ static bool checkMessage(InputChannel& server, InputChannel& client, InputMessag
 
     memset(&serverMsg, 1, sizeof(serverMsg));
     serverMsg.header.type = type;
-    if (type == InputMessage::Type::MOTION) {
-        serverMsg.body.motion.pointerCount = MAX_POINTERS;
-    }
+    makeMessageValid(serverMsg);
     status_t result = server.sendMessage(&serverMsg);
     if (result != OK) {
         ALOGE("Could not send message to the input channel");
@@ -229,8 +245,9 @@ int main() {
     }
 
     InputMessage::Type types[] = {
-            InputMessage::Type::KEY,   InputMessage::Type::MOTION,  InputMessage::Type::FINISHED,
-            InputMessage::Type::FOCUS, InputMessage::Type::CAPTURE, InputMessage::Type::DRAG,
+            InputMessage::Type::KEY,      InputMessage::Type::MOTION,  InputMessage::Type::FINISHED,
+            InputMessage::Type::FOCUS,    InputMessage::Type::CAPTURE, InputMessage::Type::DRAG,
+            InputMessage::Type::TIMELINE,
     };
     for (InputMessage::Type type : types) {
         bool success = checkMessage(*server, *client, type);
@@ -242,4 +259,3 @@ int main() {
 
     return 0;
 }
-

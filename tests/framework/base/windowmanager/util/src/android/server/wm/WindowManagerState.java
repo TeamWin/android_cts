@@ -821,7 +821,7 @@ public class WindowManagerState {
                 : null;
     }
 
-    public int getStackIdByActivity(ComponentName activityName) {
+    public int getRootTaskIdByActivity(ComponentName activityName) {
         final ActivityTask task = getTaskByActivity(activityName);
         return  (task == null) ? INVALID_STACK_ID : task.mRootTaskId;
     }

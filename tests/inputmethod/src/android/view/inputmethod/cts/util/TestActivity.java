@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
-public final class TestActivity extends Activity {
+public class TestActivity extends Activity {
 
     private static final AtomicReference<Function<TestActivity, View>> sInitializer =
             new AtomicReference<>();

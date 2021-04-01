@@ -34,9 +34,9 @@ import android.hardware.biometrics.SensorProperties;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
-import android.server.biometrics.BiometricTestBase;
 import android.server.biometrics.SensorStates;
 import android.server.biometrics.Utils;
+import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.TestJournalProvider.TestJournalContainer;
 import android.server.wm.UiDeviceUtils;
@@ -58,13 +58,12 @@ import java.util.Map;
 
 @SuppressWarnings("deprecation")
 @Presubmit
-public class FingerprintServiceTest extends BiometricTestBase {
+public class FingerprintServiceTest extends ActivityManagerTestBase {
     private static final String TAG = "FingerprintServiceTest";
 
     private static final String DUMPSYS_FINGERPRINT = "dumpsys fingerprint --proto --state";
 
-    @Override
-    protected SensorStates getSensorStates() throws Exception {
+    private SensorStates getSensorStates() throws Exception {
         final byte[] dump = Utils.executeShellCommand(DUMPSYS_FINGERPRINT);
         SensorServiceStateProto proto = SensorServiceStateProto.parseFrom(dump);
         return SensorStates.parseFrom(proto);
@@ -72,7 +71,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
     @Nullable
     private static FingerprintCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
-        waitFor("Waiting for authentication callback",
+        Utils.waitFor("Waiting for authentication callback",
                 () -> journal.extras.containsKey(FingerprintCallbackHelper.KEY));
 
         final Bundle bundle = journal.extras.getBundle(FingerprintCallbackHelper.KEY);
@@ -121,7 +120,7 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
 
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
 
         final SensorStates sensorStates = getSensorStates();
         for (Map.Entry<Integer, SensorState> sensorEntry : sensorStates.sensorStates.entrySet()) {
@@ -156,11 +155,11 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
         session.startEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
 
         session.finishEnroll(userId);
         mInstrumentation.waitForIdleSync();
-        waitForIdleService();
+        Utils.waitForIdleService(this::getSensorStates);
 
         final SensorStates sensorStates = getSensorStates();
 
@@ -187,11 +186,11 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);
@@ -246,11 +245,11 @@ public class FingerprintServiceTest extends BiometricTestBase {
 
             session.startEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
 
             session.finishEnroll(userId);
             mInstrumentation.waitForIdleSync();
-            waitForIdleService();
+            Utils.waitForIdleService(this::getSensorStates);
         }
 
         final TestJournal journal = TestJournalContainer.get(AUTH_ON_CREATE_ACTIVITY);

@@ -19,25 +19,25 @@ package android.server.wm;
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.server.wm.CliIntentExtra.extraInt;
 import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.server.wm.app.Components.BACKGROUND_IMAGE_ACTIVITY;
 import static android.server.wm.app.Components.BAD_BLUR_ACTIVITY;
 import static android.server.wm.app.Components.BLUR_ACTIVITY;
 import static android.server.wm.app.Components.BLUR_ATTRIBUTES_ACTIVITY;
-import static android.server.wm.app.Components.BACKGROUND_IMAGE_ACTIVITY;
-import static android.server.wm.app.Components.BlurActivity.EXTRA_NO_BLUR_BACKGROUND_COLOR;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BACKGROUND_BLUR_RADIUS_PX;
 import static android.server.wm.app.Components.BlurActivity.EXTRA_BLUR_BEHIND_RADIUS_PX;
+import static android.server.wm.app.Components.BlurActivity.EXTRA_NO_BLUR_BACKGROUND_COLOR;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
-import android.platform.test.annotations.Presubmit;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.platform.test.annotations.Presubmit;
 import android.view.WindowManager;
 
 import androidx.test.filters.FlakyTest;
@@ -236,7 +236,7 @@ public class BlurTests extends ActivityManagerTestBase {
 
     private void startTestActivity(ComponentName activityName, final CliIntentExtra... extras) {
         launchActivity(activityName, extras);
-        assertNotEquals(mWmState.getStackIdByActivity(activityName), INVALID_STACK_ID);
+        assertNotEquals(mWmState.getRootTaskIdByActivity(activityName), INVALID_STACK_ID);
     }
 
 

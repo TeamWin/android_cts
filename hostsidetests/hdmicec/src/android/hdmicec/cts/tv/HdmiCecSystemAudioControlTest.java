@@ -47,7 +47,50 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
                     .around(hdmiCecClient);
 
     public HdmiCecSystemAudioControlTest() {
-        super(LogicalAddress.TV, "-t", "a");
+        super(LogicalAddress.TV, "-t", "a", "-t", "r");
+    }
+
+    /**
+     * Test 11.1.15-1
+     *
+     * <p>Tests that the DUT sends a correctly formatted {@code <System Audio Mode Request>}
+     * message.
+     */
+    @Test
+    public void cect_11_1_15_1_DutSendsSystemAudioModeRequest() throws Exception {
+        hdmiCecClient.broadcastReportPhysicalAddress(LogicalAddress.AUDIO_SYSTEM);
+        hdmiCecClient.broadcastReportPhysicalAddress(
+                LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+        hdmiCecClient.sendCecMessage(LogicalAddress.RECORDER_1, CecOperand.IMAGE_VIEW_ON);
+        hdmiCecClient.broadcastActiveSource(
+                LogicalAddress.RECORDER_1, hdmiCecClient.getPhysicalAddress());
+        /*
+         * Invoke the DUT to turn on the system audio mode and check for system audio mode request
+         * message with params.
+         */
+        assertWithMessage("Device did not send a <System Audio Mode Request> message with params")
+                .that(setSystemAudioMode(true))
+                .isTrue();
+    }
+
+    /**
+     * Test 11.1.15-5
+     *
+     * <p>Tests that the DUT sends a correctly formatted {@code <System Audio Mode Request>} message
+     * when the DUT invokes the System Audio Mode to be Off.
+     */
+    @Test
+    public void cect_11_1_15_5_DutResponseWhenSystemAudioModeToOff() throws Exception {
+        // Ensure that system audio mode is on.
+        setSystemAudioMode(true);
+        /*
+         * Invoke the DUT to turn off the system audio mode and check for system audio mode request
+         * message with no params.
+         */
+        assertWithMessage(
+                        "Device did not send a <System Audio Mode Request> message with no params")
+                .that(setSystemAudioMode(false))
+                .isTrue();
     }
 
     /**
@@ -104,5 +147,22 @@ public final class HdmiCecSystemAudioControlTest extends BaseHdmiCecCtsTest {
         assertWithMessage("Device is muted")
                 .that(AudioManagerHelper.isDeviceMuted(getDevice()))
                 .isFalse();
+    }
+
+    private boolean setSystemAudioMode(boolean enabled) throws Exception {
+        getDevice().executeShellCommand("cmd hdmi_control setsam " + (enabled ? "on" : "off"));
+        try {
+            String message =
+                    hdmiCecClient.checkExpectedOutput(
+                            LogicalAddress.AUDIO_SYSTEM, CecOperand.SYSTEM_AUDIO_MODE_REQUEST);
+            /*
+             * When system audio mode is turned off. DUT should send <System Audio Mode Request>
+             * message with no params. And when it is turned on, DUT should send the same message
+             * with params.
+             */
+            return enabled ^ CecMessage.getParamsAsString(message).equals("");
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

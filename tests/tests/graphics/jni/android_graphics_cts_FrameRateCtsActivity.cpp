@@ -156,13 +156,13 @@ private:
 };
 
 jint nativeWindowSetFrameRate(JNIEnv* env, jclass, jobject jSurface, jfloat frameRate,
-                              jint compatibility, jboolean shouldBeSeamless) {
+                              jint compatibility, jint changeFrameRateStrategy) {
     ANativeWindow* window = nullptr;
     if (jSurface) {
         window = ANativeWindow_fromSurface(env, jSurface);
     }
-    return ANativeWindow_setFrameRateWithSeamlessness(window, frameRate, compatibility,
-            shouldBeSeamless);
+    return ANativeWindow_setFrameRateWithChangeStrategy(window, frameRate, compatibility,
+            changeFrameRateStrategy);
 }
 
 jlong surfaceControlCreate(JNIEnv* env, jclass, jobject jParentSurface, jstring jName, jint left,
@@ -196,12 +196,12 @@ void surfaceControlDestroy(JNIEnv*, jclass, jlong surfaceControlLong) {
 }
 
 void surfaceControlSetFrameRate(JNIEnv*, jclass, jlong surfaceControlLong, jfloat frameRate,
-                                jint compatibility, jboolean shouldBeSeamless) {
+                                jint compatibility, jint changeFrameRateStrategy) {
     ASurfaceControl* surfaceControl =
             reinterpret_cast<Surface*>(surfaceControlLong)->getSurfaceControl();
     ASurfaceTransaction* transaction = ASurfaceTransaction_create();
-    ASurfaceTransaction_setFrameRateWithSeamlessness(transaction, surfaceControl, frameRate,
-            compatibility, bool(shouldBeSeamless));
+    ASurfaceTransaction_setFrameRateWithChangeStrategy(transaction, surfaceControl, frameRate,
+            compatibility, changeFrameRateStrategy);
     ASurfaceTransaction_apply(transaction);
     ASurfaceTransaction_delete(transaction);
 }
@@ -241,12 +241,12 @@ jboolean surfaceControlPostBuffer(JNIEnv*, jclass, jlong surfaceControlLong, jin
 }
 
 const std::array<JNINativeMethod, 6> JNI_METHODS = {{
-        {"nativeWindowSetFrameRate", "(Landroid/view/Surface;FIZ)I",
+        {"nativeWindowSetFrameRate", "(Landroid/view/Surface;FII)I",
          (void*)nativeWindowSetFrameRate},
         {"nativeSurfaceControlCreate", "(Landroid/view/Surface;Ljava/lang/String;IIII)J",
          (void*)surfaceControlCreate},
         {"nativeSurfaceControlDestroy", "(J)V", (void*)surfaceControlDestroy},
-        {"nativeSurfaceControlSetFrameRate", "(JFIZ)V", (void*)surfaceControlSetFrameRate},
+        {"nativeSurfaceControlSetFrameRate", "(JFII)V", (void*)surfaceControlSetFrameRate},
         {"nativeSurfaceControlSetVisibility", "(JZ)V", (void*)surfaceControlSetVisibility},
         {"nativeSurfaceControlPostBuffer", "(JI)Z", (void*)surfaceControlPostBuffer},
 }};

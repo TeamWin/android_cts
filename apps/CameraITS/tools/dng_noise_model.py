@@ -119,7 +119,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
   """
 
   def test_dng_noise_model_generation(self):
-    logging.debug('Starting %s', _NAME)
+    logging.info('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -134,8 +134,8 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       sens_max_meas = sens_max_analog
       white_level = props['android.sensor.info.whiteLevel']
 
-      logging.debug('Sensitivity range: [%f, %f]', sens_min, sens_max)
-      logging.debug('Max analog sensitivity: %f', sens_max_analog)
+      logging.info('Sensitivity range: [%d, %d]', sens_min, sens_max)
+      logging.info('Max analog sensitivity: %d', sens_max_analog)
 
       # Do AE to get a rough idea of where we are.
       iso_ae, exp_ae, _, _, _ = cam.do_3a(
@@ -156,7 +156,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       color_plane_plots = {}
       while int(round(iso)) <= sens_max_meas:
         iso_int = int(round(iso))
-        logging.debug('ISO %d', iso_int)
+        logging.info('ISO %d', iso_int)
         fig, [[plt_r, plt_gr], [plt_gb, plt_b]] = plt.subplots(
             2, 2, figsize=(11, 11))
         fig.gca()
@@ -171,7 +171,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
         for b in range(_BRACKET_MAX):
           # Get the exposure for this sensitivity and exposure time.
           exposure = int(math.pow(2, b)*auto_e/iso)
-          logging.debug('exp %.3fms', round(exposure*1.0E-6, 3))
+          logging.info('exp %.3fms', round(exposure*1.0E-6, 3))
           req = capture_request_utils.manual_capture_request(iso_int, exposure,
                                                              f_dist)
           fmt_raw = {'format': 'rawStats',
@@ -188,7 +188,7 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
           if not 1.0 >= s_read/float(iso_int) >= _RTOL_EXP_GAIN:
             raise AssertionError(
                 f's_write: {iso}, s_read: {s_read}, RTOL: {_RTOL_EXP_GAIN}')
-          logging.debug('ISO_write: %d, ISO_read: %d', iso_int, s_read)
+          logging.info('ISO_write: %d, ISO_read: %d', iso_int, s_read)
 
           for pidx in range(len(means)):
             plot = color_plane_plots[iso_int][pidx]
@@ -224,8 +224,8 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
           [slope, intercept, rvalue, _, _] = scipy.stats.linregress(
               samples_s[pidx])
           measured_models[pidx].append([iso_int, slope, intercept])
-          logging.debug('Sensitivity %d: %e*y + %e (R=%f)', iso_int, slope,
-                        intercept, rvalue)
+          logging.info('%s sensitivity %d: %e*y + %e (R=%f)',
+                       'RGKB'[pidx], iso_int, slope, intercept, rvalue)
 
           # Add the samples for this sensitivity to the global samples list.
           samples[pidx].extend(
@@ -298,14 +298,14 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       int_model = result[2]*sens_sq + result[3]*np.square(np.maximum(
           sens/sens_max_analog, 1))
 
-      plt_slope.loglog(sens, slp_measured, 'rgkb'[pidx]+'+', basex=10,
-                       basey=10, label='Measured')
-      plt_slope.loglog(sens, slp_model, 'rgkb'[pidx]+'x', basex=10, basey=10,
+      plt_slope.loglog(sens, slp_measured, 'rgkb'[pidx]+'+', base=10,
+                       label='Measured')
+      plt_slope.loglog(sens, slp_model, 'rgkb'[pidx]+'x', base=10,
                        label='Model')
-      plt_intercept.loglog(sens, int_measured, 'rgkb'[pidx]+'+', basex=10,
-                           basey=10, label='Measured')
-      plt_intercept.loglog(sens, int_model, 'rgkb'[pidx]+'x', basex=10,
-                           basey=10, label='Model')
+      plt_intercept.loglog(sens, int_measured, 'rgkb'[pidx]+'+', base=10,
+                           label='Measured')
+      plt_intercept.loglog(sens, int_model, 'rgkb'[pidx]+'x', base=10,
+                           label='Model')
     plt_slope.legend()
     plt_intercept.legend()
     fig.savefig('%s.png' % os.path.join(log_path, _NAME))
