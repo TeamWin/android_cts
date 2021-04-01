@@ -1,0 +1,95 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.time.cts.host;
+
+import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import android.cts.statsdatom.lib.AtomTestUtils;
+import android.cts.statsdatom.lib.ConfigUtils;
+import android.cts.statsdatom.lib.DeviceUtils;
+import android.cts.statsdatom.lib.ReportUtils;
+
+import com.android.os.AtomsProto;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.List;
+
+/** Host-side CTS tests for the time zone detector service stats logging. */
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
+
+    protected TimeZoneDetectorHostHelper mTimeZoneDetectorHostHelper;
+
+    @Before
+    public void setUp() throws Exception {
+        mTimeZoneDetectorHostHelper = new TimeZoneDetectorHostHelper(getDevice());
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        ConfigUtils.removeConfig(getDevice());
+        ReportUtils.clearReports(getDevice());
+    }
+
+    @Test
+    public void testAtom_TimeZoneDetectorState() throws Exception {
+        // Enable the atom.
+        ConfigUtils.uploadConfigForPulledAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.TIME_ZONE_DETECTOR_STATE_FIELD_NUMBER);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        // This should trigger a pull.
+        AtomTestUtils.sendAppBreadcrumbReportedAtom(getDevice());
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        // Extract and assert about TimeZoneDetectorState.
+        List<AtomsProto.Atom> atoms = ReportUtils.getGaugeMetricAtoms(getDevice());
+
+        boolean found = false;
+        for (AtomsProto.Atom atom : atoms) {
+            if (atom.hasTimeZoneDetectorState()) {
+                AtomsProto.TimeZoneDetectorState state = atom.getTimeZoneDetectorState();
+
+                // There are a few parts of the pull metric we can check easily via the command
+                // line. Checking more would require adding more commands or something that dumps a
+                // proto. This test provides at least some coverage that the atom is working /
+                // matches actual state.
+                assertThat(state.getGeoSupported()).isEqualTo(
+                        mTimeZoneDetectorHostHelper.isGeoDetectionSupported());
+                assertThat(state.getLocationEnabled()).isEqualTo(
+                        mTimeZoneDetectorHostHelper.isLocationEnabledForCurrentUser());
+                boolean isGeoDetectionEnabled = state.getDetectionMode()
+                        == AtomsProto.TimeZoneDetectorState.DetectionMode.GEO;
+                assertThat(isGeoDetectionEnabled).isEqualTo(
+                        mTimeZoneDetectorHostHelper.isGeoDetectionEnabled());
+                found = true;
+                break;
+            }
+        }
+        assertWithMessage("Did not find a matching atom TimeZoneDetectorState")
+                .that(found).isTrue();
+    }
+}
