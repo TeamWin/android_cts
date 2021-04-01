@@ -19,7 +19,6 @@ package android.server.biometrics;
 import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_ACTIVITY;
 import static android.server.biometrics.Components.CLASS_2_BIOMETRIC_OR_CREDENTIAL_ACTIVITY;
 
-import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_IDLE;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_PAUSED;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_AUTH_STARTED_UI_SHOWING;
 import static com.android.server.biometrics.nano.BiometricServiceStateProto.STATE_SHOWING_DEVICE_CREDENTIAL;
@@ -36,7 +35,6 @@ import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.TestJournalProvider;
 import android.server.wm.WindowManagerState;
-import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -307,26 +305,8 @@ public class BiometricActivityTests extends BiometricTestBase {
             waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
         }
 
-        // All sensors are idle, BiometricService is waiting for device credential
-        state = getCurrentState();
-        assertTrue(state.toString(), state.mSensorStates.areAllSensorsIdle());
-        assertEquals(state.toString(), STATE_SHOWING_DEVICE_CREDENTIAL, state.mState);
+        successfullyEnterCredential();
 
-        // Wait for any animations to complete. Ideally, this should be reflected in
-        // STATE_SHOWING_DEVICE_CREDENTIAL, but SysUI and BiometricService are different processes
-        // so we'd need to add some additional plumbing. We can improve this in the future.
-        Thread.sleep(1000);
-
-        // Enter credential. AuthSession done, authentication callback received
-        final UiObject2 passwordField = findView(VIEW_ID_PASSWORD_FIELD);
-        Log.d(TAG, "Focusing, entering, submitting credential");
-        passwordField.click();
-        passwordField.setText(LOCK_CREDENTIAL);
-        mDevice.pressEnter();
-        waitForState(STATE_AUTH_IDLE);
-
-        state = getCurrentState();
-        assertEquals(state.toString(), STATE_AUTH_IDLE, state.mState);
         callbackState = getCallbackState(journal);
         assertEquals(callbackState.toString(), 0, callbackState.mNumAuthRejected);
         assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);

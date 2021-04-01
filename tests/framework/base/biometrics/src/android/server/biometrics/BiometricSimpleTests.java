@@ -28,6 +28,7 @@ import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
+import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.server.biometrics.nano.SensorStateProto;
@@ -91,9 +92,8 @@ public class BiometricSimpleTests extends BiometricTestBase {
         // Second case above
         BiometricPrompt.AuthenticationCallback callback =
                 mock(BiometricPrompt.AuthenticationCallback.class);
-        showCredentialOnlyBiometricPrompt(callback);
-        mInstrumentation.waitForIdleSync();
-        Utils.waitForIdleService(this::getSensorStates);
+        showCredentialOnlyBiometricPrompt(callback, new CancellationSignal(),
+                false /* shouldShow */);
         verify(callback).onAuthenticationError(
                 eq(BiometricPrompt.BIOMETRIC_ERROR_NO_DEVICE_CREDENTIAL),
                 any());
@@ -101,12 +101,62 @@ public class BiometricSimpleTests extends BiometricTestBase {
         // Third case above. Since the deprecated API is intended to allow credential in addition
         // to biometrics, we should be receiving BIOMETRIC_ERROR_NO_BIOMETRICS.
         callback = mock(BiometricPrompt.AuthenticationCallback.class);
-        showDeviceCredentialAllowedBiometricPrompt(callback);
-        mInstrumentation.waitForIdleSync();
-        Utils.waitForIdleService(this::getSensorStates);
+        showDeviceCredentialAllowedBiometricPrompt(callback, new CancellationSignal(),
+                false /* shouldShow */);
         verify(callback).onAuthenticationError(
                 eq(BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS),
                 any());
     }
 
+    /**
+     * When device credential is enrolled, check the behavior for
+     * 1) BiometricManager#canAuthenticate(DEVICE_CREDENTIAL)
+     * 2a) Successfully authenticating BiometricPrompt#setAllowedAuthenticators(DEVICE_CREDENTIAL)
+     * 2b) Cancelling authentication for the above
+     * 3a) @deprecated BiometricPrompt#setDeviceCredentialALlowed(true)
+     * 3b) Cancelling authentication for the above
+     * 4) Cancelling auth for options 2) and 3)
+     */
+    @Test
+    public void testWhenCredentialEnrolled() throws Exception {
+        try (CredentialSession session = new CredentialSession()) {
+            session.setCredential();
+
+            // First case above
+            final int result = mBiometricManager.canAuthenticate(BiometricManager
+                    .Authenticators.DEVICE_CREDENTIAL);
+            assertEquals(BiometricManager.BIOMETRIC_SUCCESS, result);
+
+            // 2a above
+            BiometricPrompt.AuthenticationCallback callback =
+                    mock(BiometricPrompt.AuthenticationCallback.class);
+            showCredentialOnlyBiometricPrompt(callback, new CancellationSignal(),
+                    true /* shouldShow */);
+            successfullyEnterCredential();
+            verify(callback).onAuthenticationSucceeded(any());
+
+            // 2b above
+            CancellationSignal cancel = new CancellationSignal();
+            callback = mock(BiometricPrompt.AuthenticationCallback.class);
+            showCredentialOnlyBiometricPrompt(callback, cancel, true /* shouldShow */);
+            cancelAuthentication(cancel);
+            verify(callback).onAuthenticationError(eq(BiometricPrompt.BIOMETRIC_ERROR_CANCELED),
+                    any());
+
+            // 3a above
+            callback = mock(BiometricPrompt.AuthenticationCallback.class);
+            showDeviceCredentialAllowedBiometricPrompt(callback, new CancellationSignal(),
+                    true /* shouldShow */);
+            successfullyEnterCredential();
+            verify(callback).onAuthenticationSucceeded(any());
+
+            // 3b above
+            cancel = new CancellationSignal();
+            callback = mock(BiometricPrompt.AuthenticationCallback.class);
+            showDeviceCredentialAllowedBiometricPrompt(callback, cancel, true /* shouldShow */);
+            cancelAuthentication(cancel);
+            verify(callback).onAuthenticationError(eq(BiometricPrompt.BIOMETRIC_ERROR_CANCELED),
+                    any());
+        }
+    }
 }
