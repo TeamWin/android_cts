@@ -4973,6 +4973,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_yes">Yes</string>
     <string name="audio_general_info">Info</string>
     <string name="audio_general_ok">Ok</string>
+    <string name="audio_general_start">Start</string>
+    <string name="audio_general_stop">Stop</string>
+
+    <string name="audio_general_JavaApi">Java API</string>
+    <string name="audio_general_NativeApi">Native API</string>
+
+    <string name="audio_general_clear_results">Clear Results</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
@@ -5155,6 +5162,13 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="af_no">No</string>
     <string name="af_yes">Yes</string>
 
+    <!-- AudioTap2Tone test -->
+    <string name="audio_tap2tone">Audio Tap To Tone Test</string>
+    <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
+        resulting tone.\nSelect the Audio API to test and press the \"Start\" button.
+        Use your fingernail to tap on the field below to trigger the test tone. Results will be
+        displayed in the field.</string>
+    <string name="audio_tap2tone_init_result">Result:</string>
 
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>

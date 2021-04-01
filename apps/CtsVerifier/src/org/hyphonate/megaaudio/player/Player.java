@@ -47,6 +47,11 @@ public abstract class Player extends StreamBase {
         return bufferSizeInBytes / sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT);
     }
 
+    /**
+     * @return The AudioSouce object associated with this player
+     */
+    public abstract AudioSource getAudioSource();
+
     //
     // Status
     //

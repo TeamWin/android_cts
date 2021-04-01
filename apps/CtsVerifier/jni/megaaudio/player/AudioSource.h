@@ -48,6 +48,8 @@ public:
      */
     virtual void reset() {}
 
+    virtual void trigger() {}
+
     /**
      * Process a request for audio data.
      * @param audioData The buffer to be filled.
