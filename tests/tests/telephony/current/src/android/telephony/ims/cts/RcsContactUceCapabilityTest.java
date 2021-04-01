@@ -17,7 +17,9 @@
 package android.telephony.ims.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.net.Uri;
 import android.os.Parcel;
@@ -32,6 +34,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Instant;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -40,7 +44,7 @@ import java.util.Set;
 @RunWith(AndroidJUnit4.class)
 public class RcsContactUceCapabilityTest {
 
-    private static final Uri TEST_CONTACT = Uri.fromParts("sip", "me.test", null);
+    private static final Uri TEST_CONTACT = Uri.fromParts("sip", "test1", null);
 
     public static final String FEATURE_TAG_CHAT_IM =
             "+g.3gpp.iari-ref=\"urn%3Aurn-7%3A3gpp-application.ims.iari.rcse.im\"";
@@ -60,29 +64,17 @@ public class RcsContactUceCapabilityTest {
             return;
         }
 
-        final boolean isAudioCapable = true;
-        final boolean isVideoCapable = true;
-        final String serviceVersion = "1.0";
-        final String serviceDescription = "service description test";
-
-        // Create the test capability
-        ServiceCapabilities.Builder servCapsBuilder = new ServiceCapabilities.Builder(
-                isAudioCapable, isVideoCapable);
-        servCapsBuilder.addSupportedDuplexMode(ServiceCapabilities.DUPLEX_MODE_FULL);
-
-        RcsContactPresenceTuple.Builder tupleBuilder = new RcsContactPresenceTuple.Builder(
-                RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN,
-                RcsContactPresenceTuple.SERVICE_ID_MMTEL, serviceVersion);
-        tupleBuilder.setContactUri(TEST_CONTACT)
-                .setServiceDescription(serviceDescription)
-                .setServiceCapabilities(servCapsBuilder.build());
+        // Create two presence tuples for testing.
+        RcsContactPresenceTuple mmtelTuple = createPresenceMmtelTuple();
+        RcsContactPresenceTuple ftTuple = createPresenceFtTuple();
 
         PresenceBuilder presenceBuilder = new PresenceBuilder(TEST_CONTACT,
                 RcsContactUceCapability.SOURCE_TYPE_CACHED,
                 RcsContactUceCapability.REQUEST_RESULT_FOUND);
-        presenceBuilder.addCapabilityTuple(tupleBuilder.build());
+        presenceBuilder.addCapabilityTuple(mmtelTuple);
+        presenceBuilder.addCapabilityTuples(Collections.singletonList(ftTuple));
 
-        RcsContactUceCapability testCapability = presenceBuilder.build();
+        final RcsContactUceCapability testCapability = presenceBuilder.build();
 
         // parcel and unparcel
         Parcel infoParceled = Parcel.obtain();
@@ -92,36 +84,91 @@ public class RcsContactUceCapabilityTest {
                 RcsContactUceCapability.CREATOR.createFromParcel(infoParceled);
         infoParceled.recycle();
 
-        boolean unparceledVolteCapable = false;
-        boolean unparceledVtCapable = false;
-        String unparceledTupleStatus = RcsContactPresenceTuple.TUPLE_BASIC_STATUS_CLOSED;
-        String unparceledDuplexMode = ServiceCapabilities.DUPLEX_MODE_RECEIVE_ONLY;
+        assertEquals(unparceledCapability.getContactUri(), testCapability.getContactUri());
+        assertEquals(unparceledCapability.getSourceType(), testCapability.getSourceType());
+        assertEquals(unparceledCapability.getRequestResult(), testCapability.getRequestResult());
+        assertEquals(unparceledCapability.getCapabilityMechanism(),
+                testCapability.getCapabilityMechanism());
 
-        RcsContactPresenceTuple unparceledTuple =
+        // Verify mmtel tuple
+        RcsContactPresenceTuple unparceledMMtelTuple =
                 unparceledCapability.getCapabilityTuple(RcsContactPresenceTuple.SERVICE_ID_MMTEL);
+        verifyUnparceledTuple(unparceledMMtelTuple, mmtelTuple);
 
-        if (unparceledTuple != null) {
-            unparceledTupleStatus = unparceledTuple.getStatus();
+        // Verify File transfer tuple
+        RcsContactPresenceTuple unparceledFtTuple =
+                unparceledCapability.getCapabilityTuple(RcsContactPresenceTuple.SERVICE_ID_FT);
+        verifyUnparceledTuple(unparceledFtTuple, ftTuple);
 
-            ServiceCapabilities serviceCaps = unparceledTuple.getServiceCapabilities();
-            if (serviceCaps != null) {
-                unparceledVolteCapable = serviceCaps.isAudioCapable();
-                unparceledVtCapable = serviceCaps.isVideoCapable();
-                List<String> duplexModes = serviceCaps.getSupportedDuplexModes();
-                if (duplexModes != null && !duplexModes.isEmpty()) {
-                    unparceledDuplexMode = duplexModes.get(0);
-                }
+        // Verify all the tuples from the API getCapabilityTuples
+        List<RcsContactPresenceTuple> unparceledTuples = unparceledCapability.getCapabilityTuples();
+        assertNotNull(unparceledTuples);
+        assertEquals(2, unparceledTuples.size());
+        for (RcsContactPresenceTuple unparcelTuple : unparceledTuples) {
+            String serverId = unparcelTuple.getServiceId();
+            if (RcsContactPresenceTuple.SERVICE_ID_MMTEL.equals(serverId)) {
+                verifyUnparceledTuple(unparcelTuple, mmtelTuple);
+            } else if (RcsContactPresenceTuple.SERVICE_ID_FT.equals(serverId)) {
+                verifyUnparceledTuple(unparcelTuple, ftTuple);
+            } else {
+                fail("Invalid service ID: " + serverId);
             }
         }
+    }
 
-        assertEquals(TEST_CONTACT, unparceledCapability.getContactUri());
-        assertTrue(unparceledVolteCapable);
-        assertTrue(unparceledVtCapable);
-        assertEquals(RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN, unparceledTupleStatus);
-        assertEquals(ServiceCapabilities.DUPLEX_MODE_FULL, unparceledDuplexMode);
-        assertEquals(RcsContactPresenceTuple.SERVICE_ID_MMTEL, unparceledTuple.getServiceId());
-        assertEquals(serviceVersion, unparceledTuple.getServiceVersion());
-        assertEquals(serviceDescription, unparceledTuple.getServiceDescription());
+    private RcsContactPresenceTuple createPresenceMmtelTuple() {
+        ServiceCapabilities.Builder servCapsBuilder = new ServiceCapabilities.Builder(true, true);
+        servCapsBuilder.addSupportedDuplexMode(ServiceCapabilities.DUPLEX_MODE_FULL);
+
+        RcsContactPresenceTuple.Builder tupleBuilder = new RcsContactPresenceTuple.Builder(
+                RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN,
+                RcsContactPresenceTuple.SERVICE_ID_MMTEL, "1.0");
+        tupleBuilder.setContactUri(TEST_CONTACT)
+                .setTime(Instant.now())
+                .setServiceDescription("service description for contact 1")
+                .setServiceCapabilities(servCapsBuilder.build());
+        return tupleBuilder.build();
+    }
+
+    private RcsContactPresenceTuple createPresenceFtTuple() {
+        ServiceCapabilities.Builder servCapsBuilder = new ServiceCapabilities.Builder(true, true);
+        servCapsBuilder.addSupportedDuplexMode(ServiceCapabilities.DUPLEX_MODE_FULL);
+
+        RcsContactPresenceTuple.Builder tupleBuilder = new RcsContactPresenceTuple.Builder(
+                RcsContactPresenceTuple.TUPLE_BASIC_STATUS_OPEN,
+                RcsContactPresenceTuple.SERVICE_ID_FT, "1.0");
+        tupleBuilder.setContactUri(TEST_CONTACT)
+                .setServiceDescription("service description for contact2")
+                .setServiceCapabilities(servCapsBuilder.build());
+        return tupleBuilder.build();
+    }
+
+    private void verifyUnparceledTuple(RcsContactPresenceTuple unparceledTuple,
+            RcsContactPresenceTuple expectedTuple) {
+        assertNotNull(unparceledTuple);
+        assertEquals(unparceledTuple.getStatus(), expectedTuple.getStatus());
+        assertEquals(unparceledTuple.getServiceId(), expectedTuple.getServiceId());
+        assertEquals(unparceledTuple.getServiceDescription(),
+                expectedTuple.getServiceDescription());
+        assertEquals(unparceledTuple.getServiceVersion(), expectedTuple.getServiceVersion());
+        assertEquals(unparceledTuple.getContactUri(), expectedTuple.getContactUri());
+        assertEquals(unparceledTuple.getTime(), expectedTuple.getTime());
+
+        ServiceCapabilities unparceledServiceCaps = unparceledTuple.getServiceCapabilities();
+        ServiceCapabilities expectedServiceCaps = unparceledTuple.getServiceCapabilities();
+        assertNotNull(unparceledServiceCaps);
+        assertEquals(unparceledServiceCaps.isAudioCapable(), expectedServiceCaps.isAudioCapable());
+        assertEquals(unparceledServiceCaps.isVideoCapable(), expectedServiceCaps.isVideoCapable());
+
+        List<String> unparceledDuplexModes = unparceledServiceCaps.getSupportedDuplexModes();
+        List<String> expectedDuplexModes = expectedServiceCaps.getSupportedDuplexModes();
+        assertEquals(unparceledDuplexModes.size(), expectedDuplexModes.size());
+        assertTrue(unparceledDuplexModes.containsAll(expectedDuplexModes));
+
+        List<String> unparceledUnsupportedModes = unparceledServiceCaps.getUnsupportedDuplexModes();
+        List<String> expectedUnsupportedModes = expectedServiceCaps.getUnsupportedDuplexModes();
+        assertEquals(unparceledUnsupportedModes.size(), expectedUnsupportedModes.size());
+        assertTrue(unparceledUnsupportedModes.containsAll(expectedUnsupportedModes));
     }
 
     @Test
@@ -130,16 +177,15 @@ public class RcsContactUceCapabilityTest {
             return;
         }
 
-        final int requestResult = RcsContactUceCapability.REQUEST_RESULT_FOUND;
         final Set<String> featureTags = new HashSet<>();
         featureTags.add(FEATURE_TAG_CHAT_IM);
         featureTags.add(FEATURE_TAG_CHAT_SESSION);
         featureTags.add(FEATURE_TAG_FILE_TRANSFER);
 
         OptionsBuilder optionsBuilder = new OptionsBuilder(TEST_CONTACT);
-        optionsBuilder.setRequestResult(requestResult);
         optionsBuilder.addFeatureTags(featureTags);
         optionsBuilder.addFeatureTag(FEATURE_TAG_POST_CALL);
+        optionsBuilder.setRequestResult(RcsContactUceCapability.REQUEST_RESULT_FOUND);
 
         RcsContactUceCapability testCapability = optionsBuilder.build();
 
@@ -151,16 +197,20 @@ public class RcsContactUceCapabilityTest {
                 RcsContactUceCapability.CREATOR.createFromParcel(infoParceled);
         infoParceled.recycle();
 
-        Set<String> verifiedFeatureTags = new HashSet<>(featureTags);
-        verifiedFeatureTags.add(FEATURE_TAG_POST_CALL);
+        assertEquals(unparceledCapability.getContactUri(), testCapability.getContactUri());
+        assertEquals(unparceledCapability.getSourceType(), testCapability.getSourceType());
+        assertEquals(unparceledCapability.getRequestResult(), testCapability.getRequestResult());
+        assertEquals(unparceledCapability.getCapabilityMechanism(),
+                testCapability.getCapabilityMechanism());
 
-        int unparceledRequestResult = unparceledCapability.getRequestResult();
+        Set<String> expectedFeatureTags = new HashSet<>(featureTags);
+        expectedFeatureTags.add(FEATURE_TAG_POST_CALL);
+
         Set<String> unparceledFeatureTags = unparceledCapability.getFeatureTags();
-        assertEquals(requestResult, unparceledRequestResult);
-        assertEquals(verifiedFeatureTags.size(), unparceledFeatureTags.size());
-        Iterator<String> featureTag = verifiedFeatureTags.iterator();
-        while (featureTag.hasNext()) {
-            assertTrue(unparceledFeatureTags.contains(featureTag.next()));
+        assertEquals(unparceledFeatureTags.size(), expectedFeatureTags.size());
+        Iterator<String> expectedFeatureTag = expectedFeatureTags.iterator();
+        while (expectedFeatureTag.hasNext()) {
+            assertTrue(unparceledFeatureTags.contains(expectedFeatureTag.next()));
         }
     }
 }
