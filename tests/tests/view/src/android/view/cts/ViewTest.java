@@ -3932,7 +3932,8 @@ public class ViewTest {
 
         // Mouse events should trigger touch mode.
         final MotionEvent event =
-                CtsMouseUtil.obtainMouseEvent(MotionEvent.ACTION_SCROLL, mockView, 0, 0);
+                CtsMouseUtil.obtainMouseEvent(MotionEvent.ACTION_SCROLL, mockView,
+                        mockView.getWidth() - 1, 0);
         mInstrumentation.sendPointerSync(event);
         assertTrue(fitWindowsView.isInTouchMode());
 
