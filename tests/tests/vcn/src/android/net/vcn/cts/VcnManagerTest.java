@@ -69,6 +69,8 @@ public class VcnManagerTest {
 
     private static final Executor INLINE_EXECUTOR = Runnable::run;
 
+    private static final String VCN_GATEWAY_CONNECTION_NAME = "test-vcn-gateway-connection";
+
     private final Context mContext;
     private final VcnManager mVcnManager;
     private final SubscriptionManager mSubscriptionManager;
@@ -125,7 +127,7 @@ public class VcnManagerTest {
                 new VcnControlPlaneIkeConfig(ikeParams, childParams);
 
         final VcnGatewayConnectionConfig gatewayConnConfig =
-                new VcnGatewayConnectionConfig.Builder(controlConfig)
+                new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, controlConfig)
                         .addExposedCapability(NET_CAPABILITY_INTERNET)
                         .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
                         .setRetryInterval(
@@ -244,9 +246,9 @@ public class VcnManagerTest {
 
         @Override
         public void onGatewayConnectionError(
-                @NonNull int[] networkCapabilities, int errorCode, @Nullable Throwable detail) {
+                @NonNull String gatewayConnectionName, int errorCode, @Nullable Throwable detail) {
             mFutureOnGatewayConnectionError.complete(
-                    new GatewayConnectionError(networkCapabilities, errorCode, detail));
+                    new GatewayConnectionError(gatewayConnectionName, errorCode, detail));
         }
 
         public int awaitOnStatusChanged() throws Exception {
@@ -260,13 +262,13 @@ public class VcnManagerTest {
 
     /** Info class for organizing VcnStatusCallback#onGatewayConnectionError response data. */
     private static class GatewayConnectionError {
-        @NonNull public final int[] networkCapabilities;
+        @NonNull public final String gatewayConnectionName;
         public final int errorCode;
         @Nullable public final Throwable detail;
 
         public GatewayConnectionError(
-                @NonNull int[] networkCapabilities, int errorCode, @Nullable Throwable detail) {
-            this.networkCapabilities = networkCapabilities.clone();
+                @NonNull String gatewayConnectionName, int errorCode, @Nullable Throwable detail) {
+            this.gatewayConnectionName = gatewayConnectionName;
             this.errorCode = errorCode;
             this.detail = detail;
         }
