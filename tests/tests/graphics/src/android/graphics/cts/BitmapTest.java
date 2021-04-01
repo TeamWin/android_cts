@@ -2145,15 +2145,15 @@ public class BitmapTest {
         Debug.getMemoryInfo(end);
         assertNotEquals(0, start.getTotalPss());
         assertNotEquals(0, end.getTotalPss());
-        if (end.getTotalPss() - start.getTotalPss() > 2000 /* kB */) {
+        if (end.getTotalPss() - start.getTotalPss() > 5000 /* kB */) {
             runGcAndFinalizersSync();
             Debug.getMemoryInfo(end);
-            if (end.getTotalPss() - start.getTotalPss() > 4000 /* kB */) {
+            if (end.getTotalPss() - start.getTotalPss() > 7000 /* kB */) {
                 // Guarded by if so we don't continually generate garbage for the
                 // assertion string.
                 assertEquals("Memory leaked, iteration=" + iteration,
                         start.getTotalPss(), end.getTotalPss(),
-                        4000 /* kb */);
+                        7000 /* kb */);
             }
         }
     }
