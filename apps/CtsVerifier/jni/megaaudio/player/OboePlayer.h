@@ -33,6 +33,7 @@ public:
     virtual void onErrorBeforeClose(oboe::AudioStream * oboeStream, oboe::Result error) override;
 
     virtual Result setupStream(int32_t channelCount, int32_t sampleRate, int32_t routeDeviceId) override;
+    virtual Result startStream() override;
 };
 
 #endif // MEGA_PLAYER_OBOEPLAYER_H

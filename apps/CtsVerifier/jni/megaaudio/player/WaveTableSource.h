@@ -89,6 +89,10 @@ public:
      * Standard wavetable generators
      */
     static void genSinWave(float* buffer, int length);
+    static void genTriangleWave(float* buffer, int size, float maxValue, float minValue,
+                                           float dutyCycle);
+    static void genPulseWave(float* buffer, int size,float maxValue, float minValue,
+                                            float dutyCycle);
 
 protected:
     static const int DEFAULT_WAVETABLE_LENGTH = 2049;

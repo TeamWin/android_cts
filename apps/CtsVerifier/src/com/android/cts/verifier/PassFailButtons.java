@@ -16,6 +16,9 @@
 
 package com.android.cts.verifier;
 
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
 import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -35,9 +38,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 import android.widget.Toast;
-
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 import com.android.compatibility.common.util.ReportLog;
 
@@ -518,6 +518,9 @@ public class PassFailButtons {
         } else {
             throw new IllegalArgumentException("Unknown id: " + target.getId());
         }
+
+        // Give tests a chance to handle completion
+        ((PassFailButtons.Activity) activity).setTestResultAndFinish(passed);
 
         setTestResultAndFinishHelper(activity, testId, testDetails, passed, reportLog, historyCollection);
     }
