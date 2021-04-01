@@ -23,6 +23,8 @@
     <string name="fail_button_text">Fail</string>
     <string name="next_button_text">Next</string>
     <string name="go_button_text">Go</string>
+    <string name="present_button_text">Device Present</string>
+    <string name="gone_button_text">Device Gone</string>
     <string name="tests_completed_successfully">All tests completed successfully.</string>
 
     <string name="retry_button_text">Retry</string>
@@ -792,6 +794,31 @@
         Before proceeding, make sure you have a bluetooth device nearby and discoverable.
         Also, make sure that bluetooth is turned on on this device.
         Once you press the button, wait for a dialog to pop up and select your device from the list.
+    </string>
+
+    <string name="companion_service_test">Companion Device Service Test</string>
+    <string name="companion_service_test_info">
+        This test checks that APIs to notify the companion app of its associated device going in and
+        out of Bluetooth range are working correctly.
+        Before proceeding, make sure you have a Bluetooth LE device nearby and
+        discoverable. Also, make sure that bluetooth is turned on the device.
+        First, you press the go button, wait for a dialog to pop up and select your device from the
+        list. Second, make sure your bluetooth device is unreachable(you can power off/reboot your
+        Bluetooth device or put it into a Faraday bag) and press the Device Gone button.
+        Lastly, make your bluetooth device reachable by waiting for the device to power on or
+        removing it from the Faraday bag and press the Device Present button.
+    </string>
+
+    <string name="companion_service_test_gone_text">
+        Now, please make your Bluetooth device unreachable.
+        Put your bluetooth device into a RF Bag or power off/reboot your device,
+        then press the Device Gone button.
+    </string>
+
+    <string name="companion_service_test_present_text">
+        Now, please make your Bluetooth device reachable.
+        Remove your Bluetooth device from a RF Bag or power on your device,
+        then press the Device Present button.
     </string>
 
     <!-- Strings for FeatureSummaryActivity -->
