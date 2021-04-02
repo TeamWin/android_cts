@@ -16,6 +16,8 @@
 
 package android.jobscheduler.cts;
 
+import static android.app.job.JobInfo.NETWORK_TYPE_ANY;
+import static android.app.job.JobInfo.NETWORK_TYPE_NONE;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.ensureSavedWifiNetwork;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.isWiFiConnected;
 import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
@@ -32,6 +34,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AppOpsManager;
+import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -296,7 +299,7 @@ public class JobThrottlingTest {
 
     @Test
     public void testEJStoppedWhenRestricted() throws Exception {
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -310,7 +313,7 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictedEJStartedWhenUnrestricted() throws Exception {
         setTestPackageRestricted(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertFalse("Job started for restricted app",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         setTestPackageRestricted(false);
@@ -321,7 +324,7 @@ public class JobThrottlingTest {
     @Test
     public void testRestrictedEJAllowedWhenUidActive() throws Exception {
         setTestPackageRestricted(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertFalse("Job started for restricted app",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         // Turn the screen on to ensure the app gets into the TOP state.
@@ -351,7 +354,7 @@ public class JobThrottlingTest {
         setAirplaneMode(false);
         setWifiState(true, mCm, mWifiManager);
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -409,7 +412,7 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
-        sendScheduleJobBroadcast(false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
         // Slowly add back required bucket constraints.
@@ -450,7 +453,7 @@ public class JobThrottlingTest {
         BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.RESTRICTED);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertFalse("New job started in RESTRICTED bucket", mTestAppInterface.awaitJobStart(3_000));
 
@@ -579,7 +582,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertTrue("New expedited job failed to start with battery saver ON",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
@@ -593,7 +596,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(false);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         assertTrue("New expedited job failed to start with battery saver ON",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         BatteryUtils.enableBatterySaver(true);
@@ -606,7 +609,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         toggleDozeState(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -617,7 +620,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         toggleDozeState(false);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -632,7 +635,7 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
 
         toggleDozeState(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -661,7 +664,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -690,7 +693,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         toggleDozeState(true);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -720,7 +723,7 @@ public class JobThrottlingTest {
         mDeviceConfigStateHelper.set("runtime_min_ej_guarantee_ms", Long.toString(60_000L));
 
         toggleDozeState(false);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -743,7 +746,7 @@ public class JobThrottlingTest {
 
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(false);
-        mTestAppInterface.scheduleJob(false, false, true);
+        mTestAppInterface.scheduleJob(false, JobInfo.NETWORK_TYPE_NONE, true);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -785,7 +788,7 @@ public class JobThrottlingTest {
         // Toggle individual constraints
 
         // Connectivity
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -798,7 +801,7 @@ public class JobThrottlingTest {
         setWifiState(true, mCm, mWifiManager);
 
         // Idle
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -811,7 +814,7 @@ public class JobThrottlingTest {
         triggerJobIdle();
 
         // Charging
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -826,7 +829,7 @@ public class JobThrottlingTest {
         // Battery not low
         setScreenState(false);
         triggerJobIdle();
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_ANY, false);
         runJob();
         assertTrue("New job didn't start in RESTRICTED bucket",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -880,7 +883,7 @@ public class JobThrottlingTest {
         assumeTrue("device idle not enabled", mDeviceIdleEnabled);
 
         toggleDozeState(false);
-        sendScheduleJobBroadcast(false);
+        mTestAppInterface.scheduleJob(false, NETWORK_TYPE_NONE, false);
         runJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT));
@@ -949,7 +952,7 @@ public class JobThrottlingTest {
     }
 
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
-        mTestAppInterface.scheduleJob(allowWhileIdle, false, false);
+        mTestAppInterface.scheduleJob(allowWhileIdle, NETWORK_TYPE_ANY, false);
     }
 
     private void toggleDozeState(final boolean idle) throws Exception {
