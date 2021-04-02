@@ -349,46 +349,36 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void testMandatoryStreamCombination(String cameraId,
             StaticMetadata staticInfo, String physicalCameraId,
             MandatoryStreamCombination combination,
-            boolean substituteY8, boolean substituteHeic, boolean maxResolution) throws Exception {
+            boolean substituteY8, boolean substituteHeic, boolean ultraHighResolution)
+            throws Exception {
 
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
         // TODO: This needs to be adjusted based on feedback
-        final int TIMEOUT_MULTIPLIER = maxResolution ? 2 : 1;
+        final int TIMEOUT_MULTIPLIER = ultraHighResolution ? 2 : 1;
         final int TIMEOUT_FOR_RESULT_MS =
                 ((staticInfo.isHardwareLevelLegacy()) ? 2000 : 1000) * TIMEOUT_MULTIPLIER;
         final int MIN_RESULT_COUNT = 3;
 
         // Set up outputs
-        // List of {OutputConfiguration, whether stream is ultra high resolution}
-        List<Pair<OutputConfiguration, Boolean>> outputConfigAndInfos = new ArrayList<>();
-        List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
-        List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
-        List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
-        List<ImageReader> y8Targets = new ArrayList<ImageReader>();
-        List<ImageReader> rawTargets = new ArrayList<ImageReader>();
-        List<ImageReader> heicTargets = new ArrayList<ImageReader>();
-        List<ImageReader> depth16Targets = new ArrayList<ImageReader>();
+        List<OutputConfiguration> outputConfigs = new ArrayList<>();
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
 
-        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(), privTargets,
-                jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets, depth16Targets,
-                outputConfigAndInfos, MIN_RESULT_COUNT, substituteY8, substituteHeic,
-                physicalCameraId, mHandler);
+        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(),
+                targets, outputConfigs, outputSurfaces, MIN_RESULT_COUNT, substituteY8,
+                substituteHeic, physicalCameraId, ultraHighResolution,
+                /*multiResStreamConfig*/null, mHandler);
 
         boolean haveSession = false;
         try {
             CaptureRequest.Builder requestBuilder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
 
-            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
-
-            for (Pair<OutputConfiguration, Boolean> c : outputConfigAndInfos) {
-                if (maxResolution == c.second) {
-                    requestBuilder.addTarget(c.first.getSurface());
-                }
-                outputConfigs.add(c.first);
+            for (Surface s : outputSurfaces) {
+                requestBuilder.addTarget(s);
             }
 
-            if (maxResolution) {
+            if (ultraHighResolution) {
                 requestBuilder.set(CaptureRequest.SENSOR_PIXEL_MODE,
                         CameraMetadata.SENSOR_PIXEL_MODE_MAXIMUM_RESOLUTION);
             }
@@ -449,27 +439,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
         }
 
-        for (SurfaceTexture target : privTargets) {
-            target.release();
-        }
-        for (ImageReader target : jpegTargets) {
-            target.close();
-        }
-        for (ImageReader target : yuvTargets) {
-            target.close();
-        }
-        for (ImageReader target : y8Targets) {
-            target.close();
-        }
-        for (ImageReader target : rawTargets) {
-            target.close();
-        }
-        for (ImageReader target : heicTargets) {
-            target.close();
-        }
-        for (ImageReader target : depth16Targets) {
-            target.close();
-        }
+        targets.close();
     }
 
     /**
@@ -580,15 +550,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         final int TIMEOUT_FOR_RESULT_MS = 5000 * TIMEOUT_MULTIPLIER;
         final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
 
-        List<SurfaceTexture> privTargets = new ArrayList<>();
-        List<ImageReader> jpegTargets = new ArrayList<>();
-        List<ImageReader> yuvTargets = new ArrayList<>();
-        List<ImageReader> y8Targets = new ArrayList<>();
-        List<ImageReader> rawTargets = new ArrayList<>();
-        List<ImageReader> heicTargets = new ArrayList<>();
-        List<ImageReader> depth16Targets = new ArrayList<>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
         ArrayList<Surface> outputSurfaces = new ArrayList<>();
-        List<Pair<OutputConfiguration, Boolean>> outputConfigInfos = new ArrayList<>();
+        List<OutputConfiguration> outputConfigs = new ArrayList<>();
         ImageReader inputReader = null;
         ImageWriter inputWriter = null;
         SimpleImageReaderListener inputReaderListener = new SimpleImageReaderListener();
@@ -600,9 +564,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             assertTrue("Reprocessable stream combinations should have at least 3 or more streams",
                     (streamInfo != null) && (streamInfo.size() >= 3));
         } else {
-             assertTrue("Max Resolution Reprocessable stream combinations should have 2 streams",
+            assertTrue("Max Resolution Reprocessable stream combinations should have 2 streams",
                     (streamInfo != null) && (streamInfo.size() == 2));
-
         }
 
         assertTrue("The first mandatory stream information in a reprocessable combination must " +
@@ -628,17 +591,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             } else {
                 mandatoryStreamInfos = streamInfo.subList(2, streamInfo.size());
             }
-            CameraTestUtils.setupConfigurationTargets(mandatoryStreamInfos, privTargets,
-                    jpegTargets, yuvTargets, y8Targets, rawTargets, heicTargets,
-                    depth16Targets, outputConfigInfos, NUM_REPROCESS_CAPTURES_PER_CONFIG,
-                    substituteY8, substituteHeic, null/*overridePhysicalCameraId*/, mHandler);
-
-            outputSurfaces.ensureCapacity(outputConfigInfos.size());
-            for (Pair<OutputConfiguration, Boolean> c : outputConfigInfos) {
-                if (c.second == maxResolution) {
-                    outputSurfaces.add(c.first.getSurface());
-                }
-            }
+            CameraTestUtils.setupConfigurationTargets(mandatoryStreamInfos, targets,
+                    outputConfigs, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG,
+                    substituteY8, substituteHeic, null/*overridePhysicalCameraId*/, maxResolution,
+                    /*multiResStreamConfig*/null, mHandler);
 
             InputConfiguration inputConfig = new InputConfiguration(inputSizes.get(0).getWidth(),
                     inputSizes.get(0).getHeight(), inputFormat);
@@ -647,13 +603,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             // the YUV/Y8 ImageReader for input is also used for output.)
             final boolean inputIsYuv = inputConfig.getFormat() == ImageFormat.YUV_420_888;
             final boolean inputIsY8 = inputConfig.getFormat() == ImageFormat.Y8;
-            final boolean useYuv = inputIsYuv || yuvTargets.size() > 0;
-            final boolean useY8 = inputIsY8 || y8Targets.size() > 0;
+            final boolean useYuv = inputIsYuv || targets.mYuvTargets.size() > 0;
+            final boolean useY8 = inputIsY8 || targets.mY8Targets.size() > 0;
             final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG *
                     (maxResolution ? 1 : (
                     ((inputIsYuv || inputIsY8) ? 1 : 0) +
-                    (substituteHeic ? heicTargets.size() : jpegTargets.size()) +
-                    (useYuv ? yuvTargets.size() : y8Targets.size())));
+                    (substituteHeic ? targets.mHeicTargets.size() : targets.mJpegTargets.size()) +
+                    (useYuv ? targets.mYuvTargets.size() : targets.mY8Targets.size())));
 
             // It needs 1 input buffer for each reprocess capture + the number of buffers
             // that will be used as outputs.
@@ -694,23 +650,23 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 reprocessOutputs.add(inputReader.getSurface());
             }
 
-            for (ImageReader reader : jpegTargets) {
+            for (ImageReader reader : targets.mJpegTargets) {
                 reprocessOutputs.add(reader.getSurface());
             }
 
-            for (ImageReader reader : heicTargets) {
+            for (ImageReader reader : targets.mHeicTargets) {
                 reprocessOutputs.add(reader.getSurface());
             }
 
-            for (ImageReader reader : yuvTargets) {
+            for (ImageReader reader : targets.mYuvTargets) {
                 reprocessOutputs.add(reader.getSurface());
             }
 
-            for (ImageReader reader : y8Targets) {
+            for (ImageReader reader : targets.mY8Targets) {
                 reprocessOutputs.add(reader.getSurface());
             }
             if (maxResolution) {
-                for (ImageReader reader : rawTargets) {
+                for (ImageReader reader : targets.mRawTargets) {
                     reprocessOutputs.add(reader.getSurface());
                 }
             }
@@ -739,34 +695,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         } finally {
             inputReaderListener.drain();
             reprocessOutputCaptureListener.drain();
-
-            for (SurfaceTexture target : privTargets) {
-                target.release();
-            }
-
-            for (ImageReader target : jpegTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : yuvTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : y8Targets) {
-                target.close();
-            }
-
-            for (ImageReader target : rawTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : heicTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : depth16Targets) {
-                target.close();
-            }
+            targets.close();
 
             if (inputReader != null) {
                 inputReader.close();
