@@ -884,8 +884,8 @@ public class PackageManagerShellCommandIncrementalTest {
 
     private void doTestInstallSysTrace(String testApk) throws Exception {
         // Async atrace dump uses less resources but requires periodic pulls.
-        // Overall timeout of 30secs in 100ms intervals should be enough.
-        final int atraceDumpIterations = 300;
+        // Overall timeout of 10secs in 100ms intervals should be enough.
+        final int atraceDumpIterations = 100;
         final int atraceDumpDelayMs = 100;
         final String expected = "|page_read:";
 
