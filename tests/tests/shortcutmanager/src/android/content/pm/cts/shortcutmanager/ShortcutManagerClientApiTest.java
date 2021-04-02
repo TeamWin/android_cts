@@ -25,14 +25,21 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils.setDefaultLauncher;
 
 import android.app.PendingIntent;
+import android.app.appsearch.AppSearchManager;
+import android.app.appsearch.SearchResult;
+import android.app.appsearch.SearchSpec;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.content.pm.Signature;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.test.suitebuilder.annotation.SmallTest;
+import android.util.ArraySet;
 
 import com.android.compatibility.common.util.CddTest;
 
@@ -42,6 +49,13 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Tests for {@link ShortcutManager} and {@link ShortcutInfo}.
@@ -1411,6 +1425,62 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                 success = true;
             }
             assertTrue(success);
+        });
+    }
+
+    public void testUpdateShortcutVisibility_GrantShortcutAccess() throws Exception {
+        final List<byte[]> certs = new ArrayList<>(1);
+
+        // retrieve cert from package1
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            try {
+                final PackageManager pm = mPackageContext1.getPackageManager();
+                final String pkgName = mPackageContext1.getPackageName();
+                PackageInfo packageInfo = pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES);
+                for (Signature signature : packageInfo.signatures) {
+                    MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
+                    certs.add(sha256.digest(signature.toByteArray()));
+                }
+            } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException e) {
+            }
+        });
+
+        // Push shortcuts for package2 and make them visible to package1
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
+            final ShortcutManager manager = getManager();
+            for (byte[] cert : certs) {
+                manager.updateShortcutVisibility(mPackageContext1.getPackageName(), cert, true);
+            }
+            assertTrue(manager.setDynamicShortcuts(list(
+                    makeShortcut("s1", "1a"),
+                    makeShortcut("s2", "2a"),
+                    makeShortcut("s3", "3a"))));
+        });
+
+        // Verify package1 can see these shortcuts
+        final Executor executor = Executors.newSingleThreadExecutor();
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
+            final AppSearchManager apm = mPackageContext1.getSystemService(
+                    AppSearchManager.class);
+            apm.createGlobalSearchSession(executor, res -> {
+                        assertTrue(res.getErrorMessage(), res.isSuccess());
+                        res.getResultValue().search("", new SearchSpec.Builder()
+                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY).build()
+                        ).getNextPage(executor, page -> {
+                            assertTrue(page.getErrorMessage(), page.isSuccess());
+                            final List<SearchResult> results = page.getResultValue();
+                            final Set<String> shortcuts =
+                                    new ArraySet<>(results.size());
+                            for (SearchResult result : results) {
+                                shortcuts.add(result.getGenericDocument().getUri());
+                            }
+                            final Set<String> expected = new ArraySet<>(3);
+                            expected.add("s1");
+                            expected.add("s2");
+                            expected.add("s3");
+                            assertEquals("Unexpected results", expected, shortcuts);
+                        });
+                    });
         });
     }
 
