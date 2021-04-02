@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.UserInfo;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.SystemUserOnly;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -81,6 +82,7 @@ public final class UserManagerTest {
     // TODO(b/179163496): add testIsUserForeground_ tests for profile users
 
     @Test
+    @SystemUserOnly(reason = "Profiles are only supported on system user.")
     public void testCloneUser() throws Exception {
         // Need CREATE_USERS permission to create user in test
         mInstrumentation.getUiAutomation().adoptShellPermissionIdentity(
