@@ -19,10 +19,6 @@ package {
 android_test {
     name: "CtsDomainVerificationDeviceTestCases",
     srcs: [ "src/**/*.kt" ],
-    test_suites: [
-        "cts",
-        "device-tests",
-    ],
     defaults: ["cts_defaults"],
     sdk_version: "test_current",
     static_libs: [
