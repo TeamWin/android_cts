@@ -31,7 +31,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
@@ -862,8 +861,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
-        return wm.isWifiEnabled() && cm.getActiveNetwork() != null
-                && cm.getNetworkCapabilities(cm.getActiveNetwork()).hasTransport(TRANSPORT_WIFI);
+        if (!wm.isWifiEnabled()) {
+            return false;
+        }
+        final Network network = cm.getActiveNetwork();
+        if (network == null) {
+            return false;
+        }
+        final NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
+        return networkCapabilities != null && networkCapabilities.hasTransport(TRANSPORT_WIFI);
     }
 
     /**
