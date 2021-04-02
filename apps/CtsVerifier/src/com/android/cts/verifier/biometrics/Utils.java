@@ -20,21 +20,14 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.res.Resources;
-import android.hardware.biometrics.BiometricManager;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.text.InputType;
 import android.util.Log;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
-import java.security.KeyPair;
 import java.security.KeyStore;
 import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.Signature;
-import java.util.Random;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -158,91 +151,6 @@ public class Utils {
         builder.setMessage(messageRes);
         builder.setPositiveButton(positiveButtonRes, listener);
         AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    static abstract class VerifyRandomContents {
-        final Context mContext;
-        final String mRandomTitle;
-        final String mRandomSubtitle;
-        final String mRandomDescription;
-        final String mRandomNegativeButtonText;
-
-        abstract void onVerificationSucceeded();
-
-        VerifyRandomContents(Context context) {
-            mContext = context;
-
-            final Random random = new Random();
-            mRandomTitle = String.valueOf(random.nextInt(10000));
-            mRandomSubtitle = String.valueOf(random.nextInt(10000));
-            mRandomDescription = String.valueOf(random.nextInt(10000));
-            mRandomNegativeButtonText = String.valueOf(random.nextInt(10000));
-        }
-
-        void verifyContents(String titleEntered, String subtitleEntered, String descriptionEntered,
-                String negativeEntered) {
-            if (!titleEntered.contentEquals(mRandomTitle)) {
-                showToastAndLog(mContext, "Title incorrect, "
-                        + titleEntered + " " + mRandomTitle);
-            } else if (!subtitleEntered.contentEquals(mRandomSubtitle)) {
-                showToastAndLog(mContext, "Subtitle incorrect, "
-                        + subtitleEntered + " " + mRandomSubtitle);
-            } else if (!descriptionEntered.contentEquals(mRandomDescription)) {
-                showToastAndLog(mContext, "Description incorrect, "
-                        + descriptionEntered + " " + mRandomDescription);
-            } else if (!negativeEntered.contentEquals(mRandomNegativeButtonText)) {
-                showToastAndLog(mContext, "Negative text incorrect, "
-                        + negativeEntered + " " + mRandomNegativeButtonText);
-            } else {
-                showToastAndLog(mContext, "Contents matched!");
-                onVerificationSucceeded();
-            }
-        }
-
-    }
-
-    static void showUIVerificationDialog(Context context, int titleRes,
-            int positiveButtonRes, VerifyRandomContents contents) {
-        LinearLayout layout = new LinearLayout(context);
-        layout.setOrientation(LinearLayout.VERTICAL);
-
-        final EditText titleBox = new EditText(context);
-        titleBox.setHint("Title");
-        titleBox.setInputType(InputType.TYPE_CLASS_NUMBER);
-        layout.addView(titleBox);
-
-        final EditText subtitleBox = new EditText(context);
-        subtitleBox.setHint("Subtitle");
-        subtitleBox.setInputType(InputType.TYPE_CLASS_NUMBER);
-        layout.addView(subtitleBox);
-
-        final EditText descriptionBox = new EditText(context);
-        descriptionBox.setHint("Description");
-        descriptionBox.setInputType(InputType.TYPE_CLASS_NUMBER);
-        layout.addView(descriptionBox);
-
-        final EditText negativeBox = new EditText(context);
-        negativeBox.setHint("Negative Button");
-        negativeBox.setInputType(InputType.TYPE_CLASS_NUMBER);
-        layout.addView(negativeBox);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setTitle(titleRes);
-        builder.setPositiveButton(positiveButtonRes, (dialog, which) -> {
-            if (which == DialogInterface.BUTTON_POSITIVE) {
-                final String titleEntered = titleBox.getText().toString();
-                final String subtitleEntered = subtitleBox.getText().toString();
-                final String descriptionEntered = descriptionBox.getText().toString();
-                final String negativeEntered = negativeBox.getText().toString();
-
-                contents.verifyContents(titleEntered, subtitleEntered, descriptionEntered,
-                        negativeEntered);
-            }
-        });
-
-        AlertDialog dialog = builder.create();
-        dialog.setView(layout);
         dialog.show();
     }
 

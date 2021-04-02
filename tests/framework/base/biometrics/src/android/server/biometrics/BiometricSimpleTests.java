@@ -30,10 +30,13 @@ import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.uiautomator.UiObject2;
 
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Test;
+
+import java.util.Random;
 
 /**
  * Simple tests.
@@ -157,6 +160,65 @@ public class BiometricSimpleTests extends BiometricTestBase {
             cancelAuthentication(cancel);
             verify(callback).onAuthenticationError(eq(BiometricPrompt.BIOMETRIC_ERROR_CANCELED),
                     any());
+        }
+    }
+
+    @Test
+    public void testContentsShownDuringBiometricAuth() throws Exception {
+        for (SensorProperties props : mSensorProperties) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(props.getSensorId())) {
+                enrollForSensor(session, props.getSensorId());
+
+                final Random random = new Random();
+                final String randomTitle = String.valueOf(random.nextInt(10000));
+                final String randomSubtitle = String.valueOf(random.nextInt(10000));
+                final String randomDescription = String.valueOf(random.nextInt(10000));
+                final String randomNegativeButtonText = String.valueOf(random.nextInt(10000));
+
+                showDefaultBiometricPrompt(session, props.getSensorId(), 0 /* userId */,
+                        true /* requireConfirmation */, randomTitle, randomSubtitle,
+                        randomDescription, randomNegativeButtonText);
+
+                final UiObject2 actualTitle = findView(TITLE_VIEW);
+                final UiObject2 actualSubtitle = findView(SUBTITLE_VIEW);
+                final UiObject2 actualDescription = findView(DESCRIPTION_VIEW);
+                final UiObject2 actualNegativeButton = findView(BUTTON_ID_NEGATIVE);
+                assertEquals(randomTitle, actualTitle.getText());
+                assertEquals(randomSubtitle, actualSubtitle.getText());
+                assertEquals(randomDescription, actualDescription.getText());
+                assertEquals(randomNegativeButtonText, actualNegativeButton.getText());
+
+                // Finish auth
+                successfullyAuthenticate(session, 0 /* userId */);
+            }
+        }
+    }
+
+    @Test
+    public void testContentsShownDuringCredentialAuth() throws Exception {
+        try (CredentialSession session = new CredentialSession()){
+            session.setCredential();
+
+            final Random random = new Random();
+            final String randomTitle = String.valueOf(random.nextInt(10000));
+            final String randomSubtitle = String.valueOf(random.nextInt(10000));
+            final String randomDescription = String.valueOf(random.nextInt(10000));
+
+            BiometricPrompt.AuthenticationCallback callback =
+                    mock(BiometricPrompt.AuthenticationCallback.class);
+            showCredentialOnlyBiometricPromptWithContents(callback, new CancellationSignal(),
+                    true /* shouldShow */, randomTitle, randomSubtitle, randomDescription);
+
+            final UiObject2 actualTitle = findView(TITLE_VIEW);
+            final UiObject2 actualSubtitle = findView(SUBTITLE_VIEW);
+            final UiObject2 actualDescription = findView(DESCRIPTION_VIEW);
+            assertEquals(randomTitle, actualTitle.getText());
+            assertEquals(randomSubtitle, actualSubtitle.getText());
+            assertEquals(randomDescription, actualDescription.getText());
+
+            // Finish auth
+            successfullyEnterCredential();
         }
     }
 }
