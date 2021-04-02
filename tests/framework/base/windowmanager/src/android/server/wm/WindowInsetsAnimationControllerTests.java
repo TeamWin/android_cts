@@ -16,6 +16,7 @@
 
 package android.server.wm;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.CANCELLED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.FINISHED;
 import static android.server.wm.WindowInsetsAnimationControllerTests.ControlListener.Event.READY;
@@ -152,7 +153,7 @@ public class WindowInsetsAnimationControllerTests extends WindowManagerTestBase 
             mockImeEventStream = null;
         }
 
-        mActivity = startActivity(TestActivity.class);
+        mActivity = startActivityInWindowingMode(TestActivity.class, WINDOWING_MODE_FULLSCREEN);
         mRootView = mActivity.getWindow().getDecorView();
         mListener = new ControlListener(mErrorCollector);
         assumeTestCompatibility();
