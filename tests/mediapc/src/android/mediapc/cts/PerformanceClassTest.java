@@ -16,13 +16,12 @@
 
 package android.mediapc.cts;
 
-import android.os.Build;
 import android.content.pm.PackageManager;
-import android.util.Log;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -33,8 +32,6 @@ import static org.junit.Assert.assertTrue;
  * Tests the basic aspects of the media performance class.
  */
 public class PerformanceClassTest {
-    private static final String TAG = "PerformanceClassTest";
-
     private boolean isHandheld() {
         // handheld nature is not exposed to package manager, for now
         // we check for touchscreen and NOT watch and NOT tv
@@ -48,26 +45,15 @@ public class PerformanceClassTest {
 
     @SmallTest
     @Test
-    public void testMediaPerformanceClass() throws Exception {
-        int pc = Build.VERSION.MEDIA_PERFORMANCE_CLASS;
-
-        Log.d(TAG, "performance class is "  + pc);
-
+    public void testMediaPerformanceClassScope() throws Exception {
         // if device is not of a performance class, we are done.
-        if (pc == 0) {
-            return;
+        Assume.assumeTrue("not a device of a valid media performance class", Utils.isPerfClass());
+
+        if (Utils.isRPerfClass()
+                || Utils.isSPerfClass()) {
+            assertTrue("performance class is only defined for Handheld devices",
+                       isHandheld());
         }
-
-        if (pc == Build.VERSION_CODES.R + 1 /* TODO: make this S */) {
-        }
-    }
-
-    // Tests S specific basic requirements
-    private void testS() throws Exception {
-        assertTrue("performance class is only defined for Handheld devices",
-                   isHandheld());
-
-        // TODO: add more tests
     }
 }
 
