@@ -150,6 +150,20 @@ public class TestActivity extends Activity {
                 .getInstrumentation().startActivitySync(intent);
     }
 
+
+    public static TestActivity startSameTaskAndClearTopSync(
+            @NonNull Function<TestActivity, View> activityInitializer) {
+        sInitializer.set(activityInitializer);
+        final Intent intent = new Intent()
+                .setAction(Intent.ACTION_MAIN)
+                .setClass(InstrumentationRegistry.getInstrumentation().getContext(),
+                        TestActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        return (TestActivity) InstrumentationRegistry
+                .getInstrumentation().startActivitySync(intent);
+    }
+
     /**
      * Updates {@link WindowManager.LayoutParams#softInputMode}.
      *
