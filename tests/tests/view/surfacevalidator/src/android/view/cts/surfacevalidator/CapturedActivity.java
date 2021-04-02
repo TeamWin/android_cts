@@ -99,6 +99,7 @@ public class CapturedActivity extends Activity {
     private CountDownLatch mCountDownLatch;
     private boolean mProjectionServiceBound = false;
     private Point mLogicalDisplaySize = new Point();
+    private long mMinimumCaptureDurationMs = 0;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -203,6 +204,10 @@ public class CapturedActivity extends Activity {
         return mOnEmbedded ? 100000 : 50000;
     }
 
+    public void setMinimumCaptureDurationMs(long durationMs) {
+        mMinimumCaptureDurationMs = durationMs;
+    }
+
     public TestResult runTest(ISurfaceValidatorTestCase animationTestCase) throws Throwable {
         TestResult testResult = new TestResult();
         if (mOnWatch) {
@@ -220,7 +225,7 @@ public class CapturedActivity extends Activity {
 
         final long timeOutMs = mOnEmbedded ? 125000 : 62500;
         final long captureDuration = animationTestCase.hasAnimation() ?
-            getCaptureDurationMs() : 0;
+                getCaptureDurationMs() : mMinimumCaptureDurationMs;
         final long endCaptureDelayMs = START_CAPTURE_DELAY_MS + captureDuration;
         final long endDelayMs = endCaptureDelayMs + 1000;
 
@@ -261,12 +266,8 @@ public class CapturedActivity extends Activity {
             final Display defaultDisplay = displayManager.getDisplay(Display.DEFAULT_DISPLAY);
             final int rotation = defaultDisplay.getRotation();
 
-            View testAreaView = findViewById(android.R.id.content);
-            Rect boundsToCheck = new Rect(0, 0, testAreaView.getWidth(), testAreaView.getHeight());
-            int[] topLeft = new int[2];
-            testAreaView.getLocationOnScreen(topLeft);
-            boundsToCheck.offset(topLeft[0], topLeft[1]);
-
+            Rect boundsToCheck =
+                    animationTestCase.getBoundsToCheck(findViewById(android.R.id.content));
             if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {
                 fail("capture bounds too small to be a fullscreen activity: " + boundsToCheck);
             }
