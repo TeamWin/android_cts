@@ -90,6 +90,7 @@ public class TestUtils {
 
     public static final String QUERY_TYPE = "android.scopedstorage.cts.queryType";
     public static final String INTENT_EXTRA_PATH = "android.scopedstorage.cts.path";
+    public static final String INTENT_EXTRA_URI = "android.scopedstorage.cts.uri";
     public static final String INTENT_EXTRA_CALLING_PKG = "android.scopedstorage.cts.calling_pkg";
     public static final String INTENT_EXCEPTION = "android.scopedstorage.cts.exception";
     public static final String CREATE_FILE_QUERY = "android.scopedstorage.cts.createfile";
@@ -100,6 +101,13 @@ public class TestUtils {
             "android.scopedstorage.cts.can_openfile_read";
     public static final String CAN_OPEN_FILE_FOR_WRITE_QUERY =
             "android.scopedstorage.cts.can_openfile_write";
+    public static final String IS_URI_REDACTED_VIA_FILE_DESCRIPTOR_FOR_READ =
+            "android.scopedstorage.cts.is_uri_redacted_via_file_descriptor_for_read";
+    public static final String IS_URI_REDACTED_VIA_FILE_DESCRIPTOR_FOR_WRITE =
+            "android.scopedstorage.cts.is_uri_redacted_via_file_descriptor_for_write";
+    public static final String IS_URI_REDACTED_VIA_FILEPATH =
+            "android.scopedstorage.cts.is_uri_redacted_via_filepath";
+    public static final String QUERY_URI = "android.scopedstorage.cts.query_uri";
     public static final String OPEN_FILE_FOR_READ_QUERY =
             "android.scopedstorage.cts.openfile_read";
     public static final String OPEN_FILE_FOR_WRITE_QUERY =
@@ -326,6 +334,53 @@ public class TestUtils {
      */
     public static boolean checkDatabaseRowExistsAs(TestApp testApp, File file) throws Exception {
         return getResultFromTestApp(testApp, file.getPath(), CHECK_DATABASE_ROW_EXISTS_QUERY);
+    }
+
+    /**
+     * Makes the given {@code testApp} open file descriptor on {@code uri} and verifies that the fd
+     * redacts EXIF metadata.
+     *
+     * <p> This method drops shell permission identity.
+     */
+    public static boolean isFileDescriptorRedacted(TestApp testApp, Uri uri)
+            throws Exception {
+        String actionName = IS_URI_REDACTED_VIA_FILE_DESCRIPTOR_FOR_READ;
+        return getFromTestApp(testApp, uri, actionName).getBoolean(actionName, false);
+    }
+
+    /**
+     * Makes the given {@code testApp} open file descriptor on {@code uri} and verifies that the fd
+     * redacts EXIF metadata.
+     *
+     * <p> This method drops shell permission identity.
+     */
+    public static boolean canOpenRedactedUriForWrite(TestApp testApp, Uri uri)
+            throws Exception {
+        String actionName = IS_URI_REDACTED_VIA_FILE_DESCRIPTOR_FOR_WRITE;
+        return getFromTestApp(testApp, uri, actionName).getBoolean(actionName, false);
+    }
+
+
+    /**
+     * Makes the given {@code testApp} open file path associated with {@code uri} and verifies that
+     * the path redacts EXIF metadata.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean isFileOpenRedacted(TestApp testApp, Uri uri)
+            throws Exception {
+        final String actionName = IS_URI_REDACTED_VIA_FILEPATH;
+        return getFromTestApp(testApp, uri, actionName).getBoolean(actionName, false);
+    }
+
+    /**
+     * Makes the given {@code testApp} query on {@code uri}.
+     *
+     * <p>This method drops shell permission identity.
+     */
+    public static boolean canQueryOnUri(TestApp testApp, Uri uri) throws Exception {
+        final String actionName = QUERY_URI;
+        return getFromTestApp(testApp, uri, actionName).getBoolean(actionName, false);
     }
 
     public static Uri insertFileFromExternalMedia(boolean useRelative) throws IOException {
@@ -1241,7 +1296,7 @@ public class TestUtils {
     /**
      * <p>This method drops shell permission identity.
      */
-    private static void forceStopApp(String packageName) throws Exception {
+    public static void forceStopApp(String packageName) throws Exception {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         try {
             uiAutomation.adoptShellPermissionIdentity(Manifest.permission.FORCE_STOP_PACKAGES);
@@ -1255,13 +1310,10 @@ public class TestUtils {
         }
     }
 
-    /**
-     * <p>This method drops shell permission identity.
-     */
-    private static void sendIntentToTestApp(TestApp testApp, String dirPath, String actionName,
-            BroadcastReceiver broadcastReceiver, CountDownLatch latch) throws Exception {
-        final String packageName = testApp.getPackageName();
-        forceStopApp(packageName);
+    private static void launchTestApp(TestApp testApp, String actionName,
+            BroadcastReceiver broadcastReceiver, CountDownLatch latch, Intent intent)
+            throws InterruptedException, TimeoutException {
+
         // Register broadcast receiver
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(actionName);
@@ -1269,20 +1321,47 @@ public class TestUtils {
         getContext().registerReceiver(broadcastReceiver, intentFilter);
 
         // Launch the test app.
-        final Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setPackage(packageName);
+        intent.setPackage(testApp.getPackageName());
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra(QUERY_TYPE, actionName);
-        intent.putExtra(INTENT_EXTRA_PATH, dirPath);
         intent.putExtra(INTENT_EXTRA_CALLING_PKG, getContext().getPackageName());
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
         getContext().startActivity(intent);
         if (!latch.await(POLLING_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
             final String errorMessage = "Timed out while waiting to receive " + actionName
-                    + " intent from " + packageName;
+                    + " intent from " + testApp.getPackageName();
             throw new TimeoutException(errorMessage);
         }
         getContext().unregisterReceiver(broadcastReceiver);
+    }
+
+    /**
+     * Sends intent to {@code testApp} for actions on {@code dirPath}
+     *
+     * <p>This method drops shell permission identity.
+     */
+    private static void sendIntentToTestApp(TestApp testApp, String dirPath, String actionName,
+            BroadcastReceiver broadcastReceiver, CountDownLatch latch) throws Exception {
+        final String packageName = testApp.getPackageName();
+        forceStopApp(packageName);
+
+        // Launch the test app.
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.putExtra(INTENT_EXTRA_PATH, dirPath);
+        launchTestApp(testApp, actionName, broadcastReceiver, latch, intent);
+    }
+
+    /**
+     * Sends intent to {@code testApp} for actions on {@code uri}
+     *
+     * <p>This method drops shell permission identity.
+     */
+    private static void sendIntentToTestApp(TestApp testApp, Uri uri, String actionName,
+            BroadcastReceiver broadcastReceiver, CountDownLatch latch) throws Exception {
+
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.putExtra(INTENT_EXTRA_URI, uri);
+        launchTestApp(testApp, actionName, broadcastReceiver, latch, intent);
     }
 
     /**
@@ -1342,6 +1421,34 @@ public class TestUtils {
         };
 
         sendIntentToTestApp(testApp, dirPath, actionName, broadcastReceiver, latch);
+        if (exception[0] != null) {
+            throw exception[0];
+        }
+        return bundle[0];
+    }
+
+    /**
+     * <p>This method drops shell permission identity.
+     */
+    private static Bundle getFromTestApp(TestApp testApp, Uri uri, String actionName)
+            throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final Bundle[] bundle = new Bundle[1];
+        final Exception[] exception = new Exception[1];
+        exception[0] = null;
+        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (intent.hasExtra(INTENT_EXCEPTION)) {
+                    exception[0] = (Exception) (intent.getSerializableExtra(INTENT_EXCEPTION));
+                } else {
+                    bundle[0] = intent.getExtras();
+                }
+                latch.countDown();
+            }
+        };
+
+        sendIntentToTestApp(testApp, uri, actionName, broadcastReceiver, latch);
         if (exception[0] != null) {
             throw exception[0];
         }
@@ -1432,7 +1539,7 @@ public class TestUtils {
         // Unmount data and obb dirs for test app first so test app won't be killed during
         // volume unmount.
         executeShellCommand("sm unmount-app-data-dirs " + getContext().getPackageName() + " "
-                        + android.os.Process.myPid() + " " + android.os.UserHandle.myUserId());
+                    + android.os.Process.myPid() + " " + android.os.UserHandle.myUserId());
         pollForCondition(TestUtils::isObbDirUnmounted,
                 "Timed out while waiting for unmounting obb dir");
         executeShellCommand("sm set-force-adoptable on");

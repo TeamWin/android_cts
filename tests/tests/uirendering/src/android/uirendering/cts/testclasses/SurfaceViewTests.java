@@ -46,9 +46,7 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
-// TODO(b/182584062): remove @SkipPresubmit.
 @LargeTest
-@SkipPresubmit
 @RunWith(AndroidJUnit4.class)
 public class SurfaceViewTests extends ActivityTestBase {
 

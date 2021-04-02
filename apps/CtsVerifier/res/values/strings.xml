@@ -23,6 +23,8 @@
     <string name="fail_button_text">Fail</string>
     <string name="next_button_text">Next</string>
     <string name="go_button_text">Go</string>
+    <string name="present_button_text">Device Present</string>
+    <string name="gone_button_text">Device Gone</string>
     <string name="tests_completed_successfully">All tests completed successfully.</string>
 
     <string name="retry_button_text">Retry</string>
@@ -251,14 +253,6 @@
     <string name="biometric_test_category_strong">2) Strong Biometric Tests</string>
     <string name="biometric_test_category_weak">3) Weak Biometric Tests</string>
     <string name="biometric_test_category_combination">4) setUserAuthParams Tests</string>
-
-    <string name="biometric_test_credential_enrolled_label">1b: Credential Enrolled Tests</string>
-    <string name="biometric_test_credential_enrolled_instructions">This test checks that apps are able to request credential enrollment, and that the BiometricManager/BiometricPrompt
-        APIs return results consistent with credential (PIN/Pattern/Password) state.</string>
-    <string name="biometric_test_credential_enroll_button">Enroll credential</string>
-    <string name="biometric_test_credential_enrolled_bm_button">Check BiometricManager</string>
-    <string name="biometric_test_credential_enrolled_bp_setAllowedAuthenticators_button">Check BiometricPrompt setAllowedAuthenticators(DEVICE_CREDENTIAL)</string>
-    <string name="biometric_test_credential_enrolled_bp_setDeviceCredentialAllowed_button">Check BiometricPrompt setDeviceCredentialAllowed(true)</string>
 
     <string name="biometric_test_credential_crypto_label">1c: Credential Crypto</string>
     <string name="biometric_test_credential_crypto_instructions">This test checks that PIN/Pattern/Password successfully unlocks the relevant KeyStore operations. Please
@@ -800,6 +794,31 @@
         Before proceeding, make sure you have a bluetooth device nearby and discoverable.
         Also, make sure that bluetooth is turned on on this device.
         Once you press the button, wait for a dialog to pop up and select your device from the list.
+    </string>
+
+    <string name="companion_service_test">Companion Device Service Test</string>
+    <string name="companion_service_test_info">
+        This test checks that APIs to notify the companion app of its associated device going in and
+        out of Bluetooth range are working correctly.
+        Before proceeding, make sure you have a Bluetooth LE device nearby and
+        discoverable. Also, make sure that bluetooth is turned on the device.
+        First, you press the go button, wait for a dialog to pop up and select your device from the
+        list. Second, make sure your bluetooth device is unreachable(you can power off/reboot your
+        Bluetooth device or put it into a Faraday bag) and press the Device Gone button.
+        Lastly, make your bluetooth device reachable by waiting for the device to power on or
+        removing it from the Faraday bag and press the Device Present button.
+    </string>
+
+    <string name="companion_service_test_gone_text">
+        Now, please make your Bluetooth device unreachable.
+        Put your bluetooth device into a RF Bag or power off/reboot your device,
+        then press the Device Gone button.
+    </string>
+
+    <string name="companion_service_test_present_text">
+        Now, please make your Bluetooth device reachable.
+        Remove your Bluetooth device from a RF Bag or power on your device,
+        then press the Device Present button.
     </string>
 
     <!-- Strings for FeatureSummaryActivity -->
@@ -5748,4 +5767,11 @@ Follow the instructions on the screen to measure the frequency response for the 
       5. Ensure that each engine can be selected.
     </string>
     <string name="tts_accessibility_settings_button">Go To Accessibility Settings</string>
+
+    <!-- Strings for SecurityModeFeatureVerifierActivity test -->
+    <string name="security_mode_feature_verifier_test">SecurityModeFeatureVerifier Test</string>
+    <string name="security_mode_feature_verifier_instructions">This test verifies that the PackageManager.FEATURE_SECURITY_MODEL_COMPATIBLE feature is present.</string>
+    <string name="handheld_or_tablet_text_before_test">Is this a handheld or tablet device?</string>
+    <string name="handheld_or_tablet_yes">Yes</string>
+    <string name="handheld_or_tablet_not_applicable">Not applicable</string>
 </resources>

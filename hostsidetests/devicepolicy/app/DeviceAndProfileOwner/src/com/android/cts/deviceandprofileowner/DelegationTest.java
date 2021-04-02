@@ -27,6 +27,8 @@ import static android.app.admin.DevicePolicyManager.EXTRA_DELEGATION_SCOPES;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assert.assertThrows;
+
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -189,24 +191,52 @@ public class DelegationTest extends BaseDeviceAdminTest {
     }
 
     public void testDeviceOwnerOrManagedPoOnlyDelegations() throws Exception {
-        final String [] doOrManagedPoDelegations =
-                { DELEGATION_NETWORK_LOGGING, DELEGATION_SECURITY_LOGGING };
+        final String [] doOrManagedPoDelegations = { DELEGATION_NETWORK_LOGGING };
         final boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(
                 mContext.getPackageName());
         final boolean isManagedProfileOwner = mDevicePolicyManager.getProfileOwner() != null
                 && mDevicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT);
         for (String scope : doOrManagedPoDelegations) {
-            try {
-                mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
-                        Collections.singletonList(scope));
-                if (!isDeviceOwner() && !isManagedProfileOwner) {
-                    fail("PO not in a managed profile shouldn't be able to delegate " + scope);
-                }
-            } catch (SecurityException e) {
-                if (isDeviceOwner || isManagedProfileOwner) {
+            if (isDeviceOwner || isManagedProfileOwner) {
+                try {
+                    mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
+                            Collections.singletonList(scope));
+                } catch (SecurityException e) {
                     fail("DO or managed PO fails to delegate " + scope + " exception: " + e);
                     Log.e(TAG, "DO or managed PO fails to delegate " + scope, e);
                 }
+            } else {
+                assertThrows("PO not in a managed profile shouldn't be able to delegate " + scope,
+                        SecurityException.class,
+                        () -> mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
+                                DELEGATE_PKG, Collections.singletonList(scope)));
+            }
+        }
+    }
+
+    public void testDeviceOwnerOrOrgOwnedManagedPoOnlyDelegations() throws Exception {
+        final String [] doOrOrgOwnedManagedPoDelegations = { DELEGATION_SECURITY_LOGGING };
+        final boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(
+                mContext.getPackageName());
+        final boolean isOrgOwnedManagedProfileOwner = mDevicePolicyManager.getProfileOwner() != null
+                && mDevicePolicyManager.isManagedProfile(ADMIN_RECEIVER_COMPONENT)
+                && mDevicePolicyManager.isOrganizationOwnedDeviceWithManagedProfile();
+        for (String scope : doOrOrgOwnedManagedPoDelegations) {
+            if (isDeviceOwner || isOrgOwnedManagedProfileOwner) {
+                try {
+                    mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, DELEGATE_PKG,
+                            Collections.singletonList(scope));
+                } catch (SecurityException e) {
+                    fail("DO or organization-owned managed PO fails to delegate " + scope
+                            + " exception: " + e);
+                    Log.e(TAG, "DO or organization-owned managed PO fails to delegate " + scope, e);
+                }
+            } else {
+                assertThrows("PO not in an organization-owned managed profile shouldn't be able to "
+                        + "delegate " + scope,
+                        SecurityException.class,
+                        () -> mDevicePolicyManager.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT,
+                                DELEGATE_PKG, Collections.singletonList(scope)));
             }
         }
     }

@@ -26,6 +26,8 @@ import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREG
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
 import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+import static android.app.stubs.LocalForegroundService.ACTION_START_FGS_RESULT;
+import static android.app.stubs.LocalForegroundServiceSticky.ACTION_RESTART_FGS_STICKY_RESULT;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
@@ -36,6 +38,7 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
 import android.app.Instrumentation;
+import android.app.Service;
 import android.app.cts.android.app.cts.tools.ServiceConnectionHandler;
 import android.app.cts.android.app.cts.tools.ServiceProcessController;
 import android.app.cts.android.app.cts.tools.SyncOrderedBroadcast;
@@ -44,6 +47,7 @@ import android.app.cts.android.app.cts.tools.WaitForBroadcast;
 import android.app.cts.android.app.cts.tools.WatchUidRunner;
 import android.app.stubs.CommandReceiver;
 import android.app.stubs.LocalForegroundServiceLocation;
+import android.app.stubs.LocalForegroundServiceSticky;
 import android.app.stubs.ScreenOnActivity;
 import android.content.ComponentName;
 import android.content.Context;
@@ -69,11 +73,14 @@ import android.view.accessibility.AccessibilityEvent;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.AmMonitor;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 @Presubmit
@@ -2174,6 +2181,76 @@ public class ActivityManagerProcessStateTest {
             uid1Watcher.finish();
             uid2Watcher.finish();
             uid3Watcher.finish();
+        }
+    }
+
+    /**
+     * Test FGS compatibility with STICKY flag.
+     * @throws Exception
+     */
+    @Test
+    public void testFgsSticky() throws Exception {
+        // For START_STICKY, service is restarted, Service.onStartCommand is called with a null
+        // intent.
+        testFgsStickyInternal(Service.START_STICKY, ACTION_RESTART_FGS_STICKY_RESULT,
+                waiter -> waiter.doWait(WAITFOR_MSEC));
+        // For START_REDELIVER_INTENT, service is restarted, Service.onStartCommand is called with
+        // the same intent as previous service start.
+        testFgsStickyInternal(Service.START_REDELIVER_INTENT, ACTION_START_FGS_RESULT,
+                waiter -> waiter.doWait(WAITFOR_MSEC));
+        // For START_NOT_STICKY, service does not restart and Service.onStartCommand is not called
+        // again.
+        testFgsStickyInternal(Service.START_NOT_STICKY, ACTION_RESTART_FGS_STICKY_RESULT,
+                waiter -> {
+                    try {
+                        waiter.doWait(WAITFOR_MSEC);
+                        fail("Not-Sticky service should not restart after kill");
+                    } catch (Exception e) {
+                    }
+                });
+        testFgsStickyInternal(Service.START_NOT_STICKY, ACTION_START_FGS_RESULT,
+                waiter -> {
+                    try {
+                        waiter.doWait(WAITFOR_MSEC);
+                        fail("Not-Sticky service should not restart after kill");
+                    } catch (Exception e) {
+                    }
+                });
+    }
+
+    private void testFgsStickyInternal(int stickyFlag, String waitForBroadcastAction,
+            Consumer<WaitForBroadcast> checkKillResult) throws Exception {
+        ApplicationInfo app1Info = mContext.getPackageManager().getApplicationInfo(
+                PACKAGE_NAME_APP1, 0);
+        WatchUidRunner uid1Watcher = new WatchUidRunner(mInstrumentation, app1Info.uid,
+                WAITFOR_MSEC);
+        AmMonitor monitor = new AmMonitor(mInstrumentation,
+                new String[]{AmMonitor.WAIT_FOR_EARLY_ANR, AmMonitor.WAIT_FOR_ANR});
+        try {
+            WaitForBroadcast waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(ACTION_START_FGS_RESULT);
+            Bundle extras = new Bundle();
+            extras.putInt(LocalForegroundServiceSticky.STICKY_FLAG, stickyFlag);
+            CommandReceiver.sendCommand(mContext,
+                    CommandReceiver.COMMAND_START_FOREGROUND_SERVICE_STICKY,
+                    PACKAGE_NAME_APP1, PACKAGE_NAME_APP1, 0, extras);
+            uid1Watcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+            waiter.doWait(WAITFOR_MSEC);
+
+            waiter = new WaitForBroadcast(mInstrumentation.getTargetContext());
+            waiter.prepare(waitForBroadcastAction);
+
+            CtsAppTestUtils.executeShellCmd(mInstrumentation,
+                    "am crash " + PACKAGE_NAME_APP1);
+            monitor.waitFor(AmMonitor.WAIT_FOR_CRASHED, WAITFOR_MSEC);
+            monitor.sendCommand(AmMonitor.CMD_KILL);
+            checkKillResult.accept(waiter);
+        } finally {
+            uid1Watcher.finish();
+            final ActivityManager am = mContext.getSystemService(ActivityManager.class);
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                am.forceStopPackage(PACKAGE_NAME_APP1);
+            });
         }
     }
 
