@@ -19,6 +19,9 @@ package android.devicepolicy.cts;
 import static android.app.AppOpsManager.MODE_ALLOWED;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeFalse;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
@@ -59,6 +62,7 @@ import org.junit.runner.RunWith;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
@@ -556,6 +560,18 @@ public final class DevicePolicyManagerTest {
         }
     }
 
+
+    @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
+    @Test
+    public void getPolicyExemptAppsCanOnlyBeDefinedOnAutomotiveBuilds() throws Exception {
+        assumeFalse("device has " + PackageManager.FEATURE_AUTOMOTIVE,
+                sPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+        assertWithMessage("list of policy-exempt apps")
+                .that(invokeWithShellPermissionIdentity(
+                        () -> sDevicePolicyManager.getPolicyExemptApps()))
+                .isEmpty();
+    }
+
     FullyManagedDeviceProvisioningParams.Builder
             createDefaultManagedDeviceProvisioningParamsBuilder() {
         return new FullyManagedDeviceProvisioningParams.Builder(
@@ -659,5 +675,14 @@ public final class DevicePolicyManagerTest {
                 .map(applicationInfo -> applicationInfo.packageName)
                 .filter(packageName -> !systemApps.contains(packageName))
                 .collect(Collectors.toSet());
+    }
+
+    private static <T> T invokeWithShellPermissionIdentity(Callable<T> callable) throws Exception {
+        try {
+            sUiAutomation.adoptShellPermissionIdentity();
+            return callable.call();
+        } finally {
+            sUiAutomation.dropShellPermissionIdentity();
+        }
     }
 }
