@@ -45,7 +45,7 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
+    public int onStartCommand(Intent intent, int flags, int startId) {
         String notificationChannelId = getNotificationChannelId();
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
         notificationManager.createNotificationChannel(new NotificationChannel(
@@ -85,5 +85,6 @@ public class LocalForegroundServiceLocation extends LocalForegroundService {
 
         sendBroadcast(new Intent(ACTION_START_FGSL_RESULT)
                 .setFlags(Intent.FLAG_RECEIVER_FOREGROUND));
+        return START_NOT_STICKY;
     }
 }

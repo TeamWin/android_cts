@@ -178,7 +178,7 @@ public class CapturedActivity extends Activity {
             unbindService(mConnection);
             mProjectionServiceBound = false;
         }
-        mSettingsSession.close();
+        restoreSettings();
     }
 
     @Override
@@ -378,4 +378,12 @@ public class CapturedActivity extends Activity {
             }
         }
     }
+
+    public void restoreSettings() {
+        if (mSettingsSession != null) {
+            mSettingsSession.close();
+            mSettingsSession = null;
+        }
+    }
+
 }

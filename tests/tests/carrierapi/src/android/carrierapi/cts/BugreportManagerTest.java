@@ -43,6 +43,8 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
+import com.android.compatibility.common.util.PollingCheck;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -74,6 +76,7 @@ public class BugreportManagerTest {
 
     private static final long BUGREPORT_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(10);
     private static final long UIAUTOMATOR_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
+    private static final long ONEWAY_CALLBACK_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
     // This value is defined in dumpstate.cpp:TELEPHONY_REPORT_USER_CONSENT_TIMEOUT_MS. Because the
     // consent dialog is so large and important, the user *must* be given at least 2 minutes to read
     // it before it times out.
@@ -185,6 +188,13 @@ public class BugreportManagerTest {
 
         // Attempting to start a second report immediately gets us a concurrency error.
         mBugreportManager.startConnectivityBugreport(bugreportFd2, Runnable::run, callback2);
+        // Since IDumpstateListener#onError is oneway, it's not guaranteed that binder has delivered
+        // the callback to us yet, even though BugreportManagerServiceImpl sends it before returning
+        // from #startBugreport.
+        PollingCheck.check(
+                "No terminal callback received for the second bugreport",
+                ONEWAY_CALLBACK_TIMEOUT_MILLIS,
+                callback2::isDone);
         assertThat(callback2.getErrorCode())
                 .isEqualTo(BugreportCallback.BUGREPORT_ERROR_ANOTHER_REPORT_IN_PROGRESS);
 

@@ -317,13 +317,13 @@ public class TunerTest {
                     case FrontendStatus.FRONTEND_STATUS_TYPE_ROLL_OFF:
                         status.getRollOff();
                         break;
-                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_MISO:
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_MISO_ENABLED:
                         status.isMisoEnabled();
                         break;
                     case FrontendStatus.FRONTEND_STATUS_TYPE_IS_LINEAR:
                         status.isLinear();
                         break;
-                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_SHORT_FRAMES:
+                    case FrontendStatus.FRONTEND_STATUS_TYPE_IS_SHORT_FRAMES_ENABLED:
                         status.isShortFramesEnabled();
                         break;
                 }
