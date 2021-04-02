@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.mock;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -367,8 +368,8 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
      * but does not complete authentication. In other words, the dialog will stay on the screen.
      */
     protected void showDefaultBiometricPromptWithContents(int sensorId, int userId,
-            boolean requireConfirmation, @NonNull String title,
-            @NonNull String subtitle, @NonNull String description,
+            boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull String title, @NonNull String subtitle, @NonNull String description,
             @NonNull String negativeButtonText) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
@@ -405,10 +406,11 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
      * and fakes successful authentication via TestApis.
      */
     protected void showDefaultBiometricPromptAndAuth(@NonNull BiometricTestSession session,
-            int sensorId,
-            int userId) throws Exception {
+            int sensorId, int userId) throws Exception {
+        BiometricPrompt.AuthenticationCallback callback = mock(
+                BiometricPrompt.AuthenticationCallback.class);
         showDefaultBiometricPromptWithContents(sensorId, userId, false /* requireConfirmation */,
-                "Title", "Subtitle", "Description", "Negative Button");
+                callback, "Title", "Subtitle", "Description", "Negative Button");
         successfullyAuthenticate(session, userId);
     }
 
