@@ -23,6 +23,7 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
@@ -32,10 +33,13 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
+import android.hardware.camera2.params.MandatoryStreamCombination;
+import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
 import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamInfo;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Log;
 import android.util.Size;
@@ -54,6 +58,7 @@ import java.util.Set;
 import org.junit.runners.Parameterized;
 import org.junit.runner.RunWith;
 import org.junit.Test;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for multi-resolution size reprocessing.
@@ -234,6 +239,210 @@ public class MultiResolutionReprocessCaptureTest extends Camera2AndroidTestCase 
         for (String id : mCameraIdsUnderTest) {
             // OPAQUE -> JPEG must be supported.
             testMultiResolutionReprocessing(id, ImageFormat.PRIVATE, ImageFormat.JPEG);
+        }
+    }
+
+    /**
+     * Test for making sure the mandatory stream combinations work for multi-resolution
+     * reprocessing.
+     */
+    @Test
+    public void testMultiResolutionMandatoryStreamCombinationTest() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            StaticMetadata info = mAllStaticInfo.get(id);
+            CameraCharacteristics c = info.getCharacteristics();
+            MandatoryStreamCombination[] combinations = c.get(
+                            CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if (combinations == null) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                continue;
+            }
+            MultiResolutionStreamConfigurationMap multiResolutionMap = c.get(
+                    CameraCharacteristics.SCALER_MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP);
+            if (multiResolutionMap == null) {
+                Log.i(TAG, "Camera " + id + " doesn't support multi-resolution capture.");
+                continue;
+            }
+            int[] multiResolutionInputFormats = multiResolutionMap.getInputFormats();
+            int[] multiResolutionOutputFormats = multiResolutionMap.getOutputFormats();
+            if (multiResolutionInputFormats.length == 0
+                    || multiResolutionOutputFormats.length == 0) {
+                Log.i(TAG, "Camera " + id + " doesn't support multi-resolution reprocess "
+                        + "input/output.");
+                continue;
+            }
+
+            try {
+                openDevice(id);
+                for (MandatoryStreamCombination combination : combinations) {
+                    if (!combination.isReprocessable()) {
+                        continue;
+                    }
+
+                    MandatoryStreamCombination.MandatoryStreamInformation firstStreamInfo =
+                            combination.getStreamsInformation().get(0);
+                    int inputFormat = firstStreamInfo.getFormat();
+                    boolean supportMultiResReprocess = firstStreamInfo.isInput() &&
+                            CameraTestUtils.contains(multiResolutionOutputFormats, inputFormat) &&
+                            CameraTestUtils.contains(multiResolutionInputFormats, inputFormat);
+                    if (!supportMultiResReprocess)  {
+                        continue;
+                    }
+
+                    testMultiResolutionMandatoryStreamCombination(id, info, combination,
+                            multiResolutionMap);
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMultiResolutionMandatoryStreamCombination(String cameraId,
+            StaticMetadata staticInfo, MandatoryStreamCombination combination,
+            MultiResolutionStreamConfigurationMap multiResStreamConfig) throws Exception {
+        String log = "Testing multi-resolution mandatory stream combination: " +
+                combination.getDescription() + " on camera: " + cameraId;
+        Log.i(TAG, log);
+
+        final int TIMEOUT_FOR_RESULT_MS = 5000;
+        final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
+
+        // Set up outputs
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
+        MultiResolutionImageReader inputReader = null;
+        ImageWriter inputWriter = null;
+        SimpleImageReaderListener inputReaderListener = new SimpleImageReaderListener();
+        SimpleCaptureCallback inputCaptureListener = new SimpleCaptureCallback();
+        SimpleCaptureCallback reprocessOutputCaptureListener = new SimpleCaptureCallback();
+
+        List<MandatoryStreamInformation> streamInfo = combination.getStreamsInformation();
+        assertTrue("Reprocessable stream combinations should have at least 3 or more streams",
+                    (streamInfo != null) && (streamInfo.size() >= 3));
+        assertTrue("The first mandatory stream information in a reprocessable combination must " +
+                "always be input", streamInfo.get(0).isInput());
+
+        int inputFormat = streamInfo.get(0).getFormat();
+
+        CameraTestUtils.setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()),
+                targets, outputConfigs, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG,
+                /*substituteY8*/false, /*substituteHeic*/false, /*physicalCameraId*/null,
+                /*ultraHighResolution*/false, multiResStreamConfig, mHandler);
+
+        Collection<MultiResolutionStreamInfo> multiResInputs =
+                multiResStreamConfig.getInputInfo(inputFormat);
+        InputConfiguration inputConfig = new InputConfiguration(multiResInputs, inputFormat);
+
+        try {
+            // For each config, YUV and JPEG outputs will be tested. (For YUV reprocessing,
+            // the YUV ImageReader for input is also used for output.)
+            final boolean inputIsYuv = inputConfig.getFormat() == ImageFormat.YUV_420_888;
+            final boolean useYuv = inputIsYuv || targets.mYuvTargets.size() > 0 ||
+                    targets.mYuvMultiResTargets.size() > 0;
+            final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG * (
+                    (inputIsYuv ? 1 : 0) + targets.mJpegMultiResTargets.size() +
+                    targets.mJpegTargets.size() +
+                    (useYuv ? targets.mYuvMultiResTargets.size() + targets.mYuvTargets.size() : 0));
+
+            // It needs 1 input buffer for each reprocess capture + the number of buffers
+            // that will be used as outputs.
+            inputReader = new MultiResolutionImageReader(multiResInputs, inputFormat,
+                    totalNumReprocessCaptures + NUM_REPROCESS_CAPTURES_PER_CONFIG);
+            inputReader.setOnImageAvailableListener(
+                    inputReaderListener, new HandlerExecutor(mHandler));
+            outputConfigs.addAll(
+                    OutputConfiguration.createInstancesForMultiResolutionOutput(inputReader));
+            outputSurfaces.add(inputReader.getSurface());
+
+            CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+
+            checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
+                    inputConfig, SessionConfiguration.SESSION_REGULAR,
+                    true/*defaultSupport*/, String.format(
+                    "Session configuration query for multi-res combination: %s failed",
+                    combination.getDescription()));
+
+            // Verify we can create a reprocessable session with the input and all outputs.
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            CameraCaptureSession session = configureReprocessableCameraSessionWithConfigurations(
+                    mCamera, inputConfig, outputConfigs, sessionListener, mHandler);
+            inputWriter = ImageWriter.newInstance(
+                    session.getInputSurface(), totalNumReprocessCaptures);
+
+            // Prepare a request for reprocess input
+            CaptureRequest.Builder builder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
+            builder.addTarget(inputReader.getSurface());
+
+            for (int i = 0; i < totalNumReprocessCaptures; i++) {
+                session.capture(builder.build(), inputCaptureListener, mHandler);
+            }
+
+            List<CaptureRequest> reprocessRequests = new ArrayList<>();
+            List<Surface> reprocessOutputs = new ArrayList<>();
+
+            if (inputIsYuv) {
+                reprocessOutputs.add(inputReader.getSurface());
+            }
+            for (MultiResolutionImageReader reader : targets.mJpegMultiResTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+            for (ImageReader reader : targets.mJpegTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+            for (MultiResolutionImageReader reader : targets.mYuvMultiResTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+            for (ImageReader reader : targets.mYuvTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (int i = 0; i < NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
+                for (Surface output : reprocessOutputs) {
+                    TotalCaptureResult result = inputCaptureListener.getTotalCaptureResult(
+                            TIMEOUT_FOR_RESULT_MS);
+                    Map<String, TotalCaptureResult> physicalResults =
+                            result.getPhysicalCameraTotalResults();
+
+                    String activePhysicalCameraId = result.get(
+                            CaptureResult.LOGICAL_MULTI_CAMERA_ACTIVE_PHYSICAL_ID);
+                    if (activePhysicalCameraId != null) {
+                        result = physicalResults.get(activePhysicalCameraId);
+                    }
+
+                    builder = mCamera.createReprocessCaptureRequest(result);
+                    inputWriter.queueInputImage(
+                            inputReaderListener.getImage(TIMEOUT_FOR_RESULT_MS));
+                    builder.addTarget(output);
+                    reprocessRequests.add(builder.build());
+                }
+            }
+
+            session.captureBurst(reprocessRequests, reprocessOutputCaptureListener, mHandler);
+
+            for (int i = 0; i < reprocessOutputs.size() * NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
+                TotalCaptureResult result = reprocessOutputCaptureListener.getTotalCaptureResult(
+                        TIMEOUT_FOR_RESULT_MS);
+            }
+        } catch (Throwable e) {
+            mCollector.addMessage(
+                    String.format("Mandatory multi-res stream combination: %s failed due: %s",
+                    combination.getDescription(), e.getMessage()));
+        } finally {
+            inputReaderListener.drain();
+            reprocessOutputCaptureListener.drain();
+            targets.close();
+
+            if (inputReader != null) {
+                inputReader.close();
+            }
+
+            if (inputWriter != null) {
+                inputWriter.close();
+            }
         }
     }
 

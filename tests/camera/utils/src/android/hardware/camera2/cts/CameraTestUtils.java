@@ -41,6 +41,7 @@ import android.hardware.cts.helpers.CameraUtils;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.hardware.camera2.params.MandatoryStreamCombination;
 import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
+import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamInfo;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.SessionConfiguration;
@@ -79,6 +80,7 @@ import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -212,14 +214,150 @@ public class CameraTestUtils extends Assert {
         return writer;
     }
 
+    /**
+     * Utility class to store the targets for mandatory stream combination test.
+     */
+    public static class StreamCombinationTargets {
+        public List<SurfaceTexture> mPrivTargets = new ArrayList<>();
+        public List<ImageReader> mJpegTargets = new ArrayList<>();
+        public List<ImageReader> mYuvTargets = new ArrayList<>();
+        public List<ImageReader> mY8Targets = new ArrayList<>();
+        public List<ImageReader> mRawTargets = new ArrayList<>();
+        public List<ImageReader> mHeicTargets = new ArrayList<>();
+        public List<ImageReader> mDepth16Targets = new ArrayList<>();
+
+        public List<MultiResolutionImageReader> mPrivMultiResTargets = new ArrayList<>();
+        public List<MultiResolutionImageReader> mJpegMultiResTargets = new ArrayList<>();
+        public List<MultiResolutionImageReader> mYuvMultiResTargets = new ArrayList<>();
+        public List<MultiResolutionImageReader> mRawMultiResTargets = new ArrayList<>();
+
+        public void close() {
+            for (SurfaceTexture target : mPrivTargets) {
+                target.release();
+            }
+            for (ImageReader target : mJpegTargets) {
+                target.close();
+            }
+            for (ImageReader target : mYuvTargets) {
+                target.close();
+            }
+            for (ImageReader target : mY8Targets) {
+                target.close();
+            }
+            for (ImageReader target : mRawTargets) {
+                target.close();
+            }
+            for (ImageReader target : mHeicTargets) {
+                target.close();
+            }
+            for (ImageReader target : mDepth16Targets) {
+                target.close();
+            }
+
+            for (MultiResolutionImageReader target : mPrivMultiResTargets) {
+                target.close();
+            }
+            for (MultiResolutionImageReader target : mJpegMultiResTargets) {
+                target.close();
+            }
+            for (MultiResolutionImageReader target : mYuvMultiResTargets) {
+                target.close();
+            }
+            for (MultiResolutionImageReader target : mRawMultiResTargets) {
+                target.close();
+            }
+        }
+    }
+
+    private static void configureTarget(StreamCombinationTargets targets,
+            List<OutputConfiguration> outputConfigs, List<Surface> outputSurfaces,
+            int format, Size targetSize, int numBuffers, String overridePhysicalCameraId,
+            MultiResolutionStreamConfigurationMap multiResStreamConfig,
+            boolean isUltraHighResolution, boolean isCompatibleTarget,
+            boolean createMultiResiStreamConfig, ImageDropperListener listener, Handler handler) {
+        if (createMultiResiStreamConfig) {
+            Collection<MultiResolutionStreamInfo> multiResolutionStreams =
+                    multiResStreamConfig.getOutputInfo(format);
+            MultiResolutionImageReader multiResReader = new MultiResolutionImageReader(
+                    multiResolutionStreams, format, numBuffers);
+            multiResReader.setOnImageAvailableListener(listener, new HandlerExecutor(handler));
+            Collection<OutputConfiguration> configs =
+                    OutputConfiguration.createInstancesForMultiResolutionOutput(multiResReader);
+            outputConfigs.addAll(configs);
+            outputSurfaces.add(multiResReader.getSurface());
+            switch (format) {
+                case ImageFormat.PRIVATE:
+                    targets.mPrivMultiResTargets.add(multiResReader);
+                    break;
+                case ImageFormat.JPEG:
+                    targets.mJpegMultiResTargets.add(multiResReader);
+                    break;
+                case ImageFormat.YUV_420_888:
+                    targets.mYuvMultiResTargets.add(multiResReader);
+                    break;
+                case ImageFormat.RAW_SENSOR:
+                    targets.mRawMultiResTargets.add(multiResReader);
+                    break;
+                default:
+                    fail("Unknown/Unsupported output format " + format);
+            }
+        } else {
+            if (format == ImageFormat.PRIVATE) {
+                SurfaceTexture target = new SurfaceTexture(/*random int*/1);
+                target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                OutputConfiguration config = new OutputConfiguration(new Surface(target));
+                if (overridePhysicalCameraId != null) {
+                    config.setPhysicalCameraId(overridePhysicalCameraId);
+                }
+                outputConfigs.add(config);
+                if (isCompatibleTarget) {
+                    outputSurfaces.add(config.getSurface());
+                }
+                targets.mPrivTargets.add(target);
+            } else {
+                ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                        targetSize.getHeight(), format, numBuffers);
+                target.setOnImageAvailableListener(listener, handler);
+                OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                if (overridePhysicalCameraId != null) {
+                    config.setPhysicalCameraId(overridePhysicalCameraId);
+                }
+                outputConfigs.add(config);
+                if (isCompatibleTarget) {
+                    outputSurfaces.add(config.getSurface());
+                }
+                switch (format) {
+                    case ImageFormat.JPEG:
+                      targets.mJpegTargets.add(target);
+                      break;
+                    case ImageFormat.YUV_420_888:
+                      targets.mYuvTargets.add(target);
+                      break;
+                    case ImageFormat.Y8:
+                      targets.mY8Targets.add(target);
+                      break;
+                    case ImageFormat.RAW_SENSOR:
+                      targets.mRawTargets.add(target);
+                      break;
+                    case ImageFormat.HEIC:
+                      targets.mHeicTargets.add(target);
+                      break;
+                    case ImageFormat.DEPTH16:
+                      targets.mDepth16Targets.add(target);
+                      break;
+                    default:
+                      fail("Unknown/Unsupported output format " + format);
+                }
+            }
+        }
+    }
+
     public static void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
-            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
-            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
-            List<ImageReader> rawTargets, List<ImageReader> heicTargets,
-            List<ImageReader> depth16Targets,
-            List<Pair<OutputConfiguration, Boolean>> outputConfigs,
-            int numBuffers, boolean substituteY8, boolean substituteHeic,
-            String overridePhysicalCameraId, Handler handler) {
+            StreamCombinationTargets targets,
+            List<OutputConfiguration> outputConfigs,
+            List<Surface> outputSurfaces, int numBuffers, boolean substituteY8,
+            boolean substituteHeic, String overridePhysicalCameraId, boolean ultraHighResolution,
+            MultiResolutionStreamConfigurationMap multiResStreamConfig, Handler handler) {
 
         ImageDropperListener imageDropperListener = new ImageDropperListener();
 
@@ -233,98 +371,38 @@ public class CameraTestUtils extends Assert {
             } else if (substituteHeic && (format == ImageFormat.JPEG)) {
                 format = ImageFormat.HEIC;
             }
-            Surface newSurface;
             Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
             availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
-            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
             boolean isUltraHighResolution = streamInfo.isUltraHighResolution();
+            boolean isCompatibleTarget = (isUltraHighResolution == ultraHighResolution);
+            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
+            boolean createMultiResReader =
+                    (multiResStreamConfig != null &&
+                     !multiResStreamConfig.getOutputInfo(format).isEmpty() &&
+                     streamInfo.isMaximumSize());
             switch (format) {
-                case ImageFormat.PRIVATE: {
-                    SurfaceTexture target = new SurfaceTexture(/*random int*/1);
-                    target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
-                    OutputConfiguration config = new OutputConfiguration(new Surface(target));
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    privTargets.add(target);
-                    break;
-                }
-                case ImageFormat.JPEG: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, handler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    jpegTargets.add(target);
-                    break;
-                }
-                case ImageFormat.YUV_420_888: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, handler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    yuvTargets.add(target);
-                    break;
-                }
-                case ImageFormat.Y8: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, handler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    y8Targets.add(target);
+                case ImageFormat.PRIVATE:
+                case ImageFormat.JPEG:
+                case ImageFormat.YUV_420_888:
+                case ImageFormat.Y8:
+                case ImageFormat.HEIC:
+                case ImageFormat.DEPTH16:
+                {
+                    configureTarget(targets, outputConfigs, outputSurfaces, format,
+                            targetSize, numBuffers, overridePhysicalCameraId, multiResStreamConfig,
+                            isUltraHighResolution, isCompatibleTarget, createMultiResReader,
+                            imageDropperListener, handler);
                     break;
                 }
                 case ImageFormat.RAW_SENSOR: {
                     // targetSize could be null in the logical camera case where only
                     // physical camera supports RAW stream.
                     if (targetSize != null) {
-                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                                targetSize.getHeight(), format, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, handler);
-                        OutputConfiguration config =
-                                new OutputConfiguration(target.getSurface());
-                        if (overridePhysicalCameraId != null) {
-                            config.setPhysicalCameraId(overridePhysicalCameraId);
-                        }
-                        outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                        rawTargets.add(target);
+                        configureTarget(targets, outputConfigs, outputSurfaces, format,
+                                targetSize, numBuffers, overridePhysicalCameraId,
+                                multiResStreamConfig, isUltraHighResolution, isCompatibleTarget,
+                                createMultiResReader, imageDropperListener, handler);
                     }
-                    break;
-                }
-                case ImageFormat.HEIC: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, handler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    heicTargets.add(target);
-                    break;
-                }
-                case ImageFormat.DEPTH16: {
-                    ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
-                            targetSize.getHeight(), format, numBuffers);
-                    target.setOnImageAvailableListener(imageDropperListener, handler);
-                    OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                    if (overridePhysicalCameraId != null) {
-                        config.setPhysicalCameraId(overridePhysicalCameraId);
-                    }
-                    outputConfigs.add(Pair.create(config, isUltraHighResolution));
-                    depth16Targets.add(target);
                     break;
                 }
                 default:
