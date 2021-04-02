@@ -88,7 +88,7 @@ public class TestImsService extends Service {
     interface CapabilitiesSetListener {
         void onSet();
     }
-    interface RcsCapabilitySetListener {
+    interface RcsCapabilityExchangeEventListener {
         void onSet();
     }
     interface DeviceCapPublishListener {
@@ -148,7 +148,7 @@ public class TestImsService extends Service {
         public RcsFeature createRcsFeature(int slotId) {
             synchronized (mLock) {
                 countDownLatch(LATCH_CREATE_RCS);
-                mTestRcsFeature = new TestRcsFeature(
+                mTestRcsFeature = new TestRcsFeature(getBaseContext(),
                         //onReady
                         () -> {
                             synchronized (mLock) {
