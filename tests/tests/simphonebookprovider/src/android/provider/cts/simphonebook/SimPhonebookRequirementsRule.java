@@ -22,6 +22,7 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assume.assumeThat;
 
 import android.content.Context;
+import android.telephony.TelephonyManager;
 
 import androidx.test.core.app.ApplicationProvider;
 
@@ -42,6 +43,13 @@ class SimPhonebookRequirementsRule extends ExternalResource {
     @Override
     protected void before() {
         Context context = ApplicationProvider.getApplicationContext();
+        TelephonyManager telephonyManager = context.getSystemService(TelephonyManager.class);
+
+        // Skip the test if the device doesn't appear to have any multi-SIM capability. The checks
+        // that follow this one are a bit flaky on devices that have an eSIM but don't support
+        // DSDS or DSDA (e.g. crosshatch and blueline).
+        assumeThat("not enough SIMs",
+                telephonyManager.getSupportedModemCount(), greaterThanOrEqualTo(mMinimumSimCount));
         RemovableSims removableSims = new RemovableSims(context);
 
         assumeThat(removableSims.getRemovableSimSlotCount(),
