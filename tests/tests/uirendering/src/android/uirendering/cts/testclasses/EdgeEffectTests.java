@@ -330,6 +330,20 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     @Test
+    public void testNoSetSizeCallDoesNotCrash() {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
+        edgeEffect.onPullDistance(1f, 1f);
+        edgeEffect.onAbsorb(100);
+        edgeEffect.onRelease();
+
+        RenderNode node = new RenderNode("");
+        RecordingCanvas canvas = node.beginRecording();
+        edgeEffect.draw(canvas);
+        node.endRecording();
+    }
+
+    @Test
     public void testAbsorbThenDrawDoesNotCrash() {
         MockVsyncHelper.runOnVsyncThread(() -> {
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
