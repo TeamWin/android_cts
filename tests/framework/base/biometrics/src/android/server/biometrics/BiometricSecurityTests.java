@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package com.android.cts.useembeddeddex;
+package android.server.biometrics;
 
-import android.app.Activity;
+import android.platform.test.annotations.Presubmit;
 
-public class EmptyActivity extends Activity {}
+@Presubmit
+public class BiometricSecurityTests extends BiometricTestBase {
+    private static final String TAG = "BiometricTests/Security";
+
+}

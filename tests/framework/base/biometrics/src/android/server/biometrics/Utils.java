@@ -23,14 +23,19 @@ import android.hardware.biometrics.BiometricPrompt;
 import android.os.ParcelFileDescriptor;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.server.wm.Condition;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -38,7 +43,59 @@ import javax.crypto.SecretKey;
 
 public class Utils {
 
+    private static final String TAG = "BiometricTestUtils";
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
+
+    /**
+     * Retrieves the current SensorStates.
+     */
+    public interface SensorStatesSupplier {
+        SensorStates getSensorStates() throws Exception;
+    }
+
+    /**
+     * Waits for the service to become idle
+     * @throws Exception
+     */
+    public static void waitForIdleService(@NonNull SensorStatesSupplier supplier) throws Exception {
+        for (int i = 0; i < 10; i++) {
+            if (!supplier.getSensorStates().areAllSensorsIdle()) {
+                Log.d(TAG, "Not idle yet..");
+                Thread.sleep(300);
+            } else {
+                return;
+            }
+        }
+        Log.d(TAG, "Timed out waiting for idle");
+    }
+
+    /**
+     * Waits for the specified sensor to become non-idle
+     */
+    public static void waitForBusySensor(int sensorId, @NonNull SensorStatesSupplier supplier)
+            throws Exception {
+        for (int i = 0; i < 10; i++) {
+            if (!supplier.getSensorStates().sensorStates.get(sensorId).isBusy()) {
+                Log.d(TAG, "Not busy yet..");
+                Thread.sleep(300);
+            } else {
+                return;
+            }
+        }
+        Log.d(TAG, "Timed out waiting to become busy");
+    }
+
+    public static void waitFor(@NonNull String message, @NonNull BooleanSupplier condition) {
+        waitFor(message, condition, null /* onFailure */);
+    }
+
+    public static void waitFor(@NonNull String message, @NonNull BooleanSupplier condition,
+            @Nullable Consumer<Object> onFailure) {
+        Condition.waitFor(new Condition<>(message, condition)
+                .setRetryIntervalMs(500)
+                .setRetryLimit(20)
+                .setOnFailure(onFailure));
+    }
 
     /**
      * Runs a shell command, similar to running "adb shell ..." from the command line.

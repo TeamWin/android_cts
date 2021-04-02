@@ -56,6 +56,7 @@ import android.os.strictmode.InstanceCountViolation;
 import android.os.strictmode.LeakedClosableViolation;
 import android.os.strictmode.NetworkViolation;
 import android.os.strictmode.NonSdkApiUsedViolation;
+import android.os.strictmode.UnsafeIntentLaunchViolation;
 import android.os.strictmode.UntaggedSocketViolation;
 import android.os.strictmode.Violation;
 import android.platform.test.annotations.AppModeFull;
@@ -93,6 +94,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -872,16 +874,28 @@ public class StrictModeTest {
         // The UnsafeIntentLaunch StrictMode check is intended to detect and report unparceling and
         // launching of Intents from the delivered Intent. This test verifies a violation is
         // reported when an inner Intent is unparceled from the Intent delivered to an Activity and
-        // used to start another Activity.
+        // used to start another Activity. This test also uses its own OnVmViolationListener to
+        // obtain the actual StrictMode Violation to verify the getIntent method of the
+        // UnsafeIntentLaunchViolation returns the Intent that triggered the Violation.
+        final LinkedBlockingQueue<Violation> violations = new LinkedBlockingQueue<>();
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder()
                         .detectUnsafeIntentLaunch()
-                        .penaltyLog()
+                        .penaltyListener(Executors.newSingleThreadExecutor(),
+                                violation -> violations.add(violation))
                         .build());
         Context context = getContext();
         Intent intent = IntentLaunchActivity.getUnsafeIntentLaunchTestIntent(context);
+        Intent innerIntent = intent.getParcelableExtra(IntentLaunchActivity.EXTRA_INNER_INTENT);
 
-        assertViolation(UNSAFE_INTENT_LAUNCH, () -> context.startActivity(intent));
+        context.startActivity(intent);
+        Violation violation = violations.poll(5, TimeUnit.SECONDS);
+        assertThat(violation).isInstanceOf(UnsafeIntentLaunchViolation.class);
+        // The inner Intent will only have the target component set; since the Intent references
+        // may not be the same compare the component of the Intent that triggered the violation
+        // against the inner Intent obtained above.
+        assertThat(((UnsafeIntentLaunchViolation) violation).getIntent().getComponent()).isEqualTo(
+                innerIntent.getComponent());
     }
 
     @Test

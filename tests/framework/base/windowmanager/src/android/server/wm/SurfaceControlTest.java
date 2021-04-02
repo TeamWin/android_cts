@@ -87,6 +87,7 @@ public class SurfaceControlTest {
     @After
     public void tearDown() throws UiObjectNotFoundException {
         mActivity.dismissPermissionDialog();
+        mActivity.restoreSettings();
     }
 
     @Test

@@ -16,8 +16,6 @@
 
 package android.theme.cts;
 
-import android.platform.test.annotations.RequiresDevice;
-
 import com.android.ddmlib.Log;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -147,8 +145,6 @@ public class ThemeHostTest extends DeviceTestCase {
         super.tearDown();
     }
 
-    // b/183706483
-    @RequiresDevice
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest()) {
             Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV / automotive");
