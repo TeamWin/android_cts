@@ -577,6 +577,102 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
         runImeVisibilityTestWhenForceStopPackage(true /* instant */);
     }
 
+    @Test
+    public void testRestoreImeVisibility() throws Exception {
+        runRestoreImeVisibility(TestSoftInputMode.UNCHANGED_WITH_BACKWARD_NAV, true);
+    }
+
+    @Test
+    public void testRestoreImeVisibility_noRestoreForAlwaysHidden() throws Exception {
+        runRestoreImeVisibility(TestSoftInputMode.ALWAYS_HIDDEN_WITH_BACKWARD_NAV, false);
+    }
+
+    @Test
+    public void testRestoreImeVisibility_noRestoreForHiddenWithForwardNav() throws Exception {
+        runRestoreImeVisibility(TestSoftInputMode.HIDDEN_WITH_FORWARD_NAV, false);
+    }
+
+    private enum TestSoftInputMode {
+        UNCHANGED_WITH_BACKWARD_NAV,
+        ALWAYS_HIDDEN_WITH_BACKWARD_NAV,
+        HIDDEN_WITH_FORWARD_NAV
+    }
+
+    private void runRestoreImeVisibility(TestSoftInputMode mode, boolean expectImeVisible)
+            throws Exception {
+        final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        try (MockImeSession imeSession = MockImeSession.create(
+                instrumentation.getContext(), instrumentation.getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+            final String markerForActivity1 = getTestMarker();
+            final AtomicReference<EditText> editTextRef = new AtomicReference<>();
+            // Launch a test activity with focusing editText to show keyboard
+            TestActivity.startSync(activity -> {
+                final LinearLayout layout = new LinearLayout(activity);
+                final EditText editText = new EditText(activity);
+                editTextRef.set(editText);
+                editText.setHint("focused editText");
+                editText.setPrivateImeOptions(markerForActivity1);
+                editText.requestFocus();
+                layout.addView(editText);
+                activity.getWindow().getDecorView().getWindowInsetsController().show(ime());
+                if (mode == TestSoftInputMode.ALWAYS_HIDDEN_WITH_BACKWARD_NAV) {
+                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                }
+                return layout;
+            });
+
+            expectEvent(stream, editorMatcher("onStartInput", markerForActivity1), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInputView", markerForActivity1), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.VISIBLE, TIMEOUT);
+            expectImeVisible(TIMEOUT);
+
+            // Launch another app task activity to hide keyboard
+            TestActivity.startNewTaskSync(activity -> {
+                activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+                return new LinearLayout(activity);
+            });
+            expectEvent(stream, hideSoftInputMatcher(), TIMEOUT);
+            expectEvent(stream, onFinishInputViewMatcher(false), TIMEOUT);
+            expectEventWithKeyValue(stream, "onWindowVisibilityChanged", "visible",
+                    View.GONE, TIMEOUT);
+            expectImeInvisible(TIMEOUT);
+
+            if (mode == TestSoftInputMode.HIDDEN_WITH_FORWARD_NAV) {
+                // Start new TestActivity on the same task with STATE_HIDDEN softInputMode.
+                final String markerForActivity2 = getTestMarker();
+                TestActivity.startSameTaskAndClearTopSync(activity -> {
+                    final LinearLayout layout = new LinearLayout(activity);
+                    final EditText editText = new EditText(activity);
+                    editText.setHint("focused editText");
+                    editText.setPrivateImeOptions(markerForActivity2);
+                    editText.requestFocus();
+                    layout.addView(editText);
+                    activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_HIDDEN);
+                    return layout;
+                });
+                expectEvent(stream, editorMatcher("onStartInput", markerForActivity2), TIMEOUT);
+            } else {
+                // Press back key to back to the first test activity
+                instrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
+                expectEvent(stream, editorMatcher("onStartInput", markerForActivity1), TIMEOUT);
+            }
+
+            // Expect the IME visibility according to expectImeVisible
+            // The expected result could be:
+            //  1) The system can restore the IME visibility to show IME up when navigated back to
+            //     the original app task, even the IME is hidden when switching to the next task.
+            //  2) The system won't restore the IME visibility in some softInputMode cases.
+            if (expectImeVisible) {
+                expectImeVisible(TIMEOUT);
+            } else {
+                expectImeInvisible(TIMEOUT);
+            }
+        }
+    }
+
     private void runImeVisibilityWhenImeTransitionBetweenActivities(boolean instant)
             throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(

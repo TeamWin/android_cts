@@ -86,6 +86,9 @@
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
+    <!-- Needed for CompaionDeviceAwakeTestActivity test. -->
+    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
+
     <!-- TODO(b/176993670): needed by DevicePolicyManagerWrapper to send ordered broadcast from
          current user to system user on devices running on headless system user mode. Should be
          removed once tests are refactored to use the proper IPC between theses users.  -->
@@ -209,6 +212,31 @@
             <meta-data android:name="display_mode"
                        android:value="multi_display_mode" />
         </activity>
+
+        <activity android:name=".companion.CompanionDeviceServiceTestActivity"
+                  android:label="@string/companion_service_test"
+                  android:exported="true"
+                  android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_features" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.software.companion_device_setup" />
+            <meta-data android:name="display_mode"
+                       android:value="multi_display_mode" />
+        </activity>
+
+        <service
+            android:name=".companion.DevicePresenceListener"
+            android:exported="true"
+            android:label="Presence Listener Service"
+            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
+        </service>
 
         <!-- A generic activity for intent based tests.
         stateNotNeeded is defined ot prevent IntentDrivenTestActivity from being killed when

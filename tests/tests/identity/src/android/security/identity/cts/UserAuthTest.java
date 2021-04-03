@@ -118,6 +118,13 @@ public class UserAuthTest {
             mLockCredential.gotoKeyguard();
             mLockCredential.enterAndConfirmLockCredential();
             launchHomeActivity();
+            Context appContext = InstrumentationRegistry.getTargetContext();
+            KeyguardManager keyguardManager = (KeyguardManager)appContext.
+                                              getSystemService(Context.KEYGUARD_SERVICE);
+            for (int i = 0; i < 5 && keyguardManager.isDeviceLocked(); i++) {
+                Log.w(TAG, "Wait for keyguardManager unlock device ...");
+                SystemClock.sleep(1000);
+            }
         }
 
         @Override

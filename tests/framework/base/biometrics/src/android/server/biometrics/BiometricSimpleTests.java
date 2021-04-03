@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
@@ -30,10 +31,15 @@ import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.uiautomator.UiObject2;
 
 import com.android.server.biometrics.nano.SensorStateProto;
 
 import org.junit.Test;
+
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple tests.
@@ -42,6 +48,10 @@ import org.junit.Test;
 public class BiometricSimpleTests extends BiometricTestBase {
     private static final String TAG = "BiometricTests/Simple";
 
+    /**
+     * Tests that enrollments created via {@link BiometricTestSession} show up in the
+     * biometric dumpsys.
+     */
     @Test
     public void testEnroll() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
@@ -52,6 +62,10 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    /**
+     * Tests that the sensorIds retrieved via {@link BiometricManager#getSensorProperties()} and
+     * the dumpsys are consistent with each other.
+     */
     @Test
     public void testSensorPropertiesAndDumpsysMatch() throws Exception {
         final BiometricServiceState state = getCurrentState();
@@ -62,6 +76,9 @@ public class BiometricSimpleTests extends BiometricTestBase {
         }
     }
 
+    /**
+     * Tests that the PackageManager features and biometric dumpsys are consistent with each other.
+     */
     @Test
     public void testPackageManagerAndDumpsysMatch() throws Exception {
         final BiometricServiceState state = getCurrentState();
@@ -157,6 +174,129 @@ public class BiometricSimpleTests extends BiometricTestBase {
             cancelAuthentication(cancel);
             verify(callback).onAuthenticationError(eq(BiometricPrompt.BIOMETRIC_ERROR_CANCELED),
                     any());
+        }
+    }
+
+    /**
+     * Tests that the values specified through the public APIs are shown on the BiometricPrompt UI
+     * when biometric auth is requested.
+     *
+     * Upon successful authentication, checks that the result is
+     * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
+     */
+    @Test
+    public void testSimpleBiometricAuth() throws Exception {
+        for (SensorProperties props : mSensorProperties) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(props.getSensorId())) {
+                enrollForSensor(session, props.getSensorId());
+
+                final Random random = new Random();
+                final String randomTitle = String.valueOf(random.nextInt(10000));
+                final String randomSubtitle = String.valueOf(random.nextInt(10000));
+                final String randomDescription = String.valueOf(random.nextInt(10000));
+                final String randomNegativeButtonText = String.valueOf(random.nextInt(10000));
+
+                CountDownLatch latch = new CountDownLatch(1);
+                BiometricPrompt.AuthenticationCallback callback =
+                        new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        assertEquals("Must be TYPE_BIOMETRIC",
+                                BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC,
+                                result.getAuthenticationType());
+                        latch.countDown();
+                    }
+                };
+
+                showDefaultBiometricPromptWithContents(props.getSensorId(), 0 /* userId */,
+                        true /* requireConfirmation */, callback, randomTitle, randomSubtitle,
+                        randomDescription, randomNegativeButtonText);
+
+                final UiObject2 actualTitle = findView(TITLE_VIEW);
+                final UiObject2 actualSubtitle = findView(SUBTITLE_VIEW);
+                final UiObject2 actualDescription = findView(DESCRIPTION_VIEW);
+                final UiObject2 actualNegativeButton = findView(BUTTON_ID_NEGATIVE);
+                assertEquals(randomTitle, actualTitle.getText());
+                assertEquals(randomSubtitle, actualSubtitle.getText());
+                assertEquals(randomDescription, actualDescription.getText());
+                assertEquals(randomNegativeButtonText, actualNegativeButton.getText());
+
+                // Finish auth
+                successfullyAuthenticate(session, 0 /* userId */);
+                latch.await(3, TimeUnit.SECONDS);
+            }
+        }
+    }
+
+    /**
+     * Tests that the values specified through the public APIs are shown on the BiometricPrompt UI
+     * when credential auth is requested.
+     *
+     * Upon successful authentication, checks that the result is
+     * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
+     */
+    @Test
+    public void testSimpleCredentialAuth() throws Exception {
+        try (CredentialSession session = new CredentialSession()){
+            session.setCredential();
+
+            final Random random = new Random();
+            final String randomTitle = String.valueOf(random.nextInt(10000));
+            final String randomSubtitle = String.valueOf(random.nextInt(10000));
+            final String randomDescription = String.valueOf(random.nextInt(10000));
+
+            CountDownLatch latch = new CountDownLatch(1);
+            BiometricPrompt.AuthenticationCallback callback =
+                    new BiometricPrompt.AuthenticationCallback() {
+                @Override
+                public void onAuthenticationSucceeded(
+                        BiometricPrompt.AuthenticationResult result) {
+                    assertEquals("Must be TYPE_CREDENTIAL",
+                            BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL,
+                            result.getAuthenticationType());
+                    latch.countDown();
+                }
+            };
+            showCredentialOnlyBiometricPromptWithContents(callback, new CancellationSignal(),
+                    true /* shouldShow */, randomTitle, randomSubtitle, randomDescription);
+
+            final UiObject2 actualTitle = findView(TITLE_VIEW);
+            final UiObject2 actualSubtitle = findView(SUBTITLE_VIEW);
+            final UiObject2 actualDescription = findView(DESCRIPTION_VIEW);
+            assertEquals(randomTitle, actualTitle.getText());
+            assertEquals(randomSubtitle, actualSubtitle.getText());
+            assertEquals(randomDescription, actualDescription.getText());
+
+            // Finish auth
+            successfullyEnterCredential();
+            latch.await(3, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * Tests that cancelling auth succeeds, and that ERROR_CANCELED is received.
+     */
+    @Test
+    public void testBiometricCancellation() throws Exception {
+        for (SensorProperties props : mSensorProperties) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(props.getSensorId())) {
+                enrollForSensor(session, props.getSensorId());
+
+                BiometricPrompt.AuthenticationCallback callback =
+                        mock(BiometricPrompt.AuthenticationCallback.class);
+                CancellationSignal cancellationSignal = new CancellationSignal();
+
+                showDefaultBiometricPrompt(props.getSensorId(), 0 /* userId */,
+                        true /* requireConfirmation */, callback, cancellationSignal);
+
+                cancelAuthentication(cancellationSignal);
+                verify(callback).onAuthenticationError(eq(BiometricPrompt.BIOMETRIC_ERROR_CANCELED),
+                        any());
+                verifyNoMoreInteractions(callback);
+            }
         }
     }
 }

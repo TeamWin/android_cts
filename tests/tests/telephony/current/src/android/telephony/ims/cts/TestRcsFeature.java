@@ -16,16 +16,15 @@
 
 package android.telephony.ims.cts;
 
+import android.content.Context;
 import android.telephony.ims.feature.CapabilityChangeRequest;
-import android.telephony.ims.feature.CapabilityChangeRequest.CapabilityPair;
-import android.telephony.ims.feature.ImsFeature;
 import android.telephony.ims.feature.RcsFeature;
 import android.telephony.ims.stub.CapabilityExchangeEventListener;
+import android.telephony.ims.stub.ImsRegistrationImplBase;
 import android.telephony.ims.stub.RcsCapabilityExchangeImplBase;
 import android.util.Log;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 
 public class TestRcsFeature extends RcsFeature {
@@ -34,34 +33,36 @@ public class TestRcsFeature extends RcsFeature {
 
     private final TestImsService.ReadyListener mReadyListener;
     private final TestImsService.RemovedListener mRemovedListener;
-    private final TestImsService.CapabilitiesSetListener mCapSetListener;
-    private final TestImsService.RcsCapabilitySetListener mRcsCapabilitySetListener;
+    private final TestImsService.RcsCapabilityExchangeEventListener mCapExchangeEventListener;
+
+    private final RcsImsCapabilities mRcsCapabilitiesLte;
+    private final RcsImsCapabilities mRcsCapabilitiesIWan;
+    private final TestImsService.CapabilitiesSetListener mRcsCapabilityChangedListener;
 
     private TestRcsCapabilityExchangeImpl mCapExchangeImpl;
     private CapabilityExchangeEventListener mCapEventListener;
     private TestImsService.DeviceCapPublishListener mDeviceCapPublishListener;
 
-    private CapabilityChangeRequest mCapabilityChangeRequest;
-    private int mCapabilitiesChangedResult = ImsFeature.CAPABILITY_SUCCESS;
-
-    TestRcsFeature(TestImsService.ReadyListener readyListener,
-            TestImsService.RemovedListener listener,
+    TestRcsFeature(Context context,
+            TestImsService.ReadyListener readyListener,
+            TestImsService.RemovedListener removedListener,
             TestImsService.CapabilitiesSetListener setListener,
-            TestImsService.RcsCapabilitySetListener uceCallbackListener) {
+            TestImsService.RcsCapabilityExchangeEventListener capExchangeEventListener) {
+        super(context.getMainExecutor());
+
         mReadyListener = readyListener;
-        mRemovedListener = listener;
-        mCapSetListener = setListener;
-        mRcsCapabilitySetListener = uceCallbackListener;
+        mRemovedListener = removedListener;
+        mCapExchangeEventListener = capExchangeEventListener;
+
+        mRcsCapabilityChangedListener = setListener;
+        mRcsCapabilitiesLte = new RcsImsCapabilities(RcsImsCapabilities.CAPABILITY_TYPE_NONE);
+        mRcsCapabilitiesIWan = new RcsImsCapabilities(RcsImsCapabilities.CAPABILITY_TYPE_NONE);
 
         setFeatureState(STATE_READY);
     }
 
     public void setDeviceCapPublishListener(TestImsService.DeviceCapPublishListener listener) {
         mDeviceCapPublishListener = listener;
-    }
-
-    public void overrideCapabilitiesEnabledResult(int result) {
-        mCapabilitiesChangedResult = result;
     }
 
     @Override
@@ -93,15 +94,17 @@ public class TestRcsFeature extends RcsFeature {
         }
         mCapEventListener = listener;
         mCapExchangeImpl = new TestRcsCapabilityExchangeImpl(mDeviceCapPublishListener);
-        mRcsCapabilitySetListener.onSet();
+        mCapExchangeEventListener.onSet();
         return mCapExchangeImpl;
     }
 
+    @Override
     public void destroyCapabilityExchangeImpl(RcsCapabilityExchangeImplBase capExchangeImpl) {
         if (ImsUtils.VDBG) {
             Log.d(TAG, "TestRcsFeature.destroyCapabilityExchangeImpl called");
         }
-        mRcsCapabilitySetListener.onSet();
+        mCapEventListener = null;
+        mCapExchangeEventListener.onSet();
     }
 
     public CapabilityExchangeEventListener getEventListener() {
@@ -115,26 +118,39 @@ public class TestRcsFeature extends RcsFeature {
     @Override
     public void changeEnabledCapabilities(CapabilityChangeRequest request,
             CapabilityCallbackProxy c) {
-        // Trigger the error callback if the result is failed
-        if (mCapabilitiesChangedResult != ImsFeature.CAPABILITY_SUCCESS) {
-            CapabilityChangeRequest.CapabilityPair capPair = request.getCapabilitiesToEnable()
-                    .get(0);
-            c.onChangeCapabilityConfigurationError(capPair.getCapability(), capPair.getRadioTech(),
-                    ImsFeature.CAPABILITY_ERROR_GENERIC);
-            return;
+
+        // Enabled RCS capabilities
+        List<CapabilityChangeRequest.CapabilityPair> pairs = request.getCapabilitiesToEnable();
+        for (CapabilityChangeRequest.CapabilityPair pair : pairs) {
+            if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_LTE) {
+                mRcsCapabilitiesLte.addCapabilities(pair.getCapability());
+            } else if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN) {
+                mRcsCapabilitiesIWan.addCapabilities(pair.getCapability());
+            }
         }
-        mCapabilityChangeRequest = request;
-        // Notify that the capabilities is changed.
-        mCapSetListener.onSet();
+
+        // Disabled RCS capabilities
+        pairs = request.getCapabilitiesToDisable();
+        for (CapabilityChangeRequest.CapabilityPair pair : pairs) {
+            if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_LTE) {
+                mRcsCapabilitiesLte.removeCapabilities(pair.getCapability());
+            } else if (pair.getRadioTech() == ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN) {
+                mRcsCapabilitiesIWan.removeCapabilities(pair.getCapability());
+            }
+        }
+        mRcsCapabilityChangedListener.onSet();
     }
 
     @Override
     public boolean queryCapabilityConfiguration(int capability, int radioTech) {
-        List<CapabilityPair> pairList =  mCapabilityChangeRequest.getCapabilitiesToEnable();
-        if (pairList == null) return false;
-        Optional<CapabilityPair> queryResult = pairList.stream().filter(pair -> {
-            return (pair.getCapability() == capability) && (pair.getRadioTech() == radioTech);
-        }).findAny();
-        return queryResult.isPresent();
+        if (ImsUtils.VDBG) {
+            Log.d(TAG, "TestRcsFeature.queryCapabilityConfiguration capability: " + capability);
+        }
+        if (radioTech == ImsRegistrationImplBase.REGISTRATION_TECH_LTE) {
+            return mRcsCapabilitiesLte.isCapable(capability);
+        } else if (radioTech == ImsRegistrationImplBase.REGISTRATION_TECH_IWLAN) {
+            return mRcsCapabilitiesIWan.isCapable(capability);
+        }
+        return false;
     }
 }

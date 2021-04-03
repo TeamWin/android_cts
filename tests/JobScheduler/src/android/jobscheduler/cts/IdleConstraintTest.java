@@ -21,17 +21,12 @@ import static com.android.compatibility.common.util.TestUtils.waitUntil;
 import android.annotation.TargetApi;
 import android.app.UiModeManager;
 import android.app.job.JobInfo;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
-import android.os.PowerManager;
 import android.os.UserHandle;
 import android.support.test.uiautomator.UiDevice;
-import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 
-import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 /**
@@ -42,7 +37,6 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
     private static final int STATE_JOB_ID = IdleConstraintTest.class.hashCode();
     private static final String TAG = "IdleConstraintTest";
 
-    private PowerManager mPowerManager;
     private JobInfo.Builder mBuilder;
     private UiDevice mUiDevice;
 
@@ -53,7 +47,6 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         super.setUp();
         mBuilder = new JobInfo.Builder(STATE_JOB_ID, kJobServiceComponent);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        mPowerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
 
         // Make sure the screen doesn't turn off when the test turns it on.
         mInitialDisplayTimeout = mUiDevice.executeShellCommand(
@@ -93,15 +86,6 @@ public class IdleConstraintTest extends BaseJobSchedulerTest {
         mUiDevice.executeShellCommand("cmd jobscheduler trigger-dock-state "
                 + (idle ? "idle" : "active"));
         // Wait a moment to let that happen before proceeding.
-        Thread.sleep(2_000);
-    }
-
-    /**
-     * Set the screen state.
-     */
-    private void toggleScreenOn(final boolean screenon) throws Exception {
-        BatteryUtils.turnOnScreen(screenon);
-        // Wait a little bit for the broadcasts to be processed.
         Thread.sleep(2_000);
     }
 
