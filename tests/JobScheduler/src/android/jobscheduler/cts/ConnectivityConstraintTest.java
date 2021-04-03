@@ -31,7 +31,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
@@ -367,10 +366,11 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
         mTestAppInterface.startAndKeepTestActivity();
+        toggleScreenOn(true);
 
-        mTestAppInterface.scheduleJob(false, true, false);
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, false);
 
-        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        mTestAppInterface.runSatisfiedJob();
         assertTrue("Job with metered connectivity constraint did not fire on a metered network.",
                 mTestAppInterface.awaitJobStart(30_000));
 
@@ -862,8 +862,15 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
     }
 
     static boolean isWiFiConnected(final ConnectivityManager cm, final WifiManager wm) {
-        return wm.isWifiEnabled() && cm.getActiveNetwork() != null
-                && cm.getNetworkCapabilities(cm.getActiveNetwork()).hasTransport(TRANSPORT_WIFI);
+        if (!wm.isWifiEnabled()) {
+            return false;
+        }
+        final Network network = cm.getActiveNetwork();
+        if (network == null) {
+            return false;
+        }
+        final NetworkCapabilities networkCapabilities = cm.getNetworkCapabilities(network);
+        return networkCapabilities != null && networkCapabilities.hasTransport(TRANSPORT_WIFI);
     }
 
     /**

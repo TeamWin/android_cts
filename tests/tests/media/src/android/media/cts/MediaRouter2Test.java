@@ -1042,6 +1042,12 @@ public class MediaRouter2Test {
     }
 
     @Test
+    public void testGettingSystemMediaRouter2WithoutPermissionThrowsSecurityException() {
+        assertThrows(SecurityException.class,
+                () -> MediaRouter2.getInstance(mContext, mContext.getPackageName()));
+    }
+
+    @Test
     public void markCallbacksAsTested() {
         // Due to CTS coverage tool's bug, it doesn't count the callback methods as tested even if
         // we have tests for them. This method just directly calls those methods so that the tool

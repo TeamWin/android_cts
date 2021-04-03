@@ -43,27 +43,11 @@
                 android:text="@string/biometric_test_weak_enroll"/>
 
             <Button
-                android:id="@+id/biometric_test_weak_authenticate_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="@string/biometric_test_weak_authenticate"
-                android:enabled="false"/>
-
-            <Button
                 android:id="@+id/biometric_test_weak_authenticate_time_based_keys_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
                 android:text="@string/biometric_test_weak_authenticate_time_based_keys"
-                android:enabled="false"/>
-
-            <Button
-                android:id="@+id/authenticate_credential_setDeviceCredentialAllowed_biometric_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="@string/biometric_test_authenticate_with_credential1_button"
                 android:enabled="false"/>
             <Button
                 android:id="@+id/authenticate_credential_setDeviceCredentialAllowed_credential_button"
@@ -93,21 +77,6 @@
                 android:layout_centerInParent="true"
                 android:text="@string/biometric_test_reject_first"
                 android:enabled="false"/>
-            <Button
-                android:id="@+id/authenticate_negative_button_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="@string/biometric_test_negative_button_button"
-                android:enabled="false"/>
-            <Button
-                android:id="@+id/authenticate_cancellation_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:text="@string/biometric_test_cancellation_button"
-                android:enabled="false"/>
-
             <Space
                 android:layout_width="match_parent"
                 android:layout_height="0dp"

@@ -39,8 +39,12 @@ import android.content.IntentFilter;
 import android.jobscheduler.cts.jobtestapp.TestActivity;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
 import android.os.SystemClock;
+import android.os.UserHandle;
 import android.server.wm.WindowManagerStateHelper;
 import android.util.Log;
+
+import com.android.compatibility.common.util.CallbackAsserter;
+import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.Map;
 
@@ -80,21 +84,38 @@ class TestAppInterface {
         mTestJobState.reset();
     }
 
-    void scheduleJob(boolean allowWhileIdle, boolean needNetwork, boolean asExpeditedJob) {
-        scheduleJob(Map.of(
-                TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle,
-                TestJobSchedulerReceiver.EXTRA_REQUIRE_NETWORK_ANY, needNetwork,
-                TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, asExpeditedJob
-        ));
+    void scheduleJob(boolean allowWhileIdle, int requiredNetworkType, boolean asExpeditedJob)
+            throws Exception {
+        scheduleJob(
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle,
+                        TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, asExpeditedJob
+                ),
+                Map.of(
+                        TestJobSchedulerReceiver.EXTRA_REQUIRED_NETWORK_TYPE, requiredNetworkType
+                ));
     }
 
-    void scheduleJob(Map<String, Boolean> booleanExtras) {
+    void scheduleJob(Map<String, Boolean> booleanExtras, Map<String, Integer> intExtras)
+            throws Exception {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
         scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, mJobId);
-        booleanExtras.forEach((key, value) -> scheduleJobIntent.putExtra(key, value));
+        booleanExtras.forEach(scheduleJobIntent::putExtra);
+        intExtras.forEach(scheduleJobIntent::putExtra);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
+
+        final CallbackAsserter resultBroadcastAsserter = CallbackAsserter.forBroadcast(
+                new IntentFilter(TestJobSchedulerReceiver.ACTION_JOB_SCHEDULE_RESULT));
         mContext.sendBroadcast(scheduleJobIntent);
+        resultBroadcastAsserter.assertCalled("Didn't get schedule job result broadcast",
+                15 /* 15 seconds */);
+    }
+
+    /** Asks (not forces) JobScheduler to run the job if constraints are met. */
+    void runSatisfiedJob() throws Exception {
+        SystemUtil.runShellCommand("cmd jobscheduler run -s"
+                + " -u " + UserHandle.myUserId() + " " + TEST_APP_PACKAGE + " " + mJobId);
     }
 
     void startAndKeepTestActivity() {
