@@ -21,6 +21,7 @@ import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.MultiResolutionImageReader;
@@ -29,9 +30,12 @@ import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
+import android.hardware.camera2.params.MandatoryStreamCombination;
+import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
 import android.hardware.camera2.params.MultiResolutionStreamConfigurationMap;
 import android.hardware.camera2.params.MultiResolutionStreamInfo;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
@@ -51,12 +55,15 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.Test;
 
+import static android.hardware.camera2.cts.CameraTestUtils.checkSessionConfigurationSupported;
 import static android.hardware.camera2.cts.CameraTestUtils.ImageAndMultiResStreamInfo;
+import static android.hardware.camera2.cts.CameraTestUtils.StreamCombinationTargets;
 import static android.hardware.camera2.cts.CameraTestUtils.SimpleMultiResolutionImageReaderListener;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.*;
 
 /**
  * Basic test for MultiResolutionImageReader APIs.
@@ -201,6 +208,134 @@ public class MultiResolutionImageReaderTest extends Camera2AndroidTestCase {
     @Test
     public void testMultiResolutionImageReaderRepeatingPrivate() throws Exception {
         testMultiResolutionImageReaderForFormat(ImageFormat.PRIVATE, /*repeating*/true);
+    }
+
+    /**
+     * Test for making sure the mandatory stream combinations work for multi-resolution output.
+     */
+    @Test
+    public void testMultiResolutionMandatoryStreamCombinationTest() throws Exception {
+        for (String id : mCameraIdsUnderTest) {
+            StaticMetadata info = mAllStaticInfo.get(id);
+            CameraCharacteristics c = info.getCharacteristics();
+            MandatoryStreamCombination[] combinations = c.get(
+                            CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if (combinations == null) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                continue;
+            }
+            MultiResolutionStreamConfigurationMap multiResolutionMap = c.get(
+                    CameraCharacteristics.SCALER_MULTI_RESOLUTION_STREAM_CONFIGURATION_MAP);
+            if (multiResolutionMap == null) {
+                Log.i(TAG, "Camera " + id + " doesn't support multi-resolution capture.");
+                continue;
+            }
+            int[] multiResolutionOutputFormats = multiResolutionMap.getOutputFormats();
+            if (multiResolutionOutputFormats.length == 0) {
+                Log.i(TAG, "Camera " + id + " doesn't support multi-resolution output capture.");
+                continue;
+            }
+
+            try {
+                openDevice(id);
+                for (MandatoryStreamCombination combination : combinations) {
+                    if (combination.isReprocessable()) {
+                        continue;
+                    }
+
+                    List<MandatoryStreamCombination.MandatoryStreamInformation> streamsInfo =
+                            combination.getStreamsInformation();
+                    for (MandatoryStreamCombination.MandatoryStreamInformation mandateInfo :
+                            streamsInfo) {
+                        boolean supportMultiResOutput = CameraTestUtils.contains(
+                                multiResolutionOutputFormats, mandateInfo.getFormat());
+                        if (mandateInfo.isMaximumSize() && supportMultiResOutput)  {
+                            testMultiResolutionMandatoryStreamCombination(id, info, combination,
+                                    multiResolutionMap);
+                            break;
+                        }
+                    }
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMultiResolutionMandatoryStreamCombination(String cameraId,
+            StaticMetadata staticInfo, MandatoryStreamCombination combination,
+            MultiResolutionStreamConfigurationMap multiResStreamConfig) throws Exception {
+        String log = "Testing multi-resolution mandatory stream combination: " +
+                combination.getDescription() + " on camera: " + cameraId;
+        Log.i(TAG, log);
+
+        final int TIMEOUT_FOR_RESULT_MS = 1000;
+        final int MIN_RESULT_COUNT = 3;
+
+        // Set up outputs
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        StreamCombinationTargets targets = new StreamCombinationTargets();
+
+        CameraTestUtils.setupConfigurationTargets(combination.getStreamsInformation(),
+                targets, outputConfigs, outputSurfaces, MIN_RESULT_COUNT, /*substituteY8*/false,
+                /*substituteHeic*/false, /*physicalCameraId*/null, /*ultraHighResolution*/false,
+                multiResStreamConfig, mHandler);
+
+        boolean haveSession = false;
+        try {
+            CaptureRequest.Builder requestBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+            for (Surface s : outputSurfaces) {
+                requestBuilder.addTarget(s);
+            }
+
+            CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+
+            checkSessionConfigurationSupported(mCamera, mHandler, outputConfigs,
+                    /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                    true/*defaultSupport*/, String.format(
+                    "Session configuration query for multi-res combination: %s failed",
+                    combination.getDescription()));
+
+            createSessionByConfigs(outputConfigs);
+            haveSession = true;
+            CaptureRequest request = requestBuilder.build();
+            mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+
+            verify(mockCaptureCallback,
+                    timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
+                    .onCaptureCompleted(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(TotalCaptureResult.class));
+            verify(mockCaptureCallback, never()).
+                    onCaptureFailed(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(CaptureFailure.class));
+
+        } catch (Throwable e) {
+            mCollector.addMessage(
+                    String.format("Mandatory multi-res stream combination: %s failed due: %s",
+                    combination.getDescription(), e.getMessage()));
+        }
+        if (haveSession) {
+            try {
+                Log.i(TAG, String.format(
+                        "Done with camera %s, multi-res combination: %s, closing session",
+                        cameraId, combination.getDescription()));
+                stopCapture(/*fast*/false);
+            } catch (Throwable e) {
+                mCollector.addMessage(
+                    String.format("Closing down for multi-res combination: %s failed due to: %s",
+                            combination.getDescription(), e.getMessage()));
+            }
+        }
+
+        targets.close();
     }
 
     private void testMultiResolutionImageReaderForFormat(int format, boolean repeating)

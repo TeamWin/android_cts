@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.mockito.Mockito.mock;
 
 import android.app.Instrumentation;
 import android.content.ComponentName;
@@ -85,6 +86,11 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     // Positive-side (right) buttons
     protected static final String BUTTON_ID_CONFIRM = "button_confirm";
     protected static final String BUTTON_ID_TRY_AGAIN = "button_try_again";
+
+    // Biometric text contents
+    protected static final String TITLE_VIEW = "title";
+    protected static final String SUBTITLE_VIEW = "subtitle";
+    protected static final String DESCRIPTION_VIEW = "description";
 
     protected static final String VIEW_ID_PASSWORD_FIELD = "lockPassword";
 
@@ -195,7 +201,12 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
             findAndPressButton(BUTTON_ID_CONFIRM);
             mInstrumentation.waitForIdleSync();
             waitForState(STATE_AUTH_IDLE);
+        } else {
+            waitForState(STATE_AUTH_IDLE);
         }
+
+        assertEquals("Failed to become idle after authenticating",
+                STATE_AUTH_IDLE, getCurrentState().mState);
     }
 
     protected void successfullyEnterCredential() throws Exception {
@@ -207,6 +218,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         // Wait for any animations to complete. Ideally, this should be reflected in
         // STATE_SHOWING_DEVICE_CREDENTIAL, but SysUI and BiometricService are different processes
         // so we'd need to add some additional plumbing. We can improve this in the future.
+        // TODO(b/152240892)
         Thread.sleep(1000);
 
         // Enter credential. AuthSession done, authentication callback received
@@ -225,6 +237,11 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         cancel.cancel();
         mInstrumentation.waitForIdleSync();
         waitForState(STATE_AUTH_IDLE);
+
+        //TODO(b/152240892): Currently BiometricService does not get a signal from SystemUI
+        //  when the dialog finishes animating away.
+        Thread.sleep(1000);
+
         BiometricServiceState state = getCurrentState();
         assertEquals("Not idle after requesting cancellation", state.mState, STATE_AUTH_IDLE);
     }
@@ -248,19 +265,38 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
             @NonNull BiometricPrompt.AuthenticationCallback callback,
             @NonNull CancellationSignal cancellationSignal,
             boolean shouldShow) throws Exception {
+        showCredentialOnlyBiometricPromptWithContents(callback, cancellationSignal, shouldShow,
+                "Title", "Subtitle", "Description");
+    }
+
+    /**
+     * Shows a BiometricPrompt that specifies {@link Authenticators#DEVICE_CREDENTIAL}
+     * and the specified contents.
+     */
+    protected void showCredentialOnlyBiometricPromptWithContents(
+            @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull CancellationSignal cancellationSignal, boolean shouldShow,
+            @NonNull String title, @NonNull String subtitle,
+            @NonNull String description) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
         final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
-                .setTitle("Title")
-                .setSubtitle("Subtitle")
-                .setDescription("Description")
+                .setTitle(title)
+                .setSubtitle(subtitle)
+                .setDescription(description)
                 .setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL)
                 .setAllowBackgroundAuthentication(true)
                 .build();
 
         prompt.authenticate(cancellationSignal, executor, callback);
-
         mInstrumentation.waitForIdleSync();
+
+        // Wait for any animations to complete. Ideally, this should be reflected in
+        // STATE_SHOWING_DEVICE_CREDENTIAL, but SysUI and BiometricService are different processes
+        // so we'd need to add some additional plumbing. We can improve this in the future.
+        // TODO(b/152240892)
+        Thread.sleep(1000);
+
         if (shouldShow) {
             waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
             BiometricServiceState state = getCurrentState();
@@ -289,8 +325,14 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                 .build();
 
         prompt.authenticate(cancellationSignal, executor, callback);
-
         mInstrumentation.waitForIdleSync();
+
+        // Wait for any animations to complete. Ideally, this should be reflected in
+        // STATE_SHOWING_DEVICE_CREDENTIAL, but SysUI and BiometricService are different processes
+        // so we'd need to add some additional plumbing. We can improve this in the future.
+        // TODO(b/152240892)
+        Thread.sleep(1000);
+
         if (shouldShow) {
             waitForState(STATE_SHOWING_DEVICE_CREDENTIAL);
             BiometricServiceState state = getCurrentState();
@@ -300,20 +342,43 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         }
     }
 
-    /**
-     * Shows the default BiometricPrompt (sensors meeting BIOMETRIC_WEAK) with a negative button,
-     * and fakes successful authentication via TestApis.
-     */
-    protected void showDefaultBiometricPromptAndAuth(@NonNull BiometricTestSession session,
-            int sensorId,
-            int userId) throws Exception {
+    protected void showDefaultBiometricPrompt(int sensorId, int userId,
+            boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull CancellationSignal cancellationSignal) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
         final Executor executor = handler::post;
         final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
                 .setTitle("Title")
                 .setSubtitle("Subtitle")
                 .setDescription("Description")
+                .setConfirmationRequired(requireConfirmation)
                 .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
+                .setAllowBackgroundAuthentication(true)
+                .setAllowedSensorIds(new ArrayList<>(Collections.singletonList(sensorId)))
+                .build();
+        prompt.authenticate(cancellationSignal, executor, callback);
+
+        waitForState(STATE_AUTH_STARTED_UI_SHOWING);
+    }
+
+    /**
+     * Shows the default BiometricPrompt (sensors meeting BIOMETRIC_WEAK) with a negative button,
+     * but does not complete authentication. In other words, the dialog will stay on the screen.
+     */
+    protected void showDefaultBiometricPromptWithContents(int sensorId, int userId,
+            boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull String title, @NonNull String subtitle, @NonNull String description,
+            @NonNull String negativeButtonText) throws Exception {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle(title)
+                .setSubtitle(subtitle)
+                .setDescription(description)
+                .setConfirmationRequired(requireConfirmation)
+                .setNegativeButton(negativeButtonText, executor, (dialog, which) -> {
                     Log.d(TAG, "Negative button pressed");
                 })
                 .setAllowBackgroundAuthentication(true)
@@ -334,6 +399,18 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                 });
 
         waitForState(STATE_AUTH_STARTED_UI_SHOWING);
+    }
+
+    /**
+     * Shows the default BiometricPrompt (sensors meeting BIOMETRIC_WEAK) with a negative button,
+     * and fakes successful authentication via TestApis.
+     */
+    protected void showDefaultBiometricPromptAndAuth(@NonNull BiometricTestSession session,
+            int sensorId, int userId) throws Exception {
+        BiometricPrompt.AuthenticationCallback callback = mock(
+                BiometricPrompt.AuthenticationCallback.class);
+        showDefaultBiometricPromptWithContents(sensorId, userId, false /* requireConfirmation */,
+                callback, "Title", "Subtitle", "Description", "Negative Button");
         successfullyAuthenticate(session, userId);
     }
 
