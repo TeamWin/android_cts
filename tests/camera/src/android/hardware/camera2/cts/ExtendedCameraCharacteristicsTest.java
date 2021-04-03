@@ -38,6 +38,7 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
+import android.util.ArraySet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
@@ -601,7 +602,14 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         Size arraySize = new Size(activeRect.width(), activeRect.height());
 
-        Set<Size> snapshotSizeSet = snapshotConfig.getOutputSizes(ImageFormat.JPEG);
+
+        ArraySet<Size> snapshotSizeSet = new ArraySet<>(snapshotConfig.getOutputSizes(
+                    ImageFormat.JPEG));
+        Set<Size> highResSnapshotSizeSet = snapshotConfig.getHighResolutionOutputSizes(
+                ImageFormat.JPEG);
+        if (highResSnapshotSizeSet != null) {
+            snapshotSizeSet.addAll(highResSnapshotSizeSet);
+        }
         Size[] snapshotSizes = new Size[snapshotSizeSet.size()];
         snapshotSizes = snapshotSizeSet.toArray(snapshotSizes);
         Size maxJpegSize = CameraTestUtils.getMaxSize(snapshotSizes);
