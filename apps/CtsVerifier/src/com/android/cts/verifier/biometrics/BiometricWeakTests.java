@@ -56,7 +56,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
     private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
     private Button mCheckInvalidInputsButton;
     private Button mRejectThenAuthenticateButton;
-    private Button mCancellationButton;
 
     private boolean mAuthenticateTimeBasedKeysPassed;
     private boolean mAuthenticateCredential1Passed;
@@ -64,7 +63,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
     private boolean mAuthenticateCredential3Passed;
     private boolean mCheckInvalidInputsPassed;
     private boolean mRejectThenAuthenticatePassed;
-    private boolean mCancellationPassed;
 
     @Override
     protected String getTag() {
@@ -89,7 +87,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
                 R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
         mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
         mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
-        mCancellationButton = findViewById(R.id.authenticate_cancellation_button);
 
         mEnrollButton.setOnClickListener((view) -> {
             checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
@@ -252,14 +249,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
                 updatePassButton();
             });
         });
-
-        mCancellationButton.setOnClickListener((view) -> {
-            testCancellationSignal(Authenticators.BIOMETRIC_WEAK, () -> {
-                mCancellationPassed = true;
-                mCancellationButton.setEnabled(false);
-                updatePassButton();
-            });
-        });
     }
 
     @Override
@@ -280,8 +269,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
         if (mAuthenticateTimeBasedKeysPassed
                 && mAuthenticateCredential1Passed && mAuthenticateCredential2Passed
                 && mAuthenticateCredential3Passed && mCheckInvalidInputsPassed
-                && mRejectThenAuthenticatePassed
-                && mCancellationPassed) {
+                && mRejectThenAuthenticatePassed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
@@ -300,7 +288,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
             mAuthenticateCredential3Button.setEnabled(true);
             mCheckInvalidInputsButton.setEnabled(true);
             mRejectThenAuthenticateButton.setEnabled(true);
-            mCancellationButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }
