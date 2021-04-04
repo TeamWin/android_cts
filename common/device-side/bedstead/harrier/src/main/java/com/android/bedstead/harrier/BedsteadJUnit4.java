@@ -16,7 +16,11 @@
 
 package com.android.bedstead.harrier;
 
+import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
+import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
+import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 
 import com.google.common.base.Objects;
 
@@ -73,6 +77,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         private void calculateAnnotations() {
             List<Annotation> annotations = new ArrayList<>(
                     Arrays.asList(getMethod().getAnnotations()));
+
+            parseEnterpriseAnnotations(annotations);
 
             int index = 0;
             while (index < annotations.size()) {
@@ -165,6 +171,10 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
 
             for (Annotation annotation : parameterizedAnnotations) {
+                if (annotation.annotationType().equals(IncludeNone.class)) {
+                    // Special case - does not generate a run
+                    continue;
+                }
                 modifiedTests.add(
                         new BedsteadFrameworkMethod(m.getMethod(), annotation));
             }
@@ -175,13 +185,54 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
     private Set<Annotation> getParameterizedAnnotations(FrameworkMethod method) {
         Set<Annotation> parameterizedAnnotations = new HashSet<>();
+        List<Annotation> annotations = new ArrayList<>(Arrays.asList(method.getAnnotations()));
 
-        for (Annotation annotation : method.getMethod().getAnnotations()) {
+        // TODO(scottjonathan): We're doing this twice... does it matter?
+        parseEnterpriseAnnotations(annotations);
+
+        for (Annotation annotation : annotations) {
             if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null) {
                 parameterizedAnnotations.add(annotation);
             }
         }
 
         return parameterizedAnnotations;
+    }
+
+    /**
+     * Parse enterprise-specific annotations.
+     *
+     * <p>To be used before general annotation processing.
+     */
+    private static void parseEnterpriseAnnotations(List<Annotation> annotations) {
+        int index = 0;
+        while (index < annotations.size()) {
+            Annotation annotation = annotations.get(index);
+            if (annotation instanceof PositivePolicyTest) {
+                annotations.remove(index);
+                Class<?> policy = ((PositivePolicyTest) annotation).policy();
+
+                EnterprisePolicy enterprisePolicy =
+                        policy.getAnnotation(EnterprisePolicy.class);
+                List<Annotation> replacementAnnotations =
+                        Policy.positiveStates(enterprisePolicy);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else if (annotation instanceof NegativePolicyTest) {
+                annotations.remove(index);
+                Class<?> policy = ((NegativePolicyTest) annotation).policy();
+
+                EnterprisePolicy enterprisePolicy =
+                        policy.getAnnotation(EnterprisePolicy.class);
+                List<Annotation> replacementAnnotations =
+                        Policy.negativeStates(enterprisePolicy);
+
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
+            } else {
+                index++;
+            }
+        }
     }
 }
