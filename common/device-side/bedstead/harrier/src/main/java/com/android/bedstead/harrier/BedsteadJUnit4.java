@@ -30,8 +30,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -39,13 +41,22 @@ import java.util.Set;
  */
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
+    // These are annotations which are not included indirectly
+    private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
+    static {
+        sIgnoredAnnotationPackages.add("java.lang.annotation");
+        sIgnoredAnnotationPackages.add("com.android.bedstead.harrier.annotations.meta");
+    }
+
     /**
      * {@link FrameworkMethod} subclass which allows modifying the test name and annotations.
      */
     public static final class BedsteadFrameworkMethod extends FrameworkMethod {
 
-        private final String mSuffix;
-        private final Set<Annotation> mAnnotations;
+        private final Class<? extends Annotation> mParameterizedAnnotation;
+        private final Map<Class<? extends Annotation>, Annotation> mAnnotationsMap =
+                new HashMap<>();
+        private Annotation[] mAnnotations;
 
         public BedsteadFrameworkMethod(Method method) {
             this(method, /* parameterizedAnnotation= */ null);
@@ -53,22 +64,59 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
         public BedsteadFrameworkMethod(Method method, Annotation parameterizedAnnotation) {
             super(method);
-            if (parameterizedAnnotation == null) {
-                mSuffix = null;
-                mAnnotations = new HashSet<>();
-            } else {
-                this.mSuffix = parameterizedAnnotation.annotationType().getSimpleName();
-                this.mAnnotations = new HashSet<>(
-                        Arrays.asList(parameterizedAnnotation.annotationType().getAnnotations()));
+            this.mParameterizedAnnotation = (parameterizedAnnotation == null) ? null
+                    : parameterizedAnnotation.annotationType();
+
+            calculateAnnotations();
+        }
+
+        private void calculateAnnotations() {
+            List<Annotation> annotations = new ArrayList<>(
+                    Arrays.asList(getMethod().getAnnotations()));
+
+            int index = 0;
+            while (index < annotations.size()) {
+                Annotation annotation = annotations.get(index);
+                annotations.remove(index);
+                List<Annotation> replacementAnnotations = getReplacementAnnotations(annotation);
+                annotations.addAll(index, replacementAnnotations);
+                index += replacementAnnotations.size();
             }
+
+            this.mAnnotations = annotations.toArray(new Annotation[0]);
+            for (Annotation annotation : annotations) {
+                mAnnotationsMap.put(annotation.annotationType(), annotation);
+            }
+        }
+
+        private List<Annotation> getReplacementAnnotations(Annotation annotation) {
+            List<Annotation> replacementAnnotations = new ArrayList<>();
+
+            if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
+                    && !annotation.annotationType().equals(mParameterizedAnnotation)) {
+                return replacementAnnotations;
+            }
+
+            for (Annotation indirectAnnotation : annotation.annotationType().getAnnotations()) {
+                if (sIgnoredAnnotationPackages.contains(
+                        indirectAnnotation.annotationType().getPackage().getName())) {
+                    continue;
+                }
+
+                replacementAnnotations.addAll(getReplacementAnnotations(indirectAnnotation));
+            }
+
+            replacementAnnotations.add(annotation);
+
+            return replacementAnnotations;
         }
 
         @Override
         public String getName() {
-            if (mSuffix == null) {
+            if (mParameterizedAnnotation == null) {
                 return super.getName();
             }
-            return super.getName() + "[" + mSuffix + "]";
+            return super.getName() + "[" + mParameterizedAnnotation.getSimpleName() + "]";
         }
 
         @Override
@@ -83,26 +131,17 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
             BedsteadFrameworkMethod other = (BedsteadFrameworkMethod) obj;
 
-            return Objects.equal(mSuffix, other.mSuffix);
+            return Objects.equal(mParameterizedAnnotation, other.mParameterizedAnnotation);
         }
 
         @Override
         public Annotation[] getAnnotations() {
-            Set<Annotation> allAnnotations = new HashSet<>(mAnnotations);
-            allAnnotations.addAll(Arrays.asList(getMethod().getAnnotations()));
-
-            return allAnnotations.toArray(new Annotation[allAnnotations.size()]);
+            return mAnnotations;
         }
 
         @Override
         public <T extends Annotation> T getAnnotation(Class<T> annotationType) {
-            for (Annotation a : mAnnotations) {
-                if (annotationType.isInstance(a)) {
-                    return (T) a;
-                }
-            }
-
-            return super.getAnnotation(annotationType);
+            return (T) mAnnotationsMap.get(annotationType);
         }
     }
 
