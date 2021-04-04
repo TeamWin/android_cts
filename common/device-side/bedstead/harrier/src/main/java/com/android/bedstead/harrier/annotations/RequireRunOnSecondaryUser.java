@@ -37,7 +37,7 @@ import java.lang.annotation.Target;
  * annotated {@link Postsubmit} until they are shown to meet the multi-user presubmit
  * requirements.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface RequireRunOnSecondaryUser {

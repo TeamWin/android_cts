@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier;
 
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+
 import com.google.common.base.Objects;
 
 import org.junit.Test;
@@ -46,19 +48,19 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         private final Set<Annotation> mAnnotations;
 
         public BedsteadFrameworkMethod(Method method) {
-            this(method, /* suffix= */ (String) null);
+            this(method, /* parameterizedAnnotation= */ null);
         }
 
-        public BedsteadFrameworkMethod(Method method, String suffix) {
+        public BedsteadFrameworkMethod(Method method, Annotation parameterizedAnnotation) {
             super(method);
-            this.mSuffix = suffix;
-            this.mAnnotations = new HashSet<>();
-        }
-
-        public BedsteadFrameworkMethod(Method method, Annotation... annotations) {
-            super(method);
-            this.mSuffix = null;
-            this.mAnnotations = new HashSet<>(Arrays.asList(annotations));
+            if (parameterizedAnnotation == null) {
+                mSuffix = null;
+                mAnnotations = new HashSet<>();
+            } else {
+                this.mSuffix = parameterizedAnnotation.annotationType().getSimpleName();
+                this.mAnnotations = new HashSet<>(
+                        Arrays.asList(parameterizedAnnotation.annotationType().getAnnotations()));
+            }
         }
 
         @Override
@@ -116,9 +118,31 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         List<FrameworkMethod> modifiedTests = new ArrayList<>();
 
         for (FrameworkMethod m : basicTests) {
-            modifiedTests.add(new BedsteadFrameworkMethod(m.getMethod()));
+            Set<Annotation> parameterizedAnnotations = getParameterizedAnnotations(m);
+
+            if (parameterizedAnnotations.isEmpty()) {
+                // Unparameterized, just add the original
+                modifiedTests.add(new BedsteadFrameworkMethod(m.getMethod()));
+            }
+
+            for (Annotation annotation : parameterizedAnnotations) {
+                modifiedTests.add(
+                        new BedsteadFrameworkMethod(m.getMethod(), annotation));
+            }
         }
 
         return modifiedTests;
+    }
+
+    private Set<Annotation> getParameterizedAnnotations(FrameworkMethod method) {
+        Set<Annotation> parameterizedAnnotations = new HashSet<>();
+
+        for (Annotation annotation : method.getMethod().getAnnotations()) {
+            if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null) {
+                parameterizedAnnotations.add(annotation);
+            }
+        }
+
+        return parameterizedAnnotations;
     }
 }

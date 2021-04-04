@@ -16,7 +16,7 @@
 
 package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
-@RequireRunOnPrimaryUser
+@RequireRunOnSecondaryUser
 // TODO(scottjonathan): Add annotations to ensure Device Owner is set
 public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
 }
