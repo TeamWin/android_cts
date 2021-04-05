@@ -51,15 +51,9 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private Button mEnrollButton;
     private Button mAuthenticateTimeBasedKeysButton;
-    private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
-    private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
-    private Button mCheckInvalidInputsButton;
     private Button mRejectThenAuthenticateButton;
 
     private boolean mAuthenticateTimeBasedKeysPassed;
-    private boolean mAuthenticateCredential2Passed;
-    private boolean mAuthenticateCredential3Passed;
-    private boolean mCheckInvalidInputsPassed;
     private boolean mRejectThenAuthenticatePassed;
 
     @Override
@@ -77,11 +71,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
         mAuthenticateTimeBasedKeysButton = findViewById(
                 R.id.biometric_test_weak_authenticate_time_based_keys_button);
-        mAuthenticateCredential2Button = findViewById(
-                R.id.authenticate_credential_setDeviceCredentialAllowed_credential_button);
-        mAuthenticateCredential3Button = findViewById(
-                R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
-        mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
         mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
 
         mEnrollButton.setOnClickListener((view) -> {
@@ -206,30 +195,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
         });
 
-        mAuthenticateCredential2Button.setOnClickListener((view) -> {
-            testSetDeviceCredentialAllowed_credentialAuth(() -> {
-                mAuthenticateCredential2Passed = true;
-                mAuthenticateCredential2Button.setEnabled(false);
-                updatePassButton();
-            });
-        });
-
-        mAuthenticateCredential3Button.setOnClickListener((view) -> {
-            testSetAllowedAuthenticators_credentialAndBiometricEnrolled_credentialAuth(() -> {
-                mAuthenticateCredential3Passed = true;
-                mAuthenticateCredential3Button.setEnabled(false);
-                updatePassButton();
-            });
-        });
-
-        mCheckInvalidInputsButton.setOnClickListener((view) -> {
-            testInvalidInputs(() -> {
-                mCheckInvalidInputsPassed = true;
-                mCheckInvalidInputsButton.setEnabled(false);
-                updatePassButton();
-            });
-        });
-
         mRejectThenAuthenticateButton.setOnClickListener((view) -> {
             testBiometricRejectDoesNotEndAuthentication(() -> {
                 mRejectThenAuthenticatePassed = true;
@@ -255,8 +220,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private void updatePassButton() {
         if (mAuthenticateTimeBasedKeysPassed
-                && mAuthenticateCredential2Passed
-                && mAuthenticateCredential3Passed && mCheckInvalidInputsPassed
                 && mRejectThenAuthenticatePassed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
@@ -271,9 +234,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
             showToastAndLog("Successfully enrolled, please continue the test");
             mEnrollButton.setEnabled(false);
             mAuthenticateTimeBasedKeysButton.setEnabled(true);
-            mAuthenticateCredential2Button.setEnabled(true);
-            mAuthenticateCredential3Button.setEnabled(true);
-            mCheckInvalidInputsButton.setEnabled(true);
             mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
