@@ -19,16 +19,16 @@
     <option name="config-descriptor:metadata" key="parameter" value="not_instant_app" />
     <option name="config-descriptor:metadata" key="parameter" value="multi_abi" />
     <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
-    <!-- target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="host" />
         <option name="config-filename" value="CtsMediaPerformanceClassTestCases" />
         <option name="version" value="1.0"/>
-    </target_preparer -->
-    <!-- target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer">
         <option name="push-all" value="true" />
-        <option name="media-folder-name" value="CtsMediaPerformanceeClassTestCases-1.0" />
-        <option name="dynamic-config-module" value="CtsMediaV2TestCases" />
-    </target_preparer -->
+        <option name="media-folder-name" value="CtsMediaPerformanceClassTestCases-1.0" />
+        <option name="dynamic-config-module" value="CtsMediaPerformanceClassTestCases" />
+    </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsMediaPerformanceClassTestCases.apk" />

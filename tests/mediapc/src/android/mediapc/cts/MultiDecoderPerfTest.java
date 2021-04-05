@@ -1,0 +1,85 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.mediapc.cts;
+
+import android.util.Pair;
+
+import androidx.test.filters.LargeTest;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertTrue;
+
+@RunWith(Parameterized.class)
+public class MultiDecoderPerfTest extends MultiCodecPerfTestBase {
+    private static final String LOG_TAG = MultiDecoderPerfTest.class.getSimpleName();
+
+    private final String mDecoderName;
+
+    public MultiDecoderPerfTest(String mimeType, String testFile, String decoderName,
+            boolean isAsync) {
+        super(mimeType, testFile, isAsync);
+        mDecoderName = decoderName;
+    }
+
+    @Parameterized.Parameters(name = "{index}({0}_{2}_{3})")
+    public static Collection<Object[]> inputParams() {
+        // Prepares the params list with the supported Hardware decoders in the device
+        final List<Object[]> argsList = new ArrayList<>();
+        for (String mime : mMimeList) {
+            ArrayList<String> listOfDecoders = getHardwareCodecsFor720p(mime, false);
+            for (String decoder : listOfDecoders) {
+                for (boolean isAsync : boolStates) {
+                    argsList.add(new Object[]{mime, mTestFiles.get(mime), decoder, isAsync});
+                }
+            }
+        }
+        return argsList;
+    }
+
+    @LargeTest
+    @Test(timeout = CodecTestBase.PER_TEST_TIMEOUT_LARGE_TEST_MS)
+    public void test720p() throws Exception {
+        ArrayList<Pair<String, String>> mimeDecoderPairs = new ArrayList<>();
+        mimeDecoderPairs.add(Pair.create(mMime, mDecoderName));
+        int maxInstances = checkAndGetMaxSupportedInstancesFor720p(mimeDecoderPairs);
+        assertTrue("Decoder " + mDecoderName + " unable to support minimum concurrent " +
+                "instances. act/exp: " + maxInstances + "/" + REQUIRED_MIN_CONCURRENT_INSTANCES,
+                maxInstances >= REQUIRED_MIN_CONCURRENT_INSTANCES);
+        ExecutorService pool = Executors.newFixedThreadPool(maxInstances);
+        List<Decode> testList = new ArrayList<>();
+        for (int i = 0; i < maxInstances; i++) {
+            testList.add(new Decode(mMime, mTestFile, mDecoderName, mIsAsync));
+        }
+        List<Future<Double>> resultList = pool.invokeAll(testList);
+        double achievedFrameRate = 0.0;
+        for (Future<Double> result : resultList) {
+            achievedFrameRate += result.get();
+        }
+        assertTrue("Unable to achieve the maxFrameRate supported. act/exp: " + achievedFrameRate
+                + "/" + mMaxFrameRate, achievedFrameRate >= mMaxFrameRate);
+    }
+}
