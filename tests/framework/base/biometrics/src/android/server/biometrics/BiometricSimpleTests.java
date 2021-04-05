@@ -38,6 +38,8 @@ import com.android.server.biometrics.nano.SensorStateProto;
 import org.junit.Test;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple tests.
@@ -178,9 +180,12 @@ public class BiometricSimpleTests extends BiometricTestBase {
     /**
      * Tests that the values specified through the public APIs are shown on the BiometricPrompt UI
      * when biometric auth is requested.
+     *
+     * Upon successful authentication, checks that the result is
+     * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
      */
     @Test
-    public void testContentsShownDuringBiometricAuth() throws Exception {
+    public void testSimpleBiometricAuth() throws Exception {
         for (SensorProperties props : mSensorProperties) {
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
@@ -192,8 +197,21 @@ public class BiometricSimpleTests extends BiometricTestBase {
                 final String randomDescription = String.valueOf(random.nextInt(10000));
                 final String randomNegativeButtonText = String.valueOf(random.nextInt(10000));
 
+                CountDownLatch latch = new CountDownLatch(1);
+                BiometricPrompt.AuthenticationCallback callback =
+                        new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        assertEquals("Must be TYPE_BIOMETRIC",
+                                BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC,
+                                result.getAuthenticationType());
+                        latch.countDown();
+                    }
+                };
+
                 showDefaultBiometricPromptWithContents(props.getSensorId(), 0 /* userId */,
-                        true /* requireConfirmation */, randomTitle, randomSubtitle,
+                        true /* requireConfirmation */, callback, randomTitle, randomSubtitle,
                         randomDescription, randomNegativeButtonText);
 
                 final UiObject2 actualTitle = findView(TITLE_VIEW);
@@ -207,6 +225,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
                 // Finish auth
                 successfullyAuthenticate(session, 0 /* userId */);
+                latch.await(3, TimeUnit.SECONDS);
             }
         }
     }
@@ -214,9 +233,12 @@ public class BiometricSimpleTests extends BiometricTestBase {
     /**
      * Tests that the values specified through the public APIs are shown on the BiometricPrompt UI
      * when credential auth is requested.
+     *
+     * Upon successful authentication, checks that the result is
+     * {@link BiometricPrompt#AUTHENTICATION_RESULT_TYPE_BIOMETRIC}
      */
     @Test
-    public void testContentsShownDuringCredentialAuth() throws Exception {
+    public void testSimpleCredentialAuth() throws Exception {
         try (CredentialSession session = new CredentialSession()){
             session.setCredential();
 
@@ -225,8 +247,18 @@ public class BiometricSimpleTests extends BiometricTestBase {
             final String randomSubtitle = String.valueOf(random.nextInt(10000));
             final String randomDescription = String.valueOf(random.nextInt(10000));
 
+            CountDownLatch latch = new CountDownLatch(1);
             BiometricPrompt.AuthenticationCallback callback =
-                    mock(BiometricPrompt.AuthenticationCallback.class);
+                    new BiometricPrompt.AuthenticationCallback() {
+                @Override
+                public void onAuthenticationSucceeded(
+                        BiometricPrompt.AuthenticationResult result) {
+                    assertEquals("Must be TYPE_CREDENTIAL",
+                            BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL,
+                            result.getAuthenticationType());
+                    latch.countDown();
+                }
+            };
             showCredentialOnlyBiometricPromptWithContents(callback, new CancellationSignal(),
                     true /* shouldShow */, randomTitle, randomSubtitle, randomDescription);
 
@@ -239,6 +271,7 @@ public class BiometricSimpleTests extends BiometricTestBase {
 
             // Finish auth
             successfullyEnterCredential();
+            latch.await(3, TimeUnit.SECONDS);
         }
     }
 

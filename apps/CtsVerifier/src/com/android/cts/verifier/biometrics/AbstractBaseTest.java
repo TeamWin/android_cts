@@ -142,31 +142,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     }
 
     /**
-     * When both credential and biometrics are enrolled, check that the user is able to
-     * authenticate with biometric.
-     */
-    void testSetDeviceCredentialAllowed_biometricAuth(Runnable successRunnable) {
-        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-        builder.setDeviceCredentialAllowed(true);
-        builder.setTitle("Please authenticate with BIOMETRIC only");
-        final BiometricPrompt prompt = builder.build();
-        prompt.authenticate(new CancellationSignal(), mExecutor,
-                new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(
-                            BiometricPrompt.AuthenticationResult result) {
-                        if (result.getAuthenticationType() ==
-                                BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC) {
-                            successRunnable.run();
-                        } else {
-                            showToastAndLog("Please ensure that you authenticate with biometric,"
-                                    + " and not device credential");
-                        }
-                    }
-                });
-    }
-
-    /**
      * When both credential and biometrics are enrolled, check that the user is able to navigate
      * to the credential option, and that authenticating works.
      */
