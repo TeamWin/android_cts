@@ -212,7 +212,7 @@ public final class RecognitionServiceMicIndicatorTest {
 
     private void assertPrivacyChipAndIndicatorsPresent(boolean trustVoiceService) {
         // Open notification and verify the privacy indicator is shown
-        mUiDevice.openNotification();
+        mUiDevice.openQuickSettings();
         SystemClock.sleep(UI_WAIT_TIMEOUT);
 
         final UiObject2 privacyChip =
