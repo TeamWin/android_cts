@@ -266,8 +266,6 @@
     <string name="biometric_test_ui_verification_dialog_title">Please enter your recorded contents</string>
     <string name="biometric_test_ui_verification_dialog_check">Check</string>
 
-    <!-- Invoking the public API with non-public constants -->
-    <string name="biometric_test_invalid_inputs">Test invalid inputs</string>
     <!-- Rejecting does not end the authentication lifecycle -->
     <string name="biometric_test_reject_first">Reject, then authenticate</string>
 

@@ -414,6 +414,34 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         successfullyAuthenticate(session, userId);
     }
 
+    protected void showBiometricPromptWithAuthenticators(int authenticators) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
+                .setAllowBackgroundAuthentication(true)
+                .setAllowedAuthenticators(authenticators)
+                .build();
+        prompt.authenticate(new CancellationSignal(), executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        Log.d(TAG, "onAuthenticationError: " + errorCode);
+                    }
+
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        Log.d(TAG, "onAuthenticationSucceeded");
+                    }
+                });
+    }
+
     @NonNull
     protected static BiometricCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
         Utils.waitFor("Waiting for authentication callback",

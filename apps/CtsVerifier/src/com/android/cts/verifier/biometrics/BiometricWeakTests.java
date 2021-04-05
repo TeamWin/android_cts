@@ -51,11 +51,9 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private Button mEnrollButton;
     private Button mAuthenticateTimeBasedKeysButton;
-    private Button mCheckInvalidInputsButton;
     private Button mRejectThenAuthenticateButton;
 
     private boolean mAuthenticateTimeBasedKeysPassed;
-    private boolean mCheckInvalidInputsPassed;
     private boolean mRejectThenAuthenticatePassed;
 
     @Override
@@ -73,7 +71,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
         mAuthenticateTimeBasedKeysButton = findViewById(
                 R.id.biometric_test_weak_authenticate_time_based_keys_button);
-        mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
         mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
 
         mEnrollButton.setOnClickListener((view) -> {
@@ -198,14 +195,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
         });
 
-        mCheckInvalidInputsButton.setOnClickListener((view) -> {
-            testInvalidInputs(() -> {
-                mCheckInvalidInputsPassed = true;
-                mCheckInvalidInputsButton.setEnabled(false);
-                updatePassButton();
-            });
-        });
-
         mRejectThenAuthenticateButton.setOnClickListener((view) -> {
             testBiometricRejectDoesNotEndAuthentication(() -> {
                 mRejectThenAuthenticatePassed = true;
@@ -231,7 +220,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private void updatePassButton() {
         if (mAuthenticateTimeBasedKeysPassed
-                && mCheckInvalidInputsPassed
                 && mRejectThenAuthenticatePassed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
@@ -246,7 +234,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
             showToastAndLog("Successfully enrolled, please continue the test");
             mEnrollButton.setEnabled(false);
             mAuthenticateTimeBasedKeysButton.setEnabled(true);
-            mCheckInvalidInputsButton.setEnabled(true);
             mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
