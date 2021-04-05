@@ -38,12 +38,6 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical">
-      <Button
-          android:layout_width="match_parent"
-          android:layout_height="wrap_content"
-          android:id="@+id/audio_dev_notification_connect_clearmsgs_btn"
-          android:text="@string/audio_dev_notification_clearmsgs"/>
-
       <TextView
           android:layout_width="match_parent"
           android:layout_height="wrap_content"

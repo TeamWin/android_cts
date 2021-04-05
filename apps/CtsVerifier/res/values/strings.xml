@@ -4773,16 +4773,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="error_screen_pinning_couldnt_exit">Could not exit screen pinning through API.</string>
 
     <!--  Audio Devices Notifications Tests -->
+    <string name="audio_devices_notification_instructions">
+          Connect and disconnect a wired headset.
+          Note if the appropriate notification messages appear below.
+          The \"Pass\" button will be enabled if device connect and disconnect messages are received.
+    </string>
     <string name="audio_out_devices_notifications_test">Audio Output Devices Notifications Test</string>
-    <string name="audio_out_devices_notification_instructions">
-          Click the "Clear Messages" button then connect and disconnect a wired headset.
-          Note if the appropriate notification messages appear below.
-    </string>
     <string name="audio_in_devices_notifications_test">Audio Input Devices Notifications Test</string>
-    <string name="audio_in_devices_notification_instructions">
-          Click the "Clear Messages" button then connect and disconnect a microphone or wired headset.
-          Note if the appropriate notification messages appear below.
-    </string>
     <string name="audio_dev_notification_clearmsgs">Clear Messages</string>
     <string name="audio_dev_notification_connectMsg">CONNECT DETECTED</string>
     <string name="audio_dev_notification_disconnectMsg">DISCONNECT DETECTED</string>
