@@ -81,6 +81,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @AppModeFull // TODO(Instant) Figure out which APIs should work.
 public class ContextTest extends AndroidTestCase {
@@ -204,6 +205,23 @@ public class ContextTest extends AndroidTestCase {
         assertEquals(null, mContext.getAttributionTag());
     }
 
+    public void testCreateAttributionContextFromParams() throws Exception {
+        final ContextParams params = new ContextParams.Builder()
+                .setAttributionTag("foo")
+                .setNextAttributionSource(new AttributionSource.Builder(1)
+                        .setPackageName("bar")
+                        .setAttributionTag("baz")
+                        .build())
+                .build();
+        final Context attributionContext = getContext().createContext(params);
+
+        assertEquals(params, attributionContext.getParams());
+        assertEquals(params.getNextAttributionSource(),
+                attributionContext.getAttributionSource().getNext());
+        assertEquals(params.getAttributionTag(),
+                attributionContext.getAttributionSource().getAttributionTag());
+    }
+
     public void testContextParams() throws Exception {
         final ContextParams params = new ContextParams.Builder()
                 .setAttributionTag("foo")
@@ -211,15 +229,12 @@ public class ContextTest extends AndroidTestCase {
                         .setPackageName("bar")
                         .setAttributionTag("baz")
                         .build())
-                .setRenouncedPermissions(new HashSet<>(Arrays.asList(GRANTED_PERMISSION)))
                 .build();
 
         assertEquals("foo", params.getAttributionTag());
         assertEquals(1, params.getNextAttributionSource().getUid());
         assertEquals("bar", params.getNextAttributionSource().getPackageName());
         assertEquals("baz", params.getNextAttributionSource().getAttributionTag());
-        assertEquals(new HashSet<>(Arrays.asList(GRANTED_PERMISSION)),
-                params.getRenouncedPermissions());
     }
 
     public void testContextParams_Inherit() throws Exception {
@@ -239,24 +254,6 @@ public class ContextTest extends AndroidTestCase {
                     .setAttributionTag(null).build();
             assertEquals(null, params.getAttributionTag());
         }
-    }
-
-    public void testCreateContext_WithRenouncedPermissions() throws Exception {
-        final Context attrib = mContext.createContext(new ContextParams.Builder()
-                .setRenouncedPermissions(
-                        new HashSet<>(Arrays.asList(GRANTED_PERMISSION, NOT_GRANTED_PERMISSION)))
-                .build());
-
-        // Renounced permissions appear to be denied
-        assertTrue(attrib.getParams().getRenouncedPermissions().contains(GRANTED_PERMISSION));
-        assertTrue(attrib.getParams().getRenouncedPermissions().contains(NOT_GRANTED_PERMISSION));
-        assertEquals(PERMISSION_DENIED, attrib.checkSelfPermission(GRANTED_PERMISSION));
-        assertEquals(PERMISSION_DENIED, attrib.checkSelfPermission(NOT_GRANTED_PERMISSION));
-
-        // But still granted on parent context
-        assertNotNull(mContext.getParams().getRenouncedPermissions());
-        assertEquals(PERMISSION_GRANTED, mContext.checkSelfPermission(GRANTED_PERMISSION));
-        assertEquals(PERMISSION_DENIED, mContext.checkSelfPermission(NOT_GRANTED_PERMISSION));
     }
 
     /**
