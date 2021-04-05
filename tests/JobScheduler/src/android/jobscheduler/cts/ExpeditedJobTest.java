@@ -39,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
 import java.util.Map;
 
 @RunWith(AndroidJUnit4.class)
@@ -73,7 +74,7 @@ public class ExpeditedJobTest {
         mTestAppInterface.scheduleJob(Map.of(
                 TestJobSchedulerReceiver.EXTRA_AS_EXPEDITED, true,
                 TestJobSchedulerReceiver.EXTRA_REQUEST_JOB_UID_STATE, true
-        ));
+        ), Collections.emptyMap());
         forceRunJob();
         assertTrue("Job did not start after scheduling",
                 mTestAppInterface.awaitJobStart(DEFAULT_WAIT_TIMEOUT_MS));

@@ -35,6 +35,7 @@ import android.provider.DeviceConfig;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -205,6 +206,15 @@ public abstract class BaseJobSchedulerTest extends InstrumentationTestCase {
     void assertJobNotReady(int jobId) throws Exception {
         String state = getJobState(jobId);
         assertTrue("Job unexpectedly ready, in state: " + state, !state.contains("ready"));
+    }
+
+    /**
+     * Set the screen state.
+     */
+    static void toggleScreenOn(final boolean screenon) throws Exception {
+        BatteryUtils.turnOnScreen(screenon);
+        // Wait a little bit for the broadcasts to be processed.
+        Thread.sleep(2_000);
     }
 
     /** Asks (not forces) JobScheduler to run the job if constraints are met. */
