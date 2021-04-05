@@ -141,65 +141,6 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         startActivityForResult(enrollIntent, requestCode);
     }
 
-    /**
-     * When both credential and biometrics are enrolled, check that the user is able to navigate
-     * to the credential option, and that authenticating works.
-     */
-    void testSetDeviceCredentialAllowed_credentialAuth(Runnable successRunnable) {
-        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-        builder.setDeviceCredentialAllowed(true);
-        builder.setTitle("Please authenticate with CREDENTIAL only");
-        builder.setDescription("Depending on your implementation, you may need to skip biometric"
-                + " authentication, e.g. press the \"Use PIN\" button");
-        final BiometricPrompt prompt = builder.build();
-        prompt.authenticate(new CancellationSignal(), mExecutor,
-                new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(
-                            BiometricPrompt.AuthenticationResult result) {
-                        if (result.getAuthenticationType()
-                                == BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
-                            successRunnable.run();
-                        } else {
-                            showToastAndLog("Please ensure that you authenticate with device"
-                                    + " credential, and not biometric");
-                        }
-                    }
-                });
-    }
-
-    /**
-     * When both credential and biometrics are enrolled, check that the user is able to navigate
-     * to the credential option, and that authenticating works.
-     *
-     * Note: we don't need to test the biometric authentication path here since it's tested
-     * everywhere else already.
-     */
-    void testSetAllowedAuthenticators_credentialAndBiometricEnrolled_credentialAuth(
-            Runnable successRunnable) {
-        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-        builder.setAllowedAuthenticators(Authenticators.DEVICE_CREDENTIAL
-                | Authenticators.BIOMETRIC_WEAK);
-        builder.setTitle("Please authenticate with CREDENTIAL only");
-        builder.setDescription("Depending on your implementation, you may need to skip biometric"
-                + " authentication, e.g. press the \"Use PIN\" button");
-        final BiometricPrompt prompt = builder.build();
-        prompt.authenticate(new CancellationSignal(), mExecutor,
-                new BiometricPrompt.AuthenticationCallback() {
-                    @Override
-                    public void onAuthenticationSucceeded(
-                            BiometricPrompt.AuthenticationResult result) {
-                        if (result.getAuthenticationType()
-                                == BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL) {
-                            successRunnable.run();
-                        } else {
-                            showToastAndLog("Please ensure that you authenticate with device"
-                                    + " credential, and not biometric");
-                        }
-                    }
-                });
-    }
-
     private boolean isPublicAuthenticatorConstant(int authenticator) {
         final int[] publicConstants =  {
                 Authenticators.BIOMETRIC_STRONG,
@@ -305,47 +246,4 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
                     }
                 });
     }
-
-    void testNegativeButtonCallback(int allowedAuthenticators, Runnable successRunnable) {
-        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-        builder.setTitle("Press the negative button");
-        builder.setAllowedAuthenticators(allowedAuthenticators);
-        builder.setNegativeButton("Press me", mExecutor, (dialog1, which1) -> {
-            mExecutor.execute(successRunnable);
-        });
-
-        final BiometricPrompt prompt = builder.build();
-        prompt.authenticate(new CancellationSignal(), mExecutor,
-                new AuthenticationCallback() {
-            // Do nothing
-        });
-    }
-
-    void testCancellationSignal(int allowedAuthenticators, Runnable successRunnable) {
-        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-        builder.setTitle("Do not authenticate");
-        builder.setDescription("The authentication prompt should be dismissed automatically in 5s");
-        builder.setAllowedAuthenticators(allowedAuthenticators);
-        if ((allowedAuthenticators & Authenticators.DEVICE_CREDENTIAL) == 0) {
-            builder.setNegativeButton("Negative button", mExecutor, (dialog, which) -> {
-                // do nothing
-            });
-        }
-
-        final CancellationSignal cancel = new CancellationSignal();
-        final BiometricPrompt prompt = builder.build();
-        prompt.authenticate(cancel, mExecutor, new AuthenticationCallback() {
-            @Override
-            public void onAuthenticationError(int errorCode, CharSequence errString) {
-                if (errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED) {
-                    successRunnable.run();
-                } else {
-                    showToastAndLog("Unexpected error: " + errorCode);
-                }
-            }
-        });
-
-        mHandler.postDelayed(cancel::cancel, 5000);
-    }
-
 }

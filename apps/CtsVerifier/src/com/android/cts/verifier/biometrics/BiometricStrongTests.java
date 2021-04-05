@@ -69,16 +69,12 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private Button mCheckAndEnrollButton;
     private Button mAuthenticateWithoutStrongBoxButton;
     private Button mAuthenticateWithStrongBoxButton;
-    private Button mAuthenticateCredential2Button; // setDeviceCredentialAllowed(true), credential
-    private Button mAuthenticateCredential3Button; // setAllowedAuthenticators(CREDENTIAL|BIOMETRIC)
     private Button mCheckInvalidInputsButton;
     private Button mRejectThenAuthenticateButton;
     private Button mKeyInvalidatedButton;
 
     private boolean mAuthenticateWithoutStrongBoxPassed;
     private boolean mAuthenticateWithStrongBoxPassed;
-    private boolean mAuthenticateCredential2Passed;
-    private boolean mAuthenticateCredential3Passed;
     private boolean mCheckInvalidInputsPassed;
     private boolean mRejectThenAuthenticatePassed;
     private boolean mKeyInvalidatedStrongboxPassed;
@@ -98,8 +94,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
             mCheckAndEnrollButton.setEnabled(false);
             mAuthenticateWithoutStrongBoxButton.setEnabled(true);
             mAuthenticateWithStrongBoxButton.setEnabled(true);
-            mAuthenticateCredential2Button.setEnabled(true);
-            mAuthenticateCredential3Button.setEnabled(true);
             mCheckInvalidInputsButton.setEnabled(true);
             mRejectThenAuthenticateButton.setEnabled(true);
         } else {
@@ -117,10 +111,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mCheckAndEnrollButton = findViewById(R.id.check_and_enroll_button);
         mAuthenticateWithoutStrongBoxButton = findViewById(R.id.authenticate_no_strongbox_button);
         mAuthenticateWithStrongBoxButton = findViewById(R.id.authenticate_strongbox_button);
-        mAuthenticateCredential2Button = findViewById(
-                R.id.authenticate_credential_setDeviceCredentialAllowed_credential_button);
-        mAuthenticateCredential3Button = findViewById(
-                R.id.authenticate_credential_setAllowedAuthenticators_credential_button);
         mCheckInvalidInputsButton = findViewById(R.id.authenticate_invalid_inputs);
         mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
         mKeyInvalidatedButton = findViewById(R.id.authenticate_key_invalidated_button);
@@ -147,22 +137,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mAuthenticateWithStrongBoxButton.setOnClickListener((view) -> {
             testBiometricBoundEncryption(KEY_NAME_STRONGBOX, PAYLOAD,
                     true /* useStrongBox */);
-        });
-
-        mAuthenticateCredential2Button.setOnClickListener((view) -> {
-            testSetDeviceCredentialAllowed_credentialAuth(() -> {
-                mAuthenticateCredential2Passed = true;
-                mAuthenticateCredential2Button.setEnabled(false);
-                updatePassButton();
-            });
-        });
-
-        mAuthenticateCredential3Button.setOnClickListener((view) -> {
-            testSetAllowedAuthenticators_credentialAndBiometricEnrolled_credentialAuth(() -> {
-                mAuthenticateCredential3Passed = true;
-                mAuthenticateCredential3Button.setEnabled(false);
-                updatePassButton();
-            });
         });
 
         mCheckInvalidInputsButton.setOnClickListener((view) -> {
@@ -223,7 +197,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         // completed, let's allow onPause (allow tester to go into settings multiple times if
         // needed).
         if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
                 && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed) {
             return true;
         }
@@ -313,7 +286,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
 
     private void updatePassButton() {
         if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mAuthenticateCredential2Passed && mAuthenticateCredential3Passed
                 && mCheckInvalidInputsPassed && mRejectThenAuthenticatePassed) {
 
             if (!mKeyInvalidatedStrongboxPassed || !mKeyInvalidatedNoStrongboxPassed) {
