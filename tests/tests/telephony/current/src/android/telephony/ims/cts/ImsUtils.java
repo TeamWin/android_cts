@@ -51,8 +51,21 @@ public class ImsUtils {
     public static final int ITEM_COMPRESSED = 2001;
     // TODO Replace with a real sip message once that logic is in.
     public static final String TEST_TRANSACTION_ID = "z9hG4bK.TeSt";
-    public static final String TEST_CALL_ID = "testcall";
-    public static final SipMessage TEST_SIP_MESSAGE = new SipMessage("A", "B", new byte[0]);
+    public static final String TEST_CALL_ID = "a84b4c76e66710@pc33.atlanta.com";
+    // Sample messages from RFC 3261 modified for parsing use cases.
+    public static final SipMessage TEST_SIP_MESSAGE = new SipMessage(
+            "INVITE sip:bob@biloxi.com SIP/2.0",
+            // Typical Via
+            "Via: SIP/2.0/UDP pc33.atlanta.com;branch=z9hG4bK.TeSt\n"
+                    + "Max-Forwards: 70\n"
+                    + "To: Bob <sip:bob@biloxi.com>\n"
+                    + "From: Alice <sip:alice@atlanta.com>;tag=1928301774\n"
+                    + "Call-ID: a84b4c76e66710@pc33.atlanta.com\n"
+                    + "CSeq: 314159 INVITE\n"
+                    + "Contact: <sip:alice@pc33.atlanta.com>\n"
+                    + "Content-Type: application/sdp\n"
+                    + "Content-Length: 142",
+            new byte[0]);
 
     public static boolean shouldTestTelephony() {
         final PackageManager pm = InstrumentationRegistry.getInstrumentation().getContext()

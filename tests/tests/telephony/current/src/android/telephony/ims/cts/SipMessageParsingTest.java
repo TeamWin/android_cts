@@ -16,13 +16,13 @@
 
 package android.telephony.ims.cts;
 
+import static junit.framework.Assert.fail;
+
 import static org.junit.Assert.assertEquals;
 
 import android.telephony.ims.SipMessage;
 
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.internal.telephony.SipMessageParsingUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -189,41 +189,43 @@ public class SipMessageParsingTest {
 
     @Test
     public void testGetViaBranch() {
-        assertEquals(SIP_MESSAGE_1_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_1.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_2_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_2.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_3_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_3.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_4_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_4.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_5_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_5.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_6_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_6.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_7_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_7.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_8_TRANSACTION_ID, SipMessageParsingUtils.getTransactionId(
-                SIP_MESSAGE_8.getHeaderSection()));
+        assertEquals(SIP_MESSAGE_1_TRANSACTION_ID, SIP_MESSAGE_1.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_2_TRANSACTION_ID, SIP_MESSAGE_2.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_3_TRANSACTION_ID, SIP_MESSAGE_3.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_4_TRANSACTION_ID, SIP_MESSAGE_4.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_5_TRANSACTION_ID, SIP_MESSAGE_5.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_6_TRANSACTION_ID, SIP_MESSAGE_6.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_7_TRANSACTION_ID, SIP_MESSAGE_7.getViaBranchParameter());
+        assertEquals(SIP_MESSAGE_8_TRANSACTION_ID, SIP_MESSAGE_8.getViaBranchParameter());
+
+        try {
+            new SipMessage(
+                    "INVITE sip:bob@biloxi.com SIP/2.0",
+                    "Max-Forwards: 70\n"
+                            + "To: Bob <sip:bob@biloxi.com>\n"
+                            + "From: Alice <sip:alice@atlanta.com>;tag=1928301774\n"
+                            + "Call-ID: a84b4c76e66710@pc33.atlanta.com\n"
+                            + "CSeq: 314159 INVITE\n"
+                            + "Contact: <sip:alice@pc33.atlanta.com>\n"
+                            + "Content-Type: application/sdp\n"
+                            + "Content-Length: 142\n",
+                    new byte[0]);
+            fail("A SipMessage must throw an IllegalArgumentException if no Via branch parameter "
+                    + "is present in the headers");
+        } catch (IllegalArgumentException e) {
+            // expected
+        }
     }
 
     @Test
     public void testGetCallId() {
-        assertEquals(SIP_MESSAGE_1_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_1.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_2_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_2.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_3_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_3.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_4_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_4.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_5_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_5.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_6_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_6.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_7_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_7.getHeaderSection()));
-        assertEquals(SIP_MESSAGE_8_CALL_ID, SipMessageParsingUtils.getCallId(
-                SIP_MESSAGE_8.getHeaderSection()));
+        assertEquals(SIP_MESSAGE_1_CALL_ID, SIP_MESSAGE_1.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_2_CALL_ID, SIP_MESSAGE_2.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_3_CALL_ID, SIP_MESSAGE_3.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_4_CALL_ID, SIP_MESSAGE_4.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_5_CALL_ID, SIP_MESSAGE_5.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_6_CALL_ID, SIP_MESSAGE_6.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_7_CALL_ID, SIP_MESSAGE_7.getCallIdParameter());
+        assertEquals(SIP_MESSAGE_8_CALL_ID, SIP_MESSAGE_8.getCallIdParameter());
     }
 }
