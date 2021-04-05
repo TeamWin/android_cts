@@ -51,10 +51,8 @@ public class BiometricWeakTests extends AbstractBaseTest {
 
     private Button mEnrollButton;
     private Button mAuthenticateTimeBasedKeysButton;
-    private Button mRejectThenAuthenticateButton;
 
     private boolean mAuthenticateTimeBasedKeysPassed;
-    private boolean mRejectThenAuthenticatePassed;
 
     @Override
     protected String getTag() {
@@ -71,7 +69,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
         mAuthenticateTimeBasedKeysButton = findViewById(
                 R.id.biometric_test_weak_authenticate_time_based_keys_button);
-        mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
 
         mEnrollButton.setOnClickListener((view) -> {
             checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
@@ -194,14 +191,6 @@ public class BiometricWeakTests extends AbstractBaseTest {
                 });
 
         });
-
-        mRejectThenAuthenticateButton.setOnClickListener((view) -> {
-            testBiometricRejectDoesNotEndAuthentication(() -> {
-                mRejectThenAuthenticatePassed = true;
-                mRejectThenAuthenticateButton.setEnabled(false);
-                updatePassButton();
-            });
-        });
     }
 
     @Override
@@ -219,8 +208,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
     }
 
     private void updatePassButton() {
-        if (mAuthenticateTimeBasedKeysPassed
-                && mRejectThenAuthenticatePassed) {
+        if (mAuthenticateTimeBasedKeysPassed) {
             showToastAndLog("All tests passed");
             getPassButton().setEnabled(true);
         }
@@ -234,10 +222,8 @@ public class BiometricWeakTests extends AbstractBaseTest {
             showToastAndLog("Successfully enrolled, please continue the test");
             mEnrollButton.setEnabled(false);
             mAuthenticateTimeBasedKeysButton.setEnabled(true);
-            mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }
     }
-
 }
