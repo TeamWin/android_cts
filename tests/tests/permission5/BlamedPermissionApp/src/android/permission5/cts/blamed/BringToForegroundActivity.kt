@@ -22,6 +22,7 @@ import android.content.ContextParams
 import android.content.Intent
 import android.os.Bundle
 import android.os.RemoteCallback
+import android.util.ArraySet
 
 class BringToForegroundActivity : Activity() {
 
