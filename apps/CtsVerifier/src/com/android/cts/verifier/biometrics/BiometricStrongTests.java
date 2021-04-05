@@ -69,12 +69,10 @@ public class BiometricStrongTests extends AbstractBaseTest {
     private Button mCheckAndEnrollButton;
     private Button mAuthenticateWithoutStrongBoxButton;
     private Button mAuthenticateWithStrongBoxButton;
-    private Button mRejectThenAuthenticateButton;
     private Button mKeyInvalidatedButton;
 
     private boolean mAuthenticateWithoutStrongBoxPassed;
     private boolean mAuthenticateWithStrongBoxPassed;
-    private boolean mRejectThenAuthenticatePassed;
     private boolean mKeyInvalidatedStrongboxPassed;
     private boolean mKeyInvalidatedNoStrongboxPassed;
 
@@ -92,7 +90,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
             mCheckAndEnrollButton.setEnabled(false);
             mAuthenticateWithoutStrongBoxButton.setEnabled(true);
             mAuthenticateWithStrongBoxButton.setEnabled(true);
-            mRejectThenAuthenticateButton.setEnabled(true);
         } else {
             showToastAndLog("Unexpected result after enrollment: " + biometricStatus);
         }
@@ -108,7 +105,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mCheckAndEnrollButton = findViewById(R.id.check_and_enroll_button);
         mAuthenticateWithoutStrongBoxButton = findViewById(R.id.authenticate_no_strongbox_button);
         mAuthenticateWithStrongBoxButton = findViewById(R.id.authenticate_strongbox_button);
-        mRejectThenAuthenticateButton = findViewById(R.id.authenticate_reject_first);
         mKeyInvalidatedButton = findViewById(R.id.authenticate_key_invalidated_button);
 
         mHasStrongBox = getPackageManager()
@@ -133,14 +129,6 @@ public class BiometricStrongTests extends AbstractBaseTest {
         mAuthenticateWithStrongBoxButton.setOnClickListener((view) -> {
             testBiometricBoundEncryption(KEY_NAME_STRONGBOX, PAYLOAD,
                     true /* useStrongBox */);
-        });
-
-        mRejectThenAuthenticateButton.setOnClickListener((view) -> {
-            testBiometricRejectDoesNotEndAuthentication(() -> {
-                mRejectThenAuthenticatePassed = true;
-                mRejectThenAuthenticateButton.setEnabled(false);
-                updatePassButton();
-            });
         });
 
         mKeyInvalidatedButton.setOnClickListener((view) -> {
@@ -184,8 +172,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
         // Key invalidation test is currently the last test. Thus, if every other test is currently
         // completed, let's allow onPause (allow tester to go into settings multiple times if
         // needed).
-        if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mRejectThenAuthenticatePassed) {
+        if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed) {
             return true;
         }
 
@@ -273,8 +260,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
     }
 
     private void updatePassButton() {
-        if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed
-                && mRejectThenAuthenticatePassed) {
+        if (mAuthenticateWithoutStrongBoxPassed && mAuthenticateWithStrongBoxPassed) {
 
             if (!mKeyInvalidatedStrongboxPassed || !mKeyInvalidatedNoStrongboxPassed) {
                 mKeyInvalidatedButton.setEnabled(true);

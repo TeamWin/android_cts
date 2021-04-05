@@ -170,6 +170,71 @@ public class BiometricActivityTests extends BiometricTestBase {
     }
 
     @Test
+    public void testBiometricOnly_rejectThenAuthenticate() throws Exception {
+        for (SensorProperties prop : mSensorProperties) {
+            try (BiometricTestSession session =
+                         mBiometricManager.createTestSession(prop.getSensorId());
+                 ActivitySession activitySession =
+                         new ActivitySession(this, CLASS_2_BIOMETRIC_ACTIVITY)) {
+                testBiometricOnly_rejectThenAuthenticate_forSensor(
+                        session, prop.getSensorId(), activitySession);
+            }
+        }
+    }
+
+    private void testBiometricOnly_rejectThenAuthenticate_forSensor(
+            @NonNull BiometricTestSession session, int sensorId,
+            @NonNull ActivitySession activitySession) throws Exception {
+        Log.d(TAG, "testBiometricOnly_rejectThenAuthenticate_forSensor: " + sensorId);
+
+        final int userId = 0;
+        waitForAllUnenrolled();
+        enrollForSensor(session, sensorId);
+
+        final TestJournalProvider.TestJournal journal =
+                TestJournalProvider.TestJournalContainer.get(activitySession.getComponentName());
+
+        // Launch test activity
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
+                WindowManagerState.STATE_RESUMED);
+        mInstrumentation.waitForIdleSync();
+        BiometricCallbackHelper.State callbackState = getCallbackState(journal);
+        assertNotNull(callbackState);
+
+        BiometricServiceState state = getCurrentState();
+        assertTrue(state.toString(), state.mSensorStates.sensorStates.get(sensorId).isBusy());
+
+        session.rejectAuthentication(userId);
+        mInstrumentation.waitForIdleSync();
+        callbackState = getCallbackState(journal);
+        assertNotNull(callbackState);
+        assertEquals(callbackState.toString(), 1, callbackState.mNumAuthRejected);
+        assertEquals(callbackState.toString(), 0, callbackState.mNumAuthAccepted);
+        assertEquals(callbackState.toString(), 0, callbackState.mAcquiredReceived.size());
+        assertEquals(callbackState.toString(), 0, callbackState.mErrorsReceived.size());
+
+        state = getCurrentState();
+        Log.d(TAG, "State after rejectAuthentication: " + state);
+        if (state.mState == STATE_AUTH_PAUSED) {
+            findAndPressButton(BUTTON_ID_TRY_AGAIN);
+            mInstrumentation.waitForIdleSync();
+            waitForState(STATE_AUTH_STARTED_UI_SHOWING);
+        }
+
+        // Accept authentication and end
+        successfullyAuthenticate(session, userId);
+
+        mInstrumentation.waitForIdleSync();
+        callbackState = getCallbackState(journal);
+        assertNotNull(callbackState);
+        assertTrue(callbackState.toString(), callbackState.mErrorsReceived.isEmpty());
+        assertTrue(callbackState.toString(), callbackState.mAcquiredReceived.isEmpty());
+        assertEquals(callbackState.toString(), 1, callbackState.mNumAuthAccepted);
+        assertEquals(callbackState.toString(), 1, callbackState.mNumAuthRejected);
+    }
+
+    @Test
     public void testBiometricOnly_negativeButtonInvoked() throws Exception {
         for (SensorProperties prop : mSensorProperties) {
             try (BiometricTestSession session =
