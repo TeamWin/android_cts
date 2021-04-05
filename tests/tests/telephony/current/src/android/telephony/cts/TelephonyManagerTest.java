@@ -4306,6 +4306,7 @@ public class TelephonyManagerTest {
                 mTelephonyManager, (tm) -> {
                     List<UiccCardInfo> cardInfos = mTelephonyManager.getUiccCardsInfo();
                     Set<String> presentCards = Arrays.stream(mTelephonyManager.getUiccSlotsInfo())
+                            .filter(Objects::nonNull)
                             .filter(UiccSlotInfo::getIsActive)
                             .map(UiccSlotInfo::getCardId)
                             .filter(Objects::nonNull)
