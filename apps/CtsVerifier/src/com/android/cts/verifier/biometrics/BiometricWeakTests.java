@@ -61,8 +61,7 @@ public class BiometricWeakTests extends AbstractBaseTest {
         mEnrollButton = findViewById(R.id.biometric_test_weak_enroll_button);
 
         mEnrollButton.setOnClickListener((view) -> {
-            checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK,
-                    new int[]{Authenticators.BIOMETRIC_WEAK, Authenticators.BIOMETRIC_STRONG});
+            checkAndEnroll(mEnrollButton, Authenticators.BIOMETRIC_WEAK);
         });
     }
 

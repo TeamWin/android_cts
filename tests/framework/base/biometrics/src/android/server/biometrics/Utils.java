@@ -21,6 +21,7 @@ import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentat
 import android.content.ComponentName;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
+import android.hardware.biometrics.SensorProperties;
 import android.os.ParcelFileDescriptor;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
@@ -228,6 +229,18 @@ public class Utils {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public static int testApiStrengthToAuthenticatorStrength(int testApiStrength) {
+        switch (testApiStrength) {
+            case SensorProperties.STRENGTH_STRONG:
+                return BiometricManager.Authenticators.BIOMETRIC_STRONG;
+            case SensorProperties.STRENGTH_WEAK:
+                return BiometricManager.Authenticators.BIOMETRIC_WEAK;
+            default:
+                throw new IllegalArgumentException("Unable to convert testApiStrength: "
+                        + testApiStrength);
         }
     }
 }

@@ -133,24 +133,4 @@ public class Utils {
         AlertDialog dialog = builder.create();
         dialog.show();
     }
-
-    static boolean deviceConfigContains(Context context, int authenticator) {
-        final Resources res = context.getResources();
-        final int resId = res.getIdentifier("config_biometric_sensors", "array", "android");
-        final String config[] = res.getStringArray(resId);
-        for (String s : config) {
-            Log.d(TAG, s);
-            final String[] elems = s.split(":");
-            final int strength = Integer.parseInt(elems[2]);
-            if (strength == authenticator) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    static void showToastAndLog(Context context, String s) {
-        Log.d(TAG, s);
-        Toast.makeText(context, s, Toast.LENGTH_SHORT).show();
-    }
 }
