@@ -17,7 +17,9 @@
 package android.server.biometrics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -91,6 +93,29 @@ public class BiometricSimpleTests extends BiometricTestBase {
                 state.mSensorStates.containsModality(SensorStateProto.FACE));
         assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_IRIS),
                 state.mSensorStates.containsModality(SensorStateProto.IRIS));
+    }
+
+    @Test
+    public void testInvalidInputs() {
+        for (int i = 0; i < 32; i++) {
+            final int authenticator = 1 << i;
+            // If it's a public constant, no need to test
+            if (Utils.isPublicAuthenticatorConstant(authenticator)) {
+                continue;
+            }
+
+            // Test canAuthenticate(int)
+            assertThrows("Invalid authenticator in canAuthenticate must throw exception: "
+                            + authenticator,
+                    Exception.class,
+                    () -> mBiometricManager.canAuthenticate(authenticator));
+
+            // Test BiometricPrompt
+            assertThrows("Invalid authenticator in authenticate must throw exception: "
+                            + authenticator,
+                    Exception.class,
+                    () -> showBiometricPromptWithAuthenticators(authenticator));
+        }
     }
 
     /**
