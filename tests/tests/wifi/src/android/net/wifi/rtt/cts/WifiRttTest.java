@@ -122,10 +122,6 @@ public class WifiRttTest extends TestBase {
                     result.getMacAddress().toString(), testAp.BSSID);
             assertNull("Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
                     + i, result.getPeerHandle());
-            if (BuildCompat.isAtLeastS()) {
-                assertTrue("Wi-Fi RTT results: should be a 802.11MC measurement",
-                        result.is80211mcMeasurement());
-            }
 
             allResults.add(result);
             int status = result.getStatus();
@@ -138,6 +134,8 @@ public class WifiRttTest extends TestBase {
                                     + i,
                             result.getNumAttemptedMeasurements(),
                             RangingRequest.getMaxRttBurstSize());
+                    assertTrue("Wi-Fi RTT results: should be a 802.11MC measurement",
+                            result.is80211mcMeasurement());
                 }
                 distanceSum += result.getDistanceMm();
                 if (i == 0) {
@@ -233,10 +231,15 @@ public class WifiRttTest extends TestBase {
         }
         builder.addAccessPoints(scanResults);
 
+        ScanResult testApNon80211mc = null;
         if (BuildCompat.isAtLeastS()) {
-            builder.addNon80211mcCapableAccessPoints(List.of(testAp, testAp, testAp));
-        } else {
+            testApNon80211mc = scanForTestNon11mcCapableAp(NUM_SCANS_SEARCHING_FOR_IEEE80211MC_AP);
+        }
+        if (testApNon80211mc == null) {
             builder.addAccessPoints(List.of(testAp, testAp, testAp));
+        } else {
+            builder.addNon80211mcCapableAccessPoints(List.of(testApNon80211mc, testApNon80211mc,
+                    testApNon80211mc));
         }
 
         try {
@@ -504,13 +507,13 @@ public class WifiRttTest extends TestBase {
             assertNull(
                     "Wi-Fi RTT results: invalid result (non-null PeerHandle) entry on iteration "
                             + i, result.getPeerHandle());
-            assertFalse("Wi-Fi RTT results: should not be a 802.11MC measurement",
-                    result.is80211mcMeasurement());
 
             allResults.add(result);
             int status = result.getStatus();
             statuses[i] = status;
             if (status == RangingResult.STATUS_SUCCESS) {
+                assertFalse("Wi-Fi RTT results: should not be a 802.11MC measurement",
+                        result.is80211mcMeasurement());
                 distanceSum += result.getDistanceMm();
 
                 assertTrue("Wi-Fi RTT results: invalid RSSI on iteration " + i,
