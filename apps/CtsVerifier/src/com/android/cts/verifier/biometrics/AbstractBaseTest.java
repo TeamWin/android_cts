@@ -140,45 +140,4 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
 
         startActivityForResult(enrollIntent, requestCode);
     }
-
-    void testBiometricRejectDoesNotEndAuthentication(Runnable successRunnable) {
-        Utils.showInstructionDialog(this,
-                R.string.biometric_test_reject_continues_instruction_title,
-                R.string.biometric_test_reject_continues_instruction_contents,
-                R.string.biometric_test_reject_continues_instruction_continue,
-                (dialog, which) -> {
-                    if (which == DialogInterface.BUTTON_POSITIVE) {
-                        final BiometricPrompt.Builder builder = new BiometricPrompt.Builder(this);
-                        builder.setTitle("Reject, then authenticate");
-                        builder.setDescription("Please present a non-enrolled biometric to trigger"
-                                + " onAuthenticationFailed. Then present an enrolled biometric"
-                                + " to finish this test.");
-                        builder.setAllowedAuthenticators(Authenticators.BIOMETRIC_WEAK);
-                        builder.setNegativeButton("Cancel", mExecutor, (dialog1, which1) -> {
-                            // Do nothing
-                        });
-
-                        final BiometricPrompt prompt = builder.build();
-                        prompt.authenticate(new CancellationSignal(), mExecutor,
-                                new AuthenticationCallback() {
-                                    boolean rejectReceived;
-                                    @Override
-                                    public void onAuthenticationSucceeded(AuthenticationResult
-                                            result) {
-                                        if (rejectReceived) {
-                                            successRunnable.run();
-                                        } else {
-                                            showToastAndLog("Please present a non-enrolled"
-                                                    + " biometric first");
-                                        }
-                                    }
-
-                                    @Override
-                                    public void onAuthenticationFailed() {
-                                        rejectReceived = true;
-                                    }
-                                });
-                    }
-                });
-    }
 }
