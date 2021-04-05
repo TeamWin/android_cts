@@ -22,6 +22,7 @@ import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.platform.test.annotations.Presubmit;
+import android.security.keystore.KeyProperties;
 import android.util.Log;
 
 import org.junit.Test;
@@ -39,7 +40,8 @@ public class BiometricCryptoTests extends BiometricTestBase {
     public void testGenerateKeyWithoutDeviceCredential_throwsException() {
         assertThrows("Key shouldn't be generatable before device credentials are enrolled",
                 Exception.class,
-                () -> Utils.generateBiometricBoundKey("keyBeforeCredentialEnrolled"));
+                () -> Utils.generateBiometricBoundKey("keyBeforeCredentialEnrolled",
+                        false /* useStrongBox */));
     }
 
     @Test
@@ -49,7 +51,8 @@ public class BiometricCryptoTests extends BiometricTestBase {
             session.setCredential();
             assertThrows("Key shouldn't be generatable before biometrics are enrolled",
                     InvalidAlgorithmParameterException.class,
-                    () -> Utils.generateBiometricBoundKey("keyBeforeBiometricEnrolled"));
+                    () -> Utils.generateBiometricBoundKey("keyBeforeBiometricEnrolled",
+                            false /* useStrongBox */));
         }
     }
 
@@ -58,24 +61,70 @@ public class BiometricCryptoTests extends BiometricTestBase {
         try (CredentialSession credentialSession = new CredentialSession()) {
             credentialSession.setCredential();
 
+            // 1) Test biometric or credential time-based key. These should be generatable
+            // regardless of biometric strength and enrollment, since credentials are enrolled.
+            int authType = KeyProperties.AUTH_BIOMETRIC_STRONG
+                    | KeyProperties.AUTH_DEVICE_CREDENTIAL;
+            Utils.createTimeBoundSecretKey_deprecated("credential_tb_d", false /* useStrongBox */);
+            Utils.createTimeBoundSecretKey("credential_tb", authType, false /* useStrongBox */);
+            if (mHasStrongBox) {
+                Utils.createTimeBoundSecretKey_deprecated("credential_tb_d_sb",
+                        true /* useStrongBox */);
+                Utils.createTimeBoundSecretKey("credential_tb_sb", authType,
+                        true /* useStrongBox */);
+            }
+
             for (SensorProperties prop : mSensorProperties) {
-                final String keyName = "key" + prop.getSensorId();
-                Log.d(TAG, "Testing sensor: " + prop + ", key name: " + keyName);
+                final String keyPrefix = "key" + prop.getSensorId();
+                Log.d(TAG, "Testing sensor: " + prop + ", key name: " + keyPrefix);
 
                 try (BiometricTestSession session =
                              mBiometricManager.createTestSession(prop.getSensorId())) {
                     waitForAllUnenrolled();
                     enrollForSensor(session, prop.getSensorId());
+
                     if (prop.getSensorStrength() == SensorProperties.STRENGTH_STRONG) {
-                        Utils.generateBiometricBoundKey(keyName);
+                        // Test biometric-bound key
+                        Utils.generateBiometricBoundKey(keyPrefix, false /* useStrongBox */);
+                        if (mHasStrongBox) {
+                            Utils.generateBiometricBoundKey(keyPrefix + "sb",
+                                    true /* useStrongBox */);
+                        }
                         // We can test initializing the key, which in this case is a Cipher.
                         // However, authenticating it and using it is not testable, since that
                         // requires a real authentication from the TEE or equivalent.
-                        BiometricPrompt.CryptoObject crypto = Utils.initializeCryptoObject(keyName);
+                        BiometricPrompt.CryptoObject crypto =
+                                Utils.initializeCryptoObject(keyPrefix);
                     } else {
-                        assertThrows("Key shouldn't be generatable with non-strong biometrics",
+                        // 1) Test biometric auth-per-use keys
+                        assertThrows("Biometric auth-per-use key shouldn't be generatable with"
+                                        + " non-strong biometrics",
                                 InvalidAlgorithmParameterException.class,
-                                () -> Utils.generateBiometricBoundKey(keyName));
+                                () -> Utils.generateBiometricBoundKey(keyPrefix,
+                                        false /* useStrongBox */));
+                        if (mHasStrongBox) {
+                            assertThrows("Biometric auth-per-use strongbox-backed key shouldn't"
+                                            + " be generatable with non-strong biometrics",
+                                    InvalidAlgorithmParameterException.class,
+                                    () -> Utils.generateBiometricBoundKey(keyPrefix,
+                                            true /* useStrongBox */));
+                        }
+
+                        // 2) Test biometric time-based keys
+                        assertThrows("Biometric time-based key shouldn't be generatable with"
+                                        + " non-strong biometrics",
+                                Exception.class,
+                                () -> Utils.createTimeBoundSecretKey(keyPrefix + "tb",
+                                        KeyProperties.AUTH_BIOMETRIC_STRONG,
+                                        false /* useStrongBox */));
+                        if (mHasStrongBox) {
+                            assertThrows("Biometric time-based strongbox-backed key shouldn't be"
+                                            + " generatable with non-strong biometrics",
+                                    Exception.class,
+                                    () -> Utils.createTimeBoundSecretKey(keyPrefix + "tb",
+                                            KeyProperties.AUTH_BIOMETRIC_STRONG,
+                                            true /* useStrongBox */));
+                        }
                     }
                 }
             }

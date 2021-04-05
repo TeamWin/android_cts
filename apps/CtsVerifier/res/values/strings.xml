@@ -289,7 +289,6 @@
         does NOT have ANY biometrics enrolled before starting this test. After passing the first part of the test, it will check various use cases
         when authentication is invoked.</string>
     <string name="biometric_test_weak_enroll">Start enrollment</string>
-    <string name="biometric_test_weak_authenticate_time_based_keys">Authenticate attempt time-based keys</string>
 
     <string name="biometric_test_set_user_authentication_credential_cipher_label">4a: Cipher, Credential</string>
     <string name="biometric_test_set_user_authentication_biometric_cipher_label">4b: Cipher, Biometric</string>
