@@ -266,9 +266,6 @@
     <string name="biometric_test_ui_verification_dialog_title">Please enter your recorded contents</string>
     <string name="biometric_test_ui_verification_dialog_check">Check</string>
 
-    <!-- Rejecting does not end the authentication lifecycle -->
-    <string name="biometric_test_reject_first">Reject, then authenticate</string>
-
     <string name="biometric_test_reject_continues_instruction_title">Instructions</string>
     <string name="biometric_test_reject_continues_instruction_contents">Please authenticate with a non-enrolled biometric before authenticating with the actual enrolled biometric.</string>
     <string name="biometric_test_reject_continues_instruction_continue">Continue</string>
