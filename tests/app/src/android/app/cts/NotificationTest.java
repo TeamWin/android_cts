@@ -33,6 +33,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -243,7 +244,7 @@ public class NotificationTest extends AndroidTestCase {
         mNotification = new Notification.Builder(mContext, "channel_id")
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
-                .setColorized(true)
+                .setColorized(true).setColor(Color.WHITE)
                 .build();
 
         assertTrue(mNotification.extras.getBoolean(Notification.EXTRA_COLORIZED));
