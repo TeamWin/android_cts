@@ -5343,7 +5343,8 @@ Follow the instructions on the screen to measure the frequency response for the 
       can receive incoming calls after it has been set.
     </string>
     <string name="dialer_incoming_call_detected">Detected the incoming call. Activity passed.</string>
-    <string name="dialer_check_incoming_call_explanation">Call the device.</string>
+    <string name="dialer_check_incoming_call_explanation">Call the device and end the call in the
+        pop up in-call UI.</string>
     <string name="dialer_check_incoming_call">Verify Call Received</string>
 
     <!-- Strings for VoicemailSettingsCheck test -->
@@ -5367,6 +5368,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="dialer_shows_hun_explanation">Call the device.
         Check the box if the heads up notification was shown containing the text
         \"CTS Incoming Call Notification\", and only one incoming call notification was shown.
+        Also a pop up CtsVerifier in call UI will show.
     </string>
     <string name="dialer_shows_hun_check_box">HUN shown and meets criteria specified above.</string>
     <string name="dialer_incoming_call_hun_teaser">Incoming Call</string>
