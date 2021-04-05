@@ -200,7 +200,12 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
             findAndPressButton(BUTTON_ID_CONFIRM);
             mInstrumentation.waitForIdleSync();
             waitForState(STATE_AUTH_IDLE);
+        } else {
+            waitForState(STATE_AUTH_IDLE);
         }
+
+        assertEquals("Failed to become idle after authenticating",
+                STATE_AUTH_IDLE, getCurrentState().mState);
     }
 
     protected void successfullyEnterCredential() throws Exception {
@@ -231,6 +236,11 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         cancel.cancel();
         mInstrumentation.waitForIdleSync();
         waitForState(STATE_AUTH_IDLE);
+
+        //TODO(b/152240892): Currently BiometricService does not get a signal from SystemUI
+        //  when the dialog finishes animating away.
+        Thread.sleep(1000);
+
         BiometricServiceState state = getCurrentState();
         assertEquals("Not idle after requesting cancellation", state.mState, STATE_AUTH_IDLE);
     }
@@ -331,12 +341,33 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         }
     }
 
+    protected void showDefaultBiometricPrompt(int sensorId, int userId,
+            boolean requireConfirmation, @NonNull BiometricPrompt.AuthenticationCallback callback,
+            @NonNull CancellationSignal cancellationSignal) throws Exception {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setConfirmationRequired(requireConfirmation)
+                .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
+                .setAllowBackgroundAuthentication(true)
+                .setAllowedSensorIds(new ArrayList<>(Collections.singletonList(sensorId)))
+                .build();
+        prompt.authenticate(cancellationSignal, executor, callback);
+
+        waitForState(STATE_AUTH_STARTED_UI_SHOWING);
+    }
+
     /**
      * Shows the default BiometricPrompt (sensors meeting BIOMETRIC_WEAK) with a negative button,
      * but does not complete authentication. In other words, the dialog will stay on the screen.
      */
-    protected void showDefaultBiometricPrompt(@NonNull BiometricTestSession session, int sensorId,
-            int userId, boolean requireConfirmation, @NonNull String title,
+    protected void showDefaultBiometricPromptWithContents(int sensorId, int userId,
+            boolean requireConfirmation, @NonNull String title,
             @NonNull String subtitle, @NonNull String description,
             @NonNull String negativeButtonText) throws Exception {
         final Handler handler = new Handler(Looper.getMainLooper());
@@ -376,7 +407,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     protected void showDefaultBiometricPromptAndAuth(@NonNull BiometricTestSession session,
             int sensorId,
             int userId) throws Exception {
-        showDefaultBiometricPrompt(session, sensorId, userId, false /* requireConfirmation */,
+        showDefaultBiometricPromptWithContents(sensorId, userId, false /* requireConfirmation */,
                 "Title", "Subtitle", "Description", "Negative Button");
         successfullyAuthenticate(session, userId);
     }
