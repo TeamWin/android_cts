@@ -83,10 +83,10 @@ public class MediaDrmTest {
             long end = System.currentTimeMillis();
             for (MediaDrm.LogMessage log: logMessages) {
                 Assert.assertTrue("Log occurred in future",
-                        log.timestampMillis <= end);
+                        log.getTimestampMillis() <= end);
                 Assert.assertTrue("Invalid log priority",
-                        log.priority >= Log.VERBOSE &&
-                                log.priority <= Log.ASSERT);
+                        log.getPriority() >= Log.VERBOSE &&
+                                log.getPriority() <= Log.ASSERT);
                 Log.i(TAG, log.toString());
             }
         }
