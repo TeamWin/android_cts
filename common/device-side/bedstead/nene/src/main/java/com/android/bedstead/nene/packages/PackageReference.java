@@ -22,15 +22,14 @@ import static android.content.pm.PermissionInfo.PROTECTION_FLAG_DEVELOPMENT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
 
 import androidx.annotation.Nullable;
-import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.permissions.PermissionContext;
@@ -46,15 +45,14 @@ import java.io.File;
  * <p>To resolve the package into a {@link Package}, see {@link #resolve()}.
  */
 public abstract class PackageReference {
-    private final Packages mPackages;
+    private final TestApis mTestApis;
     private final String mPackageName;
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
-    private static final PackageManager sPackageManager = sContext.getPackageManager();
+    private final PackageManager mPackageManager;
 
-    PackageReference(Packages packages, String packageName) {
-        mPackages = packages;
+    PackageReference(TestApis testApis, String packageName) {
+        mTestApis = testApis;
+        mPackageManager = mTestApis.context().instrumentedContext().getPackageManager();
         mPackageName = packageName;
     }
 
@@ -69,7 +67,7 @@ public abstract class PackageReference {
      */
     @Nullable
     public Package resolve() {
-        return mPackages.fetchPackage(mPackageName);
+        return mTestApis.packages().fetchPackage(mPackageName);
     }
 
     /**
@@ -113,11 +111,11 @@ public abstract class PackageReference {
         packageRemovedIntentFilter.addDataScheme("package");
 
         BlockingBroadcastReceiver broadcastReceiver = BlockingBroadcastReceiver.create(
-                mPackages.mTestApis.context().androidContextAsUser(user),
+                mTestApis.context().androidContextAsUser(user),
                 packageRemovedIntentFilter);
 
         try {
-            try (PermissionContext p = mPackages.mTestApis.permissions().withPermission(
+            try (PermissionContext p = mTestApis.permissions().withPermission(
                     INTERACT_ACROSS_USERS_FULL)) {
                 broadcastReceiver.register();
             }
@@ -185,8 +183,8 @@ public abstract class PackageReference {
         // There is no readable output upon failure so we need to check ourselves
         checkCanGrantOrRevokePermission(user, permission);
 
-        if (packageName().equals(sContext.getPackageName())
-                && user.equals(mPackages.mTestApis.users().instrumented())) {
+        if (packageName().equals(mTestApis.context().instrumentedContext().getPackageName())
+                && user.equals(mTestApis.users().instrumented())) {
             Package resolved = resolve();
             if (!resolved.grantedPermissions(user).contains(permission)) {
                 return this; // Already denied
@@ -223,7 +221,7 @@ public abstract class PackageReference {
 
         try {
             PermissionInfo permissionInfo =
-                    sPackageManager.getPermissionInfo(permission, /* flags= */ 0);
+                    mPackageManager.getPermissionInfo(permission, /* flags= */ 0);
 
             if (!protectionIsDangerous(permissionInfo.protectionLevel)
                     && !protectionIsDevelopment(permissionInfo.protectionLevel)) {

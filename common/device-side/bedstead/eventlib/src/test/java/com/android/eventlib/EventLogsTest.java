@@ -28,8 +28,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
@@ -49,8 +47,6 @@ import java.util.concurrent.TimeUnit;
 
 @RunWith(JUnit4.class)
 public class EventLogsTest {
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
     private static final String TEST_APP_PACKAGE_NAME = "com.android.eventlib.tests.testapp";
     private static final String INCORRECT_PACKAGE_NAME = "com.android.eventlib.tests.notapackage";
     private static final UserHandle NON_EXISTING_USER_HANDLE = UserHandle.of(1000);
@@ -66,7 +62,8 @@ public class EventLogsTest {
     private boolean hasScheduledEventsOnTestApp = false;
     private final ScheduledExecutorService mScheduledExecutorService =
             Executors.newSingleThreadScheduledExecutor();
-    private final TestApis mTestApis = new TestApis();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     @Before
     public void setUp() {
@@ -1096,11 +1093,11 @@ public class EventLogsTest {
 
     @Test
     public void differentUser_queryWorks() {
-        UserReference profile = mTestApis.users().createUser()
-                .parent(mTestApis.users().instrumented())
-                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+        UserReference profile = sTestApis.users().createUser()
+                .parent(sTestApis.users().instrumented())
+                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
-        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
+        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
             logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
 
@@ -1115,11 +1112,11 @@ public class EventLogsTest {
 
     @Test
     public void differentUserSpecifiedByUserHandle_queryWorks() {
-        UserReference profile = mTestApis.users().createUser()
-                .parent(mTestApis.users().instrumented())
-                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+        UserReference profile = sTestApis.users().createUser()
+                .parent(sTestApis.users().instrumented())
+                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
-        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
+        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
             logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
 
@@ -1134,11 +1131,11 @@ public class EventLogsTest {
 
     @Test
     public void differentUser_doesntGetEventsFromWrongUser() {
-        UserReference profile = mTestApis.users().createUser()
-                .parent(mTestApis.users().instrumented())
-                .type(mTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+        UserReference profile = sTestApis.users().createUser()
+                .parent(sTestApis.users().instrumented())
+                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
                 .createAndStart();
-        mTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
+        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
         try {
             logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
             logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG2, /* data= */ null);
@@ -1211,7 +1208,7 @@ public class EventLogsTest {
     }
 
     private void logCustomEventOnTestApp(String tag, String data) {
-        logCustomEventOnTestApp(mTestApis.users().instrumented(), tag, data);
+        logCustomEventOnTestApp(sTestApis.users().instrumented(), tag, data);
     }
 
     private void logCustomEventOnTestApp() {
