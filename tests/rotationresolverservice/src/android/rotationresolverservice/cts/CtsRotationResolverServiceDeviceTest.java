@@ -15,6 +15,9 @@
  */
 package android.rotationresolverservice.cts;
 
+import static android.view.Surface.ROTATION_0;
+import static android.view.Surface.ROTATION_90;
+
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
@@ -27,9 +30,9 @@ import android.content.Context;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.platform.test.annotations.AppModeFull;
+import android.service.rotationresolver.RotationResolutionRequest;
 import android.service.rotationresolver.RotationResolverService;
 import android.text.TextUtils;
-import android.view.Surface;
 
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -55,6 +58,10 @@ public class CtsRotationResolverServiceDeviceTest {
     private static final String KEY_SERVICE_ENABLED = "service_enabled";
     private static final String FAKE_SERVICE_PACKAGE =
             CtsTestRotationResolverService.class.getPackage().getName();
+    private static final String FAKE_PACKAGE_NAME = "package_name";
+    private static final boolean FAKE_SHOULD_USE_CAMERA = true;
+    private static final long FAKE_TIME_OUT = 1000L;
+
     private final boolean isTestable =
             !TextUtils.isEmpty(getRotationResolverServiceComponent());
     private Context mContext;
@@ -91,10 +98,10 @@ public class CtsRotationResolverServiceDeviceTest {
         assertThat(CtsTestRotationResolverService.hasPendingChecks()).isTrue();
 
         /** From test service, respond with onSuccess */
-        CtsTestRotationResolverService.respondSuccess(Surface.ROTATION_0);
+        CtsTestRotationResolverService.respondSuccess(ROTATION_0);
 
         /** From manager, verify onSuccess callback was received*/
-        assertThat(getLastTestCallbackCode()).isEqualTo(Surface.ROTATION_0);
+        assertThat(getLastTestCallbackCode()).isEqualTo(ROTATION_0);
     }
 
     @Test
@@ -118,6 +125,20 @@ public class CtsRotationResolverServiceDeviceTest {
          * ROTATION_RESULT_FAILURE_CANCELLED */
         assertThat(getLastTestCallbackCode()).isEqualTo(
                 RotationResolverService.ROTATION_RESULT_FAILURE_CANCELLED);
+    }
+
+    @Test
+    public void testRotationResolutionRequest_ConstructorSetsValues() {
+        /* Construct a RotationResolutionObject */
+        final RotationResolutionRequest request = new RotationResolutionRequest(FAKE_PACKAGE_NAME,
+                ROTATION_0, ROTATION_90, FAKE_SHOULD_USE_CAMERA, FAKE_TIME_OUT);
+
+        /* Verify the values are correctly set */
+        assertThat(request.getPackageName()).isEqualTo(FAKE_PACKAGE_NAME);
+        assertThat(request.getCurrentRotation()).isEqualTo(ROTATION_0);
+        assertThat(request.getProposedRotation()).isEqualTo(ROTATION_90);
+        assertThat(request.shouldUseCamera()).isEqualTo(FAKE_SHOULD_USE_CAMERA);
+        assertThat(request.getTimeoutMillis()).isEqualTo(FAKE_TIME_OUT);
     }
 
     private void bindToTestService() {
