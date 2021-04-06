@@ -117,8 +117,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
         }
 
         mCheckAndEnrollButton.setOnClickListener((view) -> {
-            checkAndEnroll(mCheckAndEnrollButton, Authenticators.BIOMETRIC_STRONG,
-                    new int[] {Authenticators.BIOMETRIC_STRONG});
+            checkAndEnroll(mCheckAndEnrollButton, Authenticators.BIOMETRIC_STRONG);
         });
 
         mAuthenticateWithoutStrongBoxButton.setOnClickListener((view) -> {
