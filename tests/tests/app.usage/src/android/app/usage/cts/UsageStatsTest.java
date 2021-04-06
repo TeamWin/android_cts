@@ -741,13 +741,12 @@ public class UsageStatsTest {
 
             final UsageStatsManager usmOther = userContext.getSystemService(
                     UsageStatsManager.class);
-            final List<UsageStats> stats = usmOther
-                    .queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime,
-                        System.currentTimeMillis());
-            for (UsageStats pkgStats : stats) {
-                System.err.println(pkgStats.getPackageName() + " has entry in other user");
-            }
-            assertFalse(stats.isEmpty());
+
+            waitUntil(() -> {
+                final List<UsageStats> stats = usmOther.queryUsageStats(
+                        UsageStatsManager.INTERVAL_DAILY, startTime, System.currentTimeMillis());
+                return stats.isEmpty();
+            }, false);
         });
         // user cleanup done in @After
     }
