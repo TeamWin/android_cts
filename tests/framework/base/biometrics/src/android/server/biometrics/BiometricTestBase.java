@@ -99,6 +99,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     @NonNull protected List<SensorProperties> mSensorProperties;
     @Nullable private PowerManager.WakeLock mWakeLock;
     @NonNull protected UiDevice mDevice;
+    protected boolean mHasStrongBox;
 
     /**
      * Expose this functionality to our package, since ActivityManagerTestBase's is `protected`.
@@ -473,6 +474,9 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
 
         assumeTrue(mInstrumentation.getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+
+        mHasStrongBox = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_STRONGBOX_KEYSTORE);
 
         // Keep the screen on for the duration of each test, since BiometricPrompt goes away
         // when screen turns off.
