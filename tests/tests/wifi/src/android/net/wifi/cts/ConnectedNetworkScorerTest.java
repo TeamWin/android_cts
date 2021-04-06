@@ -22,6 +22,7 @@ import static android.Manifest.permission.READ_WIFI_CREDENTIAL;
 import static android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
+import static android.net.wifi.WifiUsabilityStatsEntry.RateStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_FAILURE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_NO_PROBE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_SUCCESS;
@@ -285,7 +286,25 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                     }
                     statsEntry.isWifiScoringEnabled();
                     statsEntry.isThroughputSufficient();
+                    RateStats rateStats = new RateStats(WifiUsabilityStatsEntry.WIFI_PREAMBLE_VHT,
+                            WifiUsabilityStatsEntry.WIFI_SPATIAL_STREAMS_TWO,
+                            WifiUsabilityStatsEntry.WIFI_BANDWIDTH_40_MHZ,
+                            2, 20, 100, 200, 5, 10);
                     assertThat(statsEntry.getRateStats()).isNotNull();
+                    if(statsEntry.getRateStats().size() > 0) {
+                        assertThat(statsEntry.getRateStats().get(0).getPreamble()).isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getNumberOfSpatialStreams())
+                                .isAtLeast(1);
+                        assertThat(statsEntry.getRateStats().get(0).getBandwidthInMhz())
+                                .isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getRateMcsIdx()).isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getBitRateInKbps())
+                                .isGreaterThan(0);
+                        assertThat(statsEntry.getRateStats().get(0).getTxMpdu()).isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getRxMpdu()).isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getMpduLost()).isAtLeast(0);
+                        assertThat(statsEntry.getRateStats().get(0).getRetries()).isAtLeast(0);
+                    }
                     assertThat(statsEntry.getWifiLinkLayerRadioStats()).isNotNull();
                 }
                 // no longer populated, return default value.
