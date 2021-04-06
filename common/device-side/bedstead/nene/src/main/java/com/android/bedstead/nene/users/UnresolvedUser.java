@@ -16,14 +16,16 @@
 
 package com.android.bedstead.nene.users;
 
+import com.android.bedstead.nene.TestApis;
+
 /**
  * Default implementation of {@link UserReference}.
  *
  * <p>Represents the abstract idea of a {@link User}, which may or may not exist.
  */
 public final class UnresolvedUser extends UserReference {
-    UnresolvedUser(Users users, int id) {
-        super(users, id);
+    UnresolvedUser(TestApis testApis, int id) {
+        super(testApis, id);
     }
 
     @Override

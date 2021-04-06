@@ -22,8 +22,6 @@ import android.content.pm.PermissionInfo;
 import android.os.Build;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
@@ -43,8 +41,7 @@ public class Permissions {
 
     private List<PermissionContextImpl> mPermissionContexts = new ArrayList<>();
     private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final PackageManager sPackageManager = sContext.getPackageManager();
     private static final PackageReference sInstrumentedPackage =
             sTestApis.packages().find(sContext.getPackageName());

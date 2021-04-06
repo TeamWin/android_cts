@@ -22,8 +22,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.broadcastreceivers.BroadcastReceivedEvent;
@@ -50,8 +49,9 @@ public class EventLibAppComponentFactoryTest {
     private static final String GENERATED_BROADCAST_RECEIVER_ACTION =
             "com.android.eventlib.GENERATED_BROADCAST_RECEIVER";
 
+    private static final TestApis sTestApis = new TestApis();
     private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+            sTestApis.context().instrumentedContext();
 
     @Test
     public void startActivity_activityDoesNotExist_startsLoggingActivity() {

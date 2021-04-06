@@ -29,6 +29,7 @@ import android.os.UserHandle;
 import androidx.annotation.CheckResult;
 import androidx.annotation.Nullable;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -52,7 +53,13 @@ public final class Users {
     private Map<Integer, User> mCachedUsers = null;
     private Map<String, UserType> mCachedUserTypes = null;
     private Set<UserType> mCachedUserTypeValues = null;
-    private final AdbUserParser parser = AdbUserParser.get(this, SDK_INT);
+    private final AdbUserParser mParser;
+    private final TestApis mTestApis;
+
+    public Users(TestApis testApis) {
+        mTestApis = testApis;
+        mParser = AdbUserParser.get(mTestApis, SDK_INT);
+    }
 
     /** Get all {@link User}s on the device. */
     public Collection<User> all() {
@@ -73,12 +80,12 @@ public final class Users {
 
     /** Get a {@link UserReference} by {@code id}. */
     public UserReference find(int id) {
-        return new UnresolvedUser(this, id);
+        return new UnresolvedUser(mTestApis, id);
     }
 
     /** Get a {@link UserReference} by {@code userHandle}. */
     public UserReference find(UserHandle userHandle) {
-        return new UnresolvedUser(this, userHandle.getIdentifier());
+        return new UnresolvedUser(mTestApis, userHandle.getIdentifier());
     }
 
     @Nullable
@@ -156,14 +163,14 @@ public final class Users {
      */
     @CheckResult
     public UserBuilder createUser() {
-        return new UserBuilder(this);
+        return new UserBuilder(mTestApis);
     }
 
     private void fillCache() {
         try {
             // TODO: Replace use of adb on supported versions of Android
             String userDumpsysOutput = ShellCommand.builder("dumpsys user").execute();
-            AdbUserParser.ParseResult result = parser.parse(userDumpsysOutput);
+            AdbUserParser.ParseResult result = mParser.parse(userDumpsysOutput);
 
             mCachedUsers = result.mUsers;
             if (result.mUserTypes != null) {

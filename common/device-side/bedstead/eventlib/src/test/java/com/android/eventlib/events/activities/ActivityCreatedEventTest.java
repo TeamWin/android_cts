@@ -22,9 +22,8 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.PersistableBundle;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.activitycontext.ActivityContext;
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 
 import org.junit.Before;
@@ -35,8 +34,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class ActivityCreatedEventTest {
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final String STRING_KEY = "Key";
     private static final String STRING_VALUE = "Value";
     private static final String DIFFERENT_STRING_VALUE = "Value2";

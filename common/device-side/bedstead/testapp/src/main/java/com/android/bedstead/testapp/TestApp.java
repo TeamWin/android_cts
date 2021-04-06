@@ -21,8 +21,6 @@ import static com.android.compatibility.common.util.FileUtils.readInputStreamFul
 import android.content.Context;
 import android.os.UserHandle;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.packages.Package;
@@ -37,9 +35,8 @@ import java.io.InputStream;
 /** Represents a single test app which can be installed and interacted with. */
 public class TestApp {
 
-    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
-
-    private final TestApis mTestApis = new TestApis();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private final TestAppDetails mDetails;
 
     TestApp(TestAppDetails details) {
@@ -55,7 +52,7 @@ public class TestApp {
      * <p>This will only be resolvable after the app is installed.
      */
     public PackageReference reference() {
-        return mTestApis.packages().find(packageName());
+        return sTestApis.packages().find(packageName());
     }
 
     /**
@@ -69,19 +66,19 @@ public class TestApp {
      * Install the {@link TestApp} on the device for the given {@link UserReference}.
      */
     public void install(UserReference user) {
-        mTestApis.packages().install(user, apkBytes());
+        sTestApis.packages().install(user, apkBytes());
     }
 
     /**
      * Install the {@link TestApp} on the device for the given {@link UserHandle}.
      */
     public void install(UserHandle user) {
-        install(mTestApis.users().find(user));
+        install(sTestApis.users().find(user));
     }
 
     private byte[] apkBytes() {
         try (InputStream inputStream =
-                     mContext.getResources().openRawResource(mDetails.mResourceIdentifier)) {
+                     sContext.getResources().openRawResource(mDetails.mResourceIdentifier)) {
             return readInputStreamFully(inputStream);
         } catch (IOException e) {
             throw new NeneException("Error when reading TestApp bytes", e);
