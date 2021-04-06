@@ -16,12 +16,48 @@ $ atest android.mediav2.cts.ExtractorTest android.mediav2.cts.ExtractorUnitTest
 ```
 
 ### Features
-All tests accepts attributes that offer selective run of tests. Media codec tests parses the value of key *codec-sel* to determine the list of components on which the tests are to be tried. Similarly for Media extractor and media muxer parses the value of keys *ext-sel* and *mux-sel* to determine the list of components on which the tests are to be tried.
+All tests accepts attributes that offer selective run of tests.
 
-To limit media codec decoder tests to mp3 and vorbis decoder,
+#### Select codecs by name
+To select codecs by name, *codec-prefix* can be passed to media codec tests to select one or more codecs that start with a given prefix.
+
+Example: To limit the tests to run for codecs whose names start with c2.android.
+
 ```sh
-adb shell am instrument -w -r  -e codec-sel 'mp3;vorbis'  -e debug false -e class 'android.mediav2.cts.CodecDecoderTest' android.mediav2.cts.test/androidx.test.runner.AndroidJUnitRunner
+atest CtsMediaV2TestCases -- --module-arg CtsMediaV2TestCases:instrumentation-arg:codec-prefix:=c2.android.
 ```
+
+Example: To limit the tests to run for c2.android.hevc.decoder
+
+```sh
+atest CtsMediaV2TestCases -- --module-arg CtsMediaV2TestCases:instrumentation-arg:codec-prefix:=c2.android.hevc.decoder
+```
+
+#### Select codecs by type
+To select codecs by type, *mime-sel* can be passed to media codec tests to select one or more codecs.
+
+Example: To limit media codec decoder tests to mp3 and vorbis decoder
+
+```sh
+atest android.mediav2.cts.CodecDecoderTest -- --module-arg  CtsMediaV2TestCases:instrumentation-arg:mime-sel:=mp3,vorbis
+```
+
+#### Select extractors by type
+To select extractors by type, *ext-sel* can be passed to extractor tests to select one or more extractors.
+
+Example: To limit extractor tests to mp4 and webm types
+```sh
+atest android.mediav2.cts.ExtractorTest -- --module-arg  CtsMediaV2TestCases:instrumentation-arg:ext-sel:=mp4,webm
+```
+
+#### Select muxers by type
+To select muxers by type, *mux-sel* can be passed to muxer tests to select one or more muxers.
+
+Example: To limit muxer tests to mp4 and webm types
+```sh
+atest android.mediav2.cts.MuxerTest -- --module-arg  CtsMediaV2TestCases:instrumentation-arg:mux-sel:=mp4,webm
+```
+
 ### Appendix
 | Identifier for codec-sel | Mime |
 | ------ | ------ |
