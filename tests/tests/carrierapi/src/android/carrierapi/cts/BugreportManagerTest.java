@@ -129,11 +129,13 @@ public class BugreportManagerTest {
     public void startConnectivityBugreport() throws Exception {
         BugreportCallbackImpl callback = new BugreportCallbackImpl();
 
+        assertThat(callback.hasEarlyReportFinished()).isFalse();
         mBugreportManager.startConnectivityBugreport(mBugreportFd, Runnable::run, callback);
         setConsentDialogReply(ConsentReply.ALLOW);
         waitUntilDoneOrTimeout(callback);
 
         assertThat(callback.isSuccess()).isTrue();
+        assertThat(callback.hasEarlyReportFinished()).isTrue();
         assertThat(callback.hasReceivedProgress()).isTrue();
         assertThat(mBugreportFile.length()).isGreaterThan(0L);
         assertFdIsClosed(mBugreportFd);
@@ -182,6 +184,7 @@ public class BugreportManagerTest {
         File bugreportFile2 = createTempFile("bugreport_2_" + name.getMethodName(), ".zip");
         ParcelFileDescriptor bugreportFd2 = parcelFd(bugreportFile2);
 
+        assertThat(callback1.hasEarlyReportFinished()).isFalse();
         // Start the first report, but don't accept the consent dialog or wait for the callback to
         // complete yet.
         mBugreportManager.startConnectivityBugreport(mBugreportFd, Runnable::run, callback1);
@@ -203,6 +206,7 @@ public class BugreportManagerTest {
         waitUntilDoneOrTimeout(callback1);
 
         assertThat(callback1.isSuccess()).isTrue();
+        assertThat(callback1.hasEarlyReportFinished()).isTrue();
         assertThat(callback1.hasReceivedProgress()).isTrue();
         assertThat(mBugreportFile.length()).isGreaterThan(0L);
         assertFdIsClosed(mBugreportFd);
@@ -235,6 +239,7 @@ public class BugreportManagerTest {
     public void startBugreport_connectivityBugreport() throws Exception {
         BugreportCallbackImpl callback = new BugreportCallbackImpl();
 
+        assertThat(callback.hasEarlyReportFinished()).isFalse();
         // Carrier apps that compile with the system SDK have visibility to use this API, so we need
         // to enforce that the additional parameters can't be abused to e.g. surreptitiously capture
         // screenshots.
@@ -248,6 +253,7 @@ public class BugreportManagerTest {
         waitUntilDoneOrTimeout(callback);
 
         assertThat(callback.isSuccess()).isTrue();
+        assertThat(callback.hasEarlyReportFinished()).isTrue();
         assertThat(callback.hasReceivedProgress()).isTrue();
         assertThat(mBugreportFile.length()).isGreaterThan(0L);
         assertFdIsClosed(mBugreportFd);

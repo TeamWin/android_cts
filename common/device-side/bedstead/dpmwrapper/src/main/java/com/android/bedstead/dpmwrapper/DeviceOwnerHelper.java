@@ -136,7 +136,7 @@ public final class DeviceOwnerHelper {
         // Handle some special cases first...
 
         // Methods that use CharSequence instead of String
-        if (parameterTypes.length == 2) {
+        if (parameterTypes != null && parameterTypes.length == 2) {
             switch (methodName) {
                 case "wipeData":
                     return clazz.getDeclaredMethod(methodName,
