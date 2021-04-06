@@ -24,5 +24,8 @@ java_test_host {
         "cts",
         "general-tests",
     ],
-    data: [":CtsJvmtiRunTest1912DeviceApp"]
+    data: [":CtsJvmtiRunTest1912DeviceApp"],
+    test_options: {
+        unit_test: false,
+    },
 }
