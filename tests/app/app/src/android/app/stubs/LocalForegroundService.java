@@ -33,7 +33,9 @@ public class LocalForegroundService extends LocalService {
 
     private static final String TAG = "LocalForegroundService";
     private static final String EXTRA_COMMAND = "LocalForegroundService.command";
-    private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    public static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    public static String ACTION_START_FGS_RESULT =
+            "android.app.stubs.LocalForegroundService.RESULT";
 
     public static final int COMMAND_START_FOREGROUND = 1;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION = 2;
@@ -41,6 +43,7 @@ public class LocalForegroundService extends LocalService {
     public static final int COMMAND_STOP_FOREGROUND_DETACH_NOTIFICATION = 4;
     public static final int COMMAND_STOP_FOREGROUND_REMOVE_NOTIFICATION_USING_FLAGS = 5;
     public static final int COMMAND_START_NO_FOREGROUND = 6;
+    public static final int COMMAND_START_FOREGROUND_DEFER_NOTIFICATION = 7;
 
     private int mNotificationId = 0;
 
