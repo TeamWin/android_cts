@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -42,8 +40,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class DeviceAdminAppTest {
 
-    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private static final TestApis sTestApis = new TestApis();
+    private final Context mContext = sTestApis.context().instrumentedContext();
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();

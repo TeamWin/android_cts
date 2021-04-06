@@ -18,7 +18,7 @@ package com.android.bedstead.testapp;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import com.android.bedstead.nene.TestApis;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,8 +30,8 @@ import java.util.Set;
 /** Entry point to Test App. Used for querying for {@link TestApp} instances. */
 public final class TestAppProvider {
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private boolean mTestAppsInitialised = false;
     private final Set<TestAppDetails> mTestApps = new HashSet<>();

@@ -20,9 +20,8 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.activitycontext.ActivityContext;
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 
 import org.junit.Before;
@@ -33,8 +32,8 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public final class ActivityStoppedEventTest {
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private static final String DEFAULT_ACTIVITY_CLASS_NAME = ActivityContext.class.getName();
     private static final String CUSTOM_ACTIVITY_CLASS_NAME = "customActivityName";
