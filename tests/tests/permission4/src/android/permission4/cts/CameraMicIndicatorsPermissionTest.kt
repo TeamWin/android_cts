@@ -153,7 +153,7 @@ class CameraMicIndicatorsPermissionTest {
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             assertTvIndicatorsShown(useMic, useCamera)
         } else {
-            uiDevice.openNotification()
+            uiDevice.openQuickSettings()
             assertPrivacyChipAndIndicatorsPresent(useMic, useCamera)
         }
     }
