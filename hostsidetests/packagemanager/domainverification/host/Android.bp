@@ -36,6 +36,8 @@ java_test_host {
     ],
     data: [
         ":CtsDomainVerificationTestCallingApp",
+    ],
+    java_resources: [
         ":CtsDomainVerificationTestDeclaringApp1",
         ":CtsDomainVerificationTestDeclaringApp2",
     ],

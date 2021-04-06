@@ -19,6 +19,7 @@ package android.server.biometrics;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
+import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.ParcelFileDescriptor;
 import android.security.keystore.KeyGenParameterSpec;
@@ -175,5 +176,16 @@ public class Utils {
         final BiometricPrompt.CryptoObject cryptoObject =
                 new BiometricPrompt.CryptoObject(cipher);
         return cryptoObject;
+    }
+
+    public static boolean isPublicAuthenticatorConstant(int authenticator) {
+        switch (authenticator) {
+            case BiometricManager.Authenticators.BIOMETRIC_STRONG:
+            case BiometricManager.Authenticators.BIOMETRIC_WEAK:
+            case BiometricManager.Authenticators.DEVICE_CREDENTIAL:
+                return true;
+            default:
+                return false;
+        }
     }
 }
