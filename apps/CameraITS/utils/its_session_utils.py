@@ -1247,9 +1247,10 @@ class ItsSessionUtilsTests(unittest.TestCase):
       test_image = self._generate_test_image(brightness)
       print(f'Testing brightness: {brightness}')
       if brightness <= _VALIDATE_LIGHTING_THRESH:
-        self.assertRaises(AssertionError, validate_lighting, test_image)
+        self.assertRaises(
+            AssertionError, validate_lighting, test_image, 'unittest')
       else:
-        self.assertTrue(validate_lighting(test_image),
+        self.assertTrue(validate_lighting(test_image, 'unittest'),
                         f'image value {brightness} should PASS')
 
 
