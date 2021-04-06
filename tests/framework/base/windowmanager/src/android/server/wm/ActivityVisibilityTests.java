@@ -41,6 +41,7 @@ import static android.server.wm.app.Components.SHOW_WHEN_LOCKED_DIALOG_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TOP_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_ACTIVITY;
+import static android.server.wm.app.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.wm.app.Components.TRANSLUCENT_TOP_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ACTIVITY;
 import static android.server.wm.app.Components.TURN_SCREEN_ON_ATTR_ACTIVITY;
@@ -113,6 +114,64 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
         mWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mWmState.assertVisibility(TEST_ACTIVITY, true);
         mWmState.assertVisibility(TRANSLUCENT_ACTIVITY, true);
+    }
+
+    /**
+     * Assert that the activity is visible when the intermediate activity finishes and a
+     * translucent activity is on the top most.
+     */
+    @Test
+    public void testVisibilityBehindTranslucentActivity() {
+        // launch first activity
+        launchActivity(TEST_ACTIVITY);
+        mWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+
+        // launch second activity
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+
+        // launch translucent activity
+        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
+        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_RESUMED);
+
+        // finish the second activity
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        mWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.computeState(
+                new WaitForValidActivityState(TEST_ACTIVITY),
+                new WaitForValidActivityState(TRANSLUCENT_TEST_ACTIVITY));
+
+        mWmState.assertVisibility(TEST_ACTIVITY, true);
+    }
+
+    /**
+     * Assert that the home activity is visible when the intermediate activity finishes and a
+     * translucent activity is on the top most.
+     */
+    @Test
+    public void testHomeVisibilityBehindTranslucentActivity() {
+        if (!hasHomeScreen()) {
+            return;
+        }
+        launchHomeActivity();
+
+        // launch first activity
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+
+        // launch translucent activity
+        launchActivity(TRANSLUCENT_TEST_ACTIVITY);
+        mWmState.waitForActivityState(TRANSLUCENT_TEST_ACTIVITY, STATE_RESUMED);
+        mWmState.assertVisibility(TRANSLUCENT_TEST_ACTIVITY, true);
+
+        // Finish the first activity
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        mWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
+        mWmState.waitForActivityRemoved(BROADCAST_RECEIVER_ACTIVITY);
+
+        mWmState.waitForHomeActivityVisible();
+        mWmState.assertHomeActivityVisible(true);
     }
 
     @Test
