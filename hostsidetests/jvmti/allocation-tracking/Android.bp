@@ -24,4 +24,7 @@ java_test_host {
         "cts",
         "general-tests",
     ],
+    test_options: {
+        unit_test: false,
+    },
 }
