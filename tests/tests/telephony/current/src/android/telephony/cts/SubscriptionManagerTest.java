@@ -953,14 +953,14 @@ public class SubscriptionManagerTest {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         int originalD2DStatusSharing = mSm.getDeviceToDeviceStatusSharingPreference(mSubId);
-        mSm.setDeviceToDeviceStatusSharingPreference(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
-                mSubId);
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId,
+                SubscriptionManager.D2D_SHARING_ALL_CONTACTS);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL_CONTACTS,
                 mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
-        mSm.setDeviceToDeviceStatusSharingPreference(SubscriptionManager.D2D_SHARING_ALL, mSubId);
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId, SubscriptionManager.D2D_SHARING_ALL);
         assertEquals(SubscriptionManager.D2D_SHARING_ALL,
                 mSm.getDeviceToDeviceStatusSharingPreference(mSubId));
-        mSm.setDeviceToDeviceStatusSharingPreference(originalD2DStatusSharing, mSubId);
+        mSm.setDeviceToDeviceStatusSharingPreference(mSubId, originalD2DStatusSharing);
         uiAutomation.dropShellPermissionIdentity();
     }
 
@@ -969,9 +969,9 @@ public class SubscriptionManagerTest {
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         uiAutomation.adoptShellPermissionIdentity(MODIFY_PHONE_STATE);
         List<Uri> originalD2DSharingContacts = mSm.getDeviceToDeviceStatusSharingContacts(mSubId);
-        mSm.setDeviceToDeviceStatusSharingContacts(CONTACTS, mSubId);
+        mSm.setDeviceToDeviceStatusSharingContacts(mSubId, CONTACTS);
         assertEquals(CONTACTS, mSm.getDeviceToDeviceStatusSharingContacts(mSubId));
-        mSm.setDeviceToDeviceStatusSharingContacts(originalD2DSharingContacts, mSubId);
+        mSm.setDeviceToDeviceStatusSharingContacts(mSubId, originalD2DSharingContacts);
         uiAutomation.dropShellPermissionIdentity();
     }
 
