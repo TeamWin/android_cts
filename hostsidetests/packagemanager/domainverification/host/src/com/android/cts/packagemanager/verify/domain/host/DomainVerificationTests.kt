@@ -16,8 +16,7 @@
 
 package com.android.cts.packagemanager.verify.domain.host
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils
+import com.android.cts.packagemanager.verify.domain.host.DomainVerificationHostUtils.installApkResource
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.CALLING_PKG_NAME
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_APK_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_APK_2
@@ -29,13 +28,17 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test
 import com.android.tradefed.testtype.junit4.DeviceTestRunOptions
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 
 @RunWith(DeviceJUnit4ClassRunner::class)
 class DomainVerificationTests : BaseHostJUnit4Test() {
 
-    private val buildHelper by lazy { CompatibilityBuildHelper(build) }
+    @Rule
+    @JvmField
+    val tempFolder = TemporaryFolder()
 
     @Before
     @After
@@ -46,7 +49,7 @@ class DomainVerificationTests : BaseHostJUnit4Test() {
 
     @Test
     fun declaredDomainSet() {
-        installPackage(DECLARING_PKG_APK_1)
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_1)
         runDeviceTests(DeviceTestRunOptions(DECLARING_PKG_NAME_1).apply {
             // The base name is used as the code package does not change with
             // the manifest rename that splits the packages into 1 and 2 variants.
@@ -57,13 +60,10 @@ class DomainVerificationTests : BaseHostJUnit4Test() {
 
     @Test
     fun verifyDomains() {
-        installPackage(DECLARING_PKG_APK_1)
-        installPackage(DECLARING_PKG_APK_2)
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_1)
+        device.installApkResource(tempFolder, DECLARING_PKG_APK_2)
         runDeviceTests(DeviceTestRunOptions(CALLING_PKG_NAME).apply {
             testClassName = "$CALLING_PKG_NAME.DomainVerificationCallingAppTests"
         })
     }
-
-    private fun installPackage(apkName: DomainUtils.ApkName, reinstall: Boolean = false) =
-        device.installPackage(buildHelper.getTestFile(apkName.value), reinstall)
 }

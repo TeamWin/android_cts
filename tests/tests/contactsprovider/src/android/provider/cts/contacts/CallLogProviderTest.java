@@ -23,6 +23,7 @@ import android.content.ContentValues;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.net.Uri;
+import android.platform.test.annotations.SecurityTest;
 import android.provider.CallLog;
 import android.provider.CallLog.Calls;
 import android.test.InstrumentationTestCase;
@@ -44,6 +45,7 @@ public class CallLogProviderTest extends InstrumentationTestCase {
         mProvider = mContentResolver.acquireContentProviderClient(CallLog.AUTHORITY);
     }
 
+    @SecurityTest(minPatchLevel="2021-05")
     public void testNoSubqueries() throws Exception {
         // Add a single call just to make sure the call log has something inside
         ContentValues values = new ContentValues();
