@@ -16,15 +16,10 @@
 
 package com.android.cts.verifier.biometrics;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
-import android.hardware.biometrics.BiometricPrompt;
-import android.hardware.biometrics.BiometricPrompt.AuthenticationCallback;
-import android.hardware.biometrics.BiometricPrompt.AuthenticationResult;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -33,7 +28,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
 
 import java.util.concurrent.Executor;
 
