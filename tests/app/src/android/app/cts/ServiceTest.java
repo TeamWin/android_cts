@@ -1105,6 +1105,31 @@ public class ServiceTest extends ActivityTestsBase {
         assertNoNotification(2);
     }
 
+    public void testForegroundService_notificationChannelDeletion() throws Exception {
+        NotificationManager noMan = mContext.getSystemService(NotificationManager.class);
+
+        // Start service as foreground - it should show notification #1
+        mExpectedServiceState = STATE_START_1;
+        startForegroundService(LocalForegroundService.COMMAND_START_FOREGROUND);
+        waitForResultOrThrow(DELAY, "service to start first time");
+        assertNotification(1, LocalForegroundService.getNotificationTitle(1));
+
+        try {
+            final String channel = LocalForegroundService.NOTIFICATION_CHANNEL_ID;
+            noMan.deleteNotificationChannel(channel);
+            fail("Deleting FGS notification channel did not throw");
+        } catch (SecurityException se) {
+            // Expected outcome, i.e. success case
+        } catch (Exception e) {
+            fail("Deleting FGS notification threw unexpected failure " + e);
+        }
+
+        mExpectedServiceState = STATE_DESTROY;
+        mContext.stopService(mLocalForegroundService);
+        waitForResultOrThrow(DELAY, "service to be destroyed");
+
+    }
+
     class TestSendCallback implements PendingIntent.OnFinished {
         public volatile int result = -1;
 
