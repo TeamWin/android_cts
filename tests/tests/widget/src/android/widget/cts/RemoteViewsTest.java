@@ -1502,50 +1502,26 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetViewId() throws Throwable {
-        assertEquals(View.NO_ID, mRemoteViews.getViewId());
-        mRemoteViews.setViewId(100);
-
-        assertEquals(100, mRemoteViews.getViewId());
-        mActivityRule.runOnUiThread(() -> {
-            mResult = mRemoteViews.apply(mContext, null);
-        });
-
-        assertEquals(100, mResult.getId());
-    }
-
-    @Test
-    public void testSetViewIdFailsOnMultipleLayouts() throws Throwable {
-        mRemoteViews = new RemoteViews(
-                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout),
-                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout)
-        );
-
-        mExpectedException.expect(UnsupportedOperationException.class);
-        mRemoteViews.setViewId(100);
-    }
-
-    @Test
     public void testCanRecycleView() throws Throwable {
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                2 /* viewId */);
 
         mActivityRule.runOnUiThread(() -> {
             mResult = mRemoteViews.apply(mContext, null);
         });
 
-        mRemoteViews.setViewId(3);
-        assertFalse(mRemoteViews.canRecycleView(mResult));
-
-        mRemoteViews.setViewId(View.NO_ID);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                3 /* viewId */);
         assertFalse(mRemoteViews.canRecycleView(mResult));
 
         mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
+        assertFalse(mRemoteViews.canRecycleView(mResult));
+
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                2 /* viewId */);
         assertTrue(mRemoteViews.canRecycleView(mResult));
 
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout);
-        mRemoteViews.setViewId(2);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout, 2 /* viewId */);
         assertFalse(mRemoteViews.canRecycleView(mResult));
 
         assertFalse(mRemoteViews.canRecycleView(null));
