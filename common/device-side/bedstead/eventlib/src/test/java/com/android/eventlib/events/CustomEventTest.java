@@ -20,8 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 
 import org.junit.Before;
@@ -35,8 +34,8 @@ public final class CustomEventTest {
     // TODO: We need a standard pattern for testing that events log correctly cross-process
     // (when within the process serialization never happens)
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final String TAG_1 = "TAG_1";
     private static final String TAG_2 = "TAG_2";
     private static final String DATA_1 = "DATA_1";

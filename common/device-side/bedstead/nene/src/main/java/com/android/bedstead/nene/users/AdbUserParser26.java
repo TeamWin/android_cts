@@ -22,6 +22,7 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 import java.util.HashMap;
@@ -88,13 +89,13 @@ import java.util.Set;
 public class AdbUserParser26 implements AdbUserParser {
     static final int USER_LIST_BASE_INDENTATION = 2;
 
-    final Users mUsers;
+    final TestApis mTestApis;
 
-    AdbUserParser26(Users users) {
-        if (users == null) {
+    AdbUserParser26(TestApis testApis) {
+        if (testApis == null) {
             throw new NullPointerException();
         }
-        mUsers = users;
+        mTestApis = testApis;
     }
 
     @Override
@@ -109,7 +110,7 @@ public class AdbUserParser26 implements AdbUserParser {
         Set<String> userStrings = extractUserStrings(usersList);
         Map<Integer, User> users = new HashMap<>();
         for (String userString : userStrings) {
-            User user = new User(mUsers, parseUser(userString));
+            User user = new User(mTestApis, parseUser(userString));
             users.put(user.id(), user);
         }
         return users;

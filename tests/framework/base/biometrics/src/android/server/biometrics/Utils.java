@@ -19,6 +19,7 @@ package android.server.biometrics;
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 
 import android.content.ComponentName;
+import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.ParcelFileDescriptor;
 import android.security.keystore.KeyGenParameterSpec;
@@ -140,7 +141,48 @@ public class Utils {
         return count;
     }
 
-    public static void generateBiometricBoundKey(String keyName) throws Exception {
+    public static void createTimeBoundSecretKey_deprecated(String keyName, boolean useStrongBox)
+            throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        KeyGenerator keyGenerator = KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+
+        // Set the alias of the entry in Android KeyStore where the key will appear
+        // and the constrains (purposes) in the constructor of the Builder
+        keyGenerator.init(new KeyGenParameterSpec.Builder(keyName,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setUserAuthenticationRequired(true)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                .setIsStrongBoxBacked(useStrongBox)
+                .setUserAuthenticationValidityDurationSeconds(5 /* seconds */)
+                .build());
+        keyGenerator.generateKey();
+    }
+
+    static void createTimeBoundSecretKey(String keyName, int authTypes, boolean useStrongBox)
+            throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+        keyStore.load(null);
+        KeyGenerator keyGenerator = KeyGenerator.getInstance(
+                KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore");
+
+        // Set the alias of the entry in Android KeyStore where the key will appear
+        // and the constrains (purposes) in the constructor of the Builder
+        keyGenerator.init(new KeyGenParameterSpec.Builder(keyName,
+                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
+                .setUserAuthenticationRequired(true)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                .setIsStrongBoxBacked(useStrongBox)
+                .setUserAuthenticationParameters(1 /* seconds */, authTypes)
+                .build());
+        keyGenerator.generateKey();
+    }
+
+    public static void generateBiometricBoundKey(String keyName, boolean useStrongBox)
+            throws Exception {
         final KeyStore keystore = KeyStore.getInstance(KEYSTORE_PROVIDER);
         keystore.load(null);
         KeyGenParameterSpec.Builder builder = new KeyGenParameterSpec.Builder(
@@ -150,6 +192,7 @@ public class Utils {
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                 .setUserAuthenticationRequired(true)
                 .setInvalidatedByBiometricEnrollment(true)
+                .setIsStrongBoxBacked(useStrongBox)
                 .setUserAuthenticationParameters(0, KeyProperties.AUTH_BIOMETRIC_STRONG);
 
         KeyGenerator keyGenerator = KeyGenerator
@@ -175,5 +218,16 @@ public class Utils {
         final BiometricPrompt.CryptoObject cryptoObject =
                 new BiometricPrompt.CryptoObject(cipher);
         return cryptoObject;
+    }
+
+    public static boolean isPublicAuthenticatorConstant(int authenticator) {
+        switch (authenticator) {
+            case BiometricManager.Authenticators.BIOMETRIC_STRONG:
+            case BiometricManager.Authenticators.BIOMETRIC_WEAK:
+            case BiometricManager.Authenticators.DEVICE_CREDENTIAL:
+                return true;
+            default:
+                return false;
+        }
     }
 }

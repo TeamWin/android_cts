@@ -22,6 +22,7 @@ import android.os.Build;
 
 import androidx.annotation.RequiresApi;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 import java.util.HashMap;
@@ -256,8 +257,8 @@ public class AdbUserParser30 extends AdbUserParser26 {
 
     private Map<String, UserType> mUserTypes;
 
-    AdbUserParser30(Users users) {
-        super(users);
+    AdbUserParser30(TestApis testApis) {
+        super(testApis);
     }
 
     @Override

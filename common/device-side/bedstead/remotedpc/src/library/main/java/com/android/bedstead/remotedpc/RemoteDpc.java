@@ -23,7 +23,6 @@ import android.content.Context;
 import android.os.UserHandle;
 
 import androidx.annotation.Nullable;
-import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
@@ -39,8 +38,7 @@ import java.io.InputStream;
 public final class RemoteDpc {
 
     private static final TestApis sTestApis = new TestApis();
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final ComponentName DPC_COMPONENT = new ComponentName(
             "com.android.bedstead.remotedpc.dpc",
             "com.android.eventlib.premade.EventLibDeviceAdminReceiver"

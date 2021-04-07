@@ -140,7 +140,7 @@ class MetadataTest(its_base_test.ItsBaseTest):
         logging.debug('Focal length: %.3f', fl)
         fov = 2 * math.degrees(math.atan(diag / (2 * fl)))
         logging.debug('Assert field of view: %.1f degrees', fov)
-        assert 30 <= fov <= 130
+        assert 10 <= fov <= 130
 
         if camera_properties_utils.lens_approx_calibrated(props):
           diopter_hyperfocal = props['android.lens.info.hyperfocalDistance']

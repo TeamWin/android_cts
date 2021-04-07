@@ -39,8 +39,6 @@ import static org.junit.Assume.assumeTrue;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
 
-    private static final String PROPERTY_LOCALE = "persist.sys.locale";
-
     /** The package name of the APK. */
     private static final String PACKAGE = "android.hdmicec.app";
 
@@ -63,25 +61,6 @@ public final class HdmiCecInvalidMessagesTest extends BaseHdmiCecCtsTest {
             RuleChain.outerRule(CecRules.requiresCec(this))
                     .around(CecRules.requiresLeanback(this))
                     .around(hdmiCecClient);
-
-    private String getSystemLocale() throws Exception {
-        ITestDevice device = getDevice();
-        return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
-    }
-
-    private void setSystemLocale(String locale) throws Exception {
-        ITestDevice device = getDevice();
-        device.executeShellCommand("setprop " + PROPERTY_LOCALE + " " + locale);
-    }
-
-    private boolean isLanguageEditable() throws Exception {
-        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
-        return val.trim().equals("true") ? true : false;
-    }
-
-    private static String extractLanguage(String locale) {
-        return locale.split("[^a-zA-Z]")[0];
-    }
 
     @Before
     public void setup() {

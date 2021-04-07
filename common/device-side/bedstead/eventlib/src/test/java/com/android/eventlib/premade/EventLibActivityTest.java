@@ -28,6 +28,7 @@ import android.content.Intent;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.activities.ActivityCreatedEvent;
 import com.android.eventlib.events.activities.ActivityDestroyedEvent;
@@ -51,7 +52,8 @@ public class EventLibActivityTest {
 
     private static final Instrumentation sInstrumentation =
             InstrumentationRegistry.getInstrumentation();
-    private static final Context sContext = sInstrumentation.getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     @Before
     public void setUp() {

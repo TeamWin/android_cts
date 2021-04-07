@@ -99,6 +99,7 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     @NonNull protected List<SensorProperties> mSensorProperties;
     @Nullable private PowerManager.WakeLock mWakeLock;
     @NonNull protected UiDevice mDevice;
+    protected boolean mHasStrongBox;
 
     /**
      * Expose this functionality to our package, since ActivityManagerTestBase's is `protected`.
@@ -414,6 +415,34 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
         successfullyAuthenticate(session, userId);
     }
 
+    protected void showBiometricPromptWithAuthenticators(int authenticators) {
+        final Handler handler = new Handler(Looper.getMainLooper());
+        final Executor executor = handler::post;
+        final BiometricPrompt prompt = new BiometricPrompt.Builder(mContext)
+                .setTitle("Title")
+                .setSubtitle("Subtitle")
+                .setDescription("Description")
+                .setNegativeButton("Negative Button", executor, (dialog, which) -> {
+                    Log.d(TAG, "Negative button pressed");
+                })
+                .setAllowBackgroundAuthentication(true)
+                .setAllowedAuthenticators(authenticators)
+                .build();
+        prompt.authenticate(new CancellationSignal(), executor,
+                new BiometricPrompt.AuthenticationCallback() {
+                    @Override
+                    public void onAuthenticationError(int errorCode, CharSequence errString) {
+                        Log.d(TAG, "onAuthenticationError: " + errorCode);
+                    }
+
+                    @Override
+                    public void onAuthenticationSucceeded(
+                            BiometricPrompt.AuthenticationResult result) {
+                        Log.d(TAG, "onAuthenticationSucceeded");
+                    }
+                });
+    }
+
     @NonNull
     protected static BiometricCallbackHelper.State getCallbackState(@NonNull TestJournal journal) {
         Utils.waitFor("Waiting for authentication callback",
@@ -445,6 +474,9 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
 
         assumeTrue(mInstrumentation.getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_SECURE_LOCK_SCREEN));
+
+        mHasStrongBox = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_STRONGBOX_KEYSTORE);
 
         // Keep the screen on for the duration of each test, since BiometricPrompt goes away
         // when screen turns off.

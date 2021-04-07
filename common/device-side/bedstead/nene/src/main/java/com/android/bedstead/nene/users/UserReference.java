@@ -18,19 +18,17 @@ package com.android.bedstead.nene.users;
 
 import static android.Manifest.permission.INTERACT_ACROSS_USERS_FULL;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.UserHandle;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContext;
 import com.android.bedstead.nene.users.User.UserState;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
-import com.android.compatibility.common.util.SystemUtil;
 
 import javax.annotation.Nullable;
 
@@ -41,16 +39,14 @@ import javax.annotation.Nullable;
  */
 public abstract class UserReference implements AutoCloseable {
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
-    private final Users mUsers;
+    private final TestApis mTestApis;
     private final int mId;
 
-    UserReference(Users users, int id) {
-        if (users == null) {
+    UserReference(TestApis testApis, int id) {
+        if (testApis == null) {
             throw new NullPointerException();
         }
-        mUsers = users;
+        mTestApis = testApis;
         mId = id;
     }
 
@@ -71,7 +67,7 @@ public abstract class UserReference implements AutoCloseable {
      */
     @Nullable
     public final User resolve() {
-        return mUsers.fetchUser(mId);
+        return mTestApis.users().fetchUser(mId);
     }
 
     /**
@@ -87,7 +83,7 @@ public abstract class UserReference implements AutoCloseable {
                     .addOperand(mId)
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-            mUsers.waitForUserToNotExistOrMatch(this, User::isRemoving);
+            mTestApis.users().waitForUserToNotExistOrMatch(this, User::isRemoving);
         } catch (AdbException e) {
             throw new NeneException("Could not remove user + " + this, e);
         }
@@ -111,7 +107,7 @@ public abstract class UserReference implements AutoCloseable {
                     .addOperand("-w")
                     .validate(ShellCommandUtils::startsWithSuccess)
                     .execute();
-            User waitedUser = mUsers.waitForUserToNotExistOrMatch(
+            User waitedUser = mTestApis.users().waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.RUNNING_UNLOCKED);
             if (waitedUser == null) {
                 throw new NeneException("User does not exist " + this);
@@ -137,7 +133,7 @@ public abstract class UserReference implements AutoCloseable {
                     .allowEmptyOutput(true)
                     .validate(String::isEmpty)
                     .execute();
-            User waitedUser = mUsers.waitForUserToNotExistOrMatch(
+            User waitedUser = mTestApis.users().waitForUserToNotExistOrMatch(
                     this, (user) -> user.state() == UserState.NOT_RUNNING);
             if (waitedUser == null) {
                 throw new NeneException("User does not exist " + this);
@@ -153,15 +149,18 @@ public abstract class UserReference implements AutoCloseable {
      * Make the user the foreground user.
      */
     public UserReference switchTo() {
-        try {
-            BlockingBroadcastReceiver broadcastReceiver =
-                    new BlockingBroadcastReceiver(sContext, Intent.ACTION_USER_FOREGROUND,
-                            (intent) ->((UserHandle)
-                                    intent.getParcelableExtra(Intent.EXTRA_USER))
-                                    .getIdentifier() == mId);
+        BlockingBroadcastReceiver broadcastReceiver =
+                new BlockingBroadcastReceiver(mTestApis.context().instrumentedContext(),
+                        Intent.ACTION_USER_FOREGROUND,
+                        (intent) ->((UserHandle)
+                                intent.getParcelableExtra(Intent.EXTRA_USER))
+                                .getIdentifier() == mId);
 
-            SystemUtil.runWithShellPermissionIdentity(
-                    broadcastReceiver::registerForAllUsers, INTERACT_ACROSS_USERS_FULL);
+        try {
+            try (PermissionContext p =
+                         mTestApis.permissions().withPermission(INTERACT_ACROSS_USERS_FULL)) {
+                broadcastReceiver.registerForAllUsers();
+            }
 
             // Expects no output on success or failure
             ShellCommand.builder("am switch-user")
@@ -173,6 +172,8 @@ public abstract class UserReference implements AutoCloseable {
             broadcastReceiver.awaitForBroadcast();
         } catch (AdbException e) {
             throw new NeneException("Could not switch to user", e);
+        } finally {
+            broadcastReceiver.unregisterQuietly();
         }
 
         return this;

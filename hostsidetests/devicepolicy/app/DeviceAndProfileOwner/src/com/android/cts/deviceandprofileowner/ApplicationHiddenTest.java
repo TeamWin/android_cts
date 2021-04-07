@@ -27,6 +27,7 @@ import android.util.Log;
 
 import com.android.bedstead.dpmwrapper.Utils;
 
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -99,6 +100,29 @@ public class ApplicationHiddenTest extends BaseDeviceAdminTest {
                         .that(mDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
                                 NONEXISTING_PACKAGE_NAME, true))
                         .isFalse();
+    }
+
+    public void testCannotHidePolicyExemptApps() throws Exception {
+        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        Log.v(mTag, "policyExemptApps: " + policyExemptApps);
+        if (policyExemptApps.isEmpty()) return;
+
+        policyExemptApps.forEach((app) -> {
+            try {
+                boolean hidden = mDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT,
+                        app, true);
+
+                assertWithMessage("setApplicationHidden(%s, true)", app).that(hidden).isFalse();
+            } finally {
+                maybeUnhideApp(app);
+            }
+        });
+    }
+
+    private void maybeUnhideApp(String app) {
+        if (mDevicePolicyManager.isApplicationHidden(ADMIN_RECEIVER_COMPONENT, app)) {
+            mDevicePolicyManager.setApplicationHidden(ADMIN_RECEIVER_COMPONENT, app, false);
+        }
     }
 
     private final class ApplicationHiddenReceiver extends BroadcastReceiver {

@@ -21,8 +21,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.content.Context;
 import android.os.UserHandle;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.users.UserReference;
@@ -37,11 +35,10 @@ import java.io.File;
 @RunWith(JUnit4.class)
 public class TestAppTest {
 
-    private final TestApis mTestApis = new TestApis();
-    private final UserReference mUser = mTestApis.users().instrumented();
-    private final UserHandle mUserHandle = mUser.userHandle();
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final UserReference sUser = sTestApis.users().instrumented();
+    private static final UserHandle sUserHandle = sUser.userHandle();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private TestAppProvider mTestAppProvider;
 
@@ -54,20 +51,20 @@ public class TestAppTest {
     public void reference_returnsNeneReference() {
         TestApp testApp = mTestAppProvider.any();
 
-        assertThat(testApp.reference()).isEqualTo(mTestApis.packages().find(testApp.packageName()));
+        assertThat(testApp.reference()).isEqualTo(sTestApis.packages().find(testApp.packageName()));
     }
 
     @Test
     public void resolve_returnsNenePackage() {
         TestApp testApp = mTestAppProvider.any();
-        testApp.install(mUser);
+        testApp.install(sUser);
 
         try {
             Package pkg = testApp.resolve();
 
             assertThat(pkg.packageName()).isEqualTo(testApp.packageName());
         } finally {
-            testApp.reference().uninstall(mUser);
+            testApp.reference().uninstall(sUser);
         }
     }
 
@@ -75,12 +72,12 @@ public class TestAppTest {
     public void install_userReference_installs() {
         TestApp testApp = mTestAppProvider.any();
 
-        testApp.install(mUser);
+        testApp.install(sUser);
 
         try {
-            assertThat(testApp.resolve().installedOnUsers()).contains(mUser);
+            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
         } finally {
-            testApp.reference().uninstall(mUser);
+            testApp.reference().uninstall(sUser);
         }
     }
 
@@ -88,12 +85,12 @@ public class TestAppTest {
     public void install_userHandle_installs() {
         TestApp testApp = mTestAppProvider.any();
 
-        testApp.install(mUserHandle);
+        testApp.install(sUserHandle);
 
         try {
-            assertThat(testApp.resolve().installedOnUsers()).contains(mUser);
+            assertThat(testApp.resolve().installedOnUsers()).contains(sUser);
         } finally {
-            testApp.reference().uninstall(mUser);
+            testApp.reference().uninstall(sUser);
         }
     }
 
