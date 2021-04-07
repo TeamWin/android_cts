@@ -562,13 +562,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         extras.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, incomingHandle);
         mTelecomManager.addNewIncomingCall(TestUtils.TEST_PHONE_ACCOUNT_HANDLE, extras);
 
-        try {
-            if (!connectionService.lock.tryAcquire(TestUtils.WAIT_FOR_CALL_ADDED_TIMEOUT_S,
-                    TimeUnit.SECONDS)) {
-                fail("Incoming Connection failure indication did not get called.");
-            }
-        } catch (InterruptedException e) {
-            fail("InterruptedException while waiting for incoming call failure");
+        if (!connectionService.waitForEvent(
+                MockConnectionService.EVENT_CONNECTION_SERVICE_CREATE_CONNECTION_FAILED)) {
+            fail("Incoming Connection failure indication did not get called.");
         }
 
         assertEquals("ConnectionService did not receive failed connection",
