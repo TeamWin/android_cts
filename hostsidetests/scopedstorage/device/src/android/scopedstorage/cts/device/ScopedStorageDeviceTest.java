@@ -816,9 +816,13 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
 
             try (InputStream in =
                          getContext().getResources().openRawResource(R.raw.img_with_metadata);
-                 OutputStream out = new FileOutputStream(jpgFile)) {
+                FileOutputStream out = new FileOutputStream(jpgFile)) {
                 // Dump the image we have to external storage
                 FileUtils.copy(in, out);
+                // Sync file to disk to ensure file is fully written to the lower fs attempting to
+                // open for redaction. Otherwise, the FUSE daemon might not accurately parse the
+                // EXIF tags and might misleadingly think there are not tags to redact
+                out.getFD().sync();
 
                 HashMap<String, String> exif = getExifMetadata(jpgFile);
                 assertExifMetadataMatch(exif, originalExif);
