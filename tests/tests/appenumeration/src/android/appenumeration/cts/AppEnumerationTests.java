@@ -82,6 +82,8 @@ import static android.appenumeration.cts.Constants.TARGET_NO_API;
 import static android.appenumeration.cts.Constants.TARGET_SHARE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_LIBRARY_PACKAGE;
 import static android.appenumeration.cts.Constants.TARGET_SHARED_USER;
+import static android.appenumeration.cts.Constants.TARGET_STUB;
+import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
@@ -653,7 +655,7 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
+    public void reinstallTarget_broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
@@ -667,13 +669,43 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void broadcastRemoved_visibleReceives() throws Exception {
+    public void reinstallTarget_broadcastRemoved_visibleReceives() throws Exception {
         final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
                 Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             Assert.assertEquals(TARGET_FILTERS,
+                    Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
+        } catch (MissingBroadcastException e) {
+            fail();
+        }
+    }
+
+    @Test
+    public void uninstallTarget_broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        try {
+            result.await();
+            fail();
+        } catch (MissingBroadcastException e) {
+            // hooray
+        }
+    }
+
+    @Test
+    public void uninstallTarget_broadcastRemoved_visibleReceives() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommand(QUERIES_NOTHING_PERM, TARGET_STUB,
+                /* targetUid */ INVALID_UID, /* intentExtra */ null,
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        try {
+            Assert.assertEquals(TARGET_STUB,
                     Uri.parse(result.await().getString(EXTRA_DATA)).getSchemeSpecificPart());
         } catch (MissingBroadcastException e) {
             fail();
@@ -1070,5 +1102,16 @@ public class AppEnumerationTests {
         final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
                 targetUid, intentExtra, action, /* waitForReady */ false);
         return result.await();
+    }
+
+    private void ensurePackageIsInstalled(String packageName, String apkPath) {
+        runShellCommand("pm install -R " + apkPath);
+        PackageInfo info = null;
+        try {
+            info = sPm.getPackageInfo(packageName, /* flags */ 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Ignore
+        }
+        Assert.assertNotNull(packageName + " should be installed", info);
     }
 }
