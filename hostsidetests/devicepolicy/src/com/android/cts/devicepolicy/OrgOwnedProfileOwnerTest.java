@@ -65,19 +65,11 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     private static final String TEST_LAUNCHER_APK = "TestLauncher.apk";
     private static final String TEST_LAUNCHER_COMPONENT =
             "com.android.cts.testlauncher/android.app.Activity";
-    private static final String QUIET_MODE_TOGGLE_ACTIVITY =
-            "com.android.cts.testlauncher/.QuietModeToggleActivity";
-    private static final String EXTRA_QUIET_MODE_STATE =
-            "com.android.cts.testactivity.QUIET_MODE_STATE";
     public static final String SUSPENSION_CHECKER_CLASS =
             "com.android.cts.suspensionchecker.ActivityLaunchTest";
 
-    private static final String ACTION_ACKNOWLEDGEMENT_REQUIRED =
-            "com.android.cts.deviceandprofileowner.action.ACKNOWLEDGEMENT_REQUIRED";
-    private static final String ACTION_ARGUMENT = "broadcast-action";
-
     private static final String USER_IS_NOT_STARTED = "User is not started";
-    private static final long USER_STOP_TIMEOUT_SEC = 30;
+    private static final long USER_STOP_TIMEOUT_SEC = 60;
 
     protected int mUserId;
     private static final String DISALLOW_CONFIG_LOCATION = "no_config_location";
@@ -608,22 +600,15 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 "testSetManagedProfileMaximumTimeOff1Sec", mUserId);
 
-        final String defaultLauncher = getDefaultLauncher();
-        try {
-            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
-            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
-            toggleQuietMode(true);
-            // Verify that at some point personal app becomes impossible to launch.
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, SUSPENSION_CHECKER_CLASS,
-                    "testWaitForActivityNotLaunchable", mPrimaryUserId);
-            toggleQuietMode(false);
-            // Ensure the profile is properly started before wipe broadcast is sent in teardown.
-            waitForUserUnlock(mUserId);
-            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
-                    "testPersonalAppsSuspendedByTimeout", mUserId);
-        } finally {
-            setAndStartLauncher(defaultLauncher);
-        }
+        toggleQuietMode(true);
+        // Verify that at some point personal app becomes impossible to launch.
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, SUSPENSION_CHECKER_CLASS,
+                "testWaitForActivityNotLaunchable", mPrimaryUserId);
+        toggleQuietMode(false);
+        // Ensure the profile is properly started before wipe broadcast is sent in teardown.
+        waitForUserUnlock(mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                "testPersonalAppsSuspendedByTimeout", mUserId);
     }
 
     @Test
@@ -634,10 +619,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 "testSetManagedProfileMaximumTimeOff1Year", mUserId);
 
-        final String defaultLauncher = getDefaultLauncher();
         try {
-            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
-            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
             toggleQuietMode(true);
             waitForUserStopped(mUserId);
             toggleQuietMode(false);
@@ -652,7 +634,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
                     "testComplianceAcknowledgementNotRequired", mUserId);
 
         } finally {
-            setAndStartLauncher(defaultLauncher);
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                     "testClearComplianceSharedPreference", mUserId);
         }
@@ -669,10 +650,7 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                 "testSetOverrideOnComplianceAcknowledgementRequired", mUserId);
 
-        final String defaultLauncher = getDefaultLauncher();
         try {
-            installAppAsUser(TEST_LAUNCHER_APK, true, true, mPrimaryUserId);
-            setAndStartLauncher(TEST_LAUNCHER_COMPONENT);
             toggleQuietMode(true);
             waitForUserStopped(mUserId);
             toggleQuietMode(false);
@@ -686,7 +664,6 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                     "testAcknowledgeCompliance", mUserId);
         } finally {
-            setAndStartLauncher(defaultLauncher);
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
                     "testClearComplianceSharedPreference", mUserId);
         }
@@ -786,18 +763,10 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
-        final String str;
-        // TV launcher uses intent filter priority to prevent 3p launchers replacing it
-        // this causes the activity that toggles quiet mode to be suspended
-        // and the profile would never start
-        if (isTv()) {
-            str = quietModeEnable ? String.format("am stop-user -f %d", mUserId)
-                    : String.format("am start-user %d", mUserId);
-        } else {
-            str = String.format("am start-activity -n %s --ez %s %s",
-                    QUIET_MODE_TOGGLE_ACTIVITY, EXTRA_QUIET_MODE_STATE, quietModeEnable);
-        }
-        executeShellCommand(str);
+        final String cmd = quietModeEnable
+                ? String.format("am stop-user -f %d", mUserId)
+                : String.format("am start-user %d", mUserId);
+        executeShellCommand(cmd);
     }
 
     private void setAndStartLauncher(String component) throws Exception {
