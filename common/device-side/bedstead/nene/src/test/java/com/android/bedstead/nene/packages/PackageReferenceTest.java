@@ -26,6 +26,7 @@ import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 import com.android.bedstead.nene.users.UserReference;
 
+import org.junit.AfterClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +52,10 @@ public class PackageReferenceTest {
             new File("/data/local/tmp/NeneTestApp1.apk");
     private static final Context sContext =
             sTestApis.context().instrumentedContext();
+    private static final UserReference sOtherUser = sTestApis.users().createUser().createAndStart();
+
+    private static final PackageReference sInstrumentedPackage =
+            sTestApis.packages().find(sContext.getPackageName());
 
     // Relies on this being declared by AndroidManifest.xml
     // TODO(scottjonathan): Replace with TestApp
@@ -60,6 +65,13 @@ public class PackageReferenceTest {
             "android.permission.INTERACT_ACROSS_USERS";
     private static final String NON_EXISTING_PERMISSION = "aPermissionThatDoesntExist";
     private static final String USER_SPECIFIC_PERMISSION = "android.permission.READ_CONTACTS";
+
+
+    @AfterClass
+    public static void teardownClass() {
+        // TODO(scottjonathan): Use annotations to share state instead of doing so manually
+        sOtherUser.remove();
+    }
 
     @Test
     public void packageName_returnsPackageName() {
@@ -78,28 +90,27 @@ public class PackageReferenceTest {
 
     @Test
     public void install_alreadyInstalled_installsInUser() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            PackageReference pkg = sTestApis.packages().find(sContext.getPackageName());
+        sInstrumentedPackage.install(sOtherUser);
 
-            pkg.install(user);
-
-            assertThat(pkg.resolve().installedOnUsers()).contains(user);
+        try {
+            assertThat(sInstrumentedPackage.resolve().installedOnUsers()).contains(sOtherUser);
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 
     @Test
     public void uninstall_packageIsInstalledForDifferentUser_isUninstalledForUser() {
-        UserReference otherUser = sTestApis.users().createUser().createAndStart();
-
+        PackageReference pkg = sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
         try {
-            sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
-            sTestApis.packages().install(otherUser, TEST_APP_APK_FILE);
+            sTestApis.packages().install(sOtherUser, TEST_APP_APK_FILE);
 
             mTestAppReference.uninstall(sUser);
 
-            assertThat(mTestAppReference.resolve().installedOnUsers()).containsExactly(otherUser);
+            assertThat(mTestAppReference.resolve().installedOnUsers()).containsExactly(sOtherUser);
         } finally {
-            otherUser.remove();
+            pkg.uninstall(sUser);
+            pkg.uninstall(sOtherUser);
         }
     }
 
@@ -119,14 +130,12 @@ public class PackageReferenceTest {
 
     @Test
     public void uninstall_packageNotInstalledForUser_doesNotThrowException() {
-        UserReference otherUser = sTestApis.users().createUser().createAndStart();
         sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
 
         try {
-            mTestAppReference.uninstall(otherUser);
+            mTestAppReference.uninstall(sOtherUser);
         } finally {
             mTestAppReference.uninstall(sUser);
-            otherUser.remove();
         }
     }
 
@@ -153,33 +162,33 @@ public class PackageReferenceTest {
 
     @Test
     public void grantPermission_permissionIsGranted() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
-            packageReference.grantPermission(user, DECLARED_RUNTIME_PERMISSION);
+        sInstrumentedPackage.install(sOtherUser);
+        sInstrumentedPackage.grantPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
 
-            assertThat(packageReference.resolve().grantedPermissions(user))
+        try {
+            assertThat(sInstrumentedPackage.resolve().grantedPermissions(sOtherUser))
                     .contains(DECLARED_RUNTIME_PERMISSION);
+        } finally {
+            sInstrumentedPackage.denyPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
         }
     }
 
     @Test
     public void grantPermission_permissionIsUserSpecific_permissionIsGrantedOnlyForThatUser() {
         // Permissions are auto-granted on the current user so we need to test against new users
-        try (UserReference user = sTestApis.users().createUser().create();
-             UserReference user2 = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
-            packageReference.install(user2);
+        try (UserReference newUser = sTestApis.users().createUser().create()) {
+            sInstrumentedPackage.install(sOtherUser);
+            sInstrumentedPackage.install(newUser);
 
-            packageReference.grantPermission(user, USER_SPECIFIC_PERMISSION);
+            sInstrumentedPackage.grantPermission(newUser, USER_SPECIFIC_PERMISSION);
 
-            Package resolvedPackage = packageReference.resolve();
-            assertThat(resolvedPackage.grantedPermissions(user2))
+            Package resolvedPackage = sInstrumentedPackage.resolve();
+            assertThat(resolvedPackage.grantedPermissions(sOtherUser))
                     .doesNotContain(USER_SPECIFIC_PERMISSION);
-            assertThat(resolvedPackage.grantedPermissions(user)).contains(USER_SPECIFIC_PERMISSION);
+            assertThat(resolvedPackage.grantedPermissions(newUser))
+                    .contains(USER_SPECIFIC_PERMISSION);
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 
@@ -199,11 +208,11 @@ public class PackageReferenceTest {
 
     @Test
     public void grantPermission_packageIsNotInstalledForUser_throwsException() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            assertThrows(NeneException.class,
-                    () -> sTestApis.packages().find(sContext.getPackageName()).grantPermission(user,
-                    DECLARED_RUNTIME_PERMISSION));
-        }
+        sInstrumentedPackage.uninstall(sOtherUser);
+
+        assertThrows(NeneException.class,
+                () -> sInstrumentedPackage.grantPermission(sOtherUser,
+                        DECLARED_RUNTIME_PERMISSION));
     }
 
     @Test
@@ -225,16 +234,16 @@ public class PackageReferenceTest {
 
     @Test
     public void denyPermission_permissionIsNotGranted() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
-            packageReference.grantPermission(user, USER_SPECIFIC_PERMISSION);
+        sInstrumentedPackage.install(sOtherUser);
+        try {
+            sInstrumentedPackage.grantPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
 
-            packageReference.denyPermission(user, USER_SPECIFIC_PERMISSION);
+            sInstrumentedPackage.denyPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
 
-            assertThat(packageReference.resolve().grantedPermissions(user))
+            assertThat(sInstrumentedPackage.resolve().grantedPermissions(sOtherUser))
                     .doesNotContain(USER_SPECIFIC_PERMISSION);
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 
@@ -254,22 +263,21 @@ public class PackageReferenceTest {
 
     @Test
     public void denyPermission_packageIsNotInstalledForUser_throwsException() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            assertThrows(NeneException.class,
-                    () -> sTestApis.packages().find(sContext.getPackageName()).denyPermission(user,
-                            DECLARED_RUNTIME_PERMISSION));
-        }
+        sInstrumentedPackage.uninstall(sOtherUser);
+
+        assertThrows(NeneException.class,
+                () -> sInstrumentedPackage.denyPermission(sOtherUser, DECLARED_RUNTIME_PERMISSION));
     }
 
     @Test
     public void denyPermission_installPermission_throwsException() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
+        sInstrumentedPackage.install(sOtherUser);
 
+        try {
             assertThrows(NeneException.class, () ->
-                    packageReference.denyPermission(user, INSTALL_PERMISSION));
+                    sInstrumentedPackage.denyPermission(sOtherUser, INSTALL_PERMISSION));
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 
@@ -282,37 +290,36 @@ public class PackageReferenceTest {
 
     @Test
     public void denyPermission_alreadyDenied_doesNothing() {
-        try (UserReference user = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
-            packageReference.denyPermission(user, USER_SPECIFIC_PERMISSION);
+        sInstrumentedPackage.install(sOtherUser);
+        try {
+            sInstrumentedPackage.denyPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
+            sInstrumentedPackage.denyPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
 
-            packageReference.denyPermission(user, USER_SPECIFIC_PERMISSION);
-
-            assertThat(packageReference.resolve().grantedPermissions(user))
+            assertThat(sInstrumentedPackage.resolve().grantedPermissions(sOtherUser))
                     .doesNotContain(USER_SPECIFIC_PERMISSION);
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 
     @Test
     public void denyPermission_permissionIsUserSpecific_permissionIsDeniedOnlyForThatUser() {
         // Permissions are auto-granted on the current user so we need to test against new users
-        try (UserReference user = sTestApis.users().createUser().create();
-             UserReference user2 = sTestApis.users().createUser().create()) {
-            PackageReference packageReference =
-                    sTestApis.packages().find(sContext.getPackageName());
-            packageReference.install(user);
-            packageReference.install(user2);
-            packageReference.grantPermission(user, USER_SPECIFIC_PERMISSION);
-            packageReference.grantPermission(user2, USER_SPECIFIC_PERMISSION);
+        try (UserReference newUser = sTestApis.users().createUser().create()) {
+            sInstrumentedPackage.install(sOtherUser);
+            sInstrumentedPackage.install(newUser);
+            sInstrumentedPackage.grantPermission(sOtherUser, USER_SPECIFIC_PERMISSION);
+            sInstrumentedPackage.grantPermission(newUser, USER_SPECIFIC_PERMISSION);
 
-            packageReference.denyPermission(user2, USER_SPECIFIC_PERMISSION);
+            sInstrumentedPackage.denyPermission(newUser, USER_SPECIFIC_PERMISSION);
 
-            Package resolvedPackage = packageReference.resolve();
-            assertThat(resolvedPackage.grantedPermissions(user2))
+            Package resolvedPackage = sInstrumentedPackage.resolve();
+            assertThat(resolvedPackage.grantedPermissions(newUser))
                     .doesNotContain(USER_SPECIFIC_PERMISSION);
-            assertThat(resolvedPackage.grantedPermissions(user)).contains(USER_SPECIFIC_PERMISSION);
+            assertThat(resolvedPackage.grantedPermissions(sOtherUser))
+                    .contains(USER_SPECIFIC_PERMISSION);
+        } finally {
+            sInstrumentedPackage.uninstall(sOtherUser);
         }
     }
 }
