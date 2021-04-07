@@ -79,7 +79,7 @@ public class HandleSplashScreenExitActivity extends Activity {
             mSSM.setOnExitAnimationListener(mSplashScreenExitHandler);
         }
         if (getIntent().getBooleanExtra(CANCEL_HANDLE_EXIT, false)) {
-            mSSM.setOnExitAnimationListener(null);
+            mSSM.clearOnExitAnimationListener();
         }
     }
 
