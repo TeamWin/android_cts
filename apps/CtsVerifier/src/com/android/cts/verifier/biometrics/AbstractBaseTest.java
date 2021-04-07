@@ -16,15 +16,10 @@
 
 package com.android.cts.verifier.biometrics;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricManager.Authenticators;
-import android.hardware.biometrics.BiometricPrompt;
-import android.hardware.biometrics.BiometricPrompt.AuthenticationCallback;
-import android.hardware.biometrics.BiometricPrompt.AuthenticationResult;
 import android.os.Bundle;
-import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
@@ -33,7 +28,6 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
 
 import java.util.concurrent.Executor;
 
@@ -92,8 +86,7 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
     protected void onBiometricEnrollFinished() {
     }
 
-    void checkAndEnroll(Button enrollButton, int requestedStrength,
-            int[] acceptableConfigStrengths) {
+    void checkAndEnroll(Button enrollButton, int requestedStrength) {
         // Check that no biometrics (of any strength) are enrolled
         int result = mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK);
         if (result == BiometricManager.BIOMETRIC_SUCCESS) {
@@ -107,23 +100,12 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
             showToastAndLog("Please ensure that all biometrics are removed before starting"
                     + " this test");
         } else if (result == BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE) {
-            boolean configContainsRequestedStrength = false;
-            for (int strength : acceptableConfigStrengths) {
-                if (Utils.deviceConfigContains(this, strength)) {
-                    configContainsRequestedStrength = true;
-                    break;
-                }
-            }
-
-            if (configContainsRequestedStrength) {
-                showToastAndLog("Your configuration contains the requested biometric strength, but"
-                        + " is inconsistent with BiometricManager.");
-            } else {
-                showToastAndLog("This device does not have a sensor meeting the requested strength,"
-                        + " you may pass this test");
-                enrollButton.setEnabled(false);
-                getPassButton().setEnabled(true);
-            }
+            // Multi-sensor cases are more thoroughly tested in regular CTS (not CTS-V), this
+            // should be fine for the purposes of CTS-V.
+            showToastAndLog("This device does not have a sensor meeting the requested strength,"
+                    + " you may pass this test");
+            enrollButton.setEnabled(false);
+            getPassButton().setEnabled(true);
         } else if (result == BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED) {
             startBiometricEnroll(REQUEST_ENROLL_WHEN_NONE_ENROLLED, requestedStrength);
         } else {

@@ -42,7 +42,7 @@ public class UserTest {
     public void id_returnsId() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mId = USER_ID;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.id()).isEqualTo(USER_ID);
     }
@@ -52,14 +52,14 @@ public class UserTest {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mId = null;
 
-        assertThrows(NullPointerException.class, () -> new User(mTestApis.users(), mutableUser));
+        assertThrows(NullPointerException.class, () -> new User(mTestApis, mutableUser));
     }
 
     @Test
     public void serialNo_returnsSerialNo() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mSerialNo = SERIAL_NO;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.serialNo()).isEqualTo(SERIAL_NO);
     }
@@ -67,7 +67,7 @@ public class UserTest {
     @Test
     public void serialNo_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.serialNo()).isNull();
     }
@@ -76,7 +76,7 @@ public class UserTest {
     public void name_returnsName() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mName = USER_NAME;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.name()).isEqualTo(USER_NAME);
     }
@@ -84,7 +84,7 @@ public class UserTest {
     @Test
     public void name_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.name()).isNull();
     }
@@ -93,7 +93,7 @@ public class UserTest {
     public void type_returnsName() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mType = USER_TYPE;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.type()).isEqualTo(USER_TYPE);
     }
@@ -101,7 +101,7 @@ public class UserTest {
     @Test
     public void type_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.type()).isNull();
     }
@@ -110,7 +110,7 @@ public class UserTest {
     public void hasProfileOwner_returnsHasProfileOwner() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mHasProfileOwner = true;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.hasProfileOwner()).isTrue();
     }
@@ -118,7 +118,7 @@ public class UserTest {
     @Test
     public void hasProfileOwner_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.hasProfileOwner()).isNull();
     }
@@ -127,7 +127,7 @@ public class UserTest {
     public void isPrimary_returnsIsPrimary() {
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mIsPrimary = true;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.isPrimary()).isTrue();
     }
@@ -135,7 +135,7 @@ public class UserTest {
     @Test
     public void isPrimary_notSet_returnsNull() {
         User.MutableUser mutableUser = createValidMutableUser();
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.isPrimary()).isNull();
     }
@@ -177,10 +177,10 @@ public class UserTest {
 
     @Test
     public void parent_returnsParent() {
-        UserReference parentUser = new User(mTestApis.users(), createValidMutableUser());
+        UserReference parentUser = new User(mTestApis, createValidMutableUser());
         User.MutableUser mutableUser = createValidMutableUser();
         mutableUser.mParent = parentUser;
-        User user = new User(mTestApis.users(), mutableUser);
+        User user = new User(mTestApis, mutableUser);
 
         assertThat(user.parent()).isEqualTo(parentUser);
     }

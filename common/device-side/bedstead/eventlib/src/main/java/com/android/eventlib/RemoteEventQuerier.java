@@ -33,8 +33,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.permissions.PermissionContext;
 
@@ -54,9 +52,8 @@ public class
 
     private static final int CONNECTION_TIMEOUT_SECONDS = 30;
     private static final String LOG_TAG = "RemoteEventQuerier";
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
     private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private final String mPackageName;
     private final EventLogsQuery<E, F> mEventLogsQuery;

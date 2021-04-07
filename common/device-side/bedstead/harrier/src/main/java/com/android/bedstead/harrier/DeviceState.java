@@ -24,7 +24,6 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -80,7 +79,7 @@ import java.util.stream.Collectors;
 public final class DeviceState implements TestRule {
 
     private final Context mContext = ApplicationProvider.getApplicationContext();
-    private final TestApis mTestApis = new TestApis();
+    private static final TestApis sTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
     private final boolean mSkipTestTeardown;
@@ -205,10 +204,10 @@ public final class DeviceState implements TestRule {
 
     private void requireFeature(String feature, FailureMode failureMode) {
         if (failureMode.equals(FailureMode.FAIL)) {
-            assertThat(mTestApis.packages().features().contains(feature)).isTrue();
+            assertThat(sTestApis.packages().features().contains(feature)).isTrue();
         } else if (failureMode.equals(FailureMode.SKIP)) {
             assumeTrue("Device must have feature " + feature,
-                    mTestApis.packages().features().contains(feature));
+                    sTestApis.packages().features().contains(feature));
         } else {
             throw new IllegalStateException("Unknown failure mode: " + failureMode);
         }
@@ -216,8 +215,8 @@ public final class DeviceState implements TestRule {
 
     private void requireUserSupported(String userType) {
         assumeTrue("Device must support user type " + userType
-                + " only supports: " + mTestApis.users().supportedTypes(),
-                mTestApis.users().supportedType(userType) != null);
+                + " only supports: " + sTestApis.users().supportedTypes(),
+                sTestApis.users().supportedType(userType) != null);
     }
 
     public enum UserType {
@@ -230,8 +229,7 @@ public final class DeviceState implements TestRule {
 
     private static final String LOG_TAG = "DeviceState";
 
-    private static final Instrumentation sInstrumentation =
-            InstrumentationRegistry.getInstrumentation();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     private List<UserReference> mCreatedUsers = new ArrayList<>();
     private List<UserBuilder> mRemovedUsers = new ArrayList<>();
@@ -249,14 +247,14 @@ public final class DeviceState implements TestRule {
 
     @Nullable
     public UserReference workProfile(UserReference forUser) {
-        return mTestApis.users().all().stream()
+        return sTestApis.users().all().stream()
                 .filter(u -> forUser.equals(u.parent())
                         && u.type().name().equals(MANAGED_PROFILE_TYPE_NAME))
                 .findFirst().orElse(null);
     }
 
     public boolean isRunningOnWorkProfile() {
-        return mTestApis.users().instrumented()
+        return sTestApis.users().instrumented()
                 .resolve().type().name().equals(MANAGED_PROFILE_TYPE_NAME);
     }
 
@@ -272,23 +270,23 @@ public final class DeviceState implements TestRule {
 
     @Nullable
     public UserReference tvProfile(UserReference forUser) {
-        return mTestApis.users().all().stream()
+        return sTestApis.users().all().stream()
                 .filter(u ->
                         forUser.equals(u.parent()) && u.type().name().equals(TV_PROFILE_TYPE_NAME))
                 .findFirst().orElse(null);
     }
 
     public boolean isRunningOnTvProfile() {
-        return mTestApis.users().instrumented().resolve()
+        return sTestApis.users().instrumented().resolve()
                 .type().name().equals(TV_PROFILE_TYPE_NAME);
     }
 
     public boolean isRunningOnPrimaryUser() {
-        return mTestApis.users().instrumented().resolve().isPrimary();
+        return sTestApis.users().instrumented().resolve().isPrimary();
     }
 
     public boolean isRunningOnSecondaryUser() {
-        return mTestApis.users().instrumented().resolve()
+        return sTestApis.users().instrumented().resolve()
                 .type().name().equals(SECONDARY_USER_TYPE_NAME);
     }
 
@@ -299,7 +297,7 @@ public final class DeviceState implements TestRule {
      */
     @Nullable
     public UserReference primaryUser() {
-        return mTestApis.users().all()
+        return sTestApis.users().all()
                 .stream().filter(User::isPrimary).findFirst().orElse(null);
     }
 
@@ -318,7 +316,7 @@ public final class DeviceState implements TestRule {
     }
 
     private Collection<UserReference> secondaryUsers() {
-        return mTestApis.users().all()
+        return sTestApis.users().all()
                 .stream().filter(u -> u.type().name().equals(SECONDARY_USER_TYPE_NAME))
                 .collect(Collectors.toSet());
     }
@@ -337,10 +335,10 @@ public final class DeviceState implements TestRule {
         workProfile.start();
 
         if (installTestApp) {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .install(workProfile);
         } else {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .uninstall(workProfile);
         }
     }
@@ -372,10 +370,10 @@ public final class DeviceState implements TestRule {
         tvProfile.start();
 
         if (installTestApp) {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .install(tvProfile);
         } else {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .uninstall(tvProfile);
         }
     }
@@ -405,10 +403,10 @@ public final class DeviceState implements TestRule {
         secondaryUser.start();
 
         if (installTestApp) {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .install(secondaryUser);
         } else {
-            mTestApis.packages().find(sInstrumentation.getContext().getPackageName())
+            sTestApis.packages().find(sContext.getPackageName())
                     .uninstall(secondaryUser);
         }
     }
@@ -429,7 +427,7 @@ public final class DeviceState implements TestRule {
             return; // Nothing to remove
         }
 
-        mRemovedUsers.add(mTestApis.users().createUser()
+        mRemovedUsers.add(sTestApis.users().createUser()
                 .name(user.name())
                 .type(user.type())
                 .parent(user.parent()));
@@ -439,7 +437,7 @@ public final class DeviceState implements TestRule {
 
     public void requireCanSupportAdditionalUser() {
         int maxUsers = getMaxNumberOfUsersSupported();
-        int currentUsers = mTestApis.users().all().size();
+        int currentUsers = sTestApis.users().all().size();
 
         assumeTrue("The device does not have space for an additional user (" + currentUsers +
                 " current users, " + maxUsers + " max users)", currentUsers + 1 <= maxUsers);
@@ -470,7 +468,7 @@ public final class DeviceState implements TestRule {
     private UserReference resolveUserTypeToUser(UserType userType) {
         switch (userType) {
             case CURRENT_USER:
-                return mTestApis.users().instrumented();
+                return sTestApis.users().instrumented();
             case PRIMARY_USER:
                 return primaryUser();
             case SECONDARY_USER:
@@ -508,9 +506,9 @@ public final class DeviceState implements TestRule {
     private UserReference createWorkProfile(UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
-            UserReference user = mTestApis.users().createUser()
+            UserReference user = sTestApis.users().createUser()
                     .parent(parent)
-                    .type(mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
+                    .type(sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME))
                     .createAndStart();
             mCreatedUsers.add(user);
             return user;
@@ -522,9 +520,9 @@ public final class DeviceState implements TestRule {
     private UserReference createTvProfile(UserReference parent) {
         requireCanSupportAdditionalUser();
         try {
-            UserReference user = mTestApis.users().createUser()
+            UserReference user = sTestApis.users().createUser()
                     .parent(parent)
-                    .type(mTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
+                    .type(sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
                     .createAndStart();
             mCreatedUsers.add(user);
             return user;
@@ -536,7 +534,7 @@ public final class DeviceState implements TestRule {
     private UserReference createSecondaryUser() {
         requireCanSupportAdditionalUser();
         try {
-            UserReference user = mTestApis.users().createUser()
+            UserReference user = sTestApis.users().createUser()
                     .createAndStart();
             mCreatedUsers.add(user);
             return user;

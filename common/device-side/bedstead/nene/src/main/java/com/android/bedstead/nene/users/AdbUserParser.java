@@ -21,6 +21,7 @@ import android.os.Build;
 
 import androidx.annotation.Nullable;
 
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbParseException;
 
 import java.util.Map;
@@ -31,14 +32,14 @@ import java.util.Map;
 @TargetApi(Build.VERSION_CODES.O)
 interface AdbUserParser {
 
-    static AdbUserParser get(Users users, int sdkVersion) {
+    static AdbUserParser get(TestApis testApis, int sdkVersion) {
         if (sdkVersion >= 31) {
-            return new AdbUserParser31(users);
+            return new AdbUserParser31(testApis);
         }
         if (sdkVersion >= 30) {
-            return new AdbUserParser30(users);
+            return new AdbUserParser30(testApis);
         }
-        return new AdbUserParser26(users);
+        return new AdbUserParser26(testApis);
     }
 
     /**

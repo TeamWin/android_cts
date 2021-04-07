@@ -264,4 +264,15 @@ public class InputDeviceVibratorManagerTest {
         // in combined effects is prebaked the combined effect will not be played.
         assertEquals(0, getVibrationCount(1 /* totalVibrations */, 1000 /* timeoutMills */));
     }
+
+    @Test
+    public void testCombinedVibrationEffectsSingleVibratorId() {
+        final int[] ids = mVibratorManager.getVibratorIds();
+        CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
+        int[] vibratorIds = mVibratorManager.getVibratorIds();
+        comb.addVibrator(ids[0], VibrationEffect.createOneShot(1000,
+                VibrationEffect.DEFAULT_AMPLITUDE));
+        mVibratorManager.vibrate(comb.combine());
+        assertEquals(1, getVibrationCount(1 /* totalVibrations */, 1000 /* timeoutMills */));
+    }
 }

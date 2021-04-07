@@ -1577,6 +1577,9 @@ public class ActivityManagerTest extends InstrumentationTestCase {
                     PACKAGE_NAME_APP3, PACKAGE_NAME_APP3, 0, null);
             watcher3.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY, null);
 
+            // Launch home so we'd have cleared these the above test activities from recents.
+            launchHome();
+
             // Now stop the foreground service, we'd have to do via the controller interface
             final Message msg = Message.obtain();
             try {

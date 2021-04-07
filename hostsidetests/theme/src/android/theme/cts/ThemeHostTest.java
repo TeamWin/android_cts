@@ -147,8 +147,6 @@ public class ThemeHostTest extends DeviceTestCase {
         super.tearDown();
     }
 
-    // b/183706483
-    @RequiresDevice
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest()) {
             Log.logAndDisplay(LogLevel.INFO, LOG_TAG, "Skipped themes test for watch / TV / automotive");
