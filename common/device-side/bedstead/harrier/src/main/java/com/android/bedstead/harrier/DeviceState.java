@@ -60,7 +60,9 @@ import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -231,26 +233,52 @@ public final class DeviceState implements TestRule {
 
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
-    private List<UserReference> mCreatedUsers = new ArrayList<>();
-    private List<UserBuilder> mRemovedUsers = new ArrayList<>();
-    private List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
+    private final Map<UserReference, UserReference> mWorkProfiles = new HashMap<>();
 
-    @Nullable
+    private final List<UserReference> mCreatedUsers = new ArrayList<>();
+    private final List<UserBuilder> mRemovedUsers = new ArrayList<>();
+    private final List<BlockingBroadcastReceiver> mRegisteredBroadcastReceivers = new ArrayList<>();
+
+    /**
+     * Get the {@link UserReference} of the work profile for the current user
+     *
+     * <p>This should only be used to get work profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed work profile
+     */
     public UserReference workProfile() {
         return workProfile(/* forUser= */ UserType.CURRENT_USER);
     }
 
-    @Nullable
+    /**
+     * Get the {@link UserReference} of the work profile.
+     *
+     * <p>This should only be used to get work profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed work profile for the given user
+     */
     public UserReference workProfile(UserType forUser) {
         return workProfile(resolveUserTypeToUser(forUser));
     }
 
-    @Nullable
+    /**
+     * Get the {@link UserReference} of the work profile.
+     *
+     * <p>This should only be used to get work profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed work profile for the given user
+     */
     public UserReference workProfile(UserReference forUser) {
-        return sTestApis.users().all().stream()
-                .filter(u -> forUser.equals(u.parent())
-                        && u.type().name().equals(MANAGED_PROFILE_TYPE_NAME))
-                .findFirst().orElse(null);
+        if (!mWorkProfiles.containsKey(forUser)) {
+            throw new IllegalStateException(
+                    "No harrier-managed work profile. This method should only be used when Harrier "
+                            + "has been used to create the work profile.");
+        }
+
+        return mWorkProfiles.get(forUser);
     }
 
     public boolean isRunningOnWorkProfile() {
@@ -321,13 +349,16 @@ public final class DeviceState implements TestRule {
                 .collect(Collectors.toSet());
     }
 
-    public void ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
+    private UserReference ensureHasWorkProfile(boolean installTestApp, UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
         requireUserSupported(MANAGED_PROFILE_TYPE_NAME);
 
         UserReference forUserReference = resolveUserTypeToUser(forUser);
 
-        UserReference workProfile = workProfile(forUserReference);
+        UserReference workProfile =
+                sTestApis.users().findProfileOfType(
+                        sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                        forUserReference);
         if (workProfile == null) {
             workProfile = createWorkProfile(forUserReference);
         }
@@ -341,17 +372,20 @@ public final class DeviceState implements TestRule {
             sTestApis.packages().find(sContext.getPackageName())
                     .uninstall(workProfile);
         }
+
+        mWorkProfiles.put(forUserReference, workProfile);
+        return workProfile;
     }
 
-    /**
-     * Ensure that there is no work profile.
-     */
-    public void ensureHasNoWorkProfile(UserType forUser) {
+    private void ensureHasNoWorkProfile(UserType forUser) {
         requireFeature("android.software.managed_users", FailureMode.SKIP);
 
         UserReference forUserReference = resolveUserTypeToUser(forUser);
 
-        UserReference workProfile = workProfile(forUserReference);
+        UserReference workProfile =
+                sTestApis.users().findProfileOfType(
+                        sTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME),
+                        forUserReference);
         if (workProfile != null) {
             removeAndRecordUser(workProfile.resolve());
         }
@@ -483,6 +517,8 @@ public final class DeviceState implements TestRule {
     }
 
     private void teardownNonShareableState() {
+        mWorkProfiles.clear();
+
         for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
             broadcastReceiver.unregisterQuietly();
         }

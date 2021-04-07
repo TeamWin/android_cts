@@ -21,11 +21,32 @@ java_library_static {
     sdk_version: "test_current",
 
     srcs: [
-        "src/**/*.java",
+        "src/main/java/**/*.java",
     ],
 
     static_libs: [
         "Nene",
         "compatibility-device-util-axt"
     ]
+}
+
+android_test {
+    name: "HarrierTest",
+    srcs: [
+        "src/test/java/**/*.java"
+    ],
+    test_suites: [
+        "general-tests",
+    ],
+    static_libs: [
+        "Nene",
+        "Harrier",
+        "androidx.test.ext.junit",
+        "ctstestrunner-axt",
+        "compatibility-device-util-axt",
+        "truth-prebuilt",
+        "testng" // for assertThrows
+    ],
+    manifest: "src/test/AndroidManifest.xml",
+    min_sdk_version: "27"
 }
