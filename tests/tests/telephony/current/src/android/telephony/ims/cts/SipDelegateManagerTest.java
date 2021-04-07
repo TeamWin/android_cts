@@ -859,7 +859,7 @@ public class SipDelegateManagerTest {
         byte[] content2 = new byte[0];
 
         SipMessage m = new SipMessage(startLine, header, content1);
-        byte[] encodedMsg = m.getEncodedMessage();
+        byte[] encodedMsg = m.toEncodedMessage();
         String decodedStr = new String(encodedMsg, UTF_8);
         SipMessage decodedMsg = generateSipMessage(decodedStr);
         assertEquals(decodedMsg.getStartLine(), m.getStartLine());
@@ -868,7 +868,7 @@ public class SipDelegateManagerTest {
 
         // Test empty content
         m = new SipMessage(startLine, header, content2);
-        encodedMsg = m.getEncodedMessage();
+        encodedMsg = m.toEncodedMessage();
         decodedStr = new String(encodedMsg, UTF_8);
         decodedMsg = generateSipMessage(decodedStr);
         assertEquals(decodedMsg.getStartLine(), m.getStartLine());
