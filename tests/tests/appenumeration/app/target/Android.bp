@@ -69,6 +69,19 @@ android_test_helper_app {
 }
 
 android_test_helper_app {
+    name: "CtsAppEnumerationStub",
+    manifest: "AndroidManifest-stub.xml",
+    defaults: ["cts_support_defaults"],
+    srcs: ["src/**/*.java"],
+    // Tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
     name: "CtsAppEnumerationSharedUidTarget",
     manifest: "AndroidManifest-noapi-sharedUser.xml",
     defaults: ["cts_support_defaults"],
