@@ -30,6 +30,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.server.wm.TestJournalProvider;
+import android.util.Log;
 import android.view.View;
 import android.window.SplashScreen;
 import android.window.SplashScreenView;
@@ -56,7 +57,7 @@ public class SplashScreenReplaceIconActivity extends Activity {
     public void onResume() {
         super.onResume();
         if (getIntent().getBooleanExtra(CANCEL_HANDLE_EXIT, false)) {
-            mSSM.setOnExitAnimationListener(null);
+            mSSM.clearOnExitAnimationListener();
         }
     }
 
@@ -66,8 +67,10 @@ public class SplashScreenReplaceIconActivity extends Activity {
         TestJournalProvider.putExtras(baseContext, REPLACE_ICON_EXIT, bundle -> {
             bundle.putBoolean(RECEIVE_SPLASH_SCREEN_EXIT, true);
             bundle.putBoolean(CONTAINS_CENTER_VIEW, centerView != null);
-            bundle.putLong(ICON_ANIMATION_DURATION, view.getIconAnimationDurationMillis());
-            bundle.putLong(ICON_ANIMATION_START, view.getIconAnimationStartMillis());
+            bundle.putLong(ICON_ANIMATION_DURATION, view.getIconAnimationDuration() != null
+                    ? view.getIconAnimationDuration().toMillis() : 0);
+            bundle.putLong(ICON_ANIMATION_START, view.getIconAnimationStart() != null
+                    ? view.getIconAnimationStart().toEpochMilli() : 0);
         });
         view.remove();
     }
