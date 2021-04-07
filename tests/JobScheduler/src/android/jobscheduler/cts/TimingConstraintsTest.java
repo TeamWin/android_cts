@@ -130,14 +130,11 @@ public class TimingConstraintsTest extends BaseJobSchedulerTest {
         JobInfo deadlineJob =
                 new JobInfo.Builder(UNEXPIRED_JOB_ID, kJobServiceComponent)
                         .setMinimumLatency(500L)
-                        .setRequiresStorageNotLow(true)
                         .build();
         kTestEnvironment.setExpectedExecutions(1);
-        setStorageStateLow(true);
         mJobScheduler.schedule(deadlineJob);
         Thread.sleep(500L);
-        // Run everything by making storage state not-low.
-        setStorageStateLow(false);
+        runSatisfiedJob(UNEXPIRED_JOB_ID);
         assertTrue("Failed to execute non-deadline job", kTestEnvironment.awaitExecution());
         assertFalse("Job that ran early (unexpired) didn't have" +
                         " JobParameters#isOverrideDeadlineExpired=false",
