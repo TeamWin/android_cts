@@ -243,4 +243,23 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
                 "getprop ro.hdmi.cec.source.set_menu_language.enabled");
         return val.trim().equals("true") ? true : false;
     }
+
+    public static String getSettingsValue(ITestDevice device, String setting) throws Exception {
+        return device.executeShellCommand("cmd hdmi_control cec_setting get " + setting)
+                .replace(setting + " = ", "").trim();
+    }
+
+    public String getSettingsValue(String setting) throws Exception {
+        return getSettingsValue(getDevice(), setting);
+    }
+
+    public static void setSettingsValue(ITestDevice device, String setting, String value)
+            throws Exception {
+        device.executeShellCommand("cmd hdmi_control cec_setting set " + setting + " " +
+                value);
+    }
+
+    public void setSettingsValue(String setting, String value) throws Exception {
+        setSettingsValue(getDevice(), setting, value);
+    }
 }
