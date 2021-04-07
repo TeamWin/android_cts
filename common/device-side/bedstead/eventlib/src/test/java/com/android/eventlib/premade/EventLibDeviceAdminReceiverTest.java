@@ -23,8 +23,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.devicepolicy.ProfileOwner;
@@ -43,12 +41,11 @@ import org.junit.runners.JUnit4;
 @RunWith(JUnit4.class)
 public class EventLibDeviceAdminReceiverTest {
 
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
     private static final ComponentName DEVICE_ADMIN_COMPONENT =
             new ComponentName(
                     sContext.getPackageName(), EventLibDeviceAdminReceiver.class.getName());
-    private static final TestApis sTestApis = new TestApis();
     private static final UserReference sUser = sTestApis.users().instrumented();
     private static final DevicePolicyManager sDevicePolicyManager =
             sContext.getSystemService(DevicePolicyManager.class);

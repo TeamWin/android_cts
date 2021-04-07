@@ -25,4 +25,7 @@ java_test_host {
         "general-tests",
     ],
     data: [":CtsJvmtiRedefineClassesDeviceApp"],
+    test_options: {
+        unit_test: false,
+    },
 }

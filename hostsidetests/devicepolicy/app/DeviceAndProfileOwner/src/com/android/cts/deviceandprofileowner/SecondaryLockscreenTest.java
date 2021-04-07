@@ -16,7 +16,6 @@
 
 package com.android.cts.deviceandprofileowner;
 
-import static com.android.compatibility.common.util.TestUtils.waitUntil;
 import static com.android.cts.deviceandprofileowner.BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
 
 import static junit.framework.Assert.assertFalse;
@@ -30,22 +29,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.os.PowerManager;
 import android.os.Process;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.RequiresDevice;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
 
+// TODO(b/184280023): remove @RequiresDevice and @Ignores.
+@RequiresDevice
 @RunWith(AndroidJUnit4.class)
 public class SecondaryLockscreenTest {
 
@@ -92,6 +94,7 @@ public class SecondaryLockscreenTest {
     }
 
     @Test
+    @Ignore("b/184280023")
     public void testSetSecondaryLockscreenEnabled() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -106,6 +109,7 @@ public class SecondaryLockscreenTest {
     }
 
     @Test
+    @Ignore("b/184280023")
     public void testHomeButton() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -118,6 +122,7 @@ public class SecondaryLockscreenTest {
     }
 
     @Test
+    @Ignore("b/184280023")
     public void testDismiss() throws Exception {
         enterKeyguardPin();
         assertTrue("Lockscreen title not shown",
@@ -141,15 +146,16 @@ public class SecondaryLockscreenTest {
     }
 
     private void enterKeyguardPin() throws Exception {
-        final PowerManager pm = mContext.getSystemService(PowerManager.class);
         mUiDevice.executeShellCommand("input keyevent KEYCODE_SLEEP");
-        waitUntil("Device still interactive", 5, () -> pm != null && !pm.isInteractive());
         mUiDevice.executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        waitUntil("Device still not interactive", 5, () -> pm.isInteractive());
+        assertTrue("Keyguard unexpectedly not shown",
+                mUiDevice.wait(Until.hasObject(
+                        By.res("com.android.systemui", "keyguard_status_view")),
+                                UI_AUTOMATOR_WAIT_TIME_MILLIS));
         mUiDevice.executeShellCommand("wm dismiss-keyguard");
-        mUiDevice.wait(
-                Until.hasObject(By.res("com.android.systemui", "pinEntry")),
-                        UI_AUTOMATOR_WAIT_TIME_MILLIS);
+        assertTrue("Keyguard pin entry unexpectedly not shown",
+                mUiDevice.wait(Until.hasObject(By.res("com.android.systemui", "pinEntry")),
+                        UI_AUTOMATOR_WAIT_TIME_MILLIS));
         mUiDevice.executeShellCommand("input text 1234");
         mUiDevice.executeShellCommand("input keyevent KEYCODE_ENTER");
     }

@@ -57,7 +57,7 @@ public final class Packages {
 
     private Map<String, Package> mCachedPackages = null;
     private Set<String> mFeatures = null;
-    private final AdbPackageParser mParser = AdbPackageParser.get(this, SDK_INT);
+    private final AdbPackageParser mParser;
     final TestApis mTestApis;
 
     private final IntentFilter mPackageAddedIntentFilter =
@@ -70,6 +70,7 @@ public final class Packages {
         }
         mPackageAddedIntentFilter.addDataScheme("package");
         mTestApis = testApis;
+        mParser = AdbPackageParser.get(mTestApis, SDK_INT);
     }
 
 
@@ -324,7 +325,7 @@ public final class Packages {
         if (packageName == null) {
             throw new NullPointerException();
         }
-        return new UnresolvedPackage(this, packageName);
+        return new UnresolvedPackage(mTestApis, packageName);
     }
 
     private void fillCache() {

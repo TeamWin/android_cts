@@ -996,8 +996,8 @@ public class AtomTests {
     /**
      * Generates traffic on a network with a given transport.
      */
-    private boolean doGenerateNetworkTraffic(@NonNull Context context,
-            @NetworkCapabilities.Transport int transport) throws IllegalStateException {
+    private boolean doGenerateNetworkTraffic(@NonNull Context context, int transport)
+            throws IllegalStateException {
         final NetworkRequest request = new NetworkRequest.Builder().addCapability(
                 NetworkCapabilities.NET_CAPABILITY_INTERNET).addTransportType(transport).build();
         return doGenerateNetworkTraffic(context, request);
@@ -1022,19 +1022,7 @@ public class AtomTests {
      * Assembles a String representation of a list of NetworkCapabilities.
      */
     private String oemManagedCapabilitiesToString(@NonNull List<Integer> capabilities) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        for (final Integer capability : capabilities) {
-            sb.append(NetworkCapabilities.capabilityNameOf(capability) + ", ");
-        }
-        // Must have been an empty set of capabilities.
-        if (sb.length() < 3) {
-            sb.append("}");
-            return sb.toString();
-        }
-        // Replace the trailing ", " with a "}".
-        sb.replace(sb.length()-2, sb.length()-1, "}");
-        return sb.toString();
+        return "{" + TextUtils.join(", ", capabilities) + "}";
     }
     /**
      * Checks if a network with a given set of OEM managed capabilities (OEM_PAID, for example) is
@@ -1168,7 +1156,7 @@ public class AtomTests {
                     break;
                 default:
                     throw new IllegalStateException("Unsupported OEM network capability "
-                            + NetworkCapabilities.capabilityNameOf(capability));
+                            + capability);
             }
         }
         suggestionBuilder.setSsid(WifiInfo.sanitizeSsid(network.SSID));

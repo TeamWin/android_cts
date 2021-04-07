@@ -26,7 +26,7 @@ import com.android.bedstead.nene.users.Users;
  * Entry point to Nene Test APIs.
  */
 public final class TestApis {
-    private final Users mUsers = new Users();
+    private final Users mUsers = new Users(this);
     private final Packages mPackages = new Packages(this);
     private final DevicePolicy mDevicePolicy = new DevicePolicy(this);
     private final Context mContext = new Context(this);

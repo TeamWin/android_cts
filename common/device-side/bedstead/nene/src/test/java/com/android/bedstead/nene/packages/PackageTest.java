@@ -20,8 +20,6 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 
@@ -42,34 +40,33 @@ public class PackageTest {
 
     private static final String ACCESS_NETWORK_STATE_PERMISSION =
             "android.permission.ACCESS_NETWORK_STATE";
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
 
-    private final TestApis mTestApis = new TestApis();
-    private final UserReference mUser = mTestApis.users().instrumented();
+    private static final TestApis sTestApis = new TestApis();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final UserReference sUser = sTestApis.users().instrumented();
 
     @Test
     public void installedOnUsers_includesUserWithPackageInstalled() {
-        mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = sTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
-            assertThat(packageReference.resolve().installedOnUsers()).contains(mUser);
+            assertThat(packageReference.resolve().installedOnUsers()).contains(sUser);
         } finally {
-            packageReference.uninstall(mUser);
+            packageReference.uninstall(sUser);
         }
     }
 
     @Test
     public void installedOnUsers_doesNotIncludeUserWithoutPackageInstalled() {
-        UserReference user = mTestApis.users().createUser().create();
-        mTestApis.packages().install(mUser, TEST_APP_APK_FILE);
-        PackageReference packageReference = mTestApis.packages().find(TEST_APP_PACKAGE_NAME);
+        UserReference user = sTestApis.users().createUser().create();
+        sTestApis.packages().install(sUser, TEST_APP_APK_FILE);
+        PackageReference packageReference = sTestApis.packages().find(TEST_APP_PACKAGE_NAME);
 
         try {
             assertThat(packageReference.resolve().installedOnUsers()).doesNotContain(user);
         } finally {
-            packageReference.uninstall(mUser);
+            packageReference.uninstall(sUser);
             user.remove();
         }
     }
@@ -78,9 +75,9 @@ public class PackageTest {
     public void grantedPermission_includesKnownInstallPermission() {
         // TODO(scottjonathan): This relies on the fact that the instrumented app declares
         //  ACCESS_NETWORK_STATE - this should be replaced with TestApp with a useful query
-        PackageReference packageReference = mTestApis.packages().find(sContext.getPackageName());
+        PackageReference packageReference = sTestApis.packages().find(sContext.getPackageName());
 
-        assertThat(packageReference.resolve().grantedPermissions(mUser))
+        assertThat(packageReference.resolve().grantedPermissions(sUser))
                 .contains(ACCESS_NETWORK_STATE_PERMISSION);
     }
 }

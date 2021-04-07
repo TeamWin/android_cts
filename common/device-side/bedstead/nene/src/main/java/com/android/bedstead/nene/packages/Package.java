@@ -18,13 +18,11 @@ package com.android.bedstead.nene.packages;
 
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 
-import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
-import androidx.test.platform.app.InstrumentationRegistry;
-
+import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 
 import java.util.Arrays;
@@ -38,9 +36,7 @@ import java.util.Set;
 public class Package extends PackageReference {
 
     private static final String LOG_TAG = "Package";
-    private static final Context sContext =
-            InstrumentationRegistry.getInstrumentation().getContext();
-    private static final PackageManager sPackageManager = sContext.getPackageManager();
+    private final PackageManager mPackageManager;
 
     static final class MutablePackage {
         String mPackageName;
@@ -55,13 +51,14 @@ public class Package extends PackageReference {
     private final MutablePackage mMutablePackage;
     private final Set<String> mRequestedPermissions;
 
-    Package(Packages packages, MutablePackage mutablePackage) {
-        super(packages, mutablePackage.mPackageName);
+    Package(TestApis testApis, MutablePackage mutablePackage) {
+        super(testApis, mutablePackage.mPackageName);
         mMutablePackage = mutablePackage;
         mRequestedPermissions = new HashSet<>();
+        mPackageManager = testApis.context().instrumentedContext().getPackageManager();
 
         try {
-            PackageInfo packageInfo = sPackageManager.getPackageInfo(
+            PackageInfo packageInfo = mPackageManager.getPackageInfo(
                     mMutablePackage.mPackageName, /* flags= */ GET_PERMISSIONS);
             if (packageInfo.requestedPermissions != null) {
                 mRequestedPermissions.addAll(Arrays.asList(packageInfo.requestedPermissions));

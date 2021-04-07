@@ -77,6 +77,8 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
     /** Unique identifier for the job scheduled by this suite of tests. */
     public static final int CONNECTIVITY_JOB_ID = ConnectivityConstraintTest.class.hashCode();
+    /** Wait this long before timing out the test. */
+    private static final long DEFAULT_TIMEOUT_MILLIS = 30000L; // 30 seconds.
 
     private WifiManager mWifiManager;
     private ConnectivityManager mCm;
@@ -128,6 +130,9 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         setDataSaverEnabled(false);
         mInitialAirplaneMode = isAirplaneModeOn();
         setAirplaneMode(false);
+        // Force the test app out of the never bucket.
+        SystemUtil.runShellCommand("am set-standby-bucket "
+                + TestAppInterface.TEST_APP_PACKAGE + " rare");
     }
 
     @Override
@@ -454,7 +459,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
      * Schedule an expedited job that requires a network connection, and verify that it runs even
      * when Data Saver is on and the device is not connected to WiFi.
      */
-    public void testExpeditedJobExecutes_DataSaverOn() throws Exception {
+    public void testFgExpeditedJobBypassesDataSaver() throws Exception {
         if (mHasWifi) {
             setWifiMeteredState(true);
         } else if (checkDeviceSupportsMobileData()) {
@@ -465,22 +470,22 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
         setDataSaverEnabled(true);
 
-        kTestEnvironment.setExpectedExecutions(1);
-        mJobScheduler.schedule(
-                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setExpedited(true)
-                        .build());
-        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+        mTestAppInterface.startAndKeepTestActivity();
 
-        assertTrue("Expedited job requiring metered connectivity did not fire with Data Saver on.",
-                kTestEnvironment.awaitExecution());
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, true);
+        mTestAppInterface.runSatisfiedJob();
+
+        assertTrue(
+                "FG expedited job requiring metered connectivity did not fire with Data Saver on.",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
     }
 
     /**
      * Schedule an expedited job that requires a network connection, and verify that it runs even
      * when multiple firewalls are active.
      */
-    public void testExpeditedJobBypassesSimultaneousFirewalls() throws Exception {
+    public void testExpeditedJobBypassesSimultaneousFirewalls_noDataSaver() throws Exception {
         if (!BatteryUtils.isBatterySaverSupported()) {
             Log.d(TAG, "Skipping test that requires battery saver support");
             return;
@@ -505,7 +510,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                 + kJobServiceComponent.getPackageName() + " restricted");
         BatteryUtils.runDumpsysBatteryUnplug();
         BatteryUtils.enableBatterySaver(true);
-        setDataSaverEnabled(true);
+        setDataSaverEnabled(false);
 
         kTestEnvironment.setExpectedExecutions(1);
         mJobScheduler.schedule(
@@ -514,9 +519,7 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
                         .build());
         runSatisfiedJob(CONNECTIVITY_JOB_ID);
 
-        assertTrue(
-                "Expedited job requiring metered connectivity did not fire with multiple "
-                        + "firewalls.",
+        assertTrue("Expedited job requiring connectivity did not fire with multiple firewalls.",
                 kTestEnvironment.awaitExecution());
     }
 
@@ -535,22 +538,18 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         }
         disconnectWifiToConnectToMobile();
 
-        kTestEnvironment.setExpectedExecutions(1);
-        kTestEnvironment.setContinueAfterStart();
-        kTestEnvironment.setExpectedStopped();
-        mJobScheduler.schedule(
-                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
-                        .build());
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
 
-        runSatisfiedJob(CONNECTIVITY_JOB_ID);
-        assertTrue("Job with metered connectivity constraint did not fire on mobile.",
-                kTestEnvironment.awaitExecution());
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_CELLULAR, false);
+
+        mTestAppInterface.runSatisfiedJob();
+        assertTrue("Job with cellular constraint did not fire on mobile.",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
 
         setDataSaverEnabled(true);
         assertTrue(
-                "Job with metered connectivity constraint was not stopped when Data Saver was "
-                        + "turned on.",
-                kTestEnvironment.awaitStopped());
+                "Job with cellular constraint was not stopped when Data Saver was turned on.",
+                mTestAppInterface.awaitJobStop(DEFAULT_TIMEOUT_MILLIS));
     }
 
     public void testJobParametersNetwork() throws Exception {
@@ -640,14 +639,34 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
         disconnectWifiToConnectToMobile();
         setDataSaverEnabled(true);
 
-        kTestEnvironment.setExpectedExecutions(0);
-        mJobScheduler.schedule(
-                mBuilder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_CELLULAR)
-                        .build());
-        runSatisfiedJob(CONNECTIVITY_JOB_ID);
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
 
-        assertTrue("Job requiring metered connectivity still executed on WiFi.",
-                kTestEnvironment.awaitTimeout());
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_CELLULAR, false);
+        mTestAppInterface.runSatisfiedJob();
+
+        assertFalse("Job requiring cellular connectivity executed with Data Saver on",
+                mTestAppInterface.awaitJobStop(DEFAULT_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule a job that requires a metered connection, and verify that it does not run when
+     * the device is not connected to WiFi and Data Saver is on.
+     */
+    public void testEJMeteredConstraintFails_withMobile_DataSaverOn() throws Exception {
+        if (!checkDeviceSupportsMobileData()) {
+            Log.d(TAG, "Skipping test that requires the device be mobile data enabled.");
+            return;
+        }
+        disconnectWifiToConnectToMobile();
+        setDataSaverEnabled(true);
+
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_CELLULAR, true);
+        mTestAppInterface.runSatisfiedJob();
+
+        assertFalse("BG expedited job requiring cellular connectivity executed with Data Saver on",
+                mTestAppInterface.awaitJobStop(DEFAULT_TIMEOUT_MILLIS));
     }
 
     /**
@@ -720,6 +739,71 @@ public class ConnectivityConstraintTest extends BaseJobSchedulerTest {
 
         assertTrue("Job requiring cellular connectivity still executed on WiFi.",
                 kTestEnvironment.awaitTimeout());
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when Data Saver is on and the device is not connected to WiFi.
+     */
+    public void testBgExpeditedJobDoesNotBypassDataSaver() throws Exception {
+        if (mHasWifi) {
+            setWifiMeteredState(true);
+        } else if (checkDeviceSupportsMobileData()) {
+            disconnectWifiToConnectToMobile();
+        } else {
+            Log.d(TAG, "Skipping test that requires a metered network.");
+            return;
+        }
+        setDataSaverEnabled(true);
+
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, true);
+        mTestAppInterface.runSatisfiedJob();
+
+        assertFalse("BG expedited job requiring connectivity fired with Data Saver on.",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
+    }
+
+    /**
+     * Schedule an expedited job that requires a network connection, and verify that it runs even
+     * when multiple firewalls are active.
+     */
+    public void testExpeditedJobDoesNotBypassSimultaneousFirewalls_withDataSaver()
+            throws Exception {
+        if (!BatteryUtils.isBatterySaverSupported()) {
+            Log.d(TAG, "Skipping test that requires battery saver support");
+            return;
+        }
+        if (mHasWifi) {
+            setWifiMeteredState(true);
+        } else if (checkDeviceSupportsMobileData()) {
+            disconnectWifiToConnectToMobile();
+        } else {
+            Log.d(TAG, "Skipping test that requires a metered network.");
+            return;
+        }
+        if (!AppStandbyUtils.isAppStandbyEnabled()) {
+            Log.d(TAG, "App standby not enabled");
+            return;
+        }
+
+        Settings.Global.putString(mContext.getContentResolver(),
+                Settings.Global.ENABLE_RESTRICTED_BUCKET, "1");
+        mDeviceConfigStateHelper.set("qc_max_session_count_restricted", "0");
+        SystemUtil.runShellCommand("am set-standby-bucket "
+                + kJobServiceComponent.getPackageName() + " restricted");
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        setDataSaverEnabled(true);
+
+        mTestAppInterface = new TestAppInterface(mContext, CONNECTIVITY_JOB_ID);
+
+        mTestAppInterface.scheduleJob(false,  JobInfo.NETWORK_TYPE_ANY, true);
+        mTestAppInterface.runSatisfiedJob();
+
+        assertFalse("Expedited job fired with multiple firewalls, including data saver.",
+                mTestAppInterface.awaitJobStart(DEFAULT_TIMEOUT_MILLIS));
     }
 
     // --------------------------------------------------------------------------------------------
