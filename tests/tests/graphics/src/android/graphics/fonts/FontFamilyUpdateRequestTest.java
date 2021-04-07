@@ -49,10 +49,11 @@ public final class FontFamilyUpdateRequestTest {
                 new FontVariationAxis("wght", 100f),
                 new FontVariationAxis("wdth", 100f));
         FontFamilyUpdateRequest.Font font = new FontFamilyUpdateRequest.Font.Builder(
-                postScriptName, style).setAxes(axes).build();
+                postScriptName, style).setAxes(axes).setIndex(5).build();
         assertThat(font.getPostScriptName()).isEqualTo(postScriptName);
         assertThat(font.getStyle()).isEqualTo(style);
         assertThat(font.getAxes()).containsExactlyElementsIn(axes).inOrder();
+        assertThat(font.getIndex()).isEqualTo(5);
 
         // Invalid parameters
         assertThrows(NullPointerException.class, () ->
