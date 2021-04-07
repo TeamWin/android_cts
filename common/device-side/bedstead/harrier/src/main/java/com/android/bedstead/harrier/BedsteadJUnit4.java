@@ -25,6 +25,7 @@ import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.google.common.base.Objects;
 
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
@@ -34,6 +35,8 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,6 +47,8 @@ import java.util.Set;
  * A JUnit test runner for use with Bedstead.
  */
 public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
+
+    private static final String BEDSTEAD_PACKAGE_NAME = "com.android.bedstead";
 
     // These are annotations which are not included indirectly
     private static final Set<String> sIgnoredAnnotationPackages = new HashSet<>();
@@ -180,7 +185,61 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
             }
         }
 
+        sortMethodsByBedsteadAnnotations(modifiedTests);
+
         return modifiedTests;
+    }
+
+    /**
+     * Sort methods so that methods with identical bedstead annotations are together.
+     *
+     * <p>This will also ensure that all tests methods which are not annotated for bedstead will
+     * run before any tests which are annotated.
+     */
+    private void sortMethodsByBedsteadAnnotations(List<FrameworkMethod> modifiedTests) {
+        List<Annotation> bedsteadAnnotationsSortedByMostCommon =
+                bedsteadAnnotationsSortedByMostCommon(modifiedTests);
+
+        modifiedTests.sort((o1, o2) -> {
+            for (Annotation annotation : bedsteadAnnotationsSortedByMostCommon) {
+                boolean o1HasAnnotation = o1.getAnnotation(annotation.annotationType()) != null;
+                boolean o2HasAnnotation = o2.getAnnotation(annotation.annotationType()) != null;
+
+                if (o1HasAnnotation && !o2HasAnnotation) {
+                    // o1 goes to the end
+                    return 1;
+                } else if (o2HasAnnotation && !o1HasAnnotation) {
+                    return -1;
+                }
+            }
+            return 0;
+        });
+    }
+
+    private List<Annotation> bedsteadAnnotationsSortedByMostCommon(List<FrameworkMethod> methods) {
+        Map<Annotation, Integer> annotationCounts = countAnnotations(methods);
+        List<Annotation> annotations = new ArrayList<>(annotationCounts.keySet());
+
+        annotations.removeIf(
+                annotation ->
+                        !annotation.getClass().getCanonicalName().contains(BEDSTEAD_PACKAGE_NAME));
+
+        annotations.sort(Comparator.comparingInt(annotationCounts::get));
+        Collections.reverse(annotations);
+
+        return annotations;
+    }
+
+    private Map<Annotation, Integer> countAnnotations(List<FrameworkMethod> methods) {
+        Map<Annotation, Integer> annotationCounts = new HashMap<>();
+
+        for (FrameworkMethod method : methods) {
+            for (Annotation annotation : method.getAnnotations()) {
+                annotationCounts.put(annotation, annotationCounts.getOrDefault(annotation, 0) + 1);
+            }
+        }
+
+        return annotationCounts;
     }
 
     private Set<Annotation> getParameterizedAnnotations(FrameworkMethod method) {
@@ -234,5 +293,22 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 index++;
             }
         }
+    }
+
+    @Override
+    protected List<TestRule> classRules() {
+        List<TestRule> rules = super.classRules();
+
+        for (TestRule rule : rules) {
+            if (rule instanceof DeviceState) {
+                DeviceState deviceState = (DeviceState) rule;
+
+                deviceState.setSkipTestTeardown(true);
+
+                break;
+            }
+        }
+
+        return rules;
     }
 }

@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
  * Parameterize a test so that it runs on a non-affiliated secondary user on a device with a
  * Device Owner.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @ParameterizedAnnotation
 @RequireRunOnSecondaryUser
