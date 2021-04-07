@@ -348,6 +348,7 @@ public class BuildTest extends TestCase {
     public void testIsSecureUserBuild() throws IOException {
         assertEquals("Must be a user build", "user", Build.TYPE);
         assertProperty("Must be a non-debuggable build", RO_DEBUGGABLE, "0");
+        assertFalse("Must be a non-debuggable build", Build.isDebuggable());
         assertProperty("Must be a secure build", RO_SECURE, "1");
     }
 
