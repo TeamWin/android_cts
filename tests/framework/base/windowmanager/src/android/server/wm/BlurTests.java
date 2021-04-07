@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.app.ActivityTaskManager.INVALID_STACK_ID;
+import static android.provider.Settings.Global.ANIMATOR_DURATION_SCALE;
 import static android.server.wm.CliIntentExtra.extraInt;
 import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app.Components.BACKGROUND_IMAGE_ACTIVITY;
@@ -34,15 +35,18 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.view.WindowManager;
 
 import androidx.test.filters.FlakyTest;
 
 import com.android.compatibility.common.util.ColorUtils;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -56,19 +60,30 @@ public class BlurTests extends ActivityManagerTestBase {
     private static final int NO_BLUR_BACKGROUND_COLOR = Color.BLACK;
     private static final int BLUR_BEHIND_DYNAMIC_UPDATE_WAIT_TIME = 300;
     private static final int BACKGROUND_BLUR_DYNAMIC_UPDATE_WAIT_TIME = 100;
+    private float mAnimatorDurationScale;
 
     @Before
     public void setUp() {
         assumeTrue(supportsBlur());
-        assumeTrue(usesSkiaRenderEngine());
         mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+            mAnimatorDurationScale =
+                    Settings.Global.getFloat(resolver, ANIMATOR_DURATION_SCALE, 1f);
+            Settings.Global.putFloat(resolver, ANIMATOR_DURATION_SCALE, 0);
+        });
         launchActivity(BACKGROUND_IMAGE_ACTIVITY);
         mWmState.waitForValidState(BACKGROUND_IMAGE_ACTIVITY);
         verifyOnlyBackgroundImageVisible();
+        assertTrue(mContext.getSystemService(WindowManager.class).isCrossWindowBlurEnabled());
     }
 
     @After
     public void tearDown() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            Settings.Global.putFloat(getInstrumentation().getContext().getContentResolver(),
+                    ANIMATOR_DURATION_SCALE, mAnimatorDurationScale);
+        });
         mContext.getSystemService(WindowManager.class).setForceCrossWindowBlurDisabled(false);
     }
 
