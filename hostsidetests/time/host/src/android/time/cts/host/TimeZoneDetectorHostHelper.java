@@ -28,6 +28,9 @@ import static org.junit.Assume.assumeTrue;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.ITestDevice;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -71,8 +74,25 @@ final class TimeZoneDetectorHostHelper {
         executeTimeZoneDetectorCommand("%s %s", SHELL_COMMAND_SET_GEO_DETECTION_ENABLED, enabled);
     }
 
-    void assumeGeoDetectionSupported() throws Exception {
-        assumeTrue(isGeoDetectionSupported());
+    void assumeLocationTimeZoneManagerIsPresent() throws Exception {
+        assumeTrue(isLocationTimeZoneManagerPresent());
+    }
+
+    private boolean isLocationTimeZoneManagerPresent() throws Exception {
+        // Look for the service name in "cmd -l".
+        byte[] serviceListBytes = executeShellCommandReturnBytes("cmd -l");
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        new ByteArrayInputStream(serviceListBytes), StandardCharsets.UTF_8))) {
+            String serviceName;
+            while ((serviceName = reader.readLine()) != null) {
+                serviceName = serviceName.trim();
+                if (LocationTimeZoneManager.SHELL_COMMAND_SERVICE_NAME.equals(serviceName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     boolean isGeoDetectionSupported() throws Exception {
