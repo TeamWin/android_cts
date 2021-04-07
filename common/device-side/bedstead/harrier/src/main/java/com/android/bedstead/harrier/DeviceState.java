@@ -233,6 +233,7 @@ public final class DeviceState implements TestRule {
 
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
+    private UserReference mSecondaryUser = null;
     private final Map<UserReference, UserReference> mWorkProfiles = new HashMap<>();
 
     private final List<UserReference> mCreatedUsers = new ArrayList<>();
@@ -332,15 +333,21 @@ public final class DeviceState implements TestRule {
     /**
      * Get the user ID of a human user on the device other than the primary user.
      *
-     * <p>Returns {@code null} if there is none present.
+     * <p>This should only be used to get work profiles managed by Harrier (using either the
+     * annotations or calls to the {@link DeviceState} class.
+     *
+     * @throws IllegalStateException if there is no harrier-managed work profile
      */
     @Nullable
     public UserReference secondaryUser() {
-        Collection<UserReference> secondaryUsers = secondaryUsers();
-        if (secondaryUsers.isEmpty()) {
-            return null;
+        if (mSecondaryUser == null) {
+            throw new IllegalStateException(
+                    "No harrier-managed secondary user. This method should only be used when "
+                            + "Harrier has been used to create the secondary user.");
         }
-        return secondaryUsers.iterator().next();
+
+        return mSecondaryUser;
+
     }
 
     private Collection<UserReference> secondaryUsers() {
@@ -426,29 +433,29 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    public void ensureHasSecondaryUser(boolean installTestApp) {
+    private void ensureHasSecondaryUser(boolean installTestApp) {
         requireUserSupported(SECONDARY_USER_TYPE_NAME);
 
-        UserReference secondaryUser = secondaryUser();
-        if (secondaryUser == null) {
-            secondaryUser = createSecondaryUser();
-        }
+        Collection<UserReference> secondaryUsers = secondaryUsers();
 
-        secondaryUser.start();
+        mSecondaryUser = secondaryUsers.isEmpty() ? createSecondaryUser()
+                : secondaryUsers.iterator().next();
+
+        mSecondaryUser.start();
 
         if (installTestApp) {
             sTestApis.packages().find(sContext.getPackageName())
-                    .install(secondaryUser);
+                    .install(mSecondaryUser);
         } else {
             sTestApis.packages().find(sContext.getPackageName())
-                    .uninstall(secondaryUser);
+                    .uninstall(mSecondaryUser);
         }
     }
 
     /**
      * Ensure that there is no secondary user.
      */
-    public void ensureHasNoSecondaryUser() {
+    private void ensureHasNoSecondaryUser() {
         requireUserSupported(SECONDARY_USER_TYPE_NAME);
 
         for (UserReference secondaryUser : secondaryUsers()) {
@@ -518,6 +525,7 @@ public final class DeviceState implements TestRule {
 
     private void teardownNonShareableState() {
         mWorkProfiles.clear();
+        mSecondaryUser = null;
 
         for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
             broadcastReceiver.unregisterQuietly();
