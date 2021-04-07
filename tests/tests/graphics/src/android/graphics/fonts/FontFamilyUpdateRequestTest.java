@@ -48,36 +48,39 @@ public final class FontFamilyUpdateRequestTest {
         List<FontVariationAxis> axes = Arrays.asList(
                 new FontVariationAxis("wght", 100f),
                 new FontVariationAxis("wdth", 100f));
-        FontFamilyUpdateRequest.Font font = new FontFamilyUpdateRequest.Font(
-                postScriptName, style, axes);
+        FontFamilyUpdateRequest.Font font = new FontFamilyUpdateRequest.Font.Builder(
+                postScriptName, style).setAxes(axes).build();
         assertThat(font.getPostScriptName()).isEqualTo(postScriptName);
         assertThat(font.getStyle()).isEqualTo(style);
         assertThat(font.getAxes()).containsExactlyElementsIn(axes).inOrder();
 
         // Invalid parameters
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.Font(null, style, axes));
+                new FontFamilyUpdateRequest.Font.Builder(null, style).setAxes(axes));
         assertThrows(IllegalArgumentException.class, () ->
-                new FontFamilyUpdateRequest.Font("", style, axes));
+                new FontFamilyUpdateRequest.Font.Builder("", style).setAxes(axes));
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.Font(postScriptName, null, axes));
+                new FontFamilyUpdateRequest.Font.Builder(postScriptName, null)
+                        .setAxes(axes));
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.Font(postScriptName, style, null));
+                new FontFamilyUpdateRequest.Font.Builder(postScriptName, style)
+                        .setAxes(null));
         assertThrows(NullPointerException.class, () ->
-                new FontFamilyUpdateRequest.Font(postScriptName, style,
-                        Collections.singletonList(null)));
+                new FontFamilyUpdateRequest.Font.Builder(postScriptName, style)
+                        .setAxes(Collections.singletonList(null)));
+        assertThrows(IllegalArgumentException.class, () ->
+                new FontFamilyUpdateRequest.Font.Builder(postScriptName, style).setIndex(-1));
+
     }
 
     @Test
     public void fontFamily() {
         String name = "test";
         List<FontFamilyUpdateRequest.Font> fonts = Arrays.asList(
-                new FontFamilyUpdateRequest.Font("Test",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
-                        Collections.emptyList()),
-                new FontFamilyUpdateRequest.Font("Test",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC),
-                        Collections.emptyList()));
+                new FontFamilyUpdateRequest.Font.Builder("Test",
+                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT)).build(),
+                new FontFamilyUpdateRequest.Font.Builder("Test",
+                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC)).build());
         FontFamilyUpdateRequest.FontFamily fontFamily =
                 new FontFamilyUpdateRequest.FontFamily.Builder(name, fonts).build();
         assertThat(fontFamily.getName()).isEqualTo(name);
@@ -108,12 +111,10 @@ public final class FontFamilyUpdateRequestTest {
         FontFileUpdateRequest fontFileUpdateRequest = new FontFileUpdateRequest(pfd, signature);
 
         List<FontFamilyUpdateRequest.Font> fonts = Arrays.asList(
-                new FontFamilyUpdateRequest.Font("Roboto-Regular",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT),
-                        Collections.emptyList()),
-                new FontFamilyUpdateRequest.Font("Roboto-Regular",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC),
-                        Collections.emptyList()));
+                new FontFamilyUpdateRequest.Font.Builder("Roboto-Regular",
+                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT)).build(),
+                new FontFamilyUpdateRequest.Font.Builder("Roboto-Regular",
+                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC)).build());
         FontFamilyUpdateRequest.FontFamily fontFamily1 =
                 new FontFamilyUpdateRequest.FontFamily.Builder("test-roboto1", fonts).build();
         FontFamilyUpdateRequest.FontFamily fontFamily2 =
