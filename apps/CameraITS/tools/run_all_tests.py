@@ -234,8 +234,11 @@ def check_manual_scenes(device_id, camera_id, scene, out_path):
     while True:
       input(f'\n Press <ENTER> after positioning camera {camera_id} with '
             f'{scene}.\n The scene setup should be: \n  {_SCENE_REQ[scene]}\n')
-      # Converge 3A prior to capture.
-      cam.do_3a()
+      # Converge 3A prior to capture
+      if scene == 'scene5':
+        cam.do_3a(do_af=False, lock_ae=True, lock_awb=True)
+      else:
+        cam.do_3a()
       req, fmt = capture_request_utils.get_fastest_auto_capture_settings(props)
       logging.info('Capturing an image to check the test scene')
       cap = cam.do_capture(req, fmt)
