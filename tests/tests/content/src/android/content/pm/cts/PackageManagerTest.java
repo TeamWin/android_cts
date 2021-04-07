@@ -47,10 +47,13 @@ import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.annotation.NonNull;
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.cts.MockActivity;
 import android.content.cts.MockContentProvider;
 import android.content.cts.MockReceiver;
@@ -116,6 +119,7 @@ public class PackageManagerTest {
 
     private Context mContext;
     private PackageManager mPackageManager;
+    private Instrumentation mInstrumentation;
     private static final String PACKAGE_NAME = "android.content.cts";
     private static final String CONTENT_PKG_NAME = "android.content.cts";
     private static final String APPLICATION_NAME = "android.content.cts.MockApplication";
@@ -137,6 +141,7 @@ public class PackageManagerTest {
             "android.content.cts.permission.TEST_DYNAMIC";
     // Number of activities/activity-alias in AndroidManifest
     private static final int NUM_OF_ACTIVITIES_IN_MANIFEST = 12;
+    public static final int TIMEOUT = 5000;
 
     private static final String SHIM_APEX_PACKAGE_NAME = "com.android.apex.cts.shim";
 
@@ -145,6 +150,8 @@ public class PackageManagerTest {
             MATCH_APEX, MATCH_HIDDEN_UNTIL_INSTALLED_COMPONENTS};
 
     private static final String SAMPLE_APK_BASE = "/data/local/tmp/cts/content/";
+    private static final String EMPTY_APP_APK = SAMPLE_APK_BASE
+            + "CtsContentEmptyTestApp.apk";
     private static final String LONG_PACKAGE_NAME_APK = SAMPLE_APK_BASE
             + "CtsContentLongPackageNameTestApp.apk";
     private static final String LONG_SHARED_USER_ID_APK = SAMPLE_APK_BASE
@@ -163,6 +170,7 @@ public class PackageManagerTest {
     public void setup() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mPackageManager = mContext.getPackageManager();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
     @After
@@ -1439,5 +1447,62 @@ public class PackageManagerTest {
 
     private void uninstallPackage(String packageName) {
         SystemUtil.runShellCommand("pm uninstall " + packageName);
+    }
+
+    @Test
+    public void testGetLaunchIntentSenderForPackage() throws Exception {
+        final Instrumentation.ActivityMonitor monitor = new Instrumentation.ActivityMonitor(
+                LauncherMockActivity.class.getName(), null /* result */, false /* block */);
+        mInstrumentation.addMonitor(monitor);
+
+        try {
+            final IntentSender intentSender = mPackageManager.getLaunchIntentSenderForPackage(
+                    PACKAGE_NAME);
+            assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
+            assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
+
+            intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
+                    null /* onFinished */, null /* handler */);
+            final Activity activity = monitor.waitForActivityWithTimeout(TIMEOUT);
+            assertThat(activity).isNotNull();
+            activity.finish();
+        } finally {
+            mInstrumentation.removeMonitor(monitor);
+        }
+    }
+
+    @Test(expected = IntentSender.SendIntentException.class)
+    public void testGetLaunchIntentSenderForPackage_noMainActivity() throws Exception {
+        assertThat(installPackage(EMPTY_APP_APK)).isTrue();
+        final PackageInfo packageInfo = mPackageManager.getPackageInfo(EMPTY_APP_PACKAGE_NAME,
+                0 /* flags */);
+        assertThat(packageInfo.packageName).isEqualTo(EMPTY_APP_PACKAGE_NAME);
+        final Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setPackage(EMPTY_APP_PACKAGE_NAME);
+        assertThat(mPackageManager.queryIntentActivities(intent, 0 /* flags */)).isEmpty();
+
+        final IntentSender intentSender = mPackageManager.getLaunchIntentSenderForPackage(
+                EMPTY_APP_PACKAGE_NAME);
+        assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
+        assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
+
+        intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
+                null /* onFinished */, null /* handler */);
+    }
+
+    @Test(expected = IntentSender.SendIntentException.class)
+    public void testGetLaunchIntentSenderForPackage_packageNotExist() throws Exception {
+        try {
+            mPackageManager.getPackageInfo(EMPTY_APP_PACKAGE_NAME, 0 /* flags */);
+            fail(EMPTY_APP_PACKAGE_NAME + " should not exist in the device");
+        } catch (NameNotFoundException e) {
+        }
+        final IntentSender intentSender = mPackageManager.getLaunchIntentSenderForPackage(
+                EMPTY_APP_PACKAGE_NAME);
+        assertThat(intentSender.getCreatorPackage()).isEqualTo(PACKAGE_NAME);
+        assertThat(intentSender.getCreatorUid()).isEqualTo(mContext.getApplicationInfo().uid);
+
+        intentSender.sendIntent(mContext, 0 /* code */, null /* intent */,
+                null /* onFinished */, null /* handler */);
     }
 }
