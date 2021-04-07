@@ -138,22 +138,22 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     }
 
     @Test
-    public void testSetGetEnterpriseNetworkPreferenceStatus() throws Exception {
-        executeDeviceTestMethod(".EnterpriseNetworkPreferenceStatusTest",
-                "testGetSetEnterpriseNetworkPreferenceStatus");
+    public void testSetGetPreferentialNetworkServiceStatus() throws Exception {
+        executeDeviceTestMethod(".PreferentialNetworkServiceStatusTest",
+                "testGetSetPreferentialNetworkServiceStatus");
     }
 
     @Test
-    public void testSetEnterpriseNetworkPreferenceStatusLogged() throws Exception {
+    public void testSetPreferentialNetworkServiceStatusLogged() throws Exception {
         DevicePolicyEventLogVerifier.assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest",
-                    "testSetEnterpriseNetworkPreferenceEnabledLogged");
+                    "testSetPreferentialNetworkServiceEnabledLogged");
         }, new DevicePolicyEventWrapper.Builder(
-                EventId.SET_ENTERPRISE_NETWORK_PREFERENCE_ENABLED_VALUE)
+                EventId.SET_PREFERENTIAL_NETWORK_SERVICE_ENABLED_VALUE)
                 .setBoolean(true)
                 .build(),
         new DevicePolicyEventWrapper.Builder(
-                EventId.SET_ENTERPRISE_NETWORK_PREFERENCE_ENABLED_VALUE)
+                EventId.SET_PREFERENTIAL_NETWORK_SERVICE_ENABLED_VALUE)
                 .setBoolean(false)
                 .build());
     }

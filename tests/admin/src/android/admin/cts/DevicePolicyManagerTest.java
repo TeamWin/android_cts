@@ -116,17 +116,17 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertTrue(mDevicePolicyManager.isAdminActive(mComponent));
     }
 
-    public void testSetGetEnterpriseNetworkPreferenceEnabled() {
+    public void testSetGetPreferentialNetworkServiceEnabled() {
         if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetGetEnterpriseNetworkPreferenceEnabled");
+            Log.w(TAG, "Skipping testSetGetPreferentialNetworkServiceEnabled");
             return;
         }
         try {
             mDevicePolicyManager.clearProfileOwner(DeviceAdminInfoTest.getProfileOwnerComponent());
             assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true));
+                    () -> mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true));
             assertThrows(SecurityException.class,
-                    () -> mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
+                    () -> mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
         }  catch (SecurityException se) {
             Log.w(TAG, "Test is not a profile owner and there is no need to clear.");
         } finally {
