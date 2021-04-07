@@ -21,9 +21,12 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.testng.Assert.assertThrows;
 
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
+import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
@@ -42,6 +45,7 @@ public class DeviceStateTest {
     public static final DeviceState sDeviceState = new DeviceState();
 
     private static final TestApis sTestApis = new TestApis();
+    private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
 
     @Test
     @EnsureHasWorkProfile
@@ -88,6 +92,52 @@ public class DeviceStateTest {
     }
 
     @Test
+    @EnsureHasTvProfile
+    public void tvProfile_tvProfileProvided_returnsTvProfile() {
+        assertThat(sDeviceState.tvProfile()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoTvProfile
+    public void tvProfile_noTvProfile_throwsException() {
+        assertThrows(IllegalStateException.class, sDeviceState::tvProfile);
+    }
+
+    @Test
+    @RequireUserSupported(TV_PROFILE_TYPE_NAME)
+    @EnsureHasNoTvProfile
+    public void tvProfile_createdTvProfile_throwsException() {
+        try (UserReference tvProfile = sTestApis.users().createUser()
+                .parent(sTestApis.users().instrumented())
+                .type(sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME))
+                .create()) {
+            assertThrows(IllegalStateException.class, sDeviceState::tvProfile);
+        }
+    }
+
+    @Test
+    @EnsureHasTvProfile
+    public void ensureHasTvProfileAnnotation_tvProfileExists() {
+        assertThat(sTestApis.users().findProfileOfType(
+                sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
+                sTestApis.users().instrumented())
+        ).isNotNull();
+    }
+
+    // TODO(scottjonathan): test the installTestApp argument
+    // TODO(scottjonathan): When supported, test the forUser argument
+
+    @Test
+    @RequireUserSupported(TV_PROFILE_TYPE_NAME)
+    @EnsureHasNoTvProfile
+    public void ensureHasNoTvProfileAnnotation_tvProfileDoesNotExist() {
+        assertThat(sTestApis.users().findProfileOfType(
+                sTestApis.users().supportedType(TV_PROFILE_TYPE_NAME),
+                sTestApis.users().instrumented())
+        ).isNull();
+    }
+
+    @Test
     @EnsureHasSecondaryUser
     public void secondaryUser_secondaryUserProvided_returnsSecondaryUser() {
         assertThat(sDeviceState.secondaryUser()).isNotNull();
@@ -118,7 +168,7 @@ public class DeviceStateTest {
     }
 
     // TODO(scottjonathan): test the installTestApp argument
-    // TODO(scottjonathan): When supported, test the forUser argument
+    // TODO(scottjonathan): Test the forUser argument
 
     @Test
     @EnsureHasNoSecondaryUser
