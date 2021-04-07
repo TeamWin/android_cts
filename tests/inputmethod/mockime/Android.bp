@@ -43,6 +43,7 @@ android_test_helper_app {
         "vts10",
         "general-tests",
         "mts",
+        "sts",
     ],
     static_libs: [
         "androidx.annotation_annotation",
