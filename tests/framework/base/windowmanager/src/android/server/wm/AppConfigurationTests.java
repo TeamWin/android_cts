@@ -20,7 +20,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
@@ -32,14 +32,14 @@ import static android.server.wm.app.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.wm.app.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.wm.app.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
-import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
-import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
-import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
-import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_APP_CONFIG_INFO;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_CONFIG_INFO_IN_ON_CREATE;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_DISPLAY_REAL_SIZE;
 import static android.server.wm.app.Components.LandscapeOrientationActivity.EXTRA_SYSTEM_RESOURCES_CONFIG_INFO;
+import static android.server.wm.app.Components.NIGHT_MODE_ACTIVITY;
+import static android.server.wm.app.Components.PORTRAIT_ORIENTATION_ACTIVITY;
+import static android.server.wm.app.Components.RESIZEABLE_ACTIVITY;
+import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.translucentapp26.Components.SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
@@ -51,8 +51,6 @@ import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -62,6 +60,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.platform.test.annotations.Presubmit;
@@ -101,11 +100,11 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         separateTestJournal();
-        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final SizeInfo fullscreenSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         separateTestJournal();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         final SizeInfo dockedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
@@ -120,11 +119,13 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         separateTestJournal();
-        launchActivity(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(RESIZEABLE_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         final SizeInfo dockedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         separateTestJournal();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        dismissSplitScreen(true /* primaryOnTop */);
         final SizeInfo fullscreenSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         assertSizesAreSane(fullscreenSizes, dockedSizes);
@@ -265,7 +266,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Move the task to the primary split task.
         separateTestJournal();
-        mTaskOrganizer.putTaskInSplitPrimary(mWmState.getTaskByActivity(activityName).mTaskId);
+        putActivityInPrimarySplit(activityName);
         // Currently launchActivityInPrimarySplit launches the target activity and then move it
         // to split task, so it requires waiting of lifecycle to get the stable initial size.
         if (relaunch) {
@@ -300,19 +301,19 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
     public void testDialogWhenLargeSplitSmall() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        launchActivity(DIALOG_WHEN_LARGE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final WindowManagerState.ActivityTask stack = mWmState
-                .getStandardStackByWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
-        final WindowManagerState.DisplayContent display =
-                mWmState.getDisplay(stack.mDisplayId);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(DIALOG_WHEN_LARGE_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
+        int displayId = mWmState.getDisplayByActivity(DIALOG_WHEN_LARGE_ACTIVITY);
+        final WindowManagerState.DisplayContent display = mWmState.getDisplay(displayId);
         final int density = display.getDpi();
         final int smallWidthPx = dpToPx(SMALL_WIDTH_DP, density);
         final int smallHeightPx = dpToPx(SMALL_HEIGHT_DP, density);
 
-        resizePrimarySplitScreen(0, 0, smallWidthPx, smallHeightPx);
+        mTaskOrganizer.setRootPrimaryTaskBounds(new Rect(0, 0, smallWidthPx, smallHeightPx));
         mWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(DIALOG_WHEN_LARGE_ACTIVITY)
-                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
+                        .setWindowingMode(WINDOWING_MODE_MULTI_WINDOW)
                         .setActivityType(ACTIVITY_TYPE_STANDARD)
                         .build());
     }
@@ -938,15 +939,15 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         final ActivitySession activitySession = createManagedActivityClientSession()
                 .startActivity(getLaunchActivityBuilder()
                         .setUseInstrumentation()
-                        .setTargetActivity(RESIZEABLE_ACTIVITY)
-                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+                        .setTargetActivity(RESIZEABLE_ACTIVITY));
+        putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         SizeInfo dockedActivitySizes = getActivitySizeInfo(activitySession);
         SizeInfo applicationSizes = getAppSizeInfo(activitySession);
         assertSizesAreSame(dockedActivitySizes, applicationSizes);
 
         // Move the activity to fullscreen and check that the size was updated
         separateTestJournal();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        mTaskOrganizer.dismissedSplitScreen(true /* primaryOnTop */);
         waitForOrFail("Activity and application configuration must match",
                 () -> activityAndAppSizesMatch(activitySession));
         final SizeInfo fullscreenSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
@@ -956,7 +957,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
 
         // Move the activity to docked size again, check if the sizes were updated
         separateTestJournal();
-        setActivityTaskWindowingMode(RESIZEABLE_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+        putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         waitForOrFail("Activity and application configuration must match",
                 () -> activityAndAppSizesMatch(activitySession));
         dockedActivitySizes = getActivitySizeInfo(activitySession);
@@ -986,8 +987,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                         .setUseInstrumentation()
                         .setTargetActivity(RESIZEABLE_ACTIVITY)
                         .setNewTask(true)
-                        .setMultipleTask(true)
-                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+                        .setMultipleTask(true));
+        putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         waitForOrFail("Activity and application configuration must match",
                 () -> activityAndAppSizesMatch(secondActivitySession));
         SizeInfo dockedActivitySizes = getActivitySizeInfo(secondActivitySession);
@@ -1002,8 +1003,8 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
                         .setUseInstrumentation()
                         .setTargetActivity(RESIZEABLE_ACTIVITY)
                         .setNewTask(true)
-                        .setMultipleTask(true)
-                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY));
+                        .setMultipleTask(true));
+        putActivityInPrimarySplit(RESIZEABLE_ACTIVITY);
         waitForOrFail("Activity and application configuration must match",
                 () -> activityAndAppSizesMatch(thirdActivitySession));
         SizeInfo secondarySplitActivitySizes = getActivitySizeInfo(thirdActivitySession);
