@@ -110,6 +110,7 @@ private external fun nativeStartStopAudioRecord(
 )
 
 @AppModeFull(reason = "Test relies on other app to connect to. Instant apps can't see other apps")
+@Ignore("b/184491462")
 class AppOpsLoggingTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext as Context
     private val appOpsManager = context.getSystemService(AppOpsManager::class.java)
