@@ -983,6 +983,7 @@ public class AppEnumerationTests {
         } else {
             cmd.append("unsuspend");
         }
+        cmd.append(" --user cur");
         packages.stream().forEach(p -> cmd.append(" ").append(p));
         runShellCommand(cmd.toString());
     }
