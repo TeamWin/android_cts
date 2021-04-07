@@ -82,10 +82,10 @@ public class RemoteViewsRecyclingTest {
         RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle);
         rv.removeAllViews(R.id.remoteViews_recycle_container);
         rv.addStableView(R.id.remoteViews_recycle_container,
-                createRemoteViews(R.layout.remoteviews_textview), FIRST_TEXT_ID
+                createRemoteViews(R.layout.remoteviews_textview, View.NO_ID), FIRST_TEXT_ID
         );
         rv.addView(R.id.remoteViews_recycle_container,
-                createRemoteViews(R.layout.remoteviews_textview));
+                createRemoteViews(R.layout.remoteviews_textview, View.NO_ID));
         rv.addStableView(R.id.remoteViews_recycle_container,
                 createRemoteViews(R.layout.remoteviews_textview), AFTER_TEXT_ID
         );
@@ -313,14 +313,17 @@ public class RemoteViewsRecyclingTest {
     private void doesntRecycleWhenViewIdDoesntMatch(boolean async) throws Throwable {
         RemoteViews rv = createRemoteViews(R.layout.remoteviews_recycle);
         rv.removeAllViews(R.id.remoteViews_recycle_container);
-        RemoteViews childView = createRemoteViews(R.layout.remoteviews_textview);
-        childView.setViewId(2345);
+        RemoteViews childView = createRemoteViews(R.layout.remoteviews_textview, 2345);
         rv.addStableView(R.id.remoteViews_recycle_container, childView, FIRST_TEXT_ID);
         applyRemoteViews(rv);
         ViewGroup container = mResult.findViewById(R.id.remoteViews_recycle_container);
         View text = container.getChildAt(0);
 
-        childView.setViewId(3456);
+        rv = createRemoteViews(R.layout.remoteviews_recycle);
+        rv.removeAllViews(R.id.remoteViews_recycle_container);
+        childView = createRemoteViews(R.layout.remoteviews_textview, 3456);
+        rv.addStableView(R.id.remoteViews_recycle_container, childView, FIRST_TEXT_ID);
+        applyRemoteViews(rv);
         reapplyRemoteViews(rv, async);
 
         container = mResult.findViewById(R.id.remoteViews_recycle_container);
@@ -418,20 +421,27 @@ public class RemoteViewsRecyclingTest {
         return new RemoteViews(PACKAGE_NAME, layout);
     }
 
+    private RemoteViews createRemoteViews(int layout, int viewId) {
+        return new RemoteViews(PACKAGE_NAME, layout, viewId);
+    }
+
     private void addTextsWithStableIds(RemoteViews views, int layoutId, boolean insertInMiddle,
             boolean addAtEnd) {
         views.addStableView(layoutId, createRemoteViews(R.layout.remoteviews_textview),
                 FIRST_TEXT_ID);
         if (insertInMiddle) {
-            views.addStableView(layoutId, createRemoteViews(R.layout.remoteviews_textview),
+            views.addStableView(layoutId,
+                    createRemoteViews(R.layout.remoteviews_textview, View.NO_ID),
                     MIDDLE_TEXT_ID);
         }
         views.addStableView(layoutId, createRemoteViews(R.layout.remoteviews_textview),
                 AFTER_TEXT_ID);
         if (addAtEnd) {
-            views.addStableView(layoutId, createRemoteViews(R.layout.remoteviews_textview),
+            views.addStableView(layoutId,
+                    createRemoteViews(R.layout.remoteviews_textview, View.NO_ID),
                     END_TEXT1_ID);
-            views.addStableView(layoutId, createRemoteViews(R.layout.remoteviews_textview),
+            views.addStableView(layoutId,
+                    createRemoteViews(R.layout.remoteviews_textview, View.NO_ID),
                     END_TEXT2_ID);
         }
     }
