@@ -51,6 +51,7 @@
     <style name="BackgroundImage" parent="@android:style/Theme.Translucent.NoTitleBar.Fullscreen">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
+        <item name="android:windowSoftInputMode">stateHidden</item>
     </style>
 
     <style name="TranslucentDialog" parent="@android:style/Theme.Material.Dialog">
@@ -62,6 +63,7 @@
         <item name="android:windowDisablePreview">true</item>
         <item name="android:windowElevation">0dp</item>
         <item name="android:windowLayoutInDisplayCutoutMode">always</item>
+        <item name="android:windowSoftInputMode">stateHidden</item>
     </style>
 
     <style name="BlurryDialog" parent="TranslucentDialog">
