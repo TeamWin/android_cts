@@ -17,14 +17,18 @@
 package android.speech.tts.cts;
 
 import static android.speech.tts.cts.TextToSpeechConstants.TTS_TEST_ON_UNBIND_ACTION;
+import static android.speech.tts.cts.TextToSpeechConstants.TTS_TEST_SERVICE_CRASH_FLAG_FILE;
 
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.Process;
 import android.speech.tts.SynthesisCallback;
 import android.speech.tts.SynthesisRequest;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeechService;
 import android.util.Log;
+
+import java.io.File;
 
 /**
  * Stub service for testing {@link android.speech.tts.TextToSpeech} connection related
@@ -32,6 +36,19 @@ import android.util.Log;
  */
 public class ConnectionTestTextToSpeechService extends TextToSpeechService {
     private static final String LOG_TAG = "ConnectionTestTextToSpeechService";
+
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        Log.d(LOG_TAG, "onCreate");
+
+        if (new File(getApplicationContext().getCacheDir(),
+                TTS_TEST_SERVICE_CRASH_FLAG_FILE).exists()) {
+            Log.d(LOG_TAG, "Going to crash itself. Pid: " + Process.myPid());
+            Process.killProcess(Process.myPid());
+        }
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
