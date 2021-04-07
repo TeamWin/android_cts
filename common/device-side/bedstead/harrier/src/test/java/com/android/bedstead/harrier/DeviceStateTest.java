@@ -20,7 +20,9 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.users.UserReference;
@@ -82,6 +84,47 @@ public class DeviceStateTest {
         assertThat(sTestApis.users().findProfileOfType(
                 sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME),
                 sTestApis.users().instrumented())
+        ).isNull();
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    public void secondaryUser_secondaryUserProvided_returnsSecondaryUser() {
+        assertThat(sDeviceState.secondaryUser()).isNotNull();
+    }
+
+    @Test
+    @EnsureHasNoSecondaryUser
+    public void secondaryUser_noSecondaryUser_throwsException() {
+        assertThrows(IllegalStateException.class, sDeviceState::secondaryUser);
+    }
+
+    @Test
+    @EnsureHasNoSecondaryUser
+    public void secondaryUser_createdSecondaryUser_throwsException() {
+        try (UserReference secondaryUser = sTestApis.users().createUser()
+                .type(sTestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
+                .create()) {
+            assertThrows(IllegalStateException.class, sDeviceState::secondaryUser);
+        }
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    public void ensureHasSecondaryUserAnnotation_secondaryUserExists() {
+        assertThat(sTestApis.users().findUserOfType(
+                sTestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
+        ).isNotNull();
+    }
+
+    // TODO(scottjonathan): test the installTestApp argument
+    // TODO(scottjonathan): When supported, test the forUser argument
+
+    @Test
+    @EnsureHasNoSecondaryUser
+    public void ensureHasNoSecondaryUserAnnotation_secondaryUserDoesNotExist() {
+        assertThat(sTestApis.users().findUserOfType(
+                sTestApis.users().supportedType(UserType.SECONDARY_USER_TYPE_NAME))
         ).isNull();
     }
 }
