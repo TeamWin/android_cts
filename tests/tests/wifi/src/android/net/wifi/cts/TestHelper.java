@@ -684,7 +684,7 @@ public class TestHelper {
                     testNetworkCallback);
             // Wait for the request to reach the wifi stack before kick-starting the UI
             // interactions.
-            Thread.sleep(500);
+            Thread.sleep(1_000);
             // Start the UI interactions.
             uiThread.run();
             // now wait for callback
