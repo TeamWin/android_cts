@@ -407,7 +407,7 @@ public class NetworkSuggestionTestCase extends BaseTestCase {
     @Override
     protected void setUp() {
         super.setUp();
-        mConnectivityManager = ConnectivityManager.from(mContext);
+        mConnectivityManager = mContext.getSystemService(ConnectivityManager.class);
     }
 
     @Override
