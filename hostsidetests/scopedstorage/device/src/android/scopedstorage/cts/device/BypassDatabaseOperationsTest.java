@@ -66,7 +66,7 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
             "android.scopedstorage.cts.testapp.A.withres", 1, false,
             "CtsScopedStorageTestAppA.apk");
     // An app with READ_EXTERNAL_STORAGE_PERMISSION. Targets current SDK and has
-    // requestOptimizedExternalStorageAccess=true
+    // requestRawExternalStorageAccess=true
     private static final TestApp APP_SYSTEM_GALLERY_BYPASS_DB = new TestApp(
             "TestAppSystemGalleryBypassDB",
             "android.scopedstorage.cts.testapp.SystemGalleryBypassDB", 1, false,
@@ -76,7 +76,7 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
             "android.scopedstorage.cts.testapp.C", 1, false,
             "CtsScopedStorageTestAppC30.apk");
     // An app with READ_EXTERNAL_STORAGE_PERMISSION. Targets targetSDK=30 and has
-    // requestOptimizedExternalStorageAccess=true
+    // requestRawExternalStorageAccess=true
     private static final TestApp APP_SYSTEM_GALLERY_30_BYPASS_DB = new TestApp(
             "TestAppSystemGalleryBypassDB",
             "android.scopedstorage.cts.testapp.SystemGalleryBypassDB", 1, false,
@@ -87,7 +87,7 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
             "TestAppFileManager", "android.scopedstorage.cts.testapp.filemanager", 1, false,
             "CtsScopedStorageTestAppFileManager.apk");
     // An app that has file manager (MANAGE_EXTERNAL_STORAGE) permission.
-    // Targets current SDK and has requestOptimizedExternalStorageAccess=true
+    // Targets current SDK and has requestRawExternalStorageAccess=true
     private static final TestApp APP_FM_BYPASS_DATABASE_OPS = new TestApp(
             "TestAppFileManagerBypassDB", "android.scopedstorage.cts.testapp.filemanagerbypassdb",
             1, false, "CtsScopedStorageTestAppFileManagerBypassDB.apk");
@@ -145,7 +145,7 @@ public class BypassDatabaseOperationsTest extends ScopedStorageBaseDeviceTest {
 
     /**
      * Test that app with MANAGE_EXTERNAL_STORAGE permission, targeting
-     * targetSDK=31 or higher and with requestOptimizedExternalStorageAccess=true
+     * targetSDK=31 or higher and with requestRawExternalStorageAccess=true
      * will bypass database operations.
      */
     @Test
