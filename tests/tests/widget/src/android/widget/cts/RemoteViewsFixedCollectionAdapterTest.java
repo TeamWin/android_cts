@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
+import android.appwidget.AppWidgetHostView;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -38,6 +39,7 @@ import android.os.Parcel;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.widget.Adapter;
 import android.widget.AdapterViewFlipper;
 import android.widget.CompoundButton;
@@ -89,9 +91,12 @@ public class RemoteViewsFixedCollectionAdapterTest {
         mActivity = mActivityRule.getActivity();
         mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_adapters);
 
-        ViewGroup parent = (ViewGroup) mActivity.findViewById(R.id.remoteView_host);
-        mView = mRemoteViews.apply(mActivity, parent);
-        parent.addView(mView);
+        ViewGroup parent = mActivity.findViewById(R.id.remoteView_host);
+        AppWidgetHostView hostView = new AppWidgetHostView(mActivity);
+        parent.addView(hostView, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+
+        mView = mRemoteViews.apply(mActivity, hostView);
+        hostView.addView(mView);
 
         mListView = mView.findViewById(R.id.remoteView_list);
         mGridView = mView.findViewById(R.id.remoteView_grid);
