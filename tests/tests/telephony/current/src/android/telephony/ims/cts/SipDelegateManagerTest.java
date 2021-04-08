@@ -1078,8 +1078,8 @@ public class SipDelegateManagerTest {
         // Send a message and ensure it gets received on the other end as well as acked
         delegateConn.sendMessageAndVerifyCompletedSuccessfully(ImsUtils.TEST_SIP_MESSAGE);
         delegate.verifyMessageSend(ImsUtils.TEST_SIP_MESSAGE);
-        delegateConn.sendCloseDialog(ImsUtils.TEST_CALL_ID);
-        delegate.verifyCloseDialog(ImsUtils.TEST_CALL_ID);
+        delegateConn.sendCloseSession(ImsUtils.TEST_CALL_ID);
+        delegate.verifyCloseSession(ImsUtils.TEST_CALL_ID);
         // send a message and notify connection that it failed
         delegate.setSendMessageDenyReason(
                 SipDelegateManager.MESSAGE_FAILURE_REASON_NETWORK_NOT_AVAILABLE);
