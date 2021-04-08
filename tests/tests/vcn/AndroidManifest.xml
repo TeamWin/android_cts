@@ -21,6 +21,8 @@
 
     <!--Allow tests to call ConnectivityManager#getActiveNetwork()-->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Allow tests to call ConnectivityManager#requestNetwork() -->
+    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
     <!--Allow tests to create socket -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <!--Allow tests to read telephony configurations -->
