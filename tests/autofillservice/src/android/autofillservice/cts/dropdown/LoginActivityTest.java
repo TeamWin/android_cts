@@ -2384,7 +2384,7 @@ public class LoginActivityTest extends LoginActivityCommonTestCase {
         mActivity.assertAutoFilled();
     }
 
-    @Presubmit
+    @FlakyTest(bugId = 162372863) // Re-add @Presubmit after fixing.
     @Test
     public void testCommitMultipleTimes() throws Throwable {
         // Set service.

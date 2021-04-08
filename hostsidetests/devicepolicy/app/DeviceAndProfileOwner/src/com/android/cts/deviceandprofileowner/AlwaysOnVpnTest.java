@@ -131,7 +131,9 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         VpnTestHelper.setAlwaysOnVpn(
                 mContext, VPN_PACKAGE, /* lockdown */ true, /* allowlist */ false);
-        assertConnectivity(false, "VPN in lockdown, service not started");
+        // Wait for loss of connectivity instead of assertConnectivity(false)
+        // to mitigate flakiness due to asynchronicity.
+        waitForNoConnectivity("VPN in lockdown, service not started");
         assertNotNull(receiver.awaitForBroadcast(VPN_ON_START_TIMEOUT_MS));
 
         VpnTestHelper.setAlwaysOnVpn(
@@ -141,7 +143,9 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
 
         VpnTestHelper.setAlwaysOnVpn(
                 mContext, VPN_PACKAGE, /* lockdown */ true, /* allowlist */ false);
-        assertConnectivity(false, "VPN in lockdown, service not started");
+        // Wait for loss of connectivity instead of assertConnectivity(false)
+        // to mitigate flakiness due to asynchronicity.
+        waitForNoConnectivity("VPN in lockdown, service not started");
         assertNotNull(receiver.awaitForBroadcast(VPN_ON_START_TIMEOUT_MS));
 
         receiver.unregisterQuietly();
@@ -206,6 +210,21 @@ public class AlwaysOnVpnTest extends BaseDeviceAdminTest {
             }
         }
         fail("Connectivity isn't available: " + message);
+    }
+
+    private void waitForNoConnectivity(String message) throws Exception {
+        long deadline = System.nanoTime() + CONNECTIVITY_WAIT_TIME_NS;
+        while (System.nanoTime() < deadline) {
+            try {
+                new Socket(CONNECTIVITY_CHECK_HOST, 80);
+                // Domain resolved, we have connectivity.
+            } catch (IOException e) {
+                // No connectivity
+                return;
+            }
+            Thread.sleep(2000);
+        }
+        fail("Connectivity still available after deadline: " + message);
     }
 
     private void assertConnectivity(boolean shouldHaveConnectivity, String message) {

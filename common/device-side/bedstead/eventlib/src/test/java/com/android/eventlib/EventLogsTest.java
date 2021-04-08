@@ -35,10 +35,12 @@ import com.android.compatibility.common.util.SystemUtil;
 import com.android.eventlib.events.CustomEvent;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.testng.annotations.BeforeClass;
 
 import java.time.Duration;
 import java.util.concurrent.Executors;
@@ -64,6 +66,20 @@ public class EventLogsTest {
             Executors.newSingleThreadScheduledExecutor();
     private static final TestApis sTestApis = new TestApis();
     private static final Context sContext = sTestApis.context().instrumentedContext();
+    private static final UserReference sProfile = sTestApis.users().createUser()
+            .parent(sTestApis.users().instrumented())
+            .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
+            .createAndStart();
+
+    @BeforeClass
+    public static void setupClass() {
+        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(sProfile);
+    }
+
+    @AfterClass
+    public static void teardownClass() {
+        sProfile.remove();
+    }
 
     @Before
     public void setUp() {
@@ -1093,61 +1109,34 @@ public class EventLogsTest {
 
     @Test
     public void differentUser_queryWorks() {
-        UserReference profile = sTestApis.users().createUser()
-                .parent(sTestApis.users().instrumented())
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart();
-        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
-        try {
-            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(sProfile, /* tag= */ TEST_TAG1, /* data= */ null);
 
-            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(profile);
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .onUser(sProfile);
 
-            assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
-        } finally {
-            profile.remove();
-        }
+        assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
     }
 
     @Test
     public void differentUserSpecifiedByUserHandle_queryWorks() {
-        UserReference profile = sTestApis.users().createUser()
-                .parent(sTestApis.users().instrumented())
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart();
-        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
-        try {
-            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(sProfile, /* tag= */ TEST_TAG1, /* data= */ null);
 
-            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(profile.userHandle());
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .onUser(sProfile.userHandle());
 
-            assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
-        } finally {
-            profile.remove();
-        }
+        assertThat(eventLogs.get().tag()).isEqualTo(TEST_TAG1);
     }
 
     @Test
     public void differentUser_doesntGetEventsFromWrongUser() {
-        UserReference profile = sTestApis.users().createUser()
-                .parent(sTestApis.users().instrumented())
-                .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart();
-        sTestApis.packages().find(TEST_APP_PACKAGE_NAME).install(profile);
-        try {
-            logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
-            logCustomEventOnTestApp(profile, /* tag= */ TEST_TAG2, /* data= */ null);
+        logCustomEventOnTestApp(/* tag= */ TEST_TAG1, /* data= */ null);
+        logCustomEventOnTestApp(sProfile, /* tag= */ TEST_TAG2, /* data= */ null);
 
-            EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
-                    .onUser(profile);
+        EventLogs<CustomEvent> eventLogs = CustomEvent.queryPackage(TEST_APP_PACKAGE_NAME)
+                .onUser(sProfile);
 
-            assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
-            assertThat(eventLogs.next()).isNull();
-        } finally {
-            profile.remove();
-        }
+        assertThat(eventLogs.next().tag()).isEqualTo(TEST_TAG2);
+        assertThat(eventLogs.next()).isNull();
     }
 
     @Test

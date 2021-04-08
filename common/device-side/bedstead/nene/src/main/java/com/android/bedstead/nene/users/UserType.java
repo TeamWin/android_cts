@@ -89,6 +89,11 @@ public final class UserType {
     }
 
     @Override
+    public int hashCode() {
+        return name().hashCode();
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null || !(obj instanceof UserType)) {
             return false;
