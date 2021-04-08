@@ -309,8 +309,6 @@ public class WallpaperManagerTest {
             Assert.assertEquals("red", 0f, secondary.red(), delta);
             Assert.assertEquals("green", 0f, secondary.green(), delta);
             Assert.assertEquals("blue", 1f, secondary.blue(), delta);
-
-            Assert.assertNull(colors.getTertiaryColor());
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {

@@ -19,7 +19,6 @@ package android.server.biometrics;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -28,12 +27,14 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
+import android.hardware.biometrics.BiometricManager.Authenticators;
 import android.hardware.biometrics.BiometricPrompt;
 import android.hardware.biometrics.BiometricTestSession;
 import android.hardware.biometrics.SensorProperties;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
 
 import com.android.server.biometrics.nano.SensorStateProto;
 
@@ -93,6 +94,16 @@ public class BiometricSimpleTests extends BiometricTestBase {
                 state.mSensorStates.containsModality(SensorStateProto.FACE));
         assertEquals(pm.hasSystemFeature(PackageManager.FEATURE_IRIS),
                 state.mSensorStates.containsModality(SensorStateProto.IRIS));
+    }
+
+    @Test
+    public void testCanAuthenticate_whenNoSensors() {
+        if (mSensorProperties.isEmpty()) {
+            assertEquals(BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+                    mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_WEAK));
+            assertEquals(BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE,
+                    mBiometricManager.canAuthenticate(Authenticators.BIOMETRIC_STRONG));
+        }
     }
 
     @Test
@@ -212,9 +223,26 @@ public class BiometricSimpleTests extends BiometricTestBase {
     @Test
     public void testSimpleBiometricAuth() throws Exception {
         for (SensorProperties props : mSensorProperties) {
+
+            Log.d(TAG, "testSimpleBiometricAuth, sensor: " + props.getSensorId());
+
             try (BiometricTestSession session =
                          mBiometricManager.createTestSession(props.getSensorId())) {
+
+                final int authenticatorStrength =
+                        Utils.testApiStrengthToAuthenticatorStrength(props.getSensorStrength());
+
+                assertEquals("Sensor: " + props.getSensorId()
+                                + ", strength: " + props.getSensorStrength(),
+                        BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED,
+                        mBiometricManager.canAuthenticate(authenticatorStrength));
+
                 enrollForSensor(session, props.getSensorId());
+
+                assertEquals("Sensor: " + props.getSensorId()
+                                + ", strength: " + props.getSensorStrength(),
+                        BiometricManager.BIOMETRIC_SUCCESS,
+                        mBiometricManager.canAuthenticate(authenticatorStrength));
 
                 final Random random = new Random();
                 final String randomTitle = String.valueOf(random.nextInt(10000));

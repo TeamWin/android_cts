@@ -24,9 +24,9 @@ import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
+import com.android.bedstead.nene.devicepolicy.DeviceOwner;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.users.UserType;
-import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.eventlib.EventLogs;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 
@@ -41,7 +41,7 @@ import org.junit.runners.JUnit4;
 public class DeviceAdminAppTest {
 
     private static final TestApis sTestApis = new TestApis();
-    private final Context mContext = sTestApis.context().instrumentedContext();
+    private static final Context sContext = sTestApis.context().instrumentedContext();
 
     @ClassRule @Rule
     public static final DeviceState sDeviceState = new DeviceState();
@@ -55,48 +55,34 @@ public class DeviceAdminAppTest {
 
     @Test
     @RequireRunOnPrimaryUser
+    // TODO(scottjonathan): Add annotations to ensure no accounts and no users
     public void setAsDeviceOwner_isEnabled() throws Exception {
-        ShellCommand.builder("dpm set-device-owner")
-                .addOperand(DeviceAdminApp.deviceAdminComponentName(mContext).flattenToString())
-                .allowEmptyOutput(true)
-                .execute();
-        try {
-            EventLogs<DeviceAdminEnabledEvent> logs =
-                    DeviceAdminEnabledEvent.queryPackage(mContext.getPackageName());
+        try (DeviceOwner deviceOwner = sTestApis.devicePolicy().setDeviceOwner(
+                sDeviceState.primaryUser(), DeviceAdminApp.deviceAdminComponentName(sContext))) {
 
+            EventLogs<DeviceAdminEnabledEvent> logs =
+                    DeviceAdminEnabledEvent.queryPackage(sContext.getPackageName());
             assertThat(logs.poll()).isNotNull();
-        } finally {
-            ShellCommand.builder("dpm remove-active-admin")
-                    .addOperand(DeviceAdminApp.deviceAdminComponentName(mContext).flattenToString())
-                    .allowEmptyOutput(true)
-                    .execute();
         }
     }
 
     @Test
     @RequireRunOnPrimaryUser
     @EnsureHasNoWorkProfile
-    public void setAsProfileOwner_isEnabled() throws Exception {
-        UserReference profile = sTestApis.users().createUser()
+    public void setAsProfileOwner_isEnabled() {
+        try (UserReference profile = sTestApis.users().createUser()
                 .parent(sTestApis.users().instrumented())
                 .type(sTestApis.users().supportedType(UserType.MANAGED_PROFILE_TYPE_NAME))
-                .createAndStart();
-        sTestApis.packages().find(mContext.getPackageName()).install(profile);
+                .createAndStart()) {
+            sTestApis.packages().find(sContext.getPackageName()).install(profile);
 
-        try {
-            ShellCommand.builder("dpm set-profile-owner")
-                    .addOption("--user", profile.id())
-                    .addOperand(DeviceAdminApp.deviceAdminComponentName(mContext).flattenToString())
-                    .allowEmptyOutput(true)
-                    .execute();
+            sTestApis.devicePolicy().setProfileOwner(
+                    profile, DeviceAdminApp.deviceAdminComponentName(sContext));
 
             EventLogs<DeviceAdminEnabledEvent> logs =
-                    DeviceAdminEnabledEvent.queryPackage(mContext.getPackageName())
+                    DeviceAdminEnabledEvent.queryPackage(sContext.getPackageName())
                     .onUser(profile);
-
             assertThat(logs.poll()).isNotNull();
-        } finally {
-            profile.remove();
         }
     }
 }

@@ -25,6 +25,8 @@ class TextToSpeechConstants {
 
     static final String MOCK_TTS_ENGINE = "android.speech.tts.cts";
 
+    static final String TTS_TEST_SERVICE_CRASH_FLAG_FILE = "tts_test_service_crash_flag_file";
+
     private TextToSpeechConstants() {
     }
 }

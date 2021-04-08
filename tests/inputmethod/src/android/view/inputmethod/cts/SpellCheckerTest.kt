@@ -56,6 +56,7 @@ import androidx.test.uiautomator.Until
 import com.android.compatibility.common.util.CtsTouchUtils
 import com.android.compatibility.common.util.PollingCheck
 import com.android.compatibility.common.util.SettingsStateChangerRule
+import com.android.compatibility.common.util.SystemUtil
 import com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand
 import com.android.cts.mockime.MockImeSession
 import com.android.cts.mockspellchecker.MockSpellChecker
@@ -74,12 +75,11 @@ import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
-private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
-
 @MediumTest
 @RunWith(AndroidJUnit4::class)
 class SpellCheckerTest : EndToEndImeTestBase() {
 
+    private val TAG = "SpellCheckerTest"
     private val SPELL_CHECKING_IME_ID = "com.android.cts.spellcheckingime/.SpellCheckingIme"
     private val TIMEOUT = TimeUnit.SECONDS.toMillis(5)
 
@@ -546,15 +546,16 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     private inner class ImeSession(val imeId: String) : AutoCloseable {
 
         init {
-            uiAutomation.executeShellCommand("ime enable $imeId")
-            uiAutomation.executeShellCommand("ime set $imeId")
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset")
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime enable $imeId")
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime set $imeId")
             PollingCheck.check("Make sure that $imeId is selected", TIMEOUT) {
                 getCurrentInputMethodInfo().id == imeId
             }
         }
 
         override fun close() {
-            uiAutomation.executeShellCommand("ime reset")
+            SystemUtil.runCommandAndPrintOnLogcat(TAG, "ime reset")
         }
     }
 

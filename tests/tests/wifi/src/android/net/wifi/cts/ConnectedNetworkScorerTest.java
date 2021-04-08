@@ -396,6 +396,11 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
             synchronized (mCountDownLatch) {
                 this.startSessionId = sessionInfo.getSessionId();
                 this.isUserSelected = sessionInfo.isUserSelected();
+                // Build a WifiConnectedSessionInfo object
+                WifiConnectedSessionInfo.Builder sessionBuilder =
+                        new WifiConnectedSessionInfo.Builder(startSessionId.intValue())
+                                .setUserSelected(isUserSelected);
+                sessionBuilder.build();
                 mCountDownLatch.countDown();
             }
         }
@@ -403,7 +408,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
 
     /**
      * Tests the
-     * {@link android.net.wifi.WifiConnectedNetworkScorer#onStart(WifiConnectionSessionInfo)}.
+     * {@link android.net.wifi.WifiConnectedNetworkScorer#onStart(WifiConnectedSessionInfo)}.
      */
     @Test
     public void testConnectedNetworkScorerWithSessionInfo() throws Exception {

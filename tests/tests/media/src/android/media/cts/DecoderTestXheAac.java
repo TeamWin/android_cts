@@ -31,11 +31,10 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.DecoderTestAacDrc.DrcParams;
-import android.media.cts.R;
 import android.os.Build;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
-import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -569,6 +568,13 @@ public class DecoderTestXheAac {
     @Test
     public void testDecodeUsacSyncSampleSeekingM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacSyncSampleSeekingM4a");
+        if(!sIsAndroidRAndAbove) {
+            // The fix for b/158471477 was released in mainline release 300802800
+            // See https://android-build.googleplex.com/builds/treetop/googleplex-android-review/11990700
+            final int MIN_VERSION = 300802800;
+            TestUtils.assumeMainlineModuleAtLeast("com.google.android.media.swcodec", MIN_VERSION);
+            TestUtils.assumeMainlineModuleAtLeast("com.google.android.media", MIN_VERSION);
+        }
 
         assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
