@@ -1412,11 +1412,11 @@ public class AppWidgetTest extends AppWidgetTestCase {
 
     @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
     @Test
-    public void testAppWidgetGetProviderInfo() {
+    public void testAppWidgetGetActivityInfo() {
         AppWidgetProviderInfo info = getFirstAppWidgetProviderInfo();
-        assertNotNull(info.getProviderInfo());
-        assertEquals(info.provider.getClassName(), info.getProviderInfo().name);
-        assertEquals(info.provider.getPackageName(), info.getProviderInfo().packageName);
+        assertNotNull(info.getActivityInfo());
+        assertEquals(info.provider.getClassName(), info.getActivityInfo().name);
+        assertEquals(info.provider.getPackageName(), info.getActivityInfo().packageName);
     }
 
     private void waitForCallCount(AtomicInteger counter, int expectedCount) {
