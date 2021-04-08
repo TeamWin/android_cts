@@ -17,10 +17,10 @@
 package android.time.cts.host;
 
 
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_NAME;
-import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_DISABLED;
-import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_SIMULATED;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_NAME;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_DISABLED;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
+import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
+import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,13 +42,13 @@ public class LocationTimeZoneManagerHostTest extends BaseLocationTimeZoneManager
 
     @Test
     public void testSecondarySuggestion() throws Exception {
-        setProviderOverrideMode(PRIMARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_DISABLED);
-        setProviderOverrideMode(SECONDARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_SIMULATED);
+        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
+        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
         startLocationTimeZoneManagerService();
         setLocationTimeZoneManagerStateRecordingMode(true);
 
-        simulateProviderBind(SECONDARY_PROVIDER_NAME);
-        simulateProviderSuggestion(SECONDARY_PROVIDER_NAME, "Europe/London");
+        simulateProviderBind(SECONDARY_PROVIDER_INDEX);
+        simulateProviderSuggestion(SECONDARY_PROVIDER_INDEX, "Europe/London");
 
         LocationTimeZoneManagerServiceStateProto serviceState =
                 dumpLocationTimeZoneManagerServiceState();
