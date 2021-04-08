@@ -25,6 +25,7 @@ import android.cts.statsdatom.lib.DeviceUtils;
 import android.cts.statsdatom.lib.ReportUtils;
 
 import com.android.os.AtomsProto;
+import com.android.os.AtomsProto.TimeZoneDetectorState.DetectionMode;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -77,14 +78,45 @@ public class TimeZoneDetectorStatsTest extends BaseHostJUnit4Test {
                 // line. Checking more would require adding more commands or something that dumps a
                 // proto. This test provides at least some coverage that the atom is working /
                 // matches actual state.
-                assertThat(state.getGeoSupported()).isEqualTo(
-                        mTimeZoneDetectorHostHelper.isGeoDetectionSupported());
-                assertThat(state.getLocationEnabled()).isEqualTo(
-                        mTimeZoneDetectorHostHelper.isLocationEnabledForCurrentUser());
-                boolean isGeoDetectionEnabled = state.getDetectionMode()
-                        == AtomsProto.TimeZoneDetectorState.DetectionMode.GEO;
-                assertThat(isGeoDetectionEnabled).isEqualTo(
-                        mTimeZoneDetectorHostHelper.isGeoDetectionEnabled());
+
+                // The shell reports the same info the atom does for geo detection supported.
+                boolean geoDetectionSupportedFromShell =
+                        mTimeZoneDetectorHostHelper.isGeoDetectionSupported();
+                assertThat(state.getGeoSupported()).isEqualTo(geoDetectionSupportedFromShell);
+
+                // The shell reports the same info the atom does for location enabled.
+                boolean locationEnabledForCurrentUserFromShell =
+                        mTimeZoneDetectorHostHelper.isLocationEnabledForCurrentUser();
+                assertThat(state.getLocationEnabled())
+                        .isEqualTo(locationEnabledForCurrentUserFromShell);
+
+                // The shell reports the user's setting for auto detection.
+                boolean autoDetectionEnabledFromShell =
+                        mTimeZoneDetectorHostHelper.isAutoDetectionEnabled();
+                assertThat(state.getAutoDetectionSetting())
+                        .isEqualTo(autoDetectionEnabledFromShell);
+
+                // The atom reports the functional state for "detection mode", which is derived from
+                // device config and settings. This logic basically repeats the logic used on the
+                // device.
+                DetectionMode expectedDetectionMode;
+                if (!autoDetectionEnabledFromShell) {
+                    expectedDetectionMode = DetectionMode.MANUAL;
+                } else {
+                    boolean geoDetectionSettingEnabledFromShell =
+                            mTimeZoneDetectorHostHelper.isGeoDetectionEnabled();
+                    boolean expectedGeoDetectionEnabled =
+                            geoDetectionSupportedFromShell
+                                    && locationEnabledForCurrentUserFromShell
+                                    && geoDetectionSettingEnabledFromShell;
+                    if (expectedGeoDetectionEnabled) {
+                        expectedDetectionMode = DetectionMode.GEO;
+                    } else {
+                        expectedDetectionMode = DetectionMode.TELEPHONY;
+                    }
+                }
+                assertThat(state.getDetectionMode()).isEqualTo(expectedDetectionMode);
+
                 found = true;
                 break;
             }
