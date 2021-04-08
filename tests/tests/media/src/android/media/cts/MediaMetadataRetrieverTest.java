@@ -345,6 +345,11 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     public void testID3v240ExtHeader() {
+        if(!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R)) {
+            // The fix for b/154357105 was released in mainline release 30.09.007.01
+            // See https://android-build.googleplex.com/builds/treetop/googleplex-android-review/11174063
+            TestUtils.assumeMainlineModuleAtLeast("com.google.android.media", 300900701);
+        }
         setDataSourceFd(R.raw.sinesweepid3v24ext);
         assertEquals("Mime type was other than expected",
                 "audio/mpeg",
