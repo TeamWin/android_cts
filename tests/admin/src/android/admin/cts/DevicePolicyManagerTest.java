@@ -1207,4 +1207,29 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
                 SecurityException.class,
                 () -> mDevicePolicyManager.getNearbyNotificationStreamingPolicy());
     }
+
+    public void testSetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            String message =
+                    "Skipping testSetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner";
+            Log.w(TAG, message);
+            return;
+        }
+        assertThrows(
+                SecurityException.class,
+                () ->
+                        mDevicePolicyManager.setNearbyAppStreamingPolicy(
+                                DevicePolicyManager.NEARBY_STREAMING_ENABLED));
+    }
+
+    public void testGetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner() {
+        if (!mDeviceAdmin) {
+            String message =
+                    "Skipping testGetNearbyAppStreamingPolicy_failIfNotDeviceOrProfileOwner";
+            Log.w(TAG, message);
+            return;
+        }
+        assertThrows(
+                SecurityException.class, () -> mDevicePolicyManager.getNearbyAppStreamingPolicy());
+    }
 }
