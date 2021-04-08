@@ -16,13 +16,14 @@
 package android.time.cts.host;
 
 import static android.time.cts.host.LocationTimeZoneManager.DUMP_STATE_OPTION_PROTO;
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_NAME;
-import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_NONE;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_NAME;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.NAMESPACE;
+import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
+import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_DUMP_STATE;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_RECORD_PROVIDER_STATES;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND;
-import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_START;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_STOP;
 import static android.time.cts.host.LocationTimeZoneManager.SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND;
@@ -82,8 +83,8 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
     @After
     public void tearDown() throws Exception {
         stopLocationTimeZoneManagerService();
-        setProviderOverrideMode(PRIMARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_NONE);
-        setProviderOverrideMode(SECONDARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_NONE);
+        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, null);
+        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, null);
 
         // Reset settings.
         if (!mOriginalGeoDetectionEnabled) {
@@ -121,29 +122,53 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
         executeLocationTimeZoneManagerCommand(SHELL_COMMAND_STOP);
     }
 
-    protected void setProviderOverrideMode(String providerName, String mode) throws Exception {
-        executeLocationTimeZoneManagerCommand(
-                "%s %s %s", SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE, providerName, mode);
+    protected void setProviderModeOverride(int providerIndex, String mode) throws Exception {
+        String deviceConfigKey;
+        if (providerIndex == PRIMARY_PROVIDER_INDEX) {
+            deviceConfigKey = KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
+        } else {
+            deviceConfigKey = KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
+        }
+
+        if (mode == null) {
+            clearDeviceConfigKey(deviceConfigKey);
+        } else {
+            setDeviceConfigKey(deviceConfigKey, mode);
+        }
     }
 
-    protected void simulateProviderSuggestion(String providerName, String... zoneIds)
+    private void clearDeviceConfigKey(String deviceConfigKey) throws Exception {
+        executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
+    }
+
+    private void setDeviceConfigKey(String deviceConfigKey, String value) throws Exception {
+        executeDeviceConfigCommand("put %s %s %s", NAMESPACE, deviceConfigKey, value);
+    }
+
+    private byte[] executeDeviceConfigCommand(String cmd, Object... args) throws Exception {
+        String command = String.format(cmd, args);
+        return mTimeZoneDetectorHostHelper.executeShellCommandReturnBytes("cmd %s %s",
+                LocationTimeZoneManager.DeviceConfig.SHELL_COMMAND_SERVICE_NAME, command);
+    }
+
+    protected void simulateProviderSuggestion(int providerIndex, String... zoneIds)
             throws Exception {
         String timeZoneIds = String.join("&", zoneIds);
         String testCommand = String.format("%s %s=string_array:%s",
                 SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS,
                 SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS_ARG_KEY_TZ,
                 timeZoneIds);
-        executeProviderTestCommand(providerName, testCommand);
+        executeProviderTestCommand(providerIndex, testCommand);
     }
 
-    protected void simulateProviderBind(String providerName) throws Exception {
-        executeProviderTestCommand(providerName, SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND);
+    protected void simulateProviderBind(int providerIndex) throws Exception {
+        executeProviderTestCommand(providerIndex, SIMULATED_PROVIDER_TEST_COMMAND_ON_BIND);
     }
 
-    private void executeProviderTestCommand(String providerName, String testCommand)
+    private void executeProviderTestCommand(int providerIndex, String testCommand)
             throws Exception {
         executeLocationTimeZoneManagerCommand("%s %s %s",
-                SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND, providerName, testCommand);
+                SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND, providerIndex, testCommand);
     }
 
     private byte[] executeLocationTimeZoneManagerCommand(String cmd, Object... args)

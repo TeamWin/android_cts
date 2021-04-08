@@ -16,10 +16,10 @@
 
 package android.time.cts.host;
 
-import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_NAME;
-import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_DISABLED;
-import static android.time.cts.host.LocationTimeZoneManager.PROVIDER_MODE_OVERRIDE_SIMULATED;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_NAME;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_DISABLED;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
+import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
+import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
 
 import static java.util.stream.Collectors.toList;
 
@@ -40,11 +40,9 @@ import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /** Host-side CTS tests for the location time zone manager service stats logging. */
 @RunWith(DeviceJUnit4ClassRunner.class)
@@ -52,8 +50,6 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
 
     private static final int PROVIDER_STATES_COUNT =
             LocationTimeZoneProviderStateChanged.State.values().length;
-    private static final int PRIMARY_PROVIDER_INDEX = 0;
-    private static final int SECONDARY_PROVIDER_INDEX = 1;
 
     @Before
     @Override
@@ -73,8 +69,8 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
 
     @Test
     public void testAtom_locationTimeZoneProviderStateChanged() throws Exception {
-        setProviderOverrideMode(PRIMARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_DISABLED);
-        setProviderOverrideMode(SECONDARY_PROVIDER_NAME, PROVIDER_MODE_OVERRIDE_SIMULATED);
+        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_DISABLED);
+        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
         mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(false);
 
         startLocationTimeZoneManagerService();
@@ -129,13 +125,9 @@ public class LocationTimeZoneManagerStatsTest extends BaseLocationTimeZoneManage
                 AtomTestUtils.WAIT_TIME_SHORT /* wait */, eventToStateFunction);
     }
 
-    private static Set<Integer> singletonStateId(int primaryProviderIndex,
+    private static Set<Integer> singletonStateId(int providerIndex,
             LocationTimeZoneProviderStateChanged.State state) {
-        return singletonSet(stateId(primaryProviderIndex, state));
-    }
-
-    private static <T> Set<T> singletonSet(T object) {
-        return new HashSet<>(Collections.singletonList(object));
+        return Collections.singleton(stateId(providerIndex, state));
     }
 
     private List<StatsLog.EventMetricData> extractEventsForProviderIndex(
