@@ -30,9 +30,17 @@ import static org.testng.Assert.assertThrows;
 import android.os.Build;
 import android.os.UserHandle;
 
+import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
+import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
 
+import org.junit.ClassRule;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -50,6 +58,15 @@ public class UsersTest {
     private static final String USER_NAME = "userName";
 
     private final TestApis mTestApis = new TestApis();
+    private final UserType mSecondaryUserType =
+            mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
+    private final UserType mManagedProfileType =
+            mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
+    private final UserReference mInstrumentedUser = mTestApis.users().instrumented();
+
+    @ClassRule
+    @Rule
+    public static final DeviceState sDeviceState = new DeviceState();
 
     // We don't want to test the exact list of any specific device, so we check that it returns
     // some known types which will exist on the emulators (used for presubmit tests).
@@ -190,13 +207,12 @@ public class UsersTest {
 
     @Test
     public void createUser_createdUserHasCorrectTypeName() {
-        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
         UserReference userReference = mTestApis.users().createUser()
-                .type(type)
+                .type(mSecondaryUserType)
                 .create();
 
         try {
-            assertThat(userReference.resolve().type()).isEqualTo(type);
+            assertThat(userReference.resolve().type()).isEqualTo(mSecondaryUserType);
         } finally {
             userReference.remove();
         }
@@ -220,8 +236,7 @@ public class UsersTest {
 
     @Test
     public void createUser_specifiesSecondaryUserType_createsUser() {
-        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
-        UserReference user = mTestApis.users().createUser().type(type).create();
+        UserReference user = mTestApis.users().createUser().type(mSecondaryUserType).create();
 
         try {
             assertThat(user.resolve()).isNotNull();
@@ -233,8 +248,8 @@ public class UsersTest {
     @Test
     public void createUser_specifiesManagedProfileUserType_createsUser() {
         UserReference systemUser = mTestApis.users().system();
-        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
-        UserReference user = mTestApis.users().createUser().type(type).parent(systemUser).create();
+        UserReference user = mTestApis.users().createUser()
+                .type(mManagedProfileType).parent(systemUser).create();
 
         try {
             assertThat(user.resolve()).isNotNull();
@@ -246,8 +261,8 @@ public class UsersTest {
     @Test
     public void createUser_createsProfile_parentIsSet() {
         UserReference systemUser = mTestApis.users().system();
-        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
-        UserReference user = mTestApis.users().createUser().type(type).parent(systemUser).create();
+        UserReference user = mTestApis.users().createUser()
+                .type(mManagedProfileType).parent(systemUser).create();
 
         try {
             assertThat(user.resolve().parent()).isEqualTo(mTestApis.users().system());
@@ -259,17 +274,16 @@ public class UsersTest {
     @Test
     public void createUser_specifiesParentOnNonProfileType_throwsException() {
         UserReference systemUser = mTestApis.users().system();
-        UserType type = mTestApis.users().supportedType(SECONDARY_USER_TYPE_NAME);
-        UserBuilder userBuilder = mTestApis.users().createUser().type(type).parent(systemUser);
+        UserBuilder userBuilder = mTestApis.users().createUser()
+                .type(mSecondaryUserType).parent(systemUser);
 
         assertThrows(NeneException.class, userBuilder::create);
     }
 
     @Test
     public void createUser_specifiesProfileTypeWithoutParent_throwsException() {
-        UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
         UserBuilder userBuilder = mTestApis.users().createUser()
-                .type(type);
+                .type(mManagedProfileType);
 
         assertThrows(NeneException.class, userBuilder::create);
     }
@@ -282,9 +296,8 @@ public class UsersTest {
         UserReference nonSystemUser = mTestApis.users().createUser().create();
 
         try {
-            UserType type = mTestApis.users().supportedType(MANAGED_PROFILE_TYPE_NAME);
             UserBuilder userBuilder = mTestApis.users().createUser()
-                    .type(type)
+                    .type(mManagedProfileType)
                     .parent(nonSystemUser);
 
             assertThrows(NeneException.class, userBuilder::create);
@@ -316,5 +329,128 @@ public class UsersTest {
     public void instrumented_hasCurrentProccessId() {
         assertThat(mTestApis.users().instrumented().id())
                 .isEqualTo(android.os.Process.myUserHandle().getIdentifier());
+    }
+
+    @Test
+    @EnsureHasNoSecondaryUser
+    public void findUsersOfType_noMatching_returnsEmptySet() {
+        assertThat(mTestApis.users().findUsersOfType(mSecondaryUserType)).isEmpty();
+    }
+
+    @Test
+    public void findUsersOfType_nullType_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findUsersOfType(null));
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    @Ignore("TODO: Re-enable when harrier .secondaryUser() only"
+            + " returns the harrier-managed secondary user")
+    public void findUsersOfType_returnsUsers() {
+        try (UserReference additionalUser = mTestApis.users().createUser().create()) {
+            assertThat(mTestApis.users().findUsersOfType(mSecondaryUserType))
+                    .containsExactly(sDeviceState.secondaryUser(), additionalUser);
+        }
+    }
+
+    @Test
+    public void findUsersOfType_profileType_throwsException() {
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().findUsersOfType(mManagedProfileType));
+    }
+
+    @Test
+    @EnsureHasNoSecondaryUser
+    public void findUserOfType_noMatching_returnsNull() {
+        assertThat(mTestApis.users().findUserOfType(mSecondaryUserType)).isNull();
+    }
+
+    @Test
+    public void findUserOfType_nullType_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findUserOfType(null));
+    }
+
+    @Test
+    @EnsureHasSecondaryUser
+    public void findUserOfType_multipleMatchingUsers_throwsException() {
+        try (UserReference additionalUser = mTestApis.users().createUser().create()) {
+            assertThrows(NeneException.class,
+                    () -> mTestApis.users().findUserOfType(mSecondaryUserType));
+        }
+    }
+
+    @Test
+    @EnsureHasSecondaryUser // TODO(scottjonathan): This should have a way of specifying exactly 1
+    public void findUserOfType_oneMatchingUser_returnsUser() {
+        assertThat(mTestApis.users().findUserOfType(mSecondaryUserType)).isNotNull();
+    }
+
+    @Test
+    public void findUserOfType_profileType_throwsException() {
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().findUserOfType(mManagedProfileType));
+    }
+
+    @Test
+    @EnsureHasNoWorkProfile
+    public void findProfilesOfType_noMatching_returnsEmptySet() {
+        assertThat(mTestApis.users().findProfilesOfType(mManagedProfileType, mInstrumentedUser))
+                .isEmpty();
+    }
+
+    @Test
+    public void findProfilesOfType_nullType_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findProfilesOfType(
+                        /* userType= */ null, mInstrumentedUser));
+    }
+
+    @Test
+    public void findProfilesOfType_nullParent_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findProfilesOfType(
+                        mManagedProfileType, /* parent= */ null));
+    }
+
+    // TODO(scottjonathan): Once we have profiles which support more than one instance, test this
+
+    @Test
+    @EnsureHasNoWorkProfile
+    public void findProfileOfType_noMatching_returnsNull() {
+        assertThat(mTestApis.users().findProfileOfType(mManagedProfileType, mInstrumentedUser))
+                .isNull();
+    }
+
+    @Test
+    public void findProfilesOfType_nonProfileType_throwsException() {
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().findProfilesOfType(mSecondaryUserType, mInstrumentedUser));
+    }
+
+    @Test
+    public void findProfileOfType_nullType_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findProfileOfType(/* userType= */ null, mInstrumentedUser));
+    }
+
+    @Test
+    public void findProfileOfType_nonProfileType_throwsException() {
+        assertThrows(NeneException.class,
+                () -> mTestApis.users().findProfileOfType(mSecondaryUserType, mInstrumentedUser));
+    }
+
+    @Test
+    public void findProfileOfType_nullParent_throwsException() {
+        assertThrows(NullPointerException.class,
+                () -> mTestApis.users().findProfileOfType(mManagedProfileType, /* parent= */ null));
+    }
+
+    @Test
+    @EnsureHasWorkProfile // TODO(scottjonathan): This should have a way of specifying exactly 1
+    public void findProfileOfType_oneMatchingUser_returnsUser() {
+        assertThat(mTestApis.users().findProfileOfType(mManagedProfileType, mInstrumentedUser))
+                .isNotNull();
     }
 }

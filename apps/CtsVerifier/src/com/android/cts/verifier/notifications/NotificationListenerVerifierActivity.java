@@ -195,7 +195,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         mPackageString = "com.android.cts.verifier";
 
-        Notification n1 = new Notification.Builder(mContext, NOISY_NOTIFICATION_CHANNEL_ID)
+        Notification n1 = new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
                 .setContentTitle("ClearTest 1")
                 .setContentText(mTag1)
                 .setSmallIcon(mIcon1)
@@ -232,7 +232,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
     private void sendNoisyNotification() {
         mTag4 = UUID.randomUUID().toString();
-        Log.d(TAG, "Sending " + mTag4);
+        Log.d(TAG, "Sending noisy notif: " + mTag4);
 
         mWhen4 = System.currentTimeMillis() + 4;
         mIcon4 = R.drawable.ic_stat_charlie;
@@ -1828,6 +1828,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         protected void setUp() {
             createChannels();
             sendNotifications();
+            sendNoisyNotification();
             status = READY;
         }
 
@@ -1840,8 +1841,8 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
 
         @Override
         protected void test() {
-            if (MockListener.getInstance().getPosted(mTag1) == null) {
-                Log.d(TAG, "Could not find " + mTag1);
+            if (MockListener.getInstance().getPosted(mTag4) == null) {
+                Log.d(TAG, "Could not find " + mTag4);
                 if (--mRetries > 0) {
                     sleep(100);
                     status = RETEST;

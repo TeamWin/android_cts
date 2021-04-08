@@ -995,10 +995,6 @@ public abstract class ActivityManagerTestBase {
                 .equals("1");
     }
 
-    protected boolean usesSkiaRenderEngine() {
-        return SystemProperties.get("debug.renderengine.backend", "default").contains("skia");
-    }
-
     protected boolean isWatch() {
         return hasDeviceFeature(FEATURE_WATCH);
     }

@@ -21,6 +21,7 @@ import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.DONT_KILL_APP;
 import static android.speech.tts.cts.TextToSpeechConstants.MOCK_TTS_ENGINE;
 import static android.speech.tts.cts.TextToSpeechConstants.TTS_TEST_ON_UNBIND_ACTION;
+import static android.speech.tts.cts.TextToSpeechConstants.TTS_TEST_SERVICE_CRASH_FLAG_FILE;
 
 import android.annotation.NonNull;
 import android.content.ComponentName;
@@ -32,8 +33,11 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
+import java.io.File;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 /**
  * Tests for {@link android.speech.tts.TextToSpeech} connection related functionality.
@@ -45,6 +49,7 @@ public class TextToSpeechConnectionTest extends AndroidTestCase {
     /** Waiting time for broadcast actions limit millis */
     private static final long TTS_SERVICE_BROADCAST_WAITING_TIME_LIMIT_MILLIS = 10L * 1000L;
 
+    private static final int TTS_TEST_SHUTDOWN_CLIENTS_COUNT = 4;
 
     private Context mContext;
     private PackageManager mPackageManager;
@@ -68,7 +73,11 @@ public class TextToSpeechConnectionTest extends AndroidTestCase {
     protected void tearDown() throws Exception {
         super.tearDown();
 
-        mTts.shutdown();
+        if (mTts != null) {
+            mTts.shutdown();
+        }
+
+        new File(mContext.getCacheDir(), TTS_TEST_SERVICE_CRASH_FLAG_FILE).delete();
 
         disableService(ConnectionTestTextToSpeechService.class);
         enableService(StubTextToSpeechService.class);
@@ -110,7 +119,7 @@ public class TextToSpeechConnectionTest extends AndroidTestCase {
         assertNull(mTts.getCurrentEngine());
     }
 
-    public void testShutdownServiceUnbound() throws Exception {
+    public void testClientsShutdownServiceUnbound() throws Exception {
 
         enableService(ConnectionTestTextToSpeechService.class);
 
@@ -118,10 +127,17 @@ public class TextToSpeechConnectionTest extends AndroidTestCase {
                 TTS_TEST_ON_UNBIND_ACTION);
         unbindReceiver.register();
 
-        createTts();
-        mTtsInitListener.waitForInitStatus();
+        Supplier<IntStream> ttsClientsStream = () -> IntStream.range(0,
+                TTS_TEST_SHUTDOWN_CLIENTS_COUNT);
 
-        mTts.shutdown();
+        TtsInitListener[] initListeners = ttsClientsStream.get().mapToObj(
+                i -> new TtsInitListener()).toArray(TtsInitListener[]::new);
+        TextToSpeech[] ttsClients = ttsClientsStream.get().mapToObj(
+                i -> createTtsForListener(initListeners[i])).toArray(TextToSpeech[]::new);
+
+        ttsClientsStream.get().forEach(i -> initListeners[i].waitForInitStatus());
+
+        ttsClientsStream.get().forEach(i -> ttsClients[i].shutdown());
 
         assertNotNull(unbindReceiver.awaitForBroadcast(
                 TTS_SERVICE_BROADCAST_WAITING_TIME_LIMIT_MILLIS));
@@ -129,9 +145,33 @@ public class TextToSpeechConnectionTest extends AndroidTestCase {
         unbindReceiver.unregisterQuietly();
     }
 
-    private void createTts() {
-        mTts = new TextToSpeech(mContext, mTtsInitListener, MOCK_TTS_ENGINE,
+    public void testServiceBindingErrorConnectionFailure() throws Exception {
+
+        enableService(ConnectionTestTextToSpeechService.class);
+
+        // Indicates whether to crash the process upon ConnectionTestTextToSpeechService
+        // creation.
+        new File(mContext.getCacheDir(), TTS_TEST_SERVICE_CRASH_FLAG_FILE).createNewFile();
+
+        // At this stage the service is enabled - TextToSpeech tries to connect
+        createTts();
+        // Service crashed and disabled - bindService will fail.
+        disableService(ConnectionTestTextToSpeechService.class);
+
+        Integer initStatus = mTtsInitListener.waitForInitStatus();
+
+
+        assertNotNull(initStatus);
+        assertEquals(TextToSpeech.ERROR, initStatus.intValue());
+    }
+
+    private TextToSpeech createTtsForListener(TtsInitListener initListener) {
+        return new TextToSpeech(mContext, initListener, MOCK_TTS_ENGINE,
                 null, /* useFallback= */ false);
+    }
+
+    private void createTts() {
+        mTts = createTtsForListener(mTtsInitListener);
     }
 
     private void enableService(@NonNull Class<?> clazz) {

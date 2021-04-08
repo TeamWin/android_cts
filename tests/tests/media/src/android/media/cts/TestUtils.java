@@ -16,21 +16,21 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static android.content.pm.PackageManager.MATCH_APEX;
+
+import static org.junit.Assume.assumeNoException;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.Context;
-import android.media.session.MediaSessionManager;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 
-import java.io.FileDescriptor;
-import java.util.ArrayList;
-import java.util.List;
+import androidx.test.core.app.ApplicationProvider;
+
+import org.junit.AssumptionViolatedException;
+
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities for tests.
@@ -64,6 +64,34 @@ public final class TestUtils {
             }
         }
         return true;
+    }
+
+    /**
+     * Checks {@code module} is at least {@code minVersion}
+     *
+     * The tests are skipped by throwing a {@link AssumptionViolatedException}.  CTS test runners
+     * will report this as a {@code ASSUMPTION_FAILED}.
+     *
+     * @param module     the apex module name
+     * @param minVersion the minimum version
+     * @throws AssumptionViolatedException if module.minVersion < minVersion
+     */
+    static void assumeMainlineModuleAtLeast(String module, long minVersion) {
+        Context context = ApplicationProvider.getApplicationContext();
+        PackageInfo info;
+        try {
+            info = context.getPackageManager().getPackageInfo(module,
+                    MATCH_APEX);
+            long actualVersion = info.getLongVersionCode();
+            assumeTrue("Assumed Module  " + module + " minVersion " + actualVersion + " >= "
+                            + minVersion,
+                    actualVersion >= minVersion);
+        } catch (PackageManager.NameNotFoundException e) {
+            assumeNoException(e);
+        }
+    }
+
+    private TestUtils() {
     }
 
     public static class Monitor {

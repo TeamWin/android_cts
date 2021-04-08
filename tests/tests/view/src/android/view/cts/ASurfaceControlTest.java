@@ -937,31 +937,31 @@ public class ASurfaceControlTest {
                     }
                 };
         verifyTest(callback,
-                new PixelChecker(PixelColor.RED) { //2500
+                new PixelChecker(PixelColor.RED) { //1111
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        return pixelCount > 1000 && pixelCount < 1250;
                     }
                 });
         verifyTest(callback,
-                new PixelChecker(PixelColor.BLUE) { //2500
+                new PixelChecker(PixelColor.BLUE) { //1111
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        return pixelCount > 1000 && pixelCount < 1250;
                     }
                 });
         verifyTest(callback,
-                new PixelChecker(PixelColor.MAGENTA) { //2500
+                new PixelChecker(PixelColor.MAGENTA) { //1111
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        return pixelCount > 1000 && pixelCount < 1250;
                     }
                 });
         verifyTest(callback,
-                new PixelChecker(PixelColor.GREEN) { //2500
+                new PixelChecker(PixelColor.GREEN) { //1111
                     @Override
                     public boolean checkPixels(int pixelCount, int width, int height) {
-                        return pixelCount > 2250 && pixelCount < 2750;
+                        return pixelCount > 1000 && pixelCount < 1250;
                     }
                 });
     }
