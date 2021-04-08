@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -109,6 +110,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     @Test
     @TemporaryIgnoreOnHeadlessSystemUserMode
     public void testProxyPacProxyTest() throws Exception {
+        assumeFalse("Test does not apply to WearOS", mIsWatch);
         executeDeviceOwnerTest("proxy.PacProxyTest");
     }
 
@@ -744,6 +746,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @Test
     public void testSetStatusBarDisabledLogged() throws Exception {
+        assumeFalse("Test does not apply to WearOS", mIsWatch);
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetStatusBarDisabledLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_STATUS_BAR_DISABLED_VALUE)
