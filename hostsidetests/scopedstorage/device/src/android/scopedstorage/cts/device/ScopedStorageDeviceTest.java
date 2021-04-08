@@ -35,6 +35,7 @@ import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameDirectory;
 import static android.scopedstorage.cts.lib.TestUtils.assertCantRenameFile;
 import static android.scopedstorage.cts.lib.TestUtils.assertDirectoryContains;
 import static android.scopedstorage.cts.lib.TestUtils.assertFileContent;
+import static android.scopedstorage.cts.lib.TestUtils.assertMountMode;
 import static android.scopedstorage.cts.lib.TestUtils.assertThrows;
 import static android.scopedstorage.cts.lib.TestUtils.canOpen;
 import static android.scopedstorage.cts.lib.TestUtils.canOpenFileAs;
@@ -125,6 +126,7 @@ import android.app.AppOpsManager;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.media.ExifInterface;
 import android.net.Uri;
@@ -133,6 +135,8 @@ import android.os.Environment;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
+import android.os.storage.StorageManager;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -3067,6 +3071,35 @@ public class ScopedStorageDeviceTest extends ScopedStorageBaseDeviceTest {
         final File file = new File(path);
         assertThat(file.exists()).isFalse();
         testTransformsDirCommon(file);
+    }
+
+
+    /**
+     * Test mount modes for a platform signed app with ACCESS_MTP permission.
+     */
+    @Test
+    public void testMTPAppWithPlatformSignatureMountMode() throws Exception {
+        final String shellPackageName = "com.android.shell";
+        final int uid = getContext().getPackageManager().getPackageUid(shellPackageName, 0);
+        assertMountMode(shellPackageName, uid, StorageManager.MOUNT_MODE_EXTERNAL_ANDROID_WRITABLE);
+    }
+
+    /**
+     * Test mount modes for ExternalStorageProvider and DownloadsProvider.
+     */
+    @Test
+    public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
+        assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
+        assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
+    }
+
+    private void assertWritableMountModeForProvider(String auth) {
+        final ProviderInfo provider = getContext().getPackageManager()
+                .resolveContentProvider(auth, 0);
+        int uid = provider.applicationInfo.uid;
+        final String packageName = provider.applicationInfo.packageName;
+
+        assertMountMode(packageName, uid, StorageManager.MOUNT_MODE_EXTERNAL_ANDROID_WRITABLE);
     }
 
     private Uri shareAndGetRedactedUri(File file, TestApp testApp) {
