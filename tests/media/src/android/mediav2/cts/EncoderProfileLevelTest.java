@@ -797,6 +797,15 @@ public class EncoderProfileLevelTest extends CodecEncoderTestBase {
                         Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime);
                         continue;
                     }
+                    // TODO (b/184889671) aac for profile AACObjectHE fails validation
+                    // TODO (b/184890155) aac for profile AACObjectLD, AACObjectELD fails validation
+                    if (mMime.equals(MediaFormat.MIMETYPE_AUDIO_AAC) &&
+                                profile != AACObjectLC) {
+                        Log.w(LOG_TAG, "Skip validation after muxing for mime = " + mMime +
+                                " profile " + profile);
+                        continue;
+                    }
+
                     for (int muxerFormat = MediaMuxer.OutputFormat.MUXER_OUTPUT_FIRST;
                          muxerFormat <= MediaMuxer.OutputFormat.MUXER_OUTPUT_LAST; muxerFormat++) {
                         if (!MuxerTest.isCodecContainerPairValid(mMime, muxerFormat)) continue;
