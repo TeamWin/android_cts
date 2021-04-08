@@ -28,6 +28,7 @@ android_test_helper_app {
     ],
     static_libs: [
         "ctstestrunner-axt",
+        "testng",
         "truth-prebuilt",
     ],
 
