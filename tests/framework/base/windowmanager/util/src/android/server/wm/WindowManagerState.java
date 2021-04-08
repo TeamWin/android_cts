@@ -1292,6 +1292,7 @@ public class WindowManagerState {
         private int mSurfaceHeight;
         boolean mCreatedByOrganizer;
         String mAffinity;
+        boolean mHasChildPipActivity;
 
         ActivityTask(TaskProto proto) {
             super(proto.windowContainer);
@@ -1312,6 +1313,7 @@ public class WindowManagerState {
             mSurfaceHeight = proto.surfaceHeight;
             mCreatedByOrganizer = proto.createdByOrganizer;
             mAffinity = proto.affinity;
+            mHasChildPipActivity = proto.hasChildPipActivity;
 
             if (proto.resumedActivity != null) {
                 mResumedActivity = proto.resumedActivity.title;
