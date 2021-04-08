@@ -160,6 +160,23 @@ public class PackageManagerShellCommandIncrementalTest {
     }
 
     @Test
+    public void testBug183952694Fixed() throws Exception {
+        // first ensure the IncFS is up and running, e.g. if it's a module
+        final Result stateListenerResult = startListeningForBroadcast();
+        installPackage(TEST_APK);
+        assertTrue(stateListenerResult.await());
+        assertTrue(isAppInstalled(TEST_APP_PACKAGE));
+
+        // the bug is fixed in the v2 version, or when the specific marker feature is present
+        final String[] validValues = {"v2", "mounter_context_for_backing_rw"};
+        final String features = executeShellCommand("ls /sys/fs/incremental-fs/features/");
+        assertTrue(
+                "Missing all of required IncFS features [" + TextUtils.join(",", validValues) + "]",
+                Arrays.stream(features.split("\\s+")).anyMatch(
+                        f -> Arrays.stream(validValues).anyMatch(f::equals)));
+    }
+
+    @Test
     public void testSplitInstallWithIdSig() throws Exception {
         // First fully install the apk.
         {
