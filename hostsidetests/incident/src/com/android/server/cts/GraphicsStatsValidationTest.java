@@ -23,6 +23,7 @@ import android.service.GraphicsStatsJankSummaryProto;
 import android.service.GraphicsStatsProto;
 import android.service.GraphicsStatsServiceDumpProto;
 
+import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.google.common.collect.Range;
 
 import java.util.ArrayList;
@@ -119,8 +120,44 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         assertThat(GPUJank).isAtMost(2);
     }
 
+    private String executeShellCommand(String command) throws Exception {
+        String result = "";
+        CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
+        getDevice().executeShellCommand(command,receiver);
+        result = (new String(receiver.getOutput())).trim();
+        return result;
+    }
+
+    //refreshRate[0]:min refresh reate refreshRate[1]:max refresh rate
+    private String[] setRefreshRate(String refreshRate[]) {
+        String origRefreshRate[] = {"",""};
+        final String gettingCommands[] = {"settings get system min_refresh_rate",
+                                          "settings get system peak_refresh_rate"};
+        final String puttingCommands[] = {"settings put system min_refresh_rate",
+                                          "settings put system peak_refresh_rate"};
+        try {
+            for (int i = 0; i < 2; i++)
+                origRefreshRate[i] = executeShellCommand(gettingCommands[i]);
+
+            for (int i = 0; i < 2; i++)
+                executeShellCommand(puttingCommands[i] + " " + refreshRate[i]);
+
+            System.out.println("display refresh rate settings:min=" + origRefreshRate[0]
+                            + " peak=" + origRefreshRate[1]
+                            + ",expected to be set to min=" + refreshRate[0]
+                            + " peak=" + refreshRate[1]);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            origRefreshRate[0] = "";
+            origRefreshRate[1] = "";
+        }
+        return origRefreshRate;
+    }
+
     public void testDaveyDrawFrame() throws Exception {
+        String origRefreshRate[] = setRefreshRate(new String[]{"61", "60"});
         GraphicsStatsProto[] results = runDrawTest("testDrawDaveyFrames");
+        setRefreshRate(origRefreshRate);
         GraphicsStatsProto statsBefore = results[0];
         GraphicsStatsProto statsAfter = results[1];
         GraphicsStatsJankSummaryProto summaryBefore = statsBefore.getSummary();
