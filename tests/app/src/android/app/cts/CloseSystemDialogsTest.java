@@ -209,7 +209,8 @@ public class CloseSystemDialogsTest {
         CompletableFuture<Integer> result = new CompletableFuture<>();
         mService = getService(APP_HELPER);
 
-        mService.postNotification(notificationId, new FutureReceiver(result));
+        mService.postNotification(notificationId, new FutureReceiver(result),
+                /* usePendingIntent */ false);
 
         mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
         assertThat(result.get()).isEqualTo(
@@ -223,11 +224,43 @@ public class CloseSystemDialogsTest {
         CompletableFuture<Integer> result = new CompletableFuture<>();
         mService = getService(APP_HELPER);
 
-        mService.postNotification(notificationId, new FutureReceiver(result));
+        mService.postNotification(notificationId, new FutureReceiver(result),
+                /* usePendingIntent */ false);
 
         mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
-        assertThat(result.get()).isEqualTo(
-                ICloseSystemDialogsTestsService.RESULT_OK);
+        assertThat(result.get()).isEqualTo(ICloseSystemDialogsTestsService.RESULT_OK);
+        assertCloseSystemDialogsReceived();
+    }
+
+    /** System doesn't throw on the PI's sender call stack. */
+    @Test
+    public void testCloseSystemDialogs_inTrampolineViaPendingIntentWhenTargetSdkCurrent_isBlocked()
+            throws Exception {
+        setTargetCurrent();
+        int notificationId = 44;
+        CompletableFuture<Integer> result = new CompletableFuture<>();
+        mService = getService(APP_HELPER);
+
+        mService.postNotification(notificationId, new FutureReceiver(result),
+                /* usePendingIntent */ true);
+
+        mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
+        assertThat(result.get()).isEqualTo(ICloseSystemDialogsTestsService.RESULT_OK);
+        assertCloseSystemDialogsNotReceived();
+    }
+
+    @Test
+    public void testCloseSystemDialogs_inTrampolineViaPendingIntentWhenTargetSdk30_isSent()
+            throws Exception {
+        int notificationId = 45;
+        CompletableFuture<Integer> result = new CompletableFuture<>();
+        mService = getService(APP_HELPER);
+
+        mService.postNotification(notificationId, new FutureReceiver(result),
+                /* usePendingIntent */ true);
+
+        mNotificationHelper.clickNotification(notificationId, /* searchAll */ true);
+        assertThat(result.get()).isEqualTo(ICloseSystemDialogsTestsService.RESULT_OK);
         assertCloseSystemDialogsReceived();
     }
 
