@@ -17,6 +17,7 @@ package android.time.cts.host;
 
 import static android.time.cts.host.LocationManager.SHELL_COMMAND_IS_LOCATION_ENABLED;
 import static android.time.cts.host.LocationManager.SHELL_COMMAND_SET_LOCATION_ENABLED;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.NAMESPACE;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_IS_AUTO_DETECTION_ENABLED;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_IS_GEO_DETECTION_ENABLED;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_SET_AUTO_DETECTION_ENABLED;
@@ -78,6 +79,24 @@ final class TimeZoneDetectorHostHelper {
         byte[] result = executeTimeZoneDetectorCommand(
                 TimeZoneDetector.SHELL_COMMAND_IS_GEO_DETECTION_SUPPORTED);
         return parseShellCommandBytesAsBoolean(result);
+    }
+
+    void clearSystemTimeDeviceConfigKey(String deviceConfigKey) throws Exception {
+        executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
+    }
+
+    void setSystemTimeDeviceConfigKey(String deviceConfigKey, String value) throws Exception {
+        executeDeviceConfigCommand("put %s %s %s", NAMESPACE, deviceConfigKey, value);
+    }
+
+    void resetSystemTimeDeviceConfigKeys() throws Exception {
+        executeDeviceConfigCommand("reset trusted_defaults %s", NAMESPACE);
+    }
+
+    private byte[] executeDeviceConfigCommand(String cmd, Object... args) throws Exception {
+        String command = String.format(cmd, args);
+        return executeShellCommandReturnBytes("cmd %s %s",
+                LocationTimeZoneManager.DeviceConfig.SHELL_COMMAND_SERVICE_NAME, command);
     }
 
     private byte[] executeLocationManagerCommand(String cmd, Object... args)
