@@ -24,7 +24,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
-import android.app.AlarmManager;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -33,7 +33,6 @@ import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 import android.util.LongArray;
@@ -43,7 +42,6 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -53,7 +51,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 /**
  * Tests that app standby imposes the appropriate restrictions on alarms
@@ -63,7 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RunWith(AndroidJUnit4.class)
 public class AppStandbyTests {
     private static final String TAG = AppStandbyTests.class.getSimpleName();
-    private static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
+    static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
     private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestAlarmScheduler";
 
     private static final long DEFAULT_WAIT = 2_000;
@@ -83,6 +84,7 @@ public class AppStandbyTests {
     };
 
     private static final long APP_STANDBY_WINDOW = 10_000;
+    private static final long MIN_WINDOW = 100;
     private static final String[] APP_BUCKET_QUOTA_KEYS = {
             "standby_quota_working",
             "standby_quota_frequent",
@@ -98,12 +100,13 @@ public class AppStandbyTests {
     private static boolean sOrigAppStandbyEnabled;
     // Test app's alarm history to help predict when a subsequent alarm is going to get deferred.
     private static TestAlarmHistory sAlarmHistory;
+    private static Context sContext = InstrumentationRegistry.getTargetContext();
+    private static UiDevice sUiDevice = UiDevice.getInstance(
+            InstrumentationRegistry.getInstrumentation());
 
-    private Context mContext;
     private ComponentName mAlarmScheduler;
-    private UiDevice mUiDevice;
     private AtomicInteger mAlarmCount;
-    private DeviceConfigStateHelper mAlarmManagerDeviceConfigStateHelper;
+    private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
 
     private final BroadcastReceiver mAlarmStateReceiver = new BroadcastReceiver() {
         @Override
@@ -129,42 +132,37 @@ public class AppStandbyTests {
 
     @Before
     public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = new AtomicInteger(0);
-        mAlarmManagerDeviceConfigStateHelper =
-                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         updateAlarmManagerConstants();
         updateBackgroundSettleTime();
         setBatteryCharging(false);
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
-        mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+        sContext.registerReceiver(mAlarmStateReceiver, intentFilter);
         assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
     }
 
-    private void scheduleAlarm(long triggerMillis, long interval) {
+    private void scheduleAlarm(long triggerMillis, long interval) throws InterruptedException {
         final Intent setAlarmIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM);
         setAlarmIntent.setComponent(mAlarmScheduler);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TYPE, ELAPSED_REALTIME_WAKEUP);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TRIGGER_TIME, triggerMillis);
+        setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_WINDOW_LENGTH, MIN_WINDOW);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_REPEAT_INTERVAL, interval);
         setAlarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-        mContext.sendBroadcast(setAlarmIntent);
-    }
-
-    private void scheduleAlarmClock(long triggerRTC) {
-        AlarmManager.AlarmClockInfo alarmInfo = new AlarmManager.AlarmClockInfo(triggerRTC, null);
-
-        final Intent setAlarmClockIntent = new Intent(TestAlarmScheduler.ACTION_SET_ALARM_CLOCK);
-        setAlarmClockIntent.setComponent(mAlarmScheduler);
-        setAlarmClockIntent.putExtra(TestAlarmScheduler.EXTRA_ALARM_CLOCK_INFO, alarmInfo);
-        mContext.sendBroadcast(setAlarmClockIntent);
+        final CountDownLatch resultLatch = new CountDownLatch(1);
+        sContext.sendOrderedBroadcast(setAlarmIntent, null, new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                resultLatch.countDown();
+            }
+        }, null, Activity.RESULT_CANCELED, null, null);
+        assertTrue("Request did not complete", resultLatch.await(10, TimeUnit.SECONDS));
     }
 
     public void testSimpleQuotaDeferral(int bucketIndex) throws Exception {
-        setAppStandbyBucket(APP_BUCKET_TAGS[bucketIndex]);
+        setTestAppStandbyBucket(APP_BUCKET_TAGS[bucketIndex]);
         final int quota = APP_STANDBY_QUOTAS[bucketIndex];
 
         long startElapsed = SystemClock.elapsedRealtime();
@@ -196,7 +194,7 @@ public class AppStandbyTests {
 
     @Test
     public void testActiveQuota() throws Exception {
-        setAppStandbyBucket("active");
+        setTestAppStandbyBucket("active");
         long nextTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         for (int i = 0; i < 3; i++) {
             scheduleAlarm(nextTrigger, 0);
@@ -223,7 +221,7 @@ public class AppStandbyTests {
 
     @Test
     public void testNeverQuota() throws Exception {
-        setAppStandbyBucket("never");
+        setTestAppStandbyBucket("never");
         final long expectedTrigger = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(expectedTrigger, 0);
         Thread.sleep(10_000);
@@ -231,17 +229,8 @@ public class AppStandbyTests {
     }
 
     @Test
-    public void testAlarmClockUnaffected() throws Exception {
-        setAppStandbyBucket("never");
-        final long trigger = System.currentTimeMillis() + MIN_FUTURITY;
-        scheduleAlarmClock(trigger);
-        Thread.sleep(MIN_FUTURITY);
-        assertTrue("Alarm clock not received as expected", waitForAlarm());
-    }
-
-    @Test
     public void testPowerWhitelistedAlarmNotBlocked() throws Exception {
-        setAppStandbyBucket(APP_BUCKET_TAGS[RARE_INDEX]);
+        setTestAppStandbyBucket(APP_BUCKET_TAGS[RARE_INDEX]);
         setPowerWhitelisted(true);
         final long triggerTime = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(triggerTime, 0);
@@ -255,11 +244,11 @@ public class AppStandbyTests {
         setPowerWhitelisted(false);
         setBatteryCharging(true);
         resetBackgroundSettleTime();
-        mAlarmManagerDeviceConfigStateHelper.restoreOriginalValues();
+        mConfigHelper.deleteAll();
         final Intent cancelAlarmsIntent = new Intent(TestAlarmScheduler.ACTION_CANCEL_ALL_ALARMS);
         cancelAlarmsIntent.setComponent(mAlarmScheduler);
-        mContext.sendBroadcast(cancelAlarmsIntent);
-        mContext.unregisterReceiver(mAlarmStateReceiver);
+        sContext.sendBroadcast(cancelAlarmsIntent);
+        sContext.unregisterReceiver(mAlarmStateReceiver);
         // Broadcast unregister may race with the next register in setUp
         Thread.sleep(500);
     }
@@ -272,22 +261,23 @@ public class AppStandbyTests {
     }
 
     private void updateAlarmManagerConstants() {
-        mAlarmManagerDeviceConfigStateHelper.set("min_futurity", String.valueOf(MIN_FUTURITY));
-        mAlarmManagerDeviceConfigStateHelper.set("app_standby_window",
-                String.valueOf(APP_STANDBY_WINDOW));
+        mConfigHelper.with("min_futurity", MIN_FUTURITY)
+                .with("app_standby_window", APP_STANDBY_WINDOW)
+                .with("min_window", MIN_WINDOW)
+                .with("exact_alarm_deny_list", TEST_APP_PACKAGE);
         for (int i = 0; i < APP_STANDBY_QUOTAS.length; i++) {
-            mAlarmManagerDeviceConfigStateHelper.set(APP_BUCKET_QUOTA_KEYS[i],
-                    String.valueOf(APP_STANDBY_QUOTAS[i]));
+            mConfigHelper.with(APP_BUCKET_QUOTA_KEYS[i], APP_STANDBY_QUOTAS[i]);
         }
+        mConfigHelper.commitAndAwaitPropagation();
     }
 
     private void updateBackgroundSettleTime() throws IOException {
-        mUiDevice.executeShellCommand(
+        sUiDevice.executeShellCommand(
                 "settings put global activity_manager_constants background_settle_time=0");
     }
 
     private void resetBackgroundSettleTime() throws IOException {
-        mUiDevice.executeShellCommand("settings delete global activity_manager_constants");
+        sUiDevice.executeShellCommand("settings delete global activity_manager_constants");
     }
 
     private void setPowerWhitelisted(boolean whitelist) throws IOException {
@@ -297,12 +287,12 @@ public class AppStandbyTests {
         executeAndLog(cmd.toString());
     }
 
-    private void setAppStandbyBucket(String bucket) throws IOException {
+    static void setTestAppStandbyBucket(String bucket) throws IOException {
         executeAndLog("am set-standby-bucket " + TEST_APP_PACKAGE + " " + bucket);
     }
 
     private void setBatteryCharging(final boolean charging) throws Exception {
-        final BatteryManager bm = mContext.getSystemService(BatteryManager.class);
+        final BatteryManager bm = sContext.getSystemService(BatteryManager.class);
         if (charging) {
             executeAndLog("dumpsys battery reset");
         } else {
@@ -313,8 +303,8 @@ public class AppStandbyTests {
         }
     }
 
-    private String executeAndLog(String cmd) throws IOException {
-        final String output = mUiDevice.executeShellCommand(cmd).trim();
+    private static String executeAndLog(String cmd) throws IOException {
+        final String output = sUiDevice.executeShellCommand(cmd).trim();
         Log.d(TAG, "command: [" + cmd + "], output: [" + output + "]");
         return output;
     }
@@ -325,12 +315,12 @@ public class AppStandbyTests {
         return success;
     }
 
-    private boolean waitUntil(Condition condition, long timeout) throws InterruptedException {
+    private boolean waitUntil(BooleanSupplier condition, long timeout) throws InterruptedException {
         final long deadLine = SystemClock.uptimeMillis() + timeout;
-        while (!condition.isMet() && SystemClock.uptimeMillis() < deadLine) {
+        while (!condition.getAsBoolean() && SystemClock.uptimeMillis() < deadLine) {
             Thread.sleep(POLL_INTERVAL);
         }
-        return condition.isMet();
+        return condition.getAsBoolean();
     }
 
     private static final class TestAlarmHistory {
@@ -349,10 +339,5 @@ public class AppStandbyTests {
             }
             return mHistory.get(mHistory.size() - x);
         }
-    }
-
-    @FunctionalInterface
-    interface Condition {
-        boolean isMet();
     }
 }

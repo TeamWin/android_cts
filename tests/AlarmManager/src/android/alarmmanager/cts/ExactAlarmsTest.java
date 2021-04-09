@@ -16,6 +16,12 @@
 
 package android.alarmmanager.cts;
 
+import static android.alarmmanager.cts.AppStandbyTests.TEST_APP_PACKAGE;
+import static android.alarmmanager.cts.AppStandbyTests.setTestAppStandbyBucket;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_ACTIVE;
+import static android.app.usage.UsageStatsManager.STANDBY_BUCKET_WORKING_SET;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -31,7 +37,6 @@ import android.os.PowerWhitelistManager;
 import android.os.Process;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -39,7 +44,7 @@ import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.AppOpsUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
+import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -47,7 +52,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
@@ -88,16 +92,15 @@ public class ExactAlarmsTest {
     private final PowerWhitelistManager mWhitelistManager = sContext.getSystemService(
             PowerWhitelistManager.class);
 
-    private final DeviceConfigStateHelper mDeviceConfigHelper = new DeviceConfigStateHelper(
-            DeviceConfig.NAMESPACE_ALARM_MANAGER);
+    private final AlarmManagerDeviceConfigHelper mDeviceConfigHelper =
+            new AlarmManagerDeviceConfigHelper();
     private final Random mIdGenerator = new Random(6789);
 
     @Rule
-    public TestWatcher mFailLoggerRule = new TestWatcher() {
+    public DumpLoggerRule mFailLoggerRule = new DumpLoggerRule(TAG) {
         @Override
         protected void failed(Throwable e, Description description) {
-            Log.i(TAG, "Debugging info for failed test: " + description.getMethodName());
-            Log.i(TAG, SystemUtil.runShellCommand("dumpsys alarm"));
+            super.failed(e, description);
             AlarmReceiver.dumpState();
         }
     };
@@ -110,12 +113,12 @@ public class ExactAlarmsTest {
 
     @Before
     public void updateAlarmManagerConstants() {
-        mDeviceConfigHelper.set("min_futurity", "0");
-        mDeviceConfigHelper.set("allow_while_idle_quota", String.valueOf(ALLOW_WHILE_IDLE_QUOTA));
-        mDeviceConfigHelper.set("allow_while_idle_compat_quota",
-                String.valueOf(ALLOW_WHILE_IDLE_COMPAT_QUOTA));
-        mDeviceConfigHelper.set("allow_while_idle_window", String.valueOf(ALLOW_WHILE_IDLE_WINDOW));
-        mDeviceConfigHelper.set("crash_non_clock_apps", "true");
+        mDeviceConfigHelper.with("min_futurity", 0L)
+                .with("allow_while_idle_quota", ALLOW_WHILE_IDLE_QUOTA)
+                .with("allow_while_idle_compat_quota", ALLOW_WHILE_IDLE_COMPAT_QUOTA)
+                .with("allow_while_idle_window", ALLOW_WHILE_IDLE_WINDOW)
+                .with("crash_non_clock_apps", true)
+                .commitAndAwaitPropagation();
     }
 
     @Before
@@ -153,7 +156,7 @@ public class ExactAlarmsTest {
 
     @After
     public void restoreAlarmManagerConstants() {
-        mDeviceConfigHelper.restoreOriginalValues();
+        mDeviceConfigHelper.deleteAll();
     }
 
     private static void revokeAppOp() throws IOException {
@@ -174,6 +177,26 @@ public class ExactAlarmsTest {
     @Test
     public void hasPermissionByDefault() {
         assertTrue(mAlarmManager.canScheduleExactAlarms());
+
+        mDeviceConfigHelper.with("exact_alarm_deny_list", sContext.getOpPackageName())
+                .commitAndAwaitPropagation();
+        assertFalse(mAlarmManager.canScheduleExactAlarms());
+    }
+
+    @Test
+    public void exactAlarmPermissionElevatesBucket() throws Exception {
+        mDeviceConfigHelper.without("exact_alarm_deny_list").commitAndAwaitPropagation();
+
+        setTestAppStandbyBucket("active");
+        assertEquals(STANDBY_BUCKET_ACTIVE, AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
+
+        setTestAppStandbyBucket("frequent");
+        assertEquals(STANDBY_BUCKET_WORKING_SET,
+                AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
+
+        setTestAppStandbyBucket("rare");
+        assertEquals(STANDBY_BUCKET_WORKING_SET,
+                AppStandbyUtils.getAppStandbyBucket(TEST_APP_PACKAGE));
     }
 
     @Test
@@ -186,6 +209,10 @@ public class ExactAlarmsTest {
     public void hasPermissionWhenAllowed() throws IOException {
         AppOpsUtils.setOpMode(sContext.getOpPackageName(), AppOpsManager.OPSTR_SCHEDULE_EXACT_ALARM,
                 AppOpsManager.MODE_ALLOWED);
+        assertTrue(mAlarmManager.canScheduleExactAlarms());
+
+        mDeviceConfigHelper.with("exact_alarm_deny_list", sContext.getOpPackageName())
+                .commitAndAwaitPropagation();
         assertTrue(mAlarmManager.canScheduleExactAlarms());
     }
 
