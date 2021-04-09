@@ -29,7 +29,6 @@ import android.server.ErrorSource;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.internal.os.StatsdConfigProto.FieldValueMatcher;
 import com.android.internal.os.StatsdConfigProto.StatsdConfig;
-import com.android.os.AtomsProto;
 import com.android.os.AtomsProto.ANROccurred;
 import com.android.os.AtomsProto.AppBreadcrumbReported;
 import com.android.os.AtomsProto.AppCrashOccurred;
@@ -45,16 +44,13 @@ import com.android.os.AtomsProto.ForegroundServiceStateChanged;
 import com.android.os.AtomsProto.GpsScanStateChanged;
 import com.android.os.AtomsProto.LmkKillOccurred;
 import com.android.os.AtomsProto.MediaCodecStateChanged;
-import com.android.os.AtomsProto.NotificationReported;
 import com.android.os.AtomsProto.OverlayStateChanged;
-import com.android.os.AtomsProto.SettingSnapshot;
 import com.android.os.AtomsProto.SyncStateChanged;
 import com.android.os.AtomsProto.TestAtomReported;
 import com.android.os.AtomsProto.UiEventReported;
 import com.android.os.AtomsProto.VibratorStateChanged;
 import com.android.os.AtomsProto.WakelockStateChanged;
 import com.android.os.StatsLog.EventMetricData;
-import com.android.server.notification.SmallHash;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -206,7 +202,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
                 .isEqualTo(AppCrashOccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
-        // TODO(b/172866626): add tests for incremental packages that crashed during loading
         assertFalse(atom.getIsIncremental());
         assertTrue((1 - atom.getLoadingProgress()) < 0.001);
         assertEquals(-1, atom.getMillisSinceOldestPendingRead());
@@ -760,7 +755,6 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
                 .isEqualTo(ANROccurred.ForegroundState.FOREGROUND_VALUE);
         assertThat(atom.getErrorSource()).isEqualTo(ErrorSource.DATA_APP);
         assertThat(atom.getPackageName()).isEqualTo(DeviceUtils.STATSD_ATOM_TEST_PKG);
-        // TODO(b/172866626): add tests for incremental packages that ANR'd during loading
         assertFalse(atom.getIsIncremental());
         assertTrue((1 - atom.getLoadingProgress()) < 0.001);
         assertEquals(-1, atom.getMillisSinceOldestPendingRead());

@@ -25,7 +25,7 @@
   <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
   <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
-    <application android:label="TestAppSystemGalleryBypassDB" android:requestOptimizedExternalStorageAccess="true">
+    <application android:label="TestAppSystemGalleryBypassDB" android:requestRawExternalStorageAccess="true">
         <activity android:name="android.scopedstorage.cts.ScopedStorageTestHelper" android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

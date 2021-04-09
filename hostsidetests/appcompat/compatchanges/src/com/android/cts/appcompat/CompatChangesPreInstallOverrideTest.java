@@ -130,12 +130,6 @@ public final class CompatChangesPreInstallOverrideTest extends CompatChangeGatin
     }
 
     private Change getCtsChange() throws Exception {
-        List<Change> allChanges = getOnDeviceCompatConfig();
-        for (Change change : allChanges) {
-            if (change.changeId == CTS_CHANGE_ID) {
-                return change;
-            }
-        }
-        return null;
+        return getOnDeviceChangeIdConfig(CTS_CHANGE_ID);
     }
 }
