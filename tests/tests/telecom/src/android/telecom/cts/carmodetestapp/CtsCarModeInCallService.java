@@ -36,8 +36,8 @@ public class CtsCarModeInCallService extends InCallService {
     private static boolean sIsServiceUnbound = false;
     private static CtsCarModeInCallService sInstance = null;
     private int mCallCount = 0;
-    private static CountDownLatch sBoundLatch;
-    private static CountDownLatch sUnboundLatch;
+    private static CountDownLatch sBoundLatch = new CountDownLatch(1);;
+    private static CountDownLatch sUnboundLatch = new CountDownLatch(1);;
     private List<Call> mCalls = new ArrayList<>();
 
     @Override
