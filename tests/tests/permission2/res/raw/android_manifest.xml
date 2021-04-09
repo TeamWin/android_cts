@@ -326,7 +326,6 @@
     <protected-broadcast android:name="android.se.omapi.action.SECURE_ELEMENT_STATE_CHANGED" />
 
     <protected-broadcast android:name="android.nfc.action.ADAPTER_STATE_CHANGED" />
-    <protected-broadcast android:name="android.nfc.action.ALWAYS_ON_STATE_CHANGED" />
     <protected-broadcast android:name="android.nfc.action.PREFERRED_PAYMENT_CHANGED" />
     <protected-broadcast android:name="android.nfc.action.TRANSACTION_DETECTED" />
     <protected-broadcast android:name="android.nfc.action.REQUIRE_UNLOCK_FOR_NFC" />
@@ -1230,7 +1229,7 @@
         android:description="@string/permdesc_answerPhoneCalls"
         android:protectionLevel="dangerous|runtime" />
 
-    <!-- Allows a calling application which manages it own calls through the self-managed
+    <!-- Allows a calling application which manages its own calls through the self-managed
          {@link android.telecom.ConnectionService} APIs.  See
          {@link android.telecom.PhoneAccount#CAPABILITY_SELF_MANAGED} for more information on the
          self-managed ConnectionService APIs.
@@ -1391,7 +1390,7 @@
     <!-- Required to be able to discover and connect to nearby Bluetooth devices.
          <p>Protection level: dangerous -->
     <permission-group android:name="android.permission-group.NEARBY_DEVICES"
-        android:icon="@drawable/ic_qs_bluetooth"
+        android:icon="@drawable/perm_group_nearby_devices"
         android:label="@string/permgrouplab_nearby_devices"
         android:description="@string/permgroupdesc_nearby_devices"
         android:priority="750" />
@@ -1954,7 +1953,15 @@
         android:label="@string/permlab_bluetooth_connect"
         android:protectionLevel="dangerous" />
 
-    <!-- Required to be able to range to devices using uwb.
+    <!-- Required to be able to advertise to nearby Bluetooth devices.
+         <p>Protection level: dangerous -->
+    <permission android:name="android.permission.BLUETOOTH_ADVERTISE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
+        android:description="@string/permdesc_bluetooth_advertise"
+        android:label="@string/permlab_bluetooth_advertise"
+        android:protectionLevel="dangerous" />
+
+    <!-- Required to be able to range to devices using ultra-wideband.
          <p>Protection level: dangerous -->
     <permission android:name="android.permission.UWB_RANGING"
         android:permissionGroup="android.permission-group.UNDEFINED"
@@ -2766,8 +2773,12 @@
     <permission android:name="android.permission.START_ACTIVITIES_FROM_BACKGROUND"
         android:protectionLevel="signature|privileged|vendorPrivileged|oem|verifier" />
 
-    <!-- Allows an application to start foreground services from background, can only be granted to
-         privileged apps or app that is SMS/EMERGENCY/SYSTEM GALLERY roles. -->
+    <!-- Allows an application to start foreground services from the background at any time.
+         <em>This permission is not for use by third-party applications</em>,
+         with the only exception being if the app is the default SMS app.
+         Otherwise, it's only usable by privileged apps, app verifier app, and apps with
+         any of the EMERGENCY or SYSTEM GALLERY roles.
+         -->
     <permission android:name="android.permission.START_FOREGROUND_SERVICES_FROM_BACKGROUND"
                 android:protectionLevel="signature|privileged|vendorPrivileged|oem|verifier|role"/>
 
@@ -2905,14 +2916,6 @@
     -->
     <permission android:name="android.permission.COMPANION_APPROVE_WIFI_CONNECTIONS"
                 android:protectionLevel="signature|privileged" />
-
-    <!-- Allows holder to request to make companion device associations without the UI prompt.
-         <p>Not for use by third-party or privileged applications.
-         @hide
-    -->
-    <permission android:name="android.permission.ASSOCIATE_COMPANION_DEVICES"
-        android:protectionLevel="internal|role" />
-
 
     <!-- Allows an app to read and listen to projection state.
          @hide
@@ -3836,8 +3839,6 @@
 
     <!-- @SystemApi Allows apps to use ui translation functions.
          <p>Protection level: signature|privileged
-         <p> TODO(b/177703453): Restrict to a specific Role instead of allowing access to any
-         privileged app.
          @hide Not for use by third-party applications.
     -->
     <permission android:name="android.permission.MANAGE_UI_TRANSLATION"
@@ -4025,12 +4026,11 @@
     <permission android:name="android.permission.SET_KEYBOARD_LAYOUT"
         android:protectionLevel="signature" />
 
-
     <!-- Allows an app to schedule a prioritized alarm that can be used to perform
-     background work even when the device is in doze.
-     <p>Not for use by third-party applications.
-     @hide
-     @SystemApi
+         background work even when the device is in doze.
+         <p>Not for use by third-party applications.
+         @hide
+         @SystemApi
      -->
     <permission android:name="android.permission.SCHEDULE_PRIORITIZED_ALARM"
                 android:protectionLevel="signature|privileged"/>
@@ -4249,10 +4249,10 @@
                 android:protectionLevel="signature|installer" />
 
     <!-- @SystemApi Allows an application to bypass role qualification. This allows switching role
-     holders to otherwise non eligible holders. Only the shell is allowed to do this, the
-     qualification for the shell role itself cannot be bypassed, and each role needs to
-     explicitly allow bypassing qualification in its definition. The bypass state will not be
-     persisted across reboot.
+         holders to otherwise non eligible holders. Only the shell is allowed to do this, the
+         qualification for the shell role itself cannot be bypassed, and each role needs to
+         explicitly allow bypassing qualification in its definition. The bypass state will not be
+         persisted across reboot.
      @hide -->
     <permission android:name="android.permission.BYPASS_ROLE_QUALIFICATION"
                 android:protectionLevel="internal|role" />
@@ -4272,6 +4272,12 @@
          -->
     <permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE"
                 android:protectionLevel="normal" />
+
+    <!-- Allows an application to create new companion device associations.
+         @SystemApi
+         @hide -->
+    <permission android:name="android.permission.ASSOCIATE_COMPANION_DEVICES"
+        android:protectionLevel="internal|role" />
 
     <!-- @SystemApi Allows an application to use SurfaceFlinger's low level features.
          <p>Not for use by third-party applications.
@@ -4491,7 +4497,7 @@
          <p>Not for use by third-party applications.</p>
          @hide -->
     <permission android:name="android.permission.DISABLE_SYSTEM_SOUND_EFFECTS"
-                android:protectionLevel="signature|privileged" />
+        android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi Allows an application to provide remote displays.
          <p>Not for use by third-party applications.</p>
@@ -4580,7 +4586,7 @@
     <permission android:name="android.permission.FACTORY_TEST"
         android:protectionLevel="signature" />
 
-    <!-- @hide @TestApi Allows an application to broadcast the intent {@link
+    <!-- @hide @TestApi @SystemApi Allows an application to broadcast the intent {@link
          android.content.Intent#ACTION_CLOSE_SYSTEM_DIALOGS}.
          <p>Not for use by third-party applications.
     -->
@@ -4916,6 +4922,8 @@
 
     <!-- @SystemApi @hide Domain verification agent package needs to have this permission before the
          system will trust it to verify domains.
+
+         TODO(159952358): STOPSHIP: This must be updated to the new "internal" protectionLevel
     -->
     <permission android:name="android.permission.DOMAIN_VERIFICATION_AGENT"
         android:protectionLevel="internal|privileged" />
@@ -5717,16 +5725,14 @@
     <permission android:name="android.permission.SET_CLIP_SOURCE"
                 android:protectionLevel="signature|recents" />
 
-    <!-- Allows an application to request installs that update existing packages do so without
-         user action via
-         {@link android.content.pm.PackageInstaller.SessionParams#setRequireUserAction(boolean)}.
-         This permission only grants the ability to make the request and is not a guarantee that the
-         request will be honored. In order to execute the install, the caller must also have the
-         "android.permission.REQUEST_INSTALL_PACKAGES" or "android.permission.INSTALL_PACKAGES"
-         permissions.
-         <p>Protection level: normal-->
+    <!-- Allows an application to indicate via
+         {@link android.content.pm.PackageInstaller.SessionParams#setRequireUserAction(boolean)}
+         that user action should not be required for an app update.
+         <p>Protection level: normal
+    -->
     <permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"
                 android:protectionLevel="normal" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION"/>
 
     <!-- Attribution for Geofencing service. -->
     <attribution android:tag="GeofencingService" android:label="@string/geofencing_service"/>
