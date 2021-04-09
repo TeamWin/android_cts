@@ -60,6 +60,9 @@ public class Activities {
     public static class SingleInstancePerTaskActivity extends BaseActivity {
     }
 
+    public static class SingleInstancePerTaskDocumentNeverActivity extends BaseActivity {
+    }
+
     public static class TaskAffinity1Activity extends BaseActivity {
     }
 

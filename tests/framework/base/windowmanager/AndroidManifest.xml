@@ -258,7 +258,10 @@
              android:launchMode="singleTask"
              android:taskAffinity=".t1"/>
         <activity android:name="android.server.wm.intent.Activities$SingleInstancePerTaskActivity"
-                  android:launchMode="singleInstancePerTask"/>
+             android:launchMode="singleInstancePerTask"/>
+        <activity android:name="android.server.wm.intent.Activities$SingleInstancePerTaskDocumentNeverActivity"
+             android:launchMode="singleInstancePerTask"
+             android:documentLaunchMode="never"/>
         <activity android:name="android.server.wm.intent.Activities$TaskAffinity1Activity"
              android:allowTaskReparenting="true"
              android:launchMode="standard"
