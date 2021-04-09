@@ -12,15 +12,12 @@ import java.net.NetworkInterface;
 import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import org.junit.Assert;
 
 abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
 {
     static {
         System.loadLibrary("ctsselinux_jni");
     }
-
-    static final byte[] ANONYMIZED_HARDWARE_ADDRESS = { 0x02, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
     protected static String getFile(String filename) throws IOException {
         BufferedReader in = null;
@@ -79,11 +76,19 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         }
     }
 
-    protected static void noNetlinkRouteBind() throws IOException {
-        assertEquals(
-                "bind() is not allowed on netlink route sockets",
-                13,
-                checkNetlinkRouteBind());
+    protected static void checkNetlinkRouteBind(boolean expectAllowed) throws IOException {
+        if (!expectAllowed) {
+            assertEquals(
+                    "Bind() is not allowed on a netlink route sockets",
+                    13,
+                    checkNetlinkRouteBind());
+        } else {
+            assertEquals(
+                    "Bind() should succeed for netlink route sockets for apps with "
+                            + "targetSdkVersion <= Q",
+                    -1,
+                    checkNetlinkRouteBind());
+        }
     }
 
     /**
@@ -164,17 +169,16 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
     }
 
     /**
-     * Verify that apps having targetSdkVersion <= 29 get an anonymized MAC
-     * address (02:00:00:00:00:00) instead of a null MAC for ethernet interfaces.
+     * Verify that apps having targetSdkVersion <= 29 are able to see MAC
+     * addresses of ethernet devices.
      * The counterpart of this test (testing for targetSdkVersion > 29) is
      * {@link libcore.java.net.NetworkInterfaceTest#testGetHardwareAddress_returnsNull()}.
      */
-    protected static void checkNetworkInterface_returnsAnonymizedHardwareAddresses()
-        throws Exception {
+    protected static void checkNetworkInterface_returnsHardwareAddresses() throws Exception {
         assertNotNull(NetworkInterface.getNetworkInterfaces());
         for (NetworkInterface nif : Collections.list(NetworkInterface.getNetworkInterfaces())) {
             if (isEthernet(nif.getName())) {
-                Assert.assertArrayEquals(ANONYMIZED_HARDWARE_ADDRESS, nif.getHardwareAddress());
+                assertEquals(6, nif.getHardwareAddress().length);
             }
         }
     }
