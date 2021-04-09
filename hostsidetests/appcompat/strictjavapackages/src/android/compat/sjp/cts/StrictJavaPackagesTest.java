@@ -63,7 +63,7 @@ import java.util.Set;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
 
-    private static final long ADB_TIMEOUT_MILLIS = 10000L;
+    private static final long ADB_TIMEOUT_MILLIS = 30000L;
 
     /**
      * This is the list of classes that are currently duplicated and should be addressed.
