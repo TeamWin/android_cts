@@ -153,7 +153,11 @@ public class TouchExplorerTest {
                     mView.getLocationOnScreen(viewLocation);
                     mTapLocation = new PointF(viewLocation[0] + midX, viewLocation[1] + midY);
                     mSwipeDistance = mView.getWidth() / 4;
-                    mSwipeTimeMillis = (long) mSwipeDistance * 4;
+
+                    // This must be slower than 10mm per 150ms to be detected as touch exploration.
+                    final double swipeDistanceMm = mSwipeDistance / metrics.xdpi * 25.4;
+                    mSwipeTimeMillis = (long) swipeDistanceMm * 20;
+
                     mView.setOnClickListener(mClickListener);
                     mView.setOnLongClickListener(mLongClickListener);
                 });
