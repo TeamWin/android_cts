@@ -6,3 +6,5 @@ ruchirr@google.com
 singhtejinder@google.com
 tsaichristine@google.com
 yro@google.com
+
+per-file apps/statsdapp/src/com/android/server/cts/device/statsdatom/AtomTests.java = file:platform/frameworks/base:/core/java/android/permission/OWNERS

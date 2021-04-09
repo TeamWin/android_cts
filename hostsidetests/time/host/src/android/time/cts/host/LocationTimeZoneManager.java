@@ -28,14 +28,14 @@ package android.time.cts.host;
 final class LocationTimeZoneManager {
 
     /**
-     * The name of the primary location time zone provider, used for shell commands.
+     * The index of the primary location time zone provider, used for shell commands.
      */
-    static final String PRIMARY_PROVIDER_NAME = "primary";
+    static final int PRIMARY_PROVIDER_INDEX = 0;
 
     /**
-     * The name of the secondary location time zone provider, used for shell commands.
+     * The index of the secondary location time zone provider, used for shell commands.
      */
-    static final String SECONDARY_PROVIDER_NAME = "secondary";
+    static final int SECONDARY_PROVIDER_INDEX = 1;
 
     /**
      * The name of the service for shell commands.
@@ -51,30 +51,6 @@ final class LocationTimeZoneManager {
      * A shell command that stops the service.
      */
     static final String SHELL_COMMAND_STOP = "stop";
-
-    /**
-     * A shell command that can put providers into different modes. Takes effect next time the
-     * service is started.
-     */
-    static final String SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE = "set_provider_mode_override";
-
-    /**
-     * The default provider mode.
-     * For use with {@link #SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE}.
-     */
-    static final String PROVIDER_MODE_OVERRIDE_NONE = "none";
-
-    /**
-     * The "simulated" provider mode.
-     * For use with {@link #SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE}.
-     */
-    static final String PROVIDER_MODE_OVERRIDE_SIMULATED = "simulated";
-
-    /**
-     * The "disabled" provider mode (equivalent to there being no provider configured).
-     * For use with {@link #SHELL_COMMAND_SET_PROVIDER_MODE_OVERRIDE}.
-     */
-    static final String PROVIDER_MODE_OVERRIDE_DISABLED = "disabled";
 
     /**
      * A shell command that tells the service to record state information during tests. The next
@@ -112,6 +88,48 @@ final class LocationTimeZoneManager {
      * Argument for {@link #SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS} to specify TZDB time zone IDs.
      */
     static final String SIMULATED_PROVIDER_TEST_COMMAND_SUCCESS_ARG_KEY_TZ = "tz";
+
+    /** Constants for interacting with the device_config service. */
+    final static class DeviceConfig {
+
+        /** The name of the device_config service command. */
+        static final String SHELL_COMMAND_SERVICE_NAME = "device_config";
+
+        /** The DeviceConfig namespace used for the location_time_zone_manager. */
+        static final String NAMESPACE = "system_time";
+
+        /**
+         * The key for the server flag that can override the device config for whether the primary
+         * location time zone provider is enabled, disabled, or (for testing) in simulation mode.
+         */
+        static final String KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE =
+                "primary_location_time_zone_provider_mode_override";
+
+        /**
+         * The key for the server flag that can override the device config for whether the secondary
+         * location time zone provider is enabled or disabled, or (for testing) in simulation mode.
+         */
+        static final String KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE =
+                "secondary_location_time_zone_provider_mode_override";
+
+        /**
+         * The "simulated" provider mode.
+         * For use with {@link #KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE} and {@link
+         * #KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE}.
+         */
+        static final String PROVIDER_MODE_SIMULATED = "simulated";
+
+        /**
+         * The "disabled" provider mode (equivalent to there being no provider configured).
+         * For use with {@link #KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE} and {@link
+         * #KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE}.
+         */
+        static final String PROVIDER_MODE_DISABLED = "disabled";
+
+        private DeviceConfig() {
+            // No need to instantiate.
+        }
+    }
 
     private LocationTimeZoneManager() {
         // No need to instantiate.

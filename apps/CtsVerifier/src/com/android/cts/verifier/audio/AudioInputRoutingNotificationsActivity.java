@@ -16,30 +16,22 @@
 
 package com.android.cts.verifier.audio;
 
-import com.android.cts.verifier.R;
-
 import android.content.Context;
-
-import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
-
 import android.os.Bundle;
 import android.os.Handler;
-
 import android.util.Log;
-
 import android.view.View;
 import android.view.View.OnClickListener;
-
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.hyphonate.megaaudio.recorder.RecorderBuilder;
-import org.hyphonate.megaaudio.recorder.Recorder;
+import com.android.cts.verifier.R;
+
 import org.hyphonate.megaaudio.recorder.JavaRecorder;
+import org.hyphonate.megaaudio.recorder.Recorder;
+import org.hyphonate.megaaudio.recorder.RecorderBuilder;
 import org.hyphonate.megaaudio.recorder.sinks.NopAudioSinkProvider;
 
 /*
@@ -50,10 +42,11 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
 
     Button recordBtn;
     Button stopBtn;
+    TextView mInfoView;
 
     Context mContext;
 
-    int mNumRecordNotifications = 0;
+    int mNumRoutingNotifications;
 
     OnBtnClickListener mBtnClickListener = new OnBtnClickListener();
 
@@ -61,7 +54,12 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
     static final int SAMPLE_RATE = 48000;
     int mNumFrames;
 
-    JavaRecorder mAudioRecorder;
+    private JavaRecorder mAudioRecorder;
+    private AudioRecordRoutingChangeListener mRouteChangeListener;
+    private boolean mIsRecording;
+
+    // ignore messages sent as a consequence of starting the player
+    private static final int NUM_IGNORE_MESSAGES = 2;
 
     private class OnBtnClickListener implements OnClickListener {
         @Override
@@ -72,26 +70,50 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
 
             switch (v.getId()) {
                 case R.id.audio_routingnotification_recordBtn:
-                {
-                     mAudioRecorder.startStream();
-
-                    AudioRecord audioRecord = mAudioRecorder.getAudioRecord();
-                    audioRecord.addOnRoutingChangedListener(
-                            new AudioRecordRoutingChangeListener(), new Handler());
-
-                }
+                    startRecording();
                     break;
 
                 case R.id.audio_routingnotification_recordStopBtn:
-                    mAudioRecorder.stopStream();
                     break;
             }
         }
     }
 
+    private void startRecording() {
+        if (!mIsRecording) {
+            mNumRoutingNotifications = 0;
+
+            mAudioRecorder.startStream();
+
+            AudioRecord audioRecord = mAudioRecorder.getAudioRecord();
+            audioRecord.addOnRoutingChangedListener(mRouteChangeListener,
+                    new Handler());
+
+            mIsRecording = true;
+            enableRecordButtons(!mIsRecording, mIsRecording);
+        }
+    }
+
+    private void stopRecording() {
+        if (mIsRecording) {
+            mAudioRecorder.stopStream();
+
+            AudioRecord audioRecord = mAudioRecorder.getAudioRecord();
+            audioRecord.removeOnRoutingChangedListener(mRouteChangeListener);
+
+            mIsRecording = false;
+            enableRecordButtons(!mIsRecording, mIsRecording);
+        }
+    }
+
     private class AudioRecordRoutingChangeListener implements AudioRecord.OnRoutingChangedListener {
         public void onRoutingChanged(AudioRecord audioRecord) {
-            mNumRecordNotifications++;
+            // Starting recording triggers routing messages, so ignore the first one.
+            mNumRoutingNotifications++;
+            if (mNumRoutingNotifications <= NUM_IGNORE_MESSAGES) {
+                return;
+            }
+
             TextView textView =
                     (TextView)findViewById(R.id.audio_routingnotification_audioRecord_change);
             String msg = mContext.getResources().getString(
@@ -101,13 +123,20 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
             int deviceType = routedDevice != null ? routedDevice.getType() : -1;
             textView.setText(msg + " - " +
                              deviceName + " [0x" + Integer.toHexString(deviceType) + "]" +
-                             " - " + mNumRecordNotifications);
+                             " - " + mNumRoutingNotifications);
+            getPassButton().setEnabled(true);
         }
     }
 
+    @Override
     protected void enableTestButtons(boolean enabled) {
-        recordBtn.setEnabled(enabled);
-        stopBtn.setEnabled(enabled);
+        enableRecordButtons(!mIsRecording, mIsRecording);
+        mInfoView.setVisibility(enabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    void enableRecordButtons(boolean enableRecord, boolean enableStop) {
+        recordBtn.setEnabled(enableRecord);
+        stopBtn.setEnabled(enableStop);
     }
 
     @Override
@@ -116,10 +145,14 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
         setContentView(R.layout.audio_input_routingnotifications_test);
 
         Button btn;
-        recordBtn = (Button)findViewById(R.id.audio_routingnotification_recordBtn);
+        recordBtn = (Button) findViewById(R.id.audio_routingnotification_recordBtn);
         recordBtn.setOnClickListener(mBtnClickListener);
-        stopBtn = (Button)findViewById(R.id.audio_routingnotification_recordStopBtn);
+        stopBtn = (Button) findViewById(R.id.audio_routingnotification_recordStopBtn);
         stopBtn.setOnClickListener(mBtnClickListener);
+
+        enableRecordButtons(false, false);
+
+        mInfoView = (TextView) findViewById(R.id.info_text);
 
         mContext = this;
 
@@ -137,17 +170,18 @@ public class AudioInputRoutingNotificationsActivity extends AudioWiredDeviceBase
             Log.e(TAG, "Failed MegaRecorder build.");
         }
 
+        mRouteChangeListener = new AudioRecordRoutingChangeListener();
+        AudioRecord audioRecord = mAudioRecorder.getAudioRecord();
+        audioRecord.addOnRoutingChangedListener(mRouteChangeListener, new Handler());
+
         // "Honor System" buttons
         super.setup();
-
         setPassFailButtonClickListeners();
     }
 
     @Override
     public void onBackPressed () {
-        if (mAudioRecorder != null) {
-            mAudioRecorder.stopStream();
-        }
+        stopRecording();
         super.onBackPressed();
     }
 }

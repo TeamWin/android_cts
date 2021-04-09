@@ -50,6 +50,18 @@
                 <action android:name="android.service.contentcapture.ContentCaptureService"/>
             </intent-filter>
         </service>
+
+        <!-- TODO(b/184617863): move to its own apk -->
+        <service android:name=".CtsTestIme"
+                 android:label="Test IME"
+                 android:permission="android.permission.BIND_INPUT_METHOD"
+                 android:exported="true">
+            <intent-filter>
+                <action android:name="android.view.InputMethod"/>
+            </intent-filter>
+            <meta-data android:name="android.view.im"
+                       android:resource="@xml/simple_ime"/>
+        </service>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
