@@ -89,7 +89,7 @@ abstract class SensorPrivacyBaseTest(
         }
         context.startActivity(intent)
         UiAutomatorUtils.waitFindObject(By.text(
-                Pattern.compile("Turn on", Pattern.CASE_INSENSITIVE))).click()
+                Pattern.compile("Unblock", Pattern.CASE_INSENSITIVE))).click()
         SystemUtil.eventually {
             assertFalse(isSensorPrivacyEnabled())
         }
