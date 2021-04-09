@@ -18,6 +18,7 @@ package android.permission3.cts.usepermission
 
 import android.app.Activity
 import android.content.BroadcastReceiver
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -36,7 +37,9 @@ class RequestPermissionsActivity : Activity() {
                     return
                 }
 
-                startActivity(Intent(context, OverlayActivity::class.java)
+                startActivity(intent
+                        .setAction(null)
+                        .setComponent(ComponentName(context!!, OverlayActivity::class.java))
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         }, IntentFilter(ACTION_SHOW_OVERLAY))
