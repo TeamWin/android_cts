@@ -31,6 +31,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Process;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.keystore.KeyGenParameterSpec;
@@ -51,6 +52,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
+import java.util.Map;
 
 /*
  * Tests the delegated certificate installer functionality.
@@ -236,7 +238,7 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
                 /* requestAccess= */ true);
 
         assertThat(mDpm.getKeyPairGrants(TEST_ALIAS))
-                .isEqualTo(singleton(singleton(getContext().getPackageName())));
+                .isEqualTo(Map.of(Process.myUid(), singleton(getContext().getPackageName())));
     }
 
     public void testIsWifiGrant_default() {
