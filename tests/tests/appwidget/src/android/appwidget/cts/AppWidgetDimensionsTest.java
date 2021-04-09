@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-class AppWidgetDimensionsTest {
+public class AppWidgetDimensionsTest {
 
     @Test
     public void containerRadius_shouldBePositive() {
