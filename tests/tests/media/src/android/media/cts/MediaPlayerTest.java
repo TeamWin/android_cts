@@ -2558,4 +2558,26 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mMediaPlayer.start();
         assertTrue(mOnErrorCalled.waitForSignal());
     }
+
+    @Presubmit
+    public void testSetOnRtpRxNoticeListenerWithoutPermission() {
+        try {
+            mMediaPlayer.setOnRtpRxNoticeListener(
+                    mContext, Runnable::run, (mp, noticeType, params) -> {});
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Expected. We don't have the required permission.
+        }
+    }
+
+    @Presubmit
+    public void testSetOnRtpRxNoticeListenerWithPermission() {
+        try {
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            mMediaPlayer.setOnRtpRxNoticeListener(
+                    mContext, Runnable::run, (mp, noticeType, params) -> {});
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
+        }
+    }
 }
