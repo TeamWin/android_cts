@@ -23,4 +23,8 @@
     <!-- CTS tests to be excluded in this plan-->
     <option name="compatibility:exclude-filter" value="CtsDeqpTestCases" />
 
+    <!-- b/178344549: CtsCameraTestCases failures due to covered lenses in folded mode-->
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases android.hardware.camera2.cts.BurstCaptureTest#testJpegBurst" />
+    <option name="compatibility:exclude-filter" value="CtsCameraTestCases[instant] android.hardware.camera2.cts.BurstCaptureTest#testJpegBurst" />
+
 </configuration>
