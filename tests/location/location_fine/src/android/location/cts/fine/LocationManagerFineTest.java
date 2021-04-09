@@ -73,6 +73,7 @@ import android.location.provider.ProviderProperties;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.DeviceConfig;
 import android.util.ArraySet;
@@ -113,6 +114,8 @@ public class LocationManagerFineTest {
     private static final String TEST_PROVIDER = "test_provider";
 
     private static final String VALID_LOCATION_ATTRIBUTION_TAG = "valid_location_attribution_tag";
+    private static final String ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG =
+            "another_valid_location_attribution_tag";
     private static final String INVALID_LOCATION_ATTRIBUTION_TAG =
             "invalid_location_attribution_tag";
 
@@ -1528,7 +1531,8 @@ public class LocationManagerFineTest {
         accessLocation(VALID_LOCATION_ATTRIBUTION_TAG);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /*expectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION,
-                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                VALID_LOCATION_ATTRIBUTION_TAG);
 
         // Tag set and using that correct tag
         addTestProviderForAttributionTag(VALID_LOCATION_ATTRIBUTION_TAG);
@@ -1536,21 +1540,24 @@ public class LocationManagerFineTest {
         accessLocation(VALID_LOCATION_ATTRIBUTION_TAG);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /*expectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
-                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION);
+                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION,
+                VALID_LOCATION_ATTRIBUTION_TAG);
 
         // Tag set and using a wrong tag
         timeBeforeLocationAccess = System.currentTimeMillis();
         accessLocation(INVALID_LOCATION_ATTRIBUTION_TAG);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /*expectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION,
-                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                INVALID_LOCATION_ATTRIBUTION_TAG);
 
         // Tag set and using that correct tag
         timeBeforeLocationAccess = System.currentTimeMillis();
         accessLocation(VALID_LOCATION_ATTRIBUTION_TAG);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /*expectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
-                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION);
+                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION,
+                VALID_LOCATION_ATTRIBUTION_TAG);
 
         // No tag set
         addTestProviderForAttributionTag();
@@ -1558,7 +1565,8 @@ public class LocationManagerFineTest {
         accessLocation(VALID_LOCATION_ATTRIBUTION_TAG);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /*expectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION,
-                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                /*unexpectedOp*/ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                VALID_LOCATION_ATTRIBUTION_TAG);
     }
 
     @Test
@@ -1567,14 +1575,15 @@ public class LocationManagerFineTest {
         mManager.getLastKnownLocation(TEST_PROVIDER);
         assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                 /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
-                /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                null);
 
         // Ensure no note ops when provider disabled
         mManager.setTestProviderEnabled(TEST_PROVIDER, false);
         timeBeforeLocationAccess = System.currentTimeMillis();
         mManager.getLastKnownLocation(TEST_PROVIDER);
         assertNoOpsNotedSinceLastLocationAccess(timeBeforeLocationAccess,
-                AppOpsManager.OPSTR_FINE_LOCATION);
+                AppOpsManager.OPSTR_FINE_LOCATION, null);
     }
 
     @Test
@@ -1589,7 +1598,8 @@ public class LocationManagerFineTest {
             assertThat(capture.getLocation(TIMEOUT_MS)).isEqualTo(loc);
             assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                     /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
-                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                    null);
         }
 
         // Ensure no note ops when provider disabled
@@ -1600,7 +1610,7 @@ public class LocationManagerFineTest {
                     Executors.newSingleThreadExecutor(), capture2);
             mManager.setTestProviderLocation(TEST_PROVIDER, loc);
             assertNoOpsNotedSinceLastLocationAccess(timeBeforeLocationAccess,
-                    AppOpsManager.OPSTR_FINE_LOCATION);
+                    AppOpsManager.OPSTR_FINE_LOCATION, null);
         }
     }
 
@@ -1617,7 +1627,8 @@ public class LocationManagerFineTest {
             assertThat(capture.getNextLocation(TIMEOUT_MS)).isEqualTo(loc1);
             assertNotedOpsSinceLastLocationAccess(timeBeforeLocationAccess,
                     /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
-                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE);
+                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                    null);
         }
 
         // Ensure no note ops when provider disabled
@@ -1626,45 +1637,101 @@ public class LocationManagerFineTest {
         try (LocationListenerCapture capture2 = new LocationListenerCapture(mContext)) {
             mManager.requestLocationUpdates(TEST_PROVIDER, 0, 0,
                     Executors.newSingleThreadExecutor(), capture2);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
             assertNoOpsNotedSinceLastLocationAccess(timeBeforeLocationAccess,
-                    AppOpsManager.OPSTR_FINE_LOCATION);
+                    AppOpsManager.OPSTR_FINE_LOCATION, null);
+        }
+    }
+
+    @Test
+    public void testRequestLocationUpdatesNoteOps_simultaneousRequests() {
+        Context attributionContextFast =
+                mContext.createAttributionContext(VALID_LOCATION_ATTRIBUTION_TAG);
+        Context attributionContextSlow =
+                mContext.createAttributionContext(ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
+        Location loc1 = createLocation(TEST_PROVIDER, mRandom);
+        Location loc2 = createLocation(TEST_PROVIDER, mRandom);
+
+        try (LocationListenerCapture fastCapture =
+                     new LocationListenerCapture(attributionContextFast);
+             LocationListenerCapture slowCapture =
+                     new LocationListenerCapture(attributionContextSlow)) {
+            attributionContextFast
+                    .getSystemService(LocationManager.class)
+                    .requestLocationUpdates(
+                            TEST_PROVIDER, new LocationRequest.Builder(0).build(),
+                            Runnable::run, fastCapture);
+            attributionContextSlow
+                    .getSystemService(LocationManager.class)
+                    .requestLocationUpdates(
+                            TEST_PROVIDER,
+                            new LocationRequest.Builder(600000).build(),
+                            Runnable::run,
+                            slowCapture);
+
+            // Set initial location.
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc1);
+
+            // Verify noteOp for the fast request.
+            long timeBeforeLocationAccess = System.currentTimeMillis();
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc2);
+            assertNotedOpsSinceLastLocationAccess(
+                    timeBeforeLocationAccess,
+                    /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
+                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                    VALID_LOCATION_ATTRIBUTION_TAG);
+            assertNoOpsNotedSinceLastLocationAccess(
+                    timeBeforeLocationAccess,
+                    AppOpsManager.OPSTR_FINE_LOCATION,
+                    ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
+
+            // Verify noteOp for the slow request.
+            timeBeforeLocationAccess = System.currentTimeMillis();
+            Location loc3 = createLocation(TEST_PROVIDER, 0, 1, 10,
+                    SystemClock.elapsedRealtimeNanos() + 600000000000L);
+            mManager.setTestProviderLocation(TEST_PROVIDER, loc3);
+            assertNotedOpsSinceLastLocationAccess(
+                    timeBeforeLocationAccess,
+                    /* expectedOp */ AppOpsManager.OPSTR_FINE_LOCATION,
+                    /* unexpectedOp */ AppOpsManager.OPSTR_FINE_LOCATION_SOURCE,
+                    ANOTHER_VALID_LOCATION_ATTRIBUTION_TAG);
         }
     }
 
     private void accessLocation(String attributionTag) {
         Context attributionContext = mContext.createAttributionContext(attributionTag);
-        attributionContext.getSystemService(LocationManager.class)
-                .getLastKnownLocation(TEST_PROVIDER);
+        attributionContext.getSystemService(LocationManager.class).getLastKnownLocation(
+                TEST_PROVIDER);
     }
 
-    private void assertNotedOpsSinceLastLocationAccess(long timeBeforeLocationAccess,
-            @NonNull String expectedOp, @NonNull String unexpectedOp) {
-        final UiAutomation automation = InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation();
+    private void assertNotedOpsSinceLastLocationAccess(
+            long timeBeforeLocationAccess,
+            @NonNull String expectedOp,
+            @NonNull String unexpectedOp,
+            String attributionTag) {
+        final UiAutomation automation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
         automation.adoptShellPermissionIdentity(android.Manifest.permission.GET_APP_OPS_STATS);
+
         try {
             final AppOpsManager appOpsManager = mContext.getSystemService(AppOpsManager.class);
-            final List<AppOpsManager.PackageOps> affectedPackageOps = appOpsManager
-                    .getPackagesForOps(new String[] {expectedOp, unexpectedOp});
-            final int packageCount = affectedPackageOps.size();
-            for (int i = 0; i < packageCount; i++) {
-                final AppOpsManager.PackageOps packageOps = affectedPackageOps.get(i);
+            final List<AppOpsManager.PackageOps> affectedPackageOps =
+                    appOpsManager.getPackagesForOps(new String[]{expectedOp, unexpectedOp});
+            for (AppOpsManager.PackageOps packageOps : affectedPackageOps) {
                 if (mContext.getPackageName().equals(packageOps.getPackageName())) {
                     // We are pulling stats only for one app op.
-                    final List<AppOpsManager.OpEntry> opEntries = packageOps.getOps();
-                    final int opEntryCount = opEntries.size();
-                    for (int j = 0; j < opEntryCount; j++) {
-                        final AppOpsManager.OpEntry opEntry = opEntries.get(j);
+                    for (AppOpsManager.OpEntry opEntry : packageOps.getOps()) {
                         if (unexpectedOp.equals(opEntry.getOpStr())) {
                             fail("Unexpected access to " + unexpectedOp);
-                        } else if (expectedOp.equals(opEntry.getOpStr())) {
-                            if (opEntry.getLastAccessTime(AppOpsManager.OP_FLAGS_ALL_TRUSTED) >=
-                                    timeBeforeLocationAccess) {
-                                return;
-                            }
-                            break;
+                        } else if (expectedOp.equals(opEntry.getOpStr())
+                                && opEntry.getAttributedOpEntries().containsKey(attributionTag)
+                                && opEntry
+                                .getAttributedOpEntries()
+                                .get(attributionTag)
+                                .getLastAccessTime(AppOpsManager.OP_FLAGS_ALL_TRUSTED)
+                                >= timeBeforeLocationAccess) {
+                            return;
                         }
-
                     }
                 }
             }
@@ -1674,30 +1741,28 @@ public class LocationManagerFineTest {
         }
     }
 
-    private void assertNoOpsNotedSinceLastLocationAccess(long timeBeforeLocationAccess,
-        @NonNull String unexpectedOp) {
-        final UiAutomation automation = InstrumentationRegistry.getInstrumentation()
-                .getUiAutomation();
+    private void assertNoOpsNotedSinceLastLocationAccess(
+            long timeBeforeLocationAccess, @NonNull String unexpectedOp, String attributionTag) {
+        final UiAutomation automation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
         automation.adoptShellPermissionIdentity(android.Manifest.permission.GET_APP_OPS_STATS);
         try {
             final AppOpsManager appOpsManager = mContext.getSystemService(AppOpsManager.class);
-            final List<AppOpsManager.PackageOps> affectedPackageOps = appOpsManager
-                    .getPackagesForOps(new String[] {unexpectedOp});
-            final int packageCount = affectedPackageOps.size();
-            for (int i = 0; i < packageCount; i++) {
-                final AppOpsManager.PackageOps packageOps = affectedPackageOps.get(i);
+            final List<AppOpsManager.PackageOps> affectedPackageOps =
+                    appOpsManager.getPackagesForOps(new String[]{unexpectedOp});
+            for (AppOpsManager.PackageOps packageOps : affectedPackageOps) {
                 if (mContext.getPackageName().equals(packageOps.getPackageName())) {
                     // We are pulling stats only for one app op.
-                    final List<AppOpsManager.OpEntry> opEntries = packageOps.getOps();
-                    final int opEntryCount = opEntries.size();
-                    for (int j = 0; j < opEntryCount; j++) {
-                        final AppOpsManager.OpEntry opEntry = opEntries.get(j);
+                    for (AppOpsManager.OpEntry opEntry : packageOps.getOps()) {
                         if (unexpectedOp.equals(opEntry.getOpStr())
-                            && opEntry.getLastAccessTime(AppOpsManager.OP_FLAGS_ALL_TRUSTED) >=
-                                    timeBeforeLocationAccess) {
-                              fail("Unexpected access to " + unexpectedOp);
+                                && opEntry.getAttributedOpEntries().containsKey(attributionTag)
+                                && opEntry
+                                .getAttributedOpEntries()
+                                .get(attributionTag)
+                                .getLastAccessTime(AppOpsManager.OP_FLAGS_ALL_TRUSTED)
+                                >= timeBeforeLocationAccess) {
+                            fail("Unexpected access to " + unexpectedOp);
                         }
-
                     }
                 }
             }
