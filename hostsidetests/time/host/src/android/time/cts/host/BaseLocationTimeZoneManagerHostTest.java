@@ -18,9 +18,7 @@ package android.time.cts.host;
 import static android.time.cts.host.LocationTimeZoneManager.DUMP_STATE_OPTION_PROTO;
 import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
 import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.NAMESPACE;
 import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
-import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_DUMP_STATE;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_RECORD_PROVIDER_STATES;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_SEND_PROVIDER_TEST_COMMAND;
@@ -83,19 +81,13 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
     @After
     public void tearDown() throws Exception {
         stopLocationTimeZoneManagerService();
-        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, null);
-        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, null);
 
-        // Reset settings.
-        if (!mOriginalGeoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(false);
-        }
-        if (!mOriginalAutoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(false);
-        }
-        if (!mOriginalLocationEnabled) {
-            mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(false);
-        }
+        // Reset settings and server flags as best we can.
+        mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
+        mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
+        mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
+        mTimeZoneDetectorHostHelper.resetSystemTimeDeviceConfigKeys();
+        setLocationTimeZoneManagerStateRecordingMode(false);
 
         startLocationTimeZoneManagerService();
     }
@@ -131,24 +123,10 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
         }
 
         if (mode == null) {
-            clearDeviceConfigKey(deviceConfigKey);
+            mTimeZoneDetectorHostHelper.clearSystemTimeDeviceConfigKey(deviceConfigKey);
         } else {
-            setDeviceConfigKey(deviceConfigKey, mode);
+            mTimeZoneDetectorHostHelper.setSystemTimeDeviceConfigKey(deviceConfigKey, mode);
         }
-    }
-
-    private void clearDeviceConfigKey(String deviceConfigKey) throws Exception {
-        executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
-    }
-
-    private void setDeviceConfigKey(String deviceConfigKey, String value) throws Exception {
-        executeDeviceConfigCommand("put %s %s %s", NAMESPACE, deviceConfigKey, value);
-    }
-
-    private byte[] executeDeviceConfigCommand(String cmd, Object... args) throws Exception {
-        String command = String.format(cmd, args);
-        return mTimeZoneDetectorHostHelper.executeShellCommandReturnBytes("cmd %s %s",
-                LocationTimeZoneManager.DeviceConfig.SHELL_COMMAND_SERVICE_NAME, command);
     }
 
     protected void simulateProviderSuggestion(int providerIndex, String... zoneIds)
