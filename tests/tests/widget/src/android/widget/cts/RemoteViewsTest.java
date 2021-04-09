@@ -1046,10 +1046,10 @@ public class RemoteViewsTest {
         DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
         assertMargins(
                 textView,
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
+                resolveDimenOffset(10, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(20, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(30, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(40, COMPLEX_UNIT_DIP, displayMetrics));
     }
 
     @Test
@@ -1063,10 +1063,10 @@ public class RemoteViewsTest {
         DisplayMetrics displayMetrics = textViewLtr.getResources().getDisplayMetrics();
         assertMargins(
                 textViewLtr,
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
+                resolveDimenOffset(10, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(20, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(30, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(40, COMPLEX_UNIT_DIP, displayMetrics));
 
         View textViewRtl = mResult.findViewById(R.id.remoteView_text_rtl);
         mRemoteViews.setViewLayoutMargin(textViewRtl.getId(), MARGIN_START, 10, COMPLEX_UNIT_DIP);
@@ -1077,10 +1077,10 @@ public class RemoteViewsTest {
         displayMetrics = textViewRtl.getResources().getDisplayMetrics();
         assertMargins(
                 textViewRtl,
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 30, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 10, displayMetrics),
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 40, displayMetrics));
+                resolveDimenOffset(30, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(20, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(10, COMPLEX_UNIT_DIP, displayMetrics),
+                resolveDimenOffset(40, COMPLEX_UNIT_DIP, displayMetrics));
     }
 
     @Test
@@ -1154,7 +1154,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutWidth(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
+                resolveDimenSize(20, COMPLEX_UNIT_DIP, displayMetrics),
                 textView.getLayoutParams().width);
 
         mRemoteViews.setViewLayoutWidth(
@@ -1169,7 +1169,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutWidthDimen(R.id.remoteView_text, R.dimen.textview_fixed_width);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                textView.getResources().getDimensionPixelOffset(R.dimen.textview_fixed_width),
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_width),
                 textView.getLayoutParams().width);
     }
 
@@ -1185,7 +1185,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutHeight(R.id.remoteView_text, 20, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 20, displayMetrics),
+                resolveDimenSize(20, COMPLEX_UNIT_DIP, displayMetrics),
                 textView.getLayoutParams().height);
 
         mRemoteViews.setViewLayoutHeight(
@@ -1200,7 +1200,7 @@ public class RemoteViewsTest {
         mRemoteViews.setViewLayoutHeightDimen(R.id.remoteView_text, R.dimen.textview_fixed_height);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(
-                textView.getResources().getDimensionPixelOffset(R.dimen.textview_fixed_height),
+                textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_height),
                 textView.getLayoutParams().height);
     }
 
@@ -1223,49 +1223,41 @@ public class RemoteViewsTest {
     @Test
     public void testSetIntDimen_fromUnitDimension() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
-        float value = 12f;
-        int unit = COMPLEX_UNIT_DIP;
-        int expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
+        DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
 
         mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
-                value, unit);
+                12f, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getCompoundDrawablePadding());
+        assertEquals(resolveDimenSize(12f, COMPLEX_UNIT_DIP, displayMetrics),
+                textView.getCompoundDrawablePadding());
 
-        unit = TypedValue.COMPLEX_UNIT_SP;
-        expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
         mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
-                value, unit);
+                12f, TypedValue.COMPLEX_UNIT_SP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getCompoundDrawablePadding());
+        assertEquals(resolveDimenSize(12f, TypedValue.COMPLEX_UNIT_SP, displayMetrics),
+                textView.getCompoundDrawablePadding());
 
-        unit = TypedValue.COMPLEX_UNIT_PX;
-        expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
         mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
-                value, unit);
+                12f, TypedValue.COMPLEX_UNIT_PX);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getCompoundDrawablePadding());
+        assertEquals(resolveDimenSize(12f, TypedValue.COMPLEX_UNIT_PX, displayMetrics),
+                textView.getCompoundDrawablePadding());
 
         mExpectedException.expect(ActionException.class);
         mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
-                value, 123456);
+                12f, 123456);
         mRemoteViews.reapply(mContext, mResult);
     }
 
     @Test
     public void testSetFloatDimen_fromResources() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
-        float expectedValue = mContext.getResources().getDimension(R.dimen.popup_row_height);
 
-        mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", R.dimen.popup_row_height);
+        mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX",
+                R.dimen.remoteviews_float_dimen);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getTextScaleX(), 1e-4f);
+        assertEquals(textView.getResources().getDimension(R.dimen.remoteviews_float_dimen),
+                textView.getTextScaleX(), 1e-4f);
 
         mExpectedException.expect(ActionException.class);
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", R.color.testcolor1);
@@ -1275,38 +1267,29 @@ public class RemoteViewsTest {
     @Test
     public void testSetFloatDimen_fromUnitDimension() throws Throwable {
         TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
-        float value = 12f;
-        int unit = COMPLEX_UNIT_DIP;
-        int expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
+        DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
 
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX",
-                value, unit);
+                3.5f, COMPLEX_UNIT_DIP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getTextScaleX(), 1e-4f);
+        assertEquals(TypedValue.applyDimension(COMPLEX_UNIT_DIP, 3.5f, displayMetrics),
+                textView.getTextScaleX(), 1e-4f);
 
-        unit = TypedValue.COMPLEX_UNIT_SP;
-        expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX",
-                value, unit);
+                3.5f, TypedValue.COMPLEX_UNIT_SP);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getTextScaleX(), 1e-4f);
+        assertEquals(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 3.5f, displayMetrics),
+                textView.getTextScaleX(), 1e-4f);
 
-        unit = TypedValue.COMPLEX_UNIT_PX;
-        expectedValue = TypedValue.complexToDimensionPixelSize(
-                TypedValue.createComplexDimension(value, unit),
-                mContext.getResources().getDisplayMetrics());
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX",
-                value, unit);
+                3.5f, TypedValue.COMPLEX_UNIT_PX);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertEquals(expectedValue, textView.getTextScaleX(), 1e-4f);
+        assertEquals(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_PX, 3.5f, displayMetrics),
+                textView.getTextScaleX(), 1e-4f);
 
         mExpectedException.expect(ActionException.class);
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX",
-                value, 123456);
+                3.5f, 123456);
         mRemoteViews.reapply(mContext, mResult);
     }
 
@@ -1502,50 +1485,26 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetViewId() throws Throwable {
-        assertEquals(View.NO_ID, mRemoteViews.getViewId());
-        mRemoteViews.setViewId(100);
-
-        assertEquals(100, mRemoteViews.getViewId());
-        mActivityRule.runOnUiThread(() -> {
-            mResult = mRemoteViews.apply(mContext, null);
-        });
-
-        assertEquals(100, mResult.getId());
-    }
-
-    @Test
-    public void testSetViewIdFailsOnMultipleLayouts() throws Throwable {
-        mRemoteViews = new RemoteViews(
-                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout),
-                new RemoteViews(PACKAGE_NAME, R.layout.listview_layout)
-        );
-
-        mExpectedException.expect(UnsupportedOperationException.class);
-        mRemoteViews.setViewId(100);
-    }
-
-    @Test
     public void testCanRecycleView() throws Throwable {
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                2 /* viewId */);
 
         mActivityRule.runOnUiThread(() -> {
             mResult = mRemoteViews.apply(mContext, null);
         });
 
-        mRemoteViews.setViewId(3);
-        assertFalse(mRemoteViews.canRecycleView(mResult));
-
-        mRemoteViews.setViewId(View.NO_ID);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                3 /* viewId */);
         assertFalse(mRemoteViews.canRecycleView(mResult));
 
         mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview);
-        mRemoteViews.setViewId(2);
+        assertFalse(mRemoteViews.canRecycleView(mResult));
+
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.remoteviews_textview,
+                2 /* viewId */);
         assertTrue(mRemoteViews.canRecycleView(mResult));
 
-        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout);
-        mRemoteViews.setViewId(2);
+        mRemoteViews = new RemoteViews(PACKAGE_NAME, R.layout.listview_layout, 2 /* viewId */);
         assertFalse(mRemoteViews.canRecycleView(mResult));
 
         assertFalse(mRemoteViews.canRecycleView(null));
@@ -1596,6 +1555,16 @@ public class RemoteViewsTest {
         assertEquals("[top margin]", top, margins.topMargin);
         assertEquals("[right margin]", right, margins.rightMargin);
         assertEquals("[bottom margin]", bottom, margins.bottomMargin);
+    }
+
+    private static int resolveDimenOffset(float value, int unit, DisplayMetrics displayMetrics) {
+        return TypedValue.complexToDimensionPixelOffset(
+                TypedValue.createComplexDimension(value, unit), displayMetrics);
+    }
+
+    private static int resolveDimenSize(float value, int unit, DisplayMetrics displayMetrics) {
+        return TypedValue.complexToDimensionPixelSize(
+                TypedValue.createComplexDimension(value, unit), displayMetrics);
     }
 
     private static final class MockBroadcastReceiver extends BroadcastReceiver {
