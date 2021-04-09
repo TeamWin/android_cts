@@ -24,8 +24,14 @@
     <attribution android:tag="invalid_ar_attribution_tag" android:label="@string/foo_label" />
 
     <application>
-        <meta-data android:name="android:activity_recognition_allow_listed_tags"
-                   android:value="valid_ar_attribution_tag;valid_at_attribution_tag2"/>
+        <service android:name=".NoOpService"
+                 android:exported="true">
+            <meta-data android:name="android:activity_recognition_allow_listed_tags"
+                       android:value="valid_ar_attribution_tag;valid_at_attribution_tag2"/>
+            <intent-filter>
+                <action android:name="android.intent.action.ACTIVITY_RECOGNIZER" />
+            </intent-filter>
+        </service>
         <uses-library android:name="android.test.runner" />
     </application>
 
