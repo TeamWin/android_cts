@@ -48,6 +48,8 @@ public class MockConnection extends Connection {
     public static final int ON_SILENCE = 9;
     public static final int ON_ADD_CONFERENCE_PARTICIPANTS = 10;
     public static final int ON_CALL_FILTERING_COMPLETED = 11;
+    public static final int ON_ANSWER_CALLED = 12;
+    public static final int ON_ANSWER_VIDEO_CALLED = 13;
 
     private CallAudioState mCallAudioState =
             new CallAudioState(false, CallAudioState.ROUTE_EARPIECE, ROUTE_EARPIECE | ROUTE_SPEAKER);
@@ -59,11 +61,14 @@ public class MockConnection extends Connection {
     private RemoteConnection mRemoteConnection = null;
     private RttTextStream mRttTextStream;
 
-    private SparseArray<InvokeCounter> mInvokeCounterMap = new SparseArray<>(11);
+    private SparseArray<InvokeCounter> mInvokeCounterMap = new SparseArray<>(13);
 
     @Override
     public void onAnswer() {
         super.onAnswer();
+        if (mInvokeCounterMap.get(ON_ANSWER_CALLED) != null) {
+            mInvokeCounterMap.get(ON_ANSWER_CALLED).invoke();
+        }
     }
 
     @Override
@@ -73,6 +78,9 @@ public class MockConnection extends Connection {
         setActive();
         if (mRemoteConnection != null) {
             mRemoteConnection.answer();
+        }
+        if (mInvokeCounterMap.get(ON_ANSWER_VIDEO_CALLED) != null) {
+            mInvokeCounterMap.get(ON_ANSWER_VIDEO_CALLED).invoke(videoState);
         }
     }
 
