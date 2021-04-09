@@ -22,15 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that an annotation is used to indicate that a given user should have no profiles of the
+ * Mark that an annotation is used to indicate that a given user should have a profile of the
  * given type.
  *
- * <p>The annotation annotated with {@link EnsureHasNoProfileAnnotation} must have the same body as
- * {@link EnsureHasNoProfile}.
+ * <p>The annotation annotated with {@link EnsureHasProfileAnnotation} must have the same body as
+ * {@link EnsureHasProfile}.
  */
 @Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface EnsureHasNoProfileAnnotation {
-    /** The name of the profile type which should not be present. */
+public @interface EnsureHasProfileAnnotation {
+    /** The name of the profile type which should be present. */
     String value();
 }
