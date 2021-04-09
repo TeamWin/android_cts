@@ -30,7 +30,6 @@ import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Directory;
-import android.provider.ContactsContract.RawContacts;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestContact;
 import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestRawContact;
 import android.provider.cts.contacts.account.StaticAccountAuthenticator;
@@ -333,6 +332,18 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
 
         assertEquals(0, rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
         assertEquals(0, rawContact.getLong(Contacts.TIMES_CONTACTED));
+    }
+
+    /** Make sure local contacts are visible by default. */
+    public void testContactQuery_localContactVisibleByDefault() throws Exception {
+        // Raw contacts without an account specified are created in the local account
+        final TestRawContact localRawContact = mBuilder.newRawContact().insert().load();
+        final TestContact contact = localRawContact.getContact().load();
+
+        assertNull(localRawContact.getString(ContactsContract.RawContacts.ACCOUNT_NAME));
+        assertNull(localRawContact.getString(ContactsContract.RawContacts.ACCOUNT_TYPE));
+        assertNull(localRawContact.getString(ContactsContract.RawContacts.DATA_SET));
+        assertEquals(1, contact.getLong(Contacts.IN_VISIBLE_GROUP));
     }
 
     public void testProjection() throws Exception {
