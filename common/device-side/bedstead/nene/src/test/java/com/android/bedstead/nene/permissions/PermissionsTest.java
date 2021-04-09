@@ -29,6 +29,8 @@ import android.os.Build;
 
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.Versions;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -202,6 +204,39 @@ public class PermissionsTest {
         assertThrows(NeneException.class, () -> sTestApis.permissions()
                 .withoutPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL)
                 .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL));
+    }
+
+    @Test
+    public void withPermissions_androidSAndAbove_restoresPreviousPermissionContext() {
+        assumeTrue("restoring permissions is only available on S+",
+                Versions.isRunningOn(Versions.S, "S"));
+
+        ShellCommandUtils.uiAutomation()
+                .adoptShellPermissionIdentity(DECLARED_PERMISSION_NOT_HELD_BY_SHELL);
+
+        PermissionContext p =
+                     sTestApis.permissions()
+                             .withPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL);
+        p.close();
+
+        assertThat(sContext.checkSelfPermission(DECLARED_PERMISSION_NOT_HELD_BY_SHELL))
+                .isEqualTo(PERMISSION_DENIED);
+    }
+
+    @Test
+    public void withoutPermission_androidSAndAbove_restoresPreviousPermissionContext() {
+        assumeTrue("restoring permissions is only available on S+",
+                Versions.isRunningOn(Versions.S, "S"));
+
+        ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(PERMISSION_HELD_BY_SHELL);
+
+        PermissionContext p =
+                     sTestApis.permissions()
+                             .withoutPermission(PERMISSION_HELD_BY_SHELL);
+        p.close();
+
+        assertThat(sContext.checkSelfPermission(PERMISSION_HELD_BY_SHELL))
+                .isEqualTo(PERMISSION_GRANTED);
     }
 
     // TODO(scottjonathan): Once we can install the testapp without granting all runtime
