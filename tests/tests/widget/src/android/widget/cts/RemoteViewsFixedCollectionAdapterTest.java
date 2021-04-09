@@ -489,11 +489,14 @@ public class RemoteViewsFixedCollectionAdapterTest {
                 .addItem(13 /* id= */, item3)
                 .build();
 
-        mListView.setVisibility(View.GONE);
-        mGridView.setVisibility(View.VISIBLE);
-        mRemoteViews.setRemoteAdapter(R.id.remoteView_grid, items);
         runOnMainAndDrawSync(
-                mActivityRule, mGridView, () -> mRemoteViews.reapply(mActivity, mView));
+                mActivityRule,
+                mGridView, () -> {
+                    mListView.setVisibility(View.GONE);
+                    mGridView.setVisibility(View.VISIBLE);
+                    mRemoteViews.setRemoteAdapter(R.id.remoteView_grid, items);
+                    mRemoteViews.reapply(mActivity, mView);
+                });
 
         Adapter adapter = mGridView.getAdapter();
         assertEquals(4, adapter.getCount());
@@ -528,11 +531,14 @@ public class RemoteViewsFixedCollectionAdapterTest {
                 .addItem(11 /* id= */, item1)
                 .build();
 
-        mListView.setVisibility(View.GONE);
-        mStackView.setVisibility(View.VISIBLE);
-        mRemoteViews.setRemoteAdapter(R.id.remoteView_stack, items);
         runOnMainAndDrawSync(
-                mActivityRule, mStackView, () -> mRemoteViews.reapply(mActivity, mView));
+                mActivityRule,
+                mStackView, () -> {
+                    mListView.setVisibility(View.GONE);
+                    mStackView.setVisibility(View.VISIBLE);
+                    mRemoteViews.setRemoteAdapter(R.id.remoteView_stack, items);
+                    mRemoteViews.reapply(mActivity, mView);
+                });
 
         Adapter adapter = mStackView.getAdapter();
         assertEquals(2, adapter.getCount());
@@ -555,11 +561,14 @@ public class RemoteViewsFixedCollectionAdapterTest {
                 .addItem(11 /* id= */, item1)
                 .build();
 
-        mListView.setVisibility(View.GONE);
-        mAdapterViewFlipper.setVisibility(View.VISIBLE);
-        mRemoteViews.setRemoteAdapter(R.id.remoteView_flipper, items);
         runOnMainAndDrawSync(
-                mActivityRule, mAdapterViewFlipper, () -> mRemoteViews.reapply(mActivity, mView));
+                mActivityRule,
+                mAdapterViewFlipper, () -> {
+                    mListView.setVisibility(View.GONE);
+                    mAdapterViewFlipper.setVisibility(View.VISIBLE);
+                    mRemoteViews.setRemoteAdapter(R.id.remoteView_flipper, items);
+                    mRemoteViews.reapply(mActivity, mView);
+                });
 
         Adapter adapter = mAdapterViewFlipper.getAdapter();
         assertEquals(2, adapter.getCount());
