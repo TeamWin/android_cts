@@ -17,6 +17,7 @@
 package android.appsecurity.cts;
 
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
  * Test that:
@@ -45,6 +47,7 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
     private static final String TEST_PACKAGE = "com.android.cts.readsettingsfieldsapp";
     private static final String TEST_CLASS = TEST_PACKAGE + ".ReadSettingsFieldsTest";
     private static final String TEST_APK = "CtsReadSettingsFieldsApp.apk";
+    private static final String TEST_APK_TEST_ONLY = "CtsReadSettingsFieldsAppTestOnly.apk";
 
     @Before
     public void setUp() throws Exception {
@@ -87,5 +90,48 @@ public class ReadableSettingsFieldsTest extends BaseAppSecurityTest {
         runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testGlobalSomeHiddenSettingsKeysAreReadable");
     }
 
-    //TODO(b/175024829): test that hidden keys without @Readable cannot be accessed
+    @Test
+    public void testSecureHiddenSettingsKeysNotReadableWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSecureHiddenSettingsKeysNotReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testSystemHiddenSettingsKeysNotReadableWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSystemHiddenSettingsKeysNotReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation()
+            throws DeviceNotAvailableException {
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testSecureHiddenSettingsKeysReadableWhenTestOnly()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSecureHiddenSettingsKeysReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testSystemHiddenSettingsKeysReadableWhenTestOnly()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testSystemHiddenSettingsKeysReadableWithoutAnnotation");
+    }
+
+    @Test
+    public void testGlobalHiddenSettingsKeysReadableWhenTestOnly()
+            throws DeviceNotAvailableException, FileNotFoundException {
+        new InstallMultiple().addFile(TEST_APK_TEST_ONLY).addArg("-t").run();
+        runDeviceTests(TEST_PACKAGE, TEST_CLASS,
+                "testGlobalHiddenSettingsKeysReadableWithoutAnnotation");
+    }
 }
