@@ -60,6 +60,7 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -104,13 +105,11 @@ public class TranscodeTest {
         TranscodeTestUtils.grantPermission(getContext().getPackageName(),
                 Manifest.permission.READ_EXTERNAL_STORAGE);
         TranscodeTestUtils.pollForPermission(Manifest.permission.READ_EXTERNAL_STORAGE, true);
-        TranscodeTestUtils.enableSeamlessTranscoding();
-        TranscodeTestUtils.disableTranscodingForAllPackages();
     }
 
     @After
     public void tearDown() throws Exception {
-        TranscodeTestUtils.disableSeamlessTranscoding();
+        TranscodeTestUtils.disableTranscodingForAllPackages();
     }
 
     /**
@@ -931,6 +930,7 @@ public class TranscodeTest {
         }
     }
 
+    @Ignore
     @Test
     public void testTranscodeMultipleFilesConcurrently_mediumDurationMediumVolume() throws Exception {
         ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[20];
@@ -953,6 +953,7 @@ public class TranscodeTest {
         }
     }
 
+    @Ignore
     @Test
     public void testTranscodeMultipleFilesConcurrently_lowDurationHighVolume() throws Exception {
         ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[100];
@@ -975,6 +976,7 @@ public class TranscodeTest {
         }
     }
 
+    @Ignore
     @Test
     public void testTranscodeMultipleFilesConcurrently_longDurationLowVolume() throws Exception {
         ModernFileOpenerThread[] modernFileOpenerThreads = new ModernFileOpenerThread[5];
