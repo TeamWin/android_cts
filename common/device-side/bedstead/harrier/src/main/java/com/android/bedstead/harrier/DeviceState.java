@@ -34,8 +34,6 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -46,6 +44,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -59,6 +58,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -116,6 +116,18 @@ public final class DeviceState implements TestRule {
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
+                for (Annotation annotation : description.getAnnotations()) {
+                    Class<? extends Annotation> annotationType = annotation.annotationType();
+
+                    EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
+                            annotationType.getAnnotation(EnsureHasNoProfileAnnotation.class);
+                    if (ensureHasNoProfileAnnotation != null) {
+                        UserType userType = (UserType) annotation.annotationType()
+                                .getMethod("forUser").invoke(annotation);
+                        ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
+                    }
+                }
+
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
                     assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
                             isRunningOnPrimaryUser());
@@ -141,14 +153,6 @@ public final class DeviceState implements TestRule {
                             /* forUser= */ ensureHasWorkAnnotation.forUser()
                     );
                 }
-                EnsureHasNoWorkProfile ensureHasNoWorkAnnotation =
-                        description.getAnnotation(EnsureHasNoWorkProfile.class);
-                if (ensureHasNoWorkAnnotation != null) {
-                    ensureHasNoProfile(
-                            MANAGED_PROFILE_TYPE_NAME,
-                            /* forUser= */ ensureHasNoWorkAnnotation.forUser()
-                    );
-                }
                 EnsureHasTvProfile ensureHasTvProfileAnnotation =
                         description.getAnnotation(EnsureHasTvProfile.class);
                 if (ensureHasTvProfileAnnotation != null) {
@@ -156,14 +160,6 @@ public final class DeviceState implements TestRule {
                             TV_PROFILE_TYPE_NAME,
                             /* installTestApp= */ ensureHasTvProfileAnnotation.installTestApp(),
                             /* forUser= */ ensureHasTvProfileAnnotation.forUser()
-                    );
-                }
-                EnsureHasNoTvProfile ensureHasNoTvProfileAnnotation =
-                        description.getAnnotation(EnsureHasNoTvProfile.class);
-                if (ensureHasNoTvProfileAnnotation != null) {
-                    ensureHasNoProfile(
-                            TV_PROFILE_TYPE_NAME,
-                            /* forUser= */ ensureHasNoTvProfileAnnotation.forUser()
                     );
                 }
                 EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
