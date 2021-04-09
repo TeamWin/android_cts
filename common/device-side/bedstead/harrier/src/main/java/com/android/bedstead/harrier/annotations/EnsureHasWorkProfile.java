@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.annotations;
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -37,6 +38,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@EnsureHasProfileAnnotation("android.os.usertype.profile.MANAGED")
 public @interface EnsureHasWorkProfile {
     /** Which user type the work profile should be attached to. */
     DeviceState.UserType forUser() default CURRENT_USER;
