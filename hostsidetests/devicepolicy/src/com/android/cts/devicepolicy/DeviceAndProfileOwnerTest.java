@@ -1905,6 +1905,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_notGranted");
     }
 
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testGetNearbyNotificationStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyNotificationStreamingPolicyTest",
+                "testGetNearbyNotificationStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testSetNearbyNotificationStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyNotificationStreamingPolicyTest",
+                "testSetNearbyNotificationStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testGetNearbyAppStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testGetNearbyAppStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testSetNearbyAppStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testSetNearbyAppStreamingPolicy");
+    }
+
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
