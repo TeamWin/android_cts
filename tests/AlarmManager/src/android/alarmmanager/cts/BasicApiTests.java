@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.AlarmManager;
@@ -31,20 +32,24 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.PowerManager;
 import android.os.SystemClock;
-import android.provider.DeviceConfig;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
+import androidx.annotation.GuardedBy;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -52,8 +57,10 @@ import org.junit.runner.RunWith;
  * General API tests earlier present at CtsAppTestCases:AlarmManagerTest
  */
 @LargeTest
+@AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class BasicApiTests {
+    private static final String TAG = BasicApiTests.class.getSimpleName();
     public static final String MOCKACTION = "android.app.AlarmManagerTest.TEST_ALARMRECEIVER";
     public static final String MOCKACTION2 = "android.app.AlarmManagerTest.TEST_ALARMRECEIVER2";
 
@@ -73,17 +80,18 @@ public class BasicApiTests {
 
     private static final int TIME_DELTA = 1000;
     private static final int TIME_DELAY = 10_000;
-    private static final int REPEAT_PERIOD = 30_000;
 
-    // Constants used for validating exact vs inexact alarm batching immunity.
-    private static final long TEST_WINDOW_LENGTH = 8_000L;
     private static final long TEST_ALARM_FUTURITY = 2_000L;
     private static final long FAIL_DELTA = 50;
-    private static final long NUM_TRIALS = 5;
-    private static final long MAX_NEAR_DELIVERIES = 0;
+    private static final long PRIORITY_ALARM_DELAY = 6_000;
+    private static final long REPEAT_PERIOD = 30_000;
     private Context mContext = InstrumentationRegistry.getTargetContext();
-    private final DeviceConfigStateHelper mDeviceConfigHelper = new DeviceConfigStateHelper(
-            DeviceConfig.NAMESPACE_ALARM_MANAGER);
+    private final AlarmManagerDeviceConfigHelper mDeviceConfigHelper =
+            new AlarmManagerDeviceConfigHelper();
+    private PowerManager mPowerManager = mContext.getSystemService(PowerManager.class);
+
+    @Rule
+    public DumpLoggerRule mFailLoggerRule = new DumpLoggerRule(TAG);
 
     @Before
     public void setUp() throws Exception {
@@ -105,16 +113,19 @@ public class BasicApiTests {
         IntentFilter filter2 = new IntentFilter(mIntent2.getAction());
         mContext.registerReceiver(mMockAlarmReceiver2, filter2);
 
-        mDeviceConfigHelper.set("min_futurity", "0");
-        mDeviceConfigHelper.set("min_interval", String.valueOf(REPEAT_PERIOD));
-        mDeviceConfigHelper.set("min_window", "0");
+        mDeviceConfigHelper.with("min_futurity", 0L)
+                .with("min_interval", REPEAT_PERIOD)
+                .with("min_window", 0L)
+                .with("priority_alarm_delay", PRIORITY_ALARM_DELAY)
+                .commitAndAwaitPropagation();
     }
 
     @After
     public void tearDown() throws Exception {
-        mDeviceConfigHelper.restoreOriginalValues();
+        mDeviceConfigHelper.deleteAll();
         mContext.unregisterReceiver(mMockAlarmReceiver);
         mContext.unregisterReceiver(mMockAlarmReceiver2);
+        toggleIdleMode(false);
     }
 
     @Test
@@ -123,28 +134,29 @@ public class BasicApiTests {
         // device becomes interactive
 
         // test parameter type is RTC_WAKEUP
-        mMockAlarmReceiver.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
         mWakeupTime = System.currentTimeMillis() + SNOOZE_DELAY;
         mAm.setExact(AlarmManager.RTC_WAKEUP, mWakeupTime, mSender);
+
         new PollingCheck(SNOOZE_DELAY + TIME_DELAY) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
-        assertEquals(mMockAlarmReceiver.rtcTime, mWakeupTime, TIME_DELTA);
+        assertEquals(mMockAlarmReceiver.getRtcTime(), mWakeupTime, TIME_DELTA);
 
         // test parameter type is ELAPSED_REALTIME_WAKEUP
-        mMockAlarmReceiver.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
         mWakeupTime = SystemClock.elapsedRealtime() + SNOOZE_DELAY;
         mAm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, mWakeupTime, mSender);
         new PollingCheck(SNOOZE_DELAY + TIME_DELAY) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
-        assertEquals(mMockAlarmReceiver.elapsedTime, mWakeupTime, TIME_DELTA);
+        assertEquals(mMockAlarmReceiver.getElapsedTime(), mWakeupTime, TIME_DELTA);
     }
 
     @Test
@@ -152,13 +164,13 @@ public class BasicApiTests {
         // An alarm with a negative wakeup time should be triggered immediately.
         // This exercises a workaround for a limitation of the /dev/alarm driver
         // that would instead cause such alarms to never be triggered.
-        mMockAlarmReceiver.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
         mWakeupTime = -1000;
         mAm.set(AlarmManager.RTC_WAKEUP, mWakeupTime, mSender);
         new PollingCheck(TIME_DELAY) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
     }
@@ -169,53 +181,46 @@ public class BasicApiTests {
      * statistically significant -- i.e. that the two alarms are not being coalesced.
      */
     @Test
-    public void testExactAlarmBatching() {
+    public void testExactAlarmBatching() throws InterruptedException {
+        final long windowLength = 6_000;
         int deliveriesTogether = 0;
-        for (int i = 0; i < NUM_TRIALS; i++) {
-            final long now = System.currentTimeMillis();
-            final long windowStart = now + TEST_ALARM_FUTURITY;
-            final long exactStart = windowStart + TEST_WINDOW_LENGTH / 2;
+        for (int i = 0; i < 5; i++) {
+            mMockAlarmReceiver.reset();
+            mMockAlarmReceiver2.reset();
 
-            mMockAlarmReceiver.setAlarmedFalse();
-            mMockAlarmReceiver2.setAlarmedFalse();
-            mAm.setWindow(AlarmManager.RTC_WAKEUP, windowStart, TEST_WINDOW_LENGTH, mSender);
-            mAm.setExact(AlarmManager.RTC_WAKEUP, exactStart, mSender2);
+            final long now = SystemClock.elapsedRealtime();
+            final long windowStart = now + 1000;
+            final long exactStart = windowStart + windowLength / 2;
 
-            // Wait until a half-second beyond its target window, just to provide a
-            // little safety slop.
-            new PollingCheck(TEST_WINDOW_LENGTH + (windowStart - now) + 500) {
-                @Override
-                protected boolean check() {
-                    return mMockAlarmReceiver.alarmed;
-                }
-            }.run();
+            mAm.setWindow(AlarmManager.ELAPSED_REALTIME_WAKEUP, windowStart, windowLength, mSender);
+            mAm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, exactStart, mSender2);
 
-            // Now wait until 1 sec beyond the expected exact alarm fire time, or for at
-            // least one second if we're already past the nominal exact alarm fire time
-            long timeToExact = Math.max(exactStart - System.currentTimeMillis() + 1000, 1000);
-            new PollingCheck(timeToExact) {
-                @Override
-                protected boolean check() {
-                    return mMockAlarmReceiver2.alarmed;
-                }
-            }.run();
+            // Wait until the end of the window.
+            Thread.sleep(windowStart - now + windowLength);
+            PollingCheck.waitFor(1000, mMockAlarmReceiver::isAlarmed,
+                    "Inexact alarm did not fire by the end of the window");
 
-            // Success when we observe that the exact and windowed alarm are not being often
-            // delivered close together -- that is, when we can be confident that they are not
-            // being coalesced.
-            final long delta = Math.abs(mMockAlarmReceiver2.rtcTime - mMockAlarmReceiver.rtcTime);
-            Log.i("testExactAlarmBatching", "[" + i + "]  delta = " + delta);
+            // If needed, wait until the time of the exact alarm.
+            final long timeToExact = Math.max(exactStart - SystemClock.elapsedRealtime(), 0);
+            Thread.sleep(timeToExact);
+            PollingCheck.waitFor(1000, mMockAlarmReceiver2::isAlarmed,
+                    "Exact alarm did not fire as expected");
+
+            final long delta = Math.abs(
+                    mMockAlarmReceiver2.getElapsedTime() - mMockAlarmReceiver.getElapsedTime());
+            Log.i(TAG, "testExactAlarmBatching: [" + i + "]  delta = " + delta);
             if (delta < FAIL_DELTA) {
                 deliveriesTogether++;
-                assertTrue("Exact alarms appear to be coalescing with inexact alarms",
-                        deliveriesTogether <= MAX_NEAR_DELIVERIES);
+                if (deliveriesTogether > 1) {
+                    fail("More than 1 deliveries with exact alarms close to inexact alarms");
+                }
             }
         }
     }
 
     @Test
     public void testSetRepeating() {
-        mMockAlarmReceiver.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
         mWakeupTime = System.currentTimeMillis() + TEST_ALARM_FUTURITY;
         mAm.setRepeating(AlarmManager.RTC_WAKEUP, mWakeupTime, REPEAT_PERIOD, mSender);
 
@@ -224,28 +229,97 @@ public class BasicApiTests {
         new PollingCheck(TEST_ALARM_FUTURITY + REPEAT_PERIOD) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
-        assertTrue(mMockAlarmReceiver.alarmed);
 
         // Now reset the receiver and wait for the intended repeat alarm to fire as expected
-        mMockAlarmReceiver.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
         new PollingCheck(REPEAT_PERIOD * 2) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
-        assertTrue(mMockAlarmReceiver.alarmed);
 
         mAm.cancel(mSender);
     }
 
+    private static final String DOZE_ON_OUTPUT = "deep idle mode";
+    private static final String DOZE_OFF_OUTPUT = "deep state: ACTIVE";
+
+    private void toggleIdleMode(boolean on) {
+        SystemUtil.runShellCommand("cmd deviceidle " + (on ? "force-idle deep" : "unforce"),
+                output -> output.contains(on ? DOZE_ON_OUTPUT : DOZE_OFF_OUTPUT));
+        PollingCheck.waitFor(10_000, () -> (on == mPowerManager.isDeviceIdleMode()),
+                "Could not set doze state to " + on);
+    }
+
+    @Test(expected = SecurityException.class)
+    public void testSetPrioritizedWithoutPermission() {
+        mAm.setPrioritized(AlarmManager.ELAPSED_REALTIME_WAKEUP, 20, 10,
+                "testSetPrioritizedWithoutPermission", r -> r.run(), mMockAlarmReceiver);
+    }
+
+    @Test
+    @Ignore("Fails on cuttlefish")  // TODO (b/182835530): Investigate and fix.
+    public void testSetPrioritized() throws InterruptedException {
+        mMockAlarmReceiver.reset();
+        mMockAlarmReceiver2.reset();
+
+        final long trigger1 = SystemClock.elapsedRealtime() + 1000;
+        final long trigger2 = SystemClock.elapsedRealtime() + 2000;
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.setPrioritized(AlarmManager.ELAPSED_REALTIME_WAKEUP, trigger1, 10,
+                        "test-1", r -> r.run(), mMockAlarmReceiver));
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.setPrioritized(AlarmManager.ELAPSED_REALTIME_WAKEUP, trigger2, 10,
+                        "test-2", r -> r.run(), mMockAlarmReceiver2));
+
+        Thread.sleep(2010);
+        PollingCheck.waitFor(1000,
+                () -> (mMockAlarmReceiver.isAlarmed() && mMockAlarmReceiver2.isAlarmed()));
+
+        toggleIdleMode(true);
+        // Ensure no previous alarm in doze throttles the next one.
+        Thread.sleep(PRIORITY_ALARM_DELAY);
+        mMockAlarmReceiver.reset();
+        mMockAlarmReceiver2.reset();
+
+        final long trigger3 = SystemClock.elapsedRealtime() + 1000;
+        final long trigger4 = SystemClock.elapsedRealtime() + 2000;
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.setPrioritized(AlarmManager.ELAPSED_REALTIME_WAKEUP, trigger3, 10,
+                        "test-3", r -> r.run(), mMockAlarmReceiver));
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.setPrioritized(AlarmManager.ELAPSED_REALTIME_WAKEUP, trigger4, 10,
+                        "test-4", r -> r.run(), mMockAlarmReceiver2));
+        Thread.sleep(1010);
+        PollingCheck.waitFor(1000, mMockAlarmReceiver::isAlarmed,
+                "First alarm not received as expected in doze");
+
+        Thread.sleep(1000);
+        assertFalse("Second alarm fired prematurely while in doze",
+                mMockAlarmReceiver2.isAlarmed());
+
+        final long timeToNextAlarm = mMockAlarmReceiver.getElapsedTime() + PRIORITY_ALARM_DELAY
+                - SystemClock.elapsedRealtime();
+        Thread.sleep(Math.max(0, timeToNextAlarm));
+        PollingCheck.waitFor(1000, mMockAlarmReceiver2::isAlarmed,
+                "Second alarm not received as expected in doze");
+
+
+        final long firstAlarmTime = mMockAlarmReceiver.getElapsedTime();
+        final long secondAlarmTime = mMockAlarmReceiver2.getElapsedTime();
+        assertTrue("First alarm: " + firstAlarmTime + " and second alarm: " + secondAlarmTime
+                        + " not separated enough",
+                (secondAlarmTime - firstAlarmTime) > (PRIORITY_ALARM_DELAY - FAIL_DELTA));
+    }
+
     @Test
     public void testCancel() {
-        mMockAlarmReceiver.setAlarmedFalse();
-        mMockAlarmReceiver2.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
+        mMockAlarmReceiver2.reset();
 
         // set two alarms
         final long now = System.currentTimeMillis();
@@ -261,20 +335,19 @@ public class BasicApiTests {
         new PollingCheck(when2 - now + TIME_DELAY) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver2.alarmed;
+                return mMockAlarmReceiver2.isAlarmed();
             }
         }.run();
 
-        assertFalse(mMockAlarmReceiver.alarmed);
-        assertTrue(mMockAlarmReceiver2.alarmed);
+        assertFalse(mMockAlarmReceiver.isAlarmed());
     }
 
     @Test
     public void testSetAlarmClock() {
         assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.LOLLIPOP));
 
-        mMockAlarmReceiver.setAlarmedFalse();
-        mMockAlarmReceiver2.setAlarmedFalse();
+        mMockAlarmReceiver.reset();
+        mMockAlarmReceiver2.reset();
 
         // Set first alarm clock.
         final long wakeupTimeFirst = System.currentTimeMillis()
@@ -309,19 +382,19 @@ public class BasicApiTests {
         assertNull(nextAlarmClock.getShowIntent());
 
         // Wait for first alarm to trigger.
-        assertFalse(mMockAlarmReceiver.alarmed);
+        assertFalse(mMockAlarmReceiver.isAlarmed());
         new PollingCheck(2 * TEST_ALARM_FUTURITY + TIME_DELAY) {
             @Override
             protected boolean check() {
-                return mMockAlarmReceiver.alarmed;
+                return mMockAlarmReceiver.isAlarmed();
             }
         }.run();
 
         // Verify first alarm fired at the right time.
-        assertEquals(mMockAlarmReceiver.rtcTime, wakeupTimeFirst, TIME_DELTA);
+        assertEquals(mMockAlarmReceiver.getRtcTime(), wakeupTimeFirst, TIME_DELTA);
 
         // Verify second alarm didn't fire.
-        assertFalse(mMockAlarmReceiver2.alarmed);
+        assertFalse(mMockAlarmReceiver2.isAlarmed());
 
         // Verify the next alarm is not returning neither the first nor the second alarm.
         nextAlarmClock = mAm.getNextAlarmClock();
@@ -334,13 +407,17 @@ public class BasicApiTests {
     /**
      * this class receives alarm from AlarmManagerTest
      */
-    public static class MockAlarmReceiver extends BroadcastReceiver {
+    public static class MockAlarmReceiver extends BroadcastReceiver
+            implements AlarmManager.OnAlarmListener {
         private final Object mSync = new Object();
         public final String mTargetAction;
 
-        public volatile boolean alarmed = false;
-        public volatile long elapsedTime;
-        public volatile long rtcTime;
+        @GuardedBy("mSync")
+        private boolean mAlarmed = false;
+        @GuardedBy("mSync")
+        private long mElapsedTime = 0;
+        @GuardedBy("mSync")
+        private long mRtcTime = 0;
 
         public MockAlarmReceiver(String targetAction) {
             mTargetAction = targetAction;
@@ -351,17 +428,41 @@ public class BasicApiTests {
             final String action = intent.getAction();
             if (action.equals(mTargetAction)) {
                 synchronized (mSync) {
-                    alarmed = true;
-                    elapsedTime = SystemClock.elapsedRealtime();
-                    rtcTime = System.currentTimeMillis();
+                    mAlarmed = true;
+                    mElapsedTime = SystemClock.elapsedRealtime();
+                    mRtcTime = System.currentTimeMillis();
                 }
             }
         }
 
-        public void setAlarmedFalse() {
+        public long getElapsedTime() {
             synchronized (mSync) {
-                alarmed = false;
+                return mElapsedTime;
             }
+        }
+
+        public long getRtcTime() {
+            synchronized (mSync) {
+                return mRtcTime;
+            }
+        }
+
+        public void reset() {
+            synchronized (mSync) {
+                mAlarmed = false;
+                mRtcTime = mElapsedTime = 0;
+            }
+        }
+
+        public boolean isAlarmed() {
+            synchronized (mSync) {
+                return mAlarmed;
+            }
+        }
+
+        @Override
+        public void onAlarm() {
+            onReceive(null, new Intent(mTargetAction));
         }
     }
 }

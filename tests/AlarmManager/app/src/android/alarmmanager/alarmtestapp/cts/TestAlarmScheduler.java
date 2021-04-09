@@ -16,6 +16,7 @@
 
 package android.alarmmanager.alarmtestapp.cts;
 
+import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -35,8 +36,8 @@ public class TestAlarmScheduler extends BroadcastReceiver {
     public static final String ACTION_SET_ALARM = PACKAGE_NAME + ".action.SET_ALARM";
     public static final String EXTRA_TRIGGER_TIME = PACKAGE_NAME + ".extra.TRIGGER_TIME";
     public static final String EXTRA_REPEAT_INTERVAL = PACKAGE_NAME + ".extra.REPEAT_INTERVAL";
+    public static final String EXTRA_WINDOW_LENGTH = PACKAGE_NAME + ".extra.WINDOW_LENGTH";
     public static final String EXTRA_TYPE = PACKAGE_NAME + ".extra.TYPE";
-    public static final String EXTRA_ALLOW_WHILE_IDLE = PACKAGE_NAME + ".extra.ALLOW_WHILE_IDLE";
     public static final String ACTION_SET_ALARM_CLOCK = PACKAGE_NAME + ".action.SET_ALARM_CLOCK";
     public static final String EXTRA_ALARM_CLOCK_INFO = PACKAGE_NAME + ".extra.ALARM_CLOCK_INFO";
     public static final String ACTION_CANCEL_ALL_ALARMS = PACKAGE_NAME + ".action.CANCEL_ALARMS";
@@ -62,6 +63,7 @@ public class TestAlarmScheduler extends BroadcastReceiver {
                         intent.getParcelableExtra(EXTRA_ALARM_CLOCK_INFO);
                 Log.d(TAG, "Setting alarm clock " + alarmClockInfo + " id: " + id);
                 am.setAlarmClock(alarmClockInfo, alarmClockSender);
+                setResult(Activity.RESULT_OK, null, null);
                 break;
             case ACTION_SET_ALARM:
                 if (!intent.hasExtra(EXTRA_TYPE) || !intent.hasExtra(EXTRA_TRIGGER_TIME)) {
@@ -71,25 +73,26 @@ public class TestAlarmScheduler extends BroadcastReceiver {
                 final int type = intent.getIntExtra(EXTRA_TYPE, 0);
                 final long triggerTime = intent.getLongExtra(EXTRA_TRIGGER_TIME, 0);
                 final long interval = intent.getLongExtra(EXTRA_REPEAT_INTERVAL, 0);
-                final boolean allowWhileIdle = intent.getBooleanExtra(EXTRA_ALLOW_WHILE_IDLE,
-                        false);
-                Log.d(TAG, "Setting alarm: id=" + id + " type=" + type + ", triggerTime=" + triggerTime
-                        + ", interval=" + interval + ", allowWhileIdle=" + allowWhileIdle);
+                final long window = intent.getLongExtra(EXTRA_WINDOW_LENGTH, 1);
+
+                Log.d(TAG, "Setting alarm: id=" + id + " type=" + type + ", triggerTime="
+                        + triggerTime + ", interval=" + interval + " window=" + window);
                 if (interval > 0) {
                     am.setRepeating(type, triggerTime, interval, alarmSender);
-                } else if (allowWhileIdle) {
-                    am.setExactAndAllowWhileIdle(type, triggerTime, alarmSender);
                 } else {
-                    am.setExact(type, triggerTime, alarmSender);
+                    am.setWindow(type, triggerTime, window, alarmSender);
                 }
+                setResult(Activity.RESULT_OK, null, null);
                 break;
             case ACTION_CANCEL_ALL_ALARMS:
                 Log.d(TAG, "Cancelling all alarms");
                 am.cancel(alarmClockSender);
                 am.cancel(alarmSender);
+                setResult(Activity.RESULT_OK, null, null);
                 break;
             default:
                 Log.e(TAG, "Unspecified action " + intent.getAction());
+                setResult(Activity.RESULT_CANCELED, null, null);
                 break;
         }
     }
