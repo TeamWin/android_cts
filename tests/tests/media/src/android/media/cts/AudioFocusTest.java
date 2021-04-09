@@ -29,6 +29,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -226,6 +227,7 @@ public class AudioFocusTest extends CtsAndroidTestCase {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
     }
 
+    @AppModeFull(reason = "Instant apps cannot access the SD card")
     public void testAudioFocusRequestMediaGainLossWithPlayer() throws Exception {
         if (hasAutomotiveFeature(getContext())) {
             Log.i(TAG, "Test testAudioFocusRequestMediaGainLossWithPlayer "
