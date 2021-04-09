@@ -155,7 +155,7 @@ public class SendBubbleActivity extends Activity {
         if (useShortcut) {
             return new Notification.BubbleMetadata.Builder(SHARE_SHORTCUT_ID)
                     .setAutoExpandBubble(autoExpand)
-                    .setSuppressBubble(suppressBubble)
+                    .setSuppressableBubble(suppressBubble)
                     .setSuppressNotification(suppressNotification)
                     .build();
         } else {
@@ -171,7 +171,7 @@ public class SendBubbleActivity extends Activity {
                     Icon.createWithResource(context, R.drawable.black))
                     .setAutoExpandBubble(autoExpand)
                     .setSuppressNotification(suppressNotification)
-                    .setSuppressBubble(suppressBubble)
+                    .setSuppressableBubble(suppressBubble)
                     .build();
         }
     }
