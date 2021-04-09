@@ -975,11 +975,22 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     private void testStreamMuting(int stream) {
+        int minVolume = mAudioManager.getStreamMinVolume(stream);
+
         // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
         if (stream == AudioManager.STREAM_VOICE_CALL) {
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
             assertFalse("Muting voice call stream (" + stream + ") should require "
                             + "MODIFY_PHONE_STATE.", mAudioManager.isStreamMute(stream));
+        // non mutable stream
+        } else if (minVolume > 0) {
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+            assertFalse("Non mutable stream " + stream + " should not be muted.",
+                    mAudioManager.isStreamMute(stream));
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
+            assertFalse("Non mutable stream " + stream + " should not be muted by toggling mute.",
+                    mAudioManager.isStreamMute(stream));
+
         } else {
             mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
             assertTrue("Muting stream " + stream + " failed.",
