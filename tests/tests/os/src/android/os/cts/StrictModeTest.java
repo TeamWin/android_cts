@@ -655,12 +655,12 @@ public class StrictModeTest {
                 () -> applicationContext.getSystemService(WindowManager.class));
 
         assertViolation(
-                "Tried to access UI constants from a non-visual Context:",
+                "The API:ViewConfiguration needs a proper configuration.",
                 () -> ViewConfiguration.get(applicationContext));
 
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertViolation("Tried to access UI constants from a non-visual Context.",
+                assertViolation("The API:GestureDetector#init needs a proper configuration.",
                         () -> new GestureDetector(applicationContext, mGestureListener));
             } catch (Exception e) {
                 fail("Failed because of " + e);
@@ -691,12 +691,12 @@ public class StrictModeTest {
                 () -> displayContext.getSystemService(WindowManager.class));
 
         assertViolation(
-                "Tried to access UI constants from a non-visual Context:",
+                "The API:ViewConfiguration needs a proper configuration.",
                 () -> ViewConfiguration.get(displayContext));
 
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertViolation("Tried to access UI constants from a non-visual Context.",
+                assertViolation("The API:GestureDetector#init needs a proper configuration.",
                         () -> new GestureDetector(displayContext, mGestureListener));
             } catch (Exception e) {
                 fail("Failed because of " + e);
@@ -841,12 +841,12 @@ public class StrictModeTest {
                 () -> uiDerivedDisplayContext.getSystemService(WindowManager.class));
 
         assertViolation(
-                "Tried to access UI constants from a non-visual Context:",
+                "The API:ViewConfiguration needs a proper configuration.",
                 () -> ViewConfiguration.get(uiDerivedDisplayContext));
 
         mInstrumentation.runOnMainSync(() -> {
             try {
-                assertViolation("Tried to access UI constants from a non-visual Context.",
+                assertViolation("The API:GestureDetector#init needs a proper configuration.",
                         () -> new GestureDetector(uiDerivedDisplayContext, mGestureListener));
             } catch (Exception e) {
                 fail("Failed because of " + e);
@@ -856,6 +856,78 @@ public class StrictModeTest {
         if (isWallpaperManagerAccessible()) {
             assertViolation("Tried to access UI related API:", () ->
                     uiDerivedDisplayContext.getSystemService(WallpaperManager.class)
+                            .getDesiredMinimumWidth());
+        }
+    }
+
+    @Presubmit
+    @Test
+    public void testIncorrectContextUse_ConfigContext() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Configuration configuration = new Configuration();
+        configuration.setToDefaults();
+        final Context configContext = getContext().createConfigurationContext(configuration);
+
+        assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                () -> configContext.getSystemService(WindowManager.class));
+
+        assertNoViolation(() -> ViewConfiguration.get(configContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertNoViolation(() -> new GestureDetector(configContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+
+        if (isWallpaperManagerAccessible()) {
+            assertViolation("Tried to access UI related API:", () ->
+                    configContext.getSystemService(WallpaperManager.class)
+                            .getDesiredMinimumWidth());
+        }
+    }
+
+    @Presubmit
+    @Test
+    public void testIncorrectContextUse_ConfigDerivedDisplayContext() throws Exception {
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder()
+                        .detectIncorrectContextUse()
+                        .penaltyLog()
+                        .build());
+
+        final Display display = getContext().getSystemService(DisplayManager.class)
+                .getDisplay(DEFAULT_DISPLAY);
+        final Configuration configuration = new Configuration();
+        configuration.setToDefaults();
+        final Context configDerivedDisplayContext = getContext()
+                .createConfigurationContext(configuration).createDisplayContext(display);
+
+        assertViolation("Tried to access visual service " + WM_CLASS_NAME,
+                () -> configDerivedDisplayContext.getSystemService(WindowManager.class));
+
+        assertViolation(
+                "The API:ViewConfiguration needs a proper configuration.",
+                () -> ViewConfiguration.get(configDerivedDisplayContext));
+
+        mInstrumentation.runOnMainSync(() -> {
+            try {
+                assertViolation("The API:GestureDetector#init needs a proper configuration.",
+                        () -> new GestureDetector(configDerivedDisplayContext, mGestureListener));
+            } catch (Exception e) {
+                fail("Failed because of " + e);
+            }
+        });
+
+        if (isWallpaperManagerAccessible()) {
+            assertViolation("Tried to access UI related API:", () ->
+                    configDerivedDisplayContext.getSystemService(WallpaperManager.class)
                             .getDesiredMinimumWidth());
         }
     }
