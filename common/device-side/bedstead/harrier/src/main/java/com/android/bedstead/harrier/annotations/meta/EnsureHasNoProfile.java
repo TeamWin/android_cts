@@ -14,29 +14,19 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
+package com.android.bedstead.harrier.annotations.meta;
 
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
 import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on a user which has no Tv profile.
- *
- * <p>Your test configuration may be configured so that this test is only run on a user which has
- * no Tv profile. Otherwise, you can use {@link DeviceState} to ensure that the device enters
- * the correct state for the method.
+ * This annotation should not be used directly. It exists as a template for annotations which
+ * ensure that a given user does not have a specific profile type.
  */
-@Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
-@EnsureHasNoProfileAnnotation("com.android.tv.profile")
-public @interface EnsureHasNoTvProfile {
-    /** Which user type the tv profile should not be attached to. */
+@Target({})
+public @interface EnsureHasNoProfile {
     DeviceState.UserType forUser() default CURRENT_USER;
 }
