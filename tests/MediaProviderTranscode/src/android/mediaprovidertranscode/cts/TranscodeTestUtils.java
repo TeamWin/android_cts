@@ -159,26 +159,10 @@ public class TranscodeTestUtils {
         assertThat(numBytesWritten).isEqualTo(byteCount);
     }
 
-    public static void enableSeamlessTranscoding() throws Exception {
-        // This is required so that MediaProvider handles device config changes
-        executeShellCommand("setprop sys.fuse.transcode_debug true");
-        // This is required so that setprop changes take precedence over device_config changes
-        executeShellCommand("setprop persist.sys.fuse.transcode_user_control true");
-        executeShellCommand("setprop persist.sys.fuse.transcode_enabled true");
-        executeShellCommand("setprop persist.sys.fuse.transcode_default false");
-    }
-
-    public static void disableSeamlessTranscoding() throws Exception {
-        executeShellCommand("setprop sys.fuse.transcode_debug false");
-        executeShellCommand("setprop persist.sys.fuse.transcode_user_control true");
-        executeShellCommand("setprop persist.sys.fuse.transcode_enabled false");
-        executeShellCommand("setprop persist.sys.fuse.transcode_default false");
-        disableTranscodingForAllPackages();
-    }
-
     public static void enableTranscodingForPackage(String packageName) throws Exception {
         executeShellCommand("device_config put storage_native_boot transcode_compat_manifest "
                 + packageName + ",0");
+        SystemClock.sleep(1000);
     }
 
     public static void forceEnableAppCompatHevc(String packageName) throws IOException {
@@ -198,6 +182,7 @@ public class TranscodeTestUtils {
 
     public static void disableTranscodingForAllPackages() throws IOException {
         executeShellCommand("device_config delete storage_native_boot transcode_compat_manifest");
+        SystemClock.sleep(1000);
     }
 
     /**
