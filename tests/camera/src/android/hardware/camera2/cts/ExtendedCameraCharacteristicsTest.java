@@ -2549,7 +2549,7 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private float[] getLensDistortion(CameraCharacteristics c) {
         float[] distortion = null;
         float[] newDistortion = c.get(CameraCharacteristics.LENS_DISTORTION);
-        if (Build.VERSION.FIRST_SDK_INT > Build.VERSION_CODES.O_MR1 || newDistortion != null) {
+        if (Build.VERSION.DEVICE_INITIAL_SDK_INT > Build.VERSION_CODES.O_MR1 || newDistortion != null) {
             // New devices need to use fixed radial distortion definition; old devices can
             // opt-in to it
             if (newDistortion != null && newDistortion.length == 5) {

@@ -322,13 +322,14 @@ public class BuildTest extends TestCase {
                         + " is invalid; must be at least VERSION_CODES.BASE",
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.BASE);
         assertTrue(
-                "First SDK version " + Build.VERSION.FIRST_SDK_INT
+                "First SDK version " + Build.VERSION.DEVICE_INITIAL_SDK_INT
                         + " is invalid; must be at least VERSION_CODES.BASE",
-                Build.VERSION.FIRST_SDK_INT >= Build.VERSION_CODES.BASE);
+                Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.BASE);
         assertTrue(
                 "Current SDK version " + Build.VERSION.SDK_INT
-                        + " must be at least first SDK version " + Build.VERSION.FIRST_SDK_INT,
-                Build.VERSION.SDK_INT >= Build.VERSION.FIRST_SDK_INT);
+                        + " must be at least first SDK version "
+                        + Build.VERSION.DEVICE_INITIAL_SDK_INT,
+                Build.VERSION.SDK_INT >= Build.VERSION.DEVICE_INITIAL_SDK_INT);
     }
 
     /**
