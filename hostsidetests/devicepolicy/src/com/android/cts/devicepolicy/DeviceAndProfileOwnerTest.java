@@ -28,7 +28,6 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
-import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
