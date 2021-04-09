@@ -21,8 +21,6 @@ import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static junit.framework.Assert.assertNotNull;
-
 import static org.testng.Assert.assertThrows;
 
 import android.content.ComponentName;
@@ -46,12 +44,16 @@ import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
+import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
+import com.android.bedstead.harrier.policies.TestPolicy;
 
 import org.junit.ClassRule;
 import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
