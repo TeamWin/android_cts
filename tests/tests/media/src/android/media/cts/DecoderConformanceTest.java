@@ -178,6 +178,7 @@ public class DecoderConformanceTest extends MediaPlayerTestBase {
                     if (stat == Status.PASS) {
                         pass = true;
                     } else if (stat == Status.SKIP) {
+                        release();
                         continue;
                     }
                 } catch (Exception e) {
