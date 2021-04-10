@@ -34,11 +34,7 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasNoTvProfile;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
-import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -46,6 +42,8 @@ import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
 import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -59,13 +57,13 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 
 /**
@@ -117,6 +115,28 @@ public final class DeviceState implements TestRule {
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
+                for (Annotation annotation : description.getAnnotations()) {
+                    Class<? extends Annotation> annotationType = annotation.annotationType();
+
+                    EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
+                            annotationType.getAnnotation(EnsureHasNoProfileAnnotation.class);
+                    if (ensureHasNoProfileAnnotation != null) {
+                        UserType userType = (UserType) annotation.annotationType()
+                                .getMethod("forUser").invoke(annotation);
+                        ensureHasNoProfile(ensureHasNoProfileAnnotation.value(), userType);
+                    }
+
+                    EnsureHasProfileAnnotation ensureHasProfileAnnotation =
+                            annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
+                    if (ensureHasProfileAnnotation != null) {
+                        UserType userType = (UserType) annotation.annotationType()
+                                .getMethod("forUser").invoke(annotation);
+                        boolean installTestApp = (boolean) annotation.annotationType()
+                                .getMethod("installTestApp").invoke(annotation);
+                            ensureHasProfile(
+                                    ensureHasProfileAnnotation.value(), installTestApp, userType);
+                    }
+                }
                 if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
                     assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
                             isRunningOnPrimaryUser());
@@ -133,51 +153,18 @@ public final class DeviceState implements TestRule {
                     assumeTrue("@RequireRunOnTvProfile tests only run on TV profile",
                             isRunningOnTvProfile());
                 }
-                EnsureHasWorkProfile ensureHasWorkAnnotation =
-                        description.getAnnotation(EnsureHasWorkProfile.class);
-                if (ensureHasWorkAnnotation != null) {
-                    ensureHasProfile(
-                            MANAGED_PROFILE_TYPE_NAME,
-                            /* installTestApp= */ ensureHasWorkAnnotation.installTestApp(),
-                            /* forUser= */ ensureHasWorkAnnotation.forUser()
-                    );
-                }
-                EnsureHasNoWorkProfile ensureHasNoWorkAnnotation =
-                        description.getAnnotation(EnsureHasNoWorkProfile.class);
-                if (ensureHasNoWorkAnnotation != null) {
-                    ensureHasNoProfile(
-                            MANAGED_PROFILE_TYPE_NAME,
-                            /* forUser= */ ensureHasNoWorkAnnotation.forUser()
-                    );
-                }
-                EnsureHasTvProfile ensureHasTvProfileAnnotation =
-                        description.getAnnotation(EnsureHasTvProfile.class);
-                if (ensureHasTvProfileAnnotation != null) {
-                    ensureHasProfile(
-                            TV_PROFILE_TYPE_NAME,
-                            /* installTestApp= */ ensureHasTvProfileAnnotation.installTestApp(),
-                            /* forUser= */ ensureHasTvProfileAnnotation.forUser()
-                    );
-                }
-                EnsureHasNoTvProfile ensureHasNoTvProfileAnnotation =
-                        description.getAnnotation(EnsureHasNoTvProfile.class);
-                if (ensureHasNoTvProfileAnnotation != null) {
-                    ensureHasNoProfile(
-                            TV_PROFILE_TYPE_NAME,
-                            /* forUser= */ ensureHasNoTvProfileAnnotation.forUser()
-                    );
-                }
                 EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
                         description.getAnnotation(EnsureHasSecondaryUser.class);
                 if (ensureHasSecondaryUserAnnotation != null) {
-                    ensureHasSecondaryUser(
+                    ensureHasUser(
+                            SECONDARY_USER_TYPE_NAME,
                             /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
                     );
                 }
                 EnsureHasNoSecondaryUser ensureHasNoSecondaryUserAnnotation =
                         description.getAnnotation(EnsureHasNoSecondaryUser.class);
                 if (ensureHasNoSecondaryUserAnnotation != null) {
-                    ensureHasNoSecondaryUser();
+                    ensureHasNoUser(SECONDARY_USER_TYPE_NAME);
                 }
                 RequireFeatures requireFeaturesAnnotation =
                         description.getAnnotation(RequireFeatures.class);
@@ -257,7 +244,8 @@ public final class DeviceState implements TestRule {
 
     private static final Context sContext = sTestApis.context().instrumentedContext();
 
-    private UserReference mSecondaryUser = null;
+    private final Map<com.android.bedstead.nene.users.UserType, UserReference> mUsers =
+            new HashMap<>();
     private final Map<com.android.bedstead.nene.users.UserType, Map<UserReference, UserReference>>
             mProfiles = new HashMap<>();
 
@@ -306,7 +294,7 @@ public final class DeviceState implements TestRule {
                 sTestApis.users().supportedType(profileType);
 
         if (resolvedUserType == null) {
-            throw new IllegalStateException("Can not have a profile of type " + forUser
+            throw new IllegalStateException("Can not have a profile of type " + profileType
                     + " as they are not supported on this device");
         }
 
@@ -395,29 +383,42 @@ public final class DeviceState implements TestRule {
     }
 
     /**
-     * Get the user ID of a human user on the device other than the primary user.
+     * Get a secondary user.
      *
-     * <p>This should only be used to get work profiles managed by Harrier (using either the
+     * <p>This should only be used to get secondary users managed by Harrier (using either the
      * annotations or calls to the {@link DeviceState} class.
      *
-     * @throws IllegalStateException if there is no harrier-managed work profile
+     * @throws IllegalStateException if there is no harrier-managed secondary user
      */
     @Nullable
     public UserReference secondaryUser() {
-        if (mSecondaryUser == null) {
+        return user(SECONDARY_USER_TYPE_NAME);
+    }
+
+    private UserReference user(String userType) {
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                sTestApis.users().supportedType(userType);
+
+        if (resolvedUserType == null) {
+            throw new IllegalStateException("Can not have a user of type " + userType
+                    + " as they are not supported on this device");
+        }
+
+        return user(resolvedUserType);
+    }
+
+    private UserReference user(com.android.bedstead.nene.users.UserType userType) {
+        if (userType == null) {
+            throw new NullPointerException();
+        }
+
+        if (!mUsers.containsKey(userType)) {
             throw new IllegalStateException(
                     "No harrier-managed secondary user. This method should only be used when "
                             + "Harrier has been used to create the secondary user.");
         }
 
-        return mSecondaryUser;
-
-    }
-
-    private Collection<UserReference> secondaryUsers() {
-        return sTestApis.users().all()
-                .stream().filter(u -> u.type().name().equals(SECONDARY_USER_TYPE_NAME))
-                .collect(Collectors.toSet());
+        return mUsers.get(userType);
     }
 
     private UserReference ensureHasProfile(
@@ -472,30 +473,39 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private void ensureHasSecondaryUser(boolean installTestApp) {
-        requireUserSupported(SECONDARY_USER_TYPE_NAME, FailureMode.SKIP);
+    private void ensureHasUser(String userType, boolean installTestApp) {
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                requireUserSupported(userType, FailureMode.SKIP);
 
-        Collection<UserReference> secondaryUsers = secondaryUsers();
+        Collection<UserReference> users = sTestApis.users().findUsersOfType(resolvedUserType);
 
-        mSecondaryUser = secondaryUsers.isEmpty() ? createSecondaryUser()
-                : secondaryUsers.iterator().next();
+        UserReference user = users.isEmpty() ? createUser(resolvedUserType)
+                : users.iterator().next();
 
-        mSecondaryUser.start();
+        user.start();
 
         if (installTestApp) {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .install(mSecondaryUser);
+            sTestApis.packages().find(sContext.getPackageName()).install(user);
         } else {
-            sTestApis.packages().find(sContext.getPackageName())
-                    .uninstall(mSecondaryUser);
+            sTestApis.packages().find(sContext.getPackageName()).uninstall(user);
         }
+
+        mUsers.put(resolvedUserType, user);
     }
 
     /**
-     * Ensure that there is no secondary user.
+     * Ensure that there is no user of the given type.
      */
-    private void ensureHasNoSecondaryUser() {
-        for (UserReference secondaryUser : secondaryUsers()) {
+    private void ensureHasNoUser(String userType) {
+        com.android.bedstead.nene.users.UserType resolvedUserType =
+                sTestApis.users().supportedType(userType);
+
+        if (resolvedUserType == null) {
+            // These user types don't exist so there can't be any
+            return;
+        }
+
+        for (UserReference secondaryUser : sTestApis.users().findUsersOfType(resolvedUserType)) {
             removeAndRecordUser(secondaryUser.resolve());
         }
     }
@@ -562,7 +572,7 @@ public final class DeviceState implements TestRule {
 
     private void teardownNonShareableState() {
         mProfiles.clear();
-        mSecondaryUser = null;
+        mUsers.clear();
 
         for (BlockingBroadcastReceiver broadcastReceiver : mRegisteredBroadcastReceivers) {
             broadcastReceiver.unregisterQuietly();
@@ -599,15 +609,16 @@ public final class DeviceState implements TestRule {
         }
     }
 
-    private UserReference createSecondaryUser() {
+    private UserReference createUser(com.android.bedstead.nene.users.UserType userType) {
         requireCanSupportAdditionalUser();
         try {
             UserReference user = sTestApis.users().createUser()
+                    .type(userType)
                     .createAndStart();
             mCreatedUsers.add(user);
             return user;
         } catch (NeneException e) {
-            throw new IllegalStateException("Error creating secondary user", e);
+            throw new IllegalStateException("Error creating user of type " + userType, e);
         }
     }
 

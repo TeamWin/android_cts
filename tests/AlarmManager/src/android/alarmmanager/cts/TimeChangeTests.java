@@ -30,7 +30,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -38,7 +37,6 @@ import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.BatteryUtils;
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -58,12 +56,12 @@ import java.util.concurrent.TimeUnit;
 public class TimeChangeTests {
     private static final String TAG = TimeChangeTests.class.getSimpleName();
     private static final String ACTION_ALARM = "android.alarmmanager.cts.ACTION_ALARM";
-    private static final long DEFAULT_WAIT_MILLIS = 1_000;
+    private static final long DEFAULT_WAIT_MILLIS = 5_000;
     private static final long MILLIS_IN_MINUTE = 60_000;
 
     private final Context mContext = InstrumentationRegistry.getTargetContext();
     private final AlarmManager mAlarmManager = mContext.getSystemService(AlarmManager.class);
-    private DeviceConfigStateHelper mDeviceConfigStateHelper;
+    private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
     private PendingIntent mAlarmPi;
     private long mTestStartRtc;
     private long mTestStartElapsed;
@@ -106,9 +104,7 @@ public class TimeChangeTests {
         mAlarmPi = PendingIntent.getBroadcast(mContext, 0, alarmIntent, PendingIntent.FLAG_MUTABLE);
         final IntentFilter alarmFilter = new IntentFilter(ACTION_ALARM);
         mContext.registerReceiver(mAlarmReceiver, alarmFilter);
-        mDeviceConfigStateHelper =
-                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
-        mDeviceConfigStateHelper.set("min_futurity", "500");
+        mConfigHelper.with("min_futurity", 0L).commitAndAwaitPropagation();
         BatteryUtils.runDumpsysBatteryUnplug();
         mTestStartRtc = System.currentTimeMillis();
         mTestStartElapsed = SystemClock.elapsedRealtime();
@@ -146,7 +142,7 @@ public class TimeChangeTests {
 
     @After
     public void tearDown() {
-        mDeviceConfigStateHelper.restoreOriginalValues();
+        mConfigHelper.deleteAll();
         BatteryUtils.runDumpsysBatteryReset();
         if (mTimeChanged) {
             // Make an attempt at resetting the clock to normal

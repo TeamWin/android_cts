@@ -24,8 +24,6 @@ java_test_host {
         "tools-common-prebuilt",
         "cts-tradefed",
         "tradefed",
-        "compatibility-host-util",
-        "compatibility-host-util-axt",
         "guava",
         "truth-prebuilt",
     ],

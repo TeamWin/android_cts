@@ -73,6 +73,7 @@ class ItsBaseTest(base_test.BaseTestClass):
     devices = self.register_controller(android_device, min_number=1)
     self.dut = devices[0]
     self.camera = self.user_params['camera']
+    logging.debug('Camera_id: %s', self.camera)
     if self.user_params.get('chart_distance'):
       self.chart_distance = float(self.user_params['chart_distance'])
       logging.debug('Chart distance: %s cm', self.chart_distance)
@@ -91,8 +92,6 @@ class ItsBaseTest(base_test.BaseTestClass):
       self.hidden_physical_id = camera_id_combo[1]
     else:
       self.hidden_physical_id = None
-    logging.debug('Camera_id:%s', self.camera_id)
-    logging.debug('Hidden Physical Camera_id: %s', self.hidden_physical_id)
 
     num_devices = len(devices)
     if num_devices == 2:  # scenes [0,1,2,3,4,5,6]
@@ -109,7 +108,7 @@ class ItsBaseTest(base_test.BaseTestClass):
         self.img_h = int(img_size[1])
         self.test_length = float(self.user_params['test_length'])
         self.rotator_cntl = self.user_params['rotator_cntl']
-        self.rotator_ch = self.user_params['rotator_ch']
+        self.rotator_ch = str(self.user_params['rotator_ch'])
       except KeyError:
         self.tablet = None
         logging.debug('Not all arguments set. Manual run.')

@@ -28,7 +28,6 @@ import android.platform.test.annotations.LargeTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.stats.devicepolicy.EventId;
 
-import com.android.compatibility.common.util.LocationModeSetter;
 import com.android.cts.devicepolicy.annotations.LockSettingsTest;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
@@ -1904,6 +1903,34 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         assumeHasWifiFeature();
 
         executeDeviceTestMethod(".WifiTest", "testAddNetworkWithKeychainKey_notGranted");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testGetNearbyNotificationStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyNotificationStreamingPolicyTest",
+                "testGetNearbyNotificationStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testSetNearbyNotificationStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(
+                ".NearbyNotificationStreamingPolicyTest",
+                "testSetNearbyNotificationStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testGetNearbyAppStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testGetNearbyAppStreamingPolicy");
+    }
+
+    // TODO(b/184175078): Migrate test to Bedstead when the infra is ready.
+    @Test
+    public void testSetNearbyAppStreamingPolicy() throws Exception {
+        executeDeviceTestMethod(".NearbyAppStreamingPolicyTest", "testSetNearbyAppStreamingPolicy");
     }
 
     /**
