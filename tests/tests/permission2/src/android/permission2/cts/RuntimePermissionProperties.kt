@@ -22,6 +22,7 @@ import android.Manifest.permission.ACCESS_FINE_LOCATION
 import android.Manifest.permission.ACTIVITY_RECOGNITION
 import android.Manifest.permission.ADD_VOICEMAIL
 import android.Manifest.permission.ANSWER_PHONE_CALLS
+import android.Manifest.permission.BLUETOOTH_ADVERTISE
 import android.Manifest.permission.BLUETOOTH_CONNECT
 import android.Manifest.permission.BLUETOOTH_SCAN
 import android.Manifest.permission.BODY_SENSORS
@@ -148,6 +149,7 @@ class RuntimePermissionProperties {
 
         // Add runtime permissions added in S which were _not_ split from a previously existing
         // runtime permission
+        expectedPerms.add(BLUETOOTH_ADVERTISE)
         expectedPerms.add(BLUETOOTH_CONNECT)
         expectedPerms.add(BLUETOOTH_SCAN)
         expectedPerms.add(UWB_RANGING)

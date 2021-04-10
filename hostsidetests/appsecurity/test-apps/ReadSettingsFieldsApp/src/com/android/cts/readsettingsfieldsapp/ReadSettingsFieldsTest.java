@@ -16,53 +16,56 @@
 
 package com.android.cts.readsettingsfieldsapp;
 
+import android.content.ContentResolver;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
 import android.util.ArraySet;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class ReadSettingsFieldsTest extends AndroidTestCase {
 
+    /** Test public keys are readable with annotation */
     public void testSecurePublicSettingsKeysAreReadable() {
-        for (String key : getPublicSettingsKeys(Settings.Secure.class)) {
-            try {
-                Settings.Secure.getString(getContext().getContentResolver(), key);
-            } catch (SecurityException ex) {
-                if (isSettingsDeprecated(ex)) {
-                    continue;
-                }
-                fail("Reading public Secure settings key <" + key + "> should not raise exception! "
-                        + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
-            }
-        }
+        testPublicSettingsKeysAreReadable(Settings.Secure.class);
     }
 
     public void testSystemPublicSettingsKeysAreReadable() {
-        for (String key : getPublicSettingsKeys(Settings.System.class)) {
+        testPublicSettingsKeysAreReadable(Settings.System.class);
+    }
+
+    public void testGlobalPublicSettingsKeysAreReadable() {
+        testPublicSettingsKeysAreReadable(Settings.Global.class);
+    }
+
+    private <T extends Settings.NameValueTable> void testPublicSettingsKeysAreReadable(
+            Class<T> settingsClass) {
+        for (String key : getPublicSettingsKeys(settingsClass)) {
             try {
-                Settings.System.getString(getContext().getContentResolver(), key);
+                callGetStringMethod(settingsClass, key);
             } catch (SecurityException ex) {
                 if (isSettingsDeprecated(ex)) {
                     continue;
                 }
-                fail("Reading public System settings key <" + key + "> should not raise exception! "
+                fail("Reading public " + settingsClass.getSimpleName() + " settings key <" + key
+                        + "> should not raise exception! "
                         + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
             }
         }
     }
 
-    public void testGlobalPublicSettingsKeysAreReadable() {
-        for (String key : getPublicSettingsKeys(Settings.Global.class)) {
-            try {
-                Settings.Global.getString(getContext().getContentResolver(), key);
-            } catch (SecurityException ex) {
-                if (isSettingsDeprecated(ex)) {
-                    continue;
-                }
-                fail("Reading public Global settings key <" + key + "> should not raise exception! "
-                        + "Did you forget to add @Readable annotation?\n" + ex.getMessage());
-            }
+    private <T extends Settings.NameValueTable> void callGetStringMethod(Class<T> settingsClass,
+            String key) throws SecurityException {
+        try {
+            Method getStringMethod = settingsClass.getMethod("getString",
+                    ContentResolver.class, String.class);
+            getStringMethod.invoke(null, getContext().getContentResolver(), key);
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            throw new SecurityException(e.getCause());
         }
     }
 
@@ -88,54 +91,112 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
         return ex.getMessage().contains("is deprecated and no longer accessible");
     }
 
+    /** Test hidden keys are readable with annotation */
     public void testSecureSomeHiddenSettingsKeysAreReadable() {
         final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"adaptive_sleep", "bugreport_in_power_menu",
                 "input_methods_subtype_history"};
-        for (String key : hiddenSettingsKeys) {
-            try {
-                // Verify that the hidden keys are not visible to the test app
-                assertFalse("Settings key <" + key + "> should not be visible",
-                        publicSettingsKeys.contains(key));
-                // Verify that the hidden keys can still be read
-                Settings.Secure.getString(getContext().getContentResolver(), key);
-            } catch (SecurityException ex) {
-                fail("Reading hidden Secure settings key <" + key + "> should not raise!");
-            }
-        }
+        testHiddenSettingsKeysReadable(Settings.Secure.class, publicSettingsKeys,
+                hiddenSettingsKeys);
     }
 
     public void testSystemSomeHiddenSettingsKeysAreReadable() {
         final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
         final String[] hiddenSettingsKeys = {"advanced_settings", "system_locales",
                 "display_color_mode", "min_refresh_rate"};
-        for (String key : hiddenSettingsKeys) {
-            try {
-                // Verify that the hidden keys are not visible to the test app
-                assertFalse("Settings key <" + key + "> should not be visible",
-                        publicSettingsKeys.contains(key));
-                // Verify that the hidden keys can still be read
-                Settings.System.getString(getContext().getContentResolver(), key);
-            } catch (SecurityException ex) {
-                fail("Reading hidden System settings key <" + key + "> should not raise!");
-            }
-        }
+        testHiddenSettingsKeysReadable(Settings.System.class, publicSettingsKeys,
+                hiddenSettingsKeys);
     }
 
     public void testGlobalSomeHiddenSettingsKeysAreReadable() {
         final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
         final String[] hiddenSettingsKeys = {"notification_bubbles", "add_users_when_locked",
                 "enable_accessibility_global_gesture_enabled"};
-        for (String key : hiddenSettingsKeys) {
+        testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
+                hiddenSettingsKeys);
+    }
+
+    private <T extends Settings.NameValueTable> void testHiddenSettingsKeysReadable(
+            Class<T> settingsClass, ArraySet<String> publicKeys, String[] targetKeys) {
+        for (String key : targetKeys) {
+            // Verify that the hidden keys are not visible to the test app
+            assertFalse("Settings key <" + key + "> should not be visible",
+                    publicKeys.contains(key));
             try {
-                // Verify that the hidden keys are not visible to the test app
-                assertFalse("Settings key <" + key + "> should not be visible",
-                        publicSettingsKeys.contains(key));
                 // Verify that the hidden keys can still be read
-                Settings.Global.getString(getContext().getContentResolver(), key);
+                callGetStringMethod(settingsClass, key);
             } catch (SecurityException ex) {
-                fail("Reading hidden Global settings key <" + key + "> should not raise!");
+                fail("Reading hidden " + settingsClass.getSimpleName() + " settings key <" + key
+                        + "> should not raise!");
             }
         }
     }
+
+    /** Test hidden keys are not readable without annotation */
+    public void testSecureHiddenSettingsKeysNotReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final String[] hiddenSettingsKeys = {"camera_autorotate",
+                "location_time_zone_detection_enabled"};
+        testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.Secure.class,
+                publicSettingsKeys, hiddenSettingsKeys);
+    }
+
+    public void testSystemHiddenSettingsKeysNotReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
+        final String[] hiddenSettingsKeys = {"display_color_mode_vendor_hint"};
+        testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.System.class,
+                publicSettingsKeys, hiddenSettingsKeys);
+    }
+
+    public void testGlobalHiddenSettingsKeysNotReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Global.class);
+        final String[] hiddenSettingsKeys = {"restricted_networking_mode",
+                "people_space_conversation_type"};
+        testHiddenSettingsKeysNotReadableWithoutAnnotation(Settings.Global.class,
+                publicSettingsKeys, hiddenSettingsKeys);
+    }
+
+    private <T extends Settings.NameValueTable>
+    void testHiddenSettingsKeysNotReadableWithoutAnnotation(
+            Class<T> settingsClass, ArraySet<String> publicKeys, String[] targetKeys) {
+        for (String key : targetKeys) {
+            // Verify that the hidden keys are not visible to the test app
+            assertFalse("Settings key <" + key + "> should not be visible",
+                    publicKeys.contains(key));
+            try {
+                // Verify that the hidden keys cannot be read
+                callGetStringMethod(settingsClass, key);
+                fail("Reading hidden " + settingsClass.getSimpleName() + " settings key <" + key
+                        + "> should raise!");
+            } catch (SecurityException ex) {
+                assertTrue(ex.getMessage().contains(
+                        "Settings key: <" + key + "> is not readable."));
+            }
+        }
+    }
+
+    /** Test hidden keys are readable if the app is test only, even without annotation */
+    public void testSecureHiddenSettingsKeysReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
+        final String[] hiddenSettingsKeys = {"camera_autorotate",
+                "location_time_zone_detection_enabled"};
+        testHiddenSettingsKeysReadable(Settings.Secure.class, publicSettingsKeys,
+                hiddenSettingsKeys);
+    }
+
+    public void testSystemHiddenSettingsKeysReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.System.class);
+        final String[] hiddenSettingsKeys = {"display_color_mode_vendor_hint"};
+        testHiddenSettingsKeysReadable(Settings.System.class, publicSettingsKeys,
+                hiddenSettingsKeys);
+    }
+
+    public void testGlobalHiddenSettingsKeysReadableWithoutAnnotation() {
+        final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Global.class);
+        final String[] hiddenSettingsKeys = {"restricted_networking_mode",
+                "people_space_conversation_type"};
+        testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
+                hiddenSettingsKeys);
+    }
 }
+

@@ -637,7 +637,7 @@ public class NotificationTest extends AndroidTestCase {
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(bubbleIntent, icon)
                 .setDesiredHeight(BUBBLE_HEIGHT)
-                .setSuppressBubble(false)
+                .setSuppressableBubble(false)
                 .setDeleteIntent(deleteIntent);
 
         Notification.BubbleMetadata data = metadataBuilder.build();
@@ -661,7 +661,7 @@ public class NotificationTest extends AndroidTestCase {
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setAutoExpandBubble(true)
                         .setSuppressNotification(true)
-                        .setSuppressBubble(true)
+                        .setSuppressableBubble(true)
                         .setDeleteIntent(deleteIntent)
                         .build();
 
@@ -681,7 +681,7 @@ public class NotificationTest extends AndroidTestCase {
         Notification.BubbleMetadata.Builder metadataBuilder =
                 new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID)
                         .setDesiredHeight(BUBBLE_HEIGHT)
-                        .setSuppressBubble(true)
+                        .setSuppressableBubble(true)
                         .setDeleteIntent(deleteIntent);
 
         Notification.BubbleMetadata data = metadataBuilder.build();
@@ -700,7 +700,7 @@ public class NotificationTest extends AndroidTestCase {
                 new Notification.BubbleMetadata.Builder(BUBBLE_SHORTCUT_ID)
                         .setDesiredHeight(BUBBLE_HEIGHT)
                         .setAutoExpandBubble(true)
-                        .setSuppressBubble(true)
+                        .setSuppressableBubble(true)
                         .setSuppressNotification(true)
                         .setDeleteIntent(deleteIntent)
                         .build();

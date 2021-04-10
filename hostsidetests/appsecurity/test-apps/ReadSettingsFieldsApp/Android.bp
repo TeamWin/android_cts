@@ -34,4 +34,26 @@ android_test_helper_app {
         "cts",
         "general-tests",
     ],
+    manifest: "AndroidManifest.xml",
+}
+
+android_test_helper_app {
+    name: "CtsReadSettingsFieldsAppTestOnly",
+    defaults: ["cts_support_defaults"],
+    static_libs: [
+        "androidx.test.rules",
+    ],
+    libs: [
+        "android.test.runner",
+        "android.test.base",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    // tag this module as a cts test artifact
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "AndroidManifestTestOnly.xml",
 }

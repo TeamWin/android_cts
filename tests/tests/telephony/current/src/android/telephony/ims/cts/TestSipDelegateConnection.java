@@ -154,9 +154,9 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
         mLatch.countDown();
     }
 
-    public void sendCloseDialog(String callId) {
-        assertNotNull("SipDelegate was null when closing dialog", connection);
-        connection.closeDialog(callId);
+    public void sendCloseSession(String callId) {
+        assertNotNull("SipDelegate was null when closing session", connection);
+        connection.cleanupSession(callId);
     }
 
     public void sendMessageAndVerifyCompletedSuccessfully(SipMessage messageToSend)
