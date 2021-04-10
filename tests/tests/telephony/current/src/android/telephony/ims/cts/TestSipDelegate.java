@@ -48,7 +48,8 @@ public class TestSipDelegate implements SipDelegate {
     // Pair is <transactionId, error reason>
     private final LinkedBlockingQueue<Pair<String, Integer>> mReceivedMessageAcks =
             new LinkedBlockingQueue<>();
-    private final LinkedBlockingQueue<String> mCloseDialogRequests = new LinkedBlockingQueue<>();
+    private final LinkedBlockingQueue<String> mCleanupSipSessionRequests =
+            new LinkedBlockingQueue<>();
     private int mSendMessageDenyReason = -1;
 
     public TestSipDelegate(int sub, DelegateRequest request, DelegateStateCallback cb,
@@ -72,9 +73,9 @@ public class TestSipDelegate implements SipDelegate {
     }
 
     @Override
-    public void closeDialog(@NonNull String callId) {
-        if (ImsUtils.VDBG) Log.d(LOG_TAG, "closeDialog");
-        mCloseDialogRequests.offer(callId);
+    public void cleanupSession(@NonNull String callId) {
+        if (ImsUtils.VDBG) Log.d(LOG_TAG, "CleanSession");
+        mCleanupSipSessionRequests.offer(callId);
     }
 
     @Override
@@ -94,8 +95,8 @@ public class TestSipDelegate implements SipDelegate {
         assertEquals(messageToVerify, m);
     }
 
-    public void verifyCloseDialog(String callIdToVerify) throws Exception {
-        String requestedCallId = mCloseDialogRequests.poll(ImsUtils.TEST_TIMEOUT_MS,
+    public void verifyCloseSession(String callIdToVerify) throws Exception {
+        String requestedCallId = mCleanupSipSessionRequests.poll(ImsUtils.TEST_TIMEOUT_MS,
                 TimeUnit.MILLISECONDS);
         assertEquals(callIdToVerify, requestedCallId);
     }
