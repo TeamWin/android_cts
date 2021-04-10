@@ -16,21 +16,23 @@
 
 package com.android.tests.packagemanager.multiuser.app;
 
-import static org.junit.Assert.assertTrue;
-
 import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageInfo;
+import android.content.pm.ModuleInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RunWith(AndroidJUnit4.class)
 public class PackageManagerMultiUserTest {
@@ -55,13 +57,17 @@ public class PackageManagerMultiUserTest {
     }
 
     /**
-     * Calling PackageManager#getInstalledModules on a secondary user without INTERACT_ACROSS_USERS
-     * should not throw SecurityException.
+     * Returns a list of installed modules to the host-side.
      */
     @Test
     public void testGetInstalledModules() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getContext();
         PackageManager packageManager = context.getPackageManager();
-        packageManager.getInstalledModules(0);
+        List<ModuleInfo> modules = packageManager.getInstalledModules(0);
+        List<String> names =
+                modules.stream().map(info -> info.getPackageName()).collect(Collectors.toList());
+        final Bundle results = new Bundle();
+        results.putStringArrayList("installedModules", new ArrayList<>(names));
+        InstrumentationRegistry.getInstrumentation().addResults(results);
     }
 }

@@ -24,6 +24,7 @@ import numpy as np
 
 import run_all_tests  # from same tools directory as run_sensor_fusion.py
 
+_CORR_DIST_THRESH_MAX = 0.005  # must match value in test_sensor_fusion.py
 _NUM_RUNS = 1
 _TEST_BED_SENSOR_FUSION = 'TEST_BED_SENSOR_FUSION'
 _TIME_SHIFT_MATCH = 'Best correlation of '
@@ -89,7 +90,6 @@ def main():
   topdir = tempfile.mkdtemp(prefix='CameraITS_')
   subprocess.call(['chmod', 'g+rx', topdir])
 
-  scenes = ['sensor_fusion']
   camera_id_combos = []
 
   # Override camera with cmd line values if available
@@ -175,12 +175,15 @@ def main():
         time_shift = find_time_shift(file_name)
         logging.info('%s time_shift: %.4f ms, corr: %.6f', return_string,
                      time_shift['time_shift'], time_shift['corr'])
-        time_shifts.append(time_shift)
+        if time_shift['corr'] < _CORR_DIST_THRESH_MAX:
+          time_shifts.append(time_shift)
+        else:
+          logging.info('Correlation distance too large. Not used for stats.')
 
     # Summarize results with stats
     times = [t['time_shift'] for t in time_shifts]
-    logging.info('time_shift mean: %.4f, sigma: %.4f',
-                 np.mean(times), np.std(times))
+    logging.info('runs: %d, time_shift mean: %.4f, sigma: %.4f',
+                 len(times), np.mean(times), np.std(times))
 
     # Delete temporary yml file after run.
     tmp_yml_file = os.path.join(run_all_tests.YAML_FILE_DIR, tmp_yml_file_name)

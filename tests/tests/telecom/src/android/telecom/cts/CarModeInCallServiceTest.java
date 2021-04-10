@@ -16,6 +16,10 @@
 
 package android.telecom.cts;
 
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
+import static android.content.pm.PackageManager.DONT_KILL_APP;
+
 import android.app.UiModeManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -28,8 +32,11 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.telecom.TelecomManager;
 import android.telecom.cts.carmodetestapp.ICtsCarModeInCallServiceControl;
+import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
+
+import junit.framework.AssertionFailedError;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -479,6 +486,31 @@ public class CarModeInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         assertEquals(1, mInCallCallbacks.getService().getCallCount());
         mInCallCallbacks.getService().disconnectAllCalls();
+    }
+
+    public void testSwitchToCarModeWhenEnableCarModeApp() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        enableAndVerifyCarMode(mCarModeIncallServiceControlOne, 1000);
+        mContext.getPackageManager().setApplicationEnabledSetting(CARMODE_APP1_PACKAGE,
+                COMPONENT_ENABLED_STATE_DISABLED, DONT_KILL_APP);
+
+
+        placeCarModeCall();
+        try {
+            verifyCarModeBound(mCarModeIncallServiceControlOne);
+            throw new Exception("Car mode 1 was disabled but bound.");
+        } catch (AssertionFailedError e) {
+            // Expected
+        }
+
+        mContext.getPackageManager().setApplicationEnabledSetting(CARMODE_APP1_PACKAGE,
+                COMPONENT_ENABLED_STATE_ENABLED, DONT_KILL_APP);
+        verifyCarModeBound(mCarModeIncallServiceControlOne);
+
+        disableAndVerifyCarMode(mCarModeIncallServiceControlOne, Configuration.UI_MODE_TYPE_NORMAL);
     }
 
 

@@ -36,6 +36,7 @@ import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 import android.telephony.PhoneStateListener;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
@@ -268,5 +269,86 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
 
         Thread.sleep(STATE_CHANGE_DELAY);
         assertEquals(CALL_STATE_RINGING, mTelephonyManager.getCallState());
+    }
+
+    /**
+     * Verifies that a call to {@link android.telecom.Call#answer(int)} with a passed video state of
+     * {@link android.telecom.VideoProfile#STATE_AUDIO_ONLY} will result in a call to
+     * {@link Connection#onAnswer()}.
+     * @throws Exception
+     */
+    public void testConnectionOnAnswerForAudioCall() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Get a new incoming call.
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        Call call = mInCallCallbacks.getService().getLastCall();
+        final MockConnection connection = verifyConnectionForIncomingCall();
+        TestUtils.InvokeCounter audioInvoke = connection.getInvokeCounter(
+                MockConnection.ON_ANSWER_CALLED);
+
+        // Answer as audio-only.
+        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+
+        // Make sure we get a call to {@link Connection#onAnswer()}.
+        audioInvoke.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+    }
+
+    /**
+     * Verifies that a call to {@link android.telecom.Call#answer(int)} with a passed video state of
+     * {@link android.telecom.VideoProfile#STATE_AUDIO_ONLY} will result in a call to
+     * {@link Connection#onAnswer()} where overridden.
+     * @throws Exception
+     */
+    public void testConnectionOnAnswerForVideoCallAnsweredAsAudio() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Get a new incoming call.
+        Bundle extras = new Bundle();
+        extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
+                VideoProfile.STATE_BIDIRECTIONAL);
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(createTestNumber(), extras);
+        Call call = mInCallCallbacks.getService().getLastCall();
+        final MockConnection connection = verifyConnectionForIncomingCall();
+        TestUtils.InvokeCounter audioInvoke = connection.getInvokeCounter(
+                MockConnection.ON_ANSWER_CALLED);
+
+        // Answer as audio-only.
+        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+
+        // Make sure we get a call to {@link Connection#onAnswer()}.
+        audioInvoke.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+    }
+
+    /**
+     * Verifies that a call to {@link android.telecom.Call#answer(int)} with a passed video state of
+     * {@link android.telecom.VideoProfile#STATE_BIDIRECTIONAL} will result in a call to
+     * {@link Connection#onAnswer(int)}.
+     * @throws Exception
+     */
+    public void testConnectionOnAnswerIntForVideoCallAnsweredAsVideo() throws Exception {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Get a new incoming call.
+        Bundle extras = new Bundle();
+        extras.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE,
+                VideoProfile.STATE_BIDIRECTIONAL);
+        setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
+        addAndVerifyNewIncomingCall(createTestNumber(), extras);
+        Call call = mInCallCallbacks.getService().getLastCall();
+        final MockConnection connection = verifyConnectionForIncomingCall();
+        TestUtils.InvokeCounter audioInvoke = connection.getInvokeCounter(
+                MockConnection.ON_ANSWER_VIDEO_CALLED);
+
+        // Answer as audio-only.
+        call.answer(VideoProfile.STATE_BIDIRECTIONAL);
+
+        // Make sure we get a call to {@link Connection#onAnswer(int)}.
+        audioInvoke.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
     }
 }

@@ -17,6 +17,7 @@ package android.time.cts.host;
 
 import static android.time.cts.host.LocationManager.SHELL_COMMAND_IS_LOCATION_ENABLED;
 import static android.time.cts.host.LocationManager.SHELL_COMMAND_SET_LOCATION_ENABLED;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.NAMESPACE;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_IS_AUTO_DETECTION_ENABLED;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_IS_GEO_DETECTION_ENABLED;
 import static android.time.cts.host.TimeZoneDetector.SHELL_COMMAND_SET_AUTO_DETECTION_ENABLED;
@@ -27,6 +28,9 @@ import static org.junit.Assume.assumeTrue;
 import com.android.tradefed.device.CollectingByteOutputReceiver;
 import com.android.tradefed.device.ITestDevice;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -70,14 +74,49 @@ final class TimeZoneDetectorHostHelper {
         executeTimeZoneDetectorCommand("%s %s", SHELL_COMMAND_SET_GEO_DETECTION_ENABLED, enabled);
     }
 
-    void assumeGeoDetectionSupported() throws Exception {
-        assumeTrue(isGeoDetectionSupported());
+    void assumeLocationTimeZoneManagerIsPresent() throws Exception {
+        assumeTrue(isLocationTimeZoneManagerPresent());
+    }
+
+    private boolean isLocationTimeZoneManagerPresent() throws Exception {
+        // Look for the service name in "cmd -l".
+        byte[] serviceListBytes = executeShellCommandReturnBytes("cmd -l");
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        new ByteArrayInputStream(serviceListBytes), StandardCharsets.UTF_8))) {
+            String serviceName;
+            while ((serviceName = reader.readLine()) != null) {
+                serviceName = serviceName.trim();
+                if (LocationTimeZoneManager.SHELL_COMMAND_SERVICE_NAME.equals(serviceName)) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     boolean isGeoDetectionSupported() throws Exception {
         byte[] result = executeTimeZoneDetectorCommand(
                 TimeZoneDetector.SHELL_COMMAND_IS_GEO_DETECTION_SUPPORTED);
         return parseShellCommandBytesAsBoolean(result);
+    }
+
+    void clearSystemTimeDeviceConfigKey(String deviceConfigKey) throws Exception {
+        executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
+    }
+
+    void setSystemTimeDeviceConfigKey(String deviceConfigKey, String value) throws Exception {
+        executeDeviceConfigCommand("put %s %s %s", NAMESPACE, deviceConfigKey, value);
+    }
+
+    void resetSystemTimeDeviceConfigKeys() throws Exception {
+        executeDeviceConfigCommand("reset trusted_defaults %s", NAMESPACE);
+    }
+
+    private byte[] executeDeviceConfigCommand(String cmd, Object... args) throws Exception {
+        String command = String.format(cmd, args);
+        return executeShellCommandReturnBytes("cmd %s %s",
+                LocationTimeZoneManager.DeviceConfig.SHELL_COMMAND_SERVICE_NAME, command);
     }
 
     private byte[] executeLocationManagerCommand(String cmd, Object... args)

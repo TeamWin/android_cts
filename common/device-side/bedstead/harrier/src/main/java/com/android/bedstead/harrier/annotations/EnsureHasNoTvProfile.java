@@ -19,6 +19,7 @@ package com.android.bedstead.harrier.annotations;
 import static com.android.bedstead.harrier.DeviceState.UserType.CURRENT_USER;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -34,6 +35,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@EnsureHasNoProfileAnnotation("com.android.tv.profile")
 public @interface EnsureHasNoTvProfile {
     /** Which user type the tv profile should not be attached to. */
     DeviceState.UserType forUser() default CURRENT_USER;

@@ -29,15 +29,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.provider.DeviceConfig;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
-
-import com.android.compatibility.common.util.DeviceConfigStateHelper;
 
 import org.junit.After;
 import org.junit.Before;
@@ -67,7 +64,7 @@ public class BackgroundRestrictedAlarmsTest {
 
     private Context mContext;
     private ComponentName mAlarmScheduler;
-    private DeviceConfigStateHelper mDeviceConfigStateHelper;
+    private AlarmManagerDeviceConfigHelper mConfigHelper = new AlarmManagerDeviceConfigHelper();
     private UiDevice mUiDevice;
     private volatile int mAlarmCount;
 
@@ -87,8 +84,6 @@ public class BackgroundRestrictedAlarmsTest {
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mAlarmScheduler = new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER);
         mAlarmCount = 0;
-        mDeviceConfigStateHelper =
-                new DeviceConfigStateHelper(DeviceConfig.NAMESPACE_ALARM_MANAGER);
         updateAlarmManagerConstants();
         updateBackgroundSettleTime();
         setAppOpsMode(APP_OP_MODE_IGNORED);
@@ -168,12 +163,14 @@ public class BackgroundRestrictedAlarmsTest {
     }
 
     private void updateAlarmManagerConstants() {
-        mDeviceConfigStateHelper.set("min_futurity", "0");
-        mDeviceConfigStateHelper.set("min_interval", String.valueOf(MIN_REPEATING_INTERVAL));
+        mConfigHelper.with("min_futurity", 0L)
+                .with("min_interval", MIN_REPEATING_INTERVAL)
+                .with("min_window", 0)
+                .commitAndAwaitPropagation();
     }
 
     private void deleteAlarmManagerConstants() {
-        mDeviceConfigStateHelper.restoreOriginalValues();
+        mConfigHelper.deleteAll();
     }
 
     private void setAppStandbyBucket(String bucket) throws IOException {

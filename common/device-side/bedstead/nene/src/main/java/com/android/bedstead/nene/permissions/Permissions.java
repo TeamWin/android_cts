@@ -16,6 +16,7 @@
 
 package com.android.bedstead.nene.permissions;
 
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -28,6 +29,7 @@ import com.android.bedstead.nene.packages.Package;
 import com.android.bedstead.nene.packages.PackageReference;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommandUtils;
+import com.android.bedstead.nene.utils.Versions;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -54,6 +56,8 @@ public class Permissions {
     // Permissions is a singleton as permission state must be application wide
     public static final Permissions sInstance = new Permissions();
 
+    private Set<String> mExistingPermissions;
+
     private Permissions() {
 
     }
@@ -73,6 +77,10 @@ public class Permissions {
      * }
      */
     public PermissionContextImpl withPermission(String... permissions) {
+        if (mPermissionContexts.isEmpty()) {
+            recordExistingPermissions();
+        }
+
         PermissionContextImpl permissionContext = new PermissionContextImpl(this);
         mPermissionContexts.add(permissionContext);
 
@@ -96,6 +104,10 @@ public class Permissions {
      * }
      */
     public PermissionContextImpl withoutPermission(String... permissions) {
+        if (mPermissionContexts.isEmpty()) {
+            recordExistingPermissions();
+        }
+
         PermissionContextImpl permissionContext = new PermissionContextImpl(this);
         mPermissionContexts.add(permissionContext);
 
@@ -110,6 +122,11 @@ public class Permissions {
     }
 
     void applyPermissions() {
+        if (mPermissionContexts.isEmpty()) {
+            restoreExistingPermissions();
+            return;
+        }
+
         Package resolvedInstrumentedPackage = sInstrumentedPackage.resolve();
 
         if (SUPPORTS_ADOPT_SHELL_PERMISSIONS) {
@@ -204,5 +221,30 @@ public class Permissions {
         } catch (PackageManager.NameNotFoundException e) {
             return false;
         }
+    }
+
+    private void recordExistingPermissions() {
+        if (!Versions.isRunningOn(Versions.S, "S")) {
+            return;
+        }
+
+        mExistingPermissions = ShellCommandUtils.uiAutomation().getAdoptedShellPermissions();
+    }
+
+    private void restoreExistingPermissions() {
+        if (!Versions.isRunningOn(Versions.S, "S")) {
+            return;
+        }
+
+        if (mExistingPermissions.isEmpty()) {
+            ShellCommandUtils.uiAutomation().dropShellPermissionIdentity();
+        } else if (mExistingPermissions == UiAutomation.ALL_PERMISSIONS) {
+            ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity();
+        } else {
+            ShellCommandUtils.uiAutomation().adoptShellPermissionIdentity(
+                    mExistingPermissions.toArray(new String[0]));
+        }
+
+        mExistingPermissions = null;
     }
 }

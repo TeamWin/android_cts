@@ -18,7 +18,7 @@ package android.time.cts.host;
 import static android.time.cts.host.LocationTimeZoneManager.DUMP_STATE_OPTION_PROTO;
 import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_PRIMARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
 import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.KEY_SECONDARY_LOCATION_TIME_ZONE_PROVIDER_MODE_OVERRIDE;
-import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.NAMESPACE;
+import static android.time.cts.host.LocationTimeZoneManager.DeviceConfig.PROVIDER_MODE_SIMULATED;
 import static android.time.cts.host.LocationTimeZoneManager.PRIMARY_PROVIDER_INDEX;
 import static android.time.cts.host.LocationTimeZoneManager.SECONDARY_PROVIDER_INDEX;
 import static android.time.cts.host.LocationTimeZoneManager.SHELL_COMMAND_DUMP_STATE;
@@ -51,13 +51,25 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
 
     @Before
     public void setUp() throws Exception {
-        mTimeZoneDetectorHostHelper = new TimeZoneDetectorHostHelper(getDevice());
+        TimeZoneDetectorHostHelper timeZoneDetectorHostHelper =
+                new TimeZoneDetectorHostHelper(getDevice());
 
-        mTimeZoneDetectorHostHelper.assumeGeoDetectionSupported();
+        // Confirm the service being tested is present. It can be turned off, in which case there's
+        // nothing to test.
+        timeZoneDetectorHostHelper.assumeLocationTimeZoneManagerIsPresent();
+
+        // Only set this if the device meets requirements. It is used to work out if there is
+        // tearDown work required.
+        mTimeZoneDetectorHostHelper = timeZoneDetectorHostHelper;
 
         // All tests start with the location_time_zone_manager disabled so that providers can be
         // configured.
         stopLocationTimeZoneManagerService();
+
+        // Configure two simulated providers. At least one is needed to be able to turn on
+        // geo detection below. Tests may override these values for their own use.
+        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
+        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, PROVIDER_MODE_SIMULATED);
 
         // Make sure locations is enabled, otherwise the geo detection feature will be disabled
         // whatever the geolocation detection setting is set to.
@@ -82,21 +94,23 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
 
     @After
     public void tearDown() throws Exception {
+        if (mTimeZoneDetectorHostHelper == null) {
+            // Setup didn't do anything, no need to tearDown.
+            return;
+        }
+        // Turn off the service before we reset configuration, otherwise it will restart itself
+        // repeatedly.
         stopLocationTimeZoneManagerService();
-        setProviderModeOverride(PRIMARY_PROVIDER_INDEX, null);
-        setProviderModeOverride(SECONDARY_PROVIDER_INDEX, null);
 
-        // Reset settings.
-        if (!mOriginalGeoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(false);
-        }
-        if (!mOriginalAutoDetectionEnabled) {
-            mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(false);
-        }
-        if (!mOriginalLocationEnabled) {
-            mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(false);
-        }
+        // Reset settings and server flags as best we can.
+        mTimeZoneDetectorHostHelper.setGeoDetectionEnabled(mOriginalGeoDetectionEnabled);
+        mTimeZoneDetectorHostHelper.setAutoDetectionEnabled(mOriginalAutoDetectionEnabled);
+        mTimeZoneDetectorHostHelper.setLocationEnabledForCurrentUser(mOriginalLocationEnabled);
+        mTimeZoneDetectorHostHelper.resetSystemTimeDeviceConfigKeys();
+        setLocationTimeZoneManagerStateRecordingMode(false);
 
+        // Attempt to start the service. It may not start if there are no providers configured,
+        // but that is ok.
         startLocationTimeZoneManagerService();
     }
 
@@ -131,24 +145,10 @@ public abstract class BaseLocationTimeZoneManagerHostTest extends BaseHostJUnit4
         }
 
         if (mode == null) {
-            clearDeviceConfigKey(deviceConfigKey);
+            mTimeZoneDetectorHostHelper.clearSystemTimeDeviceConfigKey(deviceConfigKey);
         } else {
-            setDeviceConfigKey(deviceConfigKey, mode);
+            mTimeZoneDetectorHostHelper.setSystemTimeDeviceConfigKey(deviceConfigKey, mode);
         }
-    }
-
-    private void clearDeviceConfigKey(String deviceConfigKey) throws Exception {
-        executeDeviceConfigCommand("delete %s %s", NAMESPACE, deviceConfigKey);
-    }
-
-    private void setDeviceConfigKey(String deviceConfigKey, String value) throws Exception {
-        executeDeviceConfigCommand("put %s %s %s", NAMESPACE, deviceConfigKey, value);
-    }
-
-    private byte[] executeDeviceConfigCommand(String cmd, Object... args) throws Exception {
-        String command = String.format(cmd, args);
-        return mTimeZoneDetectorHostHelper.executeShellCommandReturnBytes("cmd %s %s",
-                LocationTimeZoneManager.DeviceConfig.SHELL_COMMAND_SERVICE_NAME, command);
     }
 
     protected void simulateProviderSuggestion(int providerIndex, String... zoneIds)

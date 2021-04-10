@@ -19,6 +19,7 @@
           package="android.location.cts.fine">
 
     <attribution android:tag="valid_location_attribution_tag" android:label="@string/foo_label" />
+    <attribution android:tag="another_valid_location_attribution_tag" android:label="@string/foo_label" />
     <attribution android:tag="invalid_location_attribution_tag" android:label="@string/foo_label" />
 
     <application>
