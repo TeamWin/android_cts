@@ -32,6 +32,7 @@ import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructPollfd;
+import android.util.Log;
 import android.util.Slog;
 
 import com.android.incfs.install.IDeviceConnection;
@@ -41,17 +42,18 @@ import libcore.io.IoUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileDescriptor;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 public class IncrementalDeviceConnection implements IDeviceConnection {
     private static final String TAG = "IncrementalDeviceConnection";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final int POLL_TIMEOUT_MS = 300000;
 
-    enum ConnectionType {
+    private enum ConnectionType {
         RELIABLE,
         UNRELIABLE,
     }
@@ -125,8 +127,8 @@ public class IncrementalDeviceConnection implements IDeviceConnection {
 
     @Override
     public void close() throws Exception {
-        IoUtils.closeQuietly(mPfd);
         mShellCommand.join();
+        IoUtils.closeQuietly(mPfd);
     }
 
     static class Logger implements ILogger {
@@ -156,9 +158,23 @@ public class IncrementalDeviceConnection implements IDeviceConnection {
 
     static class Factory implements IDeviceConnection.Factory {
         private final ConnectionType mConnectionType;
+        private final boolean mExpectInstallationSuccess;
 
-        Factory(ConnectionType connectionType) {
+        static Factory reliable() {
+            return new Factory(ConnectionType.RELIABLE, true);
+        }
+
+        static Factory ureliable() {
+            return new Factory(ConnectionType.UNRELIABLE, false);
+        }
+
+        static Factory reliableExpectInstallationFailure() {
+            return new Factory(ConnectionType.RELIABLE, false);
+        }
+
+        private Factory(ConnectionType connectionType, boolean expectInstallationSuccess) {
             mConnectionType = connectionType;
+            mExpectInstallationSuccess = expectInstallationSuccess;
         }
 
         @Override
@@ -172,31 +188,29 @@ public class IncrementalDeviceConnection implements IDeviceConnection {
             final ParcelFileDescriptor processPfd = pipe[1];
 
             final ResultReceiver resultReceiver;
-            if (mConnectionType == ConnectionType.RELIABLE) {
+            if (mExpectInstallationSuccess) {
                 resultReceiver = new ResultReceiver(null) {
                     @Override
                     protected void onReceiveResult(int resultCode, Bundle resultData) {
                         if (resultCode == 0) {
                             return;
                         }
-                        try {
-                            final String message = readFullStream(
-                                    new ParcelFileDescriptor.AutoCloseInputStream(localPfd));
-                            assertEquals(message, 0, resultCode);
-                        } catch (IOException e) {
-                            assertNull("Failed to pull error from failed command: " + resultCode
-                                    + ", exception: " + e, e);
-                        }
+                        final String message = readFullStreamOrError(
+                                new FileInputStream(localPfd.getFileDescriptor()));
+                        assertEquals(message, 0, resultCode);
                     }
                 };
             } else {
                 resultReceiver = new ResultReceiver(null) {
                     @Override
                     protected void onReceiveResult(int resultCode, Bundle resultData) {
-                        try {
-                            readFullStream(new ParcelFileDescriptor.AutoCloseInputStream(localPfd));
-                        } catch (IOException ignored) {
+                        if (resultCode == 0) {
+                            return;
                         }
+                        final String message = readFullStreamOrError(
+                                new FileInputStream(localPfd.getFileDescriptor()));
+                        Log.i(TAG, "Installation finished with code: " + resultCode + ", message: "
+                                + message);
                     }
                 };
             }
@@ -218,14 +232,20 @@ public class IncrementalDeviceConnection implements IDeviceConnection {
         }
     }
 
-    private static String readFullStream(InputStream inputStream) throws IOException {
+    private static String readFullStreamOrError(InputStream inputStream) {
         try (ByteArrayOutputStream result = new ByteArrayOutputStream()) {
-            final byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) != -1) {
-                result.write(buffer, 0, length);
+            try {
+                final byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    result.write(buffer, 0, length);
+                }
+            } catch (IOException e) {
+                return result.toString("UTF-8") + " exception [" + e + "]";
             }
             return result.toString("UTF-8");
+        } catch (IOException e) {
+            return e.toString();
         }
     }
 }
