@@ -249,7 +249,7 @@ public class BiometricStrongTests extends AbstractBaseTest {
                                 updatePassButton();
                             } catch (Exception e) {
                                 showToastAndLog("Failed to encrypt after biometric was"
-                                        + "authenticated: " + e);
+                                        + "authenticated: " + e, e);
                             }
                         }
                     });
