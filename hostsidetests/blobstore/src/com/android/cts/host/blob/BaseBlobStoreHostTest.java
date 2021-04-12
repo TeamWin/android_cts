@@ -30,6 +30,12 @@ abstract class BaseBlobStoreHostTest extends BaseHostJUnit4Test {
     protected static final String TARGET_APK = "CtsBlobStoreHostTestHelper.apk";
     protected static final String TARGET_PKG = "com.android.cts.device.blob";
 
+    protected static final String TARGET_APK_A = "CtsBlobStoreHostTestHelperPrivA.apk";
+    protected static final String TARGET_PKG_A = "com.android.cts.device.blobA";
+
+    protected static final String TARGET_APK_B = "CtsBlobStoreHostTestHelperPrivB.apk";
+    protected static final String TARGET_PKG_B = "com.android.cts.device.blobB";
+
     private static final long TIMEOUT_BOOT_COMPLETE_MS = 120_000;
     private static final long DEFAULT_INSTRUMENTATION_TIMEOUT_MS = 900_000; // 15min
 
