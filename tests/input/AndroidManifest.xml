@@ -38,10 +38,12 @@
         </receiver>
 
         <activity android:name="android.input.cts.IncompleteMotionActivity"
-                  android:label="IncompleteMotion activity">
+                  android:label="IncompleteMotion activity"
+                  android:turnScreenOn="true">
         </activity>
         <activity android:name="android.input.cts.CaptureEventActivity"
-                  android:label="Capture events">
+                  android:label="Capture events"
+                  android:turnScreenOn="true">
         </activity>
     </application>
 
