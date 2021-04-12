@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
-
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
+package com.android.bedstead.harrier.annotations.meta;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,15 +22,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on a device which has no secondary user that is not the
- * current user.
+ * Mark that an annotation is used to indicate that no users of a given type should exist.
  *
- * <p>Your test configuration may be configured so that this test is only run on a device which
- * has no secondary user that is not the current user. Otherwise, you can use {@link DeviceState}
- * to ensure that the device enters the correct state for the method.
+ * <p>The annotation annotated with {@link EnsureHasNoUserAnnotation} must have the same body as
+ * {@link EnsureHasNoUser}.
  */
-@Target(ElementType.METHOD)
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@EnsureHasNoUserAnnotation("android.os.usertype.full.SECONDARY")
-public @interface EnsureHasNoSecondaryUser {
+public @interface EnsureHasNoUserAnnotation {
+    /** The name of the user type which should not be present. */
+    String value();
 }

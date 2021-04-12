@@ -33,7 +33,6 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
@@ -42,6 +41,7 @@ import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
 import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
 import com.android.bedstead.nene.TestApis;
@@ -137,6 +137,13 @@ public final class DeviceState implements TestRule {
                                     ensureHasProfileAnnotation.value(), installTestApp, forUser);
                     }
 
+
+                    EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
+                            annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
+                    if (ensureHasNoUserAnnotation != null) {
+                        ensureHasNoUser(ensureHasNoUserAnnotation.value());
+                    }
+
                     EnsureHasUserAnnotation ensureHasUserAnnotation =
                             annotationType.getAnnotation(EnsureHasUserAnnotation.class);
                     if (ensureHasUserAnnotation != null) {
@@ -160,11 +167,6 @@ public final class DeviceState implements TestRule {
                 if (description.getAnnotation(RequireRunOnTvProfile.class) != null) {
                     assumeTrue("@RequireRunOnTvProfile tests only run on TV profile",
                             isRunningOnTvProfile());
-                }
-                EnsureHasNoSecondaryUser ensureHasNoSecondaryUserAnnotation =
-                        description.getAnnotation(EnsureHasNoSecondaryUser.class);
-                if (ensureHasNoSecondaryUserAnnotation != null) {
-                    ensureHasNoUser(SECONDARY_USER_TYPE_NAME);
                 }
                 RequireFeatures requireFeaturesAnnotation =
                         description.getAnnotation(RequireFeatures.class);
