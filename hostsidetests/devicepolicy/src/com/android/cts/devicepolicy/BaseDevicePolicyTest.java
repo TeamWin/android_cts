@@ -87,6 +87,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     private static final String FEATURE_TELEPHONY = "android.hardware.telephony";
     private static final String FEATURE_SECURE_LOCK_SCREEN = "android.software.secure_lock_screen";
     private static final String FEATURE_WIFI = "android.hardware.wifi";
+    private static final String FEATURE_WATCH = "android.hardware.type.watch";
 
     //The maximum time to wait for user to be unlocked.
     private static final long USER_UNLOCK_TIMEOUT_SEC = 30;
@@ -172,6 +173,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected int mDeviceOwnerUserId;
     protected int mPrimaryUserId;
 
+    /** Is test running on a watch */
+    protected boolean mIsWatch;
+
     /** Record the initial user ID. */
     protected int mInitialUserId;
 
@@ -199,6 +203,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mSupportsMultiUser = getMaxNumberOfUsersSupported() > 1;
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
+        mIsWatch = hasDeviceFeature(FEATURE_WATCH);
 
         if (hasDeviceFeature(FEATURE_SECURE_LOCK_SCREEN)) {
             ensurePrimaryUserHasNoPassword();
