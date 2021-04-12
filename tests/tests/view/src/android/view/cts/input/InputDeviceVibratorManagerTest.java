@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.hardware.input.InputManager;
-import android.os.CombinedVibrationEffect;
+import android.os.CombinedVibration;
 import android.os.SystemClock;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -155,7 +155,7 @@ public class InputDeviceVibratorManagerTest {
 
             final long totalVibrations = testData.durations.size();
             long timeoutMills = 0;
-            CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
+            CombinedVibration.ParallelCombination comb = CombinedVibration.startParallel();
 
             final int[] ids = mVibratorManager.getVibratorIds();
             for (int i = 0; i < testData.amplitudes.size(); i++) {
@@ -181,14 +181,14 @@ public class InputDeviceVibratorManagerTest {
                 }
 
                 if (testData.amplitudes.size() == 1) {
-                    CombinedVibrationEffect mono = CombinedVibrationEffect.createSynced(effect);
+                    CombinedVibration mono = CombinedVibration.createParallel(effect);
                     // Start vibration
                     mVibratorManager.vibrate(mono);
                 } else {  // testData.amplitudes.size() == 2
                     comb.addVibrator(ids[i], effect);
                     if (i > 0) {
                         // Start vibration
-                        CombinedVibrationEffect stereo = comb.combine();
+                        CombinedVibration stereo = comb.combine();
                         mVibratorManager.vibrate(stereo);
                     }
                 }
@@ -222,12 +222,12 @@ public class InputDeviceVibratorManagerTest {
     @Test
     public void testUnsupportedVibrationEffectsPreBaked() {
         final int[] ids = mVibratorManager.getVibratorIds();
-        CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
+        CombinedVibration.ParallelCombination comb = CombinedVibration.startParallel();
         for (int i = 0; i < ids.length; i++) {
             comb.addVibrator(ids[i], VibrationEffect.createPredefined(
                     VibrationEffect.EFFECT_CLICK));
         }
-        CombinedVibrationEffect stereo = comb.combine();
+        CombinedVibration stereo = comb.combine();
         mVibratorManager.vibrate(stereo);
         // Shouldn't get any vibrations for unsupported effects
         assertEquals(0, getVibrationCount(1 /* totalVibrations */, 1000 /* timeoutMills */));
@@ -236,12 +236,12 @@ public class InputDeviceVibratorManagerTest {
     @Test
     public void testMixedVibrationEffectsOneShotAndPreBaked() {
         final int[] ids = mVibratorManager.getVibratorIds();
-        CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
+        CombinedVibration.ParallelCombination comb = CombinedVibration.startParallel();
         comb.addVibrator(ids[0], VibrationEffect.createOneShot(1000,
                 VibrationEffect.DEFAULT_AMPLITUDE));
         comb.addVibrator(ids[1], VibrationEffect.createPredefined(
                 VibrationEffect.EFFECT_CLICK));
-        CombinedVibrationEffect stereo = comb.combine();
+        CombinedVibration stereo = comb.combine();
         mVibratorManager.vibrate(stereo);
         // Shouldn't get any vibrations for combination of OneShot and Prebaked.
         // Prebaked effect is not supported by input device vibrator, if the second effect
@@ -252,12 +252,12 @@ public class InputDeviceVibratorManagerTest {
     @Test
     public void testMixedVibrationEffectsPreBakedAndOneShot() {
         final int[] ids = mVibratorManager.getVibratorIds();
-        CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
+        CombinedVibration.ParallelCombination comb = CombinedVibration.startParallel();
         comb.addVibrator(ids[0], VibrationEffect.createPredefined(
                 VibrationEffect.EFFECT_CLICK));
         comb.addVibrator(ids[1], VibrationEffect.createOneShot(1000,
                 VibrationEffect.DEFAULT_AMPLITUDE));
-        CombinedVibrationEffect stereo = comb.combine();
+        CombinedVibration stereo = comb.combine();
         mVibratorManager.vibrate(stereo);
         // Shouldn't get any vibrations for combination of Prebaked and OneShot.
         // Prebaked effect is not supported by input device vibrator, if the first effect
@@ -266,10 +266,9 @@ public class InputDeviceVibratorManagerTest {
     }
 
     @Test
-    public void testCombinedVibrationEffectsSingleVibratorId() {
+    public void testCombinedVibrationOnSingleVibratorId() {
         final int[] ids = mVibratorManager.getVibratorIds();
-        CombinedVibrationEffect.SyncedCombination comb = CombinedVibrationEffect.startSynced();
-        int[] vibratorIds = mVibratorManager.getVibratorIds();
+        CombinedVibration.ParallelCombination comb = CombinedVibration.startParallel();
         comb.addVibrator(ids[0], VibrationEffect.createOneShot(1000,
                 VibrationEffect.DEFAULT_AMPLITUDE));
         mVibratorManager.vibrate(comb.combine());
