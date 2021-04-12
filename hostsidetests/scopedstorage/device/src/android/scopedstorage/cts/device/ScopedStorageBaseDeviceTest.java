@@ -25,6 +25,7 @@ import static android.scopedstorage.cts.lib.TestUtils.setupDefaultDirectories;
 import static androidx.test.InstrumentationRegistry.getContext;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.provider.MediaStore;
 import android.scopedstorage.cts.lib.TestUtils;
@@ -35,6 +36,8 @@ import java.util.Arrays;
 import java.util.List;
 
 class ScopedStorageBaseDeviceTest {
+    private static final String VOLUME_PUBLIC = "volume_public";
+
     @BeforeClass
     public static void setup() throws Exception {
         createPublicVolume();
@@ -44,9 +47,11 @@ class ScopedStorageBaseDeviceTest {
     private static void createPublicVolume() throws Exception {
         if (TestUtils.getCurrentPublicVolumeName() == null) {
             TestUtils.createNewPublicVolume();
+            assertWithMessage("Expected newly created public volume name to be not null")
+                    .that(TestUtils.getCurrentPublicVolumeName())
+                    .isNotNull();
         }
     }
-
     private static void setupStorage() throws Exception {
         if (!getContext().getPackageManager().isInstantApp()) {
             pollForExternalStorageState();
@@ -60,7 +65,11 @@ class ScopedStorageBaseDeviceTest {
             resetDefaultExternalStorageVolume();
             TestUtils.assertDefaultVolumeIsPrimary();
         } else {
-            setExternalStorageVolume(volumeName);
+            final String publicVolumeName = TestUtils.getCurrentPublicVolumeName();
+            assertWithMessage("Expected public volume name to be not null")
+                    .that(publicVolumeName)
+                    .isNotNull();
+            setExternalStorageVolume(publicVolumeName);
             TestUtils.assertDefaultVolumeIsPublic();
         }
         setupDefaultDirectories();
@@ -69,7 +78,7 @@ class ScopedStorageBaseDeviceTest {
     static List<String> getTestParameters() {
         return Arrays.asList(
                 MediaStore.VOLUME_EXTERNAL,
-                TestUtils.getCurrentPublicVolumeName()
+                VOLUME_PUBLIC
         );
     }
 }
