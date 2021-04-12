@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.assertNotEquals;
 
+import android.annotation.NonNull;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -3894,14 +3895,19 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     public class TestCoexCallback extends WifiManager.CoexCallback {
         private Object mCoexLock;
         private int mOnCoexUnsafeChannelChangedCount;
+        private List<CoexUnsafeChannel> mCoexUnsafeChannels;
+        private int mCoexRestrictions;
 
         TestCoexCallback(Object lock) {
             mCoexLock = lock;
         }
 
         @Override
-        public void onCoexUnsafeChannelsChanged() {
+        public void onCoexUnsafeChannelsChanged(
+                    @NonNull List<CoexUnsafeChannel> unsafeChannels, int restrictions) {
             synchronized (mCoexLock) {
+                mCoexUnsafeChannels = unsafeChannels;
+                mCoexRestrictions = restrictions;
                 mOnCoexUnsafeChannelChangedCount++;
                 mCoexLock.notify();
             }
@@ -3911,6 +3917,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             synchronized (mCoexLock) {
                 return mOnCoexUnsafeChannelChangedCount;
             }
+        }
+
+        public List<CoexUnsafeChannel> getCoexUnsafeChannels() {
+            return mCoexUnsafeChannels;
+        }
+
+        public int getCoexRestrictions() {
+            return mCoexRestrictions;
         }
     }
 
@@ -3926,14 +3940,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         }
 
         try {
-            mWifiManager.setCoexUnsafeChannels(Collections.emptySet(), 0);
+            mWifiManager.setCoexUnsafeChannels(Collections.emptyList(), 0);
             fail("setCoexUnsafeChannels should not succeed - privileged call");
-        } catch (SecurityException e) {
-            // expected
-        }
-        try {
-            mWifiManager.getCoexUnsafeChannels();
-            fail("getCoexUnsafeChannels should not succeed - privileged call");
         } catch (SecurityException e) {
             // expected
         }
@@ -3967,45 +3975,40 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // These below API's only work with privileged permissions (obtained via shell identity
         // for test)
         UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        Set<CoexUnsafeChannel> prevUnsafeChannels = null;
+        List<CoexUnsafeChannel> prevUnsafeChannels = null;
         int prevRestrictions = -1;
         try {
             uiAutomation.adoptShellPermissionIdentity();
-            // Save the current state to reset after the test.
-            prevUnsafeChannels = mWifiManager.getCoexUnsafeChannels();
-            prevRestrictions = mWifiManager.getCoexRestrictions();
-
-            // Register callback
             final TestCoexCallback callback = new TestCoexCallback(mLock);
-            mWifiManager.registerCoexCallback(mExecutor, callback);
-            Set<CoexUnsafeChannel> unsafeChannels = new HashSet<>();
-            unsafeChannels.add(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 6));
-            final int restrictions = COEX_RESTRICTION_WIFI_DIRECT | COEX_RESTRICTION_SOFTAP
-                    | COEX_RESTRICTION_WIFI_AWARE;
-
+            final List<CoexUnsafeChannel> testUnsafeChannels = new ArrayList<>();
+            testUnsafeChannels.add(new CoexUnsafeChannel(WIFI_BAND_24_GHZ, 6));
+            final int testRestrictions = COEX_RESTRICTION_WIFI_DIRECT
+                    | COEX_RESTRICTION_SOFTAP | COEX_RESTRICTION_WIFI_AWARE;
             synchronized (mLock) {
                 try {
-                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
-                    // Callback should be called if the default algorithm is disabled.
+                    mWifiManager.registerCoexCallback(mExecutor, callback);
+                    // Callback should be called after registering
                     mLock.wait(TEST_WAIT_DURATION_MS);
+                    assertEquals(1, callback.getOnCoexUnsafeChannelChangedCount());
+                    // Store the previous coex channels and set new coex channels
+                    prevUnsafeChannels = callback.getCoexUnsafeChannels();
+                    prevRestrictions = callback.getCoexRestrictions();
+                    mWifiManager.setCoexUnsafeChannels(testUnsafeChannels, testRestrictions);
+                    mLock.wait(TEST_WAIT_DURATION_MS);
+                    // Unregister callback and try setting again
                     mWifiManager.unregisterCoexCallback(callback);
-                    mWifiManager.setCoexUnsafeChannels(unsafeChannels, restrictions);
+                    mWifiManager.setCoexUnsafeChannels(testUnsafeChannels, testRestrictions);
                     // Callback should not be called here since it was unregistered.
                     mLock.wait(TEST_WAIT_DURATION_MS);
                 } catch (InterruptedException e) {
                     fail("Thread interrupted unexpectedly while waiting on mLock");
                 }
             }
-
-            if (callback.getOnCoexUnsafeChannelChangedCount() == 0) {
-                // Default algorithm enabled, setter should have done nothing
-                assertEquals(prevUnsafeChannels, mWifiManager.getCoexUnsafeChannels());
-                assertEquals(prevRestrictions, mWifiManager.getCoexRestrictions());
-            } else if (callback.getOnCoexUnsafeChannelChangedCount() == 1) {
+            if (callback.getOnCoexUnsafeChannelChangedCount() == 2) {
                 // Default algorithm disabled, setter should set the getter values.
-                assertEquals(unsafeChannels, mWifiManager.getCoexUnsafeChannels());
-                assertEquals(restrictions, mWifiManager.getCoexRestrictions());
-            } else {
+                assertEquals(testUnsafeChannels, callback.getCoexUnsafeChannels());
+                assertEquals(testRestrictions, callback.getCoexRestrictions());
+            } else if (callback.getOnCoexUnsafeChannelChangedCount() != 1) {
                 fail("Coex callback called " + callback.mOnCoexUnsafeChannelChangedCount
                         + " times. Expected 0 or 1 calls." );
             }
