@@ -16,6 +16,8 @@
 
 package android.net.wifi.cts;
 
+import static android.net.wifi.CoexUnsafeChannel.POWER_CAP_NONE;
+
 import android.net.wifi.CoexUnsafeChannel;
 import android.net.wifi.WifiScanner;
 import android.test.AndroidTestCase;
@@ -33,26 +35,17 @@ public class CoexUnsafeChannelTest extends AndroidTestCase {
     public void testNoPowerCapConstructor() {
         CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL);
 
-        assertEquals(unsafeChannel.getBand(), TEST_BAND);
-        assertEquals(unsafeChannel.getChannel(), TEST_CHANNEL);
-        assertFalse(unsafeChannel.isPowerCapAvailable());
+        assertEquals(TEST_BAND, unsafeChannel.getBand());
+        assertEquals(TEST_CHANNEL, unsafeChannel.getChannel());
+        assertEquals(POWER_CAP_NONE, unsafeChannel.getPowerCapDbm());
     }
 
     public void testPowerCapConstructor() {
         CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL,
                 TEST_POWER_CAP_DBM);
 
-        assertEquals(unsafeChannel.getBand(), TEST_BAND);
-        assertEquals(unsafeChannel.getChannel(), TEST_CHANNEL);
-        assertTrue(unsafeChannel.isPowerCapAvailable());
-        assertEquals(unsafeChannel.getPowerCapDbm(), TEST_POWER_CAP_DBM);
-    }
-
-    public void testSetPowerCap() {
-        CoexUnsafeChannel unsafeChannel = new CoexUnsafeChannel(TEST_BAND, TEST_CHANNEL);
-
-        unsafeChannel.setPowerCapDbm(TEST_POWER_CAP_DBM);
-
-        assertEquals(unsafeChannel.getPowerCapDbm(), TEST_POWER_CAP_DBM);
+        assertEquals(TEST_BAND, unsafeChannel.getBand());
+        assertEquals(TEST_CHANNEL, unsafeChannel.getChannel());
+        assertEquals(TEST_POWER_CAP_DBM, unsafeChannel.getPowerCapDbm());
     }
 }
