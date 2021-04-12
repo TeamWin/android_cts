@@ -19,8 +19,8 @@ package com.android.cts.deviceandprofileowner;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class EnterpriseNetworkPreferenceStatusTest extends BaseDeviceAdminTest {
-    private static final String TAG = "EnterpriseNetworkPreferenceStatusTest";
+public class PreferentialNetworkServiceStatusTest extends BaseDeviceAdminTest {
+    private static final String TAG = "PreferentialNetworkServiceStatusTest";
 
     @Override
     public void setUp() throws Exception {
@@ -32,14 +32,14 @@ public class EnterpriseNetworkPreferenceStatusTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
-    public void testGetSetEnterpriseNetworkPreferenceStatus() throws Exception {
+    public void testGetSetPreferentialNetworkServiceStatus() throws Exception {
         // Assert default status is true
-        assertTrue(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
+        assertTrue(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
 
-        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(false);
-        assertFalse(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
+        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(false);
+        assertFalse(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
 
-        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true);
-        assertTrue(mDevicePolicyManager.isEnterpriseNetworkPreferenceEnabled());
+        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true);
+        assertTrue(mDevicePolicyManager.isPreferentialNetworkServiceEnabled());
     }
 }
