@@ -17,7 +17,6 @@
 package android.app.stubs;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.LocusId;
 import android.os.Bundle;
 
@@ -27,8 +26,6 @@ import android.os.Bundle;
  */
 public class BubbledActivity extends Activity {
 
-    boolean mIsBubbled = false;
-
     public static final String EXTRA_LOCUS_ID = "EXTRA_ID_LOCUS_ID";
     private LocusId mLocusId;
 
@@ -37,15 +34,10 @@ public class BubbledActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-        mIsBubbled = getIntent().getBooleanExtra(Intent.EXTRA_IS_BUBBLED, false);
         Bundle b = getIntent().getExtras();
         String locus = b != null ? b.getString(EXTRA_LOCUS_ID, null) : null;
         mLocusId = locus != null ? new LocusId(locus) : null;
         setLocusContext(mLocusId, null /* bundle */);
-    }
-
-    public boolean isBubbled() {
-        return mIsBubbled;
     }
 
     public LocusId getLocusId() {
