@@ -1,4 +1,2 @@
 # Bug component: 316125
-include ../OWNERS
-louischang@google.com
-riddlehsu@google.com
+include platform/frameworks/base:/services/core/java/com/android/server/wm/OWNERS
