@@ -344,6 +344,22 @@ public class EdgeEffectTests extends ActivityTestBase {
     }
 
     @Test
+    public void testInvalidPullDistanceDoesNotCrash() {
+        EdgeEffect edgeEffect = new EdgeEffect(getContext());
+        edgeEffect.setType(EdgeEffect.TYPE_STRETCH);
+        // Verify that bad inputs to onPull do not crash
+        edgeEffect.onPull(Float.NaN, Float.NaN);
+
+        edgeEffect.setSize(TEST_WIDTH, TEST_HEIGHT);
+        RenderNode node = new RenderNode("");
+        node.setPosition(0, 0, TEST_WIDTH, TEST_HEIGHT);
+        RecordingCanvas canvas = node.beginRecording();
+
+        edgeEffect.draw(canvas);
+        node.endRecording();
+    }
+
+    @Test
     public void testAbsorbThenDrawDoesNotCrash() {
         MockVsyncHelper.runOnVsyncThread(() -> {
             EdgeEffect edgeEffect = new EdgeEffect(getContext());
