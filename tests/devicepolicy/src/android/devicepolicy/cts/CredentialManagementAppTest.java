@@ -39,10 +39,10 @@ import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.activitycontext.ActivityContext;
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.compatibility.common.util.BlockingCallback;
 import com.android.compatibility.common.util.FakeKeys;
@@ -67,7 +67,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class CredentialManagementAppTest {
 
     private static final PrivateKey PRIVATE_KEY =

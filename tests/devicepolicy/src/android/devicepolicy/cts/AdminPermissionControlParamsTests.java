@@ -23,14 +23,13 @@ import android.app.admin.DevicePolicyManager;
 import android.os.Parcel;
 import android.permission.AdminPermissionControlParams;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
-
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class AdminPermissionControlParamsTests {
     private static final String PKG = "somePackage";
     private static final String PERMISSION = "somePackage";

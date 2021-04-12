@@ -19,7 +19,6 @@ package android.devicepolicy.cts;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import static org.junit.Assume.assumeTrue;
 import static org.testng.Assert.assertThrows;
 
 import android.app.ActivityManager;
@@ -27,14 +26,12 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.UserHandle;
 import android.os.UserManager;
-import android.util.ArraySet;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasTvProfile;
@@ -54,7 +51,7 @@ import org.junit.runner.RunWith;
 
 import java.util.function.Function;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class StartProfilesTest {
 
     // We set this to 30 seconds because if the total test time goes over 66 seconds then it causes

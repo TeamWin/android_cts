@@ -19,10 +19,10 @@ package android.devicepolicy.cts;
 import static com.android.bedstead.harrier.DeviceState.UserType.PRIMARY_USER;
 
 import static com.google.common.truth.Truth.assertThat;
+import static com.google.common.truth.Truth.assertWithMessage;
 
 import static junit.framework.Assert.assertNotNull;
 
-import static org.junit.Assert.assertEquals;
 import static org.testng.Assert.assertThrows;
 
 import android.content.ComponentName;
@@ -32,13 +32,13 @@ import android.os.UserHandle;
 import android.os.UserManager;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.Until;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.EnsureHasWorkProfile;
@@ -56,7 +56,7 @@ import org.junit.runner.RunWith;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class CrossProfileAppsTest {
 
     private static final String ID_USER_TEXTVIEW =
@@ -160,11 +160,12 @@ public final class CrossProfileAppsTest {
                 .wait(
                         Until.findObject(By.res(ID_USER_TEXTVIEW)),
                         TIMEOUT_WAIT_UI);
-        assertNotNull("Failed to start activity in target user", textView);
+        assertWithMessage("Failed to start activity in target user")
+                .that(textView).isNotNull();
         // Look for the text in textview, it should be the serial number of target user.
-        assertEquals("Activity is started in wrong user",
-                String.valueOf(sUserManager.getSerialNumberForUser(user)),
-                textView.getText());
+        assertWithMessage("Activity is started in wrong user")
+                .that(textView.getText())
+                .isEqualTo(String.valueOf(sUserManager.getSerialNumberForUser(user)));
     }
 
     @Test

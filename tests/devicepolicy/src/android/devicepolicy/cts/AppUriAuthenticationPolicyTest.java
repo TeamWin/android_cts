@@ -24,8 +24,9 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.security.AppUriAuthenticationPolicy;
 
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
+
+import com.android.bedstead.harrier.BedsteadJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +34,7 @@ import org.junit.runner.RunWith;
 import java.util.Map;
 
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class AppUriAuthenticationPolicyTest {
 
     private final static String PACKAGE_NAME = "com.android.test";
