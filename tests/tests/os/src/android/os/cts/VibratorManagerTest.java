@@ -27,7 +27,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import android.os.CombinedVibrationEffect;
+import android.os.CombinedVibration;
 import android.os.SystemClock;
 import android.os.VibrationAttributes;
 import android.os.VibrationEffect;
@@ -98,7 +98,7 @@ public class VibratorManagerTest {
 
     @Test
     public void testCancel() {
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(
+        mVibratorManager.vibrate(CombinedVibration.createParallel(
                 VibrationEffect.createOneShot(10_000, VibrationEffect.DEFAULT_AMPLITUDE)));
         assertStartsVibrating();
 
@@ -111,18 +111,18 @@ public class VibratorManagerTest {
     public void testVibrateOneShot() {
         VibrationEffect oneShot =
                 VibrationEffect.createOneShot(300, VibrationEffect.DEFAULT_AMPLITUDE);
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(oneShot));
+        mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot));
         assertStartsThenStopsVibrating(300);
 
         oneShot = VibrationEffect.createOneShot(500, 255 /* Max amplitude */);
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(oneShot));
+        mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot));
         assertStartsVibrating();
 
         mVibratorManager.cancel();
         assertStopsVibrating();
 
         oneShot = VibrationEffect.createOneShot(100, 1 /* Min amplitude */);
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(oneShot),
+        mVibratorManager.vibrate(CombinedVibration.createParallel(oneShot),
                 VIBRATION_ATTRIBUTES);
         assertStartsVibrating();
     }
@@ -133,11 +133,11 @@ public class VibratorManagerTest {
         final long[] timings = new long[]{100, 200, 300, 400, 500};
         final int[] amplitudes = new int[]{64, 128, 255, 128, 64};
         VibrationEffect waveform = VibrationEffect.createWaveform(timings, amplitudes, -1);
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(waveform));
+        mVibratorManager.vibrate(CombinedVibration.createParallel(waveform));
         assertStartsThenStopsVibrating(1500);
 
         waveform = VibrationEffect.createWaveform(timings, amplitudes, 0);
-        mVibratorManager.vibrate(CombinedVibrationEffect.createSynced(waveform));
+        mVibratorManager.vibrate(CombinedVibration.createParallel(waveform));
         assertStartsVibrating();
 
         mVibratorManager.cancel();
@@ -157,7 +157,7 @@ public class VibratorManagerTest {
         for (int vibratorId : vibratorIds) {
             Vibrator vibrator = mVibratorManager.getVibrator(vibratorId);
             mVibratorManager.vibrate(
-                    CombinedVibrationEffect.startSynced()
+                    CombinedVibration.startParallel()
                             .addVibrator(vibratorId, oneShot)
                             .combine());
             assertStartsVibrating(vibratorId);
