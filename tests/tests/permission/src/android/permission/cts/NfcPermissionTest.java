@@ -22,21 +22,35 @@ import static org.junit.Assert.fail;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.nfc.NfcAdapter;
+import android.nfc.NfcAdapter.ControllerAlwaysOnStateCallback;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @RunWith(JUnit4.class)
 public final class NfcPermissionTest {
 
+    private NfcAdapter mNfcAdapter;
+
+    @Before
+    public void setUp() {
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(InstrumentationRegistry.getTargetContext());
+    }
+
+    /**
+     * Verifies that there's only one dedicated app holds the NfcSetControllerAlwaysOnPermission.
+     */
     @Test
     public void testNfcSetControllerAlwaysOnPermission() {
         PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
@@ -61,6 +75,100 @@ public final class NfcPermissionTest {
         if (holding.size() > 1) {
             fail("Only one app on the device is allowed to hold the "
                      + "NFC_SET_CONTROLLER_ALWAYS_ON permission.");
+        }
+    }
+
+    /**
+     * Verifies that isControllerAlwaysOnSupported() requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    public void testIsControllerAlwaysOnSupported() {
+        try {
+            mNfcAdapter.isControllerAlwaysOnSupported();
+            fail("mNfcAdapter.isControllerAlwaysOnSupported() did not throw SecurityException"
+                    + " as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
+    /**
+     * Verifies that isControllerAlwaysOn() requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    public void testIsControllerAlwaysOn() {
+        try {
+            mNfcAdapter.isControllerAlwaysOn();
+            fail("mNfcAdapter.isControllerAlwaysOn() did not throw SecurityException"
+                    + " as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
+    /**
+     * Verifies that setControllerAlwaysOn(true) requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    public void testSetControllerAlwaysOnTrue() {
+        try {
+            mNfcAdapter.setControllerAlwaysOn(true);
+            fail("mNfcAdapter.setControllerAlwaysOn(true) did not throw SecurityException"
+                    + " as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
+    /**
+     * Verifies that setControllerAlwaysOn(false) requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    public void testSetControllerAlwaysOnFalse() {
+        try {
+            mNfcAdapter.setControllerAlwaysOn(false);
+            fail("mNfcAdapter.setControllerAlwaysOn(true) did not throw SecurityException"
+                    + " as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
+    /**
+     * Verifies that registerControllerAlwaysOnStateCallback() requires Permission.
+     * <p>
+     * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
+     */
+    @Test
+    public void testRegisterControllerAlwaysOnStateCallback() {
+        try {
+            mNfcAdapter.registerControllerAlwaysOnStateCallback(
+                    new SynchronousExecutor(), new AlwaysOnStateListener());
+            fail("mNfcAdapter.registerControllerAlwaysOnStateCallback did not throw"
+                    + "SecurityException as expected");
+        } catch (SecurityException se) {
+            // Expected Exception
+        }
+    }
+
+    private class SynchronousExecutor implements Executor {
+        public void execute(Runnable r) {
+            r.run();
+        }
+    }
+
+    private class AlwaysOnStateListener implements ControllerAlwaysOnStateCallback {
+        @Override
+        public void onStateChanged(boolean isEnabled) {
+            // Do nothing
         }
     }
 }
