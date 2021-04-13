@@ -456,7 +456,7 @@ public class RoutingTest extends AndroidTestCase {
         }
     }
 
-    public void test_audioTrack_getRoutedDevice() {
+    public void test_audioTrack_getRoutedDevice() throws Exception {
         if (!DeviceUtils.hasOutputDevice(mAudioManager)) {
             Log.i(TAG, "No output devices. Test skipped");
             return; // nothing to test here
@@ -484,15 +484,23 @@ public class RoutingTest extends AndroidTestCase {
         Thread fillerThread = new Thread(filler);
         fillerThread.start();
 
-        try { Thread.sleep(1000); } catch (InterruptedException ex) {}
-
-        // No explicit route
-        AudioDeviceInfo routedDevice = audioTrack.getRoutedDevice();
-        assertNotNull(routedDevice); // we probably can't say anything more than this
+        assertHasNonNullRoutedDevice(audioTrack);
 
         filler.stop();
         audioTrack.stop();
         audioTrack.release();
+    }
+
+    private void assertHasNonNullRoutedDevice(AudioRouting router) throws Exception {
+        AudioDeviceInfo routedDevice = null;
+        // Give a chance for playback or recording to start so routing can be established
+        final long timeouts[] = { 100, 200, 500, 500, 1000};
+        int attempt = 0;
+        do {
+            try { Thread.sleep(timeouts[attempt++]); } catch (InterruptedException ex) {}
+            routedDevice = router.getRoutedDevice();
+        } while (routedDevice == null && attempt < timeouts.length);
+        assertNotNull(routedDevice); // we probably can't say anything more than this
     }
 
     private class AudioRecordPuller implements Runnable {
@@ -520,7 +528,7 @@ public class RoutingTest extends AndroidTestCase {
         }
     }
 
-    public void test_audioRecord_getRoutedDevice() {
+    public void test_audioRecord_getRoutedDevice() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
             return;
         }
@@ -550,11 +558,7 @@ public class RoutingTest extends AndroidTestCase {
         Thread pullerThread = new Thread(puller);
         pullerThread.start();
 
-        try { Thread.sleep(1000); } catch (InterruptedException ex) {}
-
-        // No explicit route
-        AudioDeviceInfo routedDevice = audioRecord.getRoutedDevice();
-        assertNotNull(routedDevice); // we probably can't say anything more than this
+        assertHasNonNullRoutedDevice(audioRecord);
 
         puller.stop();
         audioRecord.stop();
@@ -645,7 +649,7 @@ public class RoutingTest extends AndroidTestCase {
         mediaPlayer.release();
     }
 
-    public void test_mediaPlayer_getRoutedDevice() {
+    public void test_mediaPlayer_getRoutedDevice() throws Exception {
         if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
             // Can't do it so skip this test
             return;
@@ -654,12 +658,7 @@ public class RoutingTest extends AndroidTestCase {
         MediaPlayer mediaPlayer = allocMediaPlayer();
         assertTrue(mediaPlayer.isPlaying());
 
-        // Sleep for 1s to ensure the output device open
-        SystemClock.sleep(1000);
-
-        // No explicit route
-        AudioDeviceInfo routedDevice = mediaPlayer.getRoutedDevice();
-        assertNotNull(routedDevice);
+        assertHasNonNullRoutedDevice(mediaPlayer);
 
         mediaPlayer.stop();
         mediaPlayer.release();
