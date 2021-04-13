@@ -32,6 +32,7 @@ cc_test_library {
     header_libs: ["jni_headers"],
     shared_libs: [
         "libbinder",
+        "libpermission",
         "libutils",
         "liblog",
     ],
@@ -79,6 +80,7 @@ android_test {
         "libnetdutils",
         "libnetworkstatsfactorytestjni",
         "libpackagelistparser",
+        "libpermission",
         "libpcre2",
         "libprocessgroup",
         "libselinux",
