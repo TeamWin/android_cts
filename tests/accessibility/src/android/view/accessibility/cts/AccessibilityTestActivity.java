@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 The Android Open Source Project
+ * Copyright (C) 2021 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,21 @@
 
 package android.view.accessibility.cts;
 
+import android.app.Activity;
+import android.app.KeyguardManager;
 import android.os.Bundle;
-import android.view.accessibility.cts.R;
 
-/**
- * The accessibility shortcut target activity.
- */
-public class AccessibilityShortcutTargetActivity extends AccessibilityTestActivity {
+public abstract class AccessibilityTestActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        turnOnScreen();
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.shortcut_target);
+    }
+
+    private void turnOnScreen() {
+        setTurnScreenOn(true);
+        setShowWhenLocked(true);
+        KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
+        keyguardManager.requestDismissKeyguard(this, null);
     }
 }
