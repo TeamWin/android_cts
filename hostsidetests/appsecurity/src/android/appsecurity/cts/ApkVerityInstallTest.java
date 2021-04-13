@@ -29,7 +29,6 @@ import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -290,7 +289,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @Ignore("IncFs does not support STATX_ATTR_VERITY")
     public void testInstallBaseWithFsvSigIncrementally() throws Exception {
         assumeSecurityModelCompat();
         assumeIncrementalDeliveryFeature();
@@ -304,7 +302,6 @@ public final class ApkVerityInstallTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @Ignore("IncFs does not support STATX_ATTR_VERITY")
     public void testInstallEverythingWithFsvSigIncrementally() throws Exception {
         assumeSecurityModelCompat();
         assumeIncrementalDeliveryFeature();
