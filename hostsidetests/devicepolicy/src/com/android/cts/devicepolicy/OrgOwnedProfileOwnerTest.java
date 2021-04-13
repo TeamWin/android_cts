@@ -763,10 +763,8 @@ public class OrgOwnedProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     private void toggleQuietMode(boolean quietModeEnable) throws Exception {
-        final String cmd = quietModeEnable
-                ? String.format("am stop-user -f %d", mUserId)
-                : String.format("am start-user %d", mUserId);
-        executeShellCommand(cmd);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".PersonalAppsSuspensionTest",
+                quietModeEnable ? "testEnableQuietMode" : "testDisableQuietMode", mPrimaryUserId);
     }
 
     private void setAndStartLauncher(String component) throws Exception {
