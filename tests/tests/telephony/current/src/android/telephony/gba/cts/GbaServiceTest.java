@@ -134,6 +134,7 @@ public final class GbaServiceTest {
                       TelephonyManager.BootstrapAuthenticationCallback() {
                 @Override
                 public void onKeysAvailable(byte[] gbaKey, String btId) {
+                    super.onKeysAvailable(gbaKey, btId);
                     assertNotNull(gbaKey);
                     assertNotNull(btId);
                     assertArrayEquals(key, gbaKey);
@@ -146,6 +147,7 @@ public final class GbaServiceTest {
 
                 @Override
                 public void onAuthenticationFailure(int reason) {
+                    super.onAuthenticationFailure(reason);
                     synchronized (isSuccess) {
                         isFail.set(true);
                         isSuccess.notify();
