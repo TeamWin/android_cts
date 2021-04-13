@@ -88,6 +88,8 @@ public class VibratorTest {
             VibrationEffect.Composition.PRIMITIVE_QUICK_RISE,
             VibrationEffect.Composition.PRIMITIVE_QUICK_FALL,
             VibrationEffect.Composition.PRIMITIVE_SLOW_RISE,
+            VibrationEffect.Composition.PRIMITIVE_SPIN,
+            VibrationEffect.Composition.PRIMITIVE_THUD,
     };
 
     private Vibrator mVibrator;
