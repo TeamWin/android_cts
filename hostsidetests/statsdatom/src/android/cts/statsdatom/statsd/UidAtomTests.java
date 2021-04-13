@@ -83,6 +83,7 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
     private static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     private static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
     private static final String FEATURE_PICTURE_IN_PICTURE = "android.software.picture_in_picture";
+    private static final String FEATURE_TV = "android.hardware.type.television";
 
     private IBuildInfo mCtsBuild;
 
@@ -208,6 +209,12 @@ public class UidAtomTests extends DeviceTestCase implements IBuildReceiver {
     }
 
     public void testAppCrashOccurredNative() throws Exception {
+        if (DeviceUtils.hasFeature(getDevice(), FEATURE_TV)
+                && DeviceUtils.isDebuggable(getDevice())) {
+            // Skip TVs that are debuggable because ActivityManager does not properly terminate
+            // the activity in the event of a native crash.
+            return;
+        }
         final int atomTag = Atom.APP_CRASH_OCCURRED_FIELD_NUMBER;
         ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
                 atomTag,  /*uidInAttributionChain=*/false);
