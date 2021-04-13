@@ -163,8 +163,13 @@ public class ConnectivityManagerLegacyTest extends AndroidTestCase {
             assertTrue("Couldn't requestRouteToHost using HIPRI.",
                     mCm.requestRouteToHost(TYPE_MOBILE_HIPRI, ipv4AddrToInt(HOST_ADDRESS1)));
 
+            assertTrue("Couldn't requestRouteToHostAddress using HIPRI.",
+                    mCm.requestRouteToHostAddress(TYPE_MOBILE_HIPRI,
+                            InetAddress.getByName(HOST_ADDRESS3)));
+
             checkSourceAddress(HOST_ADDRESS1, TYPE_MOBILE);
             checkSourceAddress(HOST_ADDRESS2, TYPE_WIFI);
+            checkSourceAddress(HOST_ADDRESS3, TYPE_MOBILE);
 
             // TODO check dns selection
 
