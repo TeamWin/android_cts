@@ -62,4 +62,5 @@
     <dimen name="listviewfixed_layout_height">300dp</dimen>
 
     <dimen name="remoteviews_float_dimen">4.5dp</dimen>
+    <dimen name="remoteviews_theme_dimen">7.5123dp</dimen>
 </resources>
