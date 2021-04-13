@@ -178,6 +178,18 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
             "Lcom/android/internal/annotations/VisibleForTesting$Visibility;"
         );
 
+    private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
+
+    private static final Set<String> WEAR_HIDL_OVERLAP_BURNDOWN_LIST =
+        ImmutableSet.of(
+            "Landroid/hidl/base/V1_0/DebugInfo$Architecture;",
+            "Landroid/hidl/base/V1_0/IBase;",
+            "Landroid/hidl/base/V1_0/IBase$Proxy;",
+            "Landroid/hidl/base/V1_0/IBase$Stub;",
+            "Landroid/hidl/base/V1_0/DebugInfo;",
+            "Landroid/hidl/safe_union/V1_0/Monostate;"
+        );
+
     /**
      * Ensure that there are no duplicate classes among jars listed in BOOTCLASSPATH.
      */
@@ -199,7 +211,13 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
         runWithTempDir(tmpDir -> {
             final Set<DeviceFile> sscpJarFiles =
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
-            checkClassDuplicatesMatchAllowlist(sscpJarFiles, ImmutableSet.of());
+            ImmutableSet<String> overlapBurndownList;
+            if (hasFeature(FEATURE_WEARABLE)) {
+                overlapBurndownList = ImmutableSet.copyOf(WEAR_HIDL_OVERLAP_BURNDOWN_LIST);
+            } else {
+                overlapBurndownList = ImmutableSet.of();
+            }
+            checkClassDuplicatesMatchAllowlist(sscpJarFiles, overlapBurndownList);
         });
     }
 
@@ -215,7 +233,15 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
                 pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
                 pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
             );
-            checkClassDuplicatesMatchAllowlist(allJarFiles, BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
+            ImmutableSet<String> overlapBurndownList;
+            if (hasFeature(FEATURE_WEARABLE)) {
+                overlapBurndownList = ImmutableSet.<String>builder()
+                        .addAll(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST)
+                        .addAll(WEAR_HIDL_OVERLAP_BURNDOWN_LIST).build();
+            } else {
+                overlapBurndownList = ImmutableSet.copyOf(BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
+            }
+            checkClassDuplicatesMatchAllowlist(allJarFiles, overlapBurndownList);
         });
     }
 
@@ -364,6 +390,10 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test  {
 
     private interface TempDirRunnable {
         public void runWithTempDir(File tempDir) throws Exception;
+    }
+
+    private boolean hasFeature(String featureName) throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand("pm list features").contains(featureName);
     }
 
     /**
