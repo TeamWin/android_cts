@@ -47,6 +47,7 @@ import androidx.test.InstrumentationRegistry;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.internal.util.ArrayUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -54,6 +55,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -697,6 +699,31 @@ public class ContentResolverTest extends AndroidTestCase {
         } catch (FileNotFoundException e) {
             //expected.
         }
+    }
+
+    public void testOpenOutputStream_default_truncatesFile() throws IOException {
+        Uri uri = Uri.parse(ContentResolver.SCHEME_FILE + "://"
+                + getContext().getCacheDir().getAbsolutePath()
+                + "/temp-truncates.txt");
+        OutputStreamWriter writer = new OutputStreamWriter(mContentResolver.openOutputStream(uri));
+        writer.write("My long string");
+        writer.close();
+
+        InputStream is = mContentResolver.openInputStream(uri);
+        assertEquals(
+                "My long string",
+                new BufferedReader(new InputStreamReader(is)).readLine());
+        is.close();
+
+        writer = new OutputStreamWriter(mContentResolver.openOutputStream(uri));
+        writer.write("My string");
+        writer.close();
+
+        is = mContentResolver.openInputStream(uri);
+        assertEquals(
+                "My string",
+                new BufferedReader(new InputStreamReader(is)).readLine());
+        is.close();
     }
 
     public void testOpenAssetFileDescriptor() throws IOException {
