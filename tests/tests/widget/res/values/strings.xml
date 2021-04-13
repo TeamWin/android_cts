@@ -215,4 +215,6 @@ I think so, so how about double this string, like copy and paste! </string>
     <string name="radio_choice_1">choice 1</string>
     <string name="radio_choice_2">choice 2</string>
     <string name="radio_choice_3">choice 3</string>
+
+    <string name="remoteviews_theme_string">Day</string>
 </resources>
