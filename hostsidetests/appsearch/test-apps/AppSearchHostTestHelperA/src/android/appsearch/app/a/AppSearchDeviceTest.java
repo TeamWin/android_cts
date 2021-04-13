@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.appsearch.app;
+package android.appsearch.app.a;
 
 import static com.android.server.appsearch.testing.AppSearchTestUtils.checkIsBatchResultSuccess;
 import static com.android.server.appsearch.testing.AppSearchTestUtils.doGet;
@@ -28,6 +28,7 @@ import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
 import android.app.appsearch.GetByUriRequest;
+import android.app.appsearch.PackageIdentifier;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
 
@@ -35,15 +36,15 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.android.server.appsearch.testing.AppSearchSessionShimImpl;
 
+import com.google.common.io.BaseEncoding;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
-
 @RunWith(AndroidJUnit4.class)
-public class UserDataTest {
+public class AppSearchDeviceTest {
 
     private static final String DB_NAME = "";
     private static final String NAMESPACE = "namespace";
@@ -62,6 +63,19 @@ public class UserDataTest {
                     .setCreationTimestampMillis(12345L)
                     .build();
 
+    private static final String PKG_B = "android.appsearch.app.b";
+
+    // To generate, run `apksigner` on the build APK. e.g.
+    //   ./apksigner verify --print-certs \
+    //   ~/sc-dev/out/soong/.intermediates/cts/tests/appsearch/CtsAppSearchTestHelperA/\
+    //   android_common/CtsAppSearchTestHelperA.apk`
+    // to get the SHA-256 digest. All characters need to be uppercase.
+    //
+    // Note: May need to switch the "sdk_version" of the test app from "test_current" to "30" before
+    // building the apk and running apksigner
+    private static final byte[] PKG_B_CERT_SHA256 = BaseEncoding.base16().decode(
+            "3D7A1AAE7AE8B9949BE93E071F3702AA38695B0F99B5FC4B2E8B364AC78FFDB2");
+
     private AppSearchSessionShim mDb;
 
     @Before
@@ -73,8 +87,9 @@ public class UserDataTest {
     @Test
     public void testPutDocuments() throws Exception {
         // Schema registration
-        mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(SCHEMA).build())
-                .get();
+        mDb.setSchema(new SetSchemaRequest.Builder().addSchemas(SCHEMA)
+                .setSchemaTypeVisibilityForPackage(SCHEMA.getSchemaType(), /*visible=*/ true,
+                        new PackageIdentifier(PKG_B, PKG_B_CERT_SHA256)).build()).get();
 
         // Index a document
         AppSearchBatchResult<String, Void> result = checkIsBatchResultSuccess(
