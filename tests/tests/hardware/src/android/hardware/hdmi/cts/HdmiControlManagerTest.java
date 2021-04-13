@@ -109,8 +109,8 @@ public class HdmiControlManagerTest {
                     mHdmiControlManager.getClient(HdmiDeviceInfo.DEVICE_AUDIO_SYSTEM)).isNotNull();
         }
 
-        boolean isSwitchDevice = SystemProperties.getBoolean("ro.hdmi.cec.source.is_switch.enabled",
-                false);
+        boolean isSwitchDevice = SystemProperties.getBoolean(
+                "ro.hdmi.property_is_device_hdmi_cec_switch", false);
         if (deviceTypes.contains("6") || isSwitchDevice) {
             assertThat(mHdmiControlManager.getSwitchClient()).isInstanceOf(HdmiSwitchClient.class);
             assertThat(mHdmiControlManager.getClient(6)).isInstanceOf(HdmiSwitchClient.class);
@@ -135,8 +135,8 @@ public class HdmiControlManagerTest {
                     HdmiDeviceInfo.DEVICE_PLAYBACK);
         }
 
-        boolean isSwitchDevice = SystemProperties.getBoolean("ro.hdmi.cec.source.is_switch.enabled",
-                false);
+        boolean isSwitchDevice = SystemProperties.getBoolean(
+                "ro.hdmi.property_is_device_hdmi_cec_switch", false);
 
         if (deviceTypes.contains(String.valueOf(DEVICE_TYPE_SWITCH)) || isSwitchDevice) {
             assertThat(mHdmiControlManager.getSwitchClient().getDeviceType()).isEqualTo(
