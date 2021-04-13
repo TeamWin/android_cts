@@ -807,7 +807,6 @@ public class DisplayTest {
         }
     }
 
-
     @Test
     public void testGetDeviceProductInfo() {
         DeviceProductInfo deviceProductInfo = mDefaultDisplay.getDeviceProductInfo();
@@ -836,6 +835,23 @@ public class DisplayTest {
         assertTrue(
                 allowedConnectionToSinkValues.contains(
                         deviceProductInfo.getConnectionToSinkType()));
+    }
+
+    @Test
+    public void testDeviceProductInfo() {
+        DeviceProductInfo deviceProductInfo = new DeviceProductInfo(
+                "DeviceName" /* name */,
+                "TTL" /* manufacturePnpId */,
+                "ProductId1" /* productId */,
+                2000 /* modelYear */,
+                DeviceProductInfo.CONNECTION_TO_SINK_DIRECT);
+
+        assertEquals("DeviceName", deviceProductInfo.getName());
+        assertEquals("TTL", deviceProductInfo.getManufacturerPnpId());
+        assertEquals("ProductId1", deviceProductInfo.getProductId());
+        assertEquals(2000, deviceProductInfo.getModelYear());
+        assertEquals(DeviceProductInfo.CONNECTION_TO_SINK_DIRECT,
+                deviceProductInfo.getConnectionToSinkType());
     }
 
     @Test
