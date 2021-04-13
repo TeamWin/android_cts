@@ -16,6 +16,7 @@
 
 package android.telephonyprovider.cts;
 
+import static android.content.pm.PackageManager.FEATURE_TELEPHONY;
 import static android.provider.Telephony.ServiceStateTable.DATA_NETWORK_TYPE;
 import static android.provider.Telephony.ServiceStateTable.DATA_REG_STATE;
 import static android.provider.Telephony.ServiceStateTable.DUPLEX_MODE;
@@ -26,6 +27,8 @@ import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.content.ContentResolver;
@@ -71,6 +74,8 @@ public class ServiceStateTest {
 
     @Before
     public void setUp() {
+        assumeTrue(hasTelephonyFeature());
+
         mContentResolver = getInstrumentation().getContext().getContentResolver();
         mTelephonyManager =
                 getInstrumentation().getContext().getSystemService(TelephonyManager.class);
@@ -80,6 +85,10 @@ public class ServiceStateTest {
 
     @After
     public void tearDown() {
+        if (!hasTelephonyFeature()) {
+            return;
+        }
+
         // Recover the initial ServiceState to remove the impact of manual ServiceState insertion.
         insertServiceState(mInitialServiceState);
     }
@@ -378,5 +387,10 @@ public class ServiceStateTest {
         public void onChange(boolean selfChange, @Nullable Uri uri) {
             mObserved.add(uri);
         }
+    }
+
+    private static boolean hasTelephonyFeature() {
+        return getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                FEATURE_TELEPHONY);
     }
 }
