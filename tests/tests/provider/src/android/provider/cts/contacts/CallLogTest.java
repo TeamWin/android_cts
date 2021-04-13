@@ -168,7 +168,8 @@ public class CallLogTest extends InstrumentationTestCase {
         Pair<Uri, CallLog.CallComposerLoggingException> result;
         try (InputStream inputStream =
                      context.getResources().openRawResource(R.drawable.testimage)) {
-            CallLog.storeCallComposerPictureAsUser(context, android.os.Process.myUserHandle(),
+            CallLog.storeCallComposerPicture(
+                    context.createContextAsUser(android.os.Process.myUserHandle(), 0),
                     inputStream,
                     Executors.newSingleThreadExecutor(),
                     new OutcomeReceiver<Uri, CallLog.CallComposerLoggingException>() {
