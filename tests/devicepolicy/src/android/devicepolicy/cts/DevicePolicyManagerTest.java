@@ -560,7 +560,6 @@ public final class DevicePolicyManagerTest {
         }
     }
 
-
     @RequireFeatures(PackageManager.FEATURE_DEVICE_ADMIN)
     @Test
     public void getPolicyExemptAppsCanOnlyBeDefinedOnAutomotiveBuilds() throws Exception {
