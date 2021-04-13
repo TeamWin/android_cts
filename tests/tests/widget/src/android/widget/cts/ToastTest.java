@@ -932,10 +932,12 @@ public class ToastTest {
     }
 
     @Test
-    public void testRateLimitingToasts() throws Throwable {
+    public void testRateLimitingToastsWhenInBackground() throws Throwable {
         // enable rate limiting to test it
         SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
                 .setToastRateLimitingEnabled(true));
+        // move to background
+        mActivityRule.finishActivity();
 
         long totalTimeSpentMs = 0;
         int shownToastsNum = 0;
@@ -966,6 +968,18 @@ public class ToastTest {
     }
 
     @Test
+    public void testDontRateLimitToastsWhenInForeground() throws Throwable {
+        // enable rate limiting to test it
+        SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
+                .setToastRateLimitingEnabled(true));
+
+        List<TextToastInfo> toasts =
+                createTextToasts(TOAST_RATE_LIMITS[0] + 1, "Text", Toast.LENGTH_SHORT);
+        showToasts(toasts);
+        assertTextToastsShownAndHidden(toasts);
+    }
+
+    @Test
     public void testCustomToastPostedWhileInForeground_notShownWhenAppGoesToBackground()
             throws Throwable {
         List<CustomToastInfo> toasts = createCustomToasts(2, "Custom", Toast.LENGTH_SHORT);
@@ -984,6 +998,8 @@ public class ToastTest {
         // enable rate limiting to test it
         SystemUtil.runWithShellPermissionIdentity(() -> mNotificationManager
                 .setToastRateLimitingEnabled(true));
+        // move to background
+        mActivityRule.finishActivity();
 
         int highestToastRateLimit = TOAST_RATE_LIMITS[TOAST_RATE_LIMITS.length - 1];
         List<TextToastInfo> toasts = createTextToasts(highestToastRateLimit + 1, "Text",
