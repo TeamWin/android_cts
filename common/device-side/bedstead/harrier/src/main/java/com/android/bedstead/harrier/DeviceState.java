@@ -33,17 +33,14 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import com.android.bedstead.harrier.annotations.EnsureHasNoSecondaryUser;
-import com.android.bedstead.harrier.annotations.EnsureHasSecondaryUser;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnSecondaryUser;
-import com.android.bedstead.harrier.annotations.RequireRunOnTvProfile;
-import com.android.bedstead.harrier.annotations.RequireRunOnWorkProfile;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotation;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
+import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -129,42 +126,35 @@ public final class DeviceState implements TestRule {
                     EnsureHasProfileAnnotation ensureHasProfileAnnotation =
                             annotationType.getAnnotation(EnsureHasProfileAnnotation.class);
                     if (ensureHasProfileAnnotation != null) {
-                        UserType userType = (UserType) annotation.annotationType()
+                        UserType forUser = (UserType) annotation.annotationType()
                                 .getMethod("forUser").invoke(annotation);
                         boolean installTestApp = (boolean) annotation.annotationType()
                                 .getMethod("installTestApp").invoke(annotation);
                             ensureHasProfile(
-                                    ensureHasProfileAnnotation.value(), installTestApp, userType);
+                                    ensureHasProfileAnnotation.value(), installTestApp, forUser);
                     }
-                }
-                if (description.getAnnotation(RequireRunOnPrimaryUser.class) != null) {
-                    assumeTrue("@RequireRunOnPrimaryUser tests only run on primary user",
-                            isRunningOnPrimaryUser());
-                }
-                if (description.getAnnotation(RequireRunOnWorkProfile.class) != null) {
-                    assumeTrue("@RequireRunOnWorkProfile tests only run on work profile",
-                            isRunningOnWorkProfile());
-                }
-                if (description.getAnnotation(RequireRunOnSecondaryUser.class) != null) {
-                    assumeTrue("@RequireRunOnSecondaryUser tests only run on secondary user",
-                            isRunningOnSecondaryUser());
-                }
-                if (description.getAnnotation(RequireRunOnTvProfile.class) != null) {
-                    assumeTrue("@RequireRunOnTvProfile tests only run on TV profile",
-                            isRunningOnTvProfile());
-                }
-                EnsureHasSecondaryUser ensureHasSecondaryUserAnnotation =
-                        description.getAnnotation(EnsureHasSecondaryUser.class);
-                if (ensureHasSecondaryUserAnnotation != null) {
-                    ensureHasUser(
-                            SECONDARY_USER_TYPE_NAME,
-                            /* installTestApp= */ ensureHasSecondaryUserAnnotation.installTestApp()
-                    );
-                }
-                EnsureHasNoSecondaryUser ensureHasNoSecondaryUserAnnotation =
-                        description.getAnnotation(EnsureHasNoSecondaryUser.class);
-                if (ensureHasNoSecondaryUserAnnotation != null) {
-                    ensureHasNoUser(SECONDARY_USER_TYPE_NAME);
+
+
+                    EnsureHasNoUserAnnotation ensureHasNoUserAnnotation =
+                            annotationType.getAnnotation(EnsureHasNoUserAnnotation.class);
+                    if (ensureHasNoUserAnnotation != null) {
+                        ensureHasNoUser(ensureHasNoUserAnnotation.value());
+                    }
+
+                    EnsureHasUserAnnotation ensureHasUserAnnotation =
+                            annotationType.getAnnotation(EnsureHasUserAnnotation.class);
+                    if (ensureHasUserAnnotation != null) {
+                        boolean installTestApp = (boolean) annotation.getClass()
+                                .getMethod("installTestApp").invoke(annotation);
+                        ensureHasUser(ensureHasUserAnnotation.value(), installTestApp);
+                    }
+
+                    RequireRunOnUserAnnotation requireRunOnUserAnnotation =
+                            annotationType.getAnnotation(RequireRunOnUserAnnotation.class);
+                    if (requireRunOnUserAnnotation != null) {
+                        requireRunOnUser(requireRunOnUserAnnotation.value());
+                    }
+
                 }
                 RequireFeatures requireFeaturesAnnotation =
                         description.getAnnotation(RequireFeatures.class);
@@ -202,6 +192,11 @@ public final class DeviceState implements TestRule {
 
     private Statement applySuite(final Statement base, final Description description) {
         return base;
+    }
+
+    private void requireRunOnUser(String userType) {
+        assumeTrue("This test only runs on users of type " + userType,
+                isRunningOnUser(userType));
     }
 
     private void requireFeature(String feature, FailureMode failureMode) {
@@ -316,9 +311,9 @@ public final class DeviceState implements TestRule {
         return mProfiles.get(userType).get(forUser);
     }
 
-    private boolean isRunningOnWorkProfile() {
+    private boolean isRunningOnUser(String userType) {
         return sTestApis.users().instrumented()
-                .resolve().type().name().equals(MANAGED_PROFILE_TYPE_NAME);
+                .resolve().type().name().equals(userType);
     }
 
     /**
@@ -355,20 +350,6 @@ public final class DeviceState implements TestRule {
      */
     public UserReference tvProfile(UserReference forUser) {
         return profile(TV_PROFILE_TYPE_NAME, forUser);
-    }
-
-    public boolean isRunningOnTvProfile() {
-        return sTestApis.users().instrumented().resolve()
-                .type().name().equals(TV_PROFILE_TYPE_NAME);
-    }
-
-    public boolean isRunningOnPrimaryUser() {
-        return sTestApis.users().instrumented().resolve().isPrimary();
-    }
-
-    public boolean isRunningOnSecondaryUser() {
-        return sTestApis.users().instrumented().resolve()
-                .type().name().equals(SECONDARY_USER_TYPE_NAME);
     }
 
     /**

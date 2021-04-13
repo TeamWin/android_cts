@@ -84,6 +84,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
                 getBackupUtils().isBackupEnabled());
         assertEquals("LocalTransport should be selected at this point", LOCAL_TRANSPORT,
                 getCurrentTransport());
+        mBackupUtils.wakeAndUnlockDevice();
     }
 
     protected BackupUtils getBackupUtils() {
