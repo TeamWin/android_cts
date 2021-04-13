@@ -16,8 +16,7 @@
 
 package android.server.wm;
 
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.wm.ComponentNameUtils.getWindowName;
@@ -60,6 +59,7 @@ import android.server.wm.app.Components;
 import androidx.test.filters.FlakyTest;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -231,6 +231,8 @@ public class KeyguardTests extends KeyguardTestBase {
      */
     @Test
     @Presubmit
+    // TODO (b/169271554): Temporarily switch activity to fullscreen when needing to showWhenLocked
+    @Ignore
     public void testShowWhenLockedActivityWhileSplit() {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -245,8 +247,8 @@ public class KeyguardTests extends KeyguardTestBase {
         mWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
         mWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         mWmState.assertKeyguardShowingAndOccluded();
-        mWmState.assertDoesNotContainStack("Activity must be full screen.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        WindowManagerState.Activity activity = mWmState.getActivity(SHOW_WHEN_LOCKED_ACTIVITY);
+        assertFalse(activity.getWindowingMode() == WINDOWING_MODE_MULTI_WINDOW);
     }
 
     /**

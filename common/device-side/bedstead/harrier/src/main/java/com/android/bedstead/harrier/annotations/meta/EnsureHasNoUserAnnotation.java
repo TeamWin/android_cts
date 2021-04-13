@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
-
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
+package com.android.bedstead.harrier.annotations.meta;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,16 +22,14 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run within a Tv profile.
+ * Mark that an annotation is used to indicate that no users of a given type should exist.
  *
- * <p>Your test configuration should be such that this test is only run where a Tv profile is
- * created and the test is being run within that user.
- *
- * <p>Optionally, you can guarantee that these methods do not run outside of a Tv
- * profile by using {@link DeviceState}.
+ * <p>The annotation annotated with {@link EnsureHasNoUserAnnotation} must have the same body as
+ * {@link EnsureHasNoUser}.
  */
-@Target(ElementType.METHOD)
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation("com.android.tv.profile")
-public @interface RequireRunOnTvProfile {
+public @interface EnsureHasNoUserAnnotation {
+    /** The name of the user type which should not be present. */
+    String value();
 }

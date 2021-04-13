@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.time.cts;
+package android.app.time.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -194,67 +194,5 @@ public class TimeManagerTest {
             Thread.sleep(250);
         }
         assertEquals(expectedValue, actualValue.get());
-    }
-
-    @Test
-    public void testExternalTimeSuggestionEquals() {
-        long referenceTimeMillis = 1111;
-        long currentTimeMillis = 2222;
-        ExternalTimeSuggestion one = new ExternalTimeSuggestion(
-                referenceTimeMillis,
-                currentTimeMillis);
-        assertEquals(one, one);
-
-        ExternalTimeSuggestion two = new ExternalTimeSuggestion(
-                referenceTimeMillis,
-                currentTimeMillis);
-        assertEquals(one, two);
-        assertEquals(two, one);
-
-        ExternalTimeSuggestion three = new ExternalTimeSuggestion(
-                referenceTimeMillis + 1,
-                currentTimeMillis);
-        assertNotEquals(one, three);
-        assertNotEquals(three, one);
-
-        // DebugInfo must not be considered in equals().
-        one.addDebugInfo("Debug info 1");
-        two.addDebugInfo("Debug info 2");
-        assertEquals(one, two);
-    }
-
-
-    /** Returns the result of parceling and unparceling the argument. */
-    @SuppressWarnings("unchecked")
-    public static ExternalTimeSuggestion roundTripParcelable(ExternalTimeSuggestion parcelable) {
-        Parcel parcel = Parcel.obtain();
-        parcel.writeTypedObject(parcelable, 0);
-        parcel.setDataPosition(0);
-
-        Parcelable.Creator<ExternalTimeSuggestion> creator;
-        try {
-            Field creatorField = parcelable.getClass().getField("CREATOR");
-            creator = (Parcelable.Creator<ExternalTimeSuggestion>) creatorField.get(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new AssertionError(e);
-        }
-        ExternalTimeSuggestion toReturn = parcel.readTypedObject(creator);
-        parcel.recycle();
-        return toReturn;
-    }
-
-    @Test
-    public void testExternalTimeSuggestionParcelable() {
-        long referenceTimeMillis = 1111;
-        long currentTimeMillis = 2222;
-        ExternalTimeSuggestion suggestion = new ExternalTimeSuggestion(
-                referenceTimeMillis,
-                currentTimeMillis);
-        assertEquals(suggestion, roundTripParcelable(suggestion));
-
-        // DebugInfo should also be stored (but is not checked by equals())
-        suggestion.addDebugInfo("This is debug info");
-        ExternalTimeSuggestion rtSuggestion = roundTripParcelable(suggestion);
-        assertEquals(suggestion.getDebugInfo(), rtSuggestion.getDebugInfo());
     }
 }

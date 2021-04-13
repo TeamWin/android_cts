@@ -28,6 +28,7 @@ import image_processing_utils
 import its_session_utils
 import opencv_processing_utils
 
+_ANDROID11_API_LEVEL = 30
 _CIRCLE_COLOR = 0  # [0: black, 255: white].
 _CIRCLE_MIN_AREA = 0.01  # 1% of image size.
 _FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected.
@@ -50,7 +51,7 @@ _AR_DIFF_ATOL = 0.01
 
 def _check_skip_conditions(first_api_level, props):
   """Check the skip conditions based on first API level."""
-  if first_api_level < 30:  # Original constraint.
+  if first_api_level < _ANDROID11_API_LEVEL:  # Original constraint.
     camera_properties_utils.skip_unless(camera_properties_utils.read_3a(props))
   else:  # Loosen from read_3a to enable LIMITED coverage.
     camera_properties_utils.skip_unless(
@@ -100,7 +101,8 @@ def _create_format_list():
   return format_list
 
 
-def _print_failed_test_results(failed_ar, failed_fov, failed_crop):
+def _print_failed_test_results(failed_ar, failed_fov, failed_crop,
+                               first_api_level, level_3):
   """Print failed test results."""
   if failed_ar:
     logging.error('Aspect ratio test summary')
@@ -125,13 +127,17 @@ def _print_failed_test_results(failed_ar, failed_fov, failed_crop):
     raise RuntimeError
   if failed_fov:
     raise RuntimeError
-  if failed_crop:  # failed_crop = [] if run_crop_test = False.
-    raise RuntimeError
+  if first_api_level > _ANDROID11_API_LEVEL:
+    if failed_crop:  # failed_crop = [] if run_crop_test = False.
+      raise RuntimeError
+  else:
+    if failed_crop and level_3:
+      raise RuntimeError
 
 
 def _is_checked_aspect_ratio(first_api_level, w, h):
   """Determine if format aspect ratio is a checked on based of first_API."""
-  if first_api_level >= 30:
+  if first_api_level >= _ANDROID11_API_LEVEL:
     return True
 
   for ar_check in _AR_CHECKED_PRE_API_30:
@@ -476,6 +482,7 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
 
       # Determine camera capabilities.
       full_or_better = camera_properties_utils.full_or_better(props)
+      level3 = camera_properties_utils.level3(props)
       raw_avlb = camera_properties_utils.raw16(props)
       debug = self.debug_mode
 
@@ -559,7 +566,8 @@ class AspectRatioAndCropTest(its_base_test.ItsBaseTest):
               image_processing_utils.write_image(img, img_name, True)
 
       # Print any failed test results.
-      _print_failed_test_results(failed_ar, failed_fov, failed_crop)
+      _print_failed_test_results(failed_ar, failed_fov, failed_crop,
+                                 first_api_level, level3)
 
 if __name__ == '__main__':
   test_runner.main()

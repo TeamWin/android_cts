@@ -61,9 +61,11 @@ import static android.content.pm.PackageManager.FEATURE_WATCH;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertThrows;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.AutomaticZenRule;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
@@ -3669,14 +3671,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             createDynamicShortcut();
             setUpNotifListener();
 
-            // Make a bubble
             SendBubbleActivity a = startSendBubbleActivity();
-            a.sendBubble(BUBBLE_NOTIF_ID,
-                    false /* autoExpand */,
-                    false /* suppressNotif */,
-                    true /* suppressBubble */);
-
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             // Prep to find bubbled activity
             Class clazz = BubbledActivity.class;
@@ -3690,10 +3685,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-
             BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
-            assertTrue(activity.isBubbled());
+            assertTrue(activity.isLaunchedFromBubble());
         } finally {
             deleteShortcuts();
             cleanupSendBubbleActivity();
@@ -3715,14 +3708,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             createDynamicShortcut();
             setUpNotifListener();
 
-            // Make a bubble
             SendBubbleActivity a = startSendBubbleActivity();
-            a.sendBubble(BUBBLE_NOTIF_ID,
-                    false /* autoExpand */,
-                    false /* suppressNotif */,
-                    true /* suppressBubble */);
-
-            verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
             // Prep to find bubbled activity
             Class clazz = BubbledActivity.class;
@@ -3732,17 +3718,16 @@ public class NotificationManagerTest extends AndroidTestCase {
                     new Instrumentation.ActivityMonitor(clazz.getName(), result, false);
             InstrumentationRegistry.getInstrumentation().addMonitor(monitor);
 
-            a.sendBubble(BUBBLE_NOTIF_ID,
-                    true /* autoExpand */,
+            a.sendBubble(BUBBLE_NOTIF_ID, true /* autoExpand */,
                     false /* suppressNotif */,
-                    true /* useShortcut */);
+                    false /* suppressBubble */,
+                    true /* useShortcut */,
+                    true /* setLocus */);
 
             verifyNotificationBubbleState(BUBBLE_NOTIF_ID, true /* shouldBeBubble */);
 
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-
             BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
-            assertTrue(activity.isBubbled());
+            assertTrue(activity.isLaunchedFromBubble());
         } finally {
             deleteShortcuts();
             cleanupSendBubbleActivity();
@@ -4038,6 +4023,27 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertFalse(sbn.getNotification().getBubbleMetadata().isBubbleSuppressed());
         } finally {
             deleteShortcuts();
+            cleanupSendBubbleActivity();
+        }
+    }
+
+    /** Verifies that a regular activity can't specify a bubble in ActivityOptions */
+    public void testNotificationManagerBubble_launchBubble_activityOptions_fails()
+            throws Exception {
+        try {
+            // Start test activity
+            SendBubbleActivity activity = startSendBubbleActivity();
+            assertFalse(activity.isLaunchedFromBubble());
+
+            // Should have exception
+            assertThrows(SecurityException.class, () -> {
+                Intent i = new Intent(mContext, BubbledActivity.class);
+                ActivityOptions options = ActivityOptions.makeBasic();
+                Bundle b = options.toBundle();
+                b.putBoolean("android.activity.launchTypeBubble", true);
+                activity.startActivity(i, b);
+            });
+        } finally {
             cleanupSendBubbleActivity();
         }
     }

@@ -39,7 +39,6 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
@@ -67,7 +66,6 @@ import androidx.test.uiautomator.UiObject2;
 
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
@@ -111,9 +109,6 @@ public class UiTranslationManagerTest {
     private CtsTranslationService.ServiceWatcher mTranslationServiceServiceWatcher;
     private ActivityScenario<SimpleActivity> mActivityScenario;
 
-    @Rule
-    public final RequiredFeatureRule mFeatureRule =
-            new RequiredFeatureRule(PackageManager.FEATURE_TRANSLATION);
     @Rule
     public final RequiredServiceRule mContentCaptureServiceRule =
             new RequiredServiceRule(CONTENT_CAPTURE_MANAGER_SERVICE);

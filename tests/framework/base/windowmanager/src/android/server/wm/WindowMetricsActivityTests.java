@@ -16,16 +16,16 @@
 
 package android.server.wm;
 
-import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.wm.WindowManagerState.STATE_PAUSED;
 import static android.server.wm.WindowMetricsTestHelper.getBoundsExcludingNavigationBarAndCutout;
 import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
@@ -142,11 +142,12 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
 
         assertMetricsMatchesLayout(activity);
 
-        setActivityTaskWindowingMode(activity.getComponentName(),
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mWmState.computeState(activity.getComponentName());
-        mWmState.assertContainsStack("Must contain primary split-screen stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        putActivityInPrimarySplit(activity.getComponentName());
+
+        mWmState.computeState(activity.getComponentName());
+        assertTrue(mWmState.getActivity(activity.getComponentName()).getWindowingMode()
+                == WINDOWING_MODE_MULTI_WINDOW);
 
         assertMetricsMatchesLayout(activity);
     }
@@ -160,11 +161,12 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
 
         assertMetricsValidity(activity);
 
-        setActivityTaskWindowingMode(activity.getComponentName(),
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         mWmState.computeState(activity.getComponentName());
-        mWmState.assertContainsStack("Must contain primary split-screen stack.",
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
+        putActivityInPrimarySplit(activity.getComponentName());
+
+        mWmState.computeState(activity.getComponentName());
+        assertTrue(mWmState.getActivity(activity.getComponentName()).getWindowingMode()
+                == WINDOWING_MODE_MULTI_WINDOW);
 
         assertMetricsValidity(activity);
     }
@@ -178,8 +180,9 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
 
         assertMetricsMatchesLayout(activity);
 
-        setActivityTaskWindowingMode(activity.getComponentName(),
+        launchActivity(new ComponentName(mTargetContext, MetricsActivity.class),
                 WINDOWING_MODE_FREEFORM);
+
         // Resize the freeform activity.
         resizeActivityTask(activity.getComponentName(), WINDOW_BOUNDS.left, WINDOW_BOUNDS.top,
                 WINDOW_BOUNDS.right, WINDOW_BOUNDS.bottom);
@@ -213,8 +216,9 @@ public class WindowMetricsActivityTests extends WindowManagerTestBase {
 
         assertMetricsValidity(activity);
 
-        setActivityTaskWindowingMode(activity.getComponentName(),
+        launchActivity(new ComponentName(mTargetContext, MetricsActivity.class),
                 WINDOWING_MODE_FREEFORM);
+
         // Resize the freeform activity.
         resizeActivityTask(activity.getComponentName(), WINDOW_BOUNDS.left, WINDOW_BOUNDS.top,
                 WINDOW_BOUNDS.right, WINDOW_BOUNDS.bottom);

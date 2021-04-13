@@ -51,6 +51,7 @@ class MetadataTest(its_base_test.ItsBaseTest):
       logging.debug('Limited: %s', camera_properties_utils.limited(props))
       logging.debug('Full or better: %s',
                     camera_properties_utils.full_or_better(props))
+      logging.debug('Level 3: %s', camera_properties_utils.level3(props))
       logging.debug('Capabilities')
       logging.debug('Manual sensor: %s',
                     camera_properties_utils.manual_sensor(props))
