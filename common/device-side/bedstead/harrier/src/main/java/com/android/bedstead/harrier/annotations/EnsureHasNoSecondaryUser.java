@@ -17,6 +17,7 @@
 package com.android.bedstead.harrier.annotations;
 
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -33,5 +34,6 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@EnsureHasNoUserAnnotation("android.os.usertype.full.SECONDARY")
 public @interface EnsureHasNoSecondaryUser {
 }

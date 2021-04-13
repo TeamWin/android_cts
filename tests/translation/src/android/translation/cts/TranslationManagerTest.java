@@ -23,7 +23,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
-import android.content.pm.PackageManager;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Log;
@@ -43,7 +42,6 @@ import androidx.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.ActivitiesWatcher;
 import com.android.compatibility.common.util.ActivitiesWatcher.ActivityWatcher;
-import com.android.compatibility.common.util.RequiredFeatureRule;
 import com.android.compatibility.common.util.RequiredServiceRule;
 
 import org.junit.After;
@@ -71,10 +69,6 @@ import java.util.function.Consumer;
         + "service from the test package.")
 @RunWith(AndroidJUnit4.class)
 public class TranslationManagerTest {
-
-    @Rule
-    public final RequiredFeatureRule mFeatureRule = new RequiredFeatureRule(
-            PackageManager.FEATURE_TRANSLATION);
 
     @Rule
     public final RequiredServiceRule mServiceRule = new RequiredServiceRule(

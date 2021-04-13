@@ -83,6 +83,11 @@ public abstract class AbstractBaseTest extends PassFailButtons.Activity {
         Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
     }
 
+    void showToastAndLog(String s, Exception e) {
+        Log.d(getTag(), s, e);
+        Toast.makeText(this, s, Toast.LENGTH_SHORT).show();
+    }
+
     protected void onBiometricEnrollFinished() {
     }
 

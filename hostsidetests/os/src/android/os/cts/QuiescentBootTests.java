@@ -16,7 +16,6 @@
 
 package android.os.cts;
 
-
 import static android.os.PowerManagerInternalProto.Wakefulness.WAKEFULNESS_ASLEEP;
 import static android.os.PowerManagerInternalProto.Wakefulness.WAKEFULNESS_AWAKE;
 
@@ -29,6 +28,7 @@ import android.os.PowerManagerInternalProto.Wakefulness;
 
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ProtoUtils;
+import com.android.compatibility.common.util.WindowManagerUtil;
 import com.android.server.power.PowerManagerServiceDumpProto;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -38,6 +38,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class QuiescentBootTests extends BaseHostJUnit4Test {
@@ -99,6 +102,15 @@ public class QuiescentBootTests extends BaseHostJUnit4Test {
         mDevice.waitForBootComplete(REBOOT_TIMEOUT);
 
         assertEquals("Expected to boot in awake state.", WAKEFULNESS_AWAKE, getWakefulness());
+    }
+
+    @Test
+    public void testQuiescentBoot_activitiesNotResumedAfterBoot() throws Exception {
+        mDevice.executeAdbCommand("reboot", "quiescent");
+        mDevice.waitForBootComplete(REBOOT_TIMEOUT);
+
+        List<String> resumedActivities = WindowManagerUtil.getResumedActivities(getDevice());
+        assertEquals("Expected no resumed activities", 0, resumedActivities.size());
     }
 
     private Wakefulness getWakefulness() throws Exception {

@@ -186,9 +186,9 @@ public class DevicePolicyLoggingTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setUninstallBlocked(ADMIN_RECEIVER_COMPONENT, PACKAGE_NAME, false);
     }
 
-    public void testSetEnterpriseNetworkPreferenceEnabledLogged() {
-        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(true);
-        mDevicePolicyManager.setEnterpriseNetworkPreferenceEnabled(false);
+    public void testSetPreferentialNetworkServiceEnabledLogged() {
+        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(true);
+        mDevicePolicyManager.setPreferentialNetworkServiceEnabled(false);
     }
 
     public void testDisallowAdjustVolumeMutedLogged() {

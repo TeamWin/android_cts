@@ -222,8 +222,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
 
         // Move to primary split.
         separateTestJournal();
-        final int primaryTaskId = mWmState.getTaskByActivity(NO_RELAUNCH_ACTIVITY).mTaskId;
-        mTaskOrganizer.putTaskInSplitPrimary(primaryTaskId);
+        putActivityInPrimarySplit(NO_RELAUNCH_ACTIVITY);
 
         ActivityLifecycleCounts lifecycleCounts =
                 waitForOnMultiWindowModeChanged(NO_RELAUNCH_ACTIVITY);
@@ -235,8 +234,7 @@ public class MultiWindowTests extends ActivityManagerTestBase {
         // Make sure primary split is focused. This way when we dismiss it later fullscreen stack
         // will come up.
         launchActivity(LAUNCHING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
-        final int secondaryTaskId = mWmState.getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
-        mTaskOrganizer.putTaskInSplitSecondary(secondaryTaskId);
+        putActivityInSecondarySplit(LAUNCHING_ACTIVITY);
 
         launchActivity(NO_RELAUNCH_ACTIVITY);
 
