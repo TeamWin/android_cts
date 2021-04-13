@@ -38,7 +38,7 @@ java_test_host {
 }
 
 android_test_helper_app {
-    name: "CtsAppSearchHostTestHelper",
+    name: "CtsAppSearchHostTestHelperA",
     defaults: ["cts_defaults"],
     static_libs: [
         "AppSearchTestUtils",
@@ -48,12 +48,35 @@ android_test_helper_app {
         "testng",
     ],
     srcs: [
-        "test-apps/AppSearchHostTestHelper/src/**/*.java",
+        "test-apps/AppSearchHostTestHelperA/src/**/*.java",
     ],
     test_suites: [
         "cts",
         "general-tests",
     ],
-    manifest: "test-apps/AppSearchHostTestHelper/AndroidManifest.xml",
+    manifest: "test-apps/AppSearchHostTestHelperA/AndroidManifest.xml",
+    certificate: ":cts-appsearch-hosttest-helper-cert-a",
+    sdk_version: "test_current",
+}
+
+android_test_helper_app {
+    name: "CtsAppSearchHostTestHelperB",
+    defaults: ["cts_defaults"],
+    static_libs: [
+        "AppSearchTestUtils",
+        "androidx.test.ext.junit",
+        "androidx.test.rules",
+        "compatibility-device-util-axt",
+        "testng",
+    ],
+    srcs: [
+        "test-apps/AppSearchHostTestHelperB/src/**/*.java",
+    ],
+    test_suites: [
+        "cts",
+        "general-tests",
+    ],
+    manifest: "test-apps/AppSearchHostTestHelperB/AndroidManifest.xml",
+    certificate: ":cts-appsearch-hosttest-helper-cert-b",
     sdk_version: "test_current",
 }
