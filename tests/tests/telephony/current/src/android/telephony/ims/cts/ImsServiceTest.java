@@ -110,28 +110,57 @@ public class ImsServiceTest {
     private static final int TEST_CONFIG_VALUE_INT = 0xDEADBEEF;
     private static final String TEST_CONFIG_VALUE_STRING = "DEADBEEF";
 
-    private static final String TEST_RCS_CONFIG_DEFAULT = "<RCSConfig>\n"
-            + "\t<rcsVolteSingleRegistration>1</rcsVolteSingleRegistration>\n"
-            + "\t<SERVICES>\n"
-            + "\t\t<SupportedRCSProfileVersions>UP_2.0</SupportedRCSProfileVersions>\n"
-            + "\t\t<ChatAuth>1</ChatAuth>\n"
-            + "\t\t<GroupChatAuth>1</GroupChatAuth>\n"
-            + "\t\t<ftAuth>1</ftAuth>\n"
-            + "\t\t<standaloneMsgAuth>1</standaloneMsgAuth>\n"
-            + "\t\t<geolocPushAuth>1</geolocPushAuth>\n"
-            + "\t\t<Ext>\n"
-            + "\t\t\t<DataOff>\n"
-            + "\t\t\t\t<rcsMessagingDataOff>1</rcsMessagingDataOff>\n"
-            + "\t\t\t\t<fileTransferDataOff>1</fileTransferDataOff>\n"
-            + "\t\t\t\t<mmsDataOff>1</mmsDataOff>\n"
-            + "\t\t\t\t<syncDataOff>1</syncDataOff>\n"
-            + "\t\t\t</DataOff>\n"
-            + "\t\t</Ext>\n"
-            + "\t</SERVICES>\n"
-            + "</RCSConfig>";
-    private static final String TEST_RCS_CONFIG_SINGLE_REGISTRATION_DISABLED = "<RCSConfig>\n"
-            + "\t<rcsVolteSingleRegistration>0</rcsVolteSingleRegistration>\n"
-            + "</RCSConfig>";
+    private static final String TEST_RCS_CONFIG_DEFAULT = "<?xml version=\"1.0\"?>\n"
+            + "<wap-provisioningdoc version=\"1.1\">\n"
+            + "\t<characteristic type=\"APPLICATION\">\n"
+            + "\t\t<parm name=\"AppID\" value=\"urn:oma:mo:ext-3gpp-ims:1.0\"/>\n"
+            + "\t\t<characteristic type=\"3GPP_IMS\">\n"
+            + "\t\t\t<parm name=\"AppID\" value=\"ap2001\"/>\n"
+            + "\t\t\t<parm name=\"Name\" value=\"RCS IMS Settings\"/>\n"
+            + "\t\t\t<characteristic type=\"Ext\">\n"
+            + "\t\t\t\t<characteristic type=\"GSMA\">\n"
+            + "\t\t\t\t\t<parm name=\"AppRef\" value=\"IMS-Setting\"/>\n"
+            + "\t\t\t\t\t<parm name=\"rcsVolteSingleRegistration\" value=\"1\"/>\n"
+            + "\t\t\t\t</characteristic>\n"
+            + "\t\t\t</characteristic>\n"
+            + "\t\t</characteristic>\n"
+            + "\t\t<characteristic type=\"SERVICES\">\n"
+            + "\t\t\t<parm name=\"SupportedRCSProfileVersions\" value=\"UP2.3\"/>\n"
+            + "\t\t\t<parm name=\"ChatAuth\" value=\"1\"/>\n"
+            + "\t\t\t<parm name=\"GroupChatAuth\" value=\"1\"/>\n"
+            + "\t\t\t<parm name=\"ftAuth\" value=\"1\"/>\n"
+            + "\t\t\t<parm name=\"standaloneMsgAuth\" value=\"1\"/>\n"
+            + "\t\t\t<parm name=\"geolocPushAuth\" value=\"1\"/>\n"
+            + "\t\t\t<characteristic type=\"Ext\">\n"
+            + "\t\t\t\t<characteristic type=\"DataOff\">\n"
+            + "\t\t\t\t\t<parm name=\"rcsMessagingDataOff\" value=\"1\"/>\n"
+            + "\t\t\t\t\t<parm name=\"fileTransferDataOff\" value=\"1\"/>\n"
+            + "\t\t\t\t\t<parm name=\"mmsDataOff\" value=\"1\"/>\n"
+            + "\t\t\t\t\t<parm name=\"syncDataOff\" value=\"1\"/>\n"
+            + "\t\t\t\t\t<characteristic type=\"Ext\"/>\n"
+            + "\t\t\t\t</characteristic>\n"
+            + "\t\t\t</characteristic>\n"
+            + "\t\t</characteristic>\n"
+            + "\t</characteristic>\n"
+            + "</wap-provisioningdoc>\n";
+
+    private static final String TEST_RCS_CONFIG_SINGLE_REGISTRATION_DISABLED =
+            "<?xml version=\"1.0\"?>\n"
+            + "<wap-provisioningdoc version=\"1.1\">\n"
+            + "\t<characteristic type=\"APPLICATION\">\n"
+            + "\t\t<parm name=\"AppID\" value=\"urn:oma:mo:ext-3gpp-ims:1.0\"/>\n"
+            + "\t\t<characteristic type=\"3GPP_IMS\">\n"
+            + "\t\t\t<parm name=\"AppID\" value=\"ap2001\"/>\n"
+            + "\t\t\t<parm name=\"Name\" value=\"RCS IMS Settings\"/>\n"
+            + "\t\t\t<characteristic type=\"Ext\">\n"
+            + "\t\t\t\t<characteristic type=\"GSMA\">\n"
+            + "\t\t\t\t\t<parm name=\"AppRef\" value=\"IMS-Setting\"/>\n"
+            + "\t\t\t\t\t<parm name=\"rcsVolteSingleRegistration\" value=\"0\"/>\n"
+            + "\t\t\t\t</characteristic>\n"
+            + "\t\t\t</characteristic>\n"
+            + "\t\t</characteristic>\n"
+            + "\t</characteristic>\n"
+            + "</wap-provisioningdoc>\n";
     private static final String TEST_RCS_PRE_CONFIG = "<RCSPreProvisiniongConfig>\n"
             + "\t<VERS>\n"
             + "\t\t<version>1</version>\n"
@@ -2772,7 +2801,7 @@ public class ImsServiceTest {
                 buildRcsProvisioningCallback(clientQueue, paramsQueue);
         ProvisioningManager provisioningManager =
                 ProvisioningManager.createForSubscriptionId(sTestSub);
-        String configStr = "<test01/>\n" + TEST_RCS_CONFIG_DEFAULT;
+        String configStr = TEST_RCS_CONFIG_DEFAULT;
 
         //notify rcs configuration received, wait rcs gets ready and receives notification
         try {
@@ -2802,7 +2831,7 @@ public class ImsServiceTest {
         assertTrue(Arrays.equals(
                 configStr.getBytes(), TestAcsClient.getInstance().getConfig()));
 
-        configStr = "<test02/>\n" + TEST_RCS_CONFIG_DEFAULT;
+        configStr = TEST_RCS_CONFIG_SINGLE_REGISTRATION_DISABLED;
         try {
             automan.adoptShellPermissionIdentity();
             provisioningManager.notifyRcsAutoConfigurationReceived(
