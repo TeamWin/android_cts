@@ -25,9 +25,9 @@ public class TaggingBaseTest extends CompatChangeGatingTestCase {
     private static final String DEVICE_KERNEL_HELPER_CLASS_NAME = "DeviceKernelHelpers";
     private static final String DEVICE_KERNEL_HELPER_APK_NAME = "DeviceKernelHelpers.apk";
     private static final String DEVICE_KERNEL_HELPER_PKG_NAME = "android.cts.tagging.support";
-    private static final String KERNEL_HELPER_START_COMMAND =
-            String.format("am start -W -a android.intent.action.MAIN -n %s/.%s",
-                    DEVICE_KERNEL_HELPER_PKG_NAME, DEVICE_KERNEL_HELPER_CLASS_NAME);
+    private static final String KERNEL_HELPER_START_COMMAND = String.format(
+        "am instrument -w -e package %1$s %1$s/androidx.test.runner.AndroidJUnitRunner",
+        DEVICE_KERNEL_HELPER_PKG_NAME);
 
     protected static final long NATIVE_HEAP_POINTER_TAGGING_CHANGE_ID = 135754954;
     protected static final String DEVICE_TEST_CLASS_NAME = ".TaggingTest";
