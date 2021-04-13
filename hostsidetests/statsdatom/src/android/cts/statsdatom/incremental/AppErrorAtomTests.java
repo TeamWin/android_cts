@@ -60,6 +60,10 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
 
     @Before
     public void setUp() throws Exception {
+        if (!getDevice().hasFeature(FEATURE_INCREMENTAL_DELIVERY)) {
+            return;
+        }
+        super.setUp();
         ConfigUtils.removeConfig(getDevice());
         ReportUtils.clearReports(getDevice());
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
@@ -94,6 +98,7 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
         }
         getDevice().uninstallPackage(DeviceUtils.STATSD_ATOM_TEST_PKG);
         assertFalse(getDevice().isPackageInstalled(DeviceUtils.STATSD_ATOM_TEST_PKG));
+        super.tearDown();
     }
 
     public void testAppCrashOnIncremental() throws Exception {
