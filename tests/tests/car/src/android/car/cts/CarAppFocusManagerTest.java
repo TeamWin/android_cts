@@ -153,10 +153,19 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
         Assert.assertArrayEquals(expectedFocuses, mManager.getActiveAppTypes());
         Assert.assertArrayEquals(expectedFocuses, manager2.getActiveAppTypes());
-        assertTrue(change2.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+
+        // The new implementation of AppFocusService will always notify when requesting focus
+        // for the same application type.
+        if (change2.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+                CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true)) {
+            assertTrue(change.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
-        assertTrue(change.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
+        } else {
+            // The old implementation of AppFocusService will only notify once when requesting
+            // focus for the same application type.
+            assertFalse(change.waitForFocusChangedAndAssert(DEFAULT_WAIT_TIMEOUT_MS,
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, true));
+        }
 
         assertEquals(CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED,
                 manager2.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, owner2));
@@ -286,6 +295,7 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         public void reset() {
             mLastChangeAppType = 0;
             mLastChangeAppActive = false;
+            mChangeWait.drainPermits();
         }
 
         @Override
