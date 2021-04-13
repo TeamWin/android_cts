@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.Function;
 
@@ -348,7 +347,9 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         if(!ApiLevelUtil.isAtLeast(Build.VERSION_CODES.R)) {
             // The fix for b/154357105 was released in mainline release 30.09.007.01
             // See https://android-build.googleplex.com/builds/treetop/googleplex-android-review/11174063
-            TestUtils.assumeMainlineModuleAtLeast("com.google.android.media", 300900701);
+            if (TestUtils.skipTestIfMainlineLessThan("com.google.android.media", 300900701)) {
+                return;
+            }
         }
         setDataSourceFd(R.raw.sinesweepid3v24ext);
         assertEquals("Mime type was other than expected",
