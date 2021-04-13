@@ -96,6 +96,7 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("scene3");
             add("scene4");
             add("scene5");
+            add("scene6");
             add("scene_change");
             add("sensor_fusion");
         }};
@@ -213,6 +214,10 @@ public class ItsTestActivity extends DialogTestListActivity {
             add("test_lens_shading_and_color_uniformity");
         }};
 
+    private static final ArrayList<String> mScene6Tests = new ArrayList<String>() {{
+            add("test_zoom");
+        }};
+
     private static final ArrayList<String> mSceneChangeTests = new ArrayList<String>() {{
             add("test_scene_change");
         }};
@@ -235,6 +240,7 @@ public class ItsTestActivity extends DialogTestListActivity {
             put("scene3",mScene3Tests);
             put("scene4",mScene4Tests);
             put("scene5",mScene5Tests);
+            put("scene6",mScene6Tests);
             put("scene_change",mSceneChangeTests);
             put("sensor_fusion",mSensorFusionTests);
         }};
