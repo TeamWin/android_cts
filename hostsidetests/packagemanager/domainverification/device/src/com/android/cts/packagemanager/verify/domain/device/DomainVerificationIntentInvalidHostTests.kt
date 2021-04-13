@@ -14,35 +14,21 @@
  * limitations under the License.
  */
 
-package com.android.cts.packagemanager.verify.domain.callingapp
+package com.android.cts.packagemanager.verify.domain.device
 
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_1_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARING_PKG_2_COMPONENT
 import com.android.cts.packagemanager.verify.domain.android.DomainVerificationIntentTestBase
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_2
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_2
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase(DOMAIN_1) {
+class DomainVerificationIntentInvalidHostTests :
+    DomainVerificationIntentTestBase("invalid1", assertResolvesToBrowsersInBefore = false) {
 
     @Test
-    fun multipleVerifiedTakeLastFirstInstall() {
-        setAppLinks(DECLARING_PKG_NAME_2, true, DOMAIN_1, DOMAIN_2)
-
-        assertResolvesTo(DECLARING_PKG_2_COMPONENT)
-
-        setAppLinks(DomainUtils.DECLARING_PKG_NAME_1, true, DOMAIN_1, DOMAIN_2)
-
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
-
-        // Re-approve 2 and ensure this doesn't affect anything
-        setAppLinks(DECLARING_PKG_NAME_2, true, DOMAIN_1, DOMAIN_2)
-
-        assertResolvesTo(DECLARING_PKG_1_COMPONENT)
+    fun launchInvalidHttpUri() {
+        assertResolvesTo(browsers + DECLARING_PKG_1_COMPONENT + DECLARING_PKG_2_COMPONENT)
     }
 }
