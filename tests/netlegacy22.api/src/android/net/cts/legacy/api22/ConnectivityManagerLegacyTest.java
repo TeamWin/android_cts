@@ -50,6 +50,7 @@ public class ConnectivityManagerLegacyTest extends AndroidTestCase {
     private static final String HOST_ADDRESS1 = "192.0.2.1";
     private static final String HOST_ADDRESS2 = "192.0.2.2";
     private static final String HOST_ADDRESS3 = "192.0.2.3";
+    private static final String HOST_ADDRESS4 = "192.0.2.4";
 
     // These are correct as of API level 22, which is what we target here.
     private static final int APN_REQUEST_FAILED = 3;
@@ -287,7 +288,7 @@ public class ConnectivityManagerLegacyTest extends AndroidTestCase {
 
             try {
                 assertTrue("Network type " + type,
-                        mCm.requestRouteToHost(type, ipv4AddrToInt(HOST_ADDRESS3)) == expectToWork);
+                        mCm.requestRouteToHost(type, ipv4AddrToInt(HOST_ADDRESS4)) == expectToWork);
             } catch (Exception e) {
                 Log.d(TAG, "got exception in requestRouteToHost for type " + type);
                 assertFalse("Exception received for type " + type, expectToWork);
@@ -296,6 +297,6 @@ public class ConnectivityManagerLegacyTest extends AndroidTestCase {
             //TODO verify route table
         }
 
-        assertFalse(mCm.requestRouteToHost(-1, ipv4AddrToInt(HOST_ADDRESS1)));
+        assertFalse(mCm.requestRouteToHost(-1, ipv4AddrToInt(HOST_ADDRESS4)));
     }
 }
