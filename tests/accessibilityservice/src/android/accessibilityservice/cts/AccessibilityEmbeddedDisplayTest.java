@@ -247,7 +247,7 @@ public class AccessibilityEmbeddedDisplayTest {
         assertNotNull(mEmbeddedDisplayActivity);
     }
 
-    public static class EmbeddedDisplayParentActivity extends Activity {
+    public static class EmbeddedDisplayParentActivity extends AccessibilityTestActivity {
         private ActivityView mActivityView;
 
         @Override
