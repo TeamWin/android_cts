@@ -206,5 +206,7 @@ public final class DeviceAdminFeaturesCheckerRule implements TestRule {
     @Retention(RetentionPolicy.RUNTIME)
     @Target({ElementType.METHOD})
     public static @interface TemporaryIgnoreOnHeadlessSystemUserMode {
+        String bugId();
+        String reason();
     }
 }
