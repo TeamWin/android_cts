@@ -22,17 +22,13 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.os.BugreportManager;
 import android.os.BugreportManager.BugreportCallback;
 import android.os.BugreportParams;
 import android.os.FileUtils;
 import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.SystemUserOnly;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import androidx.test.InstrumentationRegistry;
@@ -68,7 +64,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SystemUserOnly(reason = "BugreportManager requires calls to originate from the primary user")
 @RunWith(AndroidJUnit4.class)
-public class BugreportManagerTest {
+public class BugreportManagerTest extends BaseCarrierApiTest {
     private static final String TAG = "BugreportManagerTest";
 
     // See BugreportManagerServiceImpl#BUGREPORT_SERVICE.
@@ -86,7 +82,6 @@ public class BugreportManagerTest {
 
     @Rule public TestName name = new TestName();
 
-    private TelephonyManager mTelephonyManager;
     private BugreportManager mBugreportManager;
     private File mBugreportFile;
     private ParcelFileDescriptor mBugreportFd;
@@ -95,19 +90,7 @@ public class BugreportManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        Context context = InstrumentationRegistry.getContext();
-        // Bail out if no cellular support.
-        assumeTrue(
-                "No cellular support, CarrierAPI.BugreportManagerTest cases will be skipped",
-                context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_TELEPHONY));
-        // Fail the test if we don't have carrier privileges.
-        mTelephonyManager = context.getSystemService(TelephonyManager.class);
-        assertWithMessage(
-                        "This test requires a SIM card with carrier privilege rules on it.\n"
-                                + "Visit https://source.android.com/devices/tech/config/uicc.html")
-                .that(mTelephonyManager.hasCarrierPrivileges())
-                .isTrue();
-        mBugreportManager = context.getSystemService(BugreportManager.class);
+        mBugreportManager = getContext().getSystemService(BugreportManager.class);
 
         killCurrentBugreportIfRunning();
         mBugreportFile = createTempFile("bugreport_" + name.getMethodName(), ".zip");
@@ -120,6 +103,8 @@ public class BugreportManagerTest {
 
     @After
     public void tearDown() throws Exception {
+        if (!werePreconditionsSatisfied()) return;
+
         FileUtils.closeQuietly(mBugreportFd);
         FileUtils.closeQuietly(mScreenshotFd);
         killCurrentBugreportIfRunning();
