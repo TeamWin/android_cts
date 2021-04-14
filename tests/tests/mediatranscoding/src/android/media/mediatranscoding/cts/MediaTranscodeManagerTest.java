@@ -475,7 +475,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             afd = mContentResolver.openAssetFileDescriptor(destinationUri, "rw");
             builder.setDestinationFileDescriptor(afd.getParcelFileDescriptor());
         }
-        TranscodingRequest request = builder.build();
+        VideoTranscodingRequest request = builder.build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
         assertEquals(pid, request.getClientPid());
         assertEquals(uid, request.getClientUid());
@@ -492,6 +492,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                     transcodeCompleteSemaphore.release();
                 });
         assertNotNull(session);
+        assertTrue(compareFormat(videoTrackFormat, request.getVideoTrackFormat()));
 
         if (session != null) {
             Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to cancel.");
@@ -529,6 +530,17 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 MediaTranscodingTestUtil.computeStats(mContext, fileUri, destinationUri, DEBUG_YUV);
         assertTrue("PSNR: " + stats.mAveragePSNR + " is too low",
                 stats.mAveragePSNR >= PSNR_THRESHOLD);
+    }
+
+    private boolean compareFormat(MediaFormat fmt1, MediaFormat fmt2) {
+        if (fmt1 == fmt2) return true;
+        if (fmt1 == null || fmt2 == null) return false;
+
+        return (fmt1.getString(MediaFormat.KEY_MIME) == fmt2.getString(MediaFormat.KEY_MIME) &&
+                fmt1.getInteger(MediaFormat.KEY_WIDTH) == fmt2.getInteger(MediaFormat.KEY_WIDTH) &&
+                fmt1.getInteger(MediaFormat.KEY_HEIGHT) == fmt2.getInteger(MediaFormat.KEY_HEIGHT)
+                && fmt1.getInteger(MediaFormat.KEY_BIT_RATE) == fmt2.getInteger(
+                MediaFormat.KEY_BIT_RATE));
     }
 
     public void testCancelTranscoding() throws Exception {
