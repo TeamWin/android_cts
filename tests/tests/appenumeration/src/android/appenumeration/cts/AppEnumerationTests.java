@@ -630,7 +630,7 @@ public class AppEnumerationTests {
     public void broadcastAdded_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ true);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             result.await();
@@ -644,7 +644,7 @@ public class AppEnumerationTests {
     public void broadcastAdded_visibleReceives() throws Exception {
         final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_ADDED, /* waitForReady */ true);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             Assert.assertEquals(TARGET_FILTERS,
@@ -658,7 +658,7 @@ public class AppEnumerationTests {
     public void reinstallTarget_broadcastRemoved_notVisibleDoesNotReceive() throws Exception {
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ true);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             result.await();
@@ -672,7 +672,7 @@ public class AppEnumerationTests {
     public void reinstallTarget_broadcastRemoved_visibleReceives() throws Exception {
         final Result result = sendCommand(QUERIES_ACTIVITY_ACTION, TARGET_FILTERS,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ true);
         runShellCommand("pm install " + TARGET_FILTERS_APK);
         try {
             Assert.assertEquals(TARGET_FILTERS,
@@ -687,7 +687,7 @@ public class AppEnumerationTests {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
         final Result result = sendCommand(QUERIES_NOTHING, TARGET_STUB,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ true);
         runShellCommand("pm uninstall " + TARGET_STUB);
         try {
             result.await();
@@ -702,7 +702,7 @@ public class AppEnumerationTests {
         ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
         final Result result = sendCommand(QUERIES_NOTHING_PERM, TARGET_STUB,
                 /* targetUid */ INVALID_UID, /* intentExtra */ null,
-                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ false);
+                Constants.ACTION_AWAIT_PACKAGE_REMOVED, /* waitForReady */ true);
         runShellCommand("pm uninstall " + TARGET_STUB);
         try {
             Assert.assertEquals(TARGET_STUB,
