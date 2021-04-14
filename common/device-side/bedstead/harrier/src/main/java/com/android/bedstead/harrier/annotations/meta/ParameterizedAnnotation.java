@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
-
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
+package com.android.bedstead.harrier.annotations.meta;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,15 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on the primary user.
+ * Mark a Harrier annotation as being Parameterized.
  *
- * <p>Your test configuration should be such that this test is only run on the primary user
+ * <p>There will be a separate run generated for the annotated method for each
+ * {@link ParameterizedAnnotation} annotation. The test will be named methodName[paramName].
  *
- * <p>Optionally, you can guarantee that these methods do not run outside of the primary
- * user by using {@link DeviceState}.
+ * <p>If any {@link ParameterizedAnnotation} annotations are applied to a test, then the basic
+ * un-parameterized test will not be run.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation("android.os.usertype.full.SYSTEM")
-public @interface RequireRunOnPrimaryUser {
+public @interface ParameterizedAnnotation {
 }

@@ -20,6 +20,7 @@ import static junit.framework.TestCase.fail;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Subclass this to create a blocking version of a callback. For example:
@@ -41,11 +42,11 @@ public abstract class BlockingCallback<E> {
     private static final int DEFAULT_TIMEOUT_SECONDS = 120;
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
-    private E mValue = null;
+    private AtomicReference<E> mValue = new AtomicReference<>();
 
     /** Call this method from the callback method to mark the response as received. */
     protected void callbackTriggered(E value) {
-        mValue = value;
+        mValue.set(value);
         mLatch.countDown();
     }
 
@@ -69,6 +70,6 @@ public abstract class BlockingCallback<E> {
         if (!mLatch.await(timeout, unit)) {
             fail("Callback was not received");
         }
-        return mValue;
+        return mValue.get();
     }
 }
