@@ -24,11 +24,14 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.UnsafeStateException;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.annotations.Postsubmit;
 
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 // TODO(b/174859111): move to automotive-specific section
+@RunWith(BedsteadJUnit4.class)
 public final class UnsafeStateExceptionTest {
 
     private static final int VALID_OPERATION = Integer.MAX_VALUE; // Value doesn't really matter...
