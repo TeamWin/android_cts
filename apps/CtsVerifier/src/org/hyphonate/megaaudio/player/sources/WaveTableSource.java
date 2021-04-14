@@ -139,11 +139,65 @@ public class WaveTableSource extends AudioSource {
     /*
      * Standard wavetable generators
      */
-    static public void genSinWave(float[] buffer) {
+
+    /**
+     * Generates a sin waveform wavetable.
+     * @param buffer    The buffer to receive the sample values.
+     */
+    public static void genSinWave(float[] buffer) {
         int size = buffer.length;
         float incr = ((float)Math.PI  * 2.0f) / (float)(size - 1);
         for(int index = 0; index < size; index++) {
             buffer[index] = (float)Math.sin(index * incr);
         }
+    }
+
+    /**
+     * Generates a triangular waveform
+     * @param buffer    The buffer to receive the sample values.
+     * @param maxValue  The maximum value for the generated wavetable
+     * @param minValue  The minimum value for the generated wavetable.
+     * @param dutyCycle The fraction of wavetable for the first 1/4 of the triangle wave.
+     */
+    public static void genTriangleWave(
+            float[] buffer, float maxValue, float minValue, float dutyCycle) {
+        float range = maxValue - minValue;
+        int size = buffer.length - 1;
+
+        // Make a triangle that goes 0 -> max -> min -> 0.
+        int index = 0;
+        int phase0Size = (int) (size / 2 * dutyCycle);
+
+        int breakIndex = phase0Size;
+        float val = 0;
+        // Phase 0 (0 -> max)
+        if (phase0Size != 0) {
+            float phase0Incr = maxValue / (float) phase0Size;
+            for (; index < breakIndex; ++index) {
+                buffer[index] = val;
+                val += phase0Incr;
+            }
+        } else {
+            val = maxValue;
+        }
+
+        // Phase 1 & 2 (max -> min)
+        breakIndex = size - phase0Size;
+        float incr = -range / ((float) size * (1.0f - dutyCycle));
+        for (; index < breakIndex; ++index) {
+            buffer[index] = val;
+            val += incr;
+        }
+
+        // Phase 3 (min -> 0)
+        if (phase0Size != 0) {
+            float phase0Incr = maxValue / (float) phase0Size;
+            for (; index < size; ++index) {
+                buffer[index] = val;
+                val += phase0Incr;
+            }
+        }
+
+        buffer[size] = buffer[0];
     }
 }
