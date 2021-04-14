@@ -147,7 +147,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         click(By.res("android:id/button1"))
 
     protected fun clickPermissionReviewContinue() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_continue")))
         } else {
             click(By.res("com.android.permissioncontroller:id/continue_button"))
@@ -155,7 +155,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionReviewCancel() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("review_button_cancel")))
         } else {
             click(By.res("com.android.permissioncontroller:id/cancel_button"))
@@ -281,7 +281,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickAllowAlwaysInSettings() {
-        if (isAutomotive || isTv) {
+        if (isAutomotive || isTv || isWatch) {
             click(By.text(getPermissionControllerString("app_permission_button_allow_always")))
         } else {
             click(By.res("com.android.permissioncontroller:id/allow_always_radio_button"))
@@ -298,7 +298,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestDenyButton() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
         } else {
             click(By.res(DENY_BUTTON))
@@ -307,7 +307,7 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
 
     protected fun clickPermissionRequestSettingsLinkAndDeny() {
         clickPermissionRequestSettingsLink()
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
             click(By.text(getPermissionControllerString("app_permission_button_deny")))
         } else {
             click(By.res("com.android.permissioncontroller:id/deny_radio_button"))
@@ -339,7 +339,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     protected fun clickPermissionRequestDenyAndDontAskAgainButton() {
-        if (isAutomotive) {
+        if (isAutomotive || isWatch) {
+            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
+        } else if (isAutomotive ) {
             click(By.text(getPermissionControllerString(DENY_AND_DONT_ASK_AGAIN_BUTTON_TEXT)))
         } else {
             click(By.res(DENY_AND_DONT_ASK_AGAIN_BUTTON))
@@ -347,9 +349,13 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
     }
 
     // Only used in TV and Watch form factors
-    protected fun clickPermissionRequestDontAskAgainButton() =
-        click(By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
-
+    protected fun clickPermissionRequestDontAskAgainButton() {
+        if (isWatch) {
+            click(By.text(getPermissionControllerString(DENY_BUTTON_TEXT)))
+        } else {
+            click(By.res("com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
+        }
+    }
     protected fun clickPermissionRequestNoUpgradeAndDontAskAgainButton() {
         if (isAutomotive) {
             click(By.text(getPermissionControllerString(NO_UPGRADE_AND_DONT_ASK_AGAIN_BUTTON_TEXT)))
@@ -398,7 +404,11 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                         }
                 )
                 // Open the permissions UI
-                click(byTextRes(R.string.permissions).enabled(true))
+                if (isWatch) {
+                    click(byTextRes(R.string.permissions))
+                } else {
+                    click(By.text("Permissions").enabled(true))
+                }
             } catch (e: Exception) {
                 pressBack()
                 throw e
@@ -408,12 +418,26 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
+
             click(By.text(permissionLabel))
+
+            /* Watch does not show an alert dialog when user turns on
+            *  permission only when the person turns it off.
+            *  I tried check what waitFindObject(By.text(permissionLabel)).isChecke
+            *  is false before click. But it is false all time. I hve not idea why. */
+
+            if (isWatch && hasObject(By.text(permissionLabel),100)) {
+                 continue
+            }
+
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message
                 !waitFindObject(byTextRes(R.string.deny)).isChecked
             } else {
+                if (!isWatch) {
+                    click(By.text("Deny"))
+                }
                 !(waitFindObject(byTextRes(R.string.deny)).isChecked ||
                     (!isLegacyApp && hasAskButton(permission) &&
                         waitFindObject(byTextRes(R.string.ask)).isChecked))
@@ -447,7 +471,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                                 } else {
                                     R.string.deny
                                 }
-                            PermissionState.DENIED_WITH_PREJUDICE -> R.string.deny
+                            PermissionState.DENIED_WITH_PREJUDICE -> {
+                                    R.string.deny
+                            }
                         }
                     }
                 )
@@ -466,7 +492,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
                     null
                 )
                 val confirmText = resources.getString(confirmTextRes)
-                click(byTextStartsWithCaseInsensitive(confirmText))
+                if (!isWatch) {
+                    click(byTextStartsWithCaseInsensitive(confirmText))
+                }
             }
             pressBack()
         }
@@ -537,8 +565,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         }
     }
 
-    private fun byTextRes(textRes: Int): BySelector = By.text(context.getString(textRes))
-
+    private fun byTextRes(textRes: Int): BySelector {
+        return By.text(context.getString(textRes))
+    }
     private fun byTextStartsWithCaseInsensitive(prefix: String): BySelector =
         By.text(Pattern.compile("(?i)^${Pattern.quote(prefix)}.*$"))
 
