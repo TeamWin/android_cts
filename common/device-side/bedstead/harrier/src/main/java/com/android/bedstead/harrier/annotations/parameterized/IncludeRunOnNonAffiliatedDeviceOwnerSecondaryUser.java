@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations;
+package com.android.bedstead.harrier.annotations.parameterized;
 
-import com.android.bedstead.harrier.DeviceState;
-import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
+import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,15 +25,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark that a test method should run on the primary user.
- *
- * <p>Your test configuration should be such that this test is only run on the primary user
- *
- * <p>Optionally, you can guarantee that these methods do not run outside of the primary
- * user by using {@link DeviceState}.
+ * Parameterize a test so that it runs on a non-affiliated secondary user on a device with a
+ * Device Owner.
  */
-@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@RequireRunOnUserAnnotation("android.os.usertype.full.SYSTEM")
-public @interface RequireRunOnPrimaryUser {
+@ParameterizedAnnotation
+@RequireRunOnPrimaryUser
+// TODO(scottjonathan): Add annotations to ensure Device Owner is set
+public @interface IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser {
 }

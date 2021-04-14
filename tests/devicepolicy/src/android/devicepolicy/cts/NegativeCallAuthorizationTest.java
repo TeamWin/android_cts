@@ -23,9 +23,9 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
 
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 
@@ -42,7 +42,7 @@ import org.junit.runner.RunWith;
  * so it is critical that the app is not owner. These APIs are tested here.
  */
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public class NegativeCallAuthorizationTest {
     private static final String ALIAS = "some-alias";
     private static final Context sContext = ApplicationProvider.getApplicationContext();
