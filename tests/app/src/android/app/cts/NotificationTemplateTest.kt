@@ -556,6 +556,28 @@ class NotificationTemplateTest : NotificationTemplateTestBase() {
         }
     }
 
+    fun testCallStyle_forIncomingCall_isVideo_hasCorrectActions() {
+        val namedPerson = Person.Builder().setName("Named Person").build()
+        val builder = Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setStyle(Notification.CallStyle
+                        .forIncomingCall(namedPerson, pendingIntent, pendingIntent)
+                        .setIsVideo(true))
+        val notification = builder.build()
+        assertThat(notification).isNotNull()
+        assertThat(notification.extras.getBoolean(Notification.EXTRA_CALL_IS_VIDEO)).isTrue()
+        val answerText = mContext.getString(
+                getAndroidRString("call_notification_answer_video_action"))
+        val declineText = mContext.getString(getAndroidRString("call_notification_decline_action"))
+        val hangUpText = mContext.getString(getAndroidRString("call_notification_hang_up_action"))
+        val views = builder.createBigContentView()
+        checkViews(views) {
+            assertThat(requireViewWithText(answerText).visibility).isEqualTo(View.VISIBLE)
+            assertThat(requireViewWithText(declineText).visibility).isEqualTo(View.VISIBLE)
+            assertThat(findViewWithText(hangUpText)).isNull()
+        }
+    }
+
     @SmallTest
     fun testCallStyle_forOngoingCall_validatesArguments() {
         val namedPerson = Person.Builder().setName("Named Person").build()
