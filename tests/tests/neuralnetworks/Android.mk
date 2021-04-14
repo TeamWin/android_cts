@@ -38,6 +38,7 @@ LOCAL_COMPATIBILITY_SUITE := cts mts mts-neuralnetworks general-tests
 
 LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_MIN_SDK_VERSION := 30
 
 include $(BUILD_CTS_EXECUTABLE)
 
