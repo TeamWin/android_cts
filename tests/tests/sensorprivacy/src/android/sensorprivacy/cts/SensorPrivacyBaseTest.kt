@@ -38,7 +38,6 @@ import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 abstract class SensorPrivacyBaseTest(
-    val feature: String,
     val sensor: Int,
     vararg val extras: String
 ) {
@@ -63,7 +62,7 @@ abstract class SensorPrivacyBaseTest(
 
     @Before
     fun init() {
-        Assume.assumeTrue(packageManager.hasSystemFeature(feature))
+        Assume.assumeTrue(spm.supportsSensorToggle(sensor))
         uiDevice.wakeUp()
         runShellCommandOrThrow("wm dismiss-keyguard")
         uiDevice.waitForIdle()
@@ -107,10 +106,11 @@ abstract class SensorPrivacyBaseTest(
         setSensor(false)
         val latchEnabled = CountDownLatch(1)
         runWithShellPermissionIdentity {
-            spm.addSensorPrivacyListener(sensor, executor, OnSensorPrivacyChangedListener {
-                if (it) {
-                    latchEnabled.countDown()
-                }
+            spm.addSensorPrivacyListener(sensor, executor,
+                    OnSensorPrivacyChangedListener { _, enabled: Boolean ->
+                        if (enabled) {
+                            latchEnabled.countDown()
+                        }
             })
         }
         setSensor(true)
@@ -118,10 +118,11 @@ abstract class SensorPrivacyBaseTest(
 
         val latchDisabled = CountDownLatch(1)
         runWithShellPermissionIdentity {
-            spm.addSensorPrivacyListener(sensor, executor, OnSensorPrivacyChangedListener {
-                if (!it) {
-                    latchDisabled.countDown()
-                }
+            spm.addSensorPrivacyListener(sensor, executor,
+                    OnSensorPrivacyChangedListener { _, enabled: Boolean ->
+                        if (!enabled) {
+                            latchDisabled.countDown()
+                        }
             })
         }
         setSensor(false)
