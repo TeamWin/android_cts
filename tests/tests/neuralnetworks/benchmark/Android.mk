@@ -36,6 +36,6 @@ LOCAL_JNI_SHARED_LIBRARIES := libnnbenchmark_jni
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_ASSET_DIR := test/mlts/models/assets
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 30
 
 include $(BUILD_CTS_PACKAGE)
