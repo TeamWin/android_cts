@@ -204,6 +204,4 @@
     <!-- fails only on angler/bullhead userdebug -->
     <option name="compatibility:exclude-filter" value="CtsLiblogTestCases liblog#wrap_mode_blocks" />
 
-    <!-- b/175319005 -->
-    <option name="compatibility:exclude-filter" value="CtsDevicePolicyManagerTestCases com.android.cts.devicepolicy.ManagedProfileTest#testAppLinks_verificationStatus" />
 </configuration>
