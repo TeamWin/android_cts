@@ -19,6 +19,7 @@ package com.android.bedstead.harrier;
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeNone;
 import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnDeviceOwnerUser;
+import com.android.bedstead.harrier.annotations.parameterized.IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 @IncludeNone
 @IncludeRunOnDeviceOwnerUser
+@IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
 public final class Policy {
 
     private Policy() {
@@ -39,6 +41,9 @@ public final class Policy {
             Policy.class.getAnnotation(IncludeNone.class);
     private static final IncludeRunOnDeviceOwnerUser INCLUDE_RUN_ON_DEVICE_OWNER_USER =
             Policy.class.getAnnotation(IncludeRunOnDeviceOwnerUser.class);
+    private static final IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser
+            INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER =
+            Policy.class.getAnnotation(IncludeRunOnNonAffiliatedDeviceOwnerSecondaryUser.class);
 
     /**
      * Get positive state annotations for the given policy.
@@ -48,7 +53,8 @@ public final class Policy {
     public static List<Annotation> positiveStates(EnterprisePolicy enterprisePolicy) {
         List<Annotation> annotations = new ArrayList<>();
 
-        annotations.add(INCLUDE_NONE_ANNOTATION);
+        annotations.add(INCLUDE_RUN_ON_DEVICE_OWNER_USER);
+        annotations.add(INCLUDE_RUN_ON_NON_AFFILIATED_DEVICE_OWNER_SECONDARY_USER);
 
         return annotations;
     }
