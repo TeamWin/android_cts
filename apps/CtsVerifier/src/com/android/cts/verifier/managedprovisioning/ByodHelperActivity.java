@@ -19,6 +19,7 @@ package com.android.cts.verifier.managedprovisioning;
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY;
 
+import android.Manifest;
 import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -27,6 +28,7 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -34,6 +36,9 @@ import android.os.UserManager;
 import android.provider.MediaStore;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.util.Pair;
 
@@ -53,7 +58,7 @@ import java.util.ArrayList;
  * Note: We have to use a test activity because cross-profile intents only work for activities.
  */
 public class ByodHelperActivity extends LocationListenerActivity
-        implements DialogCallback {
+        implements DialogCallback, ActivityCompat.OnRequestPermissionsResultCallback {
 
     static final String TAG = "ByodHelperActivity";
 
@@ -167,6 +172,11 @@ public class ByodHelperActivity extends LocationListenerActivity
     private static final int NOTIFICATION_ID = 7;
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
 
+    private static final int EXECUTE_IMAGE_CAPTURE_TEST = 1;
+    private static final int EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST = 2;
+    private static final int EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST = 3;
+    private static final int EXECUTE_LOCATION_UPDATE_TEST = 4;
+
     private NotificationManager mNotificationManager;
     private Bundle mOriginalRestrictions;
 
@@ -274,40 +284,25 @@ public class ByodHelperActivity extends LocationListenerActivity
                             IntentFiltersTestHelper.FLAG_INTENTS_FROM_MANAGED);
             setResult(intentFiltersSetForManagedIntents? RESULT_OK : RESULT_FAILED, null);
         } else if (action.equals(ACTION_CAPTURE_AND_CHECK_IMAGE)) {
-            // We need the camera permission to send the image capture intent.
-            grantCameraPermissionToSelf();
-            Intent captureImageIntent = getCaptureImageIntent();
-            Pair<File, Uri> pair = getTempUri("image.jpg");
-            mImageFile = pair.first;
-            mImageUri = pair.second;
-            captureImageIntent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
-            if (captureImageIntent.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(captureImageIntent, REQUEST_IMAGE_CAPTURE);
+            if (hasCameraPermission()) {
+                startCaptureImageIntent();
             } else {
-                Log.e(TAG, "Capture image intent could not be resolved in managed profile.");
-                showToast(R.string.provisioning_byod_capture_media_error);
-                finish();
+                requestCameraPermission(EXECUTE_IMAGE_CAPTURE_TEST);
             }
             return;
         } else if (action.equals(ACTION_CAPTURE_AND_CHECK_VIDEO_WITH_EXTRA_OUTPUT) ||
                 action.equals(ACTION_CAPTURE_AND_CHECK_VIDEO_WITHOUT_EXTRA_OUTPUT)) {
-            // We need the camera permission to send the video capture intent.
-            grantCameraPermissionToSelf();
-            Intent captureVideoIntent = getCaptureVideoIntent();
-            int videoCaptureRequestId;
+            final int testRequestCode;
             if (action.equals(ACTION_CAPTURE_AND_CHECK_VIDEO_WITH_EXTRA_OUTPUT)) {
-                mVideoUri = getTempUri("video.mp4").second;
-                captureVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, mVideoUri);
-                videoCaptureRequestId = REQUEST_VIDEO_CAPTURE_WITH_EXTRA_OUTPUT;
+                testRequestCode = EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST;
             } else {
-                videoCaptureRequestId = REQUEST_VIDEO_CAPTURE_WITHOUT_EXTRA_OUTPUT;
+                testRequestCode = EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST;
             }
-            if (captureVideoIntent.resolveActivity(getPackageManager()) != null) {
-                startActivityForResult(captureVideoIntent, videoCaptureRequestId);
+
+            if (hasCameraPermission()) {
+                startCaptureVideoActivity(testRequestCode);
             } else {
-                Log.e(TAG, "Capture video intent could not be resolved in managed profile.");
-                showToast(R.string.provisioning_byod_capture_media_error);
-                finish();
+                requestCameraPermission(testRequestCode);
             }
             return;
         } else if (action.equals(ACTION_CAPTURE_AND_CHECK_AUDIO)) {
@@ -356,7 +351,11 @@ public class ByodHelperActivity extends LocationListenerActivity
                         DeviceAdminTestReceiver.getReceiverComponentName(), restriction);
             }
         } else if (action.equals(ACTION_BYOD_SET_LOCATION_AND_CHECK_UPDATES)) {
-            handleLocationAction();
+            if (hasLocationPermission()) {
+                handleLocationAction();
+            } else {
+                requestLocationPermission(EXECUTE_LOCATION_UPDATE_TEST);
+            }
             return;
         } else if (action.equals(ACTION_NOTIFICATION)) {
             showNotification(Notification.VISIBILITY_PUBLIC);
@@ -392,6 +391,40 @@ public class ByodHelperActivity extends LocationListenerActivity
         }
         // This activity has no UI and is only used to respond to CtsVerifier in the primary side.
         finish();
+    }
+
+    private void startCaptureVideoActivity(int testRequestCode) {
+        Intent captureVideoIntent = getCaptureVideoIntent();
+        int videoCaptureRequestId;
+        if (testRequestCode == EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST) {
+            mVideoUri = getTempUri("video.mp4").second;
+            captureVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, mVideoUri);
+            videoCaptureRequestId = REQUEST_VIDEO_CAPTURE_WITH_EXTRA_OUTPUT;
+        } else {
+            videoCaptureRequestId = REQUEST_VIDEO_CAPTURE_WITHOUT_EXTRA_OUTPUT;
+        }
+        if (captureVideoIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(captureVideoIntent, videoCaptureRequestId);
+        } else {
+            Log.e(TAG, "Capture video intent could not be resolved in managed profile.");
+            showToast(R.string.provisioning_byod_capture_media_error);
+            finish();
+        }
+    }
+
+    private void startCaptureImageIntent() {
+        Intent captureImageIntent = getCaptureImageIntent();
+        Pair<File, Uri> pair = getTempUri("image.jpg");
+        mImageFile = pair.first;
+        mImageUri = pair.second;
+        captureImageIntent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri);
+        if (captureImageIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(captureImageIntent, REQUEST_IMAGE_CAPTURE);
+        } else {
+            Log.e(TAG, "Capture image intent could not be resolved in managed profile.");
+            showToast(R.string.provisioning_byod_capture_media_error);
+            finish();
+        }
     }
 
     private void startInstallerActivity(String pathToApk) {
@@ -552,10 +585,73 @@ public class ByodHelperActivity extends LocationListenerActivity
         }
     }
 
-    private void grantCameraPermissionToSelf() {
-        mDevicePolicyManager.setPermissionGrantState(mAdminReceiverComponent, getPackageName(),
-                android.Manifest.permission.CAMERA,
-                DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
+    private boolean hasCameraPermission() {
+        return ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestCameraPermission(int requestCode) {
+        ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.CAMERA},
+                requestCode);
+    }
+
+    private boolean hasLocationPermission() {
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void requestLocationPermission(int requestCode) {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                requestCode);
+    }
+
+    /**
+     * Launch the right test based on the request code, after validating the right permission
+     * has been granted.
+     */
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+            @NonNull int[] grants) {
+        // Test that the right permission was granted.
+        switch(requestCode) {
+            case EXECUTE_IMAGE_CAPTURE_TEST:
+            case EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST:
+            case EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST:
+                if (!permissions[0].equals(android.Manifest.permission.CAMERA)
+                        || grants[0] != PackageManager.PERMISSION_GRANTED) {
+                    Log.e(TAG, "The test needs camera permission.");
+                    showToast(R.string.provisioning_byod_capture_media_error);
+                    finish();
+                    return;
+                }
+                break;
+            case EXECUTE_LOCATION_UPDATE_TEST:
+                if (!permissions[0].equals(Manifest.permission.ACCESS_FINE_LOCATION)
+                        || grants[0] != PackageManager.PERMISSION_GRANTED) {
+                    Log.e(TAG, "The test needs location permission.");
+                    showToast(R.string.provisioning_byod_location_mode_enable_missing_permission);
+                    finish();
+                    return;
+                }
+                break;
+        }
+
+        // Execute the right test.
+        switch (requestCode) {
+            case EXECUTE_IMAGE_CAPTURE_TEST:
+                startCaptureImageIntent();
+                break;
+            case EXECUTE_VIDEO_CAPTURE_WITH_EXTRA_TEST:
+            case EXECUTE_VIDEO_CAPTURE_WITHOUT_EXTRA_TEST:
+                startCaptureVideoActivity(requestCode);
+                break;
+            case EXECUTE_LOCATION_UPDATE_TEST:
+                handleLocationAction();
+                break;
+            default:
+                Log.e(TAG, "Unknown action.");
+                finish();
+        }
     }
 
     private void sendIntentInsideChooser(Intent toSend) {
@@ -563,21 +659,6 @@ public class ByodHelperActivity extends LocationListenerActivity
         Intent chooser = Intent.createChooser(toSend,
                 getResources().getString(R.string.provisioning_cross_profile_chooser));
         startActivity(chooser);
-    }
-
-    @Override
-    protected void handleLocationAction() {
-        // Grant the locaiton permission to the provile owner on cts-verifier.
-        // The permission state does not have to be reverted at the end since the profile onwer
-        // is going to be deleted when BYOD tests ends.
-        grantLocationPermissionToSelf();
-        super.handleLocationAction();
-    }
-
-    private void grantLocationPermissionToSelf() {
-        mDevicePolicyManager.setPermissionGrantState(mAdminReceiverComponent, getPackageName(),
-                android.Manifest.permission.ACCESS_FINE_LOCATION,
-                DevicePolicyManager.PERMISSION_GRANT_STATE_GRANTED);
     }
 
     @Override
