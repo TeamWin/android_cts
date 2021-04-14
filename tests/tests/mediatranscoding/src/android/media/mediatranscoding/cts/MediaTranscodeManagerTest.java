@@ -466,14 +466,16 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         .setClientPid(pid)
                         .setClientUid(uid);
 
+        AssetFileDescriptor srcFd = null;
+        AssetFileDescriptor dstFd = null;
         if (testFileDescriptor) {
             // Open source Uri.
-            AssetFileDescriptor afd = mContentResolver.openAssetFileDescriptor(fileUri,
+            srcFd = mContentResolver.openAssetFileDescriptor(fileUri,
                     "r");
-            builder.setSourceFileDescriptor(afd.getParcelFileDescriptor());
+            builder.setSourceFileDescriptor(srcFd.getParcelFileDescriptor());
             // Open destination Uri
-            afd = mContentResolver.openAssetFileDescriptor(destinationUri, "rw");
-            builder.setDestinationFileDescriptor(afd.getParcelFileDescriptor());
+            dstFd = mContentResolver.openAssetFileDescriptor(destinationUri, "rw");
+            builder.setDestinationFileDescriptor(dstFd.getParcelFileDescriptor());
         }
         VideoTranscodingRequest request = builder.build();
         Executor listenerExecutor = Executors.newSingleThreadExecutor();
@@ -493,6 +495,12 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 });
         assertNotNull(session);
         assertTrue(compareFormat(videoTrackFormat, request.getVideoTrackFormat()));
+        assertEquals(fileUri, request.getSourceUri());
+        assertEquals(destinationUri, request.getDestinationUri());
+        if (testFileDescriptor) {
+            assertEquals(srcFd.getParcelFileDescriptor(), request.getSourceFileDescriptor());
+            assertEquals(dstFd.getParcelFileDescriptor(), request.getDestinationFileDescriptor());
+        }
 
         if (session != null) {
             Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to cancel.");
