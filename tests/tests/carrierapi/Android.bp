@@ -21,8 +21,8 @@ android_test {
     defaults: ["cts_defaults"],
     static_libs: [
         "androidx.test.uiautomator_uiautomator",
-        "ctstestrunner-axt",
         "compatibility-device-util-axt",
+        "ctstestrunner-axt",
         "junit",
         "truth-prebuilt",
     ],
@@ -34,8 +34,8 @@ android_test {
         "general-tests",
     ],
     libs: [
-        "android.test.runner",
         "android.test.base",
+        "android.test.runner",
     ],
     // This  APK must be signed to match the test SIM's cert whitelist.
     // While "testkey" is the default, there are different per-device testkeys, so
