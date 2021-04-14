@@ -37,7 +37,16 @@ android_test {
 
 python_binary_host {
     name: "index_testapps",
-    defaults: ["base_default"],
+    version: {
+        py2: {
+            enabled: false,
+            embedded_launcher: false,
+        },
+        py3: {
+            enabled: true,
+            embedded_launcher: true,
+        },
+    },
     main: "tools/index/index_testapps.py",
     srcs: [
         "tools/index/index_testapps.py",

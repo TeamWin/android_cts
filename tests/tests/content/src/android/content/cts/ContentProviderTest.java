@@ -261,29 +261,29 @@ public class ContentProviderTest extends AndroidTestCase {
                 provider.checkUriPermission(uri, android.os.Process.myUid(), 0));
     }
 
-    public void testCreateContentUriAsUser_nullUri_throwsNPE() {
+    public void testCreateContentUriForUser_nullUri_throwsNPE() {
         assertThrows(
                 NullPointerException.class,
-                () -> ContentProvider.createContentUriAsUser(null, UserHandle.of(7)));
+                () -> ContentProvider.createContentUriForUser(null, UserHandle.of(7)));
     }
 
-    public void testCreateContentUriAsUser_nonContentUri_throwsIAE() {
+    public void testCreateContentUriForUser_nonContentUri_throwsIAE() {
         final Uri uri = Uri.parse("notcontent://test");
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
+                () -> ContentProvider.createContentUriForUser(uri, UserHandle.of(7)));
     }
 
-    public void testCreateContentUriAsUser_UriWithDifferentUserID_throwsIAE() {
+    public void testCreateContentUriForUser_UriWithDifferentUserID_throwsIAE() {
         final Uri uri = Uri.parse("content://07@test");
         assertThrows(
                 IllegalArgumentException.class,
-                () -> ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
+                () -> ContentProvider.createContentUriForUser(uri, UserHandle.of(7)));
     }
 
-    public void testCreateContentUriAsUser_UriWithUserID_unchanged() {
+    public void testCreateContentUriForUser_UriWithUserID_unchanged() {
         final Uri uri = Uri.parse("content://7@test");
-        assertEquals(uri, ContentProvider.createContentUriAsUser(uri, UserHandle.of(7)));
+        assertEquals(uri, ContentProvider.createContentUriForUser(uri, UserHandle.of(7)));
     }
 
     private class MockContentProvider extends ContentProvider {

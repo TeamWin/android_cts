@@ -389,7 +389,7 @@
         <activity android:name="android.content.pm.cts.LauncherMockActivity"
              android:enabled="true"
              android:exported="true">
-            <intent-filter>
+            <intent-filter android:priority="-10">
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.INFO"/>
                 <category android:name="android.intent.category.HOME"/>
