@@ -517,6 +517,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
             }
         }
 
+        assertEquals(TranscodingSession.STATUS_FINISHED, session.getStatus());
+        assertEquals(TranscodingSession.RESULT_SUCCESS, session.getResult());
+        assertEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
+
         // TODO(hkuang): Validate the transcoded video's width and height, framerate.
 
         // Validates the transcoded video's psnr.
@@ -556,6 +560,8 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                 });
         assertNotNull(session);
 
+        assertTrue(session.getSessionId() != -1);
+
         // Wait for progress update before cancel the transcoding.
         session.setOnProgressUpdateListener(listenerExecutor,
                 new TranscodingSession.OnProgressUpdateListener() {
@@ -564,6 +570,7 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
                         if (newProgress > 0) {
                             statusLatch.countDown();
                         }
+                        assertEquals(newProgress, session.getProgress());
                     }
                 });
 
@@ -573,6 +580,10 @@ public class MediaTranscodeManagerTest extends AndroidTestCase {
         Log.d(TAG, "testMediaTranscodeManager - Waiting for transcode to cancel.");
         boolean finishedOnTime = transcodeCompleteSemaphore.tryAcquire(
                 30, TimeUnit.MILLISECONDS);
+
+        assertEquals(TranscodingSession.STATUS_FINISHED, session.getStatus());
+        assertEquals(TranscodingSession.RESULT_CANCELED, session.getResult());
+        assertEquals(TranscodingSession.ERROR_NONE, session.getErrorCode());
         assertTrue("Fails to cancel transcoding", finishedOnTime);
     }
 
