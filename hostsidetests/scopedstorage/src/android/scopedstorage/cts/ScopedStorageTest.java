@@ -76,13 +76,11 @@ import static org.junit.Assume.assumeTrue;
 
 import android.Manifest;
 import android.app.WallpaperManager;
-import android.content.pm.ProviderInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.AppModeInstant;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -175,33 +173,6 @@ public class ScopedStorageTest {
                 THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
         final int uid = getContext().getPackageManager().getPackageUid(THIS_PACKAGE_NAME, 0);
         assertMountMode(THIS_PACKAGE_NAME, uid, StorageManager.MOUNT_MODE_EXTERNAL_INSTALLER);
-    }
-
-    @Test
-    public void testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs() throws Exception {
-        // TODO(b/183377919): Grant ACCESS_MTP permission via Shell
-        assertCanAccessPrivateAppAndroidDataDir(false /*canAccess*/, APP_B_NO_PERMS,
-                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
-        assertCanAccessPrivateAppAndroidObbDir(false /*canAccess*/, APP_B_NO_PERMS,
-                THIS_PACKAGE_NAME, NONMEDIA_FILE_NAME);
-    }
-
-    /**
-     * Test mount modes for ExternalStorageProvider and DownloadsProvider.
-     */
-    @Test
-    public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
-        assertWritableMountModeForProvider(DocumentsContract.EXTERNAL_STORAGE_PROVIDER_AUTHORITY);
-        assertWritableMountModeForProvider(DocumentsContract.DOWNLOADS_PROVIDER_AUTHORITY);
-    }
-
-    private void assertWritableMountModeForProvider(String auth) {
-        final ProviderInfo provider = getContext().getPackageManager()
-                .resolveContentProvider(auth, 0);
-        int uid = provider.applicationInfo.uid;
-        final String packageName = provider.applicationInfo.packageName;
-
-        assertMountMode(packageName, uid, StorageManager.MOUNT_MODE_EXTERNAL_ANDROID_WRITABLE);
     }
 
     @Test
