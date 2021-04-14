@@ -57,19 +57,22 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testManagement() throws Exception {
         executeProfileOwnerTest("ManagementTest");
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testAdminActionBookkeeping() throws Exception {
         executeProfileOwnerTest("AdminActionBookkeepingTest");
     }
 
     @Test
-    @TemporaryIgnoreOnHeadlessSystemUserMode // TODO(b/183020176): decide if it's needed or fix it
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "183020176",
+            reason = "decide if it's needed or fix it")
     public void testAppUsageObserver() throws Exception {
         executeProfileOwnerTest("AppUsageObserverTest");
     }
