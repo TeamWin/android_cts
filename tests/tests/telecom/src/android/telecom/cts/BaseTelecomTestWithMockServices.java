@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
 
 import android.app.AppOpsManager;
+import android.app.UiAutomation;
 import android.app.UiModeManager;
 import android.content.Context;
 import android.content.Intent;
@@ -40,6 +41,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.RemoteException;
 import android.os.Process;
+import android.os.UserHandle;
 import android.provider.CallLog;
 import android.telecom.Call;
 import android.telecom.CallAudioState;
@@ -61,6 +63,8 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Pair;
+
+import androidx.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.ShellIdentityUtils;
 
@@ -90,6 +94,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
     public static final String TEST_EMERGENCY_NUMBER = "5553637";
     public static final Uri TEST_EMERGENCY_URI = Uri.fromParts("tel", TEST_EMERGENCY_NUMBER, null);
+    public static final String PKG_NAME = "android.telecom.cts";
+    public static final String PERMISSION_PROCESS_OUTGOING_CALLS =
+            "android.permission.PROCESS_OUTGOING_CALLS";
 
     Context mContext;
     TelecomManager mTelecomManager;
@@ -295,6 +302,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 (tm) -> tm.registerTelephonyCallback(
                         mTelephonyCallbackHandler::post,
                         mTelephonyCallback));
+        UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.grantRuntimePermissionAsUser(PKG_NAME, PERMISSION_PROCESS_OUTGOING_CALLS,
+                UserHandle.CURRENT);
     }
 
     @Override
@@ -324,6 +335,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
             TestUtils.executeShellCommand(getInstrumentation(), "telecom cleanup-stuck-calls");
             throw t;
         }
+        UiAutomation uiAutomation =
+                InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        uiAutomation.revokeRuntimePermissionAsUser(PKG_NAME, PERMISSION_PROCESS_OUTGOING_CALLS,
+                UserHandle.CURRENT);
     }
 
     protected PhoneAccount setupConnectionService(MockConnectionService connectionService,
