@@ -37,6 +37,7 @@ import android.keystore.cts.Attestation;
 import android.keystore.cts.AuthorizationList;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Process;
 import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
@@ -48,8 +49,6 @@ import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
 
 import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
-
-import com.google.common.collect.Sets;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,6 +73,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -755,7 +756,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-
     public void testCanSetKeyPairCert() throws Exception {
         final String alias = "com.android.test.set-ec-1";
         try {
@@ -854,7 +854,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                 TEST_ALIAS, /* requestAccess= */ true);
 
         assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
-                .isEqualTo(singleton(singleton(getWho().getPackageName())));
+                .isEqualTo(Map.of(Process.myUid(), singleton(getWho().getPackageName())));
     }
 
     public void testGetKeyPairGrants_GrantedExplicitly() {
@@ -863,7 +863,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, getWho().getPackageName());
 
         assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
-                .isEqualTo(singleton(singleton(getWho().getPackageName())));
+                .isEqualTo(Map.of(Process.myUid(), singleton(getWho().getPackageName())));
     }
 
     public void testGetKeyPairGrants_Revoked() {
@@ -874,23 +874,27 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEmpty();
     }
 
-    public void testGetKeyPairGrants_SharedUid() {
+    public void testGetKeyPairGrants_SharedUid() throws Exception {
         mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
                 TEST_ALIAS, /* requestAccess= */ false);
         mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, SHARED_UID_APP1_PKG);
+        final int sharedUid = mContext.getPackageManager()
+                .getApplicationInfo(SHARED_UID_APP1_PKG, 0).uid;
 
         assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS))
-                .isEqualTo(singleton(Sets.newHashSet(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG)));
+                .isEqualTo(Map.of(sharedUid, Set.of(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG)));
     }
 
-    public void testGetKeyPairGrants_DifferentUids() {
+    public void testGetKeyPairGrants_DifferentUids() throws Exception {
         mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[]{mFakeCert},
                 TEST_ALIAS, /* requestAccess= */ true);
         mDevicePolicyManager.grantKeyPairToApp(getWho(), TEST_ALIAS, SHARED_UID_APP1_PKG);
+        final int sharedUid = mContext.getPackageManager()
+                .getApplicationInfo(SHARED_UID_APP1_PKG, 0).uid;
 
-        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEqualTo(Sets.newHashSet(
-                Sets.newHashSet(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG),
-                singleton(getWho().getPackageName())));
+        assertThat(mDevicePolicyManager.getKeyPairGrants(TEST_ALIAS)).isEqualTo(Map.of(
+                Process.myUid(), singleton(getWho().getPackageName()),
+                sharedUid, Set.of(SHARED_UID_APP1_PKG, SHARED_UID_APP2_PKG)));
     }
 
     public void testIsWifiGrant_default() {
