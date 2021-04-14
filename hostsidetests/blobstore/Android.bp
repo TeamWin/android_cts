@@ -55,3 +55,51 @@ android_test_helper_app {
     "general-tests"
   ]
 }
+
+android_test_helper_app {
+  name: "CtsBlobStoreHostTestHelperPrivA",
+  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
+  static_libs: [
+    "compatibility-device-util-axt",
+    "androidx.test.ext.junit",
+    "androidx.test.rules",
+    "BlobStoreTestUtils",
+    "truth-prebuilt",
+    "testng",
+  ],
+  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
+  aaptflags: [
+    "--rename-manifest-package com.android.cts.device.blobA",
+    "--rename-instrumentation-target-package com.android.cts.device.blobA"
+  ],
+  sdk_version: "test_current",
+  // Tag this module as a cts test artifact
+  test_suites: [
+    "cts",
+    "general-tests"
+  ]
+}
+
+android_test_helper_app {
+  name: "CtsBlobStoreHostTestHelperPrivB",
+  srcs:  ["test-apps/BlobStoreHostTestHelper/src/**/*.java"],
+  static_libs: [
+    "compatibility-device-util-axt",
+    "androidx.test.ext.junit",
+    "androidx.test.rules",
+    "BlobStoreTestUtils",
+    "truth-prebuilt",
+    "testng",
+  ],
+  manifest : "test-apps/BlobStoreHostTestHelper/AndroidManifest_withPrivPerm.xml",
+  aaptflags: [
+    "--rename-manifest-package com.android.cts.device.blobB",
+    "--rename-instrumentation-target-package com.android.cts.device.blobB",
+  ],
+  sdk_version: "test_current",
+  // Tag this module as a cts test artifact
+  test_suites: [
+    "cts",
+    "general-tests"
+  ]
+}
