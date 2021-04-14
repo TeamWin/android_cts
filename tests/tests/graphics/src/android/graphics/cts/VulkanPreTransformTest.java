@@ -105,9 +105,6 @@ public class VulkanPreTransformTest {
     @Before
     public void setUp() {
         Log.d(TAG, "setUp!");
-        // Work around for b/77148807
-        // Activity was falsely created before ActivityManager set config change to landscape
-        SystemClock.sleep(2000);
         mContext = InstrumentationRegistry.getContext();
     }
 
@@ -120,7 +117,6 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
-        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(true);
         sActivity.finish();
         sActivity = null;
@@ -135,7 +131,6 @@ public class VulkanPreTransformTest {
             return;
         }
         sActivity = mActivityRule.launchActivity(null);
-        SystemClock.sleep(5000);
         sActivity.testVulkanPreTransform(false);
         sActivity.finish();
         sActivity = null;

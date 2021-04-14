@@ -212,7 +212,7 @@ public class MediaStoreTest {
         final ProviderInfo legacy = getContext().getPackageManager()
                 .resolveContentProvider(MediaStore.AUTHORITY_LEGACY, 0);
         if (legacy == null) {
-            if (Build.VERSION.FIRST_SDK_INT >= Build.VERSION_CODES.R) {
+            if (Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.R) {
                 // If we're a brand new device, we don't require a legacy
                 // provider, since there's nothing to upgrade
                 return;

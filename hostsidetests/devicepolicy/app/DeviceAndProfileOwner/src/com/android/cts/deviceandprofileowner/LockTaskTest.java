@@ -24,6 +24,8 @@ import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATI
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.testng.Assert.assertThrows;
 
@@ -43,9 +45,9 @@ import android.util.Log;
 import android.view.KeyEvent;
 
 import androidx.test.InstrumentationRegistry;
-import androidx.test.runner.AndroidJUnit4;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class LockTaskTest extends BaseDeviceAdminTest {
@@ -177,6 +179,20 @@ public class LockTaskTest extends BaseDeviceAdminTest {
         mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
         assertEquals(0, mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT).length);
         assertFalse(mDevicePolicyManager.isLockTaskPermitted(TEST_PACKAGE));
+    }
+
+    // When OEM defines policy-exempt apps, they are permitted on lock task mode
+    public void testIsLockTaskPermittedIncludesPolicyExemptApps() {
+        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        if (policyExemptApps.isEmpty()) {
+            Log.v(TAG, "OEM doesn't define any policy-exempt app");
+            return;
+        }
+
+        for (String app : policyExemptApps) {
+            assertWithMessage("isLockTaskPermitted(%s)", app)
+                    .that(mDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
+        }
     }
 
     // Setting and unsetting the lock task features. The actual UI behavior is tested with CTS

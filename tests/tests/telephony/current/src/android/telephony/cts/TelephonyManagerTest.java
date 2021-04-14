@@ -672,7 +672,7 @@ public class TelephonyManagerTest {
         mTelephonyManager.getNetworkOperator();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getPhoneAccountHandle(),
-                "android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE");
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
@@ -993,7 +993,7 @@ public class TelephonyManagerTest {
         PhoneAccountHandle phoneAccountHandle = ShellIdentityUtils.invokeMethodWithShellPermissions(
                 mTelephonyManager,
                 (tm) -> tm.getPhoneAccountHandle(),
-                "android.Manifest.permission.READ_PRIVILEGED_PHONE_STATE");
+                "android.permission.READ_PRIVILEGED_PHONE_STATE");
         assertEquals(phoneAccountHandle, defaultAccount);
     }
 
