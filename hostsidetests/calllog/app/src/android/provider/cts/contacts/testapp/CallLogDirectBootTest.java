@@ -63,7 +63,8 @@ public class CallLogDirectBootTest extends InstrumentationTestCase {
             Pair<Uri, CallLog.CallComposerLoggingException> result;
             try (InputStream inputStream =
                          mDe.getResources().openRawResource(R.drawable.cupcake)) {
-                CallLog.storeCallComposerPictureAsUser(mDe, android.os.Process.myUserHandle(),
+                CallLog.storeCallComposerPicture(
+                        mDe.createContextAsUser(android.os.Process.myUserHandle(), 0),
                         inputStream,
                         Executors.newSingleThreadExecutor(),
                         new OutcomeReceiver<Uri, CallLog.CallComposerLoggingException>() {
