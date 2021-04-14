@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 
 import com.android.utils.blob.FakeBlobData;
+import com.android.utils.blob.Utils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -114,6 +115,28 @@ public class DataCleanupTest extends BaseBlobStoreDeviceTest {
         final BlobHandle blobHandle = getBlobHandleFromArgs();
         assertThrows(SecurityException.class,
                 () -> mBlobStoreManager.openBlob(blobHandle));
+    }
+
+    @Test
+    public void testRecommitBlob() throws Exception {
+        final BlobHandle blobHandle = getBlobHandleFromArgs();
+        try (ParcelFileDescriptor pfd = mBlobStoreManager.openBlob(blobHandle)) {
+            assertThat(pfd).isNotNull();
+
+            final long sessionId = createSession(blobHandle);
+            assertThat(sessionId).isGreaterThan(0L);
+            try (BlobStoreManager.Session session = mBlobStoreManager.openSession(sessionId)) {
+                Utils.writeToSession(session, pfd);
+                if (getShouldAllowPublicFromArgs()) {
+                    session.allowPublicAccess();
+                }
+
+                final CompletableFuture<Integer> callback = new CompletableFuture<>();
+                session.commit(mContext.getMainExecutor(), callback::complete);
+                assertThat(callback.get(TIMEOUT_COMMIT_CALLBACK_MS, TimeUnit.MILLISECONDS))
+                        .isEqualTo(0);
+            }
+        }
     }
 
     private void addSessionIdToResults(long sessionId) {
