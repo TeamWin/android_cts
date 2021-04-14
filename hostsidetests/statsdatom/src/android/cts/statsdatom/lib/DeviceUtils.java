@@ -352,6 +352,10 @@ public final class DeviceUtils {
         return device.executeShellCommand("getprop " + prop).replace("\n", "");
     }
 
+    public static boolean isDebuggable(ITestDevice device) throws Exception {
+        return Integer.parseInt(getProperty(device, "ro.debuggable")) == 1;
+    }
+
     public static boolean checkDeviceFor(ITestDevice device, String methodName) throws Exception {
         try {
             runDeviceTestsOnStatsdApp(device, ".Checkers", methodName);

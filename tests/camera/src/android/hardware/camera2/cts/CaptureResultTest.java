@@ -669,7 +669,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             // Radial distortion doesn't need to be present for new devices, or old devices that
             // opt in the new lens distortion tag.
             CameraCharacteristics c = staticInfo.getCharacteristics();
-            if (Build.VERSION.FIRST_SDK_INT > Build.VERSION_CODES.O_MR1 ||
+            if (Build.VERSION.DEVICE_INITIAL_SDK_INT > Build.VERSION_CODES.O_MR1 ||
                     c.get(CameraCharacteristics.LENS_DISTORTION) != null) {
                 waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
             }

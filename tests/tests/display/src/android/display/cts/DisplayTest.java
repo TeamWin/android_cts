@@ -77,9 +77,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
@@ -272,11 +277,18 @@ public class DisplayTest {
      */
     @Test
     public void
-            testGetHdrCapabilitiesWhenUserDisabledFormatsAreNotAllowedReturnsFilteredHdrTypes() {
+            testGetHdrCapabilitiesWhenUserDisabledFormatsAreNotAllowedReturnsFilteredHdrTypes()
+                    throws Exception {
         final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
         SurfaceControl.overrideHdrTypes(displayToken, new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
                 HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
+        waitUntil(
+                mDefaultDisplay,
+                mDefaultDisplay ->
+                        mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
+                Duration.ofSeconds(5));
+        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(false);
         int[] emptyUserDisabledFormats = {};
@@ -310,11 +322,18 @@ public class DisplayTest {
      */
     @Test
     public void
-            testGetHdrCapabilitiesWhenUserDisabledFormatsAreAllowedReturnsNonFilteredHdrTypes() {
+            testGetHdrCapabilitiesWhenUserDisabledFormatsAreAllowedReturnsNonFilteredHdrTypes()
+                    throws Exception {
         final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
         SurfaceControl.overrideHdrTypes(displayToken, new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
                 HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
+        waitUntil(
+                mDefaultDisplay,
+                mDefaultDisplay ->
+                        mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
+                Duration.ofSeconds(5));
+        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(true);
         int[] userDisabledHdrTypes =
@@ -337,12 +356,17 @@ public class DisplayTest {
      * setUserDisabledHdrTypes, the setting is persisted in Settings.Global.
      */
     @Test
-    public void testSetUserDisabledHdrTypesStoresDisabledFormatsInSettings()
-            throws NumberFormatException {
+    public void testSetUserDisabledHdrTypesStoresDisabledFormatsInSettings() throws Exception {
         final IBinder displayToken = SurfaceControl.getInternalDisplayToken();
         SurfaceControl.overrideHdrTypes(displayToken, new int[]{
                 HdrCapabilities.HDR_TYPE_DOLBY_VISION, HdrCapabilities.HDR_TYPE_HDR10,
                 HdrCapabilities.HDR_TYPE_HLG, HdrCapabilities.HDR_TYPE_HDR10_PLUS});
+        waitUntil(
+                mDefaultDisplay,
+                mDefaultDisplay ->
+                        mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length == 4,
+                Duration.ofSeconds(5));
+        assertEquals(4, mDefaultDisplay.getHdrCapabilities().getSupportedHdrTypes().length);
 
         mDisplayManager.setAreUserDisabledHdrTypesAllowed(false);
         int[] emptyUserDisabledFormats = {};
@@ -361,6 +385,44 @@ public class DisplayTest {
 
         assertEquals(HdrCapabilities.HDR_TYPE_DOLBY_VISION, userDisabledFormats[0]);
         assertEquals(HdrCapabilities.HDR_TYPE_HLG, userDisabledFormats[1]);
+    }
+
+    private void waitUntil(Display d, Predicate<Display> pred, Duration maxWait) throws Exception {
+        final int id = d.getDisplayId();
+        final Lock lock = new ReentrantLock();
+        final Condition displayChanged = lock.newCondition();
+        DisplayListener listener = new DisplayListener() {
+            @Override
+            public void onDisplayChanged(int displayId) {
+                if (displayId != id) {
+                    return;
+                }
+                lock.lock();
+                try {
+                    displayChanged.signal();
+                } finally {
+                    lock.unlock();
+                }
+            }
+            @Override
+            public void onDisplayAdded(int displayId) {}
+            @Override
+            public void onDisplayRemoved(int displayId) {}
+        };
+        Handler handler = new Handler(Looper.getMainLooper());
+        mDisplayManager.registerDisplayListener(listener, handler);
+        long remainingNanos = maxWait.toNanos();
+        lock.lock();
+        try {
+            while (!pred.test(mDefaultDisplay)) {
+                if (remainingNanos <= 0L) {
+                    throw new TimeoutException();
+                }
+                displayChanged.awaitNanos(remainingNanos);
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**

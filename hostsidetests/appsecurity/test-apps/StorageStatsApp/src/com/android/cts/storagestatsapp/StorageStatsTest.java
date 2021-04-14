@@ -81,7 +81,7 @@ public class StorageStatsTest extends InstrumentationTestCase {
      * option are enabled.
      */
     public void testVerify() throws Exception {
-        if (Build.VERSION.FIRST_SDK_INT >= Build.VERSION_CODES.P) {
+        if (Build.VERSION.DEVICE_INITIAL_SDK_INT >= Build.VERSION_CODES.P) {
             final StorageStatsManager stats = getContext()
                     .getSystemService(StorageStatsManager.class);
             assertTrue("Devices that first ship with P or newer must enable quotas to "

@@ -238,7 +238,7 @@ public class UsageStatsTest {
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testLastTimeComponentUsed_launchActivity() throws Exception {
+    public void testLastAnyTimeComponentUsed_launchActivity() throws Exception {
         mUiDevice.wakeUp();
         dismissKeyguard(); // also want to start out with the keyguard dismissed.
 
@@ -250,14 +250,14 @@ public class UsageStatsTest {
                 startTime, endTime);
         final UsageStats stats = map.get(mTargetPackage);
         assertNotNull(stats);
-        final long lastTimeComponentUsed = stats.getLastTimeComponentUsed();
+        final long lastTimeComponentUsed = stats.getLastTimeAnyComponentUsed();
         assertLessThan(startTime, lastTimeComponentUsed);
         assertLessThan(lastTimeComponentUsed, endTime);
     }
 
     @AppModeFull(reason = "No usage events access in instant apps")
     @Test
-    public void testLastTimeComponentUsedGlobal_launchActivity() throws Exception {
+    public void testLastTimeAnyComponentUsedGlobal_launchActivity() throws Exception {
         mUiDevice.wakeUp();
         dismissKeyguard();
 

@@ -42,6 +42,17 @@ public class TimeZoneProviderSuggestionTest {
     }
 
     @Test
+    public void testAccessors() {
+        TimeZoneProviderSuggestion suggestion = new TimeZoneProviderSuggestion.Builder()
+                .setTimeZoneIds(ARBITRARY_TIME_ZONE_IDS)
+                .setElapsedRealtimeMillis(ARBITRARY_ELAPSED_REALTIME_MILLIS)
+                .build();
+
+        assertEquals(ARBITRARY_TIME_ZONE_IDS, suggestion.getTimeZoneIds());
+        assertEquals(ARBITRARY_ELAPSED_REALTIME_MILLIS, suggestion.getElapsedRealtimeMillis());
+    }
+
+    @Test
     public void testEquals() {
         TimeZoneProviderSuggestion.Builder builder1 = new TimeZoneProviderSuggestion.Builder()
                 .setElapsedRealtimeMillis(ARBITRARY_ELAPSED_REALTIME_MILLIS);
