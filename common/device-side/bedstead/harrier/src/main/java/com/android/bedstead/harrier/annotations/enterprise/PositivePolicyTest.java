@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.parameterized;
-
-import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
-import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
+package com.android.bedstead.harrier.annotations.enterprise;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -25,12 +22,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Parameterize a test so that it runs on the same user as the device owner.
+ * Mark a test as testing the states where a policy is applied (by a Device Owner or Profile Owner)
+ * and it should apply to the user the test is running on.
+ *
+ * <p>This will generated parameterized runs for all matching states.
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-@ParameterizedAnnotation
-@RequireRunOnPrimaryUser
-// TODO(scottjonathan): Add annotations to ensure Device Owner is set
-public @interface IncludeRunOnDeviceOwnerUser {
+public @interface PositivePolicyTest {
+    /**
+     * The policy being tested.
+     *
+     * <p>This is used to calculate which states are required to be tested.
+     */
+    Class<?> policy();
 }
