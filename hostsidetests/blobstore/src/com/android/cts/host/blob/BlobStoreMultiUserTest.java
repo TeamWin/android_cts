@@ -45,8 +45,10 @@ public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
         mSecondaryUserId = getDevice().createUser("Test_User");
         assertThat(getDevice().startUser(mSecondaryUserId)).isTrue();
 
-        installPackageAsUser(TARGET_APK, true /* grantPermissions */, mPrimaryUserId);
-        installPackageAsUser(TARGET_APK, true /* grantPermissions */, mSecondaryUserId);
+        for (String apk : new String[] {TARGET_APK, TARGET_APK_A, TARGET_APK_B}) {
+            installPackageAsUser(apk, true /* grantPermissions */, mPrimaryUserId, "-t");
+            installPackageAsUser(apk, true /* grantPermissions */, mSecondaryUserId, "-t");
+        }
     }
 
     @After
@@ -82,6 +84,36 @@ public class BlobStoreMultiUserTest extends BaseBlobStoreHostTest {
                 mPrimaryUserId);
         // Verify that previously committed blob cannot be access from another user.
         runDeviceTestAsUser(TARGET_PKG, TEST_CLASS, "testOpenBlob_shouldThrow", args,
+                mSecondaryUserId);
+    }
+
+    @Test
+    public void testBlobAccessAcrossUsers() throws Exception {
+        Map<String, String> args = createArgs(Pair.create(KEY_ALLOW_PUBLIC, String.valueOf(1)));
+        // Commit a blob.
+        runDeviceTestAsUser(TARGET_PKG_A, TEST_CLASS, "testCommitBlob", args,
+                mPrimaryUserId);
+        Map<String, String> argsFromLastTestRun = createArgsFromLastTestRun();
+        // Verify that previously committed blob can be accessed.
+        runDeviceTestAsUser(TARGET_PKG, TEST_CLASS, "testOpenBlob", argsFromLastTestRun,
+                mPrimaryUserId);
+        // Verify that previously committed blob cannot be access from another user.
+        runDeviceTestAsUser(TARGET_PKG, TEST_CLASS, "testOpenBlob_shouldThrow", argsFromLastTestRun,
+                mSecondaryUserId);
+
+        // Verify that previously committed blob can be accessed from another user holding
+        // a priv permission.
+        runDeviceTestAsUser(TARGET_PKG_A, TEST_CLASS, "testOpenBlob", argsFromLastTestRun,
+                mSecondaryUserId);
+        runDeviceTestAsUser(TARGET_PKG_B, TEST_CLASS, "testOpenBlob", argsFromLastTestRun,
+                mSecondaryUserId);
+
+        // Recommit the blob on another user
+        argsFromLastTestRun.putAll(args);
+        runDeviceTestAsUser(TARGET_PKG_B, TEST_CLASS, "testRecommitBlob", argsFromLastTestRun,
+                mSecondaryUserId);
+        // Any package on another user should be able to access the blob
+        runDeviceTestAsUser(TARGET_PKG, TEST_CLASS, "testOpenBlob", argsFromLastTestRun,
                 mSecondaryUserId);
     }
 }
