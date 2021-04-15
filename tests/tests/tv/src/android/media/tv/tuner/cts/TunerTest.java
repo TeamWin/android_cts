@@ -1204,13 +1204,19 @@ public class TunerTest {
             public void onSignalTypeReported(int signalType) {}
 
             @Override
-            public void onModulationReported(int modulation) {}
+            public void onModulationReported(int modulation) {
+                ScanCallback.super.onModulationReported(modulation);
+            }
 
             @Override
-            public void onPriorityReported(boolean isHighPriority) {}
+            public void onPriorityReported(boolean isHighPriority) {
+                ScanCallback.super.onPriorityReported(isHighPriority);
+            }
 
             @Override
-            public void onDvbcAnnexReported(int dvbcAnnext) {}
+            public void onDvbcAnnexReported(int dvbcAnnext) {
+                ScanCallback.super.onDvbcAnnexReported(dvbcAnnext);
+            }
         };
     }
 }
