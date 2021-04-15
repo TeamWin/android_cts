@@ -582,8 +582,10 @@ public class MediaStorageTest {
         device.executeShellCommand("wm dismiss-keyguard");
 
         final GetResultActivity activity = (GetResultActivity) inst.startActivitySync(intent);
-        device.waitForIdle();
+        // Wait for the UI Thread to become idle.
+        inst.waitForIdleSync();
         activity.clearResult();
+        device.waitForIdle();
         activity.startIntentSenderForResult(pi.getIntentSender(), 42, null, 0, 0, 0);
 
         device.waitForIdle();
@@ -591,7 +593,7 @@ public class MediaStorageTest {
         // Some dialogs may have granted access automatically, so we're willing
         // to keep rolling forward if we can't find our grant button
         final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
-        if (new UiObject(grant).waitForExists(2_000)) {
+        if (new UiObject(grant).waitForExists(5_000)) {
             device.findObject(grant).click();
         }
 
