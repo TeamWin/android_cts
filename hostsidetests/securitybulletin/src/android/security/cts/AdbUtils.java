@@ -65,6 +65,7 @@ public class AdbUtils {
         ITestDevice device;
         CrashUtils.Config config;
         List<String> inputFiles = Collections.emptyList();
+        boolean checkCrash = true;
 
         pocConfig(String binaryName, ITestDevice device) {
             this.binaryName = binaryName;
@@ -713,10 +714,12 @@ public class AdbUtils {
                 removeResources(inputFiles, testConfig.inputFilesDestination, testConfig.device);
             }
         }
-        if (testConfig.config == null) {
-            testConfig.config = new CrashUtils.Config();
+        if(testConfig.checkCrash) {
+            if (testConfig.config == null) {
+                testConfig.config = new CrashUtils.Config();
+            }
+            assertNoCrashes(testConfig.device, testConfig.config);
         }
-        assertNoCrashes(testConfig.device, testConfig.config);
     }
 
     /**
