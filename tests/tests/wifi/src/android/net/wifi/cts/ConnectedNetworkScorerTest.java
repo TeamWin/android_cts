@@ -299,7 +299,7 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                                 .isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getRateMcsIdx()).isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getBitRateInKbps())
-                                .isGreaterThan(0);
+                                .isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getTxMpdu()).isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getRxMpdu()).isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getMpduLost()).isAtLeast(0);
