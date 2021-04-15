@@ -30,7 +30,6 @@ import com.android.cts.packagemanager.verify.domain.android.DomainUtils.DECLARIN
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DECLARING_PKG_NAME_2
-import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_1
 import com.android.cts.packagemanager.verify.domain.java.DomainUtils.DOMAIN_UNHANDLED
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
@@ -40,7 +39,10 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-abstract class DomainVerificationIntentTestBase {
+abstract class DomainVerificationIntentTestBase(
+    private val domain: String,
+    private val assertResolvesToBrowsersInBefore: Boolean = true
+) {
 
     companion object {
 
@@ -65,7 +67,7 @@ abstract class DomainVerificationIntentTestBase {
 
     @Before
     fun findBrowsers() {
-        intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$DOMAIN_1"))
+        intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://$domain"))
             .applyIntentVariant(intentVariant)
 
         browsers = Intent(Intent.ACTION_VIEW, Uri.parse("https://$DOMAIN_UNHANDLED"))
@@ -88,7 +90,10 @@ abstract class DomainVerificationIntentTestBase {
         }
 
         this.allResults = allResults
-        assertResolvesTo(browsers)
+
+        if (assertResolvesToBrowsersInBefore) {
+            assertResolvesTo(browsers)
+        }
     }
 
     @Before
@@ -103,19 +108,19 @@ abstract class DomainVerificationIntentTestBase {
 
     protected fun assertResolvesTo(result: ComponentName) = assertResolvesTo(listOf(result))
 
-    protected fun assertResolvesTo(packageNames: Collection<ComponentName>) {
+    protected fun assertResolvesTo(components: Collection<ComponentName>) {
         // Pass MATCH_DEFAULT_ONLY to mirror startActivity resolution
         assertThat(packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
             .map { it.activityInfo }
             .map { ComponentName(it.packageName, it.name) })
-            .containsExactlyElementsIn(packageNames)
+            .containsExactlyElementsIn(components)
 
         if (intent.hasCategory(Intent.CATEGORY_DEFAULT)) {
             // Verify explicit DEFAULT mirrors MATCH_DEFAULT_ONLY
             assertThat(packageManager.queryIntentActivities(intent, 0)
                 .map { it.activityInfo }
                 .map { ComponentName(it.packageName, it.name) })
-                .containsExactlyElementsIn(packageNames)
+                .containsExactlyElementsIn(components)
         } else {
             // Verify that non-DEFAULT match returns all results
             assertThat(packageManager.queryIntentActivities(intent, 0)
