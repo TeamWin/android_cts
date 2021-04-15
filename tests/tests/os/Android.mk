@@ -25,7 +25,7 @@ LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts general-tests sts
 
 cts_platform_version_path := cts/tests/tests/os/assets/platform_versions.txt
 cts_platform_version_string := $(shell cat $(cts_platform_version_path))
