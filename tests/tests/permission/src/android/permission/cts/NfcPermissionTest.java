@@ -23,7 +23,7 @@ import static org.junit.Assert.fail;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
-import android.nfc.NfcAdapter.ControllerAlwaysOnStateCallback;
+import android.nfc.NfcAdapter.ControllerAlwaysOnListener;
 import android.os.Process;
 
 import androidx.test.InstrumentationRegistry;
@@ -143,16 +143,16 @@ public final class NfcPermissionTest {
     }
 
     /**
-     * Verifies that registerControllerAlwaysOnStateCallback() requires Permission.
+     * Verifies that registerControllerAlwaysOnListener() requires Permission.
      * <p>
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
-    public void testRegisterControllerAlwaysOnStateCallback() {
+    public void testRegisterControllerAlwaysOnListener() {
         try {
-            mNfcAdapter.registerControllerAlwaysOnStateCallback(
+            mNfcAdapter.registerControllerAlwaysOnListener(
                     new SynchronousExecutor(), new AlwaysOnStateListener());
-            fail("mNfcAdapter.registerControllerAlwaysOnStateCallback did not throw"
+            fail("mNfcAdapter.registerControllerAlwaysOnListener did not throw"
                     + "SecurityException as expected");
         } catch (SecurityException se) {
             // Expected Exception
@@ -165,9 +165,9 @@ public final class NfcPermissionTest {
         }
     }
 
-    private class AlwaysOnStateListener implements ControllerAlwaysOnStateCallback {
+    private class AlwaysOnStateListener implements ControllerAlwaysOnListener {
         @Override
-        public void onStateChanged(boolean isEnabled) {
+        public void onControllerAlwaysOnChanged(boolean isEnabled) {
             // Do nothing
         }
     }
