@@ -29,7 +29,10 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.content.Context;
+import android.os.Build;
 import android.os.Parcel;
 import android.telephony.AccessNetworkConstants;
 import android.telephony.LteVopsSupportInfo;
@@ -37,10 +40,14 @@ import android.telephony.NetworkRegistrationInfo;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 
+import androidx.test.InstrumentationRegistry;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ServiceStateTest {
     private static final String OPERATOR_ALPHA_LONG = "CtsOperatorLong";
@@ -150,9 +157,35 @@ public class ServiceStateTest {
         assertEquals(DUPLEX_MODE_TDD, serviceState.getDuplexMode());
     }
 
+    private static Context getContext() {
+        return InstrumentationRegistry.getContext();
+    }
+
     @Test
     public void testToString() {
         assertNotNull(serviceState.toString());
+    }
+
+    @Test
+    public void testNrStateRedacted() {
+        final TelephonyManager tm = getContext().getSystemService(TelephonyManager.class);
+
+        // Verify that NR State is not leaked in user builds.
+        if (!Build.IS_DEBUGGABLE) {
+            final String sss = tm.getServiceState().toString();
+            // The string leaked in previous releases is "nrState=<val>"; test that there is
+            // no matching or highly similar string leak, such as:
+            // nrState=NONE
+            // nrState=0
+            // mNrState=RESTRICTED
+            // NRSTATE=NOT_RESTRICTED
+            // nrState = CONNECTED
+            // etc.
+            Pattern p = Pattern.compile("nrState\\s*=\\s*[a-zA-Z0-9_]+", Pattern.CASE_INSENSITIVE);
+            Matcher m = p.matcher(sss);
+            // Need to use if (find) fail to ensure that the start and end are populated
+            if (m.find()) fail("Found nrState reported as: " + sss.substring(m.start(), m.end()));
+        }
     }
 
     @Test
