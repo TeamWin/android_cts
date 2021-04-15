@@ -70,7 +70,7 @@ public class WifiNl80211ManagerTest {
     }
 
     private class TestCountryCodeChangeListener implements
-            WifiNl80211Manager.CountryCodeChangeListener {
+            WifiNl80211Manager.CountryCodeChangedListener {
         private String mCurrentCountryCode;
 
         public String getCurrentCountryCode() {
@@ -78,7 +78,7 @@ public class WifiNl80211ManagerTest {
         }
 
         @Override
-        public void onChanged(String country) {
+        public void onCountryCodeChanged(String country) {
             mCurrentCountryCode = country;
         }
     }
@@ -153,8 +153,8 @@ public class WifiNl80211ManagerTest {
         // Since current cts don't have sufficient permission to call WifiNl80211Manager API.
         // Assert register fail because the CTS don't have sufficient permission to call
         // WifiNl80211Manager API which are guarded by selinux.
-        assertFalse(manager.registerCountryCodeChangeListener(executor,
+        assertFalse(manager.registerCountryCodeChangedListener(executor,
                 testCountryCodeChangeListener));
-        manager.unregisterCountryCodeChangeListener(testCountryCodeChangeListener);
+        manager.unregisterCountryCodeChangedListener(testCountryCodeChangeListener);
     }
 }
