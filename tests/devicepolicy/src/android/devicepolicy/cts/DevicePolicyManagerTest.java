@@ -40,13 +40,13 @@ import android.os.UserManager;
 import android.provider.Settings;
 
 import androidx.test.core.app.ApplicationProvider;
-import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.android.bedstead.deviceadminapp.DeviceAdminApp;
-import com.android.bedstead.harrier.annotations.Postsubmit;
-import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.BedsteadJUnit4;
 import com.android.bedstead.harrier.DeviceState;
+import com.android.bedstead.harrier.annotations.EnsureHasNoWorkProfile;
+import com.android.bedstead.harrier.annotations.Postsubmit;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireRunOnPrimaryUser;
 import com.android.bedstead.nene.TestApis;
@@ -65,7 +65,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(BedsteadJUnit4.class)
 public final class DevicePolicyManagerTest {
     private static final Context sContext = ApplicationProvider.getApplicationContext();
     private static final DevicePolicyManager sDevicePolicyManager =

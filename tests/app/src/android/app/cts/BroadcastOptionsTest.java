@@ -20,6 +20,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 
 import android.app.BroadcastOptions;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerExemptionManager;
 
@@ -145,5 +146,20 @@ public class BroadcastOptionsTest {
                 "reason");
 
         assertBroadcastOption_noTemporaryAppAllowList(bo);
+    }
+
+    @Test
+    public void testMaxManifestReceiverApiLevel() {
+        final BroadcastOptions bo = BroadcastOptions.makeBasic();
+        // No MaxManifestReceiverApiLevel set, the default value should be CUR_DEVELOPMENT.
+        assertEquals(Build.VERSION_CODES.CUR_DEVELOPMENT, bo.getMaxManifestReceiverApiLevel());
+
+        // Set MaxManifestReceiverApiLevel to P.
+        bo.setMaxManifestReceiverApiLevel(Build.VERSION_CODES.P);
+        assertEquals(Build.VERSION_CODES.P, bo.getMaxManifestReceiverApiLevel());
+
+        // Clone the BroadcastOptions and check it too.
+        final BroadcastOptions cloned = cloneViaBundle(bo);
+        assertEquals(Build.VERSION_CODES.P, bo.getMaxManifestReceiverApiLevel());
     }
 }

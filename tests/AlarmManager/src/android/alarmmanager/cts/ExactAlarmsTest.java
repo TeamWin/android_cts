@@ -184,6 +184,8 @@ public class ExactAlarmsTest {
     }
 
     @Test
+    // TODO (b/185181884): Remove once standby buckets can be reliably manipulated from tests.
+    @Ignore("Cannot reliably test bucket manipulation yet")
     public void exactAlarmPermissionElevatesBucket() throws Exception {
         mDeviceConfigHelper.without("exact_alarm_deny_list").commitAndAwaitPropagation();
 

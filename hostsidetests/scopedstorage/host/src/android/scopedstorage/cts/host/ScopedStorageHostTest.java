@@ -59,15 +59,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
             .setDisableIsolatedStorage(true));
     }
 
-    /**
-     * Runs the given phase of SignatureStorageTest by calling into the device.
-     * Throws an exception if the test phase fails.
-     */
-    void runDeviceTestWithPlatformSignature(String phase) throws Exception {
-        assertThat(runDeviceTests("android.scopedstorage.cts.signature",
-                "android.scopedstorage.cts.signature.SignatureStorageTest", phase)).isTrue();
-    }
-
     private void setupExternalStorage() throws Exception {
         if (!mIsExternalStorageSetup) {
             runDeviceTest("setupExternalStorage");
@@ -155,21 +146,6 @@ public class ScopedStorageHostTest extends BaseHostTestCase {
             denyAppOps("android:request_install_packages");
             revokePermissions("android.permission.WRITE_EXTERNAL_STORAGE");
         }
-    }
-
-    @Test
-    public void testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs() throws Exception {
-        runDeviceTest("testMTPAppWithoutPlatformSignatureCannotAccessAndroidDirs");
-    }
-
-    @Test
-    public void testMTPAppWithPlatformSignatureCanAccessAndroidDirs() throws Exception {
-        runDeviceTestWithPlatformSignature("testMTPAppWithPlatformSignatureCanAccessAndroidDirs");
-    }
-
-    @Test
-    public void testExternalStorageProviderAndDownloadsProvider() throws Exception {
-        runDeviceTest("testExternalStorageProviderAndDownloadsProvider");
     }
 
     @Test

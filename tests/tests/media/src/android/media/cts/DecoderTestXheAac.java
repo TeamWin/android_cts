@@ -43,6 +43,8 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -51,6 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @AppModeFull(reason = "DecoderTest is non-instant")
+@RunWith(JUnit4.class)
 public class DecoderTestXheAac {
     private static final String TAG = "DecoderTestXheAac";
 

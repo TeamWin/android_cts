@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  * <p>Optionally, you can guarantee that these methods do not run outside of the primary
  * user by using {@link DeviceState}.
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @RequireRunOnUserAnnotation("android.os.usertype.full.SYSTEM")
 public @interface RequireRunOnPrimaryUser {

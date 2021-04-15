@@ -1119,8 +1119,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify that {@link WifiManager#addetworkPrivileged} throws a SecurityException when called
-     * by a normal app.
+     * Verify that {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} throws a
+     * SecurityException when called by a normal app.
      */
     public void testAddNetworkPrivilegedNotAllowedForNormalApps() {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -1141,7 +1141,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#addetworkPrivileged} throws an exception when null is the input.
+     * Verify {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} throws an exception when
+     * null is the input.
      */
     public void testAddNetworkPrivilegedBadInput() {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -1164,8 +1165,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#addetworkPrivileged} returns the proper failure status code
-     * when adding an enterprise config with mandatory fields not filled in.
+     * Verify {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} returns the proper
+     * failure status code when adding an enterprise config with mandatory fields not filled in.
      */
     public void testAddNetworkPrivilegedFailureBadEnterpriseConfig() {
         if (!WifiFeature.isWifiSupported(getContext())) {
@@ -1194,8 +1195,8 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
     }
 
     /**
-     * Verify {@link WifiManager#addetworkPrivileged} works properly when the calling app has
-     * permissions.
+     * Verify {@link WifiManager#addNetworkPrivileged(WifiConfiguration)} works properly when the
+     * calling app has permissions.
      */
     public void testAddNetworkPrivilegedSuccess() {
         if (!WifiFeature.isWifiSupported(getContext())) {
