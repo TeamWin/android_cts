@@ -512,6 +512,13 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
             stopUserAsync(userId);
         }
         for (int userId : usersCreatedByTests) {
+            removeTestAddedUser(userId);
+        }
+    }
+
+    private void removeTestAddedUser(int userId) throws Exception  {
+        // Don't remove system user or initial user.
+        if (userId != USER_SYSTEM && userId != mInitialUserId) {
             removeUser(userId);
         }
     }
@@ -803,9 +810,8 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void setProfileOwnerOrFail(String componentName, int userId)
             throws Exception {
         if (!setProfileOwner(componentName, userId, /*expectFailure*/ false)) {
-            if (userId != 0) { // don't remove system user.
-                removeUser(userId);
-            }
+            // Don't remove system user or initial user that tests require to run on.
+            removeTestAddedUser(userId);
             fail("Failed to set profile owner");
         }
     }
@@ -813,9 +819,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected void setProfileOwnerExpectingFailure(String componentName, int userId)
             throws Exception {
         if (setProfileOwner(componentName, userId, /* expectFailure =*/ true)) {
-            if (userId != 0) { // don't remove system user.
-                removeUser(userId);
-            }
+            removeTestAddedUser(userId);
             fail("Setting profile owner should have failed.");
         }
     }
@@ -1204,6 +1208,52 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + "broadcasts to user 0", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
                 userId, deviceAdminPkg);
+    }
+
+    /** Find effective restriction for user */
+    protected boolean isRestrictionSetOnUser(int userId, String restriction) throws Exception {
+        String commandOutput = getDevice().executeShellCommand("dumpsys user");
+        String[] outputLines = commandOutput.split("\\n");
+        Pattern userPattern = Pattern.compile("(^.*)UserInfo\\{" + userId + ":.*$");
+        Pattern restrictionPattern = Pattern.compile("(^.*)Effective\\srestrictions\\:.*$");
+
+        boolean userFound = false;
+        boolean restrictionsFound = false;
+        int lastIndent = -1;
+
+        for (String line : outputLines) {
+            // Starting a new block of user infos
+            if (!line.startsWith(" ".repeat(lastIndent + 1))) {
+                CLog.d("User %d restrictions found, no matched restriction.", userId);
+                return false;
+            }
+            //First, try matching user pattern
+            Matcher userMatcher = userPattern.matcher(line);
+            if (userMatcher.find()) {
+                CLog.d("User %d found in dumpsys, finding restrictions.", userId);
+                userFound = true;
+                lastIndent = userMatcher.group(1).length();
+            }
+
+            // Second, try matching restriction
+            Matcher restrictionMatcher = restrictionPattern.matcher(line);
+            if (userFound && restrictionMatcher.find()) {
+                CLog.d("User %d restrictions found, finding exact restriction.", userId);
+                restrictionsFound = true;
+                lastIndent = restrictionMatcher.group(1).length();
+            }
+
+            if (restrictionsFound && line.contains(restriction)) {
+                return true;
+            }
+        }
+        if (!userFound) {
+            CLog.e("User %d not found in dumpsys.", userId);
+        }
+        if (!restrictionsFound) {
+            CLog.d("User %d found in dumpsys, but restrictions not found.", userId);
+        }
+        return false;
     }
 
     /**
