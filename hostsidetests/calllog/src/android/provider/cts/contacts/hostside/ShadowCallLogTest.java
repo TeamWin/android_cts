@@ -29,12 +29,14 @@ import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
+@Ignore("Runtime too long and may lock up device when it fails")
 public class ShadowCallLogTest extends BaseHostJUnit4Test {
     private static final String TAG = ShadowCallLogTest.class.getSimpleName();
 
