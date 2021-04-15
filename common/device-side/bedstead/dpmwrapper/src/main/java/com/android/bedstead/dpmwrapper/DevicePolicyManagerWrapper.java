@@ -209,6 +209,16 @@ final class DevicePolicyManagerWrapper
             // Used by FactoryResetProtectionPolicyTest
             doAnswer(answer).when(spy).getFactoryResetProtectionPolicy(any());
 
+            // Used by DefaultSmsApplicationTest
+            doAnswer(answer).when(spy).setDefaultSmsApplication(any(), any());
+
+            // Used by OverrideApnTest
+            doAnswer(answer).when(spy).addOverrideApn(any(), any());
+            doAnswer(answer).when(spy).updateOverrideApn(any(), anyInt(), any());
+            doAnswer(answer).when(spy).removeOverrideApn(any(), anyInt());
+            doAnswer(answer).when(spy).getOverrideApns(any());
+            doAnswer(answer).when(spy).isOverrideApnEnabled(any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
