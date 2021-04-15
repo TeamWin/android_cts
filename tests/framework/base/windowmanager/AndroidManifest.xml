@@ -475,6 +475,15 @@
             <meta-data android:name="android.supports_size_changes"
                        android:value="true"/>
         </activity>
+
+        <service android:name="android.server.wm.WindowContextTests$TestWindowService"
+                 android:exported="true"
+                 android:enabled="true" />
+        <activity android:name="android.server.wm.WindowContextTests$TestActivity"
+                  android:exported="true"
+                  android:resizeableActivity="true"
+                  android:supportsPictureInPicture="true"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
     </application>
 
     <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
