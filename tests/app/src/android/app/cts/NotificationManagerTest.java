@@ -177,6 +177,9 @@ public class NotificationManagerTest extends AndroidTestCase {
     private static final String SHARE_SHORTCUT_ID = "shareShortcut";
     private static final String SHARE_SHORTCUT_CATEGORY =
             "android.app.stubs.SHARE_SHORTCUT_CATEGORY";
+    // use a value of 10000 for consistency with other CTS tests (see
+    // android.server.wm.intentLaunchRunner#ACTIVITY_LAUNCH_TIMEOUT)
+    private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
 
     private static final String TRAMPOLINE_APP =
             "com.android.test.notificationtrampoline.current";
@@ -3362,7 +3365,10 @@ public class NotificationManagerTest extends AndroidTestCase {
 
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
 
-            BubbledActivity activity = (BubbledActivity) monitor.waitForActivity();
+            BubbledActivity activity = (BubbledActivity) monitor.waitForActivityWithTimeout(
+                ACTIVITY_LAUNCH_TIMEOUT);
+            assertNotNull(String.format(
+                "Failed to detect BubbleActivity after %d ms", ACTIVITY_LAUNCH_TIMEOUT), activity);
             assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_NEW_DOCUMENT) != 0);
             assertTrue((activity.getIntent().getFlags() & FLAG_ACTIVITY_MULTIPLE_TASK) != 0);
         } finally {
