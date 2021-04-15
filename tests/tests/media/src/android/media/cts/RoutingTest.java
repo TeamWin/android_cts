@@ -494,11 +494,16 @@ public class RoutingTest extends AndroidTestCase {
     private void assertHasNonNullRoutedDevice(AudioRouting router) throws Exception {
         AudioDeviceInfo routedDevice = null;
         // Give a chance for playback or recording to start so routing can be established
-        final long timeouts[] = { 100, 200, 500, 500, 1000};
+        final long timeouts[] = { 100, 200, 300, 500, 1000};
         int attempt = 0;
+        long totalWait = 0;
         do {
+            totalWait += timeouts[attempt];
             try { Thread.sleep(timeouts[attempt++]); } catch (InterruptedException ex) {}
             routedDevice = router.getRoutedDevice();
+            if (routedDevice == null && (attempt > 2 || totalWait >= 1000)) {
+                Log.w(TAG, "Routing still not reported after " + totalWait + "ms");
+            }
         } while (routedDevice == null && attempt < timeouts.length);
         assertNotNull(routedDevice); // we probably can't say anything more than this
     }
