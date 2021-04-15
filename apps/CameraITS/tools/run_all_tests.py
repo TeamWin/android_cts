@@ -416,33 +416,40 @@ def main():
     auto_scene_switch = False
     logging.info('Manual testing: no tablet defined or testing scene5.')
 
-  # Run through all scenes if user does not supply one and config file doesn't
-  # have specific scene name listed.
-  possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
-  if not scenes or '<scene-name>' in scenes:
-    scenes = possible_scenes
-  else:
-    # Validate user input scene names
-    valid_scenes = True
-    temp_scenes = []
-    for s in scenes:
-      if s in possible_scenes:
-        temp_scenes.append(s)
-      elif s in _GROUPED_SCENES:
-        expand_scene(s, temp_scenes)
-      else:
-        valid_scenes = False
-        raise ValueError(f'Unknown scene specified: {s}')
-
-    # assign temp_scenes back to scenes and remove duplicates
-    scenes = sorted(set(temp_scenes), key=temp_scenes.index)
-
   logging.info('Running ITS on device: %s, camera: %s, scene: %s',
                device_id, camera_id_combos, scenes)
 
   for camera_id in camera_id_combos:
     test_params_content['camera'] = camera_id
     results = {}
+
+    # Run through all scenes if user does not supply one and config file doesn't
+    # have specific scene name listed.
+    if its_session_utils.SUB_CAMERA_SEPARATOR in camera_id:
+      possible_scenes = list(SUB_CAMERA_TESTS.keys())
+      if auto_scene_switch:
+        possible_scenes.remove('sensor_fusion')
+    else:
+      possible_scenes = _AUTO_SCENES if auto_scene_switch else _ALL_SCENES
+
+    if not scenes or '<scene-name>' in scenes:
+      scenes = possible_scenes
+    else:
+      # Validate user input scene names
+      valid_scenes = True
+      temp_scenes = []
+      for s in scenes:
+        if s in possible_scenes:
+          temp_scenes.append(s)
+        elif s in _GROUPED_SCENES:
+          expand_scene(s, temp_scenes)
+        else:
+          valid_scenes = False
+          raise ValueError(f'Unknown scene specified: {s}')
+
+      # assign temp_scenes back to scenes and remove duplicates
+      scenes = sorted(set(temp_scenes), key=temp_scenes.index)
+
     for s in _ALL_SCENES:
       results[s] = {RESULT_KEY: RESULT_NOT_EXECUTED}
     # A subdir in topdir will be created for each camera_id. All scene test
