@@ -27,6 +27,8 @@ import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.PropertyUtil;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -123,6 +125,7 @@ public class CameraExtensionCharacteristicsTest {
 
     @Test
     public void testExtensionAvailability() throws Exception {
+        boolean extensionsAdvertised = false;
         for (String id : mTestRule.getCameraIdsUnderTest()) {
             StaticMetadata staticMeta =
                     new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
@@ -133,6 +136,9 @@ public class CameraExtensionCharacteristicsTest {
                     mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
             ArrayList<Integer> unsupportedExtensions = new ArrayList<>(EXTENSIONS);
             List<Integer> supportedExtensions = extensionChars.getSupportedExtensions();
+            if (!extensionsAdvertised && !supportedExtensions.isEmpty()) {
+                extensionsAdvertised = true;
+            }
             for (Integer extension : supportedExtensions) {
                 verifySupportedExtension(extensionChars, id, extension, SurfaceTexture.class);
                 unsupportedExtensions.remove(extension);
@@ -143,6 +149,10 @@ public class CameraExtensionCharacteristicsTest {
                 verifyUnsupportedExtension(extensionChars, extension, SurfaceTexture.class);
             }
         }
+        boolean extensionsEnabledProp = PropertyUtil.areCameraXExtensionsEnabled();
+        assertEquals("Extensions system property : " + extensionsEnabledProp + " does not match " +
+                "with the advertised extensions: " + extensionsAdvertised, extensionsEnabledProp,
+                extensionsAdvertised);
     }
 
     @Test

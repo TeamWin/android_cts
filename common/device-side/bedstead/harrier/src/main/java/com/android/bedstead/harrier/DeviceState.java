@@ -79,8 +79,10 @@ public final class DeviceState implements TestRule {
     private final Context mContext = ApplicationProvider.getApplicationContext();
     private static final TestApis sTestApis = new TestApis();
     private static final String SKIP_TEST_TEARDOWN_KEY = "skip-test-teardown";
+    private static final String SKIP_CLASS_TEARDOWN_KEY = "skip-class-teardown";
     private static final String SKIP_TESTS_REASON_KEY = "skip-tests-reason";
-    private final boolean mSkipTestTeardown;
+    private boolean mSkipTestTeardown;
+    private boolean mSkipClassTeardown;
     private boolean mSkipTests;
     private String mSkipTestsReason;
 
@@ -90,8 +92,14 @@ public final class DeviceState implements TestRule {
         Bundle arguments = InstrumentationRegistry.getArguments();
         mSkipTestTeardown = Boolean.parseBoolean(
                 arguments.getString(SKIP_TEST_TEARDOWN_KEY, "false"));
+        mSkipClassTeardown = Boolean.parseBoolean(
+                arguments.getString(SKIP_CLASS_TEARDOWN_KEY, "false"));
         mSkipTestsReason = arguments.getString(SKIP_TESTS_REASON_KEY, "");
         mSkipTests = !mSkipTestsReason.isEmpty();
+    }
+
+    void setSkipTestTeardown(boolean skipTestTeardown) {
+        mSkipTestTeardown = skipTestTeardown;
     }
 
     @Override public Statement apply(final Statement base,
@@ -191,7 +199,16 @@ public final class DeviceState implements TestRule {
     }
 
     private Statement applySuite(final Statement base, final Description description) {
-        return base;
+        return new Statement() {
+            @Override
+            public void evaluate() throws Throwable {
+                base.evaluate();
+
+                if (!mSkipClassTeardown) {
+                    teardownShareableState();
+                }
+            }
+        };
     }
 
     private void requireRunOnUser(String userType) {
