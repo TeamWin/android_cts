@@ -404,6 +404,32 @@ class SpellCheckerTest : EndToEndImeTestBase() {
     }
 
     @Test
+    fun newSpellCheckerSession_processPurePunctuationRequest() {
+        val configuration = MockSpellCheckerConfiguration.newBuilder()
+                .addSuggestionRules(
+                        MockSpellCheckerProto.SuggestionRule.newBuilder()
+                                .setMatch("foo")
+                                .addSuggestions("suggestion")
+                                .setAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                ).build()
+        MockSpellCheckerClient.create(context, configuration).use {
+            val tsm = context.getSystemService(TextServicesManager::class.java)
+            assertThat(tsm).isNotNull()
+            val fakeListener = FakeSpellCheckerSessionListener()
+            val fakeExecutor = FakeExecutor()
+            var session: SpellCheckerSession? = tsm?.newSpellCheckerSession(Locale.US, false,
+                    RESULT_ATTR_LOOKS_LIKE_TYPO, null, fakeExecutor, fakeListener)
+            assertThat(session).isNotNull()
+            session?.getSentenceSuggestions(arrayOf(TextInfo(". ")), 5)
+            waitOnMainUntil({ fakeExecutor.runnables.size == 1 }, TIMEOUT)
+            fakeExecutor.runnables[0].run()
+            assertThat(fakeListener.getSentenceSuggestionsResults).hasSize(1)
+            assertThat(fakeListener.getSentenceSuggestionsResults[0]).hasLength(1)
+            assertThat(fakeListener.getSentenceSuggestionsResults[0]!![0]).isNull()
+        }
+    }
+
+    @Test
     fun respectSentenceBoundary() {
         // Set up two rules:
         // - Matches the sentence "Preceding text?" and marks it as grammar error.
