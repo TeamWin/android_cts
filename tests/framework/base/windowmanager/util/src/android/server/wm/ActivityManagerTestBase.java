@@ -379,6 +379,10 @@ public abstract class ActivityManagerTestBase {
                     .putExtra(EXTRA_DISMISS_KEYGUARD_METHOD, true));
         }
 
+        void expandPip() {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP));
+        }
+
         void expandPipWithAspectRatio(String extraNum, String extraDenom) {
             mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP)
                     .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR, extraNum)
@@ -688,6 +692,11 @@ public abstract class ActivityManagerTestBase {
 
     protected void removeRootTasksInWindowingModes(int... windowingModes) {
         runWithShellPermission(() -> mAtm.removeRootTasksInWindowingModes(windowingModes));
+        waitForIdle();
+    }
+
+    protected void removeRootTask(int taskId) {
+        runWithShellPermission(() -> mAtm.removeTask(taskId));
         waitForIdle();
     }
 
