@@ -38,8 +38,5 @@ android_test {
         "vts10",
         "general-tests",
     ],
-    test_options: {
-        extra_test_configs: ["DevicePolicyWorkProfileTest.xml", "DevicePolicySecondaryUserTest.xml"]
-    },
     sdk_version: "test_current",
 }
