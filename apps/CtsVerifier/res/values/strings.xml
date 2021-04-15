@@ -2476,6 +2476,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_capture_image_support">Camera support cross profile image capture</string>
     <string name="provisioning_byod_capture_image_support_info">
         This test verifies that images can be captured from the managed profile using the primary profile camera.\n
+        If prompted, accept the camera permission after pressing go.\n
         1. Capture a picture using the camera.\n
         2. Verify that the captured picture is shown.\n
         3. Click on the close button.
@@ -2483,6 +2484,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_capture_video_support_with_extra_output">Camera support cross profile video capture (with extra output path)</string>
     <string name="provisioning_byod_capture_video_support_info">
         This test verifies that videos can be captured from the managed profile using the primary profile camera.\n
+        If prompted, accept the camera permission after pressing go.\n
         1. Capture a video using the camera.\n
         2. Click on the play button.\n
         3. Verify that the captured video is played.\n
@@ -3251,8 +3253,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_no_gps_location_feature">No GPS feature present. Skip test.</string>
     <string name="provisioning_byod_location_mode_enable">Enable location</string>
     <string name="provisioning_byod_location_mode_enable_toast_location_change">Location changed</string>
+    <string name="provisioning_byod_location_mode_enable_missing_permission">Permission missing</string>
     <string name="provisioning_byod_location_mode_enable_instruction">
         This test verifies that the location updates can be enabled for the managed profile apps.\n
+        If prompted, accept the location permission after pressing go.\n
         1. Press the go button to go to the location settings page, set both the main location switch and the work profile location switch enabled.\n
         2. Press home to go to the launcher.\n
         3. Move your position a little bit, verify that location updates toast comes up.\n
@@ -4964,6 +4968,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_general_yes">Yes</string>
     <string name="audio_general_info">Info</string>
     <string name="audio_general_ok">Ok</string>
+    <string name="audio_general_start">Start</string>
+    <string name="audio_general_stop">Stop</string>
+
+    <string name="audio_general_JavaApi">Java API</string>
+    <string name="audio_general_NativeApi">Native API</string>
+
+    <string name="audio_general_clear_results">Clear Results</string>
 
     <!-- Audio Loopback Latency Test -->
     <string name="audio_loopback_latency_test">Audio Loopback Latency Test</string>
@@ -5146,6 +5157,13 @@ Follow the instructions on the screen to measure the frequency response for the 
     <string name="af_no">No</string>
     <string name="af_yes">Yes</string>
 
+    <!-- AudioTap2Tone test -->
+    <string name="audio_tap2tone">Audio Tap To Tone Test</string>
+    <string name="audio_tap2tone_info">This tests the latency from a screen interaction to a
+        resulting tone.\nSelect the Audio API to test and press the \"Start\" button.
+        Use your fingernail to tap on the field below to trigger the test tone. Results will be
+        displayed in the field.</string>
+    <string name="audio_tap2tone_init_result">Result:</string>
 
     <!-- Strings for 6DoF test -->
     <string name="six_dof_test">6DoF Test</string>

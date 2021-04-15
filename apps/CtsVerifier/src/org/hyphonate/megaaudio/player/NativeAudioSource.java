@@ -37,11 +37,17 @@ public class NativeAudioSource extends AudioSource {
     }
 
     @Override
+    public void trigger() {
+        triggerN(mNativeSourcePtr);
+    }
+
+    @Override
     public int pull(float[] audioData, int numFrames, int numChans) {
         return pullN(mNativeSourcePtr, audioData, numFrames, numChans);
     }
 
     private native void initN(long nativeSourcePtr, int numFrames, int numChans);
     private native void resetN(long nativeSourcePtr);
+    private native void triggerN(long nativeSourcePtr);
     private native int pullN(long nativeSourcePtr, float[] audioData, int numFrames, int numChans);
 }

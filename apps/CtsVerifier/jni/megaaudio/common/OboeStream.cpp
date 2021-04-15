@@ -19,7 +19,7 @@
 
 #include "OboeStream.h"
 
-static const char * const TAG = "OboePlayer(native)";
+static const char * const TAG = "OboeStream(native)";
 
 using namespace oboe;
 

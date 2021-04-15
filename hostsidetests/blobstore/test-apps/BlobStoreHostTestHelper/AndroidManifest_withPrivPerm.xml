@@ -14,16 +14,16 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.scopedstorage.cts.signature" >
-    <uses-permission android:name="android.permission.ACCESS_MTP" />
-    <application>
+          package="com.android.cts.device.blob">
+
+    <uses-permission android:name="android.permission.ACCESS_BLOBS_ACROSS_USERS" />
+
+    <application android:testOnly="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <instrumentation android:name="androidx.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.scopedstorage.cts.signature"
-                     android:label="Signature app tests for scoped storage"/>
-
+    <instrumentation
+            android:name="androidx.test.runner.AndroidJUnitRunner"
+            android:targetPackage="com.android.cts.device.blob"  />
 </manifest>

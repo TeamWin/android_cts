@@ -98,8 +98,6 @@ StreamBase::Result OboePlayer::setupStream(int32_t channelCount, int32_t sampleR
             builder.setDeviceId(mRouteDeviceId);
         }
 
-        mAudioSource->init(getNumBufferFrames() , mChannelCount);
-
         result = builder.openStream(mAudioStream);
         if (result != oboe::Result::OK){
             __android_log_print(
@@ -113,10 +111,18 @@ StreamBase::Result OboePlayer::setupStream(int32_t channelCount, int32_t sampleR
             // This doesn't affect the success of opening the stream.
             int32_t desiredSize = mAudioStream->getFramesPerBurst() * kBufferSizeInBursts;
             mAudioStream->setBufferSizeInFrames(desiredSize);
+
+            mAudioSource->init(desiredSize , mChannelCount);
         }
     }
 
     return OboeErrorToMegaAudioError(result);
+}
+
+StreamBase::Result OboePlayer::startStream() {
+    StreamBase::Result result = Player::startStream();
+
+    return result;
 }
 
 //
@@ -130,7 +136,6 @@ extern "C" {
 JNIEXPORT JNICALL jlong
 Java_org_hyphonate_megaaudio_player_OboePlayer_allocNativePlayer(
     JNIEnv *env, jobject thiz, jlong native_audio_source, jint playerSubtype) {
-    __android_log_print(ANDROID_LOG_INFO, TAG, "teardownStream()");
 
     return (jlong)new OboePlayer((AudioSource*)native_audio_source, playerSubtype);
 }
@@ -138,8 +143,6 @@ Java_org_hyphonate_megaaudio_player_OboePlayer_allocNativePlayer(
 JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_setupStreamN(
         JNIEnv *env, jobject thiz, jlong native_player,
         jint channel_count, jint sample_rate, jint routeDeviceId) {
-    __android_log_print(ANDROID_LOG_INFO, TAG,
-        "Java_org_hyphonate_megaaudio_playerOboePlayer_startStreamN()");
 
     OboePlayer* player = (OboePlayer*)native_player;
     return player->setupStream(channel_count, sample_rate, routeDeviceId);
@@ -147,8 +150,6 @@ JNIEXPORT jint JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_setupStrea
 
 JNIEXPORT int JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_teardownStreamN(
         JNIEnv *env, jobject thiz, jlong native_player) {
-    __android_log_print(ANDROID_LOG_INFO, TAG,
-        "Java_org_hyphonate_megaaudio_player_OboePlayer_teardownStreamN()");
 
     OboePlayer* player = (OboePlayer*)native_player;
     return player->teardownStream();
@@ -156,16 +157,12 @@ JNIEXPORT int JNICALL Java_org_hyphonate_megaaudio_player_OboePlayer_teardownStr
 
 JNIEXPORT JNICALL jint Java_org_hyphonate_megaaudio_player_OboePlayer_startStreamN(
         JNIEnv *env, jobject thiz, jlong native_player, jint playerSubtype) {
-    __android_log_print(ANDROID_LOG_INFO, TAG,
-        "Java_org_hyphonate_megaaudio_playerOboePlayer_startStreamN()");
 
     return ((OboePlayer*)(native_player))->startStream();
 }
 
 JNIEXPORT JNICALL jint
 Java_org_hyphonate_megaaudio_player_OboePlayer_stopN(JNIEnv *env, jobject thiz, jlong native_player) {
-     __android_log_print(ANDROID_LOG_INFO, TAG,
-         "Java_org_hyphonate_megaaudio_player_OboePlayer_stopN()");
 
    return ((OboePlayer*)(native_player))->stopStream();
 }

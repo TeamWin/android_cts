@@ -23,10 +23,12 @@ import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.ClientSuggestionsActivity;
 import android.autofillservice.cts.testcore.AutofillActivityTestRule;
+import android.autofillservice.cts.testcore.CannedFillResponse;
 import android.autofillservice.cts.testcore.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.testcore.ClientAutofillRequestCallback;
 import android.autofillservice.cts.testcore.OneTimeTextWatcher;
 import android.autofillservice.cts.testcore.UiBot;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.widget.EditText;
 
@@ -78,12 +80,162 @@ public abstract class ClientSuggestionsCommonTestCase
     }
 
     @Test
+    public void testAutoFillNoDatasets_fallbackDefaultService() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation("The Dude", isInlineMode())
+                .build());
+
+        mClientReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        mClientReplier.assertReceivedRequest();
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Select the dataset.
+        mUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillNoDatasets_fallbackDefaultService() is enough")
+    public void testManualRequestAfterFallbackDefaultService() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation("The Dude", isInlineMode())
+                .build());
+
+        mClientReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        mClientReplier.assertReceivedRequest();
+
+        // The dataset shown.
+        mUiBot.assertDatasets("The Dude");
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "DUDE")
+                .setField(ID_PASSWORD, "SWEET")
+                .setPresentation("THE DUDE", isInlineMode())
+                .build());
+
+        // Trigger autofill.
+        mActivity.forceAutofillOnUsername();
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        mClientReplier.assertNoUnhandledFillRequests();
+
+        mActivity.expectAutoFill("DUDE", "SWEET");
+
+        // Select the dataset.
+        mUiBot.selectDataset("THE DUDE");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillNoDatasets_fallbackDefaultService() is enough")
+    public void testNewFieldAddedAfterFallbackDefaultService() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation("The Dude", isInlineMode())
+                .build());
+
+        mClientReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        mClientReplier.assertReceivedRequest();
+
+        // The dataset shown.
+        mUiBot.assertDatasets("The Dude");
+
+        // Try again, in a field that was added after the first request
+        final EditText child = new EditText(mActivity);
+        child.setId(R.id.empty);
+        mActivity.addChild(child, ID_EMPTY);
+        final OneTimeTextWatcher watcher = new OneTimeTextWatcher("child", child,
+                "new view on the block");
+        child.addTextChangedListener(watcher);
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setField(ID_EMPTY, "new view on the block")
+                .setPresentation("The Dude", isInlineMode())
+                .build());
+
+        mActivity.syncRunOnUiThread(() -> child.requestFocus());
+        mUiBot.waitForIdle();
+        sReplier.getNextFillRequest();
+        mClientReplier.assertNoUnhandledFillRequests();
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Select the dataset.
+        mUiBot.selectDataset("The Dude");
+        mUiBot.waitForIdle();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        watcher.assertAutoFilled();
+    }
+
+    @Test
+    public void testNoDatasetsAfterFallbackDefaultService() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(NO_RESPONSE);
+        mClientReplier.addResponse(NO_RESPONSE);
+
+        // Trigger autofill.
+        mUiBot.selectByRelativeId(ID_USERNAME);
+        mUiBot.waitForIdle();
+
+        mClientReplier.assertReceivedRequest();
+        sReplier.getNextFillRequest();
+
+        // Make sure UI is not shown.
+        mUiBot.assertNoDatasetsEver();
+    }
+
+    @Test
+    @AppModeFull(reason = "testAutoFillOneDataset() is enough")
     public void testAutoFillNoDatasets() throws Exception {
         // Set service.
         enableService();
 
         // Set expectations.
-        mClientReplier.addResponse(NO_RESPONSE);
+        setEmptyClientResponse();
 
         // Trigger autofill.
         mUiBot.selectByRelativeId(ID_USERNAME);
@@ -101,7 +253,7 @@ public abstract class ClientSuggestionsCommonTestCase
         enableService();
 
         // Set expectations.
-        mClientReplier.addResponse(NO_RESPONSE);
+        setEmptyClientResponse();
 
         // Trigger autofill.
         mUiBot.selectByRelativeId(ID_USERNAME);
@@ -150,5 +302,11 @@ public abstract class ClientSuggestionsCommonTestCase
                 mClientReplier = mActivity.getReplier();
             }
         };
+    }
+
+    private void setEmptyClientResponse() {
+        mClientReplier.addResponse(new CannedFillResponse.Builder()
+                .setExtras(new Bundle())
+                .build());
     }
 }
