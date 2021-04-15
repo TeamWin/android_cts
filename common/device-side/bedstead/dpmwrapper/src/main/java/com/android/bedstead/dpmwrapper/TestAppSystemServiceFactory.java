@@ -219,7 +219,7 @@ public final class TestAppSystemServiceFactory {
                     != PackageManager.PERMISSION_GRANTED) {
                 fail("Package " + context.getPackageName() + " doesn't have "
                         + INTERACT_ACROSS_USERS + " - did you add it to the manifest and called "
-                        + "grantDpmWrapper() in the host-side test?");
+                        + "grantDpmWrapper() (for user " + userId + ") in the host-side test?");
             }
             context.sendOrderedBroadcastAsUser(intent,
                     UserHandle.SYSTEM, /* permission= */ null, myReceiver, sHandler,

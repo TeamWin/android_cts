@@ -17,6 +17,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
      package="com.google.android.cts.deviceowner">
 
+    <!-- TODO(b/176993670): needed by DevicePolicyManagerWrapper to send ordered broadcast from
+         current user to system user on devices running on headless system user mode. Should be
+         removed once tests are refactored to use the proper IPC between theses users.  -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS" />
+
     <application android:label="Privacy Settings for Device Owner CTS host side app"
          android:testOnly="true">
 
@@ -39,6 +44,11 @@
             <intent-filter>
                 <action android:name="android.app.action.DEVICE_ADMIN_ENABLED"/>
             </intent-filter>
+        </receiver>
+
+         <!--  TODO(b/176993670): remove if DpmWrapperManagerWrapper goes away -->
+        <receiver android:name="com.android.bedstead.dpmwrapper.TestAppCallbacksReceiver"
+             android:exported="true">
         </receiver>
     </application>
 
