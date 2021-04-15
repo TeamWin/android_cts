@@ -104,13 +104,13 @@ public class UiAutomationTest {
 
         // Access APIs guarded by a platform defined signature permissions
         try {
+            assertSame(packageManager.checkPermission(Manifest.permission.ANSWER_PHONE_CALLS,
+                    context.getPackageName()), PackageManager.PERMISSION_DENIED);
             getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
             // Access APIs guarded by a platform defined signature permission
             activityManager.getPackageImportance("foo.bar.baz");
 
             // Grant ourselves a runtime permission (was granted at install)
-            assertSame(packageManager.checkPermission(Manifest.permission.ANSWER_PHONE_CALLS,
-                    context.getPackageName()), PackageManager.PERMISSION_DENIED);
             packageManager.grantRuntimePermission(context.getPackageName(),
                     Manifest.permission.ANSWER_PHONE_CALLS, Process.myUserHandle());
         } catch (SecurityException e) {
