@@ -156,6 +156,9 @@ final class DevicePolicyManagerWrapper
             // Used by SuspendPackageTest
             doAnswer(answer).when(spy).getPolicyExemptApps();
 
+            // Used by PrivacyDeviceOwnerTest
+            doAnswer(answer).when(spy).getDeviceOwner();
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
