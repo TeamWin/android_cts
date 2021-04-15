@@ -24,6 +24,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
@@ -39,6 +40,7 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
+import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
@@ -125,6 +127,7 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcelable;
+import android.os.Process;
 import android.os.RemoteCallback;
 
 import androidx.annotation.Nullable;
@@ -764,21 +767,45 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void queriesPackage_canSeeSyncadapterTarget() throws Exception {
+    public void queriesPackage_getSyncAdapterTypes_canSeeSyncadapterTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
     }
 
     @Test
-    public void queriesNothing_cannotSeeSyncadapterTarget() throws Exception {
+    public void queriesNothing_getSyncAdapterTypes_cannotSeeSyncadapterTarget() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
         assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
                 this::getSyncAdapterTypes);
     }
 
     @Test
-    public void queriesNothingSharedUser_canSeeSyncadapterSharedUserTarget() throws Exception {
+    public void queriesNothingSharedUser_getSyncAdapterTypes_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
                 this::getSyncAdapterTypes);
+    }
+
+    @Test
+    public void queriesPackage_getSyncAdapterPackages_canSeeSyncadapterTarget()
+            throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+    }
+
+    @Test
+    public void queriesNothing_getSyncAdapterPackages_cannotSeeSyncadapterTarget()
+            throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+    }
+
+    @Test
+    public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
     }
 
     @Test
@@ -893,6 +920,22 @@ public class AppEnumerationTests {
             ThrowingFunction<String, String[]> commandMethod) throws Exception {
         if (!sGlobalFeatureEnabled) return;
         final String[] packageNames = commandMethod.apply(sourcePackageName);
+        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
+                packageNames, not(hasItemInArray(targetPackageName)));
+    }
+
+    private void assertVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
+        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
+                packageNames, hasItemInArray(targetPackageName));
+    }
+
+    private void assertNotVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
         assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
                 packageNames, not(hasItemInArray(targetPackageName)));
     }
@@ -1063,6 +1106,16 @@ public class AppEnumerationTests {
                 .map(parcelable -> ((AppWidgetProviderInfo) parcelable).provider.getPackageName())
                 .distinct()
                 .toArray(String[]::new);
+    }
+
+    private String[] getSyncAdapterPackagesForAuthorityAsUser(String sourcePackageName,
+            String targetPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        extraData.putInt(Intent.EXTRA_USER, Process.myUserHandle().getIdentifier());
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY);
+        return response.getStringArray(Intent.EXTRA_PACKAGES);
     }
 
     private void setPackagesSuspended(boolean suspend, List<String> packages) {
