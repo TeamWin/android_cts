@@ -25,7 +25,7 @@ import org.junit.Test;
 
 public class TrafficDescriptorTest {
     private static final String DNN = "DNN";
-    private static final String OS_APP_ID = "OS_APP_ID";
+    private static final byte[] OS_APP_ID = {1, 2, 3, 4};
 
     @Test
     public void testConstructorAndGetters() {
@@ -44,7 +44,8 @@ public class TrafficDescriptorTest {
     @Test
     public void testNotEquals() {
         TrafficDescriptor td = new TrafficDescriptor(DNN, OS_APP_ID);
-        TrafficDescriptor notEqualsTd = new TrafficDescriptor("NOT_DNN", "NOT_OS_APP_ID");
+        byte[] notOsAppId = {5, 6, 7, 8};
+        TrafficDescriptor notEqualsTd = new TrafficDescriptor("NOT_DNN", notOsAppId);
         assertThat(td).isNotEqualTo(notEqualsTd);
         assertThat(td).isNotEqualTo(null);
     }
