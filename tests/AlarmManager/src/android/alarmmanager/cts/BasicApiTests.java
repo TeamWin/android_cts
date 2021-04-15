@@ -34,6 +34,7 @@ import android.content.IntentFilter;
 import android.os.Build;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.WorkSource;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
@@ -216,6 +217,35 @@ public class BasicApiTests {
                 }
             }
         }
+    }
+
+    @Test
+    public void testSetExactWithWorkSource() throws Exception {
+        final int myUid = mContext.getPackageManager().getPackageUid(mContext.getOpPackageName(),
+                0);
+        final long futurityMs = 1000;
+        mMockAlarmReceiver.reset();
+
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        SystemClock.elapsedRealtime() + futurityMs, "test-tag", r -> r.run(),
+                        new WorkSource(myUid), mMockAlarmReceiver));
+
+        Thread.sleep(futurityMs);
+        PollingCheck.waitFor(2000, mMockAlarmReceiver::isAlarmed,
+                "Exact alarm with work source did not fire as expected");
+    }
+
+    @Test
+    public void testSetExact() throws Exception {
+        final long futurityMs = 1000;
+        mMockAlarmReceiver.reset();
+        mAm.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + futurityMs, "test-tag", mMockAlarmReceiver, null);
+
+        Thread.sleep(futurityMs);
+        PollingCheck.waitFor(2000, mMockAlarmReceiver::isAlarmed,
+                "Exact alarm with work source did not fire as expected");
     }
 
     @Test
