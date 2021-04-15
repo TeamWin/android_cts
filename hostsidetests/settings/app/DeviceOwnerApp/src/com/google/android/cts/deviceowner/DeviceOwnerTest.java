@@ -17,6 +17,8 @@ package com.google.android.cts.deviceowner;
 
 import static android.server.wm.WindowManagerState.STATE_RESUMED;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.admin.DeviceAdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
@@ -30,7 +32,13 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
+
 import androidx.test.InstrumentationRegistry;
+
+import com.android.bedstead.dpmwrapper.DeviceOwnerHelper;
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
+import com.android.compatibility.common.util.enterprise.DeviceAdminReceiverUtils;
 
 /**
  * Class for device-owner based tests.
@@ -38,16 +46,30 @@ import androidx.test.InstrumentationRegistry;
  * <p>This class handles making sure that the test is the device owner and that it has an active
  * admin registered if necessary. The admin component can be accessed through {@link #getWho()}.
  */
-public class DeviceOwnerTest extends InstrumentationTestCase {
+public final class DeviceOwnerTest extends InstrumentationTestCase {
 
-    public static final int TIMEOUT = 2000;
+    private static final String TAG = DeviceOwnerTest.class.getSimpleName();
+
+    private static final String WORK_POLICY_INFO_TEXT = "Your work policy info";
+
+    public static final int TIMEOUT_MS = 2_000;
 
     protected Context mContext;
     protected UiDevice mDevice;
 
     /** Device Admin receiver for DO. */
-    public static class BasicAdminReceiver extends DeviceAdminReceiver {
-        /* empty */
+    public static final class BasicAdminReceiver extends DeviceAdminReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            // Ignore intents used by DpmWrapper IPC between current and system users
+            if (DeviceOwnerHelper.runManagerMethod(this, context, intent)) return;
+
+            // Hack used to manually disable the admin during development
+            if (DeviceAdminReceiverUtils.disableSelf(context, intent)) return;
+
+            super.onReceive(context, intent);
+        }
     }
 
     static final String PACKAGE_NAME = DeviceOwnerTest.class.getPackage().getName();
@@ -64,15 +86,19 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
         mContext = getInstrumentation().getContext();
         mDevice = UiDevice.getInstance(getInstrumentation());
         mPackageManager = mContext.getPackageManager();
-        mDevicePolicyManager =
-                (DevicePolicyManager) mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
+        mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
+                BasicAdminReceiver.class);
 
         mIsDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(PACKAGE_NAME);
+        Log.d(TAG, "setup(): dpm=" + mDevicePolicyManager + ", isDO: " + mIsDeviceOwner);
+
         if (mIsDeviceOwner) {
-            assertTrue(mDevicePolicyManager.isAdminActive(RECEIVER_COMPONENT));
+            assertWithMessage("isAdminActive(%s)", RECEIVER_COMPONENT)
+                    .that(mDevicePolicyManager.isAdminActive(RECEIVER_COMPONENT)).isTrue();
 
             // Note DPM.getDeviceOwner() now always returns null on non-DO users as of NYC.
-            assertEquals(PACKAGE_NAME, mDevicePolicyManager.getDeviceOwner());
+            assertWithMessage("%s.getDeviceOwner()", mDevicePolicyManager)
+                    .that(mDevicePolicyManager.getDeviceOwner()).isEqualTo(PACKAGE_NAME);
         }
 
         try {
@@ -93,7 +119,7 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
     protected void tearDown() throws Exception {
         mDevice.pressBack();
         mDevice.pressHome();
-        mDevice.waitForIdle(TIMEOUT); // give UI time to finish animating
+        mDevice.waitForIdle(TIMEOUT_MS); // give UI time to finish animating
     }
 
     private boolean launchPrivacyAndCheckWorkPolicyInfo() throws Exception {
@@ -101,9 +127,11 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
         launchSettingsPage(InstrumentationRegistry.getContext(), Settings.ACTION_PRIVACY_SETTINGS);
 
         // Wait for loading permission usage data.
-        mDevice.waitForIdle(TIMEOUT);
+        mDevice.waitForIdle(TIMEOUT_MS);
 
-        return (null != mDevice.wait(Until.findObject(By.text("Your work policy info")), TIMEOUT));
+        Log.d(TAG, "Waiting " + TIMEOUT_MS + "ms for the '" + WORK_POLICY_INFO_TEXT + "' message");
+
+        return (null != mDevice.wait(Until.findObject(By.text(WORK_POLICY_INFO_TEXT)), TIMEOUT_MS));
     }
 
     private void launchSettingsPage(Context ctx, String pageName) throws Exception {
@@ -128,15 +156,24 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
                         PackageManager.DONT_KILL_APP);
     }
 
+    private void launchPrivacySettingsAndAssertWorkPolicyInfoIsShowing() throws Exception {
+        assertWithMessage("Work policy info (%s) on settings entry", WORK_POLICY_INFO_TEXT)
+                .that(launchPrivacyAndCheckWorkPolicyInfo()).isTrue();
+    }
+
+    private void launchPrivacySettingsAndAssertWorkPolicyInfoIsNotShowing() throws Exception {
+        assertWithMessage("Work policy info (%s) on settings entry", WORK_POLICY_INFO_TEXT)
+                .that(launchPrivacyAndCheckWorkPolicyInfo()).isFalse();
+    }
+
     /**
      * If the app is the active device owner and has work policy info, then we should have a Privacy
      * entry for it.
      */
     public void testDeviceOwnerWithInfo() throws Exception {
-        assertTrue(mIsDeviceOwner);
-        assertTrue(
-                "Couldn't find work policy info settings entry",
-                launchPrivacyAndCheckWorkPolicyInfo());
+        assertWithMessage("is device owner").that(mIsDeviceOwner).isTrue();
+
+        launchPrivacySettingsAndAssertWorkPolicyInfoIsShowing();
     }
 
     /**
@@ -144,11 +181,11 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
      * have a Privacy entry for it.
      */
     public void testDeviceOwnerWithoutInfo() throws Exception {
-        assertTrue(mIsDeviceOwner);
+        assertWithMessage("is device owner").that(mIsDeviceOwner).isTrue();
+
         disableWorkPolicyInfoActivity();
-        assertFalse(
-                "Work policy info settings entry shouldn't be present",
-                launchPrivacyAndCheckWorkPolicyInfo());
+
+        launchPrivacySettingsAndAssertWorkPolicyInfoIsNotShowing();
     }
 
     /**
@@ -156,10 +193,9 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
      * policy info.
      */
     public void testNonDeviceOwnerWithInfo() throws Exception {
-        assertFalse(mIsDeviceOwner);
-        assertFalse(
-                "Work policy info settings entry shouldn't be present",
-                launchPrivacyAndCheckWorkPolicyInfo());
+        assertWithMessage("is device owner").that(mIsDeviceOwner).isFalse();
+
+        launchPrivacySettingsAndAssertWorkPolicyInfoIsNotShowing();
     }
 
     /**
@@ -167,10 +203,10 @@ public class DeviceOwnerTest extends InstrumentationTestCase {
      * not have a Privacy entry for work policy info.
      */
     public void testNonDeviceOwnerWithoutInfo() throws Exception {
-        assertFalse(mIsDeviceOwner);
+        assertWithMessage("is device owner").that(mIsDeviceOwner).isFalse();
+
         disableWorkPolicyInfoActivity();
-        assertFalse(
-                "Work policy info settings entry shouldn't be present",
-                launchPrivacyAndCheckWorkPolicyInfo());
+
+        launchPrivacySettingsAndAssertWorkPolicyInfoIsNotShowing();
     }
 }

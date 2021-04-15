@@ -38,6 +38,7 @@ android_test_helper_app {
         "ub-uiautomator",
         "truth-prebuilt",
         "cts-wm-util",
+        "DpmWrapper",
     ],
     // tag this module as a cts test artifact
     test_suites: [
