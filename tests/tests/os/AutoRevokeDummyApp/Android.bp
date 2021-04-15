@@ -25,6 +25,7 @@ android_test_helper_app {
         "vts10",
         "mts",
         "general-tests",
+        "sts",
     ],
     srcs: ["src/**/*.java", "src/**/*.kt"],
 }
