@@ -57,7 +57,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -127,7 +126,6 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
-    @Ignore("TODO(b/177266929)")
     public void testSetSchema_Failure() throws Exception {
         mDb1.setSchema(new SetSchemaRequest.Builder().addSchemas(AppSearchEmail.SCHEMA).build())
                 .get();
@@ -164,7 +162,6 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
-    @Ignore("TODO(b/177266929)")
     public void testSetSchema_updateVersion() throws Exception {
         AppSearchSchema schema =
                 new AppSearchSchema.Builder("Email")
@@ -424,7 +421,6 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
-    @Ignore("TODO(b/177266929)")
     public void testRemoveSchema() throws Exception {
         // Schema registration
         AppSearchSchema emailSchema =
@@ -490,7 +486,6 @@ public abstract class AppSearchSessionCtsTestBase {
     }
 
     @Test
-    @Ignore("TODO(b/177266929)")
     public void testRemoveSchema_twoDatabases() throws Exception {
         // Schema registration in mDb1 and mDb2
         AppSearchSchema emailSchema =
