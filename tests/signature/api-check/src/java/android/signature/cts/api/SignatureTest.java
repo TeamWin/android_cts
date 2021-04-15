@@ -58,7 +58,7 @@ public class SignatureTest extends AbstractApiTest {
         runWithTestResultObserver(mResultObserver -> {
             Set<JDiffClassDescription> unexpectedClasses = loadUnexpectedClasses();
             for (JDiffClassDescription classDescription : unexpectedClasses) {
-                Class<?> unexpectedClass = findUnexpectedClass(classDescription, classProvider);
+                Class<?> unexpectedClass = findUnexpectedClass(classDescription, mClassProvider);
                 if (unexpectedClass != null) {
                     mResultObserver.notifyFailure(
                             FailureType.UNEXPECTED_CLASS,
@@ -68,7 +68,7 @@ public class SignatureTest extends AbstractApiTest {
             }
 
             ApiComplianceChecker complianceChecker =
-                    new ApiComplianceChecker(mResultObserver, classProvider);
+                    new ApiComplianceChecker(mResultObserver, mClassProvider);
 
             // Load classes from any API files that form the base which the expected APIs extend.
             loadBaseClasses(complianceChecker);

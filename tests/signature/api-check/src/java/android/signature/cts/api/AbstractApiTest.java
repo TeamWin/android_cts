@@ -26,17 +26,13 @@ import android.signature.cts.VirtualPath;
 import android.signature.cts.VirtualPath.LocalFilePath;
 import android.signature.cts.VirtualPath.ResourcePath;
 import android.util.Log;
-import java.io.File;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.util.EnumSet;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 import repackaged.android.test.InstrumentationTestCase;
@@ -50,7 +46,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
 
     private TestResultObserver mResultObserver;
 
-    ClassProvider classProvider;
+    ClassProvider mClassProvider;
 
     protected String getGlobalExemptions() {
         return Settings.Global.getString(
@@ -90,7 +86,7 @@ public class AbstractApiTest extends InstrumentationTestCase {
         // out known inaccessible classes.
         // Note that com.android.internal.R.* inner classes are also excluded as they are
         // not part of API though exist in the runtime.
-        classProvider = new ExcludingClassProvider(
+        mClassProvider = new ExcludingClassProvider(
                 new BootClassPathClassesProvider(),
                 name -> name != null && name.startsWith("com.android.internal.R."));
 

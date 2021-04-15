@@ -42,7 +42,7 @@ public class SignatureMultiLibsTest extends SignatureTest {
         runWithTestResultObserver(mResultObserver -> {
 
             ApiComplianceChecker complianceChecker =
-                    new ApiComplianceChecker(mResultObserver, classProvider);
+                    new ApiComplianceChecker(mResultObserver, mClassProvider);
 
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
