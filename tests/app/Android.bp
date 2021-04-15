@@ -83,6 +83,9 @@ android_test {
     min_sdk_version: "14",
     manifest: "DownloadManagerApi28Test/AndroidManifest.xml",
     test_config: "DownloadManagerApi28Test/AndroidTest.xml",
+    lint: {
+    	baseline_filename: "lint-baseline-api-28.xml",
+    },
 }
 
 android_test {
@@ -117,6 +120,9 @@ android_test {
     min_sdk_version: "14",
     manifest: "DownloadManagerInstallerTest/AndroidManifest.xml",
     test_config: "DownloadManagerInstallerTest/AndroidTest.xml",
+    lint: {
+    	baseline_filename: "lint-baseline-installer.xml",
+    },
 }
 
 android_test {
