@@ -18,8 +18,6 @@ package android.signature.cts.api;
 
 import java.util.function.Predicate;
 
-import android.os.Bundle;
-import android.provider.Settings;
 import android.signature.cts.DexField;
 import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
@@ -127,8 +125,8 @@ public abstract class BaseKillswitchTest extends AbstractApiTest {
                 }
 
             };
-            classProvider.getAllClasses().forEach(klass -> {
-                classProvider.getAllMembers(klass)
+            mClassProvider.getAllClasses().forEach(klass -> {
+                mClassProvider.getAllMembers(klass)
                         .filter(memberFilter)
                         .forEach(member -> {
                             DexMemberChecker.checkSingleMember(member, reflection, jni, observer);

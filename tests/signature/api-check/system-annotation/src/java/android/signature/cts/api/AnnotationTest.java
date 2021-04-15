@@ -36,13 +36,13 @@ public class AnnotationTest extends AbstractApiTest {
 
     private static final String TAG = AnnotationTest.class.getSimpleName();
 
-    private String[] expectedApiFiles;
-    private String annotationForExactMatch;
+    private String[] mExpectedApiFiles;
+    private String mAnnotationForExactMatch;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-        expectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
-        annotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
+        mExpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
+        mAnnotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
     }
 
     /**
@@ -78,11 +78,11 @@ public class AnnotationTest extends AbstractApiTest {
             };
             runWithTestResultObserver(resultObserver -> {
                 AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
-                        classProvider, annotationForExactMatch, filter);
+                        mClassProvider, mAnnotationForExactMatch, filter);
 
                 ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-                parseApiResourcesAsStream(apiDocumentParser, expectedApiFiles)
+                parseApiResourcesAsStream(apiDocumentParser, mExpectedApiFiles)
                         .forEach(complianceChecker::checkSignatureCompliance);
 
                 // After done parsing all expected API files, perform any deferred checks.
