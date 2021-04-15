@@ -283,37 +283,6 @@ public class PlaybackStateTest extends AndroidTestCase {
         }
     }
 
-    public void testIsActive() {
-        int[] activeStates = new int[] {
-                PlaybackState.STATE_FAST_FORWARDING,
-                PlaybackState.STATE_REWINDING,
-                PlaybackState.STATE_SKIPPING_TO_PREVIOUS,
-                PlaybackState.STATE_SKIPPING_TO_NEXT,
-                PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM,
-                PlaybackState.STATE_BUFFERING,
-                PlaybackState.STATE_CONNECTING,
-                PlaybackState.STATE_PLAYING};
-
-        int[] nonActiveStates = new int[] {
-                PlaybackState.STATE_NONE,
-                PlaybackState.STATE_STOPPED,
-                PlaybackState.STATE_PAUSED,
-                PlaybackState.STATE_ERROR};
-
-        for (int i = 0; i < activeStates.length; i++) {
-            PlaybackState activePlaybackState = new PlaybackState.Builder()
-                    .setState(activeStates[i], 0, 1.0f)
-                    .build();
-            assertTrue(activePlaybackState.isActive());
-        }
-        for (int i = 0; i < nonActiveStates.length; i++) {
-            PlaybackState nonActivePlaybackState = new PlaybackState.Builder()
-                    .setState(nonActiveStates[i], 0, 1.0f)
-                    .build();
-            assertFalse(nonActivePlaybackState.isActive());
-        }
-    }
-
     private void assertCustomActionEquals(PlaybackState.CustomAction action1,
             PlaybackState.CustomAction action2) {
         assertEquals(action1.getAction(), action2.getAction());
