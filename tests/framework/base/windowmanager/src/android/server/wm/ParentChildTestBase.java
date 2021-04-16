@@ -16,10 +16,10 @@
 
 package android.server.wm;
 
-import static android.server.wm.DialogFrameTestActivity.EXTRA_TEST_CASE;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.wm.StateLogger.log;
-
-import static org.junit.Assert.assertTrue;
+import static android.server.wm.DialogFrameTestActivity.EXTRA_TEST_CASE;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -42,8 +42,7 @@ abstract class ParentChildTestBase<T extends Activity> extends ActivityManagerTe
 
     private void startTestCaseDocked(String testCase) throws Exception {
         startTestCase(testCase);
-        mWmState.computeState(activityName());
-        putActivityInPrimarySplit(activityName());
+        setActivityTaskWindowingMode(activityName(), WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
     abstract ComponentName activityName();
@@ -68,9 +67,9 @@ abstract class ParentChildTestBase<T extends Activity> extends ActivityManagerTe
         doSingleTest(t);
         activityRule().finishActivity();
 
-        mWmState.waitFor(wmState -> !wmState.containsActivity(activityName()),
-                "activity must be removed");
-        assertTrue(mTaskOrganizer.getPrimarySplitTaskCount() == 0);
+        mWmState.waitForWithAmState(amState -> !amState.containsStack(
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD),
+                "docked stack to be removed");
     }
 
     void doParentChildTest(String testCase, ParentChildTest t) throws Exception {

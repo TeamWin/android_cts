@@ -23,6 +23,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.ACTION_MAIN;
 import static android.content.Intent.CATEGORY_HOME;
@@ -66,6 +68,7 @@ import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ComponentNameUtils.getLogTag;
 import static android.server.wm.StateLogger.log;
 import static android.server.wm.StateLogger.logE;
+import static android.server.wm.UiDeviceUtils.pressAppSwitchButton;
 import static android.server.wm.UiDeviceUtils.pressBackButton;
 import static android.server.wm.UiDeviceUtils.pressEnterButton;
 import static android.server.wm.UiDeviceUtils.pressHomeButton;
@@ -833,18 +836,6 @@ public abstract class ActivityManagerTestBase {
         });
     }
 
-    protected void putActivityInPrimarySplit(ComponentName activityName) {
-        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        mTaskOrganizer.putTaskInSplitPrimary(taskId);
-        mWmState.waitForValidState(activityName);
-    }
-
-    protected void putActivityInSecondarySplit(ComponentName activityName) {
-        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
-        mTaskOrganizer.putTaskInSplitSecondary(taskId);
-        mWmState.waitForValidState(activityName);
-    }
-
     /**
      * Launches {@param primaryActivity} into split-screen primary windowing mode
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
@@ -901,6 +892,22 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    protected boolean setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
+        mWmState.computeState(activityName);
+        final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
+        boolean[] result = new boolean[1];
+        runWithShellPermission(() -> {
+            result[0] = mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        });
+        if (result[0]) {
+            mWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                    .setActivityType(ACTIVITY_TYPE_STANDARD)
+                    .setWindowingMode(windowingMode)
+                    .build());
+        }
+        return result[0];
+    }
+
     /**
      * Move activity to root task or on top of the given root task when the root task is also a leaf
      * task.
@@ -932,6 +939,22 @@ public abstract class ActivityManagerTestBase {
         mWmState.computeState(activityName);
         final int taskId = mWmState.getTaskByActivity(activityName).mTaskId;
         runWithShellPermission(() -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
+    }
+
+    protected void resizePrimarySplitScreen(
+            int rootTaskWidth, int rootTaskHeight, int taskWidth, int taskHeight) {
+        runWithShellPermission(() ->
+                mAtm.resizePrimarySplitScreen(new Rect(0, 0, rootTaskWidth, rootTaskHeight),
+                        new Rect(0, 0, taskWidth, taskHeight)));
+    }
+
+    protected boolean pressAppSwitchButtonAndWaitForRecents() {
+        pressAppSwitchButton();
+        final boolean isRecentsVisible = mWmState.waitForRecentsActivityVisible();
+        if (isRecentsVisible) {
+            mWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+        }
+        return isRecentsVisible;
     }
 
     protected boolean supportsVrMode() {
