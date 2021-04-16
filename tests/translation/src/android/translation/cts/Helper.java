@@ -58,8 +58,7 @@ public final class Helper {
     public static void setTemporaryTranslationService(String service) {
         Log.d(TAG, "Setting translation service to " + service);
         final int userId = UserHandle.myUserId();
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service %d %s 12000", userId, service);
+        runShellCommand("cmd translation set temporary-service %d %s 12000", userId, service);
     }
 
     /**
@@ -68,8 +67,7 @@ public final class Helper {
     public static void resetTemporaryTranslationService() {
         final int userId = UserHandle.myUserId();
         Log.d(TAG, "Resetting back user " + userId + " to default translation service");
-        //TODO(b/181179744): restore to translation service before S release.
-        runShellCommand("cmd transformer set temporary-service %d", userId);
+        runShellCommand("cmd translation set temporary-service %d", userId);
     }
 
     /**
