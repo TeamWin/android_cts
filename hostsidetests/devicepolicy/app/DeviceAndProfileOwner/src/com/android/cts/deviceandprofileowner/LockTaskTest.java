@@ -47,6 +47,7 @@ import android.view.KeyEvent;
 import androidx.test.InstrumentationRegistry;
 
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -193,6 +194,34 @@ public class LockTaskTest extends BaseDeviceAdminTest {
             assertWithMessage("isLockTaskPermitted(%s)", app)
                     .that(mDevicePolicyManager.isLockTaskPermitted(app)).isTrue();
         }
+    }
+
+    // Setting and unsetting the lock task packages when the OEM defines policy-exempt apps
+    public void testSetLockTaskPackagesIgnoresExemptApps() {
+        Set<String> policyExemptApps = mDevicePolicyManager.getPolicyExemptApps();
+        if (policyExemptApps.isEmpty()) {
+            Log.v(TAG, "OEM doesn't define any policy exempt app");
+            return;
+        }
+
+        assertWithMessage("lock task packages initially")
+                .that(mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT)).isEmpty();
+
+
+        String[] packages = new String[] { TEST_PACKAGE };
+        Set<String> expectedLockTaskPackages = new HashSet<>(policyExemptApps);
+        expectedLockTaskPackages.add(TEST_PACKAGE);
+
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, packages);
+
+        assertWithMessage("lock task packages after adding %s", TEST_PACKAGE)
+                .that(mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT)).asList()
+                .containsExactlyElementsIn(expectedLockTaskPackages);
+
+
+        mDevicePolicyManager.setLockTaskPackages(ADMIN_COMPONENT, new String[0]);
+        assertWithMessage("lock task packages after reset")
+                .that(mDevicePolicyManager.getLockTaskPackages(ADMIN_COMPONENT)).isEmpty();
     }
 
     // Setting and unsetting the lock task features. The actual UI behavior is tested with CTS

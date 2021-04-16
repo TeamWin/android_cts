@@ -23,8 +23,7 @@
         <option name="jar" value="CtsAppSearchHostTestCases.jar" />
     </test>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
-        <option name="test-file-name" value="CtsAppSearchHostTestHelperA.apk" />
-        <option name="test-file-name" value="CtsAppSearchHostTestHelperB.apk" />
+        <option name="test-file-name" value="CtsAppSearchHostTestHelper.apk" />
         <option name="cleanup-apks" value="true" />
     </target_preparer>
 </configuration>

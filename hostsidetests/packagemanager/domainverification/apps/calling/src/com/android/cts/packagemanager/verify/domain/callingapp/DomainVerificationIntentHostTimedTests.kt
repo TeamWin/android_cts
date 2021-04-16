@@ -28,7 +28,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase() {
+class DomainVerificationIntentHostTimedTests : DomainVerificationIntentTestBase(DOMAIN_1) {
 
     @Test
     fun multipleVerifiedTakeLastFirstInstall() {
