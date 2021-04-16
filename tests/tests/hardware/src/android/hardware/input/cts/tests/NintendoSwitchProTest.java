@@ -16,6 +16,10 @@
 
 package android.hardware.input.cts.tests;
 
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assume.assumeFalse;
+
+import android.content.pm.PackageManager;
 import android.hardware.cts.R;
 import android.os.SystemClock;
 
@@ -49,11 +53,18 @@ public class NintendoSwitchProTest extends InputTestCase {
 
     @Test
     public void testAllKeys() {
+        assumeFalse("Skipping test for wear devices", isWatch());
         testInputEvents(R.raw.nintendo_switchpro_keyeventtests);
     }
 
     @Test
     public void testAllMotions() {
+        assumeFalse("Skipping test for wear devices", isWatch());
         testInputEvents(R.raw.nintendo_switchpro_motioneventtests);
+    }
+
+    static boolean isWatch() {
+        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 }
