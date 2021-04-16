@@ -42,6 +42,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
 import android.app.Instrumentation;
@@ -59,6 +60,7 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethod;
 import android.view.inputmethod.InputMethodManager;
@@ -601,6 +603,12 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
     private void runRestoreImeVisibility(TestSoftInputMode mode, boolean expectImeVisible)
             throws Exception {
         final Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        final WindowManager wm = instrumentation.getContext().getSystemService(WindowManager.class);
+        // As restoring IME visibility behavior is only available when TaskSnapshot mechanism
+        // enabled, skip the test when TaskSnapshot is not supported.
+        assumeTrue("Restoring IME visibility not available when TaskSnapshot unsupported",
+                wm.isTaskSnapshotSupported());
+
         try (MockImeSession imeSession = MockImeSession.create(
                 instrumentation.getContext(), instrumentation.getUiAutomation(),
                 new ImeSettings.Builder())) {
