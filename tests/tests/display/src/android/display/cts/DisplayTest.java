@@ -120,6 +120,49 @@ public class DisplayTest {
 
     private Activity mScreenOnActivity;
 
+    private static class DisplayModeState {
+        public final int mHeight;
+        public final int mWidth;
+        public final float mRefreshRate;
+
+        DisplayModeState(Display display) {
+            mHeight = display.getMode().getPhysicalHeight();
+            mWidth = display.getMode().getPhysicalWidth();
+
+            // Starting Android S the, the platform might throttle down
+            // applications frame rate to a divisor of the refresh rate instead if changing the
+            // physical display refresh rate. Applications should use
+            // {@link android.view.Display#getRefreshRate} to know their frame rate as opposed to
+            // {@link android.view.Display.Mode#getRefreshRate} that returns the physical display
+            // refresh rate. See
+            // {@link com.android.server.display.DisplayManagerService.DISPLAY_MODE_RETURNS_PHYSICAL_REFRESH_RATE}
+            // for more details.
+            mRefreshRate = display.getRefreshRate();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof DisplayModeState)) {
+                return false;
+            }
+
+            DisplayModeState other = (DisplayModeState) obj;
+            return mHeight == other.mHeight
+                && mWidth == other.mWidth
+                && mRefreshRate == other.mRefreshRate;
+        }
+
+        @Override
+        public String toString() {
+            return new StringBuilder("{")
+                    .append("width=").append(mWidth)
+                    .append(", height=").append(mHeight)
+                    .append(", fps=").append(mRefreshRate)
+                    .append("}")
+                    .toString();
+        }
+    }
+
     @Rule
     public ActivityTestRule<DisplayTestActivity> mDisplayTestActivity =
             new ActivityTestRule<>(
@@ -578,10 +621,10 @@ public class DisplayTest {
 
         final CountDownLatch changeSignal = new CountDownLatch(1);
         final AtomicInteger changeCounter = new AtomicInteger(0);
-        final int activeModeId = mDefaultDisplay.getMode().getModeId();
+        final DisplayModeState activeMode = new DisplayModeState(mDefaultDisplay);
 
         DisplayListener listener = new DisplayListener() {
-            private int mLastModeId = activeModeId;
+            private DisplayModeState mLastMode = activeMode;
             @Override
             public void onDisplayAdded(int displayId) {}
 
@@ -590,17 +633,18 @@ public class DisplayTest {
                 if (displayId != mDefaultDisplay.getDisplayId()) {
                     return;
                 }
-                int newModeId = mDefaultDisplay.getMode().getModeId();
-                if (mLastModeId == newModeId) {
+                DisplayModeState newMode = new DisplayModeState(mDefaultDisplay);
+                if (mLastMode.equals(newMode)) {
                     // We assume this display change is caused by an external factor so it's
                     // unrelated.
                     return;
                 }
-                Log.i(TAG, "Switched mode from id=" + mLastModeId + " to id=" + newModeId);
+
+                Log.i(TAG, "Switched mode from=" + mLastMode + " to=" + newMode);
                 changeCounter.incrementAndGet();
                 changeSignal.countDown();
 
-                mLastModeId = newModeId;
+                mLastMode = newMode;
             }
 
             @Override
@@ -620,7 +664,10 @@ public class DisplayTest {
 
         // Wait until the display change is effective.
         assertTrue(changeSignal.await(5, TimeUnit.SECONDS));
-        assertEquals(mode.getModeId(), mDefaultDisplay.getMode().getModeId());
+        DisplayModeState currentMode = new DisplayModeState(mDefaultDisplay);
+        assertEquals(mode.getPhysicalHeight(), currentMode.mHeight);
+        assertEquals(mode.getPhysicalWidth(), currentMode.mWidth);
+        assertEquals(mode.getRefreshRate(), currentMode.mRefreshRate, 0.001f);
 
         // Make sure no more display mode changes are registered.
         Thread.sleep(Duration.ofSeconds(3).toMillis());
