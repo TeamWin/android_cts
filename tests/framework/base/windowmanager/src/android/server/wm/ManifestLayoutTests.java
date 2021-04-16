@@ -17,8 +17,9 @@
 package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
-import static android.server.wm.ComponentNameUtils.getWindowName;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.wm.WindowManagerState.dpToPx;
+import static android.server.wm.ComponentNameUtils.getWindowName;
 import static android.server.wm.app.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
 import static android.server.wm.app.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -92,7 +93,7 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
     public void testMinimalSizeFreeform() throws Exception {
         assumeTrue("Skipping test: no freeform support", supportsFreeform());
 
-        testMinimalSize(true /* freeform */);
+        testMinimalSize(WINDOWING_MODE_FREEFORM);
     }
 
     @Test
@@ -100,13 +101,13 @@ public class ManifestLayoutTests extends ActivityManagerTestBase {
     public void testMinimalSizeDocked() throws Exception {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
-        testMinimalSize(false /* freeform */);
+        testMinimalSize(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
     }
 
-    private void testMinimalSize(boolean freeform) throws Exception {
+    private void testMinimalSize(int windowingMode) throws Exception {
         // Issue command to resize to <0,0,1,1>. We expect the size to be floored at
         // MIN_WIDTH_DPxMIN_HEIGHT_DP.
-        if (freeform) {
+        if (windowingMode == WINDOWING_MODE_FREEFORM) {
             launchActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(BOTTOM_RIGHT_LAYOUT_ACTIVITY, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
