@@ -21,7 +21,6 @@ import static android.autofillservice.cts.testcore.AugmentedHelper.assertBasicRe
 import static android.autofillservice.cts.testcore.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.testcore.Helper.ID_USERNAME;
 
-import android.autofillservice.cts.R;
 import android.autofillservice.cts.activities.AugmentedAuthActivity;
 import android.autofillservice.cts.activities.AugmentedLoginActivity;
 import android.autofillservice.cts.commontests.AugmentedAutofillAutoActivityLaunchTestCase;
@@ -31,14 +30,9 @@ import android.autofillservice.cts.testcore.CtsAugmentedAutofillService;
 import android.content.ClipData;
 import android.content.ContentResolver;
 import android.content.IntentSender;
-import android.content.res.AssetFileDescriptor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.platform.test.annotations.Presubmit;
-import android.provider.MediaStore;
 import android.service.autofill.Dataset;
-import android.util.Log;
 import android.view.ContentInfo;
 import android.view.OnReceiveContentListener;
 import android.view.View;
@@ -120,8 +114,8 @@ public class InlineAugmentedContentTest
     @Test
     public void testFillContent_contentUri() throws Exception {
         final String suggestionTitle = "Sample Image";
-        final Uri suggestionUri = createSampleImageInMediaStore();
-        final String suggestionMimeType = mContentResolver.getType(suggestionUri);
+        final Uri suggestionUri = sampleContentUri();
+        final String suggestionMimeType = "image/png";
 
         // Set expectations
         final EditText targetField = mActivity.getUsername();
@@ -154,8 +148,8 @@ public class InlineAugmentedContentTest
     @Test
     public void testFillContent_contentUri_authFlow() throws Exception {
         final String suggestionTitle = "Sample Image";
-        final Uri suggestionUri = createSampleImageInMediaStore();
-        final String suggestionMimeType = mContentResolver.getType(suggestionUri);
+        final Uri suggestionUri = sampleContentUri();
+        final String suggestionMimeType = "image/png";
 
         // Set expectations
         final EditText targetField = mActivity.getUsername();
@@ -235,14 +229,9 @@ public class InlineAugmentedContentTest
                 .build();
     }
 
-    private Uri createSampleImageInMediaStore() {
+    private static Uri sampleContentUri() {
         String uniqueSuffix = System.currentTimeMillis() + "_" + SUFFIX_COUNTER.getAndIncrement();
-        String title = "Scenery " + uniqueSuffix;
-        String description = "Scenery description " + uniqueSuffix;
-        Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
-        String uriStr = MediaStore.Images.Media.insertImage(mContentResolver, src,
-                title, description);
-        return Uri.parse(uriStr);
+        return Uri.parse(ContentResolver.SCHEME_CONTENT + "://example/" + uniqueSuffix);
     }
 
     private static final class MyContentReceiver implements OnReceiveContentListener {
@@ -259,7 +248,6 @@ public class InlineAugmentedContentTest
                 }
                 ClipData.Item item = clip.getItemAt(i);
                 if (item.getUri() != null) {
-                    receiveUri(view, item.getUri());
                     sb.append(TEXT_FILLED_FOR_URI);
                 } else {
                     sb.append(item.getText());
@@ -267,18 +255,6 @@ public class InlineAugmentedContentTest
             }
             ((TextView) view).setText(sb.toString());
             return null;
-        }
-
-        private void receiveUri(View view, Uri uri) {
-            ContentResolver contentResolver = view.getContext().getContentResolver();
-            try (AssetFileDescriptor fd = contentResolver.openAssetFileDescriptor(uri, "r")) {
-                long sizeInBytes = fd.getLength();
-                String mimeType = contentResolver.getType(uri);
-                Log.d(TAG, "Read URI [" + uri + "] of type [" + mimeType + "]: " + sizeInBytes
-                        + " bytes");
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot read URI: " + uri, e);
-            }
         }
     }
 }
