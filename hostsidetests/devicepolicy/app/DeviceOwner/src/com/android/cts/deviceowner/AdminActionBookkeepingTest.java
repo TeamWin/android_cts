@@ -15,12 +15,18 @@
  */
 package com.android.cts.deviceowner;
 
+import static com.google.common.truth.Truth.assertWithMessage;
+
 import android.app.PendingIntent;
 import android.content.ContentResolver;
 import android.os.Process;
+import android.os.UserHandle;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.android.cts.devicepolicy.TestCertificates;
+
+import com.google.common.collect.Range;
 
 import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
@@ -28,8 +34,14 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
+
+    private static final String TAG = AdminActionBookkeepingTest.class.getSimpleName();
+
+    private static final int NOTIFICATION_TIMEOUT_MS = 5 * 60_000; // 5 minutes
+
     @Override
     protected void tearDown() throws Exception {
         mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), false);
@@ -43,7 +55,9 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      * Test: Retrieving security logs should update the corresponding timestamp.
      */
     public void testRetrieveSecurityLogs() throws Exception {
-        Thread.sleep(1);
+        Log.i(TAG, "testRetrieveSecurityLogs()");
+
+        sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastSecurityLogRetrievalTime();
 
         mDevicePolicyManager.setSecurityLoggingEnabled(getWho(), true);
@@ -53,11 +67,10 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         long timeAfter = System.currentTimeMillis();
 
         final long firstTimestamp = mDevicePolicyManager.getLastSecurityLogRetrievalTime();
-        assertTrue(firstTimestamp > previousTimestamp);
-        assertTrue(firstTimestamp >= timeBefore);
-        assertTrue(firstTimestamp <= timeAfter);
 
-        Thread.sleep(2);
+        assertTimeStamps(timeBefore, previousTimestamp, firstTimestamp, timeAfter);
+
+        sleep(2);
         timeBefore = System.currentTimeMillis();
         final boolean preBootSecurityLogsRetrieved =
                 mDevicePolicyManager.retrievePreRebootSecurityLogs(getWho()) != null;
@@ -67,13 +80,12 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         if (preBootSecurityLogsRetrieved) {
             // If the device supports pre-boot security logs, verify that retrieving them updates
             // the timestamp.
-            assertTrue(secondTimestamp > firstTimestamp);
-            assertTrue(secondTimestamp >= timeBefore);
-            assertTrue(secondTimestamp <= timeAfter);
+            assertTimeStamps(timeBefore, firstTimestamp, secondTimestamp, timeAfter);
         } else {
             // If the device does not support pre-boot security logs, verify that the attempt to
             // retrieve them does not update the timestamp.
-            assertEquals(firstTimestamp, secondTimestamp);
+            assertWithMessage("timestamp when device does not support pre-boot security logs")
+                    .that(firstTimestamp).isEqualTo(secondTimestamp);
         }
     }
 
@@ -81,11 +93,13 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      * Test: Requesting a bug report should update the corresponding timestamp.
      */
     public void testRequestBugreport() throws Exception {
+        Log.i(TAG, "testRequestBugreport()");
+
         // This test leaves a notification which will block future tests that request bug reports
         // to fix this - we dismiss the bug report before returning
         CountDownLatch notificationDismissedLatch = initTestRequestBugreport();
 
-        Thread.sleep(1);
+        sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastBugReportRequestTime();
 
         final long timeBefore = System.currentTimeMillis();
@@ -93,9 +107,7 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         final long timeAfter = System.currentTimeMillis();
 
         final long newTimestamp = mDevicePolicyManager.getLastBugReportRequestTime();
-        assertTrue(newTimestamp > previousTimestamp);
-        assertTrue(newTimestamp >= timeBefore);
-        assertTrue(newTimestamp <= timeAfter);
+        assertTimeStamps(timeBefore, previousTimestamp, newTimestamp, timeAfter);
 
         cleanupTestRequestBugreport(notificationDismissedLatch);
     }
@@ -103,6 +115,7 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
     private CountDownLatch initTestRequestBugreport() {
         CountDownLatch notificationDismissedLatch = new CountDownLatch(1);
         NotificationListener.getInstance().addListener((sbt) -> {
+            Log.i(TAG, "Received notification: " + sbt);
             // The notification we are looking for is the one which confirms the bug report is
             // ready and asks for consent to send it
             if (sbt.getPackageName().equals("android") &&
@@ -113,7 +126,9 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
                     sbt.getNotification().actions[0].actionIntent.send();
                     notificationDismissedLatch.countDown();
                 } catch (PendingIntent.CanceledException e) {
-                    fail("Could not dismiss bug report notification");
+                    String msg = "Could not dismiss bug report notification";
+                    Log.e(TAG, msg, e);
+                    fail(msg);
                 }
             }
         });
@@ -122,7 +137,13 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
 
     private void cleanupTestRequestBugreport(CountDownLatch notificationDismissedLatch)
             throws Exception {
-        notificationDismissedLatch.await();
+        Log.d(TAG, "Waiting " + NOTIFICATION_TIMEOUT_MS + "ms for bugreport notification");
+        if (!notificationDismissedLatch.await(NOTIFICATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
+            String msg = "Didn't receive bugreport notification in " + NOTIFICATION_TIMEOUT_MS
+                    + " ms";
+            Log.e(TAG, msg);
+            fail(msg);
+        }
         NotificationListener.getInstance().clearListeners();
     }
 
@@ -130,7 +151,9 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      * Test: Retrieving network logs should update the corresponding timestamp.
      */
     public void testGetLastNetworkLogRetrievalTime() throws Exception {
-        Thread.sleep(1);
+        Log.i(TAG, "testGetLastNetworkLogRetrievalTime()");
+
+        sleep(1);
         final long previousTimestamp = mDevicePolicyManager.getLastSecurityLogRetrievalTime();
 
         mDevicePolicyManager.setNetworkLoggingEnabled(getWho(), true);
@@ -140,9 +163,7 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         long timeAfter = System.currentTimeMillis();
 
         final long newTimestamp = mDevicePolicyManager.getLastNetworkLogRetrievalTime();
-        assertTrue(newTimestamp > previousTimestamp);
-        assertTrue(newTimestamp >= timeBefore);
-        assertTrue(newTimestamp <= timeAfter);
+        assertTimeStamps(timeBefore, previousTimestamp, newTimestamp, timeAfter);
     }
 
     /**
@@ -150,48 +171,63 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
      * managing the device.
      */
     public void testDeviceOwnerOrganizationName() throws Exception {
+        Log.i(TAG, "testDeviceOwnerOrganizationName()");
+
         mDevicePolicyManager.setOrganizationName(getWho(), null);
-        assertNull(mDevicePolicyManager.getDeviceOwnerOrganizationName());
+        assertWithMessage("dpm.getDeviceOwnerOrganizationName()")
+                .that(mDevicePolicyManager.getDeviceOwnerOrganizationName()).isNull();
 
         mDevicePolicyManager.setOrganizationName(getWho(), "organization");
-        assertEquals("organization", mDevicePolicyManager.getDeviceOwnerOrganizationName());
+        assertWithMessage("dpm.getDeviceOwnerOrganizationName()")
+                .that(mDevicePolicyManager.getDeviceOwnerOrganizationName())
+                .isEqualTo("organization");
 
         mDevicePolicyManager.setOrganizationName(getWho(), null);
-        assertNull(mDevicePolicyManager.getDeviceOwnerOrganizationName());
+        assertWithMessage("dpm.getDeviceOwnerOrganizationName()")
+                .that(mDevicePolicyManager.getDeviceOwnerOrganizationName()).isNull();
     }
 
     /**
      * Test: When a Device Owner is set, isDeviceManaged() should return true.
      */
     public void testIsDeviceManaged() throws Exception {
-        assertTrue(mDevicePolicyManager.isDeviceManaged());
+        Log.i(TAG, "testIsDeviceManaged()");
+
+        assertWithMessage("dpm.isDeviceManaged()").that(mDevicePolicyManager.isDeviceManaged())
+                .isTrue();
     }
 
     /**
      * Test: It should be recored whether the Device Owner or the user set the current IME.
      */
     public void testIsDefaultInputMethodSet() throws Exception {
-        final String setting = Settings.Secure.DEFAULT_INPUT_METHOD;
-        final ContentResolver resolver = getContext().getContentResolver();
-        final String ime = Settings.Secure.getString(resolver, setting);
+        Log.i(TAG, "testIsDefaultInputMethodSet()");
 
-        Settings.Secure.putString(resolver, setting, "com.test.1");
-        Thread.sleep(500);
-        assertFalse(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
+        final String setting = Settings.Secure.DEFAULT_INPUT_METHOD;
+        final String ime = getSecureSettings(setting);
+
+        setSecureSettings(setting, "com.test.1");
+        sleep(500);
+        assertWithMessage("dpm.isCurrentInputMethodSetByOwner()")
+                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isFalse();
 
         mDevicePolicyManager.setSecureSetting(getWho(), setting, "com.test.2");
-        Thread.sleep(500);
-        assertTrue(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
+        sleep(500);
+        assertWithMessage("%s.isCurrentInputMethodSetByOwner()", mDevicePolicyManager)
+                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isTrue();
 
-        Settings.Secure.putString(resolver, setting, ime);
-        Thread.sleep(500);
-        assertFalse(mDevicePolicyManager.isCurrentInputMethodSetByOwner());
+        setSecureSettings(setting, ime);
+        sleep(500);
+        assertWithMessage("%s.isCurrentInputMethodSetByOwner()", mDevicePolicyManager)
+                .that(mDevicePolicyManager.isCurrentInputMethodSetByOwner()).isFalse();
     }
 
     /**
      * Test: It should be recored whether the Device Owner or the user installed a CA cert.
      */
     public void testGetPolicyInstalledCaCerts() throws Exception {
+        Log.i(TAG, "testGetPolicyInstalledCaCerts()");
+
         final byte[] rawCert = TestCertificates.TEST_CA.getBytes();
         final Certificate cert = CertificateFactory.getInstance("X.509")
                 .generateCertificate(new ByteArrayInputStream(rawCert));
@@ -199,10 +235,12 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
         // Install a CA cert.
         KeyStore keyStore = KeyStore.getInstance("AndroidCAStore");
         keyStore.load(null, null);
-        assertNull(keyStore.getCertificateAlias(cert));
-        assertTrue(mDevicePolicyManager.installCaCert(getWho(), rawCert));
+        assertWithMessage("keystore.getCertificateAlias()").that(keyStore.getCertificateAlias(cert))
+                .isNull();
+        assertWithMessage("dpm.installCaCert()")
+                .that(mDevicePolicyManager.installCaCert(getWho(), rawCert)).isTrue();
         final String alias = keyStore.getCertificateAlias(cert);
-        assertNotNull(alias);
+        assertWithMessage("keystore.getCertificateAlias()").that(alias).isNotNull();
 
         // Verify that the CA cert was marked as installed by the Device Owner.
         verifyOwnerInstalledStatus(alias, true);
@@ -215,9 +253,44 @@ public class AdminActionBookkeepingTest extends BaseDeviceOwnerTest {
     }
 
     private void verifyOwnerInstalledStatus(String alias, boolean expectOwnerInstalled) {
+        final UserHandle user = Process.myUserHandle();
         final List<String> ownerInstalledCerts =
-                mDevicePolicyManager.getOwnerInstalledCaCerts(Process.myUserHandle());
-        assertNotNull(ownerInstalledCerts);
-        assertEquals(expectOwnerInstalled, ownerInstalledCerts.contains(alias));
+                mDevicePolicyManager.getOwnerInstalledCaCerts(user);
+        assertWithMessage("dpm.getOwnerInstalledCaCerts(%s)", user).that(ownerInstalledCerts)
+                .isNotNull();
+        if (expectOwnerInstalled) {
+            assertWithMessage("dpm.getOwnerInstalledCaCerts(%s)", user).that(ownerInstalledCerts)
+                    .contains(alias);
+        } else {
+            assertWithMessage("dpm.getOwnerInstalledCaCerts(%s)", user).that(ownerInstalledCerts)
+                    .doesNotContain(alias);
+        }
+    }
+
+    private void sleep(int durationMs) throws InterruptedException {
+        Log.v(TAG, "Sleeping for " + durationMs + " ms on thread " + Thread.currentThread());
+        Thread.sleep(durationMs);
+        Log.v(TAG, "Woke up");
+    }
+
+    private void assertTimeStamps(long before, long timeStamp1, long timeStamp2, long after) {
+        assertWithMessage("first and second timestamp order").that(timeStamp2)
+                .isGreaterThan(timeStamp1);
+        assertWithMessage("second timestamp range").that(timeStamp2)
+                .isIn(Range.closed(before, after));
+    }
+
+    private void setSecureSettings(String name, String value) {
+        final ContentResolver resolver = getContext().getContentResolver();
+        Log.d(TAG, "Setting '" + name + "'='" + value + "' on user " + getContext().getUserId());
+        Settings.Secure.putString(resolver, name , value);
+        Log.v(TAG, "Set");
+    }
+
+    private String getSecureSettings(String name) {
+        final ContentResolver resolver = getContext().getContentResolver();
+        String value = Settings.Secure.getString(resolver, name);
+        Log.d(TAG, "Got '" + name + "' for user " + getContext().getUserId() + ": " + value);
+        return value;
     }
 }
