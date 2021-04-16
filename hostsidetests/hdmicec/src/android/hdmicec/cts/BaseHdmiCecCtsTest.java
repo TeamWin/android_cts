@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 @OptionClass(alias="hdmi-cec-client-cts-test")
 public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
+    public static final String PROPERTY_LOCALE = "persist.sys.locale";
     public final HdmiCecClientWrapper hdmiCecClient;
     public LogicalAddress mDutLogicalAddress;
 
@@ -188,5 +189,24 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
             }
         }
         throw new Exception("Could not parse active source from dumpsys.");
+    }
+
+    public String getSystemLocale() throws Exception {
+        ITestDevice device = getDevice();
+        return device.executeShellCommand("getprop " + PROPERTY_LOCALE).trim();
+    }
+
+    public static String extractLanguage(String locale) {
+        return locale.split("[^a-zA-Z]")[0];
+    }
+
+    public void setSystemLocale(String locale) throws Exception {
+        ITestDevice device = getDevice();
+        device.executeShellCommand("setprop " + PROPERTY_LOCALE + " " + locale);
+    }
+
+    public boolean isLanguageEditable() throws Exception {
+        String val = getDevice().executeShellCommand("getprop ro.hdmi.set_menu_language");
+        return val.trim().equals("true") ? true : false;
     }
 }
