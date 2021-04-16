@@ -74,11 +74,14 @@ public class AuthBoundKeyAppTest extends AndroidTestCase {
         keyStore.load(null);
         try {
             SecretKey secretKey = (SecretKey) keyStore.getKey(KEY_NAME, null);
+            // In Keystore 2.0 we don't keep invalidated keys around. So we cannot diagnose that
+            // a key was invalidated. It simply does not exist. Thus we expect null.
+            if (secretKey == null) return;
         } catch (UnrecoverableKeyException e) {
-            // This is correct behavior
+            // This is correct behavior for Keystore 1.0
             return;
         }
-        fail("Expected an UnrecoverableKeyException");
+        fail("Expected an UnrecoverableKeyException or null");
     }
 
 }
