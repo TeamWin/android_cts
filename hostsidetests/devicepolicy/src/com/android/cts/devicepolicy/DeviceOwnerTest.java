@@ -32,6 +32,7 @@ import android.stats.devicepolicy.EventId;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.RequiresAdditionalFeatures;
+import com.android.cts.devicepolicy.DeviceAdminFeaturesCheckerRule.TemporaryIgnoreOnHeadlessSystemUserMode;
 import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.log.LogUtil.CLog;
 
@@ -100,11 +101,15 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185498043",
+            reason = "automotive doesn't have IProxyService")
     public void testProxyStaticProxyTest() throws Exception {
         executeDeviceOwnerTest("proxy.StaticProxyTest");
     }
 
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185498043",
+            reason = "automotive doesn't have IProxyService")
     public void testProxyPacProxyTest() throws Exception {
         assumeFalse("Test does not apply to WearOS", mIsWatch);
         executeDeviceOwnerTest("proxy.PacProxyTest");
