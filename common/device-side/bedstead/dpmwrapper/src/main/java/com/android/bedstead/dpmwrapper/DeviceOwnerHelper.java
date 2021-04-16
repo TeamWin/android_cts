@@ -142,6 +142,7 @@ public final class DeviceOwnerHelper {
                     return clazz.getDeclaredMethod(methodName,
                             new Class<?>[] { int.class, CharSequence.class });
                 case "setDeviceOwnerLockScreenInfo":
+                case "setOrganizationName":
                     return clazz.getDeclaredMethod(methodName,
                             new Class<?>[] { ComponentName.class, CharSequence.class });
             }

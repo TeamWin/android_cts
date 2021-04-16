@@ -1208,6 +1208,11 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
                 + "broadcasts to user 0", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
                 userId, deviceAdminPkg);
+
+        CLog.i("Granting WRITE_SECURE_SETTINGS package (%s) on user %d as some tests might need it",
+                deviceAdminPkg, userId);
+        executeShellCommand("pm grant --user %d %s android.permission.WRITE_SECURE_SETTINGS",
+                userId, deviceAdminPkg);
     }
 
     /** Find effective restriction for user */
