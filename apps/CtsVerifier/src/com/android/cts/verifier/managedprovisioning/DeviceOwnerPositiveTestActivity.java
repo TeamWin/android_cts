@@ -86,13 +86,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!UserManager.isHeadlessSystemUserMode()) {
-            // TODO(b/177554984): figure out how to use it on headless system user mode - right now,
-            // it removes the current user on teardown
-
-            // Tidy up in case previous run crashed.
-            new ByodFlowTestHelper(this).tearDown();
-        }
+        // Tidy up in case previous run crashed.
+        new ByodFlowTestHelper(this).tearDown();
 
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
             DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
