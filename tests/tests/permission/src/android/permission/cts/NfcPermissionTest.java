@@ -19,12 +19,14 @@ package android.permission.cts;
 import static android.Manifest.permission.NFC_SET_CONTROLLER_ALWAYS_ON;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.nfc.NfcAdapter;
 import android.nfc.NfcAdapter.ControllerAlwaysOnListener;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 
 import androidx.test.InstrumentationRegistry;
 
@@ -43,8 +45,14 @@ public final class NfcPermissionTest {
 
     private NfcAdapter mNfcAdapter;
 
+    private boolean supportsHardware() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_NFC);
+    }
+
     @Before
     public void setUp() {
+        assumeTrue(supportsHardware());
         mNfcAdapter = NfcAdapter.getDefaultAdapter(InstrumentationRegistry.getTargetContext());
     }
 
@@ -84,6 +92,7 @@ public final class NfcPermissionTest {
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
+    @AppModeFull
     public void testIsControllerAlwaysOnSupported() {
         try {
             mNfcAdapter.isControllerAlwaysOnSupported();
@@ -100,6 +109,7 @@ public final class NfcPermissionTest {
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
+    @AppModeFull
     public void testIsControllerAlwaysOn() {
         try {
             mNfcAdapter.isControllerAlwaysOn();
@@ -116,6 +126,7 @@ public final class NfcPermissionTest {
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
+    @AppModeFull
     public void testSetControllerAlwaysOnTrue() {
         try {
             mNfcAdapter.setControllerAlwaysOn(true);
@@ -132,6 +143,7 @@ public final class NfcPermissionTest {
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
+    @AppModeFull
     public void testSetControllerAlwaysOnFalse() {
         try {
             mNfcAdapter.setControllerAlwaysOn(false);
@@ -148,6 +160,7 @@ public final class NfcPermissionTest {
      * Requires Permission: {@link android.Manifest.permission#NFC_SET_CONTROLLER_ALWAYS_ON}.
      */
     @Test
+    @AppModeFull
     public void testRegisterControllerAlwaysOnListener() {
         try {
             mNfcAdapter.registerControllerAlwaysOnListener(
