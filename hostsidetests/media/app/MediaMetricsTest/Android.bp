@@ -16,6 +16,25 @@ package {
     default_applicable_licenses: ["Android-Apache-2.0"],
 }
 
+cc_test_library {
+    name: "libCtsMediaMetricsHostTestAppJni",
+    srcs: ["jni/aaudio_stream.cpp"],
+    cflags: [
+        "-Wall",
+        "-Werror",
+    ],
+    header_libs: ["jni_headers"],
+    shared_libs: [
+        "libaaudio",
+    ],
+    static_libs: [
+        "libnativetesthelper_jni",
+    ],
+    stl: "c++_static",
+    gtest: false,
+    sdk_version: "current",
+}
+
 android_test_helper_app {
     name: "CtsMediaMetricsHostTestApp",
     defaults: ["cts_defaults"],
@@ -26,10 +45,14 @@ android_test_helper_app {
     srcs: [
         "src/**/*.java",
     ],
+    jni_libs: [
+        "libCtsMediaMetricsHostTestAppJni",
+    ],
     static_libs: [
         "androidx.test.rules",
         "truth-prebuilt",
     ],
     sdk_version: "test_current",
     min_sdk_version: "30",
+    compile_multilib: "both",
 }
