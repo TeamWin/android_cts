@@ -2964,11 +2964,63 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             assertFalse(mWifiManager.isVerboseLoggingEnabled());
             assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_DISABLED,
                     mWifiManager.getVerboseLoggingLevel());
+        } finally {
+            if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test {@link WifiManager#setVerboseLoggingLevel(int)} for show key mode.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testSetVerboseLoggingShowKeyModeNonUserBuild() throws Exception {
+        if (Build.TYPE.equals("user")) return;
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Boolean currState = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            currState = mWifiManager.isVerboseLoggingEnabled();
 
             mWifiManager.setVerboseLoggingLevel(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY);
             assertTrue(mWifiManager.isVerboseLoggingEnabled());
             assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY,
                     mWifiManager.getVerboseLoggingLevel());
+        } finally {
+            if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Test {@link WifiManager#setVerboseLoggingLevel(int)} for show key mode.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testSetVerboseLoggingShowKeyModeUserBuild() throws Exception {
+        if (!Build.TYPE.equals("user")) return;
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        UiAutomation uiAutomation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        Boolean currState = null;
+        try {
+            uiAutomation.adoptShellPermissionIdentity();
+            currState = mWifiManager.isVerboseLoggingEnabled();
+
+            mWifiManager.setVerboseLoggingLevel(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY);
+            assertTrue(mWifiManager.isVerboseLoggingEnabled());
+            assertEquals(WifiManager.VERBOSE_LOGGING_LEVEL_ENABLED_SHOW_KEY,
+                    mWifiManager.getVerboseLoggingLevel());
+            fail("Verbosing logging show key mode should not be allowed for user build.");
+        } catch (SecurityException e) {
+            // expected
         } finally {
             if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
             uiAutomation.dropShellPermissionIdentity();
