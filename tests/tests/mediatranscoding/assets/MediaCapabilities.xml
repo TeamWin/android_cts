@@ -16,5 +16,6 @@
 
 <media-capabilities xmlns:android="http://schemas.android.com/apk/res/android">
     <format android:name="HEVC" supported="true"/>
+    <format android:name="VP9" supported="false"/>
     <format android:name="HDR10" supported="false"/>
 </media-capabilities>
