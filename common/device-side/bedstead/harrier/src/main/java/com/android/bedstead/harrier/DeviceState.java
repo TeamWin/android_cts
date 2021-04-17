@@ -33,6 +33,8 @@ import androidx.annotation.Nullable;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.bedstead.harrier.annotations.EnsureDoesNotHavePermission;
+import com.android.bedstead.harrier.annotations.EnsureHasPermission;
 import com.android.bedstead.harrier.annotations.FailureMode;
 import com.android.bedstead.harrier.annotations.RequireFeatures;
 import com.android.bedstead.harrier.annotations.RequireUserSupported;
@@ -46,6 +48,7 @@ import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
+import com.android.bedstead.nene.permissions.PermissionContextImpl;
 import com.android.bedstead.nene.users.User;
 import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
@@ -54,6 +57,7 @@ import com.android.compatibility.common.util.BlockingBroadcastReceiver;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -129,7 +133,9 @@ public final class DeviceState implements TestRule {
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
-                for (Annotation annotation : getAnnotations(description)) {
+                PermissionContextImpl permissionContext = null;
+
+                for (Annotation annotation : description.getAnnotations()) {
                     Class<? extends Annotation> annotationType = annotation.annotationType();
 
                     EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -188,6 +194,36 @@ public final class DeviceState implements TestRule {
                         }
                     }
 
+                    if (annotation instanceof EnsureHasPermission) {
+                        EnsureHasPermission ensureHasPermissionAnnotation =
+                                (EnsureHasPermission) annotation;
+                        try {
+                            permissionContext = sTestApis.permissions().withPermission(
+                                    ensureHasPermissionAnnotation.value());
+                        } catch (NeneException e) {
+                            failOrSkip("Error getting permission: " + e,
+                                    ensureHasPermissionAnnotation.failureMode());
+                        }
+                    }
+
+                    if (annotation instanceof EnsureDoesNotHavePermission) {
+                        EnsureDoesNotHavePermission ensureDoesNotHavePermission =
+                                (EnsureDoesNotHavePermission) annotation;
+
+                        try {
+                            if (permissionContext == null) {
+                                permissionContext = sTestApis.permissions().withoutPermission(
+                                        ensureDoesNotHavePermission.value());
+                            } else {
+                                permissionContext = permissionContext.withoutPermission(
+                                        ensureDoesNotHavePermission.value());
+                            }
+                        } catch (NeneException e) {
+                            failOrSkip("Error denying permission: " + e,
+                                    ensureDoesNotHavePermission.failureMode());
+                        }
+                    }
+
                 }
                 Log.d(LOG_TAG,
                         "Finished preparing state for test " + description.getMethodName());
@@ -197,12 +233,18 @@ public final class DeviceState implements TestRule {
                 } finally {
                     Log.d(LOG_TAG,
                             "Tearing down state for test " + description.getMethodName());
+
+                    if (permissionContext != null) {
+                        permissionContext.close();
+                    }
+
                     teardownNonShareableState();
                     if (!mSkipTestTeardown) {
                         teardownShareableState();
                     }
                     Log.d(LOG_TAG,
-                            "Finished tearing down state for test " + description.getMethodName());
+                            "Finished tearing down state for test "
+                                    + description.getMethodName());
                 }
             }};
     }
@@ -279,6 +321,16 @@ public final class DeviceState implements TestRule {
             assertWithMessage(message).that(value).isTrue();
         } else if (failureMode.equals(FailureMode.SKIP)) {
             assumeTrue(message, value);
+        } else {
+            throw new IllegalStateException("Unknown failure mode: " + failureMode);
+        }
+    }
+
+    private void failOrSkip(String message, FailureMode failureMode) {
+        if (failureMode.equals(FailureMode.FAIL)) {
+            throw new AssertionError(message);
+        } else if (failureMode.equals(FailureMode.SKIP)) {
+            throw new AssumptionViolatedException(message);
         } else {
             throw new IllegalStateException("Unknown failure mode: " + failureMode);
         }
