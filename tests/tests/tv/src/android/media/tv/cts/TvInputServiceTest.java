@@ -1066,6 +1066,7 @@ public class TvInputServiceTest {
 
         @Override
         public IBinder createExtension() {
+            super.createExtension();
             return null;
         }
 
