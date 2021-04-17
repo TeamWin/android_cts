@@ -17,7 +17,6 @@
 package android.server.wm.lifecycle;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
@@ -26,7 +25,6 @@ import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_DESTR
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
-import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.wm.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
@@ -43,14 +41,12 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 
 import androidx.test.filters.MediumTest;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -341,7 +337,7 @@ public class ActivityLifecycleLegacySplitScreenTests extends ActivityLifecycleCl
 
         // Exit split-screen
         getLifecycleLog().clear();
-        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+        dismissSplitScreen(true /* primaryOnTop */);
 
         // Wait for the activity to receive the change
         final List<LifecycleLog.ActivityCallback> expectedSequence =
