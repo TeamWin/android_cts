@@ -32,6 +32,7 @@ import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Presubmit
 @AppModeFull(reason = "Instant apps cannot access the SD card")
@@ -86,6 +87,7 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
 
     //   Test read the xml from assets folder using the InputStream.
     //    <format android:name="HEVC" supported="true"/>
+    //    <format android:name="VP9" supported="false"/>
     //    <format android:name="HDR10" supported="false"/>
     public void testReadFromCorrectXmlWithInputStreamInAssets() throws Exception {
         InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
@@ -96,6 +98,12 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
                 parser);
         assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10));
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        List<String> supportedVideoMimetypes = capability.getSupportedVideoMimeTypes();
+        assertTrue(supportedVideoMimetypes.contains(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        List<String> unsupportedVideoMimetypes = capability.getUnsupportedVideoMimeTypes();
+        assertTrue(unsupportedVideoMimetypes.contains(MediaFormat.MIMETYPE_VIDEO_VP9));
+        List<String> unsupportedHdr = capability.getUnsupportedHdrTypes();
+        assertTrue(unsupportedHdr.contains(MediaFeature.HdrType.HDR10));
     }
 
     //   Test read the application's xml from assets folder using the XmlResourceParser.
@@ -116,6 +124,12 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         assertTrue(capability.isHdrTypeSupported(MediaFeature.HdrType.DOLBY_VISION));
         assertTrue(capability.isHdrTypeSupported(MediaFeature.HdrType.HLG));
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
+        List<String> supportedHdrTypes = capability.getSupportedHdrTypes();
+        assertTrue(supportedHdrTypes.contains(MediaFeature.HdrType.HDR10));
+        assertTrue(supportedHdrTypes.contains(MediaFeature.HdrType.HDR10_PLUS));
+        assertTrue(supportedHdrTypes.contains(MediaFeature.HdrType.DOLBY_VISION));
+        assertTrue(supportedHdrTypes.contains(MediaFeature.HdrType.HLG));
+        assertEquals(4, supportedHdrTypes.size());
     }
 
     // Test parsing invalid xml with wrong tag expect UnsupportedOperationException
@@ -243,8 +257,9 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
     }
 
     // Test unspecified codec type.
-    // VP9 is not declare in the XML which leads to isFormatSpecified return false.
+    // AV1 is not declare in the XML which leads to isFormatSpecified return false.
     //    <format android:name="HEVC" supported="true"/>
+    //    <format android:name="VP9" supported="false"/>
     //    <format android:name="HDR10" supported="false"/>
     public void testUnspecifiedCodecMimetype() throws Exception {
         InputStream xmlIs = mContext.getAssets().open("MediaCapabilities.xml");
@@ -252,7 +267,7 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         parser.setInput(xmlIs, StandardCharsets.UTF_8.name());
         ApplicationMediaCapabilities capability = ApplicationMediaCapabilities.createFromXml(
                 parser);
-        assertFalse(capability.isFormatSpecified(MediaFormat.MIMETYPE_VIDEO_VP9));
+        assertFalse(capability.isFormatSpecified(MediaFormat.MIMETYPE_VIDEO_AV1));
         assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_VP9));
     }
 
