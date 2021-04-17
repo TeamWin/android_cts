@@ -89,6 +89,7 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/annotation/MainThread;",
                     "Landroid/annotation/NonNull;",
                     "Landroid/annotation/Nullable;",
+                    "Landroid/annotation/RequiresNoPermission;",
                     "Landroid/annotation/RequiresPermission;",
                     "Landroid/annotation/SdkConstant;",
                     "Landroid/annotation/StringDef;",
