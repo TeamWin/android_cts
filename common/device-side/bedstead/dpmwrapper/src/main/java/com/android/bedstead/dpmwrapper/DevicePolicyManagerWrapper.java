@@ -156,6 +156,22 @@ final class DevicePolicyManagerWrapper
             // Used by SuspendPackageTest
             doAnswer(answer).when(spy).getPolicyExemptApps();
 
+            // Used by PrivacyDeviceOwnerTest
+            doAnswer(answer).when(spy).getDeviceOwner();
+
+            // Used by AdminActionBookkeepingTest
+            doAnswer(answer).when(spy).getDeviceOwnerOrganizationName();
+            doAnswer(answer).when(spy).setOrganizationName(any(), any());
+            doAnswer(answer).when(spy).retrieveSecurityLogs(any());
+            doAnswer(answer).when(spy).getLastSecurityLogRetrievalTime();
+            doAnswer(answer).when(spy).getLastBugReportRequestTime();
+            doAnswer(answer).when(spy).isDeviceManaged();
+            doAnswer(answer).when(spy).isCurrentInputMethodSetByOwner();
+            doAnswer(answer).when(spy).installCaCert(any(), any());
+            doAnswer(answer).when(spy).getOwnerInstalledCaCerts(any());
+            doAnswer(answer).when(spy).retrievePreRebootSecurityLogs(any());
+            doAnswer(answer).when(spy).getLastNetworkLogRetrievalTime();
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
