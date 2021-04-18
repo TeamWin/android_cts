@@ -258,5 +258,16 @@ public class FontManagerTest {
         }
     }
 
+    @Test
+    public void fontManager_PostScriptName() throws IOException {
+        FontConfig fontConfig = getFontConfig();
+        for (FontConfig.FontFamily family : fontConfig.getFontFamilies()) {
+            for (FontConfig.Font font : family.getFontList()) {
+                String psNameInFile = FontFileTestUtil.getPostScriptName(font.getFile());
+                assertThat(font.getPostScriptName()).isEqualTo(psNameInFile);
+            }
+        }
+    }
+
     // TODO: Add more tests once we sign test fonts.
 }
