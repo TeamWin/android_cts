@@ -77,17 +77,18 @@ public final class FontFamilyUpdateRequestTest {
     @Test
     public void fontFamily() {
         String name = "test";
-        List<FontFamilyUpdateRequest.Font> fonts = Arrays.asList(
-                new FontFamilyUpdateRequest.Font.Builder("Test",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT)).build(),
-                new FontFamilyUpdateRequest.Font.Builder("Test",
-                        new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC)).build());
+        FontFamilyUpdateRequest.Font font1 = new FontFamilyUpdateRequest.Font.Builder("Test",
+                new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_UPRIGHT)).build();
+        FontFamilyUpdateRequest.Font font2 = new FontFamilyUpdateRequest.Font.Builder("Test",
+                new FontStyle(FONT_WEIGHT_NORMAL, FONT_SLANT_ITALIC)).build();
         FontFamilyUpdateRequest.FontFamily fontFamily =
-                new FontFamilyUpdateRequest.FontFamily.Builder(name, fonts).build();
+                new FontFamilyUpdateRequest.FontFamily.Builder(name,
+                        Collections.singletonList(font1)).addFont(font2).build();
         assertThat(fontFamily.getName()).isEqualTo(name);
-        assertThat(fontFamily.getFonts()).containsExactlyElementsIn(fonts).inOrder();
+        assertThat(fontFamily.getFonts()).containsExactly(font1, font2).inOrder();
 
         // Invalid parameters
+        List<FontFamilyUpdateRequest.Font> fonts = Arrays.asList(font1, font2);
         assertThrows(NullPointerException.class, () ->
                 new FontFamilyUpdateRequest.FontFamily.Builder(null, fonts).build());
         assertThrows(IllegalArgumentException.class, () ->

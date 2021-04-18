@@ -32,11 +32,16 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildReceiver {
     public static final String TEST_APK = "CtsMediaMetricsHostTestApp.apk";
     public static final String TEST_PKG = "android.media.metrics.cts";
+    private static final String FEATURE_AUDIO_OUTPUT = "android.hardware.audio.output";
+    private static final String FEATURE_MICROPHONE = "android.hardware.microphone";
+    private static final int MAX_BUFFER_CAPACITY = 30 * 1024 * 1024; // 30M
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -221,4 +226,94 @@ public class MediaMetricsAtomTests extends DeviceTestCase implements IBuildRecei
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
         assertThat(data.size()).isEqualTo(0);
    }
+
+    private void validateAAudioStreamAtom(int direction) throws Exception {
+        Set<Integer> directionSet = new HashSet<>(Arrays.asList(direction));
+        List<Set<Integer>> directionList = Arrays.asList(directionSet);
+
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        AtomTestUtils.assertStatesOccurred(directionList, data, 0,
+                atom -> atom.getMediametricsAaudiostreamReported().getDirection().getNumber());
+
+        for (StatsLog.EventMetricData event : data) {
+            AtomsProto.MediametricsAAudioStreamReported atom =
+                    event.getAtom().getMediametricsAaudiostreamReported();
+            assertThat(atom.getBufferCapacity()).isGreaterThan(0);
+            assertThat(atom.getBufferCapacity()).isLessThan(MAX_BUFFER_CAPACITY);
+            assertThat(atom.getBufferSize()).isGreaterThan(0);
+            assertThat(atom.getBufferSize()).isAtMost(atom.getBufferCapacity());
+            assertThat(atom.getFramesPerBurst()).isGreaterThan(0);
+            assertThat(atom.getFramesPerBurst()).isLessThan(atom.getBufferCapacity());
+        }
+    }
+
+    private void runAAudioTestAndValidate(
+            String requiredFeature, int direction, String testFunctionName) throws Exception {
+        if (!DeviceUtils.hasFeature(getDevice(), requiredFeature)) {
+            return;
+        }
+        ConfigUtils.uploadConfigForPushedAtom(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                AtomsProto.Atom.MEDIAMETRICS_AAUDIOSTREAM_REPORTED_FIELD_NUMBER);
+
+        DeviceUtils.runDeviceTests(
+                getDevice(),
+                TEST_PKG,
+                "android.media.metrics.cts.MediaMetricsAtomHostSideTests",
+                testFunctionName);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_LONG);
+
+        validateAAudioStreamAtom(direction);
+    }
+
+    /**
+     * The test try to create and then close aaudio input stream with mmap path via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
+     * the data is collected correctly.
+     */
+    public void testAAudioMmapInputStream() throws Exception {
+        runAAudioTestAndValidate(
+                FEATURE_MICROPHONE,
+                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "testAAudioMmapInputStream");
+    }
+
+    /**
+     * The test try to create and then close aaudio output stream with mmap path via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
+     * the data is collected correctly.
+     */
+    public void testAAudioMmapOutputStream() throws Exception {
+        runAAudioTestAndValidate(
+                FEATURE_AUDIO_OUTPUT,
+                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "testAAudioMmapOutputStream");
+    }
+
+    /**
+     * The test try to create and then close aaudio input stream with legacy path via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
+     * the data is collected correctly.
+     */
+    public void testAAudioLegacyInputStream() throws Exception {
+        runAAudioTestAndValidate(
+                FEATURE_MICROPHONE,
+                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_INPUT_VALUE,
+                "testAAudioLegacyInputStream");
+    }
+
+    /**
+     * The test try to create and then close aaudio output stream with legacy path via media metrics
+     * atom host side test app on the DUT.
+     * After that, the event metric data for MediametricsAAudioStreamReported is pushed to verify
+     * the data is collected correctly.
+     */
+    public void testAAudioLegacyOutputStream() throws Exception {
+        runAAudioTestAndValidate(
+                FEATURE_AUDIO_OUTPUT,
+                AtomsProto.MediametricsAAudioStreamReported.Direction.DIRECTION_OUTPUT_VALUE,
+                "testAAudioLegacyOutputStream");
+    }
 }

@@ -33,6 +33,7 @@ import android.graphics.Typeface;
 import android.graphics.Typeface.Builder;
 import android.os.SharedMemory;
 import android.system.ErrnoException;
+import android.util.ArrayMap;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.filters.SmallTest;
@@ -860,7 +861,8 @@ public class TypefaceTest {
         }
         assertNotNull(shm);
 
-        Map<String, Typeface> reversedMap = Typeface.deserializeFontMap(shm.mapReadOnly());
+        Map<String, Typeface> reversedMap = new ArrayMap<>();
+        Typeface.deserializeFontMap(shm.mapReadOnly(), reversedMap);
 
         // Typeface equality doesn't work here since the backing native object is different.
         assertEquals(3, reversedMap.size());
