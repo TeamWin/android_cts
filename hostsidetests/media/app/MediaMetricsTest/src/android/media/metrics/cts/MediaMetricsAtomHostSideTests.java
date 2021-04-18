@@ -36,6 +36,10 @@ import org.junit.Test;
 
 public class MediaMetricsAtomHostSideTests {
 
+    static {
+        System.loadLibrary("CtsMediaMetricsHostTestAppJni");
+    }
+
     @Test
     public void testPlaybackStateEvent() throws Exception {
         Context context = InstrumentationRegistry.getContext();
@@ -149,4 +153,28 @@ public class MediaMetricsAtomHostSideTests {
         assertThat(idObj).isNotEqualTo(null);
         assertThat(idObj.getStringId().length()).isGreaterThan(0);
     }
+
+    /**
+     * Open aaudio mmap output stream and then close
+     */
+    @Test
+    public native void testAAudioMmapOutputStream();
+
+    /**
+     * Open aaudio mmap input stream and then close
+     */
+    @Test
+    public native void testAAudioMmapInputStream();
+
+    /**
+     * Open aaudio legacy output stream and then close
+     */
+    @Test
+    public native void testAAudioLegacyOutputStream();
+
+    /**
+     * Open aaudio legacy input stream and then close
+     */
+    @Test
+    public native void testAAudioLegacyInputStream();
 }
