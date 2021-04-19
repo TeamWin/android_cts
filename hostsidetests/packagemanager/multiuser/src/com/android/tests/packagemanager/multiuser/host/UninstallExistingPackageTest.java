@@ -32,24 +32,17 @@ import java.util.Collections;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class UninstallExistingPackageTest extends PackageManagerMultiUserTestBase {
-    private static final String EMPTY_TEST_APP_APK = "CtsEmptyTestApp.apk";
-    private static final String EMPTY_TEST_APP_PKG = "android.packageinstaller.emptytestapp.cts";
+    private static final String EMPTY_TEST_APP_APK = "CtsPackageManagerMultiUserEmptyTestApp.apk";
+    private static final String EMPTY_TEST_APP_PKG =
+            "android.packagemanager.multiuser.emptytestapp.cts";
     private static final String ARG_PACKAGE_NAME = "pkgName";
 
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        installPackage(EMPTY_TEST_APP_APK);
-        assertTrue(isPackageInstalled(EMPTY_TEST_APP_PKG));
-    }
-
-    /** Uninstall app after tests. */
-    @After
-    @Override
-    public void tearDown() throws Exception {
-        super.tearDown();
-        uninstallPackage(getDevice(), EMPTY_TEST_APP_PKG);
+        installPackageAsUser(EMPTY_TEST_APP_APK, true, mUserId);
+        assertTrue(isPackageInstalledForUser(EMPTY_TEST_APP_PKG, mUserId));
     }
 
     @Test
@@ -65,7 +58,7 @@ public class UninstallExistingPackageTest extends PackageManagerMultiUserTestBas
         assertTrue("Package is not installed for user " + newUserId,
                 isPackageInstalledForUser(EMPTY_TEST_APP_PKG, newUserId));
 
-        // run uninstallExistingPackage from mUserId, expect package is uninstalled
+        // run uninstallExistingPackage from current user, expect package is uninstalled
         runDeviceTestAsUser("testUninstallExistingPackage", mUserId,
                 Collections.singletonMap(ARG_PACKAGE_NAME, EMPTY_TEST_APP_PKG));
         assertFalse(isPackageInstalledForUser(EMPTY_TEST_APP_PKG, mUserId));
@@ -78,11 +71,11 @@ public class UninstallExistingPackageTest extends PackageManagerMultiUserTestBas
         // create a  user
         int newUserId = createUser();
 
-        // assert package is only installed for mUserId
+        // assert package is only installed for current user
         assertTrue(isPackageInstalledForUser(EMPTY_TEST_APP_PKG, mUserId));
         assertFalse(isPackageInstalledForUser(EMPTY_TEST_APP_PKG, newUserId));
 
-        // run uninstallExistingPackage from mUserId, expect package is not uninstalled
+        // run uninstallExistingPackage from current user, expect package is not uninstalled
         runDeviceTestAsUser("testUninstallExistingPackage", mUserId,
                 Collections.singletonMap(ARG_PACKAGE_NAME, EMPTY_TEST_APP_PKG));
         assertTrue(isPackageInstalledForUser(EMPTY_TEST_APP_PKG, mUserId));
