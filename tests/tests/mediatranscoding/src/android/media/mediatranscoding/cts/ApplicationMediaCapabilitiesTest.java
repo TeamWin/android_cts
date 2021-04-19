@@ -46,12 +46,27 @@ public class ApplicationMediaCapabilitiesTest extends AndroidTestCase {
         assertTrue(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
     }
 
+    public void testSetUnsupportVideoMime() throws Exception {
+        ApplicationMediaCapabilities capability =
+                new ApplicationMediaCapabilities.Builder().addUnsupportedVideoMimeType(
+                        MediaFormat.MIMETYPE_VIDEO_HEVC).build();
+        assertFalse(capability.isVideoMimeTypeSupported(MediaFormat.MIMETYPE_VIDEO_HEVC));
+    }
+
     public void testSetSupportHdr() throws Exception {
         ApplicationMediaCapabilities capability =
                 new ApplicationMediaCapabilities.Builder().addSupportedHdrType(
                         MediaFeature.HdrType.HDR10_PLUS).addSupportedVideoMimeType(
                         MediaFormat.MIMETYPE_VIDEO_HEVC).build();
-        assertEquals(true, capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10_PLUS));
+        assertTrue(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10_PLUS));
+    }
+
+    public void testSetUnsupportHdr() throws Exception {
+        ApplicationMediaCapabilities capability =
+                new ApplicationMediaCapabilities.Builder().addUnsupportedHdrType(
+                        MediaFeature.HdrType.HDR10_PLUS).addSupportedVideoMimeType(
+                        MediaFormat.MIMETYPE_VIDEO_HEVC).build();
+        assertFalse(capability.isHdrTypeSupported(MediaFeature.HdrType.HDR10_PLUS));
     }
 
     // Test supports HDR without supporting hevc, expect exception.
