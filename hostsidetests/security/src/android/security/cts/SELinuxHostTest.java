@@ -1298,7 +1298,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* keystore is always running */
     @CddTest(requirement="9.7")
     public void testKeystoreDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:keystore:s0", "/system/bin/keystore");
+        assertDomainOne("u:r:keystore:s0", "/system/bin/keystore2");
     }
 
     /* System server better be running :-P */
