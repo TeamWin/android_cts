@@ -50,44 +50,41 @@ public class AnnotationTest extends AbstractApiTest {
      * android.annotation.SystemApi) match the API definition.
      */
     public void testAnnotation() {
-        if ("true".equals(PropertyUtil.getProperty("ro.treble.enabled")) &&
-                PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1) {
-            AnnotationChecker.ResultFilter filter = new AnnotationChecker.ResultFilter() {
-                @Override
-                public boolean skip(Class<?> clazz) {
-                    return false;
-                }
+       AnnotationChecker.ResultFilter filter = new AnnotationChecker.ResultFilter() {
+            @Override
+            public boolean skip(Class<?> clazz) {
+                return false;
+            }
 
-                @Override
-                public boolean skip(Constructor<?> ctor) {
-                    return false;
-                }
+            @Override
+            public boolean skip(Constructor<?> ctor) {
+                return false;
+            }
 
-                @Override
-                public boolean skip(Method m) {
-                    return false;
-                }
+            @Override
+            public boolean skip(Method m) {
+                return false;
+            }
 
-                @Override
-                public boolean skip(Field f) {
-                    // The R.styleable class is not part of the API because it's annotated with
-                    // @doconly. But the class actually exists in the runtime classpath.  To avoid
-                    // the mismatch, skip the check for fields from the class.
-                    return "android.R$styleable".equals(f.getDeclaringClass().getName());
-                }
-            };
-            runWithTestResultObserver(resultObserver -> {
-                AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
-                        mClassProvider, mAnnotationForExactMatch, filter);
+            @Override
+            public boolean skip(Field f) {
+                // The R.styleable class is not part of the API because it's annotated with
+                // @doconly. But the class actually exists in the runtime classpath.  To avoid
+                // the mismatch, skip the check for fields from the class.
+                return "android.R$styleable".equals(f.getDeclaringClass().getName());
+            }
+        };
+        runWithTestResultObserver(resultObserver -> {
+            AnnotationChecker complianceChecker = new AnnotationChecker(resultObserver,
+                    mClassProvider, mAnnotationForExactMatch, filter);
 
-                ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
+            ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
-                parseApiResourcesAsStream(apiDocumentParser, mExpectedApiFiles)
-                        .forEach(complianceChecker::checkSignatureCompliance);
+            parseApiResourcesAsStream(apiDocumentParser, mExpectedApiFiles)
+                    .forEach(complianceChecker::checkSignatureCompliance);
 
-                // After done parsing all expected API files, perform any deferred checks.
-                complianceChecker.checkDeferred();
-            });
-        }
+            // After done parsing all expected API files, perform any deferred checks.
+            complianceChecker.checkDeferred();
+        });
     }
 }
