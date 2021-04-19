@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Instrumentation.ActivityResult;
 import android.content.Context;
 import android.content.Intent;
 import android.cts.tagging.Utils;
@@ -28,10 +29,12 @@ import android.os.Build;
 
 import androidx.test.filters.SmallTest;
 import androidx.test.InstrumentationRegistry;
+import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
 import org.junit.runner.RunWith;
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.android.compatibility.common.util.DropBoxReceiver;
@@ -132,5 +135,24 @@ public class TaggingTest {
         mContext.startActivity(intent);
 
         assertTrue(receiver.await());
+    }
+
+    @Rule
+    public ActivityTestRule<TestActivity> mTestActivityRule =
+            new ActivityTestRule<>(
+                    TestActivity.class, false /*initialTouchMode*/, true /*launchActivity*/);
+
+    @Test
+    public void testHeapZeroInitActivity() throws Exception {
+      TestActivity activity = mTestActivityRule.getActivity();
+      boolean result = activity.callActivity(HeapZeroInitActivity.class);
+      assertTrue(result);
+    }
+
+    @Test
+    public void testHeapZeroInitMemtagAsyncActivity() throws Exception {
+      TestActivity activity = mTestActivityRule.getActivity();
+      boolean result = activity.callActivity(HeapZeroInitMemtagAsyncActivity.class);
+      assertTrue(result);
     }
 }
