@@ -31,11 +31,14 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeNotNull;
 
 import android.content.Context;
 import android.content.cts.R;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Environment;
 import android.os.Parcel;
 import android.os.Process;
 import android.os.UserHandle;
@@ -44,6 +47,8 @@ import android.util.StringBuilderPrinter;
 
 import androidx.test.InstrumentationRegistry;
 import androidx.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -282,5 +287,56 @@ public class ApplicationInfoTest {
         assertSame(copy1, copy2); //
 
         p.restoreAllowSquashing(prevSquashing);
+    }
+
+    @Test
+    public void testIsProduct() throws Exception {
+        final String packageName = getPartitionFirstPackageName(
+                Environment.getProductDirectory().getAbsolutePath());
+        assertNotNull(packageName);
+
+        final PackageInfo info = getContext().getPackageManager().getPackageInfo(
+                packageName.trim(), 0 /* flags */);
+        assertTrue(info.applicationInfo.isProduct());
+    }
+
+    @Test
+    public void testIsVendor() throws Exception {
+        final String packageName = getPartitionFirstPackageName(
+                Environment.getVendorDirectory().getAbsolutePath());
+        assertNotNull(packageName);
+
+        final PackageInfo info = getContext().getPackageManager().getPackageInfo(
+                packageName.trim(), 0 /* flags */);
+        assertTrue(info.applicationInfo.isVendor());
+    }
+
+    @Test
+    public void testIsOem() throws Exception {
+        final String packageName = getPartitionFirstPackageName(
+                Environment.getOemDirectory().getAbsolutePath());
+        // Oem package may not exist in every builds like aosp.
+        assumeNotNull(packageName);
+
+        final PackageInfo info = getContext().getPackageManager().getPackageInfo(
+                packageName.trim(), 0 /* flags */);
+        assertTrue(info.applicationInfo.isOem());
+    }
+
+    private String getPartitionFirstPackageName(final String partition) throws Exception {
+        // List package with "-f" option which contains package direction, use that to distinguish
+        // package partition and find out target package.
+        final String output = SystemUtil.runShellCommand(
+                InstrumentationRegistry.getInstrumentation(), "pm list package -f -s");
+        final String[] packages = output.split("package:");
+        for (int i = 0; i < packages.length; i++) {
+            // Split package info to direction and name.
+            String[] info = packages[i].split("\\.apk=");
+            if (info.length != 2) continue; // Package info need include direction and name.
+            if (info[0] != null && info[0].startsWith(partition)) {
+                return info[1]; // Package name.
+            }
+        }
+        return null;
     }
 }
