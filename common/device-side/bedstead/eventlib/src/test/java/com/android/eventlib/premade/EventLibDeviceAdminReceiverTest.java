@@ -32,6 +32,8 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisableReques
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordChangedEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordFailedEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordSucceededEvent;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -127,6 +129,52 @@ public class EventLibDeviceAdminReceiverTest {
 
         EventLogs<DeviceAdminPasswordChangedEvent> eventLogs =
                 DeviceAdminPasswordChangedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
+    }
+
+    @Test
+    public void failPassword_logsPasswordFailedEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordFailed(sContext, sIntent);
+
+        EventLogs<DeviceAdminPasswordFailedEvent> eventLogs =
+                DeviceAdminPasswordFailedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+    }
+
+    @Test
+    public void failPasswordWithUserHandle_logsPasswordFailedEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordFailed(sContext, sIntent, sUser.userHandle());
+
+        EventLogs<DeviceAdminPasswordFailedEvent> eventLogs =
+                DeviceAdminPasswordFailedEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+        assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
+    }
+
+    @Test
+    public void succeedPassword_logsPasswordSucceededEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordSucceeded(sContext, sIntent);
+
+        EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
+                DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName());
+        assertThat(eventLogs.get()).isNotNull();
+    }
+
+    @Test
+    public void succeedPasswordWithUserHandle_logsPasswordSucceededEvent() {
+        EventLibDeviceAdminReceiver receiver = new EventLibDeviceAdminReceiver();
+
+        receiver.onPasswordSucceeded(sContext, sIntent, sUser.userHandle());
+
+        EventLogs<DeviceAdminPasswordSucceededEvent> eventLogs =
+                DeviceAdminPasswordSucceededEvent.queryPackage(sContext.getPackageName());
         assertThat(eventLogs.get()).isNotNull();
         assertThat(eventLogs.get().userHandle()).isEqualTo(sUser.userHandle());
     }
