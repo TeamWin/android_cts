@@ -21,20 +21,33 @@ import android.content.ComponentName;
 
 import androidx.annotation.NonNull;
 
-import com.google.android.enterprise.connectedapps.annotations.CrossProfile;
+import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcAutomaticAdmin;
+import com.android.bedstead.remotedpc.processor.annotations.RemoteDpcManager;
 
-/** See {@link DevicePolicyManager}. */
+/**
+ * Wrapper of {@link DevicePolicyManager} methods for use with Remote DPC
+ *
+ * <p>Methods called on this interface will behave as if they were called directly by the
+ * RemoteDPC instance. Return values and exceptions will behave as expected.
+ *
+ * <p>Methods on this interface must match exactly the methods declared by
+ * {@link DevicePolicyManager}, or else must be identical to a method declared by
+ * {@link DevicePolicyManager} except that it excludes a {@code ComponentName admin} first argument
+ * and must be annotated {@link RemoteDpcAutomaticAdmin}.
+ *
+ * <p>When using {@link RemoteDpcAutomaticAdmin}, there must also exist an identical method on the
+ * interface which includes the {@code ComponentName admin} argument. The RemoteDPC component name
+ * will be automatically provided when the {@link RemoteDpcAutomaticAdmin} annotated method is
+ * called.
+ */
+@RemoteDpcManager(managerClass = DevicePolicyManager.class)
 public interface RemoteDevicePolicyManager {
 
-    /** See {@link DevicePolicyManager#isUsingUnifiedPassword(android.content.ComponentName)}. */
-    @CrossProfile
+    /** See {@link DevicePolicyManager#isUsingUnifiedPassword(ComponentName)}. */
     boolean isUsingUnifiedPassword(@NonNull ComponentName admin);
-
-    /** See {@link DevicePolicyManager#isUsingUnifiedPassword(android.content.ComponentName)}. */
-    @CrossProfile
-    boolean isUsingUnifiedPassword();
+    /** See {@link DevicePolicyManager#isUsingUnifiedPassword(ComponentName)}. */
+    @RemoteDpcAutomaticAdmin boolean isUsingUnifiedPassword();
 
     /** See {@link DevicePolicyManager#getCurrentFailedPasswordAttempts()}. */
-    @CrossProfile
     int getCurrentFailedPasswordAttempts();
 }

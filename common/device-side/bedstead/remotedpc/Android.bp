@@ -12,11 +12,12 @@ android_library {
         "Nene",
         "ConnectedAppsSDK",
         "ConnectedAppsSDK_Annotations",
-        "androidx.annotation_annotation"
+        "androidx.annotation_annotation",
+        "RemoteDPC_Annotations"
     ],
     manifest: "src/communication/main/AndroidManifest.xml",
     min_sdk_version: "27",
-    plugins: ["ConnectedAppsSDK_Processor"],
+    plugins: ["ConnectedAppsSDK_Processor", "RemoteDPC_Processor"],
 }
 
 android_library {
@@ -75,4 +76,28 @@ android_test {
     ],
     manifest: "src/library/test/AndroidManifest.xml",
     min_sdk_version: "27"
+}
+
+java_library {
+    name: "RemoteDPC_Annotations",
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/remotedpc/processor/annotations/*.java"
+    ],
+    host_supported: true
+}
+
+java_plugin {
+    name: "RemoteDPC_Processor",
+    processor_class: "com.android.bedstead.remotedpc.processor.Processor",
+    static_libs: [
+        "javapoet",
+        "auto_service_annotations",
+        "RemoteDPC_Annotations",
+        "ConnectedAppsSDK_Annotations"
+    ],
+    srcs: [
+        "src/processor/main/java/com/android/bedstead/remotedpc/processor/Processor.java"
+    ],
+    plugins: ["auto_service_plugin"],
+    generates_api: true,
 }
