@@ -23,7 +23,7 @@ import static android.media.cts.MediaSessionTestService.STEP_CHECK;
 import static android.media.cts.MediaSessionTestService.STEP_CLEAN_UP;
 import static android.media.cts.MediaSessionTestService.STEP_SET_UP;
 import static android.media.cts.MediaSessionTestService.TEST_SERIES_OF_SET_QUEUE;
-import static android.media.cts.MediaSessionTestService.TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS;
+import static android.media.cts.MediaSessionTestService.TEST_SET_QUEUE;
 import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import android.app.PendingIntent;
@@ -54,6 +54,7 @@ import android.text.TextUtils;
 import android.view.KeyEvent;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -941,12 +942,25 @@ public class MediaSessionTest extends AndroidTestCase {
         }
 
         try (RemoteService.Invoker invoker = new RemoteService.Invoker(mContext,
-                MediaSessionTestService.class, TEST_SET_QUEUE_WITH_LARGE_NUMBER_OF_ITEMS)) {
+                MediaSessionTestService.class, TEST_SET_QUEUE)) {
             Bundle args = new Bundle();
             args.putParcelable(KEY_SESSION_TOKEN, mSession.getSessionToken());
             args.putInt(KEY_EXPECTED_QUEUE_SIZE, queueSize);
             invoker.run(STEP_SET_UP, args);
             mSession.setQueue(queue);
+            invoker.run(STEP_CHECK);
+            invoker.run(STEP_CLEAN_UP);
+        }
+    }
+
+    public void testSetQueueWithEmptyQueue() throws Exception {
+        try (RemoteService.Invoker invoker = new RemoteService.Invoker(mContext,
+                MediaSessionTestService.class, TEST_SET_QUEUE)) {
+            Bundle args = new Bundle();
+            args.putParcelable(KEY_SESSION_TOKEN, mSession.getSessionToken());
+            args.putInt(KEY_EXPECTED_QUEUE_SIZE, 0);
+            invoker.run(STEP_SET_UP, args);
+            mSession.setQueue(Collections.emptyList());
             invoker.run(STEP_CHECK);
             invoker.run(STEP_CLEAN_UP);
         }
