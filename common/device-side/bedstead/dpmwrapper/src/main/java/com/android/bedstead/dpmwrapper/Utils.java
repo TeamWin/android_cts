@@ -20,15 +20,27 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.util.Log;
+
+import com.android.internal.annotations.GuardedBy;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Generic helpers.
  */
 public final class Utils {
+
+    private static final String TAG = "DpmWrapperUtils";
 
     static final boolean VERBOSE = false;
 
@@ -40,6 +52,14 @@ public final class Utils {
     static final String EXTRA_METHOD = "methodName";
     static final String EXTRA_NUMBER_ARGS = "number_args";
     static final String EXTRA_ARG_PREFIX = "arg_";
+
+    private static final Object LOCK = new Object();
+
+    @GuardedBy("LOCK")
+    private static HandlerThread sHandlerThread;
+
+    @GuardedBy("LOCK")
+    private static Handler sHandler;
 
     static boolean isHeadlessSystemUser() {
         return UserManager.isHeadlessSystemUserMode() && MY_USER_ID == UserHandle.USER_SYSTEM;
@@ -63,6 +83,49 @@ public final class Utils {
         filter.actionsIterator().forEachRemaining((s) -> builder.append(s).append(","));
         builder.deleteCharAt(builder.length() - 1);
         return builder.append(']').toString();
+    }
+
+    static Handler getHandler() {
+        synchronized (LOCK) {
+            if (sHandler == null) {
+                sHandlerThread = new HandlerThread("DpmWrapperHandlerThread");
+                Log.i(TAG, "Starting handler thread " + sHandlerThread);
+                sHandlerThread.start();
+                sHandler = new Handler(sHandlerThread.getLooper());
+            }
+        }
+        return sHandler;
+    }
+
+    static <T> T callOnHandlerThread(Callable<T> callable) throws Exception {
+        if (VERBOSE) Log.v(TAG, "callOnHandlerThread(): called from " + Thread.currentThread());
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<T> returnRef = new AtomicReference<>();
+        final AtomicReference<Exception> exceptionRef = new AtomicReference<>();
+
+        getHandler().post(() -> {
+            Log.d(TAG, "Calling callable on handler thread " + Thread.currentThread());
+            try {
+                T result = callable.call();
+                if (VERBOSE) Log.v(TAG, "Got result: "  + result);
+                returnRef.set(result);
+            } catch (Exception e) {
+                Log.e(TAG, "Got exception: "  + e);
+                exceptionRef.set(e);
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        if (!latch.await(50, TimeUnit.SECONDS)) {
+            throw new TimeoutException("didn't get result in 50 seconds");
+        }
+
+        Exception exception = exceptionRef.get();
+        if (exception != null) throw exception;
+
+        return returnRef.get();
     }
 
     /**

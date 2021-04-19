@@ -24,6 +24,7 @@ import static com.android.bedstead.dpmwrapper.Utils.EXTRA_CLASS;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_METHOD;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_NUMBER_ARGS;
 import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
+import static com.android.bedstead.dpmwrapper.Utils.getHandler;
 
 import android.annotation.Nullable;
 import android.app.admin.DeviceAdminReceiver;
@@ -37,8 +38,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -71,10 +70,6 @@ public final class TestAppSystemServiceFactory {
     // Must be high enough to outlast long tests like NetworkLoggingTest, which waits up to
     // 6 minutes for network monitoring events.
     private static final long TIMEOUT_MS = TimeUnit.MINUTES.toMillis(10);
-
-    private static final HandlerThread HANDLER_THREAD = new HandlerThread(TAG + "HandlerThread");
-
-    private static Handler sHandler;
 
     // Caches whether the package declares the required receiver (otherwise each test would be
     // querying package manager, which is expensive)
@@ -164,12 +159,6 @@ public final class TestAppSystemServiceFactory {
             return manager;
         }
 
-        if (sHandler == null) {
-            Log.i(TAG, "Starting handler thread " + HANDLER_THREAD);
-            HANDLER_THREAD.start();
-            sHandler = new Handler(HANDLER_THREAD.getLooper());
-        }
-
         String receiverClassName = receiverClass.getName();
         final String wrappedClassName = wrappedClass.getName();
         if (VERBOSE) {
@@ -222,7 +211,7 @@ public final class TestAppSystemServiceFactory {
                         + "grantDpmWrapper() (for user " + userId + ") in the host-side test?");
             }
             context.sendOrderedBroadcastAsUser(intent,
-                    UserHandle.SYSTEM, /* permission= */ null, myReceiver, sHandler,
+                    UserHandle.SYSTEM, /* permission= */ null, myReceiver, getHandler(),
                     RESULT_NOT_SENT_TO_ANY_RECEIVER, /* initialData= */ null,
                     /* initialExtras= */ null);
 
