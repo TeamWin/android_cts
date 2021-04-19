@@ -124,6 +124,8 @@ public class CommandReceiverActivity extends Activity {
 
     public static final String EXTRA_USER_RESTRICTION =
             "com.android.cts.verifier.managedprovisioning.extra.USER_RESTRICTION";
+    public static final String EXTRA_USE_CURRENT_USER_DPM =
+            "com.android.cts.verifier.managedprovisioning.extra.USE_CURRENT_USER_DPM";
     public static final String EXTRA_SETTING =
             "com.android.cts.verifier.managedprovisioning.extra.SETTING";
     // This extra can be used along with a command extra to set policy to
@@ -186,8 +188,17 @@ public class CommandReceiverActivity extends Activity {
         super.onCreate(savedInstanceState);
         final Intent intent = getIntent();
         try {
-            mDpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
-                    DeviceAdminTestReceiver.class);
+            // On phones, the test runs on user 0, which is the Device Owner, but on headless system
+            // user mode it runs in a different user.
+            // Most DPM operations must be set on device owner user, but a few - like adding user
+            // restrictions - must be set in the current user.
+
+            boolean useCurrentUserDpm = intent.getBooleanExtra(EXTRA_USE_CURRENT_USER_DPM, false);
+            mDpm = useCurrentUserDpm
+                    ? getSystemService(DevicePolicyManager.class)
+                    : TestAppSystemServiceFactory.getDevicePolicyManager(this,
+                            DeviceAdminTestReceiver.class);
+
             mUm = (UserManager) getSystemService(Context.USER_SERVICE);
             mAdmin = DeviceAdminTestReceiver.getReceiverComponentName();
             final String command = getIntent().getStringExtra(EXTRA_COMMAND);
@@ -196,6 +207,8 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_USER_RESTRICTION: {
                     String restrictionKey = intent.getStringExtra(EXTRA_USER_RESTRICTION);
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
+                    Log.i(TAG, "Setting '" + restrictionKey + "'=" + enforced + " using " + mDpm
+                            + " on user " + getUserId());
                     if (enforced) {
                         mDpm.addUserRestriction(mAdmin, restrictionKey);
                     } else {
@@ -633,9 +646,30 @@ public class CommandReceiverActivity extends Activity {
         }
     }
 
-    public static Intent createSetUserRestrictionIntent(String restriction, boolean enforced) {
-        return new Intent(ACTION_EXECUTE_COMMAND)
-                .putExtra(EXTRA_COMMAND,COMMAND_SET_USER_RESTRICTION)
+    /**
+     * Creates an intent to set the given user restriction using the device owner's {@code dpm}.
+     */
+    public static Intent createSetDeviceOwnerUserRestrictionIntent(String restriction,
+            boolean enforced) {
+        return createSetUserRestrictionIntent(restriction, enforced, /* currentUserDpm= */ false);
+    }
+
+    /**
+     * Creates an intent to set the given user restriction using the current user's {@code dpm}.
+     */
+    public static Intent createSetCurrentUserRestrictionIntent(String restriction,
+            boolean enforced) {
+        return createSetUserRestrictionIntent(restriction, enforced, /* currentUserDpm= */ true);
+    }
+
+    private static Intent createSetUserRestrictionIntent(String restriction, boolean enforced,
+            boolean forceCurrentUserDpm) {
+        Intent intent = new Intent(ACTION_EXECUTE_COMMAND);
+        if (forceCurrentUserDpm) {
+            intent.putExtra(EXTRA_USE_CURRENT_USER_DPM, true);
+        }
+        return intent
+                .putExtra(EXTRA_COMMAND, COMMAND_SET_USER_RESTRICTION)
                 .putExtra(EXTRA_USER_RESTRICTION, restriction)
                 .putExtra(EXTRA_ENFORCED, enforced);
     }
