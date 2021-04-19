@@ -218,13 +218,6 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
                     "Landroid/os/InputEventInjectionResult;",
                     "Landroid/os/InputEventInjectionSync;",
                     "Landroid/os/TouchOcclusionMode;",
-                    "Lcom/android/internal/protolog/common/BitmaskConversionException;",
-                    "Lcom/android/internal/protolog/common/InvalidFormatStringException;",
-                    "Lcom/android/internal/protolog/common/IProtoLogGroup;",
-                    "Lcom/android/internal/protolog/common/LogDataType;",
-                    "Lcom/android/internal/protolog/common/ProtoLog;",
-                    "Lcom/android/internal/protolog/ProtoLogImpl;",
-                    "Lcom/android/internal/protolog/ProtoLogViewerConfigReader;",
                     "Lcom/android/internal/util/FrameworkStatsLog;"
             );
 
