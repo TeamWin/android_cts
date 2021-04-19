@@ -40,7 +40,9 @@ import com.android.bedstead.harrier.annotations.meta.EnsureHasNoProfileAnnotatio
 import com.android.bedstead.harrier.annotations.meta.EnsureHasNoUserAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasProfileAnnotation;
 import com.android.bedstead.harrier.annotations.meta.EnsureHasUserAnnotation;
+import com.android.bedstead.harrier.annotations.meta.ParameterizedAnnotation;
 import com.android.bedstead.harrier.annotations.meta.RequireRunOnUserAnnotation;
+import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
 import com.android.bedstead.nene.TestApis;
 import com.android.bedstead.nene.exceptions.AdbException;
 import com.android.bedstead.nene.exceptions.NeneException;
@@ -49,6 +51,8 @@ import com.android.bedstead.nene.users.UserBuilder;
 import com.android.bedstead.nene.users.UserReference;
 import com.android.bedstead.nene.utils.ShellCommand;
 import com.android.compatibility.common.util.BlockingBroadcastReceiver;
+
+import junit.framework.AssertionFailedError;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -84,6 +88,7 @@ public final class DeviceState implements TestRule {
     private boolean mSkipTestTeardown;
     private boolean mSkipClassTeardown;
     private boolean mSkipTests;
+    private boolean mUsingBedsteadJUnit4 = false;
     private String mSkipTestsReason;
 
     private static final String TV_PROFILE_TYPE_NAME = "com.android.tv.profile";
@@ -100,6 +105,10 @@ public final class DeviceState implements TestRule {
 
     void setSkipTestTeardown(boolean skipTestTeardown) {
         mSkipTestTeardown = skipTestTeardown;
+    }
+
+    void setUsingBedsteadJUnit4(boolean usingBedsteadJUnit4) {
+        mUsingBedsteadJUnit4 = usingBedsteadJUnit4;
     }
 
     @Override public Statement apply(final Statement base,
@@ -120,7 +129,7 @@ public final class DeviceState implements TestRule {
 
                 assumeFalse(mSkipTestsReason, mSkipTests);
 
-                for (Annotation annotation : description.getAnnotations()) {
+                for (Annotation annotation : getAnnotations(description)) {
                     Class<? extends Annotation> annotationType = annotation.annotationType();
 
                     EnsureHasNoProfileAnnotation ensureHasNoProfileAnnotation =
@@ -163,23 +172,23 @@ public final class DeviceState implements TestRule {
                         requireRunOnUser(requireRunOnUserAnnotation.value());
                     }
 
-                }
-                RequireFeatures requireFeaturesAnnotation =
-                        description.getAnnotation(RequireFeatures.class);
-                if (requireFeaturesAnnotation != null) {
-                    for (String feature: requireFeaturesAnnotation.value()) {
-                        requireFeature(feature, requireFeaturesAnnotation.failureMode());
+                    if (annotation instanceof RequireFeatures) {
+                        RequireFeatures requireFeaturesAnnotation = (RequireFeatures) annotation;
+                        for (String feature: requireFeaturesAnnotation.value()) {
+                            requireFeature(feature, requireFeaturesAnnotation.failureMode());
+                        }
                     }
-                }
-                RequireUserSupported requireUserSupportedAnnotation =
-                        description.getAnnotation(RequireUserSupported.class);
-                if (requireUserSupportedAnnotation != null) {
-                    for (String userType: requireUserSupportedAnnotation.value()) {
-                        requireUserSupported(
-                                userType, requireUserSupportedAnnotation.failureMode());
-                    }
-                }
 
+                    if (annotation instanceof RequireUserSupported) {
+                        RequireUserSupported requireUserSupportedAnnotation =
+                                (RequireUserSupported) annotation;
+                        for (String userType: requireUserSupportedAnnotation.value()) {
+                            requireUserSupported(
+                                    userType, requireUserSupportedAnnotation.failureMode());
+                        }
+                    }
+
+                }
                 Log.d(LOG_TAG,
                         "Finished preparing state for test " + description.getMethodName());
 
@@ -196,6 +205,37 @@ public final class DeviceState implements TestRule {
                             "Finished tearing down state for test " + description.getMethodName());
                 }
             }};
+    }
+
+    private Collection<Annotation> getAnnotations(Description description) {
+        if (mUsingBedsteadJUnit4) {
+            // The annotations are already exploded
+            return description.getAnnotations();
+        }
+
+        // Otherwise we should build a new collection by recursively gathering annotations
+        // if we find any which don't work without the runner we should error and fail the test
+        List<Annotation> annotations = new ArrayList<>(description.getAnnotations());
+        checkAnnotations(annotations);
+
+        BedsteadJUnit4.resolveRecursiveAnnotations(annotations,
+                /* parameterizedAnnotation= */ null);
+
+        checkAnnotations(annotations);
+
+        return annotations;
+    }
+
+    private void checkAnnotations(Collection<Annotation> annotations) {
+        for (Annotation annotation : annotations) {
+            if (annotation.annotationType().getAnnotation(RequiresBedsteadJUnit4.class) != null
+                    || annotation.annotationType().getAnnotation(
+                            ParameterizedAnnotation.class) != null) {
+                throw new AssertionFailedError("Test is annotated "
+                        + annotation.annotationType().getSimpleName()
+                        + " which requires using the BedsteadJUnit4 test runner");
+            }
+        }
     }
 
     private Statement applySuite(final Statement base, final Description description) {
