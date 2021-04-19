@@ -145,6 +145,33 @@ public class WindowContextTests extends WindowContextTestBase {
     }
 
     /**
+     * Verifies if window context on the secondary display receives global configuration changes.
+     */
+    @Test
+    public void testWindowContextGlobalConfigChanges() {
+        final TestComponentCallbacks callbacks = new TestComponentCallbacks();
+        final WindowManagerState.DisplayContent display = createManagedVirtualDisplaySession()
+                .setPublicDisplay(true).createDisplay();
+        final FontScaleSession fontScaleSession = createFontScaleSession();
+        final Context windowContext = createWindowContext(display.mId);
+
+        windowContext.registerComponentCallbacks(callbacks);
+
+        final float expectedFontScale = fontScaleSession.get() + 0.3f;
+        fontScaleSession.set(expectedFontScale);
+
+        // We don't rely on latch to verify the result because we may receive two configuration
+        // changes. One may from that WindowContext attaches to a DisplayArea although it is before
+        // ComponentCallback registration), the other is from font the scale change, which is what
+        // we want to verify.
+        waitForOrFail("Font scale must be " + expectedFontScale + ","
+                + " but was " + callbacks.mConfiguration.fontScale, () ->
+                expectedFontScale == callbacks.mConfiguration.fontScale);
+
+        windowContext.unregisterComponentCallbacks(callbacks);
+    }
+
+    /**
      * Verify the {@link WindowProviderService} lifecycle:
      * <ul>
      *     <li>In {@link WindowProviderService#onCreate()}, register to the DisplayArea with
