@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.android.bedstead.harrier.annotations.enterprise;
+package com.android.bedstead.harrier.annotations.meta;
 
-import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
+import com.android.bedstead.harrier.BedsteadJUnit4;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -24,19 +24,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark a test as testing the states where a policy is applied (by a Device Owner or Profile Owner)
- * and it should apply to the user the test is running on.
- *
- * <p>This will generated parameterized runs for all matching states.
+ * Indicates that an annotation requires using the {@link BedsteadJUnit4} test runner
  */
-@Target(ElementType.METHOD)
+@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@RequiresBedsteadJUnit4
-public @interface PositivePolicyTest {
-    /**
-     * The policy being tested.
-     *
-     * <p>This is used to calculate which states are required to be tested.
-     */
-    Class<?> policy();
+public @interface RequiresBedsteadJUnit4 {
 }
