@@ -1034,7 +1034,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY
                         | KeyProperties.PURPOSE_ENCRYPT)
                 .setAlgorithmParameterSpec(
-                        new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F0))
+                        new RSAKeyGenParameterSpec(2048, RSAKeyGenParameterSpec.F4))
                 .setKeySize(2048)
                 .setDigests(KeyProperties.DIGEST_SHA256)
                 .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
@@ -1062,7 +1062,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
                 certSerialNumber,
                 certNotBefore,
                 certNotAfter);
-        assertEquals(RSAKeyGenParameterSpec.F0,
+        assertEquals(RSAKeyGenParameterSpec.F4,
                 ((RSAPublicKey) keyPair.getPublic()).getPublicExponent());
         KeyInfo keyInfo = TestUtils.getKeyInfo(keyPair.getPrivate());
         assertEquals(2048, keyInfo.getKeySize());
