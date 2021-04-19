@@ -36,3 +36,5 @@ Verify the resulting signature:
     openssl cms -verify -binary -in CtsPkgInstallTinyAppV2V3V4.digests.signature -inform der -CAfile test-cert.x509.pem -signer test-cert.x509.pem -content CtsPkgInstallTinyAppV2V3V4.digests
 Print out the content of the signature:
     openssl pkcs7 -print -inform DER -in CtsPkgInstallTinyAppV2V3V4.digests.signature
+
+malformed.apk is a copy of CtsPkgInstallTinyAppV2V3V4.apk, and malformed.apk.idsig is a purposefully created idsig causing OOM

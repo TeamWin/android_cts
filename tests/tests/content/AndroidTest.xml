@@ -89,6 +89,8 @@
         <option name="push-file" key="HelloWorld5_hdpi-v4.digests.signature" value="/data/local/tmp/cts/content/HelloWorld5_hdpi-v4.digests.signature" />
         <option name="push-file" key="HelloWorld5_mdpi-v4.digests" value="/data/local/tmp/cts/content/HelloWorld5_mdpi-v4.digests" />
         <option name="push-file" key="HelloWorld5_mdpi-v4.digests.signature" value="/data/local/tmp/cts/content/HelloWorld5_mdpi-v4.digests.signature" />
+        <option name="push-file" key="HelloWorld5.apk" value="/data/local/tmp/cts/content/malformed.apk" />
+        <option name="push-file" key="malformed.apk.idsig" value="/data/local/tmp/cts/content/malformed.apk.idsig" />
         <option name="push-file" key="test-cert.x509.pem" value="/data/local/tmp/cts/content/test-cert.x509.pem" />
 
     </target_preparer>

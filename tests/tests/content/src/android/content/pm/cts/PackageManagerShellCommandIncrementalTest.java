@@ -103,6 +103,7 @@ public class PackageManagerShellCommandIncrementalTest {
     private static final String TEST_APK_SPLIT1_IDSIG = "HelloWorld5_hdpi-v4.apk.idsig";
     private static final String TEST_APK_SPLIT2 = "HelloWorld5_xhdpi-v4.apk";
     private static final String TEST_APK_SPLIT2_IDSIG = "HelloWorld5_xhdpi-v4.apk.idsig";
+    private static final String TEST_APK_MALFORMED = "malformed.apk";
 
     private static final long EXPECTED_READ_TIME = 1000L;
 
@@ -413,6 +414,14 @@ public class PackageManagerShellCommandIncrementalTest {
                 executeShellCommand("pm install-incremental -t -g -S " + (file.length() - 1),
                         new File[]{file}).contains(
                         "Failure"));
+        assertFalse(isAppInstalled(TEST_APP_PACKAGE));
+    }
+
+    @Test
+    public void testInstallWithInvalidIdSig() throws Exception {
+        File file = new File(createApkPath(TEST_APK_MALFORMED));
+        String result = executeShellCommand("pm install-incremental -t -g " + file.getPath());
+        assertTrue(result, result.contains("Failure"));
         assertFalse(isAppInstalled(TEST_APP_PACKAGE));
     }
 
