@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-/*
- * Native implementation for the JniStaticTest parts.
- */
-
 #include <errno.h>
 #include <jni.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/prctl.h>
 #include <sys/utsname.h>
 
-extern "C" JNIEXPORT jboolean
-Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
+extern "C" JNIEXPORT jboolean Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
 #ifdef __aarch64__
 #define PR_SET_TAGGED_ADDR_CTRL 55
 #define PR_TAGGED_ADDR_ENABLE (1UL << 0)
@@ -36,8 +32,7 @@ Java_android_cts_tagging_Utils_kernelSupportsTaggedPointers() {
 #endif
 }
 
-extern "C" JNIEXPORT jint JNICALL
-Java_android_cts_tagging_Utils_nativeHeapPointerTag(JNIEnv *) {
+extern "C" JNIEXPORT jint JNICALL Java_android_cts_tagging_Utils_nativeHeapPointerTag(JNIEnv *) {
 #ifdef __aarch64__
   void *p = malloc(10);
   jint tag = reinterpret_cast<uintptr_t>(p) >> 56;
@@ -48,22 +43,41 @@ Java_android_cts_tagging_Utils_nativeHeapPointerTag(JNIEnv *) {
 #endif
 }
 
-extern "C" __attribute__((no_sanitize("address", "hwaddress")))
-JNIEXPORT void JNICALL
+extern "C" __attribute__((no_sanitize("address", "hwaddress"))) JNIEXPORT void JNICALL
 Java_android_cts_tagging_Utils_accessMistaggedPointer(JNIEnv *) {
-  int* p = new int[4];
-  int* mistagged_p = reinterpret_cast<int*>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
+  int *p = new int[4];
+  int *mistagged_p = reinterpret_cast<int *>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
   volatile int load = *mistagged_p;
   (void)load;
   delete[] p;
 }
 
-extern "C"
-JNIEXPORT jboolean JNICALL
+extern "C" JNIEXPORT jboolean JNICALL
 Java_android_cts_tagging_Utils_mistaggedKernelUaccessFails(JNIEnv *) {
   auto *p = new utsname;
-  utsname* mistagged_p = reinterpret_cast<utsname*>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
+  utsname *mistagged_p = reinterpret_cast<utsname *>(reinterpret_cast<uintptr_t>(p) + (1ULL << 56));
   bool result = uname(mistagged_p) != 0 && errno == EFAULT;
   delete p;
   return result;
+}
+
+__attribute__((optnone)) static bool sizeIsZeroInitialized(size_t size) {
+  const int kCount = 200;
+  for (int i = 0; i < kCount; ++i) {
+    char *volatile p = reinterpret_cast<char *>(malloc(size));
+    for (int j = 0; j < size; ++j) {
+      if (p[j] != 0) {
+        free(p);
+        return false;
+      }
+    }
+    memset(p, 42, size);
+    free(p);
+  }
+  return true;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_android_cts_tagging_Utils_heapIsZeroInitialized(JNIEnv *) {
+  return sizeIsZeroInitialized(100) && sizeIsZeroInitialized(2000) && sizeIsZeroInitialized(200000);
 }
