@@ -93,8 +93,15 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final Config MEDIA_29 = new Config("CtsMediaStorageApp29.apk",
             "com.android.cts.mediastorageapp29", MEDIA_CLAZZ);
 
-    private static final String PERM_READ_EXTERNAL_STORAGE = "android.permission.READ_EXTERNAL_STORAGE";
-    private static final String PERM_WRITE_EXTERNAL_STORAGE = "android.permission.WRITE_EXTERNAL_STORAGE";
+    private static final String PERM_ACCESS_MEDIA_LOCATION =
+            "android.permission.ACCESS_MEDIA_LOCATION";
+    private static final String PERM_READ_EXTERNAL_STORAGE =
+            "android.permission.READ_EXTERNAL_STORAGE";
+    private static final String PERM_WRITE_EXTERNAL_STORAGE =
+            "android.permission.WRITE_EXTERNAL_STORAGE";
+
+    private static final String APP_OPS_MANAGE_EXTERNAL_STORAGE = "android:manage_external_storage";
+    private static final String APP_OPS_MANAGE_MEDIA = "android:manage_media";
 
     /** Copied from PackageManager*/
     private static final String FEATURE_AUTOMOTIVE = "android.hardware.type.automotive";
@@ -719,6 +726,165 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             getDevice().uninstallPackage(WRITE_PKG);
             getDevice().uninstallPackage(WRITE_PKG_2);
         }
+    }
+
+    /**
+     * Check the behavior when the app calls MediaStore#createTrashRequest,
+     * MediaStore#createDeleteRequest or MediaStore#createWriteRequest, the user
+     * click the deny button on confirmation dialog.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_userDenied() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalationWithDenied_RequestWrite", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalationWithDenied_RequestDelete", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalationWithDenied_RequestTrash", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalationWithDenied_RequestUnTrash", user);
+    }
+
+    /**
+     * If the app is NOT granted {@link android.Manifest.permission#READ_EXTERNAL_STORAGE}
+     * and {@link android.Manifest.permission#MANAGE_EXTERNAL_STORAGE}
+     * when it calls MediaStore#createTrashRequest,
+     * MediaStore#createDeleteRequest, or MediaStore#createWriteRequest,
+     * the system will show the user confirmation dialog.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_noRESAndMES_showConfirmDialog() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+
+        // grant permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_ACCESS_MEDIA_LOCATION,
+        }, true);
+        // revoke permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+                PERM_WRITE_EXTERNAL_STORAGE,
+        }, false);
+
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_EXTERNAL_STORAGE, false);
+
+        // grant the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_MEDIA, true);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestWrite_showConfirmDialog", user);
+    }
+
+    /**
+     * If the app is NOT granted {@link android.Manifest.permission#MANAGE_MEDIA},
+     * when it calls MediaStore#createTrashRequest,
+     * MediaStore#createDeleteRequest, or MediaStore#createWriteRequest,
+     * the system will show the user confirmation dialog.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_noMANAGEMEDIA_showConfirmDialog() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+        // grant permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+                PERM_ACCESS_MEDIA_LOCATION,
+        }, true);
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_MEDIA, false);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestWrite_showConfirmDialog", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestTrash_showConfirmDialog", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestDelete_showConfirmDialog", user);
+    }
+
+    /**
+     * If the app is granted {@link android.Manifest.permission#MANAGE_MEDIA},
+     * {@link android.Manifest.permission#READ_EXTERNAL_STORAGE}, without
+     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION},
+     * when it calls MediaStore#createTrashRequest or
+     * MediaStore#createDeleteRequest, The system will NOT show the user
+     * confirmation dialog. When it calls MediaStore#createWriteRequest, the
+     * system will show the user confirmation dialog.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_withNoAML_showConfirmDialog() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+        // grant permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+        }, true);
+        // revoke permission
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_ACCESS_MEDIA_LOCATION,
+        }, false);
+
+        // grant the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_MEDIA, true);
+
+        // show confirm dialog in requestWrite
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestWrite_showConfirmDialog", user);
+
+        // not show confirm dialog in requestTrash and requestDelete
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestTrash_notShowConfirmDialog", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestDelete_notShowConfirmDialog", user);
+    }
+
+    /**
+     * If the app is granted {@link android.Manifest.permission#MANAGE_MEDIA},
+     * {@link android.Manifest.permission#READ_EXTERNAL_STORAGE}, and
+     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION},
+     * when it calls MediaStore#createWriteRequest, MediaStore#createTrashRequest or
+     * MediaStore#createDeleteRequest, the system will NOT show the user confirmation dialog.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testCreateRequest_withPermission_notShowConfirmDialog() throws Exception {
+        installPackage(MEDIA.apk);
+
+        int user = getDevice().getCurrentUser();
+        // grant permissions
+        updatePermissions(MEDIA.pkg, user, new String[] {
+                PERM_READ_EXTERNAL_STORAGE,
+                PERM_ACCESS_MEDIA_LOCATION,
+        }, true);
+
+        // revoke the app ops permission
+        updateAppOp(MEDIA.pkg, user, APP_OPS_MANAGE_MEDIA, true);
+
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestWrite_notShowConfirmDialog", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestTrash_notShowConfirmDialog", user);
+        runDeviceTests(MEDIA.pkg, MEDIA.clazz,
+                "testMediaEscalation_RequestDelete_notShowConfirmDialog", user);
     }
 
     private <T extends MessageLite> T getDump(Parser<T> parser, String command) throws Exception {
