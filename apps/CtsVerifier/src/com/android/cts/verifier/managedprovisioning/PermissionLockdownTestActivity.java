@@ -25,7 +25,9 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.UserManager;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -41,6 +43,9 @@ import java.util.Arrays;
 
 public class PermissionLockdownTestActivity extends PassFailButtons.Activity
         implements RadioGroup.OnCheckedChangeListener {
+
+    private static final String TAG = PermissionLockdownTestActivity.class.getSimpleName();
+
     private static final String PERMISSION_APP_PACKAGE = "com.android.cts.permissionapp";
 
     // Alias used for starting the activity from ByodFlowTestActivity (Managed profile tests).
@@ -70,6 +75,8 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.permission_lockdown);
+
+        Log.d(TAG, "created on user " + getUserId());
 
         mDevicePolicyManager =
                 (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
@@ -197,10 +204,26 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
 
     private boolean isProfileOrDeviceOwner() {
         String adminPackage = mAdmin.getPackageName();
-        if (mDeviceOwnerTest && !mDevicePolicyManager.isDeviceOwnerApp(adminPackage)) {
-            showToast(getString(R.string.not_device_owner, adminPackage));
-            return false;
-        } else if (!mDeviceOwnerTest && !mDevicePolicyManager.isProfileOwnerApp(adminPackage)) {
+        // On headless system user mode, permissions are set in the current user, which is not
+        // device owner, but affiliated profile owner
+        boolean expectDeviceOwner = mDeviceOwnerTest && !UserManager.isHeadlessSystemUserMode();
+
+        boolean isDeviceOwner = mDevicePolicyManager.isDeviceOwnerApp(adminPackage);
+        boolean isProfileOwner = mDevicePolicyManager.isProfileOwnerApp(adminPackage);
+        Log.d(TAG, "isProfileOrDeviceOwner(): userId=" + getUserId()
+                + ", mDeviceOwnerTest=" + mDeviceOwnerTest
+                + ", expectDeviceOwner=" + expectDeviceOwner
+                + ", isDeviceOwner=" + isDeviceOwner
+                + ", isProfileOwner=" + isProfileOwner);
+
+        if (expectDeviceOwner) {
+            if (!isDeviceOwner) {
+                showToast(getString(R.string.not_device_owner, adminPackage));
+                return false;
+            }
+            return true;
+        }
+        if (!isProfileOwner) {
             showToast(getString(R.string.not_profile_owner, adminPackage));
             return false;
         }
@@ -208,6 +231,7 @@ public class PermissionLockdownTestActivity extends PassFailButtons.Activity
     }
 
     private void showToast(String toast) {
+        Log.d(TAG, "showToast(" + toast + ")");
         Toast.makeText(this, toast, Toast.LENGTH_LONG).show();
     }
 }
