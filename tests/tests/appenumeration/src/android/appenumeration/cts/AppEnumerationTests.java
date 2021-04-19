@@ -26,6 +26,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
+import static android.appenumeration.cts.Constants.ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_PROVIDER;
 import static android.appenumeration.cts.Constants.ACTION_MANIFEST_SERVICE;
@@ -95,6 +96,7 @@ import static android.os.Process.INVALID_UID;
 
 import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -102,7 +104,6 @@ import static org.hamcrest.Matchers.hasItemInArray;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -776,6 +777,26 @@ public class AppEnumerationTests {
                 this::getSyncAdapterTypes);
     }
 
+    @Test
+    public void launcherAppsIsActivityEnabled_queriesActivityAction_canSeeActivity()
+            throws Exception {
+        final ComponentName targetFilters = ComponentName.createRelative(TARGET_FILTERS,
+                ACTIVITY_CLASS_DUMMY_ACTIVITY);
+        assertThat(QUERIES_ACTIVITY_ACTION + " should be able to see " + targetFilters,
+                launcherAppsIsActivityEnabled(QUERIES_ACTIVITY_ACTION, targetFilters),
+                is(true));
+    }
+
+    @Test
+    public void launcherAppsIsActivityEnabled_queriesNothing_cannotSeeActivity()
+            throws Exception {
+        final ComponentName targetFilters = ComponentName.createRelative(TARGET_FILTERS,
+                ACTIVITY_CLASS_DUMMY_ACTIVITY);
+        assertThat(QUERIES_ACTIVITY_ACTION + " should not be able to see " + targetFilters,
+                launcherAppsIsActivityEnabled(QUERIES_NOTHING, targetFilters),
+                is(false));
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1018,6 +1039,15 @@ public class AppEnumerationTests {
         cmd.append(" --user cur");
         packages.stream().forEach(p -> cmd.append(" ").append(p));
         runShellCommand(cmd.toString());
+    }
+
+    private boolean launcherAppsIsActivityEnabled(String sourcePackageName,
+            ComponentName componentName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(Intent.EXTRA_COMPONENT_NAME, componentName.flattenToString());
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED);
+        return response.getBoolean(Intent.EXTRA_RETURN_RESULT);
     }
 
     interface Result {
