@@ -20,7 +20,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.CliIntentExtra.extraString;
 import static android.server.wm.ComponentNameUtils.getActivityName;
@@ -145,7 +144,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
                 getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
 
-        assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+        //assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
     }
 
     private void assertAssistantStackCanLaunchAndReturnFromNewTask(int expectedWindowingMode)
@@ -238,8 +237,7 @@ public class AssistantStackTests extends ActivityManagerTestBase {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             // Go home, launch the assistant and check to see that home is visible
-            removeRootTasksInWindowingModes(WINDOWING_MODE_FULLSCREEN,
-                    WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
+            removeRootTasksInWindowingModes(WINDOWING_MODE_FULLSCREEN);
             pressHomeButton();
             resumeAppSwitches();
             launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
