@@ -28,6 +28,8 @@ import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisableReques
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminDisabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminEnabledEvent;
 import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordChangedEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordFailedEvent;
+import com.android.eventlib.events.deviceadminreceivers.DeviceAdminPasswordSucceededEvent;
 
 /** Implementation of {@link DeviceAdminReceiver} which logs events in response to callbacks. */
 public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
@@ -106,28 +108,60 @@ public class EventLibDeviceAdminReceiver extends DeviceAdminReceiver {
         }
 
         logger.log();
-
-        super.onPasswordChanged(context, intent, user);
     }
 
     @Override
     public void onPasswordFailed(Context context, Intent intent) {
+        DeviceAdminPasswordFailedEvent.DeviceAdminPasswordFailedEventLogger logger =
+                DeviceAdminPasswordFailedEvent.logger(this, context, intent);
+
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            logger.setDeviceAdminReceiver(mOverrideDeviceAdminReceiverClassName);
+        }
+
+        logger.log();
+
         super.onPasswordFailed(context, intent);
     }
 
     @Override
     public void onPasswordFailed(Context context, Intent intent, UserHandle user) {
-        super.onPasswordFailed(context, intent, user);
+        DeviceAdminPasswordFailedEvent.DeviceAdminPasswordFailedEventLogger logger =
+                DeviceAdminPasswordFailedEvent.logger(this, context, intent);
+        logger.setUserHandle(user);
+
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            logger.setDeviceAdminReceiver(mOverrideDeviceAdminReceiverClassName);
+        }
+
+        logger.log();
     }
 
     @Override
     public void onPasswordSucceeded(Context context, Intent intent) {
+        DeviceAdminPasswordSucceededEvent.DeviceAdminPasswordSucceededEventLogger logger =
+                DeviceAdminPasswordSucceededEvent.logger(this, context, intent);
+
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            logger.setDeviceAdminReceiver(mOverrideDeviceAdminReceiverClassName);
+        }
+
+        logger.log();
+
         super.onPasswordSucceeded(context, intent);
     }
 
     @Override
     public void onPasswordSucceeded(Context context, Intent intent, UserHandle user) {
-        super.onPasswordSucceeded(context, intent, user);
+        DeviceAdminPasswordSucceededEvent.DeviceAdminPasswordSucceededEventLogger logger =
+                DeviceAdminPasswordSucceededEvent.logger(this, context, intent);
+        logger.setUserHandle(user);
+
+        if (mOverrideDeviceAdminReceiverClassName != null) {
+            logger.setDeviceAdminReceiver(mOverrideDeviceAdminReceiverClassName);
+        }
+
+        logger.log();
     }
 
     @Override
