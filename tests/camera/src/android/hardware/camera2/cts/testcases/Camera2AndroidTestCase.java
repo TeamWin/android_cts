@@ -96,7 +96,16 @@ public class Camera2AndroidTestCase extends Camera2ParameterizedTestCase {
      */
     @Override
     public void setUp() throws Exception {
-        super.setUp();
+        setUp(false);
+    }
+
+    /**
+     * Set up the camera2 test case required environments, including CameraManager,
+     * HandlerThread, Camera IDs, and CameraStateCallback etc.
+     * @param useAll whether all camera ids are to be used for system camera tests
+     */
+    public void setUp(boolean useAll) throws Exception {
+        super.setUp(useAll);
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
 
         mHandlerThread = new HandlerThread(TAG);
