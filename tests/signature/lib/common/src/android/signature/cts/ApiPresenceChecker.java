@@ -27,13 +27,13 @@ import java.util.stream.Collectors;
  * Base class for those that process a set of API definition files and perform some checking on
  * them.
  */
-public abstract class AbstractApiChecker {
+public class ApiPresenceChecker {
 
     final ResultObserver resultObserver;
 
     final ClassProvider classProvider;
 
-    AbstractApiChecker(ClassProvider classProvider, ResultObserver resultObserver) {
+    public ApiPresenceChecker(ClassProvider classProvider, ResultObserver resultObserver) {
         this.classProvider = classProvider;
         this.resultObserver = resultObserver;
     }
@@ -86,11 +86,6 @@ public abstract class AbstractApiChecker {
     }
 
     /**
-     * Perform any additional checks that can only be done after all api files have been processed.
-     */
-    public abstract void checkDeferred();
-
-    /**
      * Implement to provide custom check of the supplied class description.
      *
      * <p>This should not peform checks on the members, those will be done separately depending
@@ -100,8 +95,10 @@ public abstract class AbstractApiChecker {
      * @param runtimeClass the runtime class corresponding to the class description.
      * @return true if the checks passed and the members should now be checked.
      */
-    protected abstract boolean checkClass(JDiffClassDescription classDescription,
-            Class<?> runtimeClass);
+    protected boolean checkClass(JDiffClassDescription classDescription,
+            Class<?> runtimeClass) {
+        return true;
+    }
 
 
     /**
@@ -160,9 +157,10 @@ public abstract class AbstractApiChecker {
         return fieldMap;
     }
 
-    protected abstract void checkField(JDiffClassDescription classDescription,
+    protected void checkField(JDiffClassDescription classDescription,
             Class<?> runtimeClass,
-            JDiffClassDescription.JDiffField fieldDescription, Field field);
+            JDiffClassDescription.JDiffField fieldDescription, Field field) {
+    }
 
 
     /**
@@ -202,9 +200,10 @@ public abstract class AbstractApiChecker {
         }
     }
 
-    protected abstract void checkConstructor(JDiffClassDescription classDescription,
+    protected void checkConstructor(JDiffClassDescription classDescription,
             Class<?> runtimeClass,
-            JDiffClassDescription.JDiffConstructor ctorDescription, Constructor<?> ctor);
+            JDiffClassDescription.JDiffConstructor ctorDescription, Constructor<?> ctor) {
+    }
 
     /**
      * Checks that the method found through reflection matches the
@@ -245,7 +244,8 @@ public abstract class AbstractApiChecker {
         }
     }
 
-    protected abstract void checkMethod(JDiffClassDescription classDescription,
+    protected void checkMethod(JDiffClassDescription classDescription,
             Class<?> runtimeClass,
-            JDiffClassDescription.JDiffMethod methodDescription, Method method);
+            JDiffClassDescription.JDiffMethod methodDescription, Method method) {
+    }
 }
