@@ -27,7 +27,7 @@ import java.util.Set;
 /**
  * Checks that the runtime representation of a class matches the API representation of a class.
  */
-public class AnnotationChecker extends AbstractApiChecker {
+public class AnnotationChecker extends ApiPresenceChecker {
 
     private final String annotationSpec;
 
@@ -82,7 +82,6 @@ public class AnnotationChecker extends AbstractApiChecker {
         public boolean skip(Field f);
     }
 
-    @Override
     public void checkDeferred() {
         for (Class<?> clazz : annotatedClassesMap.values()) {
             if (filter != null && filter.skip(clazz)) continue;
