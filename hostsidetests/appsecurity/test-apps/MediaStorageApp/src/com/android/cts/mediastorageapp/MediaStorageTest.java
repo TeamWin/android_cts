@@ -26,7 +26,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.Instrumentation;
@@ -482,14 +481,44 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaEscalation_RequestWrite() throws Exception {
-        doMediaEscalation_RequestWrite(MediaStorageTest::createAudio);
-        doMediaEscalation_RequestWrite(MediaStorageTest::createVideo);
-        doMediaEscalation_RequestWrite(MediaStorageTest::createImage);
-        doMediaEscalation_RequestWrite(MediaStorageTest::createPlaylist);
-        doMediaEscalation_RequestWrite(MediaStorageTest::createSubtitle);
+        doMediaEscalation_RequestWrite(true /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
     }
 
-    private void doMediaEscalation_RequestWrite(Callable<Uri> create) throws Exception {
+    @Test
+    public void testMediaEscalationWithDenied_RequestWrite() throws Exception {
+        doMediaEscalation_RequestWrite(false /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestWrite_showConfirmDialog() throws Exception {
+        doMediaEscalation_RequestWrite(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, true /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestWrite_notShowConfirmDialog() throws Exception {
+        doMediaEscalation_RequestWrite(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    private void doMediaEscalation_RequestWrite(boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
+        doMediaEscalation_RequestWrite(MediaStorageTest::createAudio, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createVideo, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createImage, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createPlaylist, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestWrite(MediaStorageTest::createSubtitle, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+    }
+
+    private void doMediaEscalation_RequestWrite(Callable<Uri> create, boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
         final Uri red = create.call();
         clearMediaOwner(red, mUserId);
 
@@ -498,30 +527,102 @@ public class MediaStorageTest {
         } catch (SecurityException expected) {
         }
 
-        doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)));
+        if (allowAccess) {
+            doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)),
+                    true /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
 
-        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            }
+        } else {
+            doEscalation(MediaStore.createWriteRequest(mContentResolver, Arrays.asList(red)),
+                    false /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+                fail("Expected write access to be blocked");
+            } catch (SecurityException expected) {
+            }
         }
     }
 
     @Test
-    public void testMediaEscalation_RequestTrash() throws Exception {
-        doMediaEscalation_RequestTrash(MediaStorageTest::createAudio);
-        doMediaEscalation_RequestTrash(MediaStorageTest::createVideo);
-        doMediaEscalation_RequestTrash(MediaStorageTest::createImage);
-        doMediaEscalation_RequestTrash(MediaStorageTest::createPlaylist);
-        doMediaEscalation_RequestTrash(MediaStorageTest::createSubtitle);
+    public void testMediaEscalationWithDenied_RequestUnTrash() throws Exception {
+        doMediaEscalationWithDenied_RequestUnTrash(MediaStorageTest::createAudio);
+        doMediaEscalationWithDenied_RequestUnTrash(MediaStorageTest::createVideo);
+        doMediaEscalationWithDenied_RequestUnTrash(MediaStorageTest::createImage);
+        doMediaEscalationWithDenied_RequestUnTrash(MediaStorageTest::createPlaylist);
+        doMediaEscalationWithDenied_RequestUnTrash(MediaStorageTest::createSubtitle);
     }
 
-    private void doMediaEscalation_RequestTrash(Callable<Uri> create) throws Exception {
+    private void doMediaEscalationWithDenied_RequestUnTrash(Callable<Uri> create) throws Exception {
         final Uri red = create.call();
         clearMediaOwner(red, mUserId);
 
         assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
-        doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), true));
+        doEscalation(
+                MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), true));
         assertEquals("1", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
-        doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), false));
+        doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), false),
+                false /* allowAccess */, false /* shouldCheckDialogShownValue */,
+                false /* isDialogShownExpected */);
+        assertEquals("1", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+    }
+
+    @Test
+    public void testMediaEscalation_RequestTrash() throws Exception {
+        doMediaEscalation_RequestTrash(true /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalationWithDenied_RequestTrash() throws Exception {
+        doMediaEscalation_RequestTrash(false /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestTrash_showConfirmDialog() throws Exception {
+        doMediaEscalation_RequestTrash(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, true /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestTrash_notShowConfirmDialog() throws Exception {
+        doMediaEscalation_RequestTrash(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    private void doMediaEscalation_RequestTrash(boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
+        doMediaEscalation_RequestTrash(MediaStorageTest::createAudio, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createVideo, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createImage, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createPlaylist, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestTrash(MediaStorageTest::createSubtitle, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+    }
+
+    private void doMediaEscalation_RequestTrash(Callable<Uri> create, boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
+        final Uri red = create.call();
+        clearMediaOwner(red, mUserId);
+
         assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+
+        if (allowAccess) {
+            doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), true),
+                    true /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            assertEquals("1", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+            doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), false),
+                    true /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+        } else {
+            doEscalation(MediaStore.createTrashRequest(mContentResolver, Arrays.asList(red), true),
+                    false /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            assertEquals("0", queryForSingleColumn(red, MediaColumns.IS_TRASHED));
+        }
     }
 
     @Test
@@ -546,23 +647,63 @@ public class MediaStorageTest {
 
     @Test
     public void testMediaEscalation_RequestDelete() throws Exception {
-        doMediaEscalation_RequestDelete(MediaStorageTest::createAudio);
-        doMediaEscalation_RequestDelete(MediaStorageTest::createVideo);
-        doMediaEscalation_RequestDelete(MediaStorageTest::createImage);
-        doMediaEscalation_RequestDelete(MediaStorageTest::createPlaylist);
-        doMediaEscalation_RequestDelete(MediaStorageTest::createSubtitle);
+        doMediaEscalation_RequestDelete(true /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
     }
 
-    private void doMediaEscalation_RequestDelete(Callable<Uri> create) throws Exception {
+    @Test
+    public void testMediaEscalationWithDenied_RequestDelete() throws Exception {
+        doMediaEscalation_RequestDelete(false /* allowAccess */,
+                false /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestDelete_showConfirmDialog() throws Exception {
+        doMediaEscalation_RequestDelete(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, true /* isDialogShownExpected */);
+    }
+
+    @Test
+    public void testMediaEscalation_RequestDelete_notShowConfirmDialog() throws Exception {
+        doMediaEscalation_RequestDelete(true /* allowAccess */,
+                true /* shouldCheckDialogShownValue */, false /* isDialogShownExpected */);
+    }
+
+    private void doMediaEscalation_RequestDelete(boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
+        doMediaEscalation_RequestDelete(MediaStorageTest::createAudio, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createVideo, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createImage, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createPlaylist, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+        doMediaEscalation_RequestDelete(MediaStorageTest::createSubtitle, allowAccess,
+                shouldCheckDialogShownValue, isDialogShownExpected);
+    }
+
+    private void doMediaEscalation_RequestDelete(Callable<Uri> create, boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
         final Uri red = create.call();
         clearMediaOwner(red, mUserId);
 
         try (Cursor c = mContentResolver.query(red, null, null, null)) {
             assertEquals(1, c.getCount());
         }
-        doEscalation(MediaStore.createDeleteRequest(mContentResolver, Arrays.asList(red)));
-        try (Cursor c = mContentResolver.query(red, null, null, null)) {
-            assertEquals(0, c.getCount());
+
+        if (allowAccess) {
+            doEscalation(MediaStore.createDeleteRequest(mContentResolver, Arrays.asList(red)),
+                    true /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            try (Cursor c = mContentResolver.query(red, null, null, null)) {
+                assertEquals(0, c.getCount());
+            }
+        } else {
+            doEscalation(MediaStore.createDeleteRequest(mContentResolver, Arrays.asList(red)),
+                    false /* allowAccess */, shouldCheckDialogShownValue, isDialogShownExpected);
+            try (Cursor c = mContentResolver.query(red, null, null, null)) {
+                assertEquals(1, c.getCount());
+            }
         }
     }
 
@@ -571,6 +712,12 @@ public class MediaStorageTest {
     }
 
     private void doEscalation(PendingIntent pi) throws Exception {
+        doEscalation(pi, true /* allowAccess */, false /* shouldCheckDialogShownValue */,
+                false /* isDialogShownExpectedExpected */);
+    }
+
+    private void doEscalation(PendingIntent pi, boolean allowAccess,
+            boolean shouldCheckDialogShownValue, boolean isDialogShownExpected) throws Exception {
         // Try launching the action to grant ourselves access
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         final Intent intent = new Intent(inst.getContext(), GetResultActivity.class);
@@ -589,17 +736,36 @@ public class MediaStorageTest {
         activity.startIntentSenderForResult(pi.getIntentSender(), 42, null, 0, 0, 0);
 
         device.waitForIdle();
+        final long timeout = 5_000;
+        if (allowAccess) {
+            // Some dialogs may have granted access automatically, so we're willing
+            // to keep rolling forward if we can't find our grant button
+            final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
+            final boolean grantExists = new UiObject(grant).waitForExists(timeout);
 
-        // Some dialogs may have granted access automatically, so we're willing
-        // to keep rolling forward if we can't find our grant button
-        final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
-        if (new UiObject(grant).waitForExists(5_000)) {
-            device.findObject(grant).click();
+            if (shouldCheckDialogShownValue) {
+                assertThat(grantExists).isEqualTo(isDialogShownExpected);
+            }
+
+            if (grantExists) {
+                device.findObject(grant).click();
+            }
+            final GetResultActivity.Result res = activity.getResult();
+            // Verify that we now have access
+            assertEquals(Activity.RESULT_OK, res.resultCode);
+        } else {
+            // fine the Deny button
+            final UiSelector deny = new UiSelector().textMatches("(?i)Deny");
+            final boolean denyExists = new UiObject(deny).waitForExists(timeout);
+
+            assertThat(denyExists).isTrue();
+
+            device.findObject(deny).click();
+
+            final GetResultActivity.Result res = activity.getResult();
+            // Verify that we don't have access
+            assertEquals(Activity.RESULT_CANCELED, res.resultCode);
         }
-
-        // Verify that we now have access
-        final GetResultActivity.Result res = activity.getResult();
-        assertEquals(Activity.RESULT_OK, res.resultCode);
     }
 
     private static Uri createAudio() throws IOException {
@@ -678,7 +844,7 @@ public class MediaStorageTest {
         final ContentResolver resolver = InstrumentationRegistry.getTargetContext()
                 .getContentResolver();
         try (Cursor c = resolver.query(uri, new String[] { column }, null, null)) {
-            assertEquals(c.getCount(), 1);
+            assertEquals(1, c.getCount());
             assertTrue(c.moveToFirst());
             return c.getString(0);
         }

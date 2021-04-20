@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier.annotations.enterprise;
 
+import com.android.bedstead.harrier.annotations.meta.RequiresBedsteadJUnit4;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -29,6 +31,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
+@RequiresBedsteadJUnit4
 public @interface NegativePolicyTest {
     /**
      * The policy being tested.

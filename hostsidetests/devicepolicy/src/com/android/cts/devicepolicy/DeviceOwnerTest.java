@@ -534,6 +534,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
 
     @FlakyTest(bugId = 137096267)
     @Test
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "132361856", reason = "3 failures such as "
+            + "missing activity handling bugreport intent")
     public void testAdminActionBookkeeping() throws Exception {
         executeDeviceOwnerTest("AdminActionBookkeepingTest");
         assertMetricsLogged(getDevice(), () -> {

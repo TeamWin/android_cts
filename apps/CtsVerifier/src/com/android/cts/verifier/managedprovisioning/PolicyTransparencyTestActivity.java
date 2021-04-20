@@ -22,8 +22,8 @@ import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
 import android.os.Bundle;
 import android.util.ArrayMap;
-import android.view.accessibility.AccessibilityEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -238,7 +238,7 @@ public class PolicyTransparencyTestActivity extends PassFailButtons.Activity imp
         if (TEST_CHECK_USER_RESTRICTION.equals(mTest)) {
             final String userRestriction = getIntent().getStringExtra(
                     CommandReceiverActivity.EXTRA_USER_RESTRICTION);
-            intent = CommandReceiverActivity.createSetUserRestrictionIntent(
+            intent = CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                     userRestriction, isChecked);
         } else {
             intent = new Intent(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);

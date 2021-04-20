@@ -240,7 +240,7 @@ public class BaseHdmiCecCtsTest extends BaseHostJUnit4Test {
 
     public boolean isLanguageEditable() throws Exception {
         String val = getDevice().executeShellCommand(
-                "getprop ro.hdmi.cec.source.set_menu_language.enabled");
+                "getprop ro.hdmi.set_menu_language");
         return val.trim().equals("true") ? true : false;
     }
 
