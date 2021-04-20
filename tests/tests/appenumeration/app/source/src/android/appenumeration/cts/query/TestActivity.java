@@ -46,6 +46,8 @@ import android.app.Activity;
 import android.app.PendingIntent;
 import android.appenumeration.cts.Constants;
 import android.appenumeration.cts.MissingBroadcastException;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -192,6 +194,8 @@ public class TestActivity extends Activity {
                 bindService(remoteCallback, packageName);
             } else if (Constants.ACTION_GET_SYNCADAPTER_TYPES.equals(action)) {
                 sendSyncAdapterTypes(remoteCallback);
+            } else if (Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS.equals(action)) {
+                sendInstalledAppWidgetProviders(remoteCallback);
             } else if (Constants.ACTION_AWAIT_PACKAGES_SUSPENDED.equals(action)) {
                 final String[] awaitPackages = intent.getBundleExtra(EXTRA_DATA)
                         .getStringArray(Intent.EXTRA_PACKAGES);
@@ -427,6 +431,19 @@ public class TestActivity extends Activity {
                     Process.myUserHandle()));
         } catch (IllegalArgumentException e) {
         }
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendInstalledAppWidgetProviders(RemoteCallback remoteCallback) {
+        final AppWidgetManager appWidgetManager = getSystemService(AppWidgetManager.class);
+        final List<AppWidgetProviderInfo> providers = appWidgetManager.getInstalledProviders();
+        final ArrayList<Parcelable> parcelables = new ArrayList<>();
+        for (AppWidgetProviderInfo info : providers) {
+            parcelables.add(info);
+        }
+        final Bundle result = new Bundle();
+        result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
         remoteCallback.sendResult(result);
         finish();
     }

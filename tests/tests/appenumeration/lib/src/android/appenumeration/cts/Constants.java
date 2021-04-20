@@ -114,6 +114,11 @@ public class Constants {
     public static final String TARGET_SYNCADAPTER = PKG_BASE + "syncadapter";
     /** A package that exposes itself as a syncadapter with a shared uid. */
     public static final String TARGET_SYNCADAPTER_SHARED_USER = PKG_BASE + "syncadapter.shareduid";
+    /** A package that exposes itself as a appwidgetprovider. */
+    public static final String TARGET_APPWIDGETPROVIDER = PKG_BASE + "appwidgetprovider";
+    /** A package that exposes itself as a appwidgetprovider with a shared uid. */
+    public static final String TARGET_APPWIDGETPROVIDER_SHARED_USER =
+            PKG_BASE + "appwidgetprovider.shareduid";
 
     private static final String BASE_PATH = "/data/local/tmp/cts/appenumeration/";
     public static final String TARGET_NO_API_APK = BASE_PATH + "CtsAppEnumerationNoApi.apk";
@@ -181,6 +186,8 @@ public class Constants {
     public static final String ACTION_BIND_SERVICE = PKG_BASE + "cts.action.BIND_SERVICE";
     public static final String ACTION_GET_SYNCADAPTER_TYPES =
             PKG_BASE + "cts.action.GET_SYNCADAPTER_TYPES";
+    public static final String ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS =
+            PKG_BASE + "cts.action.GET_INSTALLED_APPWIDGET_PROVIDERS";
     public static final String ACTION_AWAIT_PACKAGES_SUSPENDED =
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =
