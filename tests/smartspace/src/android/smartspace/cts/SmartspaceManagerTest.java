@@ -101,7 +101,7 @@ public class SmartspaceManagerTest {
     @After
     public void tearDown() throws Exception {
         Log.d(TAG, "Starting tear down, watcher is: " + mWatcher);
-        mClient.destroy();
+        mClient.close();
         setService(null);
         await(mWatcher.destroyed, "Waiting for onDestroy()");
 
@@ -118,7 +118,7 @@ public class SmartspaceManagerTest {
     @Test
     public void testDestroySession() {
         SmartspaceSession localClient = createSmartspaceSession(createSmartspaceConfig("surface"));
-        localClient.destroy();
+        localClient.close();
         await(mWatcher.destroyed, "Waiting for onDestroy()");
     }
 
@@ -131,7 +131,7 @@ public class SmartspaceManagerTest {
                 SmartspaceTargetEvent.EVENT_TARGET_INTERACTION).setSmartspaceTarget(
                 testTarget).setSmartspaceActionId("id").build();
         mClient.notifySmartspaceEvent(testEvent);
-        mClient.registerSmartspaceUpdates(Executors.newSingleThreadExecutor(),
+        mClient.addOnTargetsAvailableListener(Executors.newSingleThreadExecutor(),
                 targets -> {
                     if (targets.size() > 0 && targets.get(0).equals(testTarget)) {
                         mWatcher.queried.countDown();
@@ -156,14 +156,14 @@ public class SmartspaceManagerTest {
         SmartspaceSession client1 = createSmartspaceSession(config1);
         SmartspaceConfig config2 = createSmartspaceConfig("surface 2");
         SmartspaceSession client2 = createSmartspaceSession(config2);
-        client1.registerSmartspaceUpdates(Executors.newSingleThreadExecutor(),
+        client1.addOnTargetsAvailableListener(Executors.newSingleThreadExecutor(),
                 targets -> {
                     // Counting down only if the returned list only contains test target.
                     if (targets.size() > 0 && targets.get(0).equals(testTarget)) {
                         mWatcher.queriedTwice.countDown();
                     }
                 });
-        client2.registerSmartspaceUpdates(Executors.newSingleThreadExecutor(),
+        client2.addOnTargetsAvailableListener(Executors.newSingleThreadExecutor(),
                 targets -> {
                     // Counting down only if the returned list is empty.
                     if (targets.isEmpty()) {
@@ -267,7 +267,7 @@ public class SmartspaceManagerTest {
         }
     }
 
-    private static class RequestVerifier implements SmartspaceSession.Callback {
+    private static class RequestVerifier implements SmartspaceSession.OnTargetsAvailableListener {
         @Override
         public void onTargetsAvailable(List<SmartspaceTarget> targets) {
 
