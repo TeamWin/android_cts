@@ -459,12 +459,12 @@ public class Components extends ComponentsBase {
         // If EXTRA_SET_ASPECT_RATIO_WITH_DELAY is set, it will also attempt to apply the aspect
         // ratio after a short delay.
         public static final String ACTION_EXPAND_PIP =
-                "android.server.wm.app/PipActivity.expand_pip";
+                "android.server.wm.app.PipActivity.expand_pip";
         // Intent action that this activity dynamically registers to receive update callback.
         // If EXTRA_SET_PIP_STASH is set, then onPictureInPictureStateChanged will be called
         // with the value.
         public static final String ACTION_UPDATE_PIP_STATE =
-                "android.server.wm.app/PipActivity.update_pip_state";
+                "android.server.wm.app.PipActivity.update_pip_state";
         // Intent action that this activity dynamically registers to set requested orientation.
         // Will apply the orientation to the value set in the EXTRA_FIXED_ORIENTATION extra.
         public static final String ACTION_SET_REQUESTED_ORIENTATION =
