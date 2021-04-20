@@ -16,6 +16,8 @@
 
 package com.android.cts.deviceandprofileowner;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
@@ -23,6 +25,7 @@ import android.net.Network;
 import android.net.NetworkInfo;
 import android.net.NetworkInfo.DetailedState;
 import android.net.NetworkInfo.State;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,6 +35,7 @@ import android.os.Messenger;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
@@ -71,7 +75,8 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
     public void setUp() throws Exception {
         super.setUp();
         mCm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        mWm = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+
+        mWm = TestAppSystemServiceFactory.getWifiManager(mContext, BasicAdminReceiver.class);
         setMeteredNetwork();
     }
 
@@ -156,6 +161,8 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
         final int oldNetId = getActiveNetworkNetId();
         final boolean oldMeteredState = mCm.isActiveNetworkMetered();
         final NetworkInfo networkInfo = mCm.getActiveNetworkInfo();
+        Log.d(TAG, "setMeteredNetwork(): oldNetId= " + oldNetId
+                + ", oldMeteredState=" + oldMeteredState + ", activeNetworkInfo=" + networkInfo);
         if (networkInfo == null) {
             fail("Active network is not available");
         } else if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI) {
@@ -179,15 +186,23 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
     private void resetMeteredNetwork() throws Exception {
         if (mMeteredWifi != null) {
             Log.i(TAG, "Resetting metered status for netId=" + mMeteredWifi);
-            setWifiMeteredStatus(mMeteredWifi, /* default meteredness */ null);
-            assertWifiMeteredStatus(mMeteredWifi, /* default meteredness */ null);
+            setWifiMeteredStatus(mMeteredWifi, /* metered= */ null);
+            assertWifiMeteredStatus(mMeteredWifi, /* metered= */ null);
             assertActiveNetworkMetered(false);
         }
     }
 
     private String setWifiMeteredStatus(Boolean metered) throws Exception {
-        final String ssid = mWm.getConnectionInfo().getSSID();
+        // Cannot use mWm to get the connection info because on headless system user mode the method
+        // would be called by the device owner on system user, which have location disabled (and
+        // hence the returned connectionInfo would have the SSID redacted).
+        WifiManager wm = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        WifiInfo connectionInfo = wm.getConnectionInfo();
+
+        Log.d(TAG, "setWifiMeteredStatus(" + metered + "): setting " + connectionInfo);
+        final String ssid = connectionInfo.getSSID();
         assertNotNull("null SSID", ssid);
+        assertNotEquals("unknown SSID", WifiManager.UNKNOWN_SSID, ssid);
         final String netId = ssid.trim().replaceAll("\"", ""); // remove quotes, if any.
         assertFalse("empty SSID", ssid.isEmpty());
         setWifiMeteredStatus(netId, metered);
