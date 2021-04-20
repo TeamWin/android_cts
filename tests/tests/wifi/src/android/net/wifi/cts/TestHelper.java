@@ -610,9 +610,11 @@ public class TestHelper {
 
             // 2. Wait for matching scan results
             synchronized (uiLock) {
-                try {
-                    uiLock.wait(DURATION_UI_INTERACTION_MILLIS);
-                } catch (InterruptedException e) {
+                if (!networkRequestMatchCallback.onMatchCalled) {
+                    try {
+                        uiLock.wait(DURATION_UI_INTERACTION_MILLIS);
+                    } catch (InterruptedException e) {
+                    }
                 }
             }
             assertThat(networkRequestMatchCallback.onMatchCalled).isTrue();
