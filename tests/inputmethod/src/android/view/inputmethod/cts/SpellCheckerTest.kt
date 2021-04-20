@@ -270,8 +270,12 @@ class SpellCheckerTest : EndToEndImeTestBase() {
             assertThat(tsm).isNotNull()
             val fakeListener = FakeSpellCheckerSessionListener()
             val fakeExecutor = FakeExecutor()
-            var session: SpellCheckerSession? = tsm?.newSpellCheckerSession(Locale.US, false,
-                    RESULT_ATTR_LOOKS_LIKE_TYPO, null, fakeExecutor, fakeListener)
+            val params = SpellCheckerSession.SpellCheckerSessionParams.Builder()
+                    .setLocale(Locale.US)
+                    .setSupportedAttributes(RESULT_ATTR_LOOKS_LIKE_TYPO)
+                    .build()
+            var session: SpellCheckerSession? = tsm?.newSpellCheckerSession(
+                    params, fakeExecutor, fakeListener)
             assertThat(session).isNotNull()
             session?.getSentenceSuggestions(arrayOf(TextInfo("match")), 5)
             waitOnMainUntil({ fakeExecutor.runnables.size == 1 }, TIMEOUT)
