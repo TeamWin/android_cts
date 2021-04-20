@@ -9,8 +9,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <include layout="@layout/audio_loopback_header_layout"/>
-
     <LinearLayout android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -125,24 +123,18 @@
             android:textSize="18sp"/>
     </LinearLayout>
 
-    <include layout="@layout/audio_loopback_device_layout" />
-
-    <include layout="@layout/audio_loopback_volume_layout" />
-
-    <Button
-        android:text="@string/audio_proaudio_roundtrip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/proAudio_runRoundtripBtn"/>
-
-    <include layout="@layout/audio_loopback_footer_layout"/>
-
-    <LinearLayout android:orientation="horizontal"
+    <LinearLayout android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
         <TextView
             android:id="@+id/proAudioTestStatusLbl"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"/>
+
+        <TextView
+            android:text="@string/proAudioLoopbackMoved"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="18sp"/>
     </LinearLayout>
