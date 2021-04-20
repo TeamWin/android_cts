@@ -68,7 +68,10 @@ public final class DeviceOwnerHelper {
         String action = intent.getAction();
         Log.d(TAG, "runManagerMethod(): user=" + context.getUserId() + ", action=" + action);
 
-        if (!action.equals(ACTION_WRAPPED_MANAGER_CALL)) return false;
+        if (!action.equals(ACTION_WRAPPED_MANAGER_CALL)) {
+            if (VERBOSE) Log.v(TAG, "ignoring, it's not " + ACTION_WRAPPED_MANAGER_CALL);
+            return false;
+        }
 
         try {
             String className = intent.getStringExtra(EXTRA_CLASS);
@@ -86,9 +89,8 @@ public final class DeviceOwnerHelper {
                 for (int i = 0; i < numberArgs; i++) {
                     getArg(extras, args, parameterTypes, i);
                 }
-                Log.d(TAG, "runManagerMethod(): args=" + Arrays.toString(args) + ", types="
-                        + Arrays.toString(parameterTypes));
-
+                Log.d(TAG, "converted args: " + Arrays.toString(args) + " (with types "
+                        + Arrays.toString(parameterTypes) + ")");
             } else {
                 args = null;
             }
