@@ -32,13 +32,14 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.R;
 
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
 public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
-    private static final String TAG = "AudioLoopbackLatencyActivity";
+    private static final String TAG = AudioLoopbackLatencyActivity.class.getSimpleName();
 
 //    public static final int BYTES_PER_FRAME = 2;
 
@@ -82,7 +83,6 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void handleTestCompletion() {
         super.handleTestCompletion();
 
-        Log.i(TAG, "handleTestCompletion() ...");
         boolean resultValid = mMeanConfidence >= CONFIDENCE_THRESHOLD
                 && mMeanLatencyMillis > 1.0;
         getPassButton().setEnabled(resultValid);
@@ -91,8 +91,6 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
 
         showWait(false);
         mTestButton.setEnabled(true);
-
-        Log.i(TAG, "... done");
     }
 
     /**
@@ -101,7 +99,7 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
     protected void recordTestResults() {
         super.recordTestResults();
 
-        ReportLog reportLog = getReportLog();
+        CtsVerifierReportLog reportLog = getReportLog();
         int audioLevel = mAudioLevelSeekbar.getProgress();
         reportLog.addValue(
                 "Audio Level",
@@ -114,6 +112,8 @@ public class AudioLoopbackLatencyActivity extends AudioLoopbackBaseActivity {
                 mMinBufferSizeInFrames,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
+
+        reportLog.submit();
 
         Log.v(TAG,"Results Recorded");
     }
