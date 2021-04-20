@@ -19,6 +19,7 @@ package android.voiceinteraction.service;
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 
 import android.content.Intent;
+import android.media.AudioFormat;
 import android.os.PersistableBundle;
 import android.os.SharedMemory;
 import android.service.voice.AlwaysOnHotwordDetector;
@@ -30,6 +31,7 @@ import android.voiceinteraction.common.Utils;
 
 import java.nio.ByteBuffer;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * This service included a basic HotwordDetectionService for testing.
@@ -43,6 +45,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
     public static byte[] FAKE_BYTE_ARRAY_DATA = new byte[] {1, 2, 3};
 
     private boolean mReady = false;
+    private AlwaysOnHotwordDetector mAlwaysOnHotwordDetector = null;
 
     @Override
     public void onReady() {
@@ -61,21 +64,32 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         }
 
         final int testEvent = intent.getIntExtra(Utils.KEY_TEST_EVENT, -1);
+        Log.i(TAG, "testEvent = " + testEvent);
         if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_TEST) {
             runWithShellPermissionIdentity(() -> {
-                callCreateAlwaysOnHotwordDetector();
+                mAlwaysOnHotwordDetector = callCreateAlwaysOnHotwordDetector();
             });
         } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_WITHOUT_PERMISSION_TEST) {
             callCreateAlwaysOnHotwordDetector();
+        } else if (testEvent == Utils.HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_TEST) {
+            runWithShellPermissionIdentity(() -> {
+                if (mAlwaysOnHotwordDetector != null) {
+                    mAlwaysOnHotwordDetector.triggerHardwareRecognitionEventForTest(/* status */ 0,
+                            /* soundModelHandle */ 100, /* captureAvailable */ true,
+                            /* captureSession */ 101, /* captureDelayMs */ 1000,
+                            /* capturePreambleMs */ 1001, /* triggerInData */ true,
+                            createFakeAudioFormat(), new byte[1024]);
+                }
+            });
         }
 
         return START_NOT_STICKY;
     }
 
-    private void callCreateAlwaysOnHotwordDetector() {
+    private AlwaysOnHotwordDetector callCreateAlwaysOnHotwordDetector() {
         Log.i(TAG, "callCreateAlwaysOnHotwordDetector()");
         try {
-            createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Google",
+            return createAlwaysOnHotwordDetector(/* keyphrase */ "Hello Google",
                     Locale.forLanguageTag("en-US"),
                     createFakePersistableBundleData(),
                     createFakeSharedMemoryData(),
@@ -88,6 +102,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                         @Override
                         public void onDetected(AlwaysOnHotwordDetector.EventPayload eventPayload) {
                             Log.i(TAG, "onDetected");
+                            broadcastOnDetectedEvent();
                         }
 
                         @Override
@@ -121,6 +136,7 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
                     Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SECURITY_EXCEPTION);
         }
+        return null;
     }
 
     private void broadcastIntentWithResult(String intentName, int result) {
@@ -150,11 +166,24 @@ public class BasicVoiceInteractionService extends VoiceInteractionService {
         return persistableBundle;
     }
 
+    private AudioFormat createFakeAudioFormat() {
+        return new AudioFormat.Builder()
+                .setSampleRate(32000)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_IN_MONO).build();
+    }
+
     private void verifyHotwordDetectionServiceInitializedStatus(int status) {
         if (status == HotwordDetectionService.INITIALIZATION_STATUS_SUCCESS) {
             broadcastIntentWithResult(
                     Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_TRIGGER_RESULT_INTENT,
                     Utils.HOTWORD_DETECTION_SERVICE_TRIGGER_SUCCESS);
         }
+    }
+
+    private void broadcastOnDetectedEvent() {
+        broadcastIntentWithResult(
+                Utils.BROADCAST_HOTWORD_DETECTION_SERVICE_DSP_ONDETECT_RESULT_INTENT,
+                Utils.HOTWORD_DETECTION_SERVICE_ONDETECT_SUCCESS);
     }
 }
