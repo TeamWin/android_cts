@@ -460,8 +460,13 @@ public class Components extends ComponentsBase {
         // ratio after a short delay.
         public static final String ACTION_EXPAND_PIP =
                 "android.server.wm.app/PipActivity.expand_pip";
+        // Intent action that this activity dynamically registers to receive update callback.
+        // If EXTRA_SET_PIP_STASH is set, then onPictureInPictureStateChanged will be called
+        // with the value.
+        public static final String ACTION_UPDATE_PIP_STATE =
+                "android.server.wm.app/PipActivity.update_pip_state";
         // Intent action that this activity dynamically registers to set requested orientation.
-        // Will apply the oriention to the value set in the EXTRA_FIXED_ORIENTATION extra.
+        // Will apply the orientation to the value set in the EXTRA_FIXED_ORIENTATION extra.
         public static final String ACTION_SET_REQUESTED_ORIENTATION =
                 "android.server.wm.app.PipActivity.set_requested_orientation";
         // Intent action that will finish this activity
@@ -514,6 +519,8 @@ public class Components extends ComponentsBase {
         // fixed delay
         public static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR =
                 "set_aspect_ratio_with_delay_denominator";
+        // Calls onPictureInPictureStateChange with the state specified in the value
+        public static final String EXTRA_SET_PIP_STASHED = "set_pip_stashed";
         // Shows this activity over the keyguard
         public static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
         // Starts the activity (component name) provided by the value at the end of onCreate
@@ -524,6 +531,10 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_DISMISS_KEYGUARD = "dismiss_keyguard";
         // Number of custom actions should be set onto PictureInPictureParams
         public static final String EXTRA_NUMBER_OF_CUSTOM_ACTIONS = "number_of_custom_actions";
+        // Supplied when a callback is expected for pip
+        public static final String EXTRA_SET_PIP_CALLBACK = "set_pip_callback";
+        // Key for obtaining the callback's results
+        public static final String PIP_CALLBACK_RESULT_KEY = "pip_callback_result_key";
     }
 
     /**
