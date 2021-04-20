@@ -63,14 +63,10 @@ public abstract class AbstractApiChecker {
                     .findRequiredClass(classDescription, classProvider);
 
             if (runtimeClass == null) {
-                // No class found, notify the observer according to the class type,
-                // if missing a class isn't acceptable.
-                if (!allowMissingClass(classDescription)) {
-                    resultObserver.notifyFailure(FailureType.missing(classDescription),
-                            classDescription.getAbsoluteClassName(),
-                            "Classloader is unable to find " + classDescription
-                                    .getAbsoluteClassName());
-                }
+                resultObserver.notifyFailure(FailureType.missing(classDescription),
+                        classDescription.getAbsoluteClassName(),
+                        "Classloader is unable to find " + classDescription
+                                .getAbsoluteClassName());
                 return null;
             }
 
@@ -107,17 +103,6 @@ public abstract class AbstractApiChecker {
     protected abstract boolean checkClass(JDiffClassDescription classDescription,
             Class<?> runtimeClass);
 
-
-    /**
-     * Checks that a class that exists in the API xml file but that does not exist
-     * in the runtime is allowed or not.
-     *
-     * @param classDescription the class description that is missing.
-     * @return true if missing the class is acceptable.
-     */
-    protected boolean allowMissingClass(JDiffClassDescription classDescription) {
-        return false;
-    }
 
     /**
      * Checks all fields in test class for compliance with the API xml.
