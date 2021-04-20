@@ -1204,15 +1204,18 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         // (DPMS.manageUserUnchecked(), which don't grant it (as this is a privileged permission
         // that's not available to 3rd party apps). If we get rid of DevicePolicyManagerWrapper,
         // we won't need to grant it anymore.
-        CLog.i("Granting INTERACT_ACROSS_USERS to DO %s on user %d as it will need to send ordered "
-                + "broadcasts to user 0", deviceAdminPkg, userId);
+        CLog.i("Granting INTERACT_ACROSS_USERS package (%s) on user %d as its PO will need to "
+                + "send ordered broadcasts to user 0", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.INTERACT_ACROSS_USERS",
                 userId, deviceAdminPkg);
 
-        CLog.i("Granting WRITE_SECURE_SETTINGS package (%s) on user %d as some tests might need it",
-                deviceAdminPkg, userId);
+        CLog.i("Granting WRITE_SECURE_SETTINGS to admin package (%s) on user %d as some tests need "
+                + "it", deviceAdminPkg, userId);
         executeShellCommand("pm grant --user %d %s android.permission.WRITE_SECURE_SETTINGS",
                 userId, deviceAdminPkg);
+
+        CLog.i("Granting ALLOW_TEST_API_ACCESS to package %s", deviceAdminPkg);
+        executeShellCommand("am compat enable ALLOW_TEST_API_ACCESS %s", deviceAdminPkg);
     }
 
     /** Find effective restriction for user */
