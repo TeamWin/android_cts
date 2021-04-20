@@ -16,18 +16,20 @@
 
 package android.cts.tagging.support;
 
-import android.app.Activity;
 import android.cts.tagging.Utils;
-import android.os.Bundle;
 import android.util.Log;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class DeviceKernelHelpers extends Activity {
+@RunWith(AndroidJUnit4.class)
+@SmallTest
+public class DeviceKernelHelpers {
     private static final String TAG = DeviceKernelHelpers.class.getSimpleName();
 
-    @Override
-    public void onCreate(Bundle icicle) {
-        super.onCreate(icicle);
-
+    @Test
+    public void logKernelTaggedAddressABISupport() {
         if (Utils.kernelSupportsTaggedPointers()) {
             Log.i(TAG, "Kernel supports tagged pointers: true");
         } else {
