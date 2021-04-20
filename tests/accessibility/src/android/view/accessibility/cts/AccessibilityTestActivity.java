@@ -19,6 +19,8 @@ package android.view.accessibility.cts;
 import android.app.Activity;
 import android.app.KeyguardManager;
 import android.os.Bundle;
+import android.view.Window;
+import android.view.WindowManager;
 
 public abstract class AccessibilityTestActivity extends Activity {
     @Override
@@ -28,9 +30,20 @@ public abstract class AccessibilityTestActivity extends Activity {
     }
 
     private void turnOnScreen() {
+        // Call setTurnScreenOn in conjunction with showWhenLocked, to make sure the activity is
+        // visible when the lockscreen is up.
         setTurnScreenOn(true);
         setShowWhenLocked(true);
+        final Window window = getWindow();
+        // FLAG_KEEP_SCREEN_ON will ensure the screen stays on and is bright as long as the window
+        // is visible.
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         KeyguardManager keyguardManager = getSystemService(KeyguardManager.class);
-        keyguardManager.requestDismissKeyguard(this, null);
+        if (keyguardManager != null) {
+            keyguardManager.requestDismissKeyguard(this, null);
+        } else {
+            // Instant apps don't have access to KeyguardManager
+            window.addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+        }
     }
 }
