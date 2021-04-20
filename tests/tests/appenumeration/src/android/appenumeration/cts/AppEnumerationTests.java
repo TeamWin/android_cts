@@ -18,6 +18,7 @@ package android.appenumeration.cts;
 
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
+import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_PACKAGES;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
@@ -71,6 +72,8 @@ import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_CONTACTS;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_EDITOR;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_SHARE;
 import static android.appenumeration.cts.Constants.QUERIES_WILDCARD_WEB;
+import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER;
+import static android.appenumeration.cts.Constants.TARGET_APPWIDGETPROVIDER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_BROWSER;
 import static android.appenumeration.cts.Constants.TARGET_BROWSER_WILDCARD;
 import static android.appenumeration.cts.Constants.TARGET_CONTACTS;
@@ -108,6 +111,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
+import android.appwidget.AppWidgetProviderInfo;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.SyncAdapterType;
@@ -797,6 +801,27 @@ public class AppEnumerationTests {
                 is(false));
     }
 
+    @Test
+    public void queriesPackage_canSeeAppWidgetProviderTarget() throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_APPWIDGETPROVIDER,
+                this::getInstalledAppWidgetProviders);
+    }
+
+    @Test
+    public void queriesNothing_cannotSeeAppWidgetProviderTarget() throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_APPWIDGETPROVIDER,
+                this::getInstalledAppWidgetProviders);
+        assertNotVisible(QUERIES_NOTHING, TARGET_APPWIDGETPROVIDER_SHARED_USER,
+                this::getInstalledAppWidgetProviders);
+    }
+
+    @Test
+    public void queriesNothingSharedUser_canSeeAppWidgetProviderSharedUserTarget()
+            throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_APPWIDGETPROVIDER_SHARED_USER,
+                this::getInstalledAppWidgetProviders);
+    }
+
     private void assertNotVisible(String sourcePackageName, String targetPackageName)
             throws Exception {
         if (!sGlobalFeatureEnabled) return;
@@ -1025,6 +1050,17 @@ public class AppEnumerationTests {
                 Intent.EXTRA_RETURN_RESULT);
         return parcelables.stream()
                 .map(parcelable -> ((SyncAdapterType) parcelable).getPackageName())
+                .distinct()
+                .toArray(String[]::new);
+    }
+
+    private String[] getInstalledAppWidgetProviders(String sourcePackageName) throws Exception {
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                /* intentExtra */ null, ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS);
+        final List<Parcelable> parcelables = response.getParcelableArrayList(
+                Intent.EXTRA_RETURN_RESULT);
+        return parcelables.stream()
+                .map(parcelable -> ((AppWidgetProviderInfo) parcelable).provider.getPackageName())
                 .distinct()
                 .toArray(String[]::new);
     }
