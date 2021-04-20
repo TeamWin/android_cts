@@ -340,6 +340,7 @@ public class ItsTestActivity extends DialogTestListActivity {
                     }
                     */
                     JSONObject jsonResults = new JSONObject(results);
+                    Log.d(TAG,"Results received:" + jsonResults.toString());
                     Set<String> scenes = new HashSet<>();
                     Iterator<String> keys = jsonResults.keys();
                     while (keys.hasNext()) {
@@ -475,8 +476,8 @@ public class ItsTestActivity extends DialogTestListActivity {
                     }
                 }
                 if (allScenesPassed) {
+                    Log.i(TAG, "All scenes passed.");
                     // Enable pass button
-                    ItsTestActivity.this.showToast(R.string.its_test_passed);
                     ItsTestActivity.this.getPassButton().setEnabled(true);
                     ItsTestActivity.this.setTestResultAndFinish(true);
                 } else {
