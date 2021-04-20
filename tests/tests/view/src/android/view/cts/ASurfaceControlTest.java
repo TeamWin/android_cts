@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
@@ -371,6 +372,31 @@ public class ASurfaceControlTest {
             mBufferCyclers.add(cycler);
         }
 
+        public void setPosition(long surfaceControl, int x, int y) {
+            long surfaceTransaction = createSurfaceTransaction();
+            nSurfaceTransaction_setPosition(surfaceControl, surfaceTransaction, x, y);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
+
+        public void setScale(long surfaceControl, float xScale, float yScale) {
+            long surfaceTransaction = createSurfaceTransaction();
+            nSurfaceTransaction_setScale(surfaceControl, surfaceTransaction, xScale, yScale);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
+
+        public void setBufferTransform(long surfaceControl, int bufferTransform) {
+            long surfaceTransaction = createSurfaceTransaction();
+            nSurfaceTransaction_setBufferTransform(surfaceControl, surfaceTransaction,
+                    bufferTransform);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
+
+        public void setCrop(long surfaceControl, Rect crop) {
+            long surfaceTransaction = createSurfaceTransaction();
+            nSurfaceTransaction_setCrop(surfaceControl, surfaceTransaction, crop.left, crop.top,
+                    crop.right, crop.bottom);
+            applyAndDeleteSurfaceTransaction(surfaceTransaction);
+        }
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -1715,6 +1741,212 @@ public class ASurfaceControlTest {
 
     }
 
+    @Test
+    public void testSurfaceTransaction_setPosition() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setPosition(surfaceControl, 20, 10);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { // 7200
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 7000 && pixelCount < 8000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setPositionNegative() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        // Offset -20, -10
+                        setPosition(surfaceControl,  -20, -10);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { // 7200
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 7000 && pixelCount < 8000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setScale() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setSolidBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH, DEFAULT_LAYOUT_HEIGHT,
+                                PixelColor.RED);
+                        setScale(surfaceControl, .5f, .5f);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { // 2500
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setBufferTransform90() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setPosition(surfaceControl, -50, -50);
+                        setBufferTransform(surfaceControl, /* NATIVE_WINDOW_TRANSFORM_ROT_90 */ 4);
+                    }
+                },
+                new PixelChecker(PixelColor.BLUE) { // 2500
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setCropSmall() throws Throwable {
+        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                long surfaceControl = createFromWindow(holder.getSurface());
+
+                setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                        DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                        PixelColor.MAGENTA, PixelColor.GREEN);
+                setCrop(surfaceControl, new Rect(0, 0, 50, 50));
+            }
+        };
+
+        verifyTest(callback,
+                new PixelChecker(PixelColor.RED) { // 2500
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+
+        // The rest of the area should be the background color (yellow)
+        verifyTest(callback,
+                new PixelChecker(PixelColor.YELLOW) { // 7500
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 7000 && pixelCount < 8000;
+                    }
+                });
+
+    }
+
+    @Test
+    public void testSurfaceTransaction_setCropLarge() throws Throwable {
+        BasicSurfaceHolderCallback callback = new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setCrop(surfaceControl, new Rect(0, 0, 150, 150));
+                    }
+                };
+
+        verifyTest(callback,
+                new PixelChecker(PixelColor.RED) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+        verifyTest(callback,
+                new PixelChecker(PixelColor.BLUE) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+        verifyTest(callback,
+                new PixelChecker(PixelColor.MAGENTA) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+        verifyTest(callback,
+                new PixelChecker(PixelColor.GREEN) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setCropOffset() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setCrop(surfaceControl, new Rect(50, 50, 100, 100));
+                    }
+                }, new PixelChecker(PixelColor.MAGENTA) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+    }
+
+    @Test
+    public void testSurfaceTransaction_setCropNegative() throws Throwable {
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceControl = createFromWindow(holder.getSurface());
+
+                        setQuadrantBuffer(surfaceControl, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED, PixelColor.BLUE,
+                                PixelColor.MAGENTA, PixelColor.GREEN);
+                        setCrop(surfaceControl, new Rect(-50, -50, 50, 50));
+                    }
+                }, new PixelChecker(PixelColor.RED) {
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 2000 && pixelCount < 3000;
+                    }
+                });
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Native function prototypes
     ///////////////////////////////////////////////////////////////////////////
@@ -1741,12 +1973,14 @@ public class ASurfaceControlTest {
     private static native void nSurfaceTransaction_setGeometry(
             long surfaceControl, long surfaceTransaction, int srcRight, int srcTop, int srcLeft,
             int srcBottom, int dstRight, int dstTop, int dstLeft, int dstBottom, int transform);
-    private static native void nSurfaceTransaction_setSourceRect(long surfaceControl,
-            long surfaceTransaction, int srcRight, int srcTop, int srcLeft, int srcBottom);
+    private static native void nSurfaceTransaction_setCrop(long surfaceControl,
+            long surfaceTransaction, int left, int top, int right, int bottom);
     private static native void nSurfaceTransaction_setPosition(long surfaceControl,
-            long surfaceTransaction, int dstRight, int dstTop, int dstLeft, int dstBottom);
-    private static native void nSurfaceTransaction_setTransform(
+            long surfaceTransaction, int left, int top);
+    private static native void nSurfaceTransaction_setBufferTransform(
             long surfaceControl, long surfaceTransaction, int transform);
+    private static native void nSurfaceTransaction_setScale(long surfaceControl,
+            long surfaceTransaction, float xScale, float yScale);
     private static native void nSurfaceTransaction_setDamageRegion(
             long surfaceControl, long surfaceTransaction, int right, int top, int left, int bottom);
     private static native void nSurfaceTransaction_setZOrder(
