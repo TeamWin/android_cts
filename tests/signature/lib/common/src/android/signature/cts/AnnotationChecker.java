@@ -39,7 +39,7 @@ public class AnnotationChecker extends AbstractApiChecker {
     private final Map<String, Set<Field>> annotatedFieldsMap = new HashMap<>();
 
     /**
-     * @param annotationName name of the annotation class for the API type (e.g.
+     * @param annotationSpec name of the annotation class for the API type (e.g.
      *      android.annotation.SystemApi)
      */
     public AnnotationChecker(
@@ -114,17 +114,6 @@ public class AnnotationChecker extends AbstractApiChecker {
                                 + " does not exist in the API");
             }
         }
-    }
-
-    @Override
-    protected boolean allowMissingClass(JDiffClassDescription classDescription) {
-        // A class that exist in the API document is not found in the runtime.
-        // This can happen for classes that are optional (e.g. classes for
-        // Android Auto). This, however, should not be considered as a test
-        // failure, because the purpose of this test is to ensure that every
-        // runtime classes found in the device have more annotations than
-        // the documented.
-        return true;
     }
 
     @Override
