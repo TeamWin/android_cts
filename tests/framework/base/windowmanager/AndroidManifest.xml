@@ -364,6 +364,10 @@
              android:resizeableActivity="true"
              android:supportsPictureInPicture="true"
              android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density|touchscreen"/>
+        <activity android:name="android.server.wm.WindowMetricsActivityTests$MinAspectRatioActivity"
+                  android:label="MinAspectRatioActivity"
+                  android:minAspectRatio="3.0"
+                  android:resizeableActivity="false"/>
         <activity android:name="android.app.Activity"/>
         <activity android:name="android.server.wm.WindowInsetsLayoutTests$TestActivity"/>
         <activity android:name="android.server.wm.WindowInsetsControllerTests$TestActivity"
