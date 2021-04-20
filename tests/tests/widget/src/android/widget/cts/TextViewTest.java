@@ -4201,6 +4201,9 @@ public class TextViewTest {
 
     @Test
     public void testHandleDrawable_canBeSet_whenInsertionHandleIsShown() throws Throwable {
+        if (isWatch()) {
+            return; // watch does not support overlay keyboard.
+        }
         initTextViewForTypingOnUiThread();
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
