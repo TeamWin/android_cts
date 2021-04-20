@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * Checks that the runtime representation of a class matches the API representation of a class.
  */
-public class ApiComplianceChecker extends AbstractApiChecker {
+public class ApiComplianceChecker extends ApiPresenceChecker {
 
     /**
      * A set of method signatures whose abstract modifier should be ignored.
@@ -73,7 +73,6 @@ public class ApiComplianceChecker extends AbstractApiChecker {
         interfaceChecker = new InterfaceChecker(resultObserver, classProvider);
     }
 
-    @Override
     public void checkDeferred() {
         interfaceChecker.checkQueued();
     }

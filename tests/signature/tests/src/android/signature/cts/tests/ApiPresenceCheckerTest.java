@@ -15,7 +15,7 @@
  */
 package android.signature.cts.tests;
 
-import android.signature.cts.AbstractApiChecker;
+import android.signature.cts.ApiPresenceChecker;
 import android.signature.cts.ClassProvider;
 import android.signature.cts.ExcludingClassProvider;
 import android.signature.cts.FailureType;
@@ -28,9 +28,9 @@ import java.util.function.Consumer;
 import org.junit.Assert;
 
 /**
- * Base class for tests of implementations of {@link AbstractApiChecker}.
+ * Base class for tests of implementations of {@link ApiPresenceChecker}.
  */
-public abstract class AbstractApiCheckerTest<T extends AbstractApiChecker> {
+public abstract class ApiPresenceCheckerTest<T extends ApiPresenceChecker> {
 
     static final String VALUE = "VALUE";
 
@@ -79,7 +79,6 @@ public abstract class AbstractApiCheckerTest<T extends AbstractApiChecker> {
         ClassProvider provider = createClassProvider(excludedRuntimeClasses);
         T checker = createChecker(resultObserver, provider);
         consumer.accept(checker);
-        checker.checkDeferred();
     }
 
     protected abstract T createChecker(ResultObserver resultObserver, ClassProvider provider);
