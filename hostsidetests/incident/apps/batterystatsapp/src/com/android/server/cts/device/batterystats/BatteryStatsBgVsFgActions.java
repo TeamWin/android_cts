@@ -384,7 +384,7 @@ public class BatteryStatsBgVsFgActions {
     }
 
     /** Communicates to hostside (via logcat) that action has completed (regardless of success). */
-    private static void tellHostActionFinished(String actionCode, String requestCode) {
+    /* package */ static void tellHostActionFinished(String actionCode, String requestCode) {
         String s = String.format("Completed performing %s for request %s", actionCode, requestCode);
         Log.i(TAG, s);
     }

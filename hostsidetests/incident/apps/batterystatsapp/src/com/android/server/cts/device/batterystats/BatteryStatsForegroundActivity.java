@@ -21,6 +21,7 @@ import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActio
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_ACTION;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.KEY_REQUEST_CODE;
 import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.doAction;
+import static com.android.server.cts.device.batterystats.BatteryStatsBgVsFgActions.tellHostActionFinished;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -30,6 +31,7 @@ import android.util.Log;
 /** An activity (to be run as a foreground process) which performs one of a number of actions. */
 public class BatteryStatsForegroundActivity extends Activity {
     private static final String TAG = BatteryStatsForegroundActivity.class.getSimpleName();
+    private String mRequestCode;
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -50,9 +52,19 @@ public class BatteryStatsForegroundActivity extends Activity {
 
         doAction(this, action, requestCode);
 
+        mRequestCode = requestCode;
+
         if (!isActionAsync(action)) {
             finish();
         }
+    }
+
+    @Override
+    public void onDestroy() {
+        // Tell host we are destroyed if needed.
+        // At this time, my process state will be changed.
+        tellHostActionFinished("onDestroy", mRequestCode);
+        super.onDestroy();
     }
 
     private boolean isActionAsync(String action) {
