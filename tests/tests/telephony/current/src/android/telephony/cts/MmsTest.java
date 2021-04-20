@@ -211,7 +211,7 @@ public class MmsTest {
                 .build();
         // Send
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, new Intent(ACTION_MMS_SENT), PendingIntent.FLAG_MUTABLE_UNAUDITED);
+                context, 0, new Intent(ACTION_MMS_SENT), PendingIntent.FLAG_MUTABLE);
         if (messageId == 0L) {
             SmsManager.getDefault().sendMultimediaMessage(context,
                     contentUri, null/*locationUrl*/, null/*configOverrides*/, pendingIntent);
@@ -375,7 +375,8 @@ public class MmsTest {
                 .build();
 
         final PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 0, new Intent(ACTION_MMS_DOWNLOAD), 0);
+                context, 0, new Intent(ACTION_MMS_DOWNLOAD),
+                PendingIntent.FLAG_MUTABLE);
 
         if (messageId == 0L) {
             // Verify the downloadMultimediaMessage function without messageId exists. This test
