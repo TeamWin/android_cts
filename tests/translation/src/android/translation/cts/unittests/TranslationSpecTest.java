@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.icu.util.ULocale;
 import android.os.Parcel;
 import android.view.translation.TranslationSpec;
 
@@ -35,24 +36,24 @@ public class TranslationSpecTest {
     public void testSpec_nullLanguage() {
         assertThrows(NullPointerException.class, () -> {
             final TranslationSpec spec =
-                    new TranslationSpec(null, TranslationSpec.DATA_FORMAT_TEXT);
+                    new TranslationSpec((ULocale) null, TranslationSpec.DATA_FORMAT_TEXT);
         });
     }
 
     @Test
     public void testSpec_validSpec() {
-        final TranslationSpec spec = new TranslationSpec("en", TranslationSpec.DATA_FORMAT_TEXT);
+        final TranslationSpec spec = new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT);
 
         assertThat(spec.getDataFormat()).isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
-        assertThat(spec.getLanguage()).isEqualTo("en");
+        assertThat(spec.getLocale()).isEqualTo(ULocale.ENGLISH);
     }
 
     @Test
     public void testParceledSpec() {
-        final TranslationSpec spec = new TranslationSpec("en", TranslationSpec.DATA_FORMAT_TEXT);
+        final TranslationSpec spec = new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT);
 
         assertThat(spec.getDataFormat()).isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
-        assertThat(spec.getLanguage()).isEqualTo("en");
+        assertThat(spec.getLocale()).isEqualTo(ULocale.ENGLISH);
 
         final Parcel parcel = Parcel.obtain();
         spec.writeToParcel(parcel, 0);
@@ -61,7 +62,7 @@ public class TranslationSpecTest {
         parcel.recycle();
 
         assertThat(parceledSpec.getDataFormat()).isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
-        assertThat(parceledSpec.getLanguage()).isEqualTo("en");
+        assertThat(parceledSpec.getLocale()).isEqualTo(ULocale.ENGLISH);
     }
 
 }
