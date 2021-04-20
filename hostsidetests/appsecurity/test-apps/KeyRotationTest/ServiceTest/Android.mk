@@ -24,6 +24,8 @@ cert_dir := cts/hostsidetests/appsecurity/certs/pkgsigverify
 # the PackageManager checkSignatures APIs.
 include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsSignatureQueryServiceTest
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service androidx.test.core androidx.test.rules
@@ -36,6 +38,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # lineage as v2 and v3 of the CtsSignatureQueryService test app.
 include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsSignatureQueryServiceTest_v2
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := cts_signature_query_service androidx.test.core androidx.test.rules
@@ -47,4 +51,3 @@ LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=
-

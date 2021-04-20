@@ -19,6 +19,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_PACKAGE_NAME := CtsSplitAppFeature
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 LOCAL_MIN_SDK_VERSION := 4
 LOCAL_PACKAGE_SPLITS := v7
@@ -53,6 +55,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MANIFEST_FILE := needsplit/AndroidManifest.xml
 
 LOCAL_PACKAGE_NAME := CtsNeedSplitFeature
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 LOCAL_MIN_SDK_VERSION := 4
 
