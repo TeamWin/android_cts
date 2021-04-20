@@ -64,7 +64,6 @@ import android.metrics.MetricsReader;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.CommandSession.ActivitySessionClient;
-import android.server.wm.ConfigChangeTests.FontScaleSession;
 import android.support.test.metricshelper.MetricsAsserts;
 import android.util.EventLog.Event;
 

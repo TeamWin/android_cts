@@ -351,7 +351,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         resetComplexPasswordRestrictions();
 
         String caseDescription = "minimum Letters=0";
-        assertPasswordSucceeds("1234", caseDescription);
+        assertPasswordFails("1234", caseDescription); // Numeric PIN not allowed
         assertPasswordSucceeds("a123", caseDescription);
         assertPasswordSucceeds("abc1", caseDescription);
         assertPasswordSucceeds("abcd", caseDescription);
@@ -390,7 +390,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordSucceeds("abcd", caseDescription);
         assertPasswordSucceeds("1abc", caseDescription);
         assertPasswordSucceeds("123a", caseDescription);
-        assertPasswordSucceeds("1234", caseDescription);
+        assertPasswordFails("1234", caseDescription); // Numeric PIN not allowed
         assertPasswordFails("123", caseDescription); // too short
 
         mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 1);
@@ -399,7 +399,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordFails("abcd", caseDescription);
         assertPasswordSucceeds("1abc", caseDescription);
         assertPasswordSucceeds("123a", caseDescription);
-        assertPasswordSucceeds("1234", caseDescription);
+        assertPasswordFails("1234", caseDescription); // Numeric PIN not allowed
         assertPasswordFails("123", caseDescription); // too short
 
         mDevicePolicyManager.setPasswordMinimumNumeric(ADMIN_RECEIVER_COMPONENT, 3);
@@ -408,7 +408,7 @@ public class ResetPasswordWithTokenTest extends BaseDeviceAdminTest {
         assertPasswordFails("abcd", caseDescription);
         assertPasswordFails("1abc", caseDescription);
         assertPasswordSucceeds("123a", caseDescription);
-        assertPasswordSucceeds("1234", caseDescription);
+        assertPasswordFails("1234", caseDescription); // Numeric PIN not allowed
         assertPasswordFails("123", caseDescription); // too short
     }
 

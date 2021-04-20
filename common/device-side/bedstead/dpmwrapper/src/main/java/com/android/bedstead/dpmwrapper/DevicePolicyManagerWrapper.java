@@ -172,6 +172,11 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).retrievePreRebootSecurityLogs(any());
             doAnswer(answer).when(spy).getLastNetworkLogRetrievalTime();
 
+            // Used by PrivateDnsPolicyTest
+            doAnswer(answer).when(spy).getGlobalPrivateDnsHost(any());
+            doAnswer(answer).when(spy).getGlobalPrivateDnsMode(any());
+            doAnswer(answer).when(spy).setGlobalPrivateDnsModeSpecifiedHost(any(), any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions

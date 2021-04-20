@@ -24,6 +24,7 @@ import static com.android.bedstead.dpmwrapper.Utils.EXTRA_CLASS;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_METHOD;
 import static com.android.bedstead.dpmwrapper.Utils.EXTRA_NUMBER_ARGS;
 import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
+import static com.android.bedstead.dpmwrapper.Utils.callOnHandlerThread;
 import static com.android.bedstead.dpmwrapper.Utils.isHeadlessSystemUser;
 
 import android.annotation.Nullable;
@@ -76,7 +77,7 @@ public final class DeviceOwnerHelper {
             Log.d(TAG, "runManagerMethod(): userId=" + context.getUserId()
                     + ", intent=" + intent.getAction() + ", class=" + className
                     + ", methodName=" + methodName + ", numberArgs=" + numberArgs);
-            Object[] args = null;
+            final Object[] args;
             Class<?>[] parameterTypes = null;
             if (numberArgs > 0) {
                 args = new Object[numberArgs];
@@ -88,6 +89,8 @@ public final class DeviceOwnerHelper {
                 Log.d(TAG, "runManagerMethod(): args=" + Arrays.toString(args) + ", types="
                         + Arrays.toString(parameterTypes));
 
+            } else {
+                args = null;
             }
             Class<?> managerClass = Class.forName(className);
             Method method = findMethod(managerClass, methodName, parameterTypes);
@@ -99,8 +102,8 @@ public final class DeviceOwnerHelper {
             Object manager = managerClass.equals(DevicePolicyManager.class)
                     ? receiver.getManager(context)
                     : context.getSystemService(managerClass);
-
-            Object result = method.invoke(manager, args);
+            // Must handle in a separate thread as some APIs will fail when called from main's
+            Object result = callOnHandlerThread(() -> method.invoke(manager, args));
 
             if (VERBOSE) {
                 // Some results - like network logging events - are quite large
