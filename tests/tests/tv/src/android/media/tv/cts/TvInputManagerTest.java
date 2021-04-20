@@ -176,7 +176,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                         "android.tv.cts/android.media.tv.cts.StubTunerTvInputService",
                         channelUri,
                         false,
-                        true,
+                        false,
+                        false,
                         TunedInfo.APP_TYPE_SELF,
                         TunedInfo.APP_TAG_SELF);
                 assertEquals(expectedInfo, returnedInfo);
@@ -192,6 +193,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
         if (!Utils.hasTvInputFramework(getActivity())) {
             return;
         }
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.ACCESS_TUNED_INFO");
         mActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -205,6 +208,8 @@ public class TvInputManagerTest extends ActivityInstrumentationTestCase2<TvViewS
                 mManager.unregisterCallback(mCallback);
             }
         });
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
     }
 
     public void testGetInputState() throws Exception {
