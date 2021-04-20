@@ -23,6 +23,7 @@ import android.app.role.RoleManager
 import android.content.Context
 import android.os.Process
 import android.os.UserHandle
+import android.platform.test.annotations.AppModeFull
 import androidx.test.platform.app.InstrumentationRegistry
 import com.android.compatibility.common.util.SystemUtil
 import org.junit.After
@@ -32,6 +33,7 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+@AppModeFull(reason="Instant apps have no access to the RoleManager")
 class RenouncedPermissionsTest {
 
     var oldActivityRecognizers: List<String>? = null
