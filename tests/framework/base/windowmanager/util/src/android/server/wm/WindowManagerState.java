@@ -22,9 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.wm.ComponentNameUtils.getActivityName;
 import static android.server.wm.ProtoExtractors.extract;
@@ -1532,12 +1529,7 @@ public class WindowManagerState {
             if (requestedWindowingMode == WINDOWING_MODE_UNDEFINED) {
                 return true;
             }
-            final int windowingMode = getWindowingMode();
-            if (requestedWindowingMode == WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY) {
-                return windowingMode == WINDOWING_MODE_FULLSCREEN
-                        || windowingMode == WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-            }
-            return windowingMode == requestedWindowingMode;
+            return getWindowingMode() == requestedWindowingMode;
         }
 
         public int getWindowingMode() {
