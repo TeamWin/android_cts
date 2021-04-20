@@ -47,7 +47,8 @@ public class UsesLibraryTest extends InstrumentationTestCase {
     }
 
     /**
-     * Verify that we punt to run from apk when the shared libraries are missing.
+     * Verify that we still use an oat file (backed by a vdex-only file) when the shared
+     * libraries are missing.
      */
     public void testMissingLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
@@ -59,12 +60,13 @@ public class UsesLibraryTest extends InstrumentationTestCase {
             assertTrue(testDexElements != null && testDexElements.length == 1);
 
             DexFile testDexFile = getDexFileFromDexElement(testDexElements[0]);
-            assertFalse(isDexFileBackedByOatFile(testDexFile));
+            assertTrue(isDexFileBackedByOatFile(testDexFile));
         }
     }
 
     /**
-     * Verify that we punt to run from apk if the classpath generates a class collision failure.
+     * Verify that we still use an oat file (backed by a vdex-only file) if the classpath generates
+     * a class collision failure.
      */
     public void testDuplicateLibrary() throws Exception {
         ClassLoader loader = getClass().getClassLoader();
@@ -87,7 +89,7 @@ public class UsesLibraryTest extends InstrumentationTestCase {
             assertEquals(Arrays.toString(testDexElements), 2, testDexElements.length);
 
             DexFile testDexFile = getDexFileFromDexElement(testDexElements[1]);
-            assertFalse(isDexFileBackedByOatFile(testDexFile));
+            assertTrue(isDexFileBackedByOatFile(testDexFile));
         }
     }
 

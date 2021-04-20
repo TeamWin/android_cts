@@ -235,17 +235,8 @@ public class ConfigChangeTests extends ActivityManagerTestBase {
         }
     }
 
-    /** Helper class to save, set, and restore font_scale preferences. */
-    static class FontScaleSession extends SettingsSession<Float> {
-        FontScaleSession() {
-            super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
-                    Settings.System::getFloat,
-                    Settings.System::putFloat);
-        }
-    }
-
     private void testChangeFontScale(ComponentName activityName, boolean relaunch) {
-        final FontScaleSession fontScaleSession = mObjectTracker.manage(new FontScaleSession());
+        final FontScaleSession fontScaleSession = createFontScaleSession();
         fontScaleSession.set(1.0f);
         separateTestJournal();
         launchActivity(activityName);

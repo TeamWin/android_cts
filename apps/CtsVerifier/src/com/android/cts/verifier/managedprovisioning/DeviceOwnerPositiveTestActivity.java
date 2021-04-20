@@ -86,13 +86,8 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!UserManager.isHeadlessSystemUserMode()) {
-            // TODO(b/177554984): figure out how to use it on headless system user mode - right now,
-            // it removes the current user on teardown
-
-            // Tidy up in case previous run crashed.
-            new ByodFlowTestHelper(this).tearDown();
-        }
+        // Tidy up in case previous run crashed.
+        new ByodFlowTestHelper(this).tearDown();
 
         if (ACTION_CHECK_DEVICE_OWNER.equals(getIntent().getAction())) {
             DevicePolicyManager dpm = TestAppSystemServiceFactory.getDevicePolicyManager(this,
@@ -222,14 +217,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_WIFI, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_WIFI_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_WIFI, false))
             }));
         }
@@ -257,7 +252,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new ButtonInfo[] {
                         new ButtonInfo(
                                 R.string.device_owner_user_vpn_restriction_set,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_CONFIG_VPN, true)),
                         new ButtonInfo(
                                 R.string.device_owner_settings_go,
@@ -267,7 +262,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 new Intent(this, VpnTestActivity.class)),
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_CONFIG_VPN, false))
         }));
 
@@ -279,14 +274,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_DATA_ROAMING, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_DATA_ROAMING_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_DATA_ROAMING, false))
             }));
         }
@@ -298,11 +293,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new ButtonInfo[] {
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_set,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetDeviceOwnerUserRestrictionIntent(
                                         UserManager.DISALLOW_FACTORY_RESET, true)),
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetDeviceOwnerUserRestrictionIntent(
                                         UserManager.DISALLOW_FACTORY_RESET, false))
         }));
 
@@ -314,14 +309,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                     new ButtonInfo[] {
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_BLUETOOTH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_BLUETOOTH_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_CONFIG_BLUETOOTH, false))
             }));
         }
@@ -333,11 +328,11 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                 new ButtonInfo[] {
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_set,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_USB_FILE_TRANSFER, true)),
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_USB_FILE_TRANSFER, false))
         }));
 
@@ -392,7 +387,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 createSetUserIconIntent(R.drawable.user_icon_1)),
                         new ButtonInfo(
                                 R.string.disallow_set_user_icon,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_SET_USER_ICON, true)),
                         new ButtonInfo(
                                 R.string.device_owner_set_user_icon2_button,
@@ -402,7 +397,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 new Intent(Settings.ACTION_SETTINGS)),
                         new ButtonInfo(
                                 R.string.device_owner_user_restriction_unset,
-                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                         UserManager.DISALLOW_SET_USER_ICON, false))
         }));
 
@@ -475,14 +470,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                     createCreateManagedUserWithoutSetupIntent()),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_USER_SWITCH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_USER_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_USER_SWITCH, false))
             }));
 
@@ -496,14 +491,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                     createCreateManagedUserWithoutSetupIntent()),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_set,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_REMOVE_USER, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_USER_SETTINGS)),
                             new ButtonInfo(
                                     R.string.device_owner_user_restriction_unset,
-                                    CommandReceiverActivity.createSetUserRestrictionIntent(
+                                    CommandReceiverActivity.createSetCurrentUserRestrictionIntent(
                                             UserManager.DISALLOW_REMOVE_USER, false))
             }));
         }

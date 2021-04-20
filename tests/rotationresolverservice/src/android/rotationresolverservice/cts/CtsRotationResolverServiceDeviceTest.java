@@ -134,7 +134,7 @@ public class CtsRotationResolverServiceDeviceTest {
                 ROTATION_0, ROTATION_90, FAKE_SHOULD_USE_CAMERA, FAKE_TIME_OUT);
 
         /* Verify the values are correctly set */
-        assertThat(request.getPackageName()).isEqualTo(FAKE_PACKAGE_NAME);
+        assertThat(request.getForegroundPackageName()).isEqualTo(FAKE_PACKAGE_NAME);
         assertThat(request.getCurrentRotation()).isEqualTo(ROTATION_0);
         assertThat(request.getProposedRotation()).isEqualTo(ROTATION_90);
         assertThat(request.shouldUseCamera()).isEqualTo(FAKE_SHOULD_USE_CAMERA);

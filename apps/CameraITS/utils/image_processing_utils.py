@@ -446,6 +446,11 @@ def write_image(img, fname, apply_gamma=False):
     raise error_util.CameraItsError('Unsupported image type')
 
 
+def read_image(fname):
+  """Read image function to match write_image() above."""
+  return Image.open(fname)
+
+
 def apply_lut_to_image(img, lut):
   """Applies a LUT to every pixel in a float image array.
 

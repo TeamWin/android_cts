@@ -16,6 +16,8 @@
 
 package com.android.bedstead.harrier;
 
+import androidx.annotation.Nullable;
+
 import com.android.bedstead.harrier.annotations.enterprise.EnterprisePolicy;
 import com.android.bedstead.harrier.annotations.enterprise.NegativePolicyTest;
 import com.android.bedstead.harrier.annotations.enterprise.PositivePolicyTest;
@@ -85,41 +87,12 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
             parseEnterpriseAnnotations(annotations);
 
-            int index = 0;
-            while (index < annotations.size()) {
-                Annotation annotation = annotations.get(index);
-                annotations.remove(index);
-                List<Annotation> replacementAnnotations = getReplacementAnnotations(annotation);
-                annotations.addAll(index, replacementAnnotations);
-                index += replacementAnnotations.size();
-            }
+            resolveRecursiveAnnotations(annotations, mParameterizedAnnotation);
 
             this.mAnnotations = annotations.toArray(new Annotation[0]);
             for (Annotation annotation : annotations) {
                 mAnnotationsMap.put(annotation.annotationType(), annotation);
             }
-        }
-
-        private List<Annotation> getReplacementAnnotations(Annotation annotation) {
-            List<Annotation> replacementAnnotations = new ArrayList<>();
-
-            if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
-                    && !annotation.annotationType().equals(mParameterizedAnnotation)) {
-                return replacementAnnotations;
-            }
-
-            for (Annotation indirectAnnotation : annotation.annotationType().getAnnotations()) {
-                if (sIgnoredAnnotationPackages.contains(
-                        indirectAnnotation.annotationType().getPackage().getName())) {
-                    continue;
-                }
-
-                replacementAnnotations.addAll(getReplacementAnnotations(indirectAnnotation));
-            }
-
-            replacementAnnotations.add(annotation);
-
-            return replacementAnnotations;
         }
 
         @Override
@@ -154,6 +127,48 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
         public <T extends Annotation> T getAnnotation(Class<T> annotationType) {
             return (T) mAnnotationsMap.get(annotationType);
         }
+    }
+
+    /**
+     * Resolve annotations recursively.
+     *
+     * @param parameterizedAnnotation The class of the parameterized annotation to expand, if any
+     */
+    public static void resolveRecursiveAnnotations(List<Annotation> annotations,
+            @Nullable Class<? extends Annotation> parameterizedAnnotation) {
+        int index = 0;
+        while (index < annotations.size()) {
+            Annotation annotation = annotations.get(index);
+            annotations.remove(index);
+            List<Annotation> replacementAnnotations =
+                    getReplacementAnnotations(annotation, parameterizedAnnotation);
+            annotations.addAll(index, replacementAnnotations);
+            index += replacementAnnotations.size();
+        }
+    }
+
+    private static List<Annotation> getReplacementAnnotations(Annotation annotation,
+            @Nullable Class<? extends Annotation> parameterizedAnnotation) {
+        List<Annotation> replacementAnnotations = new ArrayList<>();
+
+        if (annotation.annotationType().getAnnotation(ParameterizedAnnotation.class) != null
+                && !annotation.annotationType().equals(parameterizedAnnotation)) {
+            return replacementAnnotations;
+        }
+
+        for (Annotation indirectAnnotation : annotation.annotationType().getAnnotations()) {
+            if (sIgnoredAnnotationPackages.contains(
+                    indirectAnnotation.annotationType().getPackage().getName())) {
+                continue;
+            }
+
+            replacementAnnotations.addAll(getReplacementAnnotations(
+                    indirectAnnotation, parameterizedAnnotation));
+        }
+
+        replacementAnnotations.add(annotation);
+
+        return replacementAnnotations;
     }
 
     public BedsteadJUnit4(Class<?> testClass) throws InitializationError {
@@ -235,7 +250,8 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
 
         for (FrameworkMethod method : methods) {
             for (Annotation annotation : method.getAnnotations()) {
-                annotationCounts.put(annotation, annotationCounts.getOrDefault(annotation, 0) + 1);
+                annotationCounts.put(
+                        annotation, annotationCounts.getOrDefault(annotation, 0) + 1);
             }
         }
 
@@ -304,6 +320,7 @@ public final class BedsteadJUnit4 extends BlockJUnit4ClassRunner {
                 DeviceState deviceState = (DeviceState) rule;
 
                 deviceState.setSkipTestTeardown(true);
+                deviceState.setUsingBedsteadJUnit4(true);
 
                 break;
             }

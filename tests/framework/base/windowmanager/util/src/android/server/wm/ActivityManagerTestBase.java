@@ -1244,6 +1244,11 @@ public abstract class ActivityManagerTestBase {
                 new SystemAlertWindowAppOpSession(mContext.getOpPackageName(), MODE_ALLOWED));
     }
 
+    /** @see ObjectTracker#manage(AutoCloseable) */
+    protected FontScaleSession createFontScaleSession() {
+        return mObjectTracker.manage(new FontScaleSession());
+    }
+
     /**
      * Test @Rule class that disables screen doze settings before each test method running and
      * restoring to initial values after test method finished.
@@ -1652,6 +1657,15 @@ public abstract class ActivityManagerTestBase {
             public void onChange(boolean selfChange) {
                 count++;
             }
+        }
+    }
+
+    /** Helper class to save, set, and restore font_scale preferences. */
+    protected static class FontScaleSession extends SettingsSession<Float> {
+        FontScaleSession() {
+            super(Settings.System.getUriFor(Settings.System.FONT_SCALE),
+                    Settings.System::getFloat,
+                    Settings.System::putFloat);
         }
     }
 
