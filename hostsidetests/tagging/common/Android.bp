@@ -40,14 +40,10 @@ cc_test_library {
 
 android_test_helper_app {
     name: "DeviceKernelHelpers",
-    defaults: ["cts_defaults"],
-    compile_multilib: "both",
+    defaults: ["cts_tagging_app_defaults"],
     test_suites: [
         "cts",
         "general-tests",
     ],
-    static_libs: ["tagging-common-devicesidelib"],
-    jni_libs: ["libtagging-common-devicesidelib-jni"],
     srcs: ["src/**/DeviceKernelHelpers.java"],
-    sdk_version: "current",
 }
