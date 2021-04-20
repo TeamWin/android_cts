@@ -1329,7 +1329,7 @@ public class SELinuxHostTest extends BaseHostJUnit4Test {
     @CddTest(requirement="9.7")
     @Test
     public void testKeystoreDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:keystore:s0", "/system/bin/keystore");
+        assertDomainOne("u:r:keystore:s0", "/system/bin/keystore2");
     }
 
     /* System server better be running :-P */
