@@ -38,8 +38,8 @@ import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
 
+import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
-
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
 
 public class ProAudioActivity
@@ -174,6 +174,8 @@ public class ProAudioActivity
                 usbOK &&
                 hdmiOK);
 
+        recordTestResults();
+
         getPassButton().setEnabled(hasPassed);
         return hasPassed;
     }
@@ -242,7 +244,7 @@ public class ProAudioActivity
      * Store test results in log
      */
     protected void recordTestResults() {
-        ReportLog reportLog = getReportLog();
+        CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
                 "Claims Pro Audio",
                 mClaimsProAudio,
@@ -278,6 +280,8 @@ public class ProAudioActivity
                 mClaimsHDMI,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
+
+        reportLog.submit();
     }
 
     @Override
