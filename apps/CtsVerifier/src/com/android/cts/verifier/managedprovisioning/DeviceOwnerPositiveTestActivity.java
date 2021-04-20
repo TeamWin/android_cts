@@ -53,10 +53,14 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
             "com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER";
     private static final String ACTION_CHECK_PROFILE_OWNER =
             "com.android.cts.verifier.managedprovisioning.action.CHECK_PROFILE_OWNER";
+    private static final String ACTION_CHECK_CURRENT_USER_AFFILIATED =
+            "com.android.cts.verifier.managedprovisioning.action.CHECK_USER_AFFILIATED";
+
     static final String EXTRA_TEST_ID = "extra-test-id";
 
     private static final String CHECK_DEVICE_OWNER_TEST_ID = "CHECK_DEVICE_OWNER";
     private static final String CHECK_PROFILE_OWNER_TEST_ID = "CHECK_PROFILE_OWNER";
+    private static final String CHECK_USER_AFFILIATED_TEST_ID = "CHECK_USER_AFFILIATED";
     private static final String DEVICE_ADMIN_SETTINGS_ID = "DEVICE_ADMIN_SETTINGS";
     private static final String WIFI_LOCKDOWN_TEST_ID = WifiLockdownTestActivity.class.getName();
     private static final String DISABLE_STATUS_BAR_TEST_ID = "DISABLE_STATUS_BAR";
@@ -119,6 +123,18 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
             finish();
             return;
         }
+        if (ACTION_CHECK_CURRENT_USER_AFFILIATED.equals(getIntent().getAction())) {
+            DevicePolicyManager dpm = getSystemService(DevicePolicyManager.class);
+            if (dpm.isAffiliatedUser()) {
+                TestResult.setPassedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                        null, null);
+            } else {
+                TestResult.setFailedResult(this, getIntent().getStringExtra(EXTRA_TEST_ID),
+                        getString(R.string.device_owner_user_not_affiliated, getUserId()), null);
+            }
+            finish();
+            return;
+        }
 
         setContentView(R.layout.positive_device_owner);
         setInfoResources(R.string.device_owner_positive_tests,
@@ -169,6 +185,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         switch(action) {
             case ACTION_CHECK_DEVICE_OWNER:
             case ACTION_CHECK_PROFILE_OWNER:
+            case ACTION_CHECK_CURRENT_USER_AFFILIATED:
                 // If this activity was started for checking device / profile owner status, then no
                 // need to do any tear down.
                 Log.d(TAG, "NOT starting createTearDownIntent() due to " + action);
@@ -192,6 +209,10 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
             adapter.add(createTestItem(this, CHECK_PROFILE_OWNER_TEST_ID,
                     R.string.device_owner_check_profile_owner_test,
                     new Intent(ACTION_CHECK_PROFILE_OWNER)
+                            .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
+            adapter.add(createTestItem(this, CHECK_USER_AFFILIATED_TEST_ID,
+                    R.string.device_owner_check_user_affiliation_test,
+                    new Intent(ACTION_CHECK_CURRENT_USER_AFFILIATED)
                             .putExtra(EXTRA_TEST_ID, getIntent().getStringExtra(EXTRA_TEST_ID))));
         }
 
