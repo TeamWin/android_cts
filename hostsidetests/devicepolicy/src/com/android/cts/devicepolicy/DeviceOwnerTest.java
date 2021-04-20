@@ -22,6 +22,7 @@ import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assert.fail;
 
 import android.platform.test.annotations.FlakyTest;
@@ -159,6 +160,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        assumeFalse("Test does not apply to WearOS: WebView unsupported", mIsWatch);
         executeDeviceOwnerTest("proxy.PacProxyTest");
     }
 
@@ -723,6 +725,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+        assumeFalse("Test does not apply to WearOS", mIsWatch);
         executeDeviceOwnerTest("DeviceOwnerProvisioningTest");
     }
 
@@ -924,6 +927,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature || !isStatsdEnabled(getDevice())) {
             return;
         }
+        assumeFalse("Test does not apply to WearOS: no status bar", mIsWatch);
         assertMetricsLogged(getDevice(), () -> {
             executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetStatusBarDisabledLogged");
         }, new DevicePolicyEventWrapper.Builder(EventId.SET_STATUS_BAR_DISABLED_VALUE)

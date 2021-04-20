@@ -150,6 +150,9 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
     protected boolean mHasFeature;
     protected int mPrimaryUserId;
 
+    /** Is test running on a watch */
+    protected boolean mIsWatch;
+
     /** Record the initial user ID. */
     protected int mInitialUserId;
 
@@ -187,6 +190,7 @@ public abstract class BaseDevicePolicyTest extends BaseHostJUnit4Test {
         mSupportsFbe = hasDeviceFeature("android.software.file_based_encryption");
         mHasTelephony = hasDeviceFeature("android.hardware.telephony");
         mHasConnectionService = hasDeviceFeature("android.software.connectionservice");
+        mIsWatch = hasDeviceFeature("android.hardware.type.watch");
         mFixedPackages = getDevice().getInstalledPackageNames();
         mBuildHelper = new CompatibilityBuildHelper(getBuild());
 
