@@ -179,12 +179,12 @@ class CameraMicIndicatorsPermissionTest {
         }
         eventually {
             if (useMic) {
-                val appView = uiDevice.findObject(UiSelector().textContains(micLabel))
-                assertTrue("View with text $APP_LABEL not found", appView.exists())
+                val iconView = uiDevice.findObject(UiSelector().descriptionContains(micLabel))
+                assertTrue("View with description $micLabel not found", iconView.exists())
             }
             if (useCamera) {
-                val appView = uiDevice.findObject(UiSelector().textContains(cameraLabel))
-                assertTrue("View with text $APP_LABEL not found", appView.exists())
+                val iconView = uiDevice.findObject(UiSelector().descriptionContains(cameraLabel))
+                assertTrue("View with text $APP_LABEL not found", iconView.exists())
             }
             val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
             assertTrue("View with text $APP_LABEL not found", appView.exists())
