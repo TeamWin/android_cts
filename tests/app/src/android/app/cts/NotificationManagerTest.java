@@ -239,8 +239,8 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         // This setting is forced on / off for certain tests, save it & restore what's on the
         // device after tests are run
-        mBubblesEnabledSettingToRestore = Settings.Global.getInt(mContext.getContentResolver(),
-                Settings.Global.NOTIFICATION_BUBBLES) == 1;
+        mBubblesEnabledSettingToRestore = Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.NOTIFICATION_BUBBLES) == 1;
 
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
@@ -706,8 +706,8 @@ public class NotificationManagerTest extends AndroidTestCase {
     private void setBubblesGlobal(boolean enabled)
             throws InterruptedException {
         SystemUtil.runWithShellPermissionIdentity(() ->
-                Settings.Global.putInt(mContext.getContentResolver(),
-                        Settings.Global.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
+                Settings.Secure.putInt(mContext.getContentResolver(),
+                        Settings.Secure.NOTIFICATION_BUBBLES, enabled ? 1 : 0));
         Thread.sleep(500); // wait for ranking update
     }
 
@@ -1564,8 +1564,8 @@ public class NotificationManagerTest extends AndroidTestCase {
         // turn on bubbles globally
         setBubblesGlobal(true);
 
-        assertEquals(1, Settings.Global.getInt(
-                mContext.getContentResolver(), Settings.Global.NOTIFICATION_BUBBLES));
+        assertEquals(1, Settings.Secure.getInt(
+                mContext.getContentResolver(), Settings.Secure.NOTIFICATION_BUBBLES));
 
         toggleListenerAccess(true);
         Thread.sleep(500); // wait for listener to be allowed
