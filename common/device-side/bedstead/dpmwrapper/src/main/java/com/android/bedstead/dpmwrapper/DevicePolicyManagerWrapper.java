@@ -177,6 +177,38 @@ final class DevicePolicyManagerWrapper
             doAnswer(answer).when(spy).getGlobalPrivateDnsMode(any());
             doAnswer(answer).when(spy).setGlobalPrivateDnsModeSpecifiedHost(any(), any());
 
+            // Used by StorageEncryptionTest
+            doAnswer(answer).when(spy).getStorageEncryptionStatus();
+            doAnswer(answer).when(spy).setStorageEncryption(any(), anyBoolean());
+
+            // Used by AdminConfiguredNetworksTest
+            doAnswer(answer).when(spy).setConfiguredNetworksLockdownState(any(), anyBoolean());
+
+            // Used by SecurityLoggingTest
+            doAnswer(answer).when(spy).isSecurityLoggingEnabled(any());
+            doAnswer(answer).when(spy).setDelegatedScopes(any(), any(), any());
+            doAnswer(answer).when(spy).retrieveSecurityLogs(any());
+
+            // Used by TimeManagementTest
+            doAnswer(answer).when(spy).setAutoTimeZoneEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).setAutoTimeEnabled(any(), anyBoolean());
+            doAnswer(answer).when(spy).getAutoTimeZoneEnabled(any());
+
+            // Used by WifiTest
+            doAnswer(answer).when(spy).getWifiMacAddress(any());
+
+            // Used by AdminConfiguredNetworksTest
+            doAnswer(answer).when(spy).hasLockdownAdminConfiguredNetworks(any());
+
+            // Used by DevicePolicyLoggingTest
+            doAnswer(answer).when(spy).getAutoTimeEnabled(any());
+
+            // Used by InstallUpdateTest
+            doAnswer(answer).when(spy).installSystemUpdate(any(), any(), any(), any());
+
+            // Used by FactoryResetProtectionPolicyTest
+            doAnswer(answer).when(spy).getFactoryResetProtectionPolicy(any());
+
             // TODO(b/176993670): add more methods below as tests are converted
         } catch (Exception e) {
             // Should never happen, but needs to be catch as some methods declare checked exceptions
