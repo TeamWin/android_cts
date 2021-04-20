@@ -16,41 +16,35 @@
 
 package android.compat.sjp.cts;
 
+import static android.compat.testing.Classpaths.ClasspathType.BOOTCLASSPATH;
+import static android.compat.testing.Classpaths.ClasspathType.SYSTEMSERVERCLASSPATH;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assume.assumeTrue;
 
-import static java.util.stream.Collectors.toSet;
+import android.compat.testing.Classpaths;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
-import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import com.google.common.collect.Sets;
 
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
 import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.DexFile;
-import org.jf.dexlib2.iface.MultiDexContainer;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Objects;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -62,8 +56,6 @@ import java.util.Set;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
-
-    private static final long ADB_TIMEOUT_MILLIS = 30000L;
 
     /**
      * This is the list of classes that are currently duplicated and should be addressed.
@@ -162,10 +154,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     @Test
     public void testBootclasspath_nonDuplicateClasses() throws Exception {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> bcpJarFiles = pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH");
-            checkClassDuplicatesMatchAllowlist(bcpJarFiles, ImmutableSet.of());
-        });
+        ImmutableList<String> jars =
+                Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH);
+        assertThat(getDuplicateClasses(jars)).isEmpty();
     }
 
     /**
@@ -174,11 +165,9 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
     @Test
     public void testSystemServerClasspath_nonDuplicateClasses() throws Exception {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> sscpJarFiles =
-                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
-            checkClassDuplicatesMatchAllowlist(sscpJarFiles, ImmutableSet.of());
-        });
+        ImmutableList<String> jars =
+                Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH);
+        assertThat(getDuplicateClasses(jars)).isEmpty();
     }
 
     /**
@@ -186,26 +175,32 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      * SYSTEMSERVERCLASSPATH.
      */
     @Test
-    public void testBootClassPathAndSystemServerClasspath_nonDuplicateClasses() throws Exception {
+    public void testBootClasspathAndSystemServerClasspath_nonDuplicateClasses() throws Exception {
         assumeTrue(ApiLevelUtil.isAfter(getDevice(), 29));
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> allJarFiles = Sets.union(
-                    pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
-                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
-            );
-            checkClassDuplicatesMatchAllowlist(allJarFiles, BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST);
-        });
+        ImmutableList.Builder<String> jars = ImmutableList.builder();
+        jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH));
+        jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH));
+
+        Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
+        Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
+                duplicate -> !BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST.contains(duplicate));
+
+        assertThat(filtered).isEmpty();
     }
 
     /**
      * Ensure that there are no duplicate classes among APEX jars listed in BOOTCLASSPATH.
      */
     @Test
-    public void testBootclasspath_nonDuplicateApexJarClasses() throws Exception {
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> bcpJarFiles = pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH");
-            checkClassDuplicatesNotInApexJars(bcpJarFiles);
-        });
+    public void testBootClasspath_nonDuplicateApexJarClasses() throws Exception {
+        ImmutableList<String> jars =
+                Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH);
+
+        Multimap<String, String> duplicates = getDuplicateClasses(jars);
+        Multimap<String, String> filtered =
+                Multimaps.filterValues(duplicates, jar -> jar.startsWith("/apex/"));
+
+        assertThat(filtered).isEmpty();
     }
 
     /**
@@ -213,11 +208,14 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testSystemServerClasspath_nonDuplicateApexJarClasses() throws Exception {
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> sscpJarFiles =
-                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH");
-            checkClassDuplicatesNotInApexJars(sscpJarFiles);
-        });
+        ImmutableList<String> jars =
+                Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH);
+
+        Multimap<String, String> duplicates = getDuplicateClasses(jars);
+        Multimap<String, String> filtered =
+                Multimaps.filterValues(duplicates, jar -> jar.startsWith("/apex/"));
+
+        assertThat(filtered).isEmpty();
     }
 
     /**
@@ -225,169 +223,48 @@ public class StrictJavaPackagesTest extends BaseHostJUnit4Test {
      * SYSTEMSERVERCLASSPATH.
      */
     @Test
-    public void testBootClassPathAndSystemServerClasspath_nonApexDuplicateClasses()
+    public void testBootClasspathAndSystemServerClasspath_nonApexDuplicateClasses()
             throws Exception {
-        runWithTempDir(tmpDir -> {
-            final Set<DeviceFile> allJarFiles = Sets.union(
-                    pullJarsFromEnvVariable(tmpDir, "BOOTCLASSPATH"),
-                    pullJarsFromEnvVariable(tmpDir, "SYSTEMSERVERCLASSPATH")
-            );
-            checkClassDuplicatesNotInApexJars(allJarFiles);
-        });
-    }
+        ImmutableList.Builder<String> jars = ImmutableList.builder();
+        jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), BOOTCLASSPATH));
+        jars.addAll(Classpaths.getJarsOnClasspath(getDevice(), SYSTEMSERVERCLASSPATH));
 
-    private String getEnvVariable(String var) {
-        try {
-            return getDevice().executeShellCommand("echo $" + var).trim();
-        } catch (DeviceNotAvailableException e) {
-            throw new RuntimeException(e);
-        }
-    }
+        Multimap<String, String> duplicates = getDuplicateClasses(jars.build());
+        Multimap<String, String> filtered = Multimaps.filterKeys(duplicates,
+                duplicate -> !BCP_AND_SSCP_OVERLAP_BURNDOWN_LIST.contains(duplicate));
+        filtered = Multimaps.filterValues(filtered, jar -> jar.startsWith("/apex/"));
 
-    private DeviceFile pullFromDevice(String devicePath, File tmpDir) {
-        try {
-            final File hostFile = Paths.get(tmpDir.getAbsolutePath(), devicePath).toFile();
-            // Ensure the destination directory structure exists.
-            hostFile.getParentFile().mkdirs();
-            final String hostPath = hostFile.getAbsolutePath();
-            getDevice().executeAdbCommand(ADB_TIMEOUT_MILLIS, "pull", devicePath, hostPath);
-            return new DeviceFile(devicePath, hostPath);
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to pull " + devicePath, e);
-        }
+        assertThat(filtered).isEmpty();
     }
 
     /**
      * Gets the duplicate classes within a list of jar files.
      *
-     * @param jars A list of jar files.
-     * @return A multimap with the class name as a key and the jar files as a value.
+     * @param jars a list of jar files.
+     * @return a multimap with the class name as a key and the jar files as a value.
      */
-    private Multimap<String, DeviceFile> getDuplicateClasses(Set<DeviceFile> jars)
+    private Multimap<String, String> getDuplicateClasses(ImmutableCollection<String> jars)
             throws Exception {
-        final Multimap<String, DeviceFile> allClasses = HashMultimap.create();
-        final Multimap<String, DeviceFile> duplicateClasses = HashMultimap.create();
-        for (DeviceFile deviceFile : jars) {
-            final File jarFile = new File(deviceFile.hostPath);
-            final MultiDexContainer<? extends DexBackedDexFile> container =
-                    DexFileFactory.loadDexContainer(jarFile, Opcodes.getDefault());
-            final List<String> entryNames = container.getDexEntryNames();
-            for (String entryName : entryNames) {
-                final DexFile dexFile = container.getEntry(entryName);
-                for (ClassDef classDef : dexFile.getClasses()) {
+        final Multimap<String, String> allClasses = HashMultimap.create();
+        for (String jar : jars) {
+            ImmutableSet<ClassDef> classes = Classpaths.getClassDefsFromJar(getDevice(), jar);
+            for (ClassDef classDef : classes) {
+                if (!classDef.getType().contains("$")) {
                     // No need to worry about inner classes, as they always go with their parent.
-                    if (!classDef.getType().contains("$")) {
-                        allClasses.put(classDef.getType(), deviceFile);
-                    }
+                    allClasses.put(classDef.getType(), jar);
                 }
             }
         }
-        for (Entry<String, Collection<DeviceFile>> entry : allClasses.asMap().entrySet()) {
-            if (entry.getValue().size() > 1) {
-                CLog.i("Class %s is duplicated in %s", entry.getKey(),
-                        entry.getValue().stream().map(DeviceFile::getJarName).collect(toSet()));
 
-                duplicateClasses.putAll(entry.getKey(), entry.getValue());
+        final Multimap<String, String> duplicates = HashMultimap.create();
+        for (String clazz : allClasses.keySet()) {
+            Collection<String> jarsWithClazz = allClasses.get(clazz);
+            if (jarsWithClazz.size() > 1) {
+                CLog.i("Class %s is duplicated in %s", clazz, jarsWithClazz);
+                duplicates.putAll(clazz, jarsWithClazz);
             }
         }
-        return duplicateClasses;
-    }
 
-    /**
-     * Checks that the duplicate classes in a set of jars exactly match a given allowlist.
-     */
-    private void checkClassDuplicatesMatchAllowlist(Set<DeviceFile> jars, Set<String> allowlist)
-            throws Exception {
-        // Collect classes which appear in at least two distinct jar files.
-        Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
-
-        allowlist.forEach(duplicateClasses::removeAll);
-
-        assertThat(duplicateClasses).isEmpty();
-    }
-
-    /**
-     * Checks that the duplicate classes are not in APEX jars.
-     */
-    private void checkClassDuplicatesNotInApexJars(Set<DeviceFile> jars)
-            throws Exception {
-        final Multimap<String, DeviceFile> duplicateClasses = getDuplicateClasses(jars);
-
-        Multimap<String, DeviceFile> duplicateClassesInApex =
-                Multimaps.filterValues(duplicateClasses,
-                        jar -> jar.devicePath.startsWith("/apex/"));
-
-        assertThat(duplicateClassesInApex).isEmpty();
-    }
-
-    /**
-     * Retrieve jar files from the device, based on an env variable.
-     *
-     * @param tmpDir   The temporary directory where the file will be dumped.
-     * @param variable The environment variable containing the colon separated jar files.
-     * @return A {@link java.util.Set} with the pulled {@link DeviceFile} instances.
-     */
-    private Set<DeviceFile> pullJarsFromEnvVariable(File tmpDir, String variable) {
-        return Arrays.stream(getEnvVariable(variable).split(":"))
-                .map(fileName -> pullFromDevice(fileName, tmpDir))
-                .collect(toSet());
-    }
-
-    private void runWithTempDir(TempDirRunnable runnable) throws Exception {
-        final File tmpDir = Files.createTempDirectory("strictjavapackages").toFile();
-        try {
-            runnable.runWithTempDir(tmpDir);
-        } finally {
-            tmpDir.delete();
-        }
-    }
-
-    private interface TempDirRunnable {
-        void runWithTempDir(File tempDir) throws Exception;
-    }
-
-    /**
-     * Class representing a device artifact that was pulled for a test method.
-     *
-     * <p> Contains the local and on-device paths.
-     */
-    private static final class DeviceFile {
-        public final String devicePath;
-        public final String hostPath;
-
-        public DeviceFile(String devicePath, String hostPath) {
-            this.devicePath = devicePath;
-            this.hostPath = hostPath;
-        }
-
-        public String getJarName() {
-            return devicePath.substring(devicePath.lastIndexOf('/') + 1);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) {
-                return true;
-            }
-            if (other == null) {
-                return false;
-            }
-            if (!(other instanceof DeviceFile)) {
-                return false;
-            }
-            DeviceFile that = (DeviceFile) other;
-            return Objects.equals(this.devicePath, that.devicePath)
-                    && Objects.equals(this.hostPath, that.hostPath);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(devicePath, hostPath);
-        }
-
-        @Override
-        public String toString() {
-            return String.format("DeviceFile(%s)", devicePath);
-        }
+        return duplicates;
     }
 }
