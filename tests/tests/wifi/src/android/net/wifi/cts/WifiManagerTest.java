@@ -2923,13 +2923,14 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
             }
             mWifiManager.setVerboseLoggingEnabled(newState);
             PollingCheck.check(
-                    "Wifi settings toggle failed!",
+                    "Wifi verbose logging toggle failed!",
                     DURATION_SETTINGS_TOGGLE,
                     () -> mWifiManager.isVerboseLoggingEnabled() == newState);
-            assertEquals(newState, mWifiManager.isVerboseLoggingEnabled());
             if (listener != null) {
-                assertEquals(newState, listener.status);
-                assertEquals(1, listener.numCalls);
+                PollingCheck.check(
+                        "Verbose logging listener timeout",
+                        DURATION_SETTINGS_TOGGLE,
+                        () -> listener.status == newState && listener.numCalls == 1);
             }
         } finally {
             if (currState != null) mWifiManager.setVerboseLoggingEnabled(currState);
