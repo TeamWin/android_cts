@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doReturn;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
@@ -46,14 +47,17 @@ final class WifiManagerWrapper extends ServiceManagerWrapper<WifiManager> {
             return spy;
         }
 
-        Log.d(TAG, "get(): creating spy for user " + context.getUserId());
         spy = Mockito.spy(manager);
+        String spyString = "WifiManagerWrapper#" + System.identityHashCode(spy);
+        Log.d(TAG, "get(): created spy for user " + context.getUserId() + ": " + spyString);
 
         // TODO(b/176993670): ideally there should be a way to automatically mock all DPM methods,
         // but that's probably not doable, as there is no contract (such as an interface) to specify
         // which ones should be spied and which ones should not (in fact, if there was an interface,
         // we wouldn't need Mockito and could wrap the calls using java's DynamicProxy
         try {
+            doReturn(spyString).when(spy).toString();
+
             // Used by WifiConfigCreator (whish is used by CtsVerifier)
             doAnswer(answer).when(spy).addNetwork(any());
             doAnswer(answer).when(spy).enableNetwork(anyInt(), anyBoolean());
