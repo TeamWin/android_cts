@@ -31,7 +31,6 @@ import android.hardware.hdmi.HdmiPlaybackClient;
 import android.hardware.hdmi.HdmiSwitchClient;
 import android.hardware.hdmi.HdmiTvClient;
 import android.os.SystemProperties;
-import android.util.Log;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SmallTest;
@@ -53,7 +52,6 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 public class HdmiControlManagerTest {
-    private static final String TAG = "HdmiControlManagerTest";
 
     private static final int DEVICE_TYPE_SWITCH = 6;
     private static final int TIMEOUT_CONTENT_CHANGE_SEC = 13;
@@ -180,7 +178,6 @@ public class HdmiControlManagerTest {
                 new HdmiControlManager.CecSettingChangeListener() {
                     @Override
                     public void onChange(String setting) {
-                        Log.i(TAG, "onChange() invoked.");
                         notifyLatch1.countDown();
                         notifyLatch2.countDown();
                         assertThat(setting).isEqualTo(
