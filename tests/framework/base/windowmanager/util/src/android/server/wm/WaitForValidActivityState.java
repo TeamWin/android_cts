@@ -95,7 +95,7 @@ public class WaitForValidActivityState {
             case WINDOWING_MODE_FREEFORM: return "FREEFORM";
             case WINDOWING_MODE_MULTI_WINDOW: return "MULTI_WINDOW";
             default:
-                throw new IllegalArgumentException("Unknown WINDOWING_MODE_: " + windowingMode);
+                return "Unknown WINDOWING_MODE_: " + windowingMode;
         }
     }
 
