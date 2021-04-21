@@ -102,7 +102,7 @@ public class GlobalSearchSessionPlatformCtsTest {
     private static final String TEXT = "foo";
 
     private static final AppSearchEmail EMAIL_DOCUMENT =
-            new AppSearchEmail.Builder("namespace", "uri1")
+            new AppSearchEmail.Builder("namespace", "id1")
                     .setFrom("from@example.com")
                     .setTo("to1@example.com", "to2@example.com")
                     .setSubject(TEXT)
@@ -296,81 +296,75 @@ public class GlobalSearchSessionPlatformCtsTest {
 
         // Insert two docs
         GenericDocument document1 = new GenericDocument.Builder<>(
-                "namespace", "uri1", AppSearchEmail.SCHEMA_TYPE).build();
+                "namespace", "id1", AppSearchEmail.SCHEMA_TYPE).build();
         GenericDocument document2 = new GenericDocument.Builder<>(
-                "namespace", "uri2", AppSearchEmail.SCHEMA_TYPE).build();
+                "namespace", "id2", AppSearchEmail.SCHEMA_TYPE).build();
         mDb.put(new PutDocumentsRequest.Builder()
                 .addGenericDocuments(document1, document2).build()).get();
 
-        // Report some usages. uri1 has 2 app and 1 system usage, uri2 has 1 app and 2 system usage.
+        // Report some usages. id1 has 2 app and 1 system usage, id2 has 1 app and 2 system usage.
         try (GlobalSearchSessionShim globalSearchSession
                      = GlobalSearchSessionShimImpl.createGlobalSearchSession().get()) {
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace")
-                    .setUri("uri1")
-                    .setUsageTimeMillis(10)
+            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id1")
+                    .setUsageTimestampMillis(10)
                     .build()).get();
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace")
-                    .setUri("uri1")
-                    .setUsageTimeMillis(20)
+            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id1")
+                    .setUsageTimestampMillis(20)
                     .build()).get();
             globalSearchSession.reportSystemUsage(
                     new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace")
-                            .setUri("uri1")
-                            .setUsageTimeMillis(1000)
+                            mContext.getPackageName(), DB_NAME, "namespace", "id1")
+                            .setUsageTimestampMillis(1000)
                             .build()).get();
 
-            mDb.reportUsage(new ReportUsageRequest.Builder("namespace")
-                    .setUri("uri2")
-                    .setUsageTimeMillis(100)
+            mDb.reportUsage(new ReportUsageRequest.Builder("namespace", "id2")
+                    .setUsageTimestampMillis(100)
                     .build()).get();
             globalSearchSession.reportSystemUsage(
                     new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace")
-                            .setUri("uri2")
-                            .setUsageTimeMillis(200)
+                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                            .setUsageTimestampMillis(200)
                             .build()).get();
             globalSearchSession.reportSystemUsage(
                     new ReportSystemUsageRequest.Builder(
-                            mContext.getPackageName(), DB_NAME, "namespace")
-                            .setUri("uri2")
-                            .setUsageTimeMillis(150)
+                            mContext.getPackageName(), DB_NAME, "namespace", "id2")
+                            .setUsageTimestampMillis(150)
                             .build()).get();
 
-            // Sort by app usage count: uri1 should win
+            // Sort by app usage count: id1 should win
             try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_COUNT)
                     .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
-                assertThat(page.get(0).getGenericDocument().getUri()).isEqualTo("uri1");
-                assertThat(page.get(1).getGenericDocument().getUri()).isEqualTo("uri2");
+                assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
+                assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id2");
             }
 
-            // Sort by app usage timestamp: uri2 should win
+            // Sort by app usage timestamp: id2 should win
             try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_USAGE_LAST_USED_TIMESTAMP)
                     .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
-                assertThat(page.get(0).getGenericDocument().getUri()).isEqualTo("uri2");
-                assertThat(page.get(1).getGenericDocument().getUri()).isEqualTo("uri1");
+                assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
+                assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id1");
             }
 
-            // Sort by system usage count: uri2 should win
+            // Sort by system usage count: id2 should win
             try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                     .setRankingStrategy(SearchSpec.RANKING_STRATEGY_SYSTEM_USAGE_COUNT)
                     .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
-                assertThat(page.get(0).getGenericDocument().getUri()).isEqualTo("uri2");
-                assertThat(page.get(1).getGenericDocument().getUri()).isEqualTo("uri1");
+                assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id2");
+                assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id1");
             }
 
-            // Sort by system usage timestamp: uri1 should win
+            // Sort by system usage timestamp: id1 should win
             try (SearchResultsShim results = mDb.search("", new SearchSpec.Builder()
                     .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY)
                     .setRankingStrategy(
@@ -378,8 +372,8 @@ public class GlobalSearchSessionPlatformCtsTest {
                     .build())) {
                 List<SearchResult> page = results.getNextPage().get();
                 assertThat(page).hasSize(2);
-                assertThat(page.get(0).getGenericDocument().getUri()).isEqualTo("uri1");
-                assertThat(page.get(1).getGenericDocument().getUri()).isEqualTo("uri2");
+                assertThat(page.get(0).getGenericDocument().getId()).isEqualTo("id1");
+                assertThat(page.get(1).getGenericDocument().getId()).isEqualTo("id2");
             }
         }
     }

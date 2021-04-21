@@ -43,7 +43,7 @@ public class AppSearchMigratorTest {
                             @NonNull GenericDocument document) {
                         return new GenericDocument.Builder<>(
                                         document.getNamespace(),
-                                        document.getUri(),
+                                        document.getId(),
                                         document.getSchemaType())
                                 .setCreationTimestampMillis(document.getCreationTimestampMillis())
                                 .setScore(document.getScore())
@@ -68,14 +68,14 @@ public class AppSearchMigratorTest {
                 };
 
         GenericDocument input =
-                new GenericDocument.Builder<>("namespace", "uri", "schemaType")
+                new GenericDocument.Builder<>("namespace", "id", "schemaType")
                         .setCreationTimestampMillis(12345L)
                         .setScore(100)
                         .setTtlMillis(54321L)
                         .build();
 
         GenericDocument expected =
-                new GenericDocument.Builder<>("namespace", "uri", "schemaType")
+                new GenericDocument.Builder<>("namespace", "id", "schemaType")
                         .setCreationTimestampMillis(12345L)
                         .setScore(100)
                         .setTtlMillis(54321L)
@@ -114,7 +114,7 @@ public class AppSearchMigratorTest {
                             @NonNull GenericDocument document) {
                         return new GenericDocument.Builder<>(
                                         document.getNamespace(),
-                                        document.getUri(),
+                                        document.getId(),
                                         document.getSchemaType())
                                 .setCreationTimestampMillis(document.getCreationTimestampMillis())
                                 .setScore(document.getScore())
@@ -130,14 +130,14 @@ public class AppSearchMigratorTest {
                 };
 
         GenericDocument input =
-                new GenericDocument.Builder<>("namespace", "uri", "schemaType")
+                new GenericDocument.Builder<>("namespace", "id", "schemaType")
                         .setCreationTimestampMillis(12345L)
                         .setScore(100)
                         .setTtlMillis(54321L)
                         .build();
 
         GenericDocument expected =
-                new GenericDocument.Builder<>("namespace", "uri", "schemaType")
+                new GenericDocument.Builder<>("namespace", "id", "schemaType")
                         .setCreationTimestampMillis(12345L)
                         .setScore(100)
                         .setTtlMillis(54321L)
