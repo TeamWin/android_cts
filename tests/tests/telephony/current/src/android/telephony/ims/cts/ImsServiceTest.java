@@ -911,54 +911,30 @@ public class ImsServiceTest {
         assertEquals(ImsReasonInfo.CODE_LOCAL_NOT_REGISTERED, deregResult.getCode());
 
         // Start registration
-        ImsRegistrationAttributes lteTagsAttr = new ImsRegistrationAttributes.Builder(
-                ImsRegistrationImplBase.REGISTRATION_TECH_LTE)
-                .setFeatureTags(featureTags)
-                .build();
-        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(lteTagsAttr);
-        ImsRegistrationAttributes attrResult = waitForResult(mRegQueue);
-        assertNotNull(attrResult);
-        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
-                attrResult.getRegistrationTechnology());
-        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, attrResult.getTransportType());
-        assertEquals(0, attrResult.getAttributeFlags());
-        assertEquals(featureTags, attrResult.getFeatureTags());
+        verifyRegistering(ImsRegistrationImplBase.REGISTRATION_TECH_LTE, featureTags, mRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN, 0 /*expected flags*/);
+
+        // move to NR
+        verifyRegistering(ImsRegistrationImplBase.REGISTRATION_TECH_NR, featureTags, mRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN, 0 /*expected flags*/);
 
         // move to cross sim
-        ImsRegistrationAttributes xSimTagsAttr = new ImsRegistrationAttributes.Builder(
-                ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM)
-                .setFeatureTags(featureTags)
-                .build();
-        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(xSimTagsAttr);
-        attrResult = waitForResult(mRegQueue);
-        assertNotNull(attrResult);
-        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM,
-                attrResult.getRegistrationTechnology());
-        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, attrResult.getTransportType());
-        assertEquals(ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET,
-                attrResult.getAttributeFlags());
-        assertEquals(featureTags, attrResult.getFeatureTags());
+        verifyRegistering(ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM, featureTags,
+                mRegQueue, AccessNetworkConstants.TRANSPORT_TYPE_WLAN,
+                ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET);
 
         // Complete registration
-        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(lteTagsAttr);
-        attrResult = waitForResult(mRegQueue);
-        assertNotNull(attrResult);
-        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_LTE,
-                attrResult.getRegistrationTechnology());
-        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, attrResult.getTransportType());
-        assertEquals(0, attrResult.getAttributeFlags());
-        assertEquals(featureTags, attrResult.getFeatureTags());
+        verifyRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_LTE, featureTags, mRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN, 0 /*expected flags*/);
+
+        // move to NR
+        verifyRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_NR, featureTags, mRegQueue,
+                AccessNetworkConstants.TRANSPORT_TYPE_WWAN, 0 /*expected flags*/);
 
         // move to cross sim
-        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(xSimTagsAttr);
-        attrResult = waitForResult(mRegQueue);
-        assertNotNull(attrResult);
-        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM,
-                attrResult.getRegistrationTechnology());
-        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WLAN, attrResult.getTransportType());
-        assertEquals(ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET,
-                attrResult.getAttributeFlags());
-        assertEquals(featureTags, attrResult.getFeatureTags());
+        verifyRegistered(ImsRegistrationImplBase.REGISTRATION_TECH_CROSS_SIM, featureTags,
+                mRegQueue, AccessNetworkConstants.TRANSPORT_TYPE_WLAN,
+                ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET);
 
         try {
             automan.adoptShellPermissionIdentity();
@@ -1909,6 +1885,20 @@ public class ImsServiceTest {
         // Complete registration
         sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
                 ImsRegistrationImplBase.REGISTRATION_TECH_LTE);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+        verifyRegistrationState(imsRcsManager, RegistrationManager.REGISTRATION_STATE_REGISTERED);
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+
+        // Start registration over NR
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(
+                ImsRegistrationImplBase.REGISTRATION_TECH_NR);
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
+        verifyRegistrationState(imsRcsManager, RegistrationManager.REGISTRATION_STATE_REGISTERING);
+        verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
+
+        // Complete registration over NR
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(
+                ImsRegistrationImplBase.REGISTRATION_TECH_NR);
         assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN, waitForIntResult(mQueue));
         verifyRegistrationState(imsRcsManager, RegistrationManager.REGISTRATION_STATE_REGISTERED);
         verifyRegistrationTransportType(imsRcsManager, AccessNetworkConstants.TRANSPORT_TYPE_WWAN);
@@ -3264,6 +3254,34 @@ public class ImsServiceTest {
                 (m) -> m.getRegistrationTransportType(getContext().getMainExecutor(),
                         mQueue::offer));
         assertEquals(expectedTransportType, waitForIntResult(mQueue));
+    }
+
+    private void verifyRegistering(int tech, ArraySet<String> featureTags,
+            LinkedBlockingQueue<ImsRegistrationAttributes> attrQueue, int expectedTransport,
+            int expectedAttrFlags) throws Exception {
+        ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(tech)
+                .setFeatureTags(featureTags).build();
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistering(attr);
+        ImsRegistrationAttributes attrResult = waitForResult(attrQueue);
+        assertNotNull(attrResult);
+        assertEquals(tech, attrResult.getRegistrationTechnology());
+        assertEquals(expectedTransport, attrResult.getTransportType());
+        assertEquals(expectedAttrFlags, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
+    }
+
+    private void verifyRegistered(int tech, ArraySet<String> featureTags,
+            LinkedBlockingQueue<ImsRegistrationAttributes> attrQueue, int expectedTransport,
+            int expectedAttrFlags) throws Exception {
+        ImsRegistrationAttributes attr = new ImsRegistrationAttributes.Builder(tech)
+                .setFeatureTags(featureTags).build();
+        sServiceConnector.getCarrierService().getImsRegistration().onRegistered(attr);
+        ImsRegistrationAttributes attrResult = waitForResult(attrQueue);
+        assertNotNull(attrResult);
+        assertEquals(tech, attrResult.getRegistrationTechnology());
+        assertEquals(expectedTransport, attrResult.getTransportType());
+        assertEquals(expectedAttrFlags, attrResult.getAttributeFlags());
+        assertEquals(featureTags, attrResult.getFeatureTags());
     }
 
     private <T> boolean waitForParam(LinkedBlockingQueue<T> queue, T waitParam) throws Exception {
