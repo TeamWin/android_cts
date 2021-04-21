@@ -34,6 +34,7 @@ TEST_KEY_SENSOR_FUSION = 'sensor_fusion'
 LOAD_SCENE_DELAY = 1  # seconds
 ACTIVITY_START_WAIT = 1.5  # seconds
 
+NUM_TRIES = 2
 RESULT_PASS = 'PASS'
 RESULT_FAIL = 'FAIL'
 RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
@@ -531,44 +532,51 @@ def main():
               '-c',
               '%s' % new_yml_file_name
           ]
-        # pylint: disable=subprocess-run-check
-        with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'w') as fp:
-          output = subprocess.run(cmd, stdout=fp)
-        # pylint: enable=subprocess-run-check
+        for num_try in range(NUM_TRIES):
+          # pylint: disable=subprocess-run-check
+          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'w') as fp:
+            output = subprocess.run(cmd, stdout=fp)
+          # pylint: enable=subprocess-run-check
 
-        # Parse mobly info output logs to determine skip and not_yet_mandated
-        # tests.
-        with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
-          test_code = output.returncode
-          test_failed = False
-          test_skipped = False
-          test_not_yet_mandated = False
-          line = file.read()
-          if 'Test skipped' in line:
-            return_string = 'SKIP '
-            num_skip += 1
-            test_skipped = True
+          # Parse mobly logs to determine SKIP, NOT_YET_MANDATED, and
+          # socket FAILs.
+          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
+            test_code = output.returncode
+            test_failed = False
+            test_skipped = False
+            test_not_yet_mandated = False
+            line = file.read()
+            if 'Test skipped' in line:
+              return_string = 'SKIP '
+              num_skip += 1
+              test_skipped = True
+              break
 
-          if 'Not yet mandated test' in line:
-            return_string = 'FAIL*'
-            num_not_mandated_fail += 1
-            test_not_yet_mandated = True
+            if 'Not yet mandated test' in line:
+              return_string = 'FAIL*'
+              num_not_mandated_fail += 1
+              test_not_yet_mandated = True
+              break
 
-          if test_code == 0 and not test_skipped:
-            return_string = 'PASS '
-            num_pass += 1
+            if test_code == 0 and not test_skipped:
+              return_string = 'PASS '
+              num_pass += 1
+              break
 
-          if test_code == 1 and not test_not_yet_mandated:
-            return_string = 'FAIL '
-            num_fail += 1
-            test_failed = True
-
-          os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
-          logging.info('%s %s/%s', return_string, s, test)
-          test_name = test.split('/')[-1].split('.')[0]
-          results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
-          msg_short = '%s %s' % (return_string, test)
-          scene_test_summary += msg_short + '\n'
+            if test_code == 1 and not test_not_yet_mandated:
+              return_string = 'FAIL '
+              if 'Problem with socket' in line and num_try != NUM_TRIES-1:
+                logging.info('Retry %s/%s', s, test)
+              else:
+                num_fail += 1
+                test_failed = True
+                break
+            os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
+        logging.info('%s %s/%s', return_string, s, test)
+        test_name = test.split('/')[-1].split('.')[0]
+        results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
+        msg_short = '%s %s' % (return_string, test)
+        scene_test_summary += msg_short + '\n'
 
       # unit is millisecond for execution time record in CtsVerifier
       scene_end_time = int(round(time.time() * 1000))
