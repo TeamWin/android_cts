@@ -261,6 +261,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
             CecOperand message, String params) throws Exception {
         checkCecClient();
         String sendMessageString = "tx " + source + destination + ":" + message + params;
+        CLog.v("Sending CEC message: " + sendMessageString);
         mOutputConsole.write(sendMessageString);
         mOutputConsole.newLine();
         mOutputConsole.flush();
@@ -325,7 +326,7 @@ public final class HdmiCecClientWrapper extends ExternalResource {
     /** Sends a message to the output console of the cec-client */
     public void sendConsoleMessage(String message) throws Exception {
         checkCecClient();
-        CLog.v("Sending message:: " + message);
+        CLog.v("Sending console message:: " + message);
         mOutputConsole.write(message);
         mOutputConsole.flush();
     }
