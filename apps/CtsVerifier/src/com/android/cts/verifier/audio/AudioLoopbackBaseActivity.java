@@ -17,37 +17,30 @@
 package com.android.cts.verifier.audio;
 
 import android.app.AlertDialog;
-
-import android.content.Context;
-
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-
 import android.util.Log;
-
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
-import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-
 import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 /**
  * Base class for testing activitiees that require audio loopback hardware..
@@ -279,51 +272,77 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     //
     // Common loging
     //
+    // Schema
+    private static final String KEY_LATENCY = "latency";
+    private static final String KEY_CONFIDENCE = "confidence";
+    private static final String KEY_SAMPLE_RATE = "sample_rate";
+    private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
+    private static final String KEY_IS_PERIPHERAL_ATTACHED = "is_peripheral_attached";
+    private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
+    private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
+
+    @Override
+    public String getTestId() {
+        return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+    }
+
+    //
+    // Subclasses should call this explicitly. SubClasses should call submit() after their logs
+    //
     protected void recordTestResults() {
         CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
-                "Estimated Latency",
+                KEY_LATENCY,
                 mMeanLatencyMillis,
                 ResultType.LOWER_BETTER,
                 ResultUnit.MS);
 
         reportLog.addValue(
-                "Confidence",
+                KEY_CONFIDENCE,
                 mMeanConfidence,
                 ResultType.HIGHER_BETTER,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Sample Rate",
+                KEY_SAMPLE_RATE,
                 mNativeAnalyzerThread.getSampleRate(),
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Low Latency Stream",
+                KEY_IS_LOW_LATENCY,
                 mNativeAnalyzerThread.isLowLatencyStream(),
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Is Peripheral Attached",
+                KEY_IS_PERIPHERAL_ATTACHED,
                 mIsPeripheralAttached,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         if (mIsPeripheralAttached) {
             reportLog.addValue(
-                    "Input Device",
+                    KEY_INPUT_PERIPHERAL_NAME,
                     mInputDevInfo != null ? mInputDevInfo.getProductName().toString() : "None",
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    "Ouput Device",
+                    KEY_OUTPUT_PERIPHERAL_NAME,
                     mOutputDevInfo != null ? mOutputDevInfo.getProductName().toString() : "None",
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
         }
+    }
+
+    private static final String KEY_LOOPBACK_AVAILABLE = "loopback_available";
+    private void recordLoopbackStatus(boolean has) {
+        getReportLog().addValue(
+                KEY_LOOPBACK_AVAILABLE,
+                has,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
     }
 
     //
@@ -487,14 +506,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
 
         connectLoopbackUI();
-    }
-
-    private void recordLoopbackStatus(boolean has) {
-        getReportLog().addValue(
-                "User reported loopback availability: ",
-                has ? 1.0 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
     }
 
     //
