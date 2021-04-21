@@ -3127,6 +3127,7 @@ public class ImsServiceTest {
         return new ProvisioningManager.RcsProvisioningCallback() {
             @Override
             public void onConfigurationChanged(byte[] configXml) {
+                super.onConfigurationChanged(configXml);
                 actionQueue.offer(RCS_CONFIG_CB_CHANGED);
                 if (paramQueue != null) {
                     RcsProvisioningCallbackParams params = new RcsProvisioningCallbackParams();
@@ -3137,6 +3138,7 @@ public class ImsServiceTest {
 
             @Override
             public void onAutoConfigurationErrorReceived(int code, String str) {
+                super.onAutoConfigurationErrorReceived(code, str);
                 actionQueue.offer(RCS_CONFIG_CB_ERROR);
                 if (paramQueue != null) {
                     RcsProvisioningCallbackParams params = new RcsProvisioningCallbackParams();
@@ -3148,16 +3150,19 @@ public class ImsServiceTest {
 
             @Override
             public void onConfigurationReset() {
+                super.onConfigurationReset();
                 actionQueue.offer(RCS_CONFIG_CB_RESET);
             }
 
             @Override
             public void onRemoved() {
+                super.onRemoved();
                 actionQueue.offer(RCS_CONFIG_CB_DELETE);
             }
 
             @Override
             public void onPreProvisioningReceived(byte[] configXml) {
+                super.onPreProvisioningReceived(configXml);
                 actionQueue.offer(RCS_CONFIG_CB_PREPROV);
                 if (paramQueue != null) {
                     RcsProvisioningCallbackParams params = new RcsProvisioningCallbackParams();
