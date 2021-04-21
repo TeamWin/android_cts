@@ -1406,10 +1406,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PrintingPolicyTest");
     }
 
-    protected void executeDeviceTestClass(String className) throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
-    }
-
     @Test
     public void testKeyManagement() throws Exception {
         installAppAsUser(SHARED_UID_APP1_APK, mUserId);
@@ -1949,8 +1945,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    protected void executeDeviceTestClass(String className) throws Exception {
+        executeDeviceTestMethod(className, /* testName= */ null);
+    }
+
     protected void executeDeviceTestMethod(String className, String testName) throws Exception {
-        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, testName, mUserId);
+        executeDeviceTestMethod(className, testName, /* params= */ new HashMap<>());
     }
 
     protected void executeDeviceTestMethod(String className, String testName,
