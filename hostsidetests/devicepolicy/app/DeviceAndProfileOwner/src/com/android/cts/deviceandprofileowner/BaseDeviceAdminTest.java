@@ -46,12 +46,12 @@ import java.util.concurrent.CountDownLatch;
 /**
  * Base class for profile and device based tests.
  *
- * This class handles making sure that the test is the profile or device owner and that it has an
+ * <p>This class handles making sure that the test is the profile or device owner and that it has an
  * active admin registered, so that all tests may assume these are done.
  */
-public class BaseDeviceAdminTest extends InstrumentationTestCase {
+public abstract class BaseDeviceAdminTest extends InstrumentationTestCase {
 
-    public static class BasicAdminReceiver extends DeviceAdminReceiver {
+    public static final class BasicAdminReceiver extends DeviceAdminReceiver {
 
         static final String ACTION_NETWORK_LOGS_AVAILABLE =
                 "com.android.cts.deviceandprofileowner.action.ACTION_NETWORK_LOGS_AVAILABLE";
@@ -115,6 +115,8 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
         }
     }
 
+    private static final String TAG = BaseDeviceAdminTest.class.getSimpleName();
+
     public static final String PACKAGE_NAME = BasicAdminReceiver.class.getPackage().getName();
     public static final ComponentName ADMIN_RECEIVER_COMPONENT = new ComponentName(
             PACKAGE_NAME, BasicAdminReceiver.class.getName());
@@ -132,7 +134,10 @@ public class BaseDeviceAdminTest extends InstrumentationTestCase {
         super.setUp();
         mContext = getInstrumentation().getContext();
 
-        mDevicePolicyManager = mContext.getSystemService(DevicePolicyManager.class);
+        mDevicePolicyManager = TestAppSystemServiceFactory.getDevicePolicyManager(mContext,
+                BasicAdminReceiver.class);
+        Log.v(TAG, "setup(): dpm for " + getClass() + " and user " + mContext.getUserId() + ": "
+                + mDevicePolicyManager);
         assertWithMessage("dpm").that(mDevicePolicyManager).isNotNull();
 
         mUserManager = mContext.getSystemService(UserManager.class);
