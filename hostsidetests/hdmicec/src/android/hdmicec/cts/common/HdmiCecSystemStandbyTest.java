@@ -46,7 +46,7 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
     private static final String POWER_CONTROL_MODE =
-            "send_standby_on_sleep";
+            "power_control_mode";
     private static final String POWER_CONTROL_MODE_NONE =
             "none";
 
