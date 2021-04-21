@@ -176,6 +176,16 @@ public final class UaSecurityProtocolIdentifierTest {
         }
     }
 
+    @Test
+    public void testUaSecurityProtocolIdentifierBuilder() {
+        UaSecurityProtocolIdentifier sp = testCreate3GppSpId(
+                PROTO_3GPP_TLS_ID[0], TLS_CS_ID_SUPPORTED[0], false);
+        UaSecurityProtocolIdentifier.Builder builder =
+                new UaSecurityProtocolIdentifier.Builder(sp);
+
+        assertTrue(sp.equals(builder.build()));
+    }
+
     private UaSecurityProtocolIdentifier testCreate3GppSpId(
             Integer id, Integer cs, boolean nullExpected) {
         boolean isFail = false;
