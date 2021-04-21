@@ -38,6 +38,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.HardwarePropertiesManager;
 import android.os.UserHandle;
 import android.os.UserManager;
 import android.util.Log;
@@ -89,6 +90,14 @@ public final class TestAppSystemServiceFactory {
     public static WifiManager getWifiManager(Context context,
             Class<? extends DeviceAdminReceiver> receiverClass) {
         return getSystemService(context, WifiManager.class, receiverClass);
+    }
+
+    /**
+     * Gets the proper {@link HardwarePropertiesManager} instance to be used by the test.
+     */
+    public static HardwarePropertiesManager getHardwarePropertiesManager(Context context,
+            Class<? extends DeviceAdminReceiver> receiverClass) {
+        return getSystemService(context, HardwarePropertiesManager.class, receiverClass);
     }
 
     private static void assertHasRequiredReceiver(Context context) {
@@ -146,6 +155,12 @@ public final class TestAppSystemServiceFactory {
                     (ServiceManagerWrapper<T>) new WifiManagerWrapper();
             wrapper = safeCastWrapper;
             wrappedClass = WifiManager.class;
+        } else if (serviceClass.equals(HardwarePropertiesManager.class)) {
+            @SuppressWarnings("unchecked")
+            ServiceManagerWrapper<T> safeCastWrapper =
+                    (ServiceManagerWrapper<T>) new HardwarePropertiesManagerWrapper();
+            wrapper = safeCastWrapper;
+            wrappedClass = HardwarePropertiesManager.class;
         } else {
             throw new IllegalArgumentException("invalid service class: " + serviceClass);
         }

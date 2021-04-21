@@ -21,6 +21,7 @@ import static com.android.bedstead.dpmwrapper.Utils.VERBOSE;
 import android.annotation.Nullable;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.CpuUsageInfo;
 import android.os.Parcelable;
 import android.util.ArraySet;
 import android.util.Log;
@@ -41,12 +42,16 @@ final class DataFormatter {
     private static final String TYPE_INT = "int";
     private static final String TYPE_LONG = "long";
     private static final String TYPE_BYTE_ARRAY = "byte_array";
+    private static final String TYPE_FLOAT_ARRAY = "float_array";
     private static final String TYPE_STRING_OR_CHAR_SEQUENCE = "string";
     private static final String TYPE_PARCELABLE = "parcelable";
     private static final String TYPE_SERIALIZABLE = "serializable";
     private static final String TYPE_ARRAY_LIST_STRING = "array_list_string";
     private static final String TYPE_ARRAY_LIST_PARCELABLE = "array_list_parcelable";
     private static final String TYPE_SET_STRING = "set_string";
+    // Must handle each array of parcelable subclass , as they need to be explicitly converted
+    private static final String TYPE_CPU_USAFE_INFO_ARRAY = "cpu_usage_info_array";
+
     // Used when a method is called passing a null argument - the proper method will have to be
     // infered using findMethod()
     private static final String TYPE_NULL = "null";
@@ -85,10 +90,24 @@ final class DataFormatter {
             return;
         }
         if ((value instanceof byte[])) {
-            logMarshalling("Adding Byte[]", index, extraTypeName, TYPE_BYTE_ARRAY, extraValueName,
+            logMarshalling("Adding byte[]", index, extraTypeName, TYPE_BYTE_ARRAY, extraValueName,
                     value);
             intent.putExtra(extraTypeName, TYPE_BYTE_ARRAY);
             intent.putExtra(extraValueName, (byte[]) value);
+            return;
+        }
+        if ((value instanceof float[])) {
+            logMarshalling("Adding float[]", index, extraTypeName, TYPE_FLOAT_ARRAY, extraValueName,
+                    value);
+            intent.putExtra(extraTypeName, TYPE_FLOAT_ARRAY);
+            intent.putExtra(extraValueName, (float[]) value);
+            return;
+        }
+        if ((value instanceof CpuUsageInfo[])) {
+            logMarshalling("Adding CpuUsageInfo[]", index, extraTypeName,
+                    TYPE_CPU_USAFE_INFO_ARRAY, extraValueName, value);
+            intent.putExtra(extraTypeName, TYPE_CPU_USAFE_INFO_ARRAY);
+            intent.putExtra(extraValueName, (CpuUsageInfo[]) value);
             return;
         }
         if ((value instanceof CharSequence)) {
@@ -218,9 +237,20 @@ final class DataFormatter {
                 logMarshalling("Got ArraySet<String>", index, extraTypeName, type, extraValueName,
                         value);
                 break;
+            case TYPE_CPU_USAFE_INFO_ARRAY:
+                Parcelable[] raw = (Parcelable[]) extras.get(extraValueName);
+                CpuUsageInfo[] cast = new CpuUsageInfo[raw.length];
+                for (int i = 0; i < raw.length; i++) {
+                    cast[i] = (CpuUsageInfo) raw[i];
+                }
+                value = cast;
+                logMarshalling("Got CpuUsageInfo[]", index, extraTypeName, type, extraValueName,
+                        value);
+                break;
             case TYPE_ARRAY_LIST_STRING:
             case TYPE_ARRAY_LIST_PARCELABLE:
             case TYPE_BYTE_ARRAY:
+            case TYPE_FLOAT_ARRAY:
             case TYPE_BOOLEAN:
             case TYPE_INT:
             case TYPE_LONG:
@@ -236,6 +266,8 @@ final class DataFormatter {
         }
         if (parameterTypes != null) {
             Class<?> parameterType = null;
+            // Must convert special types (like primitive to Object, generic list to list, etc...),
+            // but not those that can be inferred from getClass() (like String or array)
             switch (type) {
                 case TYPE_NULL:
                     break;
@@ -252,9 +284,6 @@ final class DataFormatter {
                     // A String is a CharSequence, but most methods take String, so we're assuming
                     // a string and handle the exceptional cases on findMethod()
                     parameterType = String.class;
-                    break;
-                case TYPE_BYTE_ARRAY:
-                    parameterType = byte[].class;
                     break;
                 case TYPE_ARRAY_LIST_STRING:
                     parameterType = List.class;
