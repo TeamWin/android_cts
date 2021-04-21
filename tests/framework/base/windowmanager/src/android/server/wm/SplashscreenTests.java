@@ -103,7 +103,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
-        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.RED, Color.BLACK);
+        // The windowSplashScreenContent attribute is set to RED. We check that it is ignored.
+        testSplashScreenColor(SPLASHSCREEN_ACTIVITY, Color.BLUE, Color.BLACK);
     }
 
     private void testSplashScreenColor(ComponentName name, int primaryColor, int secondaryColor) {
