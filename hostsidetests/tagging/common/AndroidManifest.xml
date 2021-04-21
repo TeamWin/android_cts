@@ -21,16 +21,11 @@
 
     <application android:debuggable="true"
                  android:allowNativeHeapPointerTagging="true">
-        <activity android:name=".DeviceKernelHelpers">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation
-        android:name="android.test.InstrumentationTestRunner"
+        android:name="androidx.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.cts.tagging.support" />
 </manifest>
 

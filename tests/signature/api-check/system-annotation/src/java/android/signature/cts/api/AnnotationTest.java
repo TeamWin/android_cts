@@ -27,6 +27,7 @@ import com.android.compatibility.common.util.PropertyUtil;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.function.Predicate;
 
 /**
  * Checks that parts of the device's API that are annotated (e.g. with android.annotation.SystemApi)
@@ -43,6 +44,15 @@ public class AnnotationTest extends AbstractApiTest {
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
         mExpectedApiFiles = getCommaSeparatedList(instrumentationArgs, "expected-api-files");
         mAnnotationForExactMatch = instrumentationArgs.getString("annotation-for-exact-match");
+    }
+
+    private Predicate<? super JDiffClassDescription> androidAutoClassesFilter() {
+        if (getInstrumentation().getContext().getPackageManager().hasSystemFeature(
+                "android.hardware.type.automotive")) {
+            return clz -> true;
+        } else {
+            return clz -> !clz.getAbsoluteClassName().startsWith("android.car.");
+        }
     }
 
     /**
@@ -81,6 +91,7 @@ public class AnnotationTest extends AbstractApiTest {
             ApiDocumentParser apiDocumentParser = new ApiDocumentParser(TAG);
 
             parseApiResourcesAsStream(apiDocumentParser, mExpectedApiFiles)
+                    .filter(androidAutoClassesFilter())
                     .forEach(complianceChecker::checkSignatureCompliance);
 
             // After done parsing all expected API files, perform any deferred checks.

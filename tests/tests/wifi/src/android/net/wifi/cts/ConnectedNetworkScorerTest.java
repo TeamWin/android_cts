@@ -22,6 +22,7 @@ import static android.Manifest.permission.READ_WIFI_CREDENTIAL;
 import static android.Manifest.permission.WIFI_UPDATE_USABILITY_STATS_SCORE;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PAID;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_OEM_PRIVATE;
+import static android.net.wifi.WifiUsabilityStatsEntry.RadioStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.RateStats;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_FAILURE;
 import static android.net.wifi.WifiUsabilityStatsEntry.PROBE_STATUS_NO_PROBE;
@@ -305,7 +306,22 @@ public class ConnectedNetworkScorerTest extends WifiJUnit4TestBase {
                         assertThat(statsEntry.getRateStats().get(0).getMpduLost()).isAtLeast(0);
                         assertThat(statsEntry.getRateStats().get(0).getRetries()).isAtLeast(0);
                     }
+                    RadioStats radioStat = new RadioStats(0, 10, 11, 12, 13, 14, 15, 16, 17, 18);
                     assertThat(statsEntry.getWifiLinkLayerRadioStats()).isNotNull();
+                    int numRadios = statsEntry.getWifiLinkLayerRadioStats().size();
+                    for (int i = 0; i < numRadios; i++) {
+                        RadioStats radioStats = statsEntry.getWifiLinkLayerRadioStats().get(i);
+                        assertThat(radioStats.getRadioId()).isAtLeast(0);
+                        assertThat(radioStats.getTotalRadioOnTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalRadioTxTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalRadioRxTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalScanTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalNanScanTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalBackgroundScanTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalRoamScanTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalPnoScanTimeMillis()).isAtLeast(0);
+                        assertThat(radioStats.getTotalHotspot2ScanTimeMillis()).isAtLeast(0);
+                    }
                 }
                 // no longer populated, return default value.
                 assertThat(statsEntry.getCellularDataNetworkType())

@@ -108,6 +108,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     private final static long POLL_TIME_PLAY_MUSIC = 2000;
     private final static long TIME_TO_PLAY = 2000;
     private final static String APPOPS_OP_STR = "android:write_settings";
+    private final static Set<Integer> ALL_KNOWN_ENCAPSULATION_TYPES = new HashSet<>() {{
+            add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
+    }};
     private final static Set<Integer> ALL_ENCAPSULATION_TYPES = new HashSet<>() {{
             add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_NONE);
             add(AudioProfile.AUDIO_ENCAPSULATION_TYPE_IEC61937);
@@ -1863,6 +1866,8 @@ public class AudioManagerTest extends InstrumentationTestCase {
             for (AudioDescriptor descriptor : device.getAudioDescriptors()) {
                 assertNotEquals(AudioDescriptor.STANDARD_NONE, descriptor.getStandard());
                 assertNotNull(descriptor.getDescriptor());
+                assertTrue(
+                        ALL_KNOWN_ENCAPSULATION_TYPES.contains(descriptor.getEncapsulationType()));
             }
             assertEquals(formats, formatsFromProfile);
             assertEquals(channelMasks, channelMasksFromProfile);

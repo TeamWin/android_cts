@@ -3855,6 +3855,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_DEVICE_OWNER" />
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_PROFILE_OWNER" />
+                <action android:name="com.android.cts.verifier.managedprovisioning.action.CHECK_USER_AFFILIATED" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
             </intent-filter>

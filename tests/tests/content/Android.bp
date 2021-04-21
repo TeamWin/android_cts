@@ -91,6 +91,7 @@ android_test {
         "data/HelloWorld5_hdpi-v4.digests.signature",
         "data/HelloWorld5_mdpi-v4.digests",
         "data/HelloWorld5_mdpi-v4.digests.signature",
+        "data/malformed.apk.idsig",
         "data/test-cert.x509.pem",
     ],
     java_resources: [
