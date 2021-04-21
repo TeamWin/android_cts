@@ -36,7 +36,7 @@ import java.io.InputStreamReader;
  * Neverallow Rules SELinux tests.
  */
 public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
-    private static final int Q_SEPOLICY_VERSION = 29;
+    private static final int R_SEPOLICY_VERSION = 30;
     private File sepolicyAnalyze;
     private File devicePolicyFile;
     private File deviceSystemPolicyFile;
@@ -131,7 +131,7 @@ src_method = """
         // If sepolicy is split and vendor sepolicy version is behind platform's,
         // only test against platform policy.
         File policyFile =
-                (isSepolicySplit() && mVendorSepolicyVersion < Q_SEPOLICY_VERSION) ?
+                (isSepolicySplit() && mVendorSepolicyVersion < R_SEPOLICY_VERSION) ?
                 deviceSystemPolicyFile :
                 devicePolicyFile;
 
