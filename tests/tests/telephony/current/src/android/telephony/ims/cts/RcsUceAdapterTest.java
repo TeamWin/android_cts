@@ -467,9 +467,6 @@ public class RcsUceAdapterTest {
             //expected
         }
 
-        // Lunch an activity to stay in the foreground.
-        lunchUceActivity();
-
         // requestCapabilities in the foreground
         try {
             ShellIdentityUtils.invokeThrowableMethodWithShellPermissionsNoReturn(uceAdapter,
@@ -500,8 +497,6 @@ public class RcsUceAdapterTest {
             }
         }
 
-        // Finish the activity
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -562,9 +557,6 @@ public class RcsUceAdapterTest {
 
         // Connect to the TestImsService
         connectTestImsService();
-
-        // Stay in the foreground.
-        lunchUceActivity();
 
         TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
@@ -631,7 +623,6 @@ public class RcsUceAdapterTest {
         verifyCapabilityResult(capability, sTestNumberUri, REQUEST_RESULT_FOUND, true, true);
         waitForResult(completeQueue);
 
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -646,9 +637,6 @@ public class RcsUceAdapterTest {
 
         // Connect to the TestImsService
         setupTestImsService(uceAdapter, true, true, false);
-
-        // Stay in the foreground
-        lunchUceActivity();
 
         Collection<Uri> contacts = Collections.singletonList(sTestNumberUri);
 
@@ -720,7 +708,6 @@ public class RcsUceAdapterTest {
             }
         });
 
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -819,9 +806,6 @@ public class RcsUceAdapterTest {
                 return value;
             }
         }, RcsUceAdapter.ERROR_SERVER_UNAVAILABLE);
-
-        // Stay in the foreground.
-        lunchUceActivity();
 
         TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
@@ -928,7 +912,6 @@ public class RcsUceAdapterTest {
             retryAfterQueue.clear();
         }
 
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -993,9 +976,6 @@ public class RcsUceAdapterTest {
             cb.onTerminated("", 0L);
         });
 
-        // Stay in the foreground.
-        lunchUceActivity();
-
         requestCapabilities(uceAdapter, contacts, callback);
 
         // Verify that all the three contact's capabilities are received
@@ -1052,7 +1032,6 @@ public class RcsUceAdapterTest {
         // Verify the onCompleted is called
         waitForResult(completeQueue);
 
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -1131,9 +1110,6 @@ public class RcsUceAdapterTest {
             cb.onTerminated("", 0L);
         });
 
-        // Stay in the foreground.
-        lunchUceActivity();
-
         requestCapabilities(uceAdapter, contacts, callback);
 
         // Verify the onCompleted is called
@@ -1206,8 +1182,6 @@ public class RcsUceAdapterTest {
                 fail("The contact of the capabilities result is invalid.");
             }
         }
-
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -1429,9 +1403,6 @@ public class RcsUceAdapterTest {
             optionsCallback.onNetworkResponse(sipCode, reason, featureTags);
         });
 
-        // Stay in the foreground.
-        lunchUceActivity();
-
         // Request capabilities by calling the API requestCapabilities.
         requestCapabilities(uceAdapter, contacts, callback);
 
@@ -1479,7 +1450,6 @@ public class RcsUceAdapterTest {
         receiveRequestCount.set(0);
         removeTestContactFromEab();
 
-        finishUceActivity();
         overrideCarrierConfig(null);
     }
 
@@ -1843,25 +1813,5 @@ public class RcsUceAdapterTest {
         } catch (ImsException e) {
             fail("requestAvailability failed " + e);
         }
-    }
-
-    private void lunchUceActivity() throws Exception {
-        final CountDownLatch countdownLatch = new CountDownLatch(1);
-        final Intent activityIntent = new Intent(getContext(), UceActivity.class);
-        activityIntent.setAction(Intent.ACTION_MAIN);
-        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        UceActivity.setCountDownLatch(countdownLatch);
-        getContext().startActivity(activityIntent);
-        countdownLatch.await(5000, TimeUnit.MILLISECONDS);
-    }
-
-    private void finishUceActivity() {
-        final Intent finishIntent = new Intent(getContext(), UceActivity.class);
-        finishIntent.setAction(UceActivity.ACTION_FINISH);
-        finishIntent.addCategory(Intent.CATEGORY_LAUNCHER);
-        finishIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        finishIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        getContext().startActivity(finishIntent);
     }
 }
