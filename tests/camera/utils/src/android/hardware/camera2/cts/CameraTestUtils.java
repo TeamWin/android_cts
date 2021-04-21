@@ -52,6 +52,7 @@ import android.media.ImageWriter;
 import android.media.Image.Plane;
 import android.os.Build;
 import android.os.Handler;
+import android.os.SystemProperties;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -3204,5 +3205,53 @@ public class CameraTestUtils extends Assert {
                     cameraId, minBurstFps), foundYUVStreamingRange);
         }
         return targetRange;
+    }
+
+    private static final int perfClass = SystemProperties.getInt(
+            "ro.odm.build.media_performance_class", 0);
+
+    private static final int PERFORMANCE_CLASS_S = Build.VERSION_CODES.R + 1;
+
+    /**
+     * Check whether this mobile device is S performance class as defined in CDD
+     */
+    public static boolean isSPerfClass() {
+        return perfClass == PERFORMANCE_CLASS_S;
+    }
+
+    /**
+     * Check whether a camera Id is a primary rear facing camera
+     */
+    public static boolean isPrimaryRearFacingCamera(CameraManager manager, String cameraId)
+            throws Exception {
+        return isPrimaryCamera(manager, cameraId, CameraCharacteristics.LENS_FACING_BACK);
+    }
+
+    /**
+     * Check whether a camera Id is a primary front facing camera
+     */
+    public static boolean isPrimaryFrontFacingCamera(CameraManager manager, String cameraId)
+            throws Exception {
+        return isPrimaryCamera(manager, cameraId, CameraCharacteristics.LENS_FACING_FRONT);
+    }
+
+    private static boolean isPrimaryCamera(CameraManager manager, String cameraId,
+            Integer lensFacing) throws Exception {
+        CameraCharacteristics characteristics;
+        Integer facing;
+
+        String [] ids = manager.getCameraIdList();
+        for (String id : ids) {
+            characteristics = manager.getCameraCharacteristics(id);
+            facing = characteristics.get(CameraCharacteristics.LENS_FACING);
+            if (lensFacing.equals(facing)) {
+                if (cameraId.equals(id)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 }

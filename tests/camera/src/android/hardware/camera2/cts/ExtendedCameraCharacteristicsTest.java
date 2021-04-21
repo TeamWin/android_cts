@@ -17,6 +17,7 @@
 package android.hardware.camera2.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -94,6 +95,8 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final Size HD = new Size(1280, 720);
     private static final Size VGA = new Size(640, 480);
     private static final Size QVGA = new Size(320, 240);
+    private static final Size UHD = new Size(3840, 2160);
+    private static final Size DC4K = new Size(4096, 2160);
 
     private static final long MIN_BACK_SENSOR_RESOLUTION = 2000000;
     private static final long MIN_FRONT_SENSOR_RESOLUTION = VGA.getHeight() * VGA.getWidth();
@@ -102,6 +105,10 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
     private static final int MAX_NUM_IMAGES = 5;
     private static final long PREVIEW_RUN_MS = 500;
     private static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
+
+    private static final long MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 12000000;
+    private static final long MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION = 6000000;
+
     /*
      * HW Levels short hand
      */
@@ -2428,6 +2435,152 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
             assertFalse("Camera " + mAllCameraIds[i] + "'s long dimension must "
                     + "align with screen's long dimension", isDevicePortrait^isCameraPortrait);
         }
+    }
+
+    /**
+     * Check camera characteristics for S Performance class requirements as specified
+     * in CDD camera section 7.5
+     */
+    @Test
+    @CddTest(requirement="7.5")
+    public void testCameraSPerfClassCharacteristics() throws Exception {
+        if (mAdoptShellPerm) {
+            // Skip test for system camera. Performance class is only applicable for public camera
+            // ids.
+            return;
+        }
+        boolean isSPerfClass = CameraTestUtils.isSPerfClass();
+        if (!isSPerfClass) {
+            return;
+        }
+
+        // H-1-6
+        boolean frontBackAdvertised = mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_CAMERA_CONCURRENT);
+        mCollector.expectTrue("Performance class device should support concurrent front-back",
+                frontBackAdvertised);
+
+        boolean hasPrimaryRear = false;
+        boolean hasPrimaryFront = false;
+        for (int i = 0; i < mCameraIdsUnderTest.length; i++) {
+            String cameraId = mCameraIdsUnderTest[i];
+            boolean isPrimaryRear = CameraTestUtils.isPrimaryRearFacingCamera(
+                    mCameraManager, cameraId);
+            boolean isPrimaryFront = CameraTestUtils.isPrimaryFrontFacingCamera(
+                    mCameraManager, cameraId);
+            if (!isPrimaryRear && !isPrimaryFront) {
+                continue;
+            }
+
+            CameraCharacteristics c = mCharacteristics.get(i);
+            StaticMetadata staticInfo = mAllStaticInfo.get(cameraId);
+
+            // H-1-1, H-1-2
+            Size pixelArraySize = CameraTestUtils.getValueNotNull(
+                    c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
+            long sensorResolution = pixelArraySize.getHeight() * pixelArraySize.getWidth();
+            StreamConfigurationMap config = staticInfo.getValueFromKeyNonNull(
+                    CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            assertNotNull("No stream configuration map found for ID " + cameraId, config);
+            List<Size> videoSizes = CameraTestUtils.getSupportedVideoSizes(cameraId,
+                    mCameraManager, null /*bound*/);
+
+            if (isPrimaryRear) {
+                hasPrimaryRear = true;
+                mCollector.expectTrue("Primary rear camera resolution should be at least " +
+                        MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
+                        sensorResolution,
+                        sensorResolution >= MIN_BACK_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
+
+                // 720P @ 240fps
+                boolean supportHighSpeed = staticInfo.isCapabilitySupported(CONSTRAINED_HIGH_SPEED);
+                mCollector.expectTrue("Primary rear camera should support high speed recording",
+                        supportHighSpeed);
+                if (supportHighSpeed) {
+                    boolean supportHD240 = false;
+                    Size[] availableHighSpeedSizes = config.getHighSpeedVideoSizes();
+                    for (Size size : availableHighSpeedSizes) {
+                        if (!size.equals(HD)) {
+                            continue;
+                        }
+                        Range<Integer>[] availableFpsRanges =
+                                config.getHighSpeedVideoFpsRangesFor(size);
+                        for (Range<Integer> fpsRange : availableFpsRanges) {
+                            if (fpsRange.getUpper() == 240) {
+                                supportHD240 = true;
+                                break;
+                            }
+                        }
+                        if (supportHD240) {
+                            break;
+                        }
+                    }
+                    mCollector.expectTrue("Primary rear camera should support HD @ 240fps",
+                            supportHD240);
+                }
+
+                // 4K @ 30fps
+                boolean supportUHD = videoSizes.contains(UHD);
+                boolean supportDC4K = videoSizes.contains(DC4K);
+                mCollector.expectTrue("Primary rear camera should support 4k video recording",
+                        supportUHD || supportDC4K);
+                if (supportUHD || supportDC4K) {
+                    long minFrameDuration = config.getOutputMinFrameDuration(
+                            android.media.MediaRecorder.class, supportDC4K ? DC4K : UHD);
+                    mCollector.expectTrue("Primary rear camera should support 4k video @ 30fps",
+                            minFrameDuration < (1e9 / 29.9));
+                }
+            } else {
+                hasPrimaryFront = true;
+                mCollector.expectTrue("Primary front camera resolution should be at least " +
+                        MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION + " pixels, is "+
+                        sensorResolution,
+                        sensorResolution >= MIN_FRONT_SENSOR_PERFORMANCE_CLASS_RESOLUTION);
+                // 1080P @ 30fps
+                boolean supportFULLHD = videoSizes.contains(FULLHD);
+                mCollector.expectTrue("Primary front camera should support 1080P video recording",
+                        supportFULLHD);
+                if (supportFULLHD) {
+                    long minFrameDuration = config.getOutputMinFrameDuration(
+                            android.media.MediaRecorder.class, FULLHD);
+                    mCollector.expectTrue("Primary front camera should support 1080P video @ 30fps",
+                            minFrameDuration < (1e9 / 29.9));
+                }
+            }
+
+            // H-1-3
+            mCollector.expectTrue("Primary rear/front camera should be at least FULL, but is " +
+                   staticInfo.getHardwareLevelChecked(), staticInfo.isHardwareLevelAtLeastFull());
+
+            // H-1-4
+            if (isPrimaryRear) {
+                mCollector.expectTrue("Primary rear camera should support RAW capability",
+                        staticInfo.isCapabilitySupported(RAW));
+            }
+
+            // H-1-5
+            Integer timestampSource = c.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
+            mCollector.expectTrue(
+                    "Primary rear/front camera should support real-time timestamp source",
+                    timestampSource != null &&
+                    timestampSource.equals(CameraMetadata.SENSOR_INFO_TIMESTAMP_SOURCE_REALTIME));
+
+            // H-1-10
+            Size[] jpegSizes = staticInfo.getJpegOutputSizesChecked();
+            assertTrue("Primary rear/front cameras must support JPEG formats",
+                    jpegSizes != null && jpegSizes.length > 0);
+            for (Size jpegSize : jpegSizes) {
+                mCollector.expectTrue(
+                        "Primary rear/front camera's JPEG size must be at least 1080p, but is " +
+                        jpegSize,
+                        jpegSize.getWidth() >= FULLHD.getWidth() &&
+                        jpegSize.getHeight() >= FULLHD.getHeight());
+            }
+        }
+        mCollector.expectTrue("There must be a primary rear camera for S performance class.",
+                hasPrimaryRear);
+        mCollector.expectTrue("There must be a primary front camera for S performance class.",
+                hasPrimaryFront);
     }
 
     /**
