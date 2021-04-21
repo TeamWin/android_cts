@@ -670,9 +670,18 @@ public class TelephonyManagerTest {
                 (tm) -> tm.getSubscriberId());
         mTelephonyManager.getLine1Number();
         mTelephonyManager.getNetworkOperator();
-        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
-                (tm) -> tm.getPhoneAccountHandle(),
-                "android.permission.READ_PRIVILEGED_PHONE_STATE");
+
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.getPhoneAccountHandle();
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
@@ -990,11 +999,18 @@ public class TelephonyManagerTest {
         TelecomManager telecomManager = getContext().getSystemService(TelecomManager.class);
         PhoneAccountHandle defaultAccount = telecomManager
                 .getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
-        PhoneAccountHandle phoneAccountHandle = ShellIdentityUtils.invokeMethodWithShellPermissions(
-                mTelephonyManager,
-                (tm) -> tm.getPhoneAccountHandle(),
-                "android.permission.READ_PRIVILEGED_PHONE_STATE");
-        assertEquals(phoneAccountHandle, defaultAccount);
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity(
+                            "android.permission.READ_PRIVILEGED_PHONE_STATE");
+            PhoneAccountHandle phoneAccountHandle = mTelephonyManager.getPhoneAccountHandle();
+            assertEquals(phoneAccountHandle, defaultAccount);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPhoneAccountHandle requires READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
+        }
     }
 
     /**
@@ -4538,6 +4554,117 @@ public class TelephonyManagerTest {
         CompletableFuture<NetworkSlicingConfig> resultFuture = new CompletableFuture<>();
         ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
                 (tm) -> tm.getNetworkSlicingConfiguration(mSimpleExecutor, resultFuture::complete));
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.checkCarrierPrivilegesForPackage(mSelfPackageName);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#checkCarrierPrivilegesForPackage requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageThrowsExceptionWithoutReadPrivilege() {
+        try {
+            mTelephonyManager.checkCarrierPrivilegesForPackage(mSelfPackageName);
+            fail("TelephonyManager#checkCarrierPrivilegesForPackage must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageAnyPhoneEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testCheckCarrierPrivilegesForPackageAnyPhoneThrowsExceptionWithoutReadPrivilege() {
+        try {
+            mTelephonyManager.checkCarrierPrivilegesForPackageAnyPhone(mSelfPackageName);
+            fail("TelephonyManager#checkCarrierPrivilegesForPackageAnyPhone must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @Test
+    public void testGetCarrierPackageNamesForIntentAndPhoneEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            Intent intent = new Intent();
+            int phoneId = 1;
+            mTelephonyManager.getCarrierPackageNamesForIntentAndPhone(intent, phoneId);
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getCarrierPackageNamesForIntentAndPhone requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetCarrierPackageNamesForIntentAndPhoneThrowsExceptionWithoutReadPrivilege() {
+        try {
+            Intent intent = new Intent();
+            int phoneId = 1;
+            mTelephonyManager.getCarrierPackageNamesForIntentAndPhone(intent, phoneId);
+            fail("TelephonyManager#getCarrierPackageNamesForIntentAndPhone must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetPackagesWithCarrierPrivilegesEnforcesReadPrivilege() {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity("android.permission.READ_PRIVILEGED_PHONE_STATE");
+            mTelephonyManager.getPackagesWithCarrierPrivileges();
+        } catch (SecurityException e) {
+            fail("TelephonyManager#getPackagesWithCarrierPrivileges requires "
+                    + "READ_PRIVILEGED_PHONE_STATE");
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+        }
+    }
+
+    @Test
+    public void testGetPackagesWithCarrierPrivilegesThrowsExceptionWithoutReadPrivilege() {
+        try {
+            mTelephonyManager.getPackagesWithCarrierPrivileges();
+            fail("TelephonyManager#getPackagesWithCarrierPrivileges must be protected "
+                    + "with READ_PRIVILEGED_PHONE_STATE");
+        } catch (SecurityException e) {
+            // expected
+        }
     }
 }
 
