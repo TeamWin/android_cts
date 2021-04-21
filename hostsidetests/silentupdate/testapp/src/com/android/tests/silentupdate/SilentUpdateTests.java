@@ -17,8 +17,13 @@
 package com.android.tests.silentupdate;
 
 import static android.app.PendingIntent.FLAG_MUTABLE;
+import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED;
+import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_REQUIRED;
+import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_UNSPECIFIED;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.fail;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -121,6 +126,26 @@ public class SilentUpdateTests {
                 install(Q_APK));
     }
 
+    @Test
+    public void setRequireUserAction_throwsOnIllegalArgument() {
+        SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
+        params.setRequireUserAction(USER_ACTION_UNSPECIFIED);
+        params.setRequireUserAction(USER_ACTION_REQUIRED);
+        params.setRequireUserAction(USER_ACTION_NOT_REQUIRED);
+        try {
+            params.setRequireUserAction(-1);
+            fail("Should not be able to setRequireUserAction to -1");
+        } catch (IllegalArgumentException e) {
+            // pass!
+        }
+        try {
+            params.setRequireUserAction(3);
+            fail("Should not be able to setRequireUserAction to 3");
+        } catch (IllegalArgumentException e) {
+            // pass!
+        }
+    }
+
     private int install(String apkName) throws Exception {
         return install(apkName, false);
     }
@@ -129,17 +154,19 @@ public class SilentUpdateTests {
         final PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
         if (requireUserAction != null) {
-            params.setRequireUserAction(requireUserAction);
+            params.setRequireUserAction(requireUserAction
+                    ? USER_ACTION_REQUIRED
+                    : USER_ACTION_NOT_REQUIRED);
         }
         int sessionId = installer.createSession(params);
         Assert.assertEquals("SessionInfo.getRequireUserAction and "
                         + "SessionParams.setRequireUserAction are not equal",
                 installer.getSessionInfo(sessionId).getRequireUserAction(),
                 requireUserAction == null
-                        ? PackageInstaller.SessionInfo.USER_ACTION_UNSPECIFIED
+                        ? USER_ACTION_UNSPECIFIED
                         : requireUserAction == Boolean.TRUE
-                                ? PackageInstaller.SessionInfo.USER_ACTION_REQUIRED
-                                : PackageInstaller.SessionInfo.USER_ACTION_NOT_REQUIRED);
+                                ? USER_ACTION_REQUIRED
+                                : SessionParams.USER_ACTION_NOT_REQUIRED);
         final PackageInstaller.Session session = installer.openSession(sessionId);
         try(OutputStream os = session.openWrite(apkName, 0, -1)) {
             try (InputStream is = getClass().getClassLoader().getResourceAsStream(apkName)) {
