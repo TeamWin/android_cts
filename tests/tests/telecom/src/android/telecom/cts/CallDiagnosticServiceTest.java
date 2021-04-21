@@ -387,9 +387,17 @@ public class CallDiagnosticServiceTest extends BaseTelecomTestWithMockServices {
                 TimeUnit.MILLISECONDS);
         mService = CtsCallDiagnosticService.getInstance();
         assertNotNull(mService);
-        mService.getCallChangeLatch().await(TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                TimeUnit.MILLISECONDS);
-        assertEquals(1, mService.getCalls().size());
+        waitUntilConditionIsTrueOrTimeout(new Condition() {
+            @Override
+            public Object expected() {
+                return 1;
+            }
+
+            @Override
+            public Object actual() {
+                return mService.getCalls().size();
+            }
+        }, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "Call added");
 
         // Make the call active.
         mConnection.setActive();
