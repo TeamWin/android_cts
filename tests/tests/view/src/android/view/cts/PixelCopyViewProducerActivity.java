@@ -27,6 +27,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver.OnDrawListener;
 import android.view.WindowInsets;
@@ -58,6 +59,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
         // Check if the device supports both of portrait and landscape orientation screens.
         mSupportsRotation = DisplayUtils.supportOrientationRequest(this);
         if (mSupportsRotation) {
+            Log.d("PixelCopyTest", "Setting orientation index = " + mCurrentOrientation);
             setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
         }
 
@@ -124,6 +126,7 @@ public class PixelCopyViewProducerActivity extends Activity implements OnDrawLis
         mFence = new CountDownLatch(3);
         runOnUiThread(() -> {
             mCurrentOrientation = (mCurrentOrientation + 1) % ORIENTATIONS.length;
+            Log.d("PixelCopyTest", "Setting orientation index = " + mCurrentOrientation);
             setRequestedOrientation(ORIENTATIONS[mCurrentOrientation]);
         });
         waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
