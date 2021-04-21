@@ -16,11 +16,7 @@
 
 package com.android.cts.verifier;
 
-import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
-import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
-
-import com.android.compatibility.common.util.ReportLog;
-
+import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ContentResolver;
@@ -34,13 +30,16 @@ import android.os.Bundle;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import android.app.ActionBar;
-import android.util.Log;
-import android.view.MenuItem;
+
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
+
+import com.android.compatibility.common.util.ReportLog;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -122,12 +121,12 @@ public class PassFailButtons {
 
     public static class Activity extends android.app.Activity implements PassFailActivity {
         private WakeLock mWakeLock;
-        private final CtsVerifierReportLog reportLog;
+        private final CtsVerifierReportLog mReportLog;
         private final TestResultHistoryCollection mHistoryCollection;
 
         public Activity() {
-           this.reportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
-           this.mHistoryCollection = new TestResultHistoryCollection();
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mHistoryCollection = new TestResultHistoryCollection();
         }
 
         @Override
@@ -186,7 +185,9 @@ public class PassFailButtons {
         }
 
         @Override
-        public CtsVerifierReportLog getReportLog() { return reportLog; }
+        public CtsVerifierReportLog getReportLog() {
+            return mReportLog;
+        }
 
         @Override
         public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
@@ -213,11 +214,11 @@ public class PassFailButtons {
 
     public static class ListActivity extends android.app.ListActivity implements PassFailActivity {
 
-        private final CtsVerifierReportLog reportLog;
+        private final CtsVerifierReportLog mReportLog;
         private final TestResultHistoryCollection mHistoryCollection;
 
         public ListActivity() {
-            this.reportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
             this.mHistoryCollection = new TestResultHistoryCollection();
         }
 
@@ -259,7 +260,9 @@ public class PassFailButtons {
         }
 
         @Override
-        public CtsVerifierReportLog getReportLog() { return reportLog; }
+        public CtsVerifierReportLog getReportLog() {
+            return mReportLog;
+        }
 
         @Override
         public TestResultHistoryCollection getHistoryCollection() { return mHistoryCollection; }
@@ -287,10 +290,10 @@ public class PassFailButtons {
     public static class TestListActivity extends AbstractTestListActivity
             implements PassFailActivity {
 
-        private final CtsVerifierReportLog reportLog;
+        private final CtsVerifierReportLog mReportLog;
 
         public TestListActivity() {
-            this.reportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
+            this.mReportLog = new CtsVerifierReportLog(REPORT_LOG_NAME, getTestId());
         }
 
         @Override
@@ -331,7 +334,9 @@ public class PassFailButtons {
         }
 
         @Override
-        public CtsVerifierReportLog getReportLog() { return reportLog; }
+        public CtsVerifierReportLog getReportLog() {
+            return mReportLog;
+        }
 
         /**
          * Get existing test history to aggregate.
