@@ -26,6 +26,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.Gravity;
 import android.view.SurfaceControl;
@@ -108,6 +109,20 @@ public class ViewRootSyncTest {
         }
 
         @Override
+        public boolean gatherTransparentRegion(Region region) {
+            boolean opaque = true;
+            int w = getWidth();
+            int h = getHeight();
+            if (w>0 && h>0) {
+                getLocationInWindow(mLocation);
+                int l = mLocation[0];
+                int t = mLocation[1];
+                region.op(l, t, l+w, t+h, Region.Op.UNION);
+            }
+            return false;
+        }
+
+        @Override
         protected void onAttachedToWindow() {
             super.onAttachedToWindow();
             SurfaceControl.Transaction t = getViewRoot().buildReparentTransaction(mSurfaceControl);
@@ -117,6 +132,8 @@ public class ViewRootSyncTest {
 
             ViewTreeObserver observer = getViewTreeObserver();
             observer.addOnPreDrawListener(mDrawListener);
+
+            getParent().requestTransparentRegion(this);
         }
 
         @Override
