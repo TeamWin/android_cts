@@ -2004,12 +2004,15 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
                 () -> mWifiManager.isWifiEnabled() == true);
             turnOffWifiAndTetheredHotspotIfEnabled();
             verifyRegisterSoftApCallback(executor, callback);
-            int[] testBands = {SoftApConfiguration.BAND_2GHZ, SoftApConfiguration.BAND_5GHZ};
+            int[] testBands = {SoftApConfiguration.BAND_2GHZ,
+                    SoftApConfiguration.BAND_5GHZ};
+            int[] expectedBands = {SoftApConfiguration.BAND_2GHZ,
+                    SoftApConfiguration.BAND_2GHZ | SoftApConfiguration.BAND_5GHZ};
             // Test bridged SoftApConfiguration set and get (setBands)
             SoftApConfiguration testSoftApConfig = new SoftApConfiguration.Builder()
                     .setSsid(TEST_SSID_UNQUOTED)
                     .setPassphrase(TEST_PASSPHRASE, SoftApConfiguration.SECURITY_TYPE_WPA2_PSK)
-                    .setBands(testBands)
+                    .setBands(expectedBands)
                     .build();
             boolean shouldFallbackToSingleAp = shouldFallbackToSingleAp(testBands,
                     callback.getCurrentSoftApCapability());
