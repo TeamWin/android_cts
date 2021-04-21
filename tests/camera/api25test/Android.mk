@@ -32,6 +32,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util-axt \
     CtsCameraUtils
 
 LOCAL_PACKAGE_NAME := CtsCameraApi25TestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 LOCAL_SDK_VERSION := 25
 
