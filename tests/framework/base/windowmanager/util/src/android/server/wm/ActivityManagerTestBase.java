@@ -41,6 +41,7 @@ import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_SECURE_LOCK_SCREEN;
+import static android.content.pm.PackageManager.FEATURE_TELEVISION;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
@@ -997,6 +998,10 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean isCar() {
         return hasDeviceFeature(FEATURE_AUTOMOTIVE);
+    }
+
+    protected boolean isLeanBack() {
+        return hasDeviceFeature(FEATURE_TELEVISION);
     }
 
     protected boolean isTablet() {
