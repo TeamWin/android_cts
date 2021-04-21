@@ -749,7 +749,8 @@ public class RemoteViewsTest {
         assertNull(newActivity);
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE_UNAUDITED);
+        PendingIntent pendingIntent =
+                PendingIntent.getActivity(mContext, 0, intent, PendingIntent.FLAG_MUTABLE);
         mRemoteViews.setOnClickPendingIntent(R.id.remoteView_image, pendingIntent);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         mActivityRule.runOnUiThread(() -> view.performClick());
@@ -760,7 +761,7 @@ public class RemoteViewsTest {
     }
 
     @Test
-    public void testSetOnCheckedChangePendingIntent() throws Throwable {
+    public void testSetOnCheckedChangeResponse() throws Throwable {
         String action = "my-checked-change-action";
         MockBroadcastReceiver receiver =  new MockBroadcastReceiver();
         mContext.registerReceiver(receiver, new IntentFilter(action));
@@ -771,7 +772,7 @@ public class RemoteViewsTest {
                         mContext,
                         0,
                         intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT);
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
         mRemoteViews.setOnCheckedChangeResponse(R.id.remoteView_checkBox,
                 RemoteViews.RemoteResponse.fromPendingIntent(pendingIntent));
 
