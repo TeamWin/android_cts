@@ -27,23 +27,19 @@ public class SetSchemaResponseCtsTest {
     @Test
     public void testRebuild() {
         SetSchemaResponse.MigrationFailure failure1 =
-                new SetSchemaResponse.MigrationFailure.Builder()
-                        .setNamespace("namespace")
-                        .setSchemaType("schemaType")
-                        .setUri("failure1")
-                        .setAppSearchResult(
-                                AppSearchResult.newFailedResult(
-                                        AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"))
-                        .build();
+                new SetSchemaResponse.MigrationFailure(
+                        "namespace",
+                        "failure1",
+                        "schemaType",
+                        AppSearchResult.newFailedResult(
+                                AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"));
         SetSchemaResponse.MigrationFailure failure2 =
-                new SetSchemaResponse.MigrationFailure.Builder()
-                        .setNamespace("namespace")
-                        .setSchemaType("schemaType")
-                        .setUri("failure2")
-                        .setAppSearchResult(
-                                AppSearchResult.newFailedResult(
-                                        AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"))
-                        .build();
+                new SetSchemaResponse.MigrationFailure(
+                        "namespace",
+                        "failure2",
+                        "schemaType",
+                        AppSearchResult.newFailedResult(
+                                AppSearchResult.RESULT_INTERNAL_ERROR, "errorMessage"));
 
         SetSchemaResponse original =
                 new SetSchemaResponse.Builder()
