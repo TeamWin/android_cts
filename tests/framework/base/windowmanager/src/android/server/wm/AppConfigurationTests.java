@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_MULTI_WINDOW;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
@@ -146,7 +145,7 @@ public class AppConfigurationTests extends MultiDisplayTestBase {
         resizeableActivityClient.startActivity(getLaunchActivityBuilder()
                         .setUseInstrumentation()
                         .setTargetActivity(RESIZEABLE_ACTIVITY)
-                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY));
+                        .setWindowingMode(WINDOWING_MODE_FULLSCREEN));
         final SizeInfo initialSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY);
 
         rotateAndCheckSizes(rotationSession, resizeableActivityClient, initialSizes);

@@ -23,12 +23,10 @@ import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import com.android.bedstead.dpmwrapper.TestAppSystemServiceFactory;
-
 public class BaseDeviceAdminTest extends AndroidTestCase {
     private static final String TAG = BaseDeviceAdminTest.class.getSimpleName();
 
-    public static class AdminReceiver extends DeviceAdminReceiver {
+    public static final class AdminReceiver extends DeviceAdminReceiver {
     }
 
     protected String mPackageName;
@@ -41,13 +39,15 @@ public class BaseDeviceAdminTest extends AndroidTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        dpm = TestAppSystemServiceFactory.getDevicePolicyManager(mContext, AdminReceiver.class);
+        dpm = getContext().getSystemService(DevicePolicyManager.class);
         int userId = mContext.getUserId();
 
         mAdminComponent = new ComponentName(mContext, AdminReceiver.class);
         mHasSecureLockScreen = mContext.getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_SECURE_LOCK_SCREEN);
-        Log.d(TAG, "setUp(): userId=" + userId + ", admin=" + mAdminComponent);
+        Log.d(TAG, "setUp(): userId=" + userId + ", admin=" + mAdminComponent
+                + ", isDO=" + dpm.isDeviceOwnerApp(mContext.getPackageName())
+                + ", isPO=" + dpm.isProfileOwnerApp(mContext.getPackageName()));
     }
 
     /**

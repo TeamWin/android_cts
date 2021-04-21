@@ -1171,6 +1171,23 @@ public class RemoteViewsTest {
                     resolveDimenOffset(6.5f, COMPLEX_UNIT_DIP, displayMetrics));
         });
 
+        // Test that zeros resolve to 0
+        mRemoteViews.setViewLayoutMarginAttr(R.id.remoteView_text, MARGIN_LEFT, 0);
+        mRemoteViews.setViewLayoutMarginAttr(R.id.remoteView_text, MARGIN_TOP, 0);
+        mRemoteViews.setViewLayoutMarginAttr(R.id.remoteView_text, MARGIN_RIGHT, 0);
+        applyNightModeThenApplyAndTest(false, () -> {
+            View textView = mResult.findViewById(R.id.remoteView_text);
+            DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
+            assertMargins(textView, 0, 0, 0,
+                    resolveDimenOffset(4.5f, COMPLEX_UNIT_DIP, displayMetrics));
+        });
+        applyNightModeThenApplyAndTest(true, () -> {
+            View textView = mResult.findViewById(R.id.remoteView_text);
+            DisplayMetrics displayMetrics = textView.getResources().getDisplayMetrics();
+            assertMargins(textView, 0, 0, 0,
+                    resolveDimenOffset(6.5f, COMPLEX_UNIT_DIP, displayMetrics));
+        });
+
         mRemoteViews.setViewLayoutMarginAttr(
                 R.id.remoteView_text, MARGIN_LEFT, R.attr.themeColor);
         assertThrowsOnReapply(ActionException.class);
@@ -1244,6 +1261,10 @@ public class RemoteViewsTest {
         assertEquals(
                 textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_width),
                 textView.getLayoutParams().width);
+
+        mRemoteViews.setViewLayoutWidthDimen(R.id.remoteView_text, 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0, textView.getLayoutParams().width);
     }
 
     @Test
@@ -1255,6 +1276,10 @@ public class RemoteViewsTest {
                 resolveDimenSize(5.5123f, COMPLEX_UNIT_DIP,
                         textView.getResources().getDisplayMetrics()),
                 textView.getLayoutParams().width);
+
+        mRemoteViews.setViewLayoutWidthAttr(R.id.remoteView_text, 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0, textView.getLayoutParams().width);
 
         mRemoteViews.setViewLayoutWidthAttr(R.id.remoteView_text, R.attr.themeColor);
         assertThrowsOnReapply(ActionException.class);
@@ -1289,6 +1314,10 @@ public class RemoteViewsTest {
         assertEquals(
                 textView.getResources().getDimensionPixelSize(R.dimen.textview_fixed_height),
                 textView.getLayoutParams().height);
+
+        mRemoteViews.setViewLayoutHeightDimen(R.id.remoteView_text, 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0, textView.getLayoutParams().height);
     }
 
     @Test
@@ -1300,6 +1329,10 @@ public class RemoteViewsTest {
                 resolveDimenSize(5.5123f, COMPLEX_UNIT_DIP,
                         textView.getResources().getDisplayMetrics()),
                 textView.getLayoutParams().height);
+
+        mRemoteViews.setViewLayoutHeightAttr(R.id.remoteView_text, 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0, textView.getLayoutParams().height);
 
         mRemoteViews.setViewLayoutHeightAttr(
                 R.id.remoteView_text, R.attr.themeColor);
@@ -1315,6 +1348,11 @@ public class RemoteViewsTest {
                 R.dimen.popup_row_height);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(expectedValue, textView.getCompoundDrawablePadding());
+
+        // test that passing 0 for the dimen sets 0 on the method.
+        mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding", 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0, textView.getCompoundDrawablePadding());
 
         mRemoteViews.setIntDimen(R.id.remoteView_text, "setCompoundDrawablePadding",
                 R.color.testcolor1);
@@ -1367,6 +1405,18 @@ public class RemoteViewsTest {
                     textView.getCompoundDrawablePadding());
         });
 
+        // test that 0 resolves to 0
+        mRemoteViews.setIntDimenAttr(R.id.remoteView_text, "setCompoundDrawablePadding", 0);
+        applyNightModeThenApplyAndTest(false, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertEquals(0, textView.getCompoundDrawablePadding());
+        });
+
+        applyNightModeThenApplyAndTest(true, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertEquals(0, textView.getCompoundDrawablePadding());
+        });
+
         mRemoteViews.setIntDimenAttr(R.id.remoteView_text, "setCompoundDrawablePadding",
                 R.attr.themeColor);
         assertThrowsOnReapply(ActionException.class);
@@ -1382,6 +1432,11 @@ public class RemoteViewsTest {
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertEquals(textView.getResources().getDimension(R.dimen.remoteviews_float_dimen),
                 textView.getTextScaleX(), 1e-4f);
+
+        // test that passing 0 for the dimen sets 0f on the method.
+        mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertEquals(0f, textView.getTextScaleX(), 1e-4f);
 
         mRemoteViews.setFloatDimen(R.id.remoteView_text, "setTextScaleX", R.color.testcolor1);
         assertThrowsOnReapply(ActionException.class);
@@ -1431,6 +1486,18 @@ public class RemoteViewsTest {
                     textView.getResources().getDisplayMetrics()), textView.getTextScaleX(), 1e-4f);
         });
 
+        // test that 0 resolves to 0
+        mRemoteViews.setFloatDimenAttr(R.id.remoteView_text, "setTextScaleX", 0);
+        applyNightModeThenApplyAndTest(false, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertEquals(0f, textView.getTextScaleX(), 1e-4f);
+        });
+
+        applyNightModeThenApplyAndTest(true, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertEquals(0f, textView.getTextScaleX(), 1e-4f);
+        });
+
         mRemoteViews.setFloatDimenAttr(R.id.remoteView_text, "setTextScaleX",
                 R.attr.themeColor);
         assertThrowsOnReapply(ActionException.class);
@@ -1444,6 +1511,10 @@ public class RemoteViewsTest {
         mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", R.color.testcolor1);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         assertSameColorStateList(ColorStateList.valueOf(expectedValue), textView.getTextColors());
+
+        mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertSameColorStateList(ColorStateList.valueOf(0), textView.getTextColors());
 
         mRemoteViews.setColor(R.id.remoteView_text, "setTextColor", R.dimen.popup_row_height);
         assertThrowsOnReapply(ActionException.class);
@@ -1463,6 +1534,20 @@ public class RemoteViewsTest {
         applyNightModeThenApplyAndTest(true, () -> {
             TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
             assertSameColorStateList(ColorStateList.valueOf(0x0f00ffff), textView.getTextColors());
+        });
+
+        // Set to 0 and test that the colors are set to 0
+        mRemoteViews.setColorAttr(R.id.remoteView_text, "setTextColor", 0);
+
+        applyNightModeThenApplyAndTest(false, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertSameColorStateList(ColorStateList.valueOf(0), textView.getTextColors());
+        });
+
+        // Switch to night mode
+        applyNightModeThenApplyAndTest(true, () -> {
+            TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+            assertSameColorStateList(ColorStateList.valueOf(0), textView.getTextColors());
         });
 
         mRemoteViews.setColorAttr(R.id.remoteView_text, "setTextColor", R.attr.themeDimension);
@@ -1511,7 +1596,19 @@ public class RemoteViewsTest {
                     progressBar.getProgressTintList());
         });
 
-        mRemoteViews.setColorAttr(R.id.remoteView_text, "setTextColor", R.attr.themeDimension);
+        mRemoteViews.setColorStateListAttr(R.id.remoteView_progress, "setProgressTintList", 0);
+        applyNightModeThenApplyAndTest(false, () -> {
+            ProgressBar progressBar = mResult.findViewById(R.id.remoteView_progress);
+            assertSameColorStateList(null, progressBar.getProgressTintList());
+        });
+
+        applyNightModeThenApplyAndTest(true, () -> {
+            ProgressBar progressBar = mResult.findViewById(R.id.remoteView_progress);
+            assertSameColorStateList(null, progressBar.getProgressTintList());
+        });
+
+        mRemoteViews.setColorAttr(R.id.remoteView_progress,
+                "setProgressTintList", R.attr.themeDimension);
         assertThrowsOnReapply(ActionException.class);
     }
 
@@ -1534,22 +1631,27 @@ public class RemoteViewsTest {
 
     @Test
     public void testSetColorStateList_fromResources() throws Throwable {
-        TextView textView = (TextView) mResult.findViewById(R.id.remoteView_text);
+        ProgressBar progressBar = (ProgressBar) mResult.findViewById(R.id.remoteView_progress);
         ColorStateList expectedValue = mContext.getColorStateList(R.color.testcolorstatelist1);
 
-        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList",
                 R.color.testcolorstatelist1);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
-        assertSameColorStateList(expectedValue, textView.getTextColors());
+        assertSameColorStateList(expectedValue, progressBar.getProgressTintList());
 
-        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList",
                 R.color.testcolor1);
         mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
         expectedValue = mContext.getResources().getColorStateList(R.color.testcolor1,
                 mContext.getTheme());
-        assertSameColorStateList(expectedValue, textView.getTextColors());
+        assertSameColorStateList(expectedValue, progressBar.getProgressTintList());
 
-        mRemoteViews.setColorStateList(R.id.remoteView_text, "setTextColor",
+        // 0 should resolve to null
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList", 0);
+        mActivityRule.runOnUiThread(() -> mRemoteViews.reapply(mContext, mResult));
+        assertSameColorStateList(null, progressBar.getProgressTintList());
+
+        mRemoteViews.setColorStateList(R.id.remoteView_progress, "setProgressTintList",
                 R.dimen.popup_row_height);
         assertThrowsOnReapply(ActionException.class);
     }
@@ -1812,7 +1914,8 @@ public class RemoteViewsTest {
     }
 
     private void assertSameColorStateList(ColorStateList expected, ColorStateList actual) {
-        assertEquals(expected.toString(), actual.toString());
+        assertEquals(expected == null ? null : expected.toString(),
+                actual == null ? null : actual.toString());
     }
 
     private <T extends Throwable>  void assertThrowsOnReapply(Class<T> klass) throws Throwable {

@@ -19,7 +19,6 @@ package android.server.wm;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
-import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_TASK_ON_HOME;
 import static android.server.wm.CliIntentExtra.extraString;
@@ -158,7 +157,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
             boolean showWhenLocked, int sleepMsInOnCreate) {
         ActivitySession activity = sleepDeviceAndLaunchTurnScreenOnActivity(lockScreenSession,
                 activitySessionClient, useWindowFlags, showWhenLocked, sleepMsInOnCreate,
-                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+                WINDOWING_MODE_FULLSCREEN);
 
         mWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
         assertTrue("Display turns on by " + (useWindowFlags ? "flags" : "APIs"),
@@ -483,8 +482,7 @@ public class ActivityVisibilityTests extends ActivityManagerTestBase {
 
         final LockScreenSession lockScreenSession = createManagedLockScreenSession();
         lockScreenSession.disableLockScreen().sleepDevice();
-        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY,
-                WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+        launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
         assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
     }

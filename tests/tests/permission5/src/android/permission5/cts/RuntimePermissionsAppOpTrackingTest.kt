@@ -29,6 +29,7 @@ import android.os.Bundle
 import android.os.Process
 import android.os.RemoteCallback
 import android.os.SystemClock
+import android.platform.test.annotations.AppModeFull
 import android.provider.CalendarContract
 import android.provider.CallLog
 import android.provider.ContactsContract
@@ -47,6 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Consumer
 
+@AppModeFull(reason="Instant apps cannot hold READ_CONTACTS/READ_CALENDAR/READ_SMS/READ_CALL_LOG")
 class RuntimePermissionsAppOpTrackingTest {
 
     @Before

@@ -581,20 +581,25 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     @Test
     public void testDisallowFactoryReset() throws Exception {
         int adminVersion = 24;
-        changeUserRestrictionOrFail("no_factory_reset", true, mPrimaryUserId,
-                DEVICE_OWNER_PKG);
+        // NOTE: the restriction must be set on primary user as it will launch SetPolicyActivity,
+        // but the admin must be installed on USER_SYSTEM, otherwise wipeData() on headless system
+        // user mode would wipe the current user (instead of factory resetting the device)
+        changeUserRestrictionOrFail("no_factory_reset", true, mPrimaryUserId, DEVICE_OWNER_PKG);
+        int adminUserId = USER_SYSTEM;
+
+        String deviceAdminPkg = DeviceAdminHelper.getDeviceAdminApkPackage(adminVersion);
+        String deviceAdminReceiver = DeviceAdminHelper.getAdminReceiverComponent(adminVersion);
         try {
             installAppAsUser(DeviceAdminHelper.getDeviceAdminApkFileName(adminVersion),
-                    mPrimaryUserId);
-            setDeviceAdmin(DeviceAdminHelper.getAdminReceiverComponent(adminVersion),
-                    mPrimaryUserId);
+                    adminUserId);
+            setDeviceAdmin(deviceAdminReceiver, adminUserId);
             runDeviceTestsAsUser(
-                    DeviceAdminHelper.getDeviceAdminApkPackage(adminVersion),
+                    deviceAdminPkg,
                     DeviceAdminHelper.getDeviceAdminJavaPackage() + ".WipeDataTest",
-                    "testWipeDataThrowsSecurityException", mPrimaryUserId);
+                    "testWipeDataThrowsSecurityException", adminUserId);
         } finally {
-            removeAdmin(DeviceAdminHelper.getAdminReceiverComponent(adminVersion), mPrimaryUserId);
-            getDevice().uninstallPackage(DeviceAdminHelper.getDeviceAdminApkPackage(adminVersion));
+            removeAdmin(deviceAdminReceiver, adminUserId);
+            getDevice().uninstallPackage(deviceAdminPkg);
         }
     }
 
@@ -609,7 +614,8 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
     @Test
     public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
         // The Device Owner should have access to all device identifiers.
-        executeDeviceTestMethod(".DeviceIdentifiersTest",
+
+        executeDeviceOwnerTestMethod(".DeviceIdentifiersTest",
                 "testDeviceOwnerCanGetDeviceIdentifiersWithPermission");
     }
 
@@ -624,7 +630,6 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             // Install the package in primary user
             runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
                     "testPackageInstall", mPrimaryUserId);
-
             assertMetricsLogged(getDevice(), () -> {
                 runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
                         "testKeepPackageCache", mPrimaryUserId);
@@ -926,7 +931,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             installAppAsUser(DEVICE_OWNER_APK, userId);
             setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
         } else {
-            grantDpmWrapperPermissions(DEVICE_OWNER_APK, userId);
+            grantDpmWrapperPermissions(DEVICE_OWNER_PKG, userId);
         }
         wakeupAndDismissKeyguard();
 
