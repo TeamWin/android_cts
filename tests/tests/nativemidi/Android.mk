@@ -36,6 +36,8 @@ LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_PACKAGE_NAME := CtsNativeMidiTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MULTILIB := both
 
 LOCAL_SDK_VERSION := current
