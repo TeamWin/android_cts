@@ -39,6 +39,7 @@ import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.icu.util.ULocale;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
@@ -176,9 +177,9 @@ public class UiTranslationManagerTest {
         runWithShellPermissionIdentity(() -> {
             // Call startTranslation API
             manager.startTranslation(
-                    new TranslationSpec(Locale.ENGLISH.getLanguage(),
+                    new TranslationSpec(ULocale.ENGLISH,
                             TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(Locale.FRENCH.getLanguage(),
+                    new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
                     views, contentCaptureContext.getActivityId());
 
@@ -243,9 +244,9 @@ public class UiTranslationManagerTest {
             runWithShellPermissionIdentity(() -> {
                 // Call startTranslation API
                 manager.startTranslation(
-                        new TranslationSpec(Locale.ENGLISH.getLanguage(),
+                        new TranslationSpec(ULocale.ENGLISH,
                                 TranslationSpec.DATA_FORMAT_TEXT),
-                        new TranslationSpec(Locale.FRENCH.getLanguage(),
+                        new TranslationSpec(ULocale.FRENCH,
                                 TranslationSpec.DATA_FORMAT_TEXT),
                         views, contentCaptureContext.getActivityId());
                 SystemClock.sleep(UI_WAIT_TIMEOUT);
@@ -301,9 +302,9 @@ public class UiTranslationManagerTest {
         runWithShellPermissionIdentity(() -> {
             // Call startTranslation API
             manager.startTranslation(
-                    new TranslationSpec(Locale.ENGLISH.getLanguage(),
+                    new TranslationSpec(ULocale.ENGLISH,
                             TranslationSpec.DATA_FORMAT_TEXT),
-                    new TranslationSpec(Locale.FRENCH.getLanguage(),
+                    new TranslationSpec(ULocale.FRENCH,
                             TranslationSpec.DATA_FORMAT_TEXT),
                     views, contentCaptureContext.getActivityId());
             SystemClock.sleep(UI_WAIT_TIMEOUT);
@@ -327,8 +328,8 @@ public class UiTranslationManagerTest {
                         mutable ? PendingIntent.FLAG_MUTABLE : PendingIntent.FLAG_IMMUTABLE);
         commandIntent.putExtra(EXTRA_FINISH_COMMAND, pendingIntent);
         if (includeStartAssert) {
-            commandIntent.putExtra(EXTRA_SOURCE_LOCALE, Locale.ENGLISH.getLanguage());
-            commandIntent.putExtra(EXTRA_TARGET_LOCALE, Locale.FRENCH.getLanguage());
+            commandIntent.putExtra(EXTRA_SOURCE_LOCALE, ULocale.ENGLISH);
+            commandIntent.putExtra(EXTRA_TARGET_LOCALE, ULocale.FRENCH);
         }
         sContext.sendBroadcast(commandIntent);
 
@@ -404,8 +405,8 @@ public class UiTranslationManagerTest {
     static class TestTranslationStateCallback implements UiTranslationStateCallback {
         private boolean mStartCalled;
         private boolean mFinishCalled;
-        private String mSourceLocale;
-        private String mTargetLocale;
+        private ULocale mSourceLocale;
+        private ULocale mTargetLocale;
 
         TestTranslationStateCallback() {
             resetStates();
@@ -418,7 +419,7 @@ public class UiTranslationManagerTest {
             mTargetLocale = null;
         }
 
-        boolean verifyOnStart(String expectedSourceLocale, String expectedTargetLocale) {
+        boolean verifyOnStart(ULocale expectedSourceLocale, ULocale expectedTargetLocale) {
             return mSourceLocale.equals(expectedSourceLocale) && mTargetLocale.equals(
                     expectedTargetLocale);
         }
@@ -432,7 +433,12 @@ public class UiTranslationManagerTest {
         }
 
         @Override
-        public void onStarted(String sourceLocale, String targetLocale) {
+        public void onStarted(String source, String target) {
+            // no-op
+        }
+
+        @Override
+        public void onStarted(ULocale sourceLocale, ULocale targetLocale) {
             mStartCalled = true;
             mSourceLocale = sourceLocale;
             mTargetLocale = targetLocale;

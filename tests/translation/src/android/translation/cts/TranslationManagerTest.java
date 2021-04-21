@@ -23,7 +23,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Application;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
-import android.content.pm.PackageManager;
+import android.icu.util.ULocale;
 import android.os.CancellationSignal;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
@@ -53,7 +53,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
@@ -123,10 +122,8 @@ public class TranslationManagerTest {
         final AtomicReference<TranslationResponse> responseRef = new AtomicReference<>();
 
         final TranslationContext translationContext = new TranslationContext.Builder(
-                new TranslationSpec(Locale.ENGLISH.getLanguage(),
-                        TranslationSpec.DATA_FORMAT_TEXT),
-                new TranslationSpec(Locale.FRENCH.getLanguage(),
-                        TranslationSpec.DATA_FORMAT_TEXT))
+                new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT),
+                new TranslationSpec(ULocale.FRENCH, TranslationSpec.DATA_FORMAT_TEXT))
                 .build();
         final Translator translator = manager.createOnDeviceTranslator(translationContext);
 
@@ -200,10 +197,8 @@ public class TranslationManagerTest {
         final AtomicReference<TranslationResponse> responseRef = new AtomicReference<>();
 
         final TranslationContext translationContext = new TranslationContext.Builder(
-                new TranslationSpec(Locale.ENGLISH.getLanguage(),
-                        TranslationSpec.DATA_FORMAT_TEXT),
-                new TranslationSpec(Locale.FRENCH.getLanguage(),
-                        TranslationSpec.DATA_FORMAT_TEXT))
+                new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT),
+                new TranslationSpec(ULocale.FRENCH, TranslationSpec.DATA_FORMAT_TEXT))
                 .build();
         final Translator translator = manager.createOnDeviceTranslator(translationContext);
 
@@ -271,10 +266,10 @@ public class TranslationManagerTest {
 
             assertThat(capability.getSupportedTranslationFlags()).isEqualTo(0);
             assertThat(capability.isUiTranslationEnabled()).isTrue();
-            assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+            assertThat(capability.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
             assertThat(capability.getSourceSpec().getDataFormat())
                     .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
-            assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+            assertThat(capability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
             assertThat(capability.getTargetSpec().getDataFormat())
                     .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
         });
