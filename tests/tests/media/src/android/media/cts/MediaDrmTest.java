@@ -18,6 +18,10 @@ package android.media.cts;
 
 import android.media.MediaDrm;
 import android.media.NotProvisionedException;
+import android.media.ResourceBusyException;
+import android.media.UnsupportedSchemeException;
+import android.media.metrics.LogSessionId;
+import android.os.PersistableBundle;
 import android.util.Log;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -88,6 +92,49 @@ public class MediaDrmTest {
                         log.getPriority() >= Log.VERBOSE &&
                                 log.getPriority() <= Log.ASSERT);
                 Log.i(TAG, log.toString());
+            }
+        }
+    }
+
+    private static boolean searchMetricsForValue(PersistableBundle haystack, Object needle) {
+        for (String key : haystack.keySet()) {
+            Object obj = haystack.get(key);
+            if (obj.equals(needle)) {
+                return true;
+            }
+            if (obj instanceof PersistableBundle) {
+                PersistableBundle haystack2 = (PersistableBundle) obj;
+                if (searchMetricsForValue(haystack2, needle)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Test
+    public void testPlaybackComponent() throws UnsupportedSchemeException {
+        for (UUID scheme : MediaDrm.getSupportedCryptoSchemes()) {
+            MediaDrm drm = new MediaDrm(scheme);
+            byte[] sid = null;
+            try {
+                drm = new MediaDrm(scheme);
+                sid = drm.openSession();
+                Assert.assertNotNull("null session id", sid);
+                MediaDrm.PlaybackComponent component = drm.getPlaybackComponent(sid);
+                Assert.assertNotNull("null PlaybackComponent", component);
+
+                String logSessionId = "testPlaybackComponent";
+                component.setLogSessionId(new LogSessionId(logSessionId));
+                PersistableBundle metrics = drm.getMetrics();
+                assertTrue("LogSessionId not set",
+                        searchMetricsForValue(metrics, logSessionId));
+            } catch (UnsupportedOperationException | NotProvisionedException e) {
+                Log.w(TAG, "testPlaybackComponent: skipping scheme " + scheme, e);
+            } catch (ResourceBusyException e) {
+                // todo: retry
+            } finally {
+                drm.close();
             }
         }
     }
