@@ -16,6 +16,7 @@
 
 package android.content.pm.cts;
 
+import static android.Manifest.permission.INSTALL_TEST_ONLY_PACKAGE;
 import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
 import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
 import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
@@ -158,6 +159,7 @@ public class PackageManagerTest {
             + "EBRNRG3ozwBsGr1sVIM9U0bVTI2TdyIyeRkZgW4JrJefwNIBAmCg4AzqXiCvG6JjqA0uTCWSFu2YqAVxVd"
             + "iRKAay19k5VFlSaM7QW9uhvlrLQqsTW01ofFzxNDbp2QfIFHZR6rebKzKBz6byQFM0DYQnYMwFWXjWkMPN"
             + "dqkRLykoFLyBup53G68k2n8w";
+    private static final String SHELL_PACKAGE_NAME = "com.android.shell";
 
     @Before
     public void setup() throws Exception {
@@ -1411,6 +1413,15 @@ public class PackageManagerTest {
             }
             foundPackages.add(pi.packageName);
         }
+    }
+
+    @Test
+    public void testInstallTestOnlyPackagePermission_onlyGrantedToShell() {
+        List<PackageInfo> packages = mPackageManager.getPackagesHoldingPermissions(
+                new String[]{INSTALL_TEST_ONLY_PACKAGE}, /* flags= */ 0);
+
+        assertThat(packages).hasSize(1);
+        assertThat(packages.get(0).packageName).isEqualTo(SHELL_PACKAGE_NAME);
     }
 
     @Test
