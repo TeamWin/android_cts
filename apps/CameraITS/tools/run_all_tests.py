@@ -23,6 +23,7 @@ import time
 import yaml
 
 import capture_request_utils
+import camera_properties_utils
 import image_processing_utils
 import its_session_utils
 
@@ -230,13 +231,15 @@ def check_manual_scenes(device_id, camera_id, scene, out_path):
       device_id=device_id,
       camera_id=camera_id) as cam:
     props = cam.get_camera_properties()
+    props = cam.override_with_hidden_physical_camera_props(props)
 
     while True:
       input(f'\n Press <ENTER> after positioning camera {camera_id} with '
             f'{scene}.\n The scene setup should be: \n  {_SCENE_REQ[scene]}\n')
       # Converge 3A prior to capture
       if scene == 'scene5':
-        cam.do_3a(do_af=False, lock_ae=True, lock_awb=True)
+        cam.do_3a(do_af=False, lock_ae=camera_properties_utils.ae_lock(props),
+                  lock_awb=camera_properties_utils.awb_lock(props))
       else:
         cam.do_3a()
       req, fmt = capture_request_utils.get_fastest_auto_capture_settings(props)
