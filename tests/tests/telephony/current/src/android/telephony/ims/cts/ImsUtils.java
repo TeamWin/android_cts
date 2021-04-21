@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.os.Binder;
 import android.service.carrier.CarrierService;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -136,8 +137,14 @@ public class ImsUtils {
                 (TelephonyManager) InstrumentationRegistry.getInstrumentation().getContext()
                         .getSystemService(Context.TELEPHONY_SERVICE);
         tm = tm.createForSubscriptionId(subId);
-        List<String> carrierPackages = tm.getCarrierPackageNamesForIntent(
-                new Intent(CarrierService.CARRIER_SERVICE_INTERFACE));
+        final long token = Binder.clearCallingIdentity();
+        List<String> carrierPackages;
+        try {
+            carrierPackages = tm.getCarrierPackageNamesForIntent(
+                    new Intent(CarrierService.CARRIER_SERVICE_INTERFACE));
+        } finally {
+            Binder.restoreCallingIdentity(token);
+        }
 
         if (carrierPackages == null || carrierPackages.size() == 0) {
             return true;
