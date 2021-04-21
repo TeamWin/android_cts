@@ -110,7 +110,7 @@ public class ReadSettingsFieldsTest extends AndroidTestCase {
 
     public void testGlobalSomeHiddenSettingsKeysAreReadable() {
         final ArraySet<String> publicSettingsKeys = getPublicSettingsKeys(Settings.Secure.class);
-        final String[] hiddenSettingsKeys = {"notification_bubbles", "add_users_when_locked",
+        final String[] hiddenSettingsKeys = {"add_users_when_locked",
                 "enable_accessibility_global_gesture_enabled"};
         testHiddenSettingsKeysReadable(Settings.Global.class, publicSettingsKeys,
                 hiddenSettingsKeys);

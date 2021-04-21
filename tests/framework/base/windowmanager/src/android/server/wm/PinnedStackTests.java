@@ -64,6 +64,7 @@ import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATI
 import static android.server.wm.app.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.wm.app.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.wm.app.Components.PipActivity.EXTRA_TAP_TO_FINISH;
+import static android.server.wm.app.Components.PipActivity.PIP_CALLBACK_RESULT_KEY;
 import static android.server.wm.app.Components.RESUME_WHILE_PAUSING_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY_WITH_SAME_AFFINITY;
@@ -100,8 +101,10 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.ContentObserver;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.RemoteCallback;
 import android.platform.test.annotations.Presubmit;
 import android.platform.test.annotations.SecurityTest;
 import android.provider.Settings;
@@ -116,12 +119,15 @@ import android.util.Size;
 import com.android.compatibility.common.util.AppOpsUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
+import com.google.common.truth.Truth;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -1333,6 +1339,26 @@ public class PinnedStackTests extends ActivityManagerTestBase {
 
         // Assert the value of isSeamlessResizeEnabled is overridden.
         assertIsSeamlessResizeEnabled(PIP_ACTIVITY, false);
+    }
+
+    @Test
+    public void testPictureInPictureStateChangeCallback() throws Exception {
+        launchActivity(PIP_ACTIVITY);
+        enterPipAndAssertPinnedTaskExists(PIP_ACTIVITY);
+        waitForEnterPip(PIP_ACTIVITY);
+
+        final CompletableFuture<Boolean> callbackReturn = new CompletableFuture<>();
+        RemoteCallback cb = new RemoteCallback((Bundle result) ->
+                callbackReturn.complete(result.getBoolean(PIP_CALLBACK_RESULT_KEY)));
+        mBroadcastActionTrigger.sendPipStateUpdate(cb, true);
+        Truth.assertThat(callbackReturn.get(5000, TimeUnit.MILLISECONDS)).isEqualTo(true);
+
+        final CompletableFuture<Boolean> callbackReturnNotStashed = new CompletableFuture<>();
+        RemoteCallback cbStashed = new RemoteCallback((Bundle result) ->
+                callbackReturnNotStashed.complete(result.getBoolean(PIP_CALLBACK_RESULT_KEY)));
+        mBroadcastActionTrigger.sendPipStateUpdate(cbStashed, false);
+        Truth.assertThat(callbackReturnNotStashed.get(5000, TimeUnit.MILLISECONDS))
+                .isEqualTo(false);
     }
 
     private void assertIsSeamlessResizeEnabled(ComponentName componentName, boolean expected) {

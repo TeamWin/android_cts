@@ -28,6 +28,8 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.function.IntConsumer;
 
 public class MainHotwordDetectionService extends HotwordDetectionService {
@@ -44,7 +46,39 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
             Log.w(TAG, "callback is null");
             return;
         }
-        callback.onDetected(null);
+        if (audioStream == null) {
+            Log.w(TAG, "audioStream is null");
+            return;
+        }
+
+        long startTime = System.currentTimeMillis();
+        try (InputStream fis =
+                     new ParcelFileDescriptor.AutoCloseInputStream(audioStream)) {
+
+            // We added the fake audio data and set "hotword!" string at the head. Then we simulated
+            // to verify the audio data with "hotword!" in HotwordDetectionService. If the audio
+            // data includes "hotword!", it means that the hotword is valid.
+            while (fis.available() < 8) {
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    // Nothing
+                }
+                if (System.currentTimeMillis() - startTime > timeoutMillis) {
+                    Log.w(TAG, "Over timeout");
+                    return;
+                }
+            }
+            Log.d(TAG, "fis.available() = " + fis.available());
+            byte[] buffer = new byte[8];
+            fis.read(buffer, 0, 8);
+            if(isSame(buffer, new byte[] {'h', 'o', 't', 'w', 'o', 'r', 'd', '!'}, buffer.length)) {
+                Log.d(TAG, "call callback.onDetected");
+                callback.onDetected(null);
+            }
+        } catch (IOException e) {
+            Log.w(TAG, "Failed to read data : ", e);
+        }
     }
 
     @Override
@@ -80,5 +114,20 @@ public class MainHotwordDetectionService extends HotwordDetectionService {
         if (statusCallback != null) {
             statusCallback.accept(INITIALIZATION_STATUS_SUCCESS);
         }
+    }
+
+    private boolean isSame(byte[] array1, byte[] array2, int length) {
+        if (length <= 0) {
+            return false;
+        }
+        if (array1 == null || array2 == null || array1.length < length || array2.length < length) {
+            return false;
+        }
+        for (int i = 0; i < length; i++) {
+            if (array1[i] != array2[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }

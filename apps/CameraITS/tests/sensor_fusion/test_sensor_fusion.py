@@ -39,11 +39,22 @@ import sensor_fusion_utils
 _CAM_FRAME_RANGE_MAX = 9.0  # Seconds: max allowed camera frame range.
 _FEATURE_MARGIN = 0.20  # Only take feature points from center 20% so that
                         # rotation measured has less rolling shutter effect.
-_CV2_FEATURE_PARAMS = dict(maxCorners=100,
-                           qualityLevel=0.3,
-                           minDistance=7,
-                           blockSize=7)  # values for cv2.goodFeaturesToTrack
 _FEATURE_PTS_MIN = 30  # Min number of feature pts to perform rotation analysis.
+# cv2.goodFeatures to track.
+# 'POSTMASK' is the measurement method in all previous versions of Android.
+# 'POSTMASK' finds best features on entire frame and then masks the features
+# to the vertical center FEATURE_MARGIN for the measurement.
+# 'PREMASK' is a new measurement that is used when FEATURE_PTS_MIN is not
+# found in frame. This finds the best 2*FEATURE_PTS_MIN in the FEATURE_MARGIN
+# part of the frame.
+_CV2_FEATURE_PARAMS_POSTMASK = dict(maxCorners=240,
+                                    qualityLevel=0.3,
+                                    minDistance=7,
+                                    blockSize=7)
+_CV2_FEATURE_PARAMS_PREMASK = dict(maxCorners=2*_FEATURE_PTS_MIN,
+                                   qualityLevel=0.3,
+                                   minDistance=7,
+                                   blockSize=7)
 _GYRO_SAMP_RATE_MIN = 100.0  # Samples/second: min gyro sample rate.
 _CV2_LK_PARAMS = dict(winSize=(15, 15),
                       maxLevel=2,
@@ -267,48 +278,70 @@ def _get_cam_rotations(frames, facing, h, log_path):
     numpy array of N-1 camera rotation measurements (rad).
   """
   gframes = []
+  file_name_stem = os.path.join(log_path, _NAME)
   for frame in frames:
     frame = (frame * 255.0).astype(np.uint8)  # cv2 uses [0, 255]
     gframes.append(cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY))
-  rots = []
+  num_frames = len(gframes)
 
   # create mask
   ymin = int(h * (1 - _FEATURE_MARGIN) / 2)
   ymax = int(h * (1 + _FEATURE_MARGIN) / 2)
-  mask = np.zeros_like(gframes[0])
-  mask[ymin:ymax, :] = 255
+  pre_mask = np.zeros_like(gframes[0])
+  pre_mask[ymin:ymax, :] = 255
 
-  for i in range(1, len(gframes)):
-    gframe0 = gframes[i-1]
-    gframe1 = gframes[i]
-    p0_filtered = cv2.goodFeaturesToTrack(
-        gframe0, mask=mask, **_CV2_FEATURE_PARAMS)
-    num_features = len(p0_filtered)
-    if num_features < _FEATURE_PTS_MIN:
-      raise AssertionError(
-          f'Not enough features points in frame {i-1}. Need at least '
-          f'{_FEATURE_PTS_MIN} features, got {num_features}.')
-    else:
-      logging.debug('Number of features in frame %s is %d',
-                    str(i - 1).zfill(3), num_features)
-    p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered, None,
-                                         **_CV2_LK_PARAMS)
-    tform = _procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
-    if facing == camera_properties_utils.LENS_FACING_BACK:
-      rot = -math.atan2(tform[0, 1], tform[0, 0])
-    elif facing == camera_properties_utils.LENS_FACING_FRONT:
-      rot = math.atan2(tform[0, 1], tform[0, 0])
-    else:
-      raise AssertionError(f'Unknown lens facing: {facing}.')
-    rots.append(rot)
-    if i == 1:
-      # Save a debug visualization of the features that are being
-      # tracked in the first frame.
-      frame = frames[i-1]
-      for x, y in p0_filtered[st == 1]:
-        cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
-      image_processing_utils.write_image(
-          frame, '%s_features.png' % os.path.join(log_path, _NAME))
+  for masking in ['post', 'pre']:  # Do post-masking (original) method 1st
+    logging.debug('Using %s masking method', masking)
+    rots = []
+    for i in range(1, num_frames):
+      gframe0 = gframes[i-1]
+      gframe1 = gframes[i]
+      if masking == 'post':
+        p0 = cv2.goodFeaturesToTrack(
+            gframe0, mask=None, **_CV2_FEATURE_PARAMS_POSTMASK)
+        post_mask = (p0[:, 0, 1] >= ymin) & (p0[:, 0, 1] <= ymax)
+        p0_filtered = p0[post_mask]
+      else:
+        p0_filtered = cv2.goodFeaturesToTrack(
+            gframe0, mask=pre_mask, **_CV2_FEATURE_PARAMS_PREMASK)
+      num_features = len(p0_filtered)
+      if num_features < _FEATURE_PTS_MIN:
+        for pt in p0_filtered:
+          x, y = pt[0][0], pt[0][1]
+          cv2.circle(frames[i-1], (x, y), 3, (100, 255, 255), -1)
+        image_processing_utils.write_image(
+            frames[i-1], f'{file_name_stem}_features{i-1:03d}.png')
+        msg = (f'Not enough features in frame {i-1}. Need at least '
+               f'{_FEATURE_PTS_MIN} features, got {num_features}.')
+        if masking == 'pre':
+          raise AssertionError(msg)
+        else:
+          logging.debug(msg)
+          break
+      else:
+        logging.debug('Number of features in frame %s is %d',
+                      str(i - 1).zfill(3), num_features)
+      p1, st, _ = cv2.calcOpticalFlowPyrLK(gframe0, gframe1, p0_filtered, None,
+                                           **_CV2_LK_PARAMS)
+      tform = _procrustes_rotation(p0_filtered[st == 1], p1[st == 1])
+      if facing == camera_properties_utils.LENS_FACING_BACK:
+        rot = -math.atan2(tform[0, 1], tform[0, 0])
+      elif facing == camera_properties_utils.LENS_FACING_FRONT:
+        rot = math.atan2(tform[0, 1], tform[0, 0])
+      else:
+        raise AssertionError(f'Unknown lens facing: {facing}.')
+      rots.append(rot)
+      if i == 1:
+        # Save debug visualization of features that are being
+        # tracked in the first frame.
+        frame = frames[i-1]
+        for x, y in p0_filtered[st == 1]:
+          cv2.circle(frame, (x, y), 3, (100, 100, 255), -1)
+        image_processing_utils.write_image(
+            frame, f'{file_name_stem}_features000.png')
+    if i == len(rots):
+      break  # exit if enough features in all frames
+
   rots = np.array(rots)
   rot_per_frame_max = max(abs(rots))
   logging.debug('Max rotation: %.4f radians', rot_per_frame_max)

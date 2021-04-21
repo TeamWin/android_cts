@@ -24,6 +24,7 @@ import android.content.ContextParams
 import android.content.pm.PackageManager
 import android.os.Process
 import android.permission.PermissionManager
+import android.platform.test.annotations.AppModeFull
 import android.provider.CalendarContract
 import android.provider.ContactsContract
 import android.util.ArraySet
@@ -41,6 +42,7 @@ class RenouncedPermissionsTest {
 
     @Test
     @Throws(Exception::class)
+    @AppModeFull(reason="Instant apps cannot hold READ_CALENDAR/READ_CONTACTS permissions")
     fun testRenouncePermissionsChain() {
         val receiverAttributionSource = getShellAttributionSourceWithRenouncedPermissions()
         val activity = createActivityWithAttributionContext(receiverAttributionSource)

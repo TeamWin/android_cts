@@ -72,7 +72,7 @@ class ItsBaseTest(base_test.BaseTestClass):
   def setup_class(self):
     devices = self.register_controller(android_device, min_number=1)
     self.dut = devices[0]
-    self.camera = self.user_params['camera']
+    self.camera = str(self.user_params['camera'])
     logging.debug('Camera_id: %s', self.camera)
     if self.user_params.get('chart_distance'):
       self.chart_distance = float(self.user_params['chart_distance'])

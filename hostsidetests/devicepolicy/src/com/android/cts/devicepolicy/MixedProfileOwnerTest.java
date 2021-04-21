@@ -18,6 +18,7 @@ package com.android.cts.devicepolicy;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.FlakyTest;
 import android.platform.test.annotations.LargeTest;
@@ -111,5 +112,12 @@ public final class MixedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     public void testSetAutoTimeZoneEnabled() {
         // Profile owner cannot set auto time zone unless it is called by the profile
         // owner of an organization-owned managed profile or a profile owner on user 0.
+    }
+
+    @Override
+    @Test
+    public void testSetAutoTimeEnabled() {
+        // This test should be skipped when profile owner is set on secondary user.
+        assumeTrue("Skipping test: profile owner is not on system user", mUserId == USER_SYSTEM);
     }
 }

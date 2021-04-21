@@ -104,8 +104,15 @@ public class CtsTranslationService extends TranslationService {
 
     @Override
     public void onCreateTranslationSession(@NonNull TranslationContext translationContext,
-            int sessionId) {
+            int sessionId, @NonNull Consumer<Boolean> callback) {
         Log.v(TAG, "onCreateTranslationSession");
+        callback.accept(true);
+    }
+
+    @Override
+    public void onCreateTranslationSession(@NonNull TranslationContext translationContext,
+            int sessionId) {
+        Log.v(TAG, "deprecated");
     }
 
     @Override
