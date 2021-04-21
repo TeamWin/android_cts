@@ -46,7 +46,7 @@ LOCAL_SRC_FILES := \
 LOCAL_PACKAGE_NAME := CtsOsTestCases
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 # uncomment when b/13282254 is fixed
 #LOCAL_SDK_VERSION := current
