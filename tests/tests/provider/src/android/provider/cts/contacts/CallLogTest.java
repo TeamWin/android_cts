@@ -196,6 +196,14 @@ public class CallLogTest extends InstrumentationTestCase {
         }
     }
 
+    public void testCallComposerLoggingException() {
+        CallLog.CallComposerLoggingException e =
+                new CallLog.CallComposerLoggingException(
+                        CallLog.CallComposerLoggingException.ERROR_STORAGE_FULL);
+        assertEquals(CallLog.CallComposerLoggingException.ERROR_STORAGE_FULL,
+                e.getErrorCode());
+    }
+
     private byte[] readResourceDrawable(Context context, int id) throws Exception {
         InputStream inputStream = context.getResources().openRawResource(id);
         return readBytes(inputStream);
