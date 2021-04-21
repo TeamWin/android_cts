@@ -23,6 +23,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestRule;
 import android.renderscript.Allocation;
 import android.util.Log;
+import android.util.Range;
 import android.util.Size;
 
 import androidx.test.InstrumentationRegistry;
@@ -202,6 +203,35 @@ public class CameraExtensionCharacteristicsTest {
                 } catch (IllegalArgumentException e) {
                     fail("should not get IllegalArgumentException due to unsupported surface " +
                             "type");
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testExtensionLatencyRanges() throws Exception {
+        final int testFormat = ImageFormat.JPEG;
+        for (String id : mTestRule.getCameraIdsUnderTest()) {
+            StaticMetadata staticMeta =
+                    new StaticMetadata(mTestRule.getCameraManager().getCameraCharacteristics(id));
+            if (!staticMeta.isColorOutputSupported()) {
+                continue;
+            }
+
+            CameraExtensionCharacteristics chars =
+                    mTestRule.getCameraManager().getCameraExtensionCharacteristics(id);
+            List<Integer> supportedExtensions = chars.getSupportedExtensions();
+            for (Integer extension : supportedExtensions) {
+                List<Size> extensionSizes = chars.getExtensionSupportedSizes(extension, testFormat);
+                for (Size sz : extensionSizes) {
+                    Range<Long> latencyRange = chars.getEstimatedCaptureLatencyRange(extension, sz,
+                            testFormat);
+                    if (latencyRange != null) {
+                        assertTrue("Negative range surface type", (latencyRange.getLower() > 0) &&
+                                (latencyRange.getUpper() > 0));
+                        assertTrue("Lower range value must be smaller compared to the upper",
+                                (latencyRange.getLower() < latencyRange.getUpper()));
+                    }
                 }
             }
         }
