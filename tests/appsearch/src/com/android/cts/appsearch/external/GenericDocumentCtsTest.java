@@ -41,7 +41,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_identical() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setTtlMillis(1L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
@@ -54,7 +54,7 @@ public class GenericDocumentCtsTest {
                                 "documentKey1", sDocumentProperties1, sDocumentProperties2)
                         .build();
         GenericDocument document2 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setTtlMillis(1L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
@@ -73,7 +73,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_differentOrder() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyBytes("byteKey1", sByteArray1, sByteArray2)
@@ -87,7 +87,7 @@ public class GenericDocumentCtsTest {
 
         // Create second document with same parameter but different order.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
                         .setPropertyDocument(
@@ -105,14 +105,14 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_failure() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .build();
 
         // Create second document with same order but different value.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 4L) // Different
                         .build();
@@ -123,14 +123,14 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentEquals_repeatedFieldOrder_failure() {
         GenericDocument document1 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
                         .build();
 
         // Create second document with same order but different value.
         GenericDocument document2 =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyBoolean("booleanKey1", true, true, false) // Different
                         .build();
@@ -141,7 +141,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentGetSingleValue() {
         GenericDocument document =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setScore(1)
                         .setTtlMillis(1L)
@@ -152,7 +152,7 @@ public class GenericDocumentCtsTest {
                         .setPropertyBytes("byteKey1", sByteArray1)
                         .setPropertyDocument("documentKey1", sDocumentProperties1)
                         .build();
-        assertThat(document.getUri()).isEqualTo("uri1");
+        assertThat(document.getId()).isEqualTo("id1");
         assertThat(document.getTtlMillis()).isEqualTo(1L);
         assertThat(document.getSchemaType()).isEqualTo("schemaType1");
         assertThat(document.getCreationTimestampMillis()).isEqualTo(5);
@@ -163,14 +163,15 @@ public class GenericDocumentCtsTest {
         assertThat(document.getPropertyString("stringKey1")).isEqualTo("test-value1");
         assertThat(document.getPropertyBytes("byteKey1"))
                 .asList()
-                .containsExactly((byte) 1, (byte) 2, (byte) 3);
+                .containsExactly((byte) 1, (byte) 2, (byte) 3)
+                .inOrder();
         assertThat(document.getPropertyDocument("documentKey1")).isEqualTo(sDocumentProperties1);
     }
 
     @Test
     public void testDocumentGetArrayValues() {
         GenericDocument document =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
@@ -182,30 +183,38 @@ public class GenericDocumentCtsTest {
                                 "documentKey1", sDocumentProperties1, sDocumentProperties2)
                         .build();
 
-        assertThat(document.getUri()).isEqualTo("uri1");
+        assertThat(document.getId()).isEqualTo("id1");
         assertThat(document.getSchemaType()).isEqualTo("schemaType1");
-        assertThat(document.getPropertyLongArray("longKey1")).asList().containsExactly(1L, 2L, 3L);
+        assertThat(document.getPropertyLongArray("longKey1"))
+                .asList()
+                .containsExactly(1L, 2L, 3L)
+                .inOrder();
         assertThat(document.getPropertyDoubleArray("doubleKey1"))
                 .usingExactEquality()
-                .containsExactly(1.0, 2.0, 3.0);
+                .containsExactly(1.0, 2.0, 3.0)
+                .inOrder();
         assertThat(document.getPropertyBooleanArray("booleanKey1"))
                 .asList()
-                .containsExactly(true, false, true);
+                .containsExactly(true, false, true)
+                .inOrder();
         assertThat(document.getPropertyStringArray("stringKey1"))
                 .asList()
-                .containsExactly("test-value1", "test-value2", "test-value3");
+                .containsExactly("test-value1", "test-value2", "test-value3")
+                .inOrder();
         assertThat(document.getPropertyBytesArray("byteKey1"))
                 .asList()
-                .containsExactly(sByteArray1, sByteArray2);
+                .containsExactly(sByteArray1, sByteArray2)
+                .inOrder();
         assertThat(document.getPropertyDocumentArray("documentKey1"))
                 .asList()
-                .containsExactly(sDocumentProperties1, sDocumentProperties2);
+                .containsExactly(sDocumentProperties1, sDocumentProperties2)
+                .inOrder();
     }
 
     @Test
     public void testDocument_toString() {
         GenericDocument document =
-                new GenericDocument.Builder<>("", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("", "id1", "schemaType1")
                         .setCreationTimestampMillis(5L)
                         .setPropertyLong("longKey1", 1L, 2L, 3L)
                         .setPropertyDouble("doubleKey1", 1.0, 2.0, 3.0)
@@ -216,42 +225,42 @@ public class GenericDocumentCtsTest {
                                 "documentKey1", sDocumentProperties1, sDocumentProperties2)
                         .build();
         String exceptedString =
-                "{ key: 'creationTimestampMillis' value: 5 } "
-                        + "{ key: 'namespace' value:  } "
-                        + "{ key: 'properties' value: "
-                        + "{ key: 'booleanKey1' value: [ 'true' 'false' 'true' ] } "
-                        + "{ key: 'byteKey1' value: "
-                        + "{ key: 'byteArray' value: [ '1' '2' '3' ] } "
-                        + "{ key: 'byteArray' value: [ '4' '5' '6' '7' ] }  } "
-                        + "{ key: 'documentKey1' value: [ '"
-                        + "{ key: 'creationTimestampMillis' value: 12345 } "
-                        + "{ key: 'namespace' value: namespace } "
-                        + "{ key: 'properties' value:  } "
-                        + "{ key: 'schemaType' value: sDocumentPropertiesSchemaType1 } "
-                        + "{ key: 'score' value: 0 } "
-                        + "{ key: 'ttlMillis' value: 0 } "
-                        + "{ key: 'uri' value: sDocumentProperties1 } ' '"
-                        + "{ key: 'creationTimestampMillis' value: 6789 } "
-                        + "{ key: 'namespace' value: namespace } "
-                        + "{ key: 'properties' value:  } "
-                        + "{ key: 'schemaType' value: sDocumentPropertiesSchemaType2 } "
-                        + "{ key: 'score' value: 0 } "
-                        + "{ key: 'ttlMillis' value: 0 } "
-                        + "{ key: 'uri' value: sDocumentProperties2 } ' ] } "
-                        + "{ key: 'doubleKey1' value: [ '1.0' '2.0' '3.0' ] } "
-                        + "{ key: 'longKey1' value: [ '1' '2' '3' ] } "
-                        + "{ key: 'stringKey1' value: [ 'String1' 'String2' 'String3' ] }  } "
-                        + "{ key: 'schemaType' value: schemaType1 } "
-                        + "{ key: 'score' value: 0 } "
-                        + "{ key: 'ttlMillis' value: 0 } "
-                        + "{ key: 'uri' value: uri1 } ";
+                "{ name: 'creationTimestampMillis' value: 5 } "
+                        + "{ name: 'id' value: id1 } "
+                        + "{ name: 'namespace' value:  } "
+                        + "{ name: 'properties' value: "
+                        + "{ name: 'booleanKey1' value: [ 'true' 'false' 'true' ] } "
+                        + "{ name: 'byteKey1' value: "
+                        + "{ name: 'byteArray' value: [ '1' '2' '3' ] } "
+                        + "{ name: 'byteArray' value: [ '4' '5' '6' '7' ] }  } "
+                        + "{ name: 'documentKey1' value: [ '"
+                        + "{ name: 'creationTimestampMillis' value: 12345 } "
+                        + "{ name: 'id' value: sDocumentProperties1 } "
+                        + "{ name: 'namespace' value: namespace } "
+                        + "{ name: 'properties' value:  } "
+                        + "{ name: 'schemaType' value: sDocumentPropertiesSchemaType1 } "
+                        + "{ name: 'score' value: 0 } "
+                        + "{ name: 'ttlMillis' value: 0 } ' '"
+                        + "{ name: 'creationTimestampMillis' value: 6789 } "
+                        + "{ name: 'id' value: sDocumentProperties2 } "
+                        + "{ name: 'namespace' value: namespace } "
+                        + "{ name: 'properties' value:  } "
+                        + "{ name: 'schemaType' value: sDocumentPropertiesSchemaType2 } "
+                        + "{ name: 'score' value: 0 } "
+                        + "{ name: 'ttlMillis' value: 0 } ' ] } "
+                        + "{ name: 'doubleKey1' value: [ '1.0' '2.0' '3.0' ] } "
+                        + "{ name: 'longKey1' value: [ '1' '2' '3' ] } "
+                        + "{ name: 'stringKey1' value: [ 'String1' 'String2' 'String3' ] }  } "
+                        + "{ name: 'schemaType' value: schemaType1 } "
+                        + "{ name: 'score' value: 0 } "
+                        + "{ name: 'ttlMillis' value: 0 } ";
         assertThat(document.toString()).isEqualTo(exceptedString);
     }
 
     @Test
     public void testDocumentGetValues_differentTypes() {
         GenericDocument document =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setScore(1)
                         .setPropertyLong("longKey1", 1L)
                         .setPropertyBoolean("booleanKey1", true, false, true)
@@ -271,7 +280,8 @@ public class GenericDocumentCtsTest {
         assertThat(document.getPropertyString("stringKey1")).isEqualTo("test-value1");
         assertThat(document.getPropertyStringArray("stringKey1"))
                 .asList()
-                .containsExactly("test-value1", "test-value2", "test-value3");
+                .containsExactly("test-value1", "test-value2", "test-value3")
+                .inOrder();
 
         // Get a value of the wrong type
         assertThat(document.getPropertyDouble("longKey1")).isEqualTo(0.0);
@@ -281,7 +291,7 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocument_setEmptyValues() {
         GenericDocument document =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1")
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1")
                         .setPropertyBoolean("testKey")
                         .build();
         assertThat(document.getPropertyBooleanArray("testKey")).isEmpty();
@@ -290,11 +300,530 @@ public class GenericDocumentCtsTest {
     @Test
     public void testDocumentInvalid() {
         GenericDocument.Builder<?> builder =
-                new GenericDocument.Builder<>("namespace", "uri1", "schemaType1");
+                new GenericDocument.Builder<>("namespace", "id1", "schemaType1");
         String nullString = null;
 
         expectThrows(
                 IllegalArgumentException.class,
                 () -> builder.setPropertyString("testKey", "string1", nullString));
+    }
+
+    @Test
+    public void testRetrieveTopLevelProperties() {
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+
+        // Top-level repeated properties should be retrievable
+        assertThat(doc.getPropertyStringArray("propString"))
+                .asList()
+                .containsExactly("Goodbye", "Hello")
+                .inOrder();
+        assertThat(doc.getPropertyLongArray("propInts"))
+                .asList()
+                .containsExactly(3L, 1L, 4L)
+                .inOrder();
+        assertThat(doc.getPropertyDoubleArray("propDoubles"))
+                .usingTolerance(0.0001)
+                .containsExactly(3.14, 0.42)
+                .inOrder();
+        assertThat(doc.getPropertyBooleanArray("propBools")).asList().containsExactly(false);
+        assertThat(doc.getPropertyBytesArray("propBytes")).isEqualTo(new byte[][] {{3, 4}});
+
+        // Top-level repeated properties should retrieve the first element
+        assertThat(doc.getPropertyString("propString")).isEqualTo("Goodbye");
+        assertThat(doc.getPropertyLong("propInts")).isEqualTo(3);
+        assertThat(doc.getPropertyDouble("propDoubles")).isWithin(0.0001).of(3.14);
+        assertThat(doc.getPropertyBoolean("propBools")).isFalse();
+        assertThat(doc.getPropertyBytes("propBytes")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveNestedProperties() {
+        GenericDocument innerDoc =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyDocument("propDocument", innerDoc)
+                        .build();
+
+        // Document should be retrievable via both array and single getters
+        assertThat(doc.getPropertyDocument("propDocument")).isEqualTo(innerDoc);
+        assertThat(doc.getPropertyDocumentArray("propDocument")).asList().containsExactly(innerDoc);
+        assertThat((GenericDocument[]) doc.getProperty("propDocument"))
+                .asList()
+                .containsExactly(innerDoc);
+
+        // Nested repeated properties should be retrievable
+        assertThat(doc.getPropertyStringArray("propDocument.propString"))
+                .asList()
+                .containsExactly("Goodbye", "Hello")
+                .inOrder();
+        assertThat(doc.getPropertyLongArray("propDocument.propInts"))
+                .asList()
+                .containsExactly(3L, 1L, 4L)
+                .inOrder();
+        assertThat(doc.getPropertyDoubleArray("propDocument.propDoubles"))
+                .usingTolerance(0.0001)
+                .containsExactly(3.14, 0.42)
+                .inOrder();
+        assertThat(doc.getPropertyBooleanArray("propDocument.propBools"))
+                .asList()
+                .containsExactly(false);
+        assertThat(doc.getPropertyBytesArray("propDocument.propBytes"))
+                .isEqualTo(new byte[][] {{3, 4}});
+        assertThat(doc.getProperty("propDocument.propBytes")).isEqualTo(new byte[][] {{3, 4}});
+
+        // Nested properties should retrieve the first element
+        assertThat(doc.getPropertyString("propDocument.propString")).isEqualTo("Goodbye");
+        assertThat(doc.getPropertyLong("propDocument.propInts")).isEqualTo(3);
+        assertThat(doc.getPropertyDouble("propDocument.propDoubles")).isWithin(0.0001).of(3.14);
+        assertThat(doc.getPropertyBoolean("propDocument.propBools")).isFalse();
+        assertThat(doc.getPropertyBytes("propDocument.propBytes")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveNestedPropertiesMultipleNestedDocuments() {
+        GenericDocument innerDoc0 =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyString("propStringTwo", "Fee", "Fi")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+        GenericDocument innerDoc1 =
+                new GenericDocument.Builder<>("namespace", "id3", "schema2")
+                        .setPropertyString("propString", "Aloha")
+                        .setPropertyLong("propInts", 7, 5, 6)
+                        .setPropertyLong("propIntsTwo", 8, 6)
+                        .setPropertyDouble("propDoubles", 7.14, 0.356)
+                        .setPropertyBoolean("propBools", true)
+                        .setPropertyBytes("propBytes", new byte[][] {{8, 9}})
+                        .build();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyDocument("propDocument", innerDoc0, innerDoc1)
+                        .build();
+
+        // Documents should be retrievable via both array and single getters
+        assertThat(doc.getPropertyDocument("propDocument")).isEqualTo(innerDoc0);
+        assertThat(doc.getPropertyDocumentArray("propDocument"))
+                .asList()
+                .containsExactly(innerDoc0, innerDoc1)
+                .inOrder();
+        assertThat((GenericDocument[]) doc.getProperty("propDocument"))
+                .asList()
+                .containsExactly(innerDoc0, innerDoc1)
+                .inOrder();
+
+        // Nested repeated properties should be retrievable and should merge the arrays from the
+        // inner documents.
+        assertThat(doc.getPropertyStringArray("propDocument.propString"))
+                .asList()
+                .containsExactly("Goodbye", "Hello", "Aloha")
+                .inOrder();
+        assertThat(doc.getPropertyLongArray("propDocument.propInts"))
+                .asList()
+                .containsExactly(3L, 1L, 4L, 7L, 5L, 6L)
+                .inOrder();
+        assertThat(doc.getPropertyDoubleArray("propDocument.propDoubles"))
+                .usingTolerance(0.0001)
+                .containsExactly(3.14, 0.42, 7.14, 0.356)
+                .inOrder();
+        assertThat(doc.getPropertyBooleanArray("propDocument.propBools"))
+                .asList()
+                .containsExactly(false, true)
+                .inOrder();
+        assertThat(doc.getPropertyBytesArray("propDocument.propBytes"))
+                .isEqualTo(new byte[][] {{3, 4}, {8, 9}});
+        assertThat(doc.getProperty("propDocument.propBytes"))
+                .isEqualTo(new byte[][] {{3, 4}, {8, 9}});
+
+        // Nested repeated properties should properly handle properties appearing in only one inner
+        // document, but not the other.
+        assertThat(doc.getPropertyStringArray("propDocument.propStringTwo"))
+                .asList()
+                .containsExactly("Fee", "Fi")
+                .inOrder();
+        assertThat(doc.getPropertyLongArray("propDocument.propIntsTwo"))
+                .asList()
+                .containsExactly(8L, 6L)
+                .inOrder();
+
+        // Nested properties should retrieve the first element
+        assertThat(doc.getPropertyString("propDocument.propString")).isEqualTo("Goodbye");
+        assertThat(doc.getPropertyString("propDocument.propStringTwo")).isEqualTo("Fee");
+        assertThat(doc.getPropertyLong("propDocument.propInts")).isEqualTo(3);
+        assertThat(doc.getPropertyLong("propDocument.propIntsTwo")).isEqualTo(8L);
+        assertThat(doc.getPropertyDouble("propDocument.propDoubles")).isWithin(0.0001).of(3.14);
+        assertThat(doc.getPropertyBoolean("propDocument.propBools")).isFalse();
+        assertThat(doc.getPropertyBytes("propDocument.propBytes")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveTopLevelPropertiesIndex() {
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+
+        // Top-level repeated properties should be retrievable
+        assertThat(doc.getPropertyStringArray("propString[1]")).asList().containsExactly("Hello");
+        assertThat(doc.getPropertyLongArray("propInts[2]")).asList().containsExactly(4L);
+        assertThat(doc.getPropertyDoubleArray("propDoubles[0]"))
+                .usingTolerance(0.0001)
+                .containsExactly(3.14);
+        assertThat(doc.getPropertyBooleanArray("propBools[0]")).asList().containsExactly(false);
+        assertThat(doc.getPropertyBytesArray("propBytes[0]")).isEqualTo(new byte[][] {{3, 4}});
+        assertThat(doc.getProperty("propBytes[0]")).isEqualTo(new byte[][] {{3, 4}});
+
+        // Top-level repeated properties should retrieve the first element
+        assertThat(doc.getPropertyString("propString[1]")).isEqualTo("Hello");
+        assertThat(doc.getPropertyLong("propInts[2]")).isEqualTo(4L);
+        assertThat(doc.getPropertyDouble("propDoubles[0]")).isWithin(0.0001).of(3.14);
+        assertThat(doc.getPropertyBoolean("propBools[0]")).isFalse();
+        assertThat(doc.getPropertyBytes("propBytes[0]")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveTopLevelPropertiesIndexOutOfRange() {
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+
+        // Array getters should return null when given a bad index.
+        assertThat(doc.getPropertyStringArray("propString[5]")).isNull();
+
+        // Single getters should return default when given a bad index.
+        assertThat(doc.getPropertyDouble("propDoubles[7]")).isEqualTo(0.0);
+    }
+
+    @Test
+    public void testNestedProperties_unusualPaths() {
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setPropertyString("propString", "Hello", "Goodbye")
+                        .setPropertyDocument(
+                                "propDocs1",
+                                new GenericDocument.Builder<>("", "", "schema1")
+                                        .setPropertyString("", "Cat", "Dog")
+                                        .build())
+                        .setPropertyDocument(
+                                "propDocs2",
+                                new GenericDocument.Builder<>("", "", "schema1")
+                                        .setPropertyDocument(
+                                                "",
+                                                new GenericDocument.Builder<>("", "", "schema1")
+                                                        .setPropertyString("", "Red", "Blue")
+                                                        .setPropertyString(
+                                                                "propString", "Bat", "Hawk")
+                                                        .build())
+                                        .build())
+                        .setPropertyDocument(
+                                "",
+                                new GenericDocument.Builder<>("", "", "schema1")
+                                        .setPropertyDocument(
+                                                "",
+                                                new GenericDocument.Builder<>("", "", "schema1")
+                                                        .setPropertyString("", "Orange", "Green")
+                                                        .setPropertyString(
+                                                                "propString", "Toad", "Bird")
+                                                        .build())
+                                        .build())
+                        .build();
+        assertThat(doc.getPropertyString("propString")).isEqualTo("Hello");
+        assertThat(doc.getPropertyString("propString[1]")).isEqualTo("Goodbye");
+        assertThat(doc.getPropertyString("propDocs1.")).isEqualTo("Cat");
+        assertThat(doc.getPropertyString("propDocs1.[1]")).isEqualTo("Dog");
+        assertThat(doc.getPropertyStringArray("propDocs1[0]."))
+                .asList()
+                .containsExactly("Cat", "Dog")
+                .inOrder();
+        assertThat(doc.getPropertyString("propDocs2..propString")).isEqualTo("Bat");
+        assertThat(doc.getPropertyString("propDocs2..propString[1]")).isEqualTo("Hawk");
+        assertThat(doc.getPropertyString("propDocs2..")).isEqualTo("Red");
+        assertThat(doc.getPropertyString("propDocs2..[1]")).isEqualTo("Blue");
+        assertThat(doc.getPropertyString("[0]..propString[1]")).isEqualTo("Bird");
+        assertThat(doc.getPropertyString("[0]..[1]")).isEqualTo("Green");
+    }
+
+    @Test
+    public void testNestedProperties_invalidPaths() {
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .setPropertyDocument(
+                                "propDocs",
+                                new GenericDocument.Builder<>("", "", "schema1")
+                                        .setPropertyString("", "Cat")
+                                        .build())
+                        .build();
+
+        // Some paths are invalid because they don't apply to the given document --- these should
+        // return null. It's not the querier's fault.
+        assertThat(doc.getPropertyStringArray("propString.propInts")).isNull();
+        assertThat(doc.getPropertyStringArray("propDocs.propFoo")).isNull();
+        assertThat(doc.getPropertyStringArray("propDocs.propNestedString.propFoo")).isNull();
+
+        // Some paths are invalid because they are malformed. These throw an exception --- the
+        // querier shouldn't provide such paths.
+        expectThrows(
+                IllegalArgumentException.class,
+                () -> doc.getPropertyStringArray("propDocs.[0]propInts"));
+        expectThrows(
+                IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[0"));
+        expectThrows(
+                IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[0.]"));
+        expectThrows(
+                IllegalArgumentException.class,
+                () -> doc.getPropertyStringArray("propString[banana]"));
+        expectThrows(
+                IllegalArgumentException.class, () -> doc.getPropertyStringArray("propString[-1]"));
+        expectThrows(
+                IllegalArgumentException.class, () -> doc.getPropertyStringArray("propDocs[0]cat"));
+    }
+
+    @Test
+    public void testRetrieveNestedPropertiesIntermediateIndex() {
+        GenericDocument innerDoc0 =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyString("propStringTwo", "Fee", "Fi")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+        GenericDocument innerDoc1 =
+                new GenericDocument.Builder<>("namespace", "id3", "schema2")
+                        .setPropertyString("propString", "Aloha")
+                        .setPropertyLong("propInts", 7, 5, 6)
+                        .setPropertyLong("propIntsTwo", 8, 6)
+                        .setPropertyDouble("propDoubles", 7.14, 0.356)
+                        .setPropertyBoolean("propBools", true)
+                        .setPropertyBytes("propBytes", new byte[][] {{8, 9}})
+                        .build();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyDocument("propDocument", innerDoc0, innerDoc1)
+                        .build();
+
+        // Documents should be retrievable via both array and single getters
+        assertThat(doc.getPropertyDocument("propDocument[1]")).isEqualTo(innerDoc1);
+        assertThat(doc.getPropertyDocumentArray("propDocument[1]"))
+                .asList()
+                .containsExactly(innerDoc1);
+        assertThat((GenericDocument[]) doc.getProperty("propDocument[1]"))
+                .asList()
+                .containsExactly(innerDoc1);
+
+        // Nested repeated properties should be retrievable and should merge the arrays from the
+        // inner documents.
+        assertThat(doc.getPropertyStringArray("propDocument[1].propString"))
+                .asList()
+                .containsExactly("Aloha");
+        assertThat(doc.getPropertyLongArray("propDocument[0].propInts"))
+                .asList()
+                .containsExactly(3L, 1L, 4L)
+                .inOrder();
+        assertThat(doc.getPropertyDoubleArray("propDocument[1].propDoubles"))
+                .usingTolerance(0.0001)
+                .containsExactly(7.14, 0.356)
+                .inOrder();
+        assertThat(doc.getPropertyBooleanArray("propDocument[0].propBools"))
+                .asList()
+                .containsExactly(false);
+        assertThat((boolean[]) doc.getProperty("propDocument[0].propBools"))
+                .asList()
+                .containsExactly(false);
+        assertThat(doc.getPropertyBytesArray("propDocument[1].propBytes"))
+                .isEqualTo(new byte[][] {{8, 9}});
+
+        // Nested repeated properties should properly handle properties appearing in only one inner
+        // document, but not the other.
+        assertThat(doc.getPropertyStringArray("propDocument[0].propStringTwo"))
+                .asList()
+                .containsExactly("Fee", "Fi")
+                .inOrder();
+        assertThat(doc.getPropertyStringArray("propDocument[1].propStringTwo")).isNull();
+        assertThat(doc.getPropertyLongArray("propDocument[0].propIntsTwo")).isNull();
+        assertThat(doc.getPropertyLongArray("propDocument[1].propIntsTwo"))
+                .asList()
+                .containsExactly(8L, 6L)
+                .inOrder();
+
+        // Nested properties should retrieve the first element
+        assertThat(doc.getPropertyString("propDocument[1].propString")).isEqualTo("Aloha");
+        assertThat(doc.getPropertyString("propDocument[0].propStringTwo")).isEqualTo("Fee");
+        assertThat(doc.getPropertyLong("propDocument[1].propInts")).isEqualTo(7L);
+        assertThat(doc.getPropertyLong("propDocument[1].propIntsTwo")).isEqualTo(8L);
+        assertThat(doc.getPropertyDouble("propDocument[0].propDoubles")).isWithin(0.0001).of(3.14);
+        assertThat(doc.getPropertyBoolean("propDocument[1].propBools")).isTrue();
+        assertThat(doc.getPropertyBytes("propDocument[0].propBytes")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveNestedPropertiesLeafIndex() {
+        GenericDocument innerDoc0 =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyString("propStringTwo", "Fee", "Fi")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+        GenericDocument innerDoc1 =
+                new GenericDocument.Builder<>("namespace", "id3", "schema2")
+                        .setPropertyString("propString", "Aloha")
+                        .setPropertyLong("propInts", 7, 5, 6)
+                        .setPropertyLong("propIntsTwo", 8, 6)
+                        .setPropertyDouble("propDoubles", 7.14, 0.356)
+                        .setPropertyBoolean("propBools", true)
+                        .setPropertyBytes("propBytes", new byte[][] {{8, 9}})
+                        .build();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyDocument("propDocument", innerDoc0, innerDoc1)
+                        .build();
+
+        // Nested repeated properties should be retrievable and should merge the arrays from the
+        // inner documents.
+        assertThat(doc.getPropertyStringArray("propDocument.propString[0]"))
+                .asList()
+                .containsExactly("Goodbye", "Aloha")
+                .inOrder();
+        assertThat(doc.getPropertyLongArray("propDocument.propInts[2]"))
+                .asList()
+                .containsExactly(4L, 6L)
+                .inOrder();
+        assertThat(doc.getPropertyDoubleArray("propDocument.propDoubles[1]"))
+                .usingTolerance(0.0001)
+                .containsExactly(0.42, 0.356)
+                .inOrder();
+        assertThat((double[]) doc.getProperty("propDocument.propDoubles[1]"))
+                .usingTolerance(0.0001)
+                .containsExactly(0.42, 0.356)
+                .inOrder();
+        assertThat(doc.getPropertyBooleanArray("propDocument.propBools[0]"))
+                .asList()
+                .containsExactly(false, true)
+                .inOrder();
+        assertThat(doc.getPropertyBytesArray("propDocument.propBytes[0]"))
+                .isEqualTo(new byte[][] {{3, 4}, {8, 9}});
+
+        // Nested repeated properties should properly handle properties appearing in only one inner
+        // document, but not the other.
+        assertThat(doc.getPropertyStringArray("propDocument.propStringTwo[0]"))
+                .asList()
+                .containsExactly("Fee");
+        assertThat((String[]) doc.getProperty("propDocument.propStringTwo[0]"))
+                .asList()
+                .containsExactly("Fee");
+        assertThat(doc.getPropertyLongArray("propDocument.propIntsTwo[1]"))
+                .asList()
+                .containsExactly(6L);
+
+        // Nested properties should retrieve the first element
+        assertThat(doc.getPropertyString("propDocument.propString[1]")).isEqualTo("Hello");
+        assertThat(doc.getPropertyString("propDocument.propStringTwo[1]")).isEqualTo("Fi");
+        assertThat(doc.getPropertyLong("propDocument.propInts[1]")).isEqualTo(1L);
+        assertThat(doc.getPropertyLong("propDocument.propIntsTwo[1]")).isEqualTo(6L);
+        assertThat(doc.getPropertyDouble("propDocument.propDoubles[1]")).isWithin(0.0001).of(0.42);
+        assertThat(doc.getPropertyBoolean("propDocument.propBools[0]")).isFalse();
+        assertThat(doc.getPropertyBytes("propDocument.propBytes[0]")).isEqualTo(new byte[] {3, 4});
+    }
+
+    @Test
+    public void testRetrieveNestedPropertiesIntermediateAndLeafIndices() {
+        GenericDocument innerDoc0 =
+                new GenericDocument.Builder<>("namespace", "id2", "schema2")
+                        .setPropertyString("propString", "Goodbye", "Hello")
+                        .setPropertyString("propStringTwo", "Fee", "Fi")
+                        .setPropertyLong("propInts", 3, 1, 4)
+                        .setPropertyDouble("propDoubles", 3.14, 0.42)
+                        .setPropertyBoolean("propBools", false)
+                        .setPropertyBytes("propBytes", new byte[][] {{3, 4}})
+                        .build();
+        GenericDocument innerDoc1 =
+                new GenericDocument.Builder<>("namespace", "id3", "schema2")
+                        .setPropertyString("propString", "Aloha")
+                        .setPropertyLong("propInts", 7, 5, 6)
+                        .setPropertyLong("propIntsTwo", 8, 6)
+                        .setPropertyDouble("propDoubles", 7.14, 0.356)
+                        .setPropertyBoolean("propBools", true)
+                        .setPropertyBytes("propBytes", new byte[][] {{8, 9}})
+                        .build();
+        GenericDocument doc =
+                new GenericDocument.Builder<>("namespace", "id1", "schema1")
+                        .setScore(42)
+                        .setPropertyDocument("propDocument", innerDoc0, innerDoc1)
+                        .build();
+
+        // Nested repeated properties should be retrievable and should merge the arrays from the
+        // inner documents.
+        assertThat(doc.getPropertyStringArray("propDocument[1].propString[0]"))
+                .asList()
+                .containsExactly("Aloha");
+        assertThat(doc.getPropertyLongArray("propDocument[0].propInts[2]"))
+                .asList()
+                .containsExactly(4L);
+        assertThat((long[]) doc.getProperty("propDocument[0].propInts[2]"))
+                .asList()
+                .containsExactly(4L);
+        assertThat(doc.getPropertyDoubleArray("propDocument[1].propDoubles[1]"))
+                .usingTolerance(0.0001)
+                .containsExactly(0.356);
+        assertThat(doc.getPropertyBooleanArray("propDocument[0].propBools[0]"))
+                .asList()
+                .containsExactly(false);
+        assertThat(doc.getPropertyBytesArray("propDocument[1].propBytes[0]"))
+                .isEqualTo(new byte[][] {{8, 9}});
+
+        // Nested properties should retrieve the first element
+        assertThat(doc.getPropertyString("propDocument[0].propString[1]")).isEqualTo("Hello");
+        assertThat(doc.getPropertyString("propDocument[0].propStringTwo[1]")).isEqualTo("Fi");
+        assertThat(doc.getPropertyLong("propDocument[1].propInts[1]")).isEqualTo(5L);
+        assertThat(doc.getPropertyLong("propDocument[1].propIntsTwo[1]")).isEqualTo(6L);
+        assertThat(doc.getPropertyDouble("propDocument[0].propDoubles[1]"))
+                .isWithin(0.0001)
+                .of(0.42);
+        assertThat(doc.getPropertyBoolean("propDocument[1].propBools[0]")).isTrue();
+        assertThat(doc.getPropertyBytes("propDocument[0].propBytes[0]"))
+                .isEqualTo(new byte[] {3, 4});
     }
 }
