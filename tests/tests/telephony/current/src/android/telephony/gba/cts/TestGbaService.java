@@ -39,6 +39,8 @@ public class TestGbaService extends GbaService {
     @Override
     public void onAuthenticationRequest(int subId, int token, int appType,
             @NonNull Uri nafUrl, @NonNull byte[] securityProtocol, boolean forceBootStrapping) {
+        super.onAuthenticationRequest(subId, token, appType, nafUrl,
+                securityProtocol, forceBootStrapping);
         boolean isSuccess = mConfig.isAuthSuccess();
         int reason = mConfig.getFailReason();
         byte[] key = mConfig.getGbaKey();
