@@ -44,6 +44,8 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
 import android.support.test.uiautomator.UiSelector;
 
 import androidx.test.InstrumentationRegistry;
@@ -465,6 +467,12 @@ public class MediaStorageTest {
         // Some dialogs may have granted access automatically, so we're willing
         // to keep rolling forward if we can't find our grant button
         final UiSelector grant = new UiSelector().textMatches("(?i)Allow");
+        UiScrollable uiScrollable = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            uiScrollable.scrollIntoView(grant);
+        } catch (UiObjectNotFoundException e) {
+            // Scrolling can fail if the UI is not scrollable
+        }
         if (new UiObject(grant).waitForExists(2_000)) {
             device.findObject(grant).click();
         }
