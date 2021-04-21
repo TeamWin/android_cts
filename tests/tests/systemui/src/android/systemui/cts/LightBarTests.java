@@ -18,6 +18,8 @@ package android.systemui.cts;
 
 import static android.server.wm.BarTestUtils.assumeHasColoredNavigationBar;
 import static android.server.wm.BarTestUtils.assumeHasColoredStatusBar;
+import static android.server.wm.BarTestUtils.assumeStatusBarContainsCutout;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
 
 import static androidx.test.InstrumentationRegistry.getInstrumentation;
 
@@ -30,10 +32,15 @@ import android.app.UiAutomation;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.view.Gravity;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.WindowInsets.Type;
+import android.view.WindowManager;
+import android.view.WindowMetrics;
 
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -179,6 +186,61 @@ public class LightBarTests extends LightBarTestBase {
 
         checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE, Color.RED,
                 mTestName.getMethodName());
+    }
+
+    @Test
+    @AppModeFull // Instant apps cannot create notifications
+    public void testLightBarIsNotAllowed_fitStatusBar() throws Throwable {
+        assumeHasColoredStatusBar(mActivityRule);
+
+        runInNotificationSession(() -> {
+            final LightBarActivity activity = mActivityRule.getActivity();
+            activity.runOnUiThread(() -> {
+                final WindowMetrics metrics = activity.getWindowManager().getCurrentWindowMetrics();
+                final Insets insets = metrics.getWindowInsets().getInsets(Type.statusBars());
+                final WindowManager.LayoutParams attrs = activity.getWindow().getAttributes();
+                attrs.gravity = Gravity.LEFT | Gravity.TOP;
+                attrs.x = insets.left;
+                attrs.y = insets.top;
+                attrs.width = metrics.getBounds().width() - insets.left - insets.right;
+                attrs.height = metrics.getBounds().height() - insets.top - insets.bottom;
+                activity.getWindow().setAttributes(attrs);
+                activity.getWindow().setStatusBarColor(Color.BLACK);
+                activity.getWindow().setNavigationBarColor(Color.BLACK);
+                activity.setLightStatusBarAppearance(true);
+                activity.setLightNavigationBarAppearance(true);
+            });
+            Thread.sleep(WAIT_TIME);
+
+            Bitmap bitmap = takeStatusBarScreenshot(activity);
+            Stats s = evaluateDarkBarBitmap(bitmap, Color.BLACK, 0);
+            assertStats(bitmap, s, false /* light */);
+        });
+    }
+
+    @Test
+    @AppModeFull // Instant apps cannot create notifications
+    public void testLightBarIsNotAllowed_fitDisplayCutout() throws Throwable {
+        assumeHasColoredStatusBar(mActivityRule);
+        assumeStatusBarContainsCutout(mActivityRule);
+
+        runInNotificationSession(() -> {
+            final LightBarActivity activity = mActivityRule.getActivity();
+            activity.runOnUiThread(() -> {
+                final WindowManager.LayoutParams attrs = activity.getWindow().getAttributes();
+                attrs.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
+                activity.getWindow().setAttributes(attrs);
+                activity.getWindow().setStatusBarColor(Color.BLACK);
+                activity.getWindow().setNavigationBarColor(Color.BLACK);
+                activity.setLightStatusBarAppearance(true);
+                activity.setLightNavigationBarAppearance(true);
+            });
+            Thread.sleep(WAIT_TIME);
+
+            Bitmap bitmap = takeStatusBarScreenshot(activity);
+            Stats s = evaluateDarkBarBitmap(bitmap, Color.BLACK, 0);
+            assertStats(bitmap, s, false /* light */);
+        });
     }
 
     private void runInNotificationSession(ThrowingRunnable task) throws Exception {

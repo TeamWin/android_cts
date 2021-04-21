@@ -17,7 +17,9 @@ package android.systemui.cts;
 
 import static android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
 import static android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
 
+import android.os.Bundle;
 import android.view.View;
 import android.view.WindowInsetsController;
 
@@ -26,6 +28,15 @@ import android.view.WindowInsetsController;
  * SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.
  */
 public class LightBarActivity extends LightBarBaseActivity {
+
+    @Override
+    protected void onCreate(Bundle bundle){
+        super.onCreate(bundle);
+
+        // Make the window extend into the waterfall insets.
+        getWindow().getAttributes().layoutInDisplayCutoutMode =
+                LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
+    }
 
     public void setLightStatusBarLegacy(boolean lightStatusBar) {
         setLightBarLegacy(lightStatusBar, View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
