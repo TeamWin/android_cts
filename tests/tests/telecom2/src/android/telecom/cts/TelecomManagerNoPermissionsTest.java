@@ -19,6 +19,7 @@ package android.telecom.cts;
 import android.content.Context;
 import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 /**
  * Verifies correct operation of TelecomManager APIs when the correct permissions have not been
@@ -87,6 +88,39 @@ public class TelecomManagerNoPermissionsTest extends InstrumentationTestCase {
         } finally {
             TestUtils.resetCompatCommand(getInstrumentation(),
                     TestUtils.ENABLE_GET_CALL_STATE_PERMISSION_PROTECTION_STRING);
+        }
+    }
+
+    public void testGetPhoneAccountCompatPermissions() throws Exception {
+        if (!TestUtils.shouldTestTelecom(mContext)) {
+            return;
+        }
+
+        try {
+            TestUtils.enableCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING);
+
+            try {
+                mTelecomManager.getPhoneAccount(TestUtils.TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_1);
+                fail("TelecomManager#getPhoneAccount should require READ_PHONE_NUMBERS or "
+                        + "READ_PRIVILEGED_PHONE_STATE when "
+                        + "ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION is enabled");
+            } catch (SecurityException e) {
+                //expected
+            }
+
+            TestUtils.disableCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING);
+            try {
+                mTelecomManager.getPhoneAccount(TestUtils.TEST_DEFAULT_PHONE_ACCOUNT_HANDLE_1);
+            } catch (SecurityException e) {
+                fail("TelecomManager#getPhoneAccount shouldn't require READ_PHONE_NUMBERS or "
+                        + "READ_PRIVILEGED_PHONE_STATE when "
+                        + "ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION is disabled");
+            }
+        } finally {
+            TestUtils.resetCompatCommand(getInstrumentation(),
+                    TestUtils.ENABLE_GET_PHONE_ACCOUNT_PERMISSION_PROTECTION_STRING);
         }
     }
 }
