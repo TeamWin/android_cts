@@ -545,7 +545,39 @@ void SurfaceTransaction_setOnCompleteCallback(JNIEnv* env, jclass, jlong surface
                                       CallbackListenerWrapper::transactionCallbackThunk);
 }
 
-const std::array<JNINativeMethod, 28> JNI_METHODS = {{
+void SurfaceTransaction_setOnCommitCallback(JNIEnv* env, jclass, jlong surfaceTransaction,
+                                            jobject callback) {
+    void* context = new CallbackListenerWrapper(env, callback);
+    ASurfaceTransaction_setOnCommit(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                    reinterpret_cast<void*>(context),
+                                    CallbackListenerWrapper::transactionCallbackThunk);
+}
+
+// Save context so we can test callbacks without a context provided.
+static CallbackListenerWrapper* listener = nullptr;
+static void transactionCallbackWithoutContextThunk(void* /* context */,
+                                                   ASurfaceTransactionStats* stats) {
+    CallbackListenerWrapper::transactionCallbackThunk(listener, stats);
+    listener = nullptr;
+}
+
+void SurfaceTransaction_setOnCompleteCallbackWithoutContext(JNIEnv* env, jclass,
+                                                            jlong surfaceTransaction,
+                                                            jobject callback) {
+    listener = new CallbackListenerWrapper(env, callback);
+    ASurfaceTransaction_setOnComplete(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                      nullptr, transactionCallbackWithoutContextThunk);
+}
+
+void SurfaceTransaction_setOnCommitCallbackWithoutContext(JNIEnv* env, jclass,
+                                                          jlong surfaceTransaction,
+                                                          jobject callback) {
+    listener = new CallbackListenerWrapper(env, callback);
+    ASurfaceTransaction_setOnCommit(reinterpret_cast<ASurfaceTransaction*>(surfaceTransaction),
+                                    nullptr, transactionCallbackWithoutContextThunk);
+}
+
+const std::array<JNINativeMethod, 31> JNI_METHODS = {{
         {"nSurfaceTransaction_create", "()J", (void*)SurfaceTransaction_create},
         {"nSurfaceTransaction_delete", "(J)V", (void*)SurfaceTransaction_delete},
         {"nSurfaceTransaction_apply", "(J)V", (void*)SurfaceTransaction_apply},
@@ -580,11 +612,21 @@ const std::array<JNINativeMethod, 28> JNI_METHODS = {{
         {"nSurfaceTransaction_setOnCompleteCallback",
          "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
          (void*)SurfaceTransaction_setOnCompleteCallback},
+        {"nSurfaceTransaction_setOnCommitCallback",
+         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         (void*)SurfaceTransaction_setOnCommitCallback},
         {"nSurfaceTransaction_setCrop", "(JJIIII)V", (void*)SurfaceTransaction_setCrop},
         {"nSurfaceTransaction_setPosition", "(JJII)V", (void*)SurfaceTransaction_setPosition},
         {"nSurfaceTransaction_setBufferTransform", "(JJI)V",
          (void*)SurfaceTransaction_setBufferTransform},
         {"nSurfaceTransaction_setScale", "(JJFF)V", (void*)SurfaceTransaction_setScale},
+        {"nSurfaceTransaction_setOnCompleteCallbackWithoutContext",
+         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         (void*)SurfaceTransaction_setOnCompleteCallbackWithoutContext},
+        {"nSurfaceTransaction_setOnCommitCallbackWithoutContext",
+         "(JLandroid/view/cts/ASurfaceControlTest$TransactionCompleteListener;)V",
+         (void*)SurfaceTransaction_setOnCommitCallbackWithoutContext},
+
 }};
 
 }  // anonymous namespace
