@@ -87,3 +87,55 @@ void WaveTableSource::genSinWave(float* buffer, int length) {
         buffer[index] = sinf(index * incr);
     }
 }
+
+void WaveTableSource::genTriangleWave(float* buffer, int size,
+                                        float maxValue, float minValue, float dutyCycle) {
+    float range = maxValue - minValue;
+
+    // Make a triangle that goes 0 -> max -> min -> 0.
+    int index = 0;
+    int phase0Size = (int) (size / 2 * dutyCycle);
+
+    int breakIndex = phase0Size;
+    float val = 0;
+    // Phase 0 (0 -> max)
+    if (phase0Size != 0) {
+        float phase0Incr = maxValue / (float) phase0Size;
+        for (; index < breakIndex; ++index) {
+            buffer[index] = val;
+            val += phase0Incr;
+        }
+    } else {
+        val = maxValue;
+    }
+
+    // Phase 1 & 2 (max -> min)
+    breakIndex = size - phase0Size;
+    float incr = -range / ((float) size * (1.0f - dutyCycle));
+    for (; index < breakIndex; ++index) {
+        buffer[index] = val;
+        val += incr;
+    }
+
+    // Phase 3 (min -> 0)
+    if (phase0Size != 0) {
+        float phase0Incr = maxValue / (float) phase0Size;
+        for (; index < size; ++index) {
+            buffer[index] = val;
+            val += phase0Incr;
+        }
+    }
+}
+
+void WaveTableSource::genPulseWave(float* buffer, int size,
+                                    float maxValue, float minValue, float dutyCycle) {
+    int index = 0;
+    int breakIndex = (int) (size * dutyCycle);
+    for (; index < breakIndex; ++index) {
+        buffer[index] = maxValue;
+    }
+    for (; index < size; ++index) {
+        buffer[index] = minValue;
+    }
+}
+

@@ -37,6 +37,13 @@ Java_org_hyphonate_megaaudio_player_NativeAudioSource_resetN(
     // TODO: implement reset()
 }
 
+JNIEXPORT void JNICALL
+Java_org_hyphonate_megaaudio_player_NativeAudioSource_triggerN(
+        JNIEnv *env, jobject thiz, jlong native_source_ptr) {
+    AudioSource* audioSource = (AudioSource*)native_source_ptr;
+    audioSource->trigger();
+}
+
 JNIEXPORT jint JNICALL
 Java_org_hyphonate_megaaudio_player_NativeAudioSource_pullN(
         JNIEnv *env, jobject thiz, jlong native_source_ptr,
