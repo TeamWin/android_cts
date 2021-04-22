@@ -31,6 +31,7 @@ import static android.appenumeration.cts.Constants.ACTION_SEND_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_SENDER_FOR_RESULT;
+import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
@@ -206,6 +207,12 @@ public class TestActivity extends Activity {
                         .getString(EXTRA_COMPONENT_NAME);
                 sendIsActivityEnabled(remoteCallback, ComponentName.unflattenFromString(
                         componentName));
+            } else if (Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY.equals(action)) {
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                final int userId = intent.getBundleExtra(EXTRA_DATA)
+                        .getInt(Intent.EXTRA_USER);
+                sendSyncAdapterPackagesForAuthorityAsUser(remoteCallback, authority, userId);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -444,6 +451,16 @@ public class TestActivity extends Activity {
         }
         final Bundle result = new Bundle();
         result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendSyncAdapterPackagesForAuthorityAsUser(RemoteCallback remoteCallback,
+            String authority, int userId) {
+        final String[] syncAdapterPackages = ContentResolver
+                .getSyncAdapterPackagesForAuthorityAsUser(authority, userId);
+        final Bundle result = new Bundle();
+        result.putStringArray(Intent.EXTRA_PACKAGES, syncAdapterPackages);
         remoteCallback.sendResult(result);
         finish();
     }
