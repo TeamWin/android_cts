@@ -128,7 +128,7 @@ public class SplitPermissionsSystemTest {
             }
         }
 
-        assertEquals(12, seenSplits.size());
+        assertEquals(14, seenSplits.size());
     }
 
     private void assertSplit(SplitPermissionInfo split, int targetSdk, String... permission) {

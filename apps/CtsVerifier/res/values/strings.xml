@@ -4897,8 +4897,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="proAudioMidiHasUSBPeripheralLbl">USB Peripheral Mode:</string>
     <string name="proAudioHDMISupportLbl">HDMI Support:</string>
     <string name="proAudioHasHDMICheckBox">Has HDMI Support</string>
+    <string name="proAudioLoopbackMoved">The latency measurement for Pro Audio has been moved to the Audio Loopback Latency Test</string>
 
-    <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
 

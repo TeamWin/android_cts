@@ -24,7 +24,6 @@ import static android.net.ipsec.ike.SaProposal.PSEUDORANDOM_FUNCTION_AES128_XCBC
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.annotation.NonNull;
@@ -104,10 +103,8 @@ public class VcnManagerTest {
         final String testRemoteId = "test.server.com";
         final byte[] psk = "psk".getBytes();
 
-        // TODO: b/180521384: Build the IkeSessionParams without a Context when the no-arg
-        // IkeSessionParams.Builder constructor is exposed.
         final IkeSessionParams ikeParams =
-                new IkeSessionParams.Builder(mContext)
+                new IkeSessionParams.Builder()
                         .setServerHostname(serverHostname)
                         .addSaProposal(ikeProposal)
                         .setLocalIdentification(new IkeFqdnIdentification(testLocalId))
@@ -130,7 +127,7 @@ public class VcnManagerTest {
                 new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, controlConfig)
                         .addExposedCapability(NET_CAPABILITY_INTERNET)
                         .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
-                        .setRetryInterval(
+                        .setRetryIntervalsMs(
                                 new long[] {
                                     TimeUnit.SECONDS.toMillis(1),
                                     TimeUnit.MINUTES.toMillis(1),
@@ -146,23 +143,11 @@ public class VcnManagerTest {
 
     @Test(expected = SecurityException.class)
     public void testSetVcnConfig_noCarrierPrivileges() throws Exception {
-        // TODO: b/180521384: Remove the assertion when constructing IkeSessionParams does not
-        // require an active default network.
-        assertNotNull(
-                "You must have an active network connection to complete CTS",
-                mConnectivityManager.getActiveNetwork());
-
         mVcnManager.setVcnConfig(new ParcelUuid(UUID.randomUUID()), buildVcnConfig());
     }
 
     @Test
     public void testSetVcnConfig_withCarrierPrivileges() throws Exception {
-        // TODO: b/180521384: Remove the assertion when constructing IkeSessionParams does not
-        // require an active default network.
-        assertNotNull(
-                "You must have an active network connection to complete CTS",
-                mConnectivityManager.getActiveNetwork());
-
         final int dataSubId = SubscriptionManager.getDefaultDataSubscriptionId();
         CarrierPrivilegeUtils.withCarrierPrivileges(mContext, dataSubId, () -> {
             SubscriptionGroupUtils.withEphemeralSubscriptionGroup(mContext, dataSubId, (subGrp) -> {

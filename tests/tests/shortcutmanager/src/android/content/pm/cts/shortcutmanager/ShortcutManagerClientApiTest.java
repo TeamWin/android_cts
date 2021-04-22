@@ -1428,62 +1428,6 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
     }
 
-    public void testUpdateShortcutVisibility_GrantShortcutAccess() throws Exception {
-        final List<byte[]> certs = new ArrayList<>(1);
-
-        // retrieve cert from package1
-        runWithCallerWithStrictMode(mPackageContext1, () -> {
-            try {
-                final PackageManager pm = mPackageContext1.getPackageManager();
-                final String pkgName = mPackageContext1.getPackageName();
-                PackageInfo packageInfo = pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES);
-                for (Signature signature : packageInfo.signatures) {
-                    MessageDigest sha256 = MessageDigest.getInstance("SHA-256");
-                    certs.add(sha256.digest(signature.toByteArray()));
-                }
-            } catch (PackageManager.NameNotFoundException | NoSuchAlgorithmException e) {
-            }
-        });
-
-        // Push shortcuts for package2 and make them visible to package1
-        runWithCallerWithStrictMode(mPackageContext2, () -> {
-            final ShortcutManager manager = getManager();
-            for (byte[] cert : certs) {
-                manager.updateShortcutVisibility(mPackageContext1.getPackageName(), cert, true);
-            }
-            assertTrue(manager.setDynamicShortcuts(list(
-                    makeShortcut("s1", "1a"),
-                    makeShortcut("s2", "2a"),
-                    makeShortcut("s3", "3a"))));
-        });
-
-        // Verify package1 can see these shortcuts
-        final Executor executor = Executors.newSingleThreadExecutor();
-        runWithCallerWithStrictMode(mPackageContext1, () -> {
-            final AppSearchManager apm = mPackageContext1.getSystemService(
-                    AppSearchManager.class);
-            apm.createGlobalSearchSession(executor, res -> {
-                        assertTrue(res.getErrorMessage(), res.isSuccess());
-                        res.getResultValue().search("", new SearchSpec.Builder()
-                                .setTermMatch(SearchSpec.TERM_MATCH_EXACT_ONLY).build()
-                        ).getNextPage(executor, page -> {
-                            assertTrue(page.getErrorMessage(), page.isSuccess());
-                            final List<SearchResult> results = page.getResultValue();
-                            final Set<String> shortcuts =
-                                    new ArraySet<>(results.size());
-                            for (SearchResult result : results) {
-                                shortcuts.add(result.getGenericDocument().getUri());
-                            }
-                            final Set<String> expected = new ArraySet<>(3);
-                            expected.add("s1");
-                            expected.add("s2");
-                            expected.add("s3");
-                            assertEquals("Unexpected results", expected, shortcuts);
-                        });
-                    });
-        });
-    }
-
     public void testDisableAndEnableShortcut() {
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(

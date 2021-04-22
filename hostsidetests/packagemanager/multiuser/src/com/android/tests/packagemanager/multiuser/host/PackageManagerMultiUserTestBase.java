@@ -47,7 +47,7 @@ public class PackageManagerMultiUserTestBase extends BaseHostJUnit4Test {
     public void setUp() throws Exception {
         assumeTrue("Device does not support multiple users",
                 getDevice().getMaxNumberOfUsersSupported() > 1);
-        mUserId = getDevice().getPrimaryUserId();
+        mUserId = getDevice().getCurrentUser();
         mCreatedUsers = new ArrayList<>();
     }
 

@@ -33,13 +33,17 @@ python3 incremental_deqp.py -s [device serial] -t [test directory]
 
 """
 import argparse
+import importlib
 import logging
 import os
+import pkgutil
 import re
 import subprocess
 import tempfile
 import time
 import uuid
+from target_file_handler import TargetFileHandler
+from custom_build_file_handler import CustomBuildFileHandler
 from zipfile import ZipFile
 
 
@@ -67,6 +71,7 @@ INCREMENTAL_DEQP_XML = ('<?xml version="1.0" encoding="utf-8"?>\n'
 
 logger = logging.getLogger()
 
+
 class AtsError(Exception):
   """Error when running incremental dEQP with Android Test Station"""
   pass
@@ -86,38 +91,30 @@ class TestResourceError(Exception):
 class BuildHelper(object):
   """Helper class for analyzing build."""
 
-  def __init__(self, base_build_target, deqp_deps):
+  def __init__(self, base_build_target, deqp_deps, custom_handler=False):
     """Init BuildHelper.
 
     Args:
       base_build_target: base build's target file name.
       deqp_deps: a set of dEQP dependency.
+      custom_handler: use custom build handler.
     """
-    self._deqp_deps = deqp_deps
+    self._deqp_deps = []
+    for deps in deqp_deps:
+      if self.is_deqp_dependency(deps):
+        self._deqp_deps.append(deps)
+    # Get base build's hash.
+    handler = TargetFileHandler(base_build_target)
+    if custom_handler:
+      handler = CustomBuildFileHandler(base_build_target)
+
+    self.base_hash = handler.GetFileHash(self._deqp_deps)
+
+  def is_deqp_dependency(self, dependency_name):
+    """Check if dependency is related to dEQP."""
     # dEQP dependency with pattern below will not be used to compare build:
     # files has /apex/ prefix are not related to dEQP.
-    # files has prefix /data/ are not system files, e.g. intermediate files.
-    # [vdso] is virtual dynamic shared object.
-    # /dmabuf is a temporary file.
-    self._exclude_pattern = re.compile('(^/apex/|^/data/|^\[vdso\]|^/dmabuf)')
-    # Get base build's hash.
-    base_hash = dict()
-    with ZipFile(base_build_target) as zip_file:
-      for dep in deqp_deps:
-        if not self.is_valid_dependency(dep):
-          continue
-        # Convert top directory's name to upper case.
-        idx = dep[1:].find('/')+1
-        deps_file = dep[1:idx].upper()+dep[idx:]
-        if deps_file not in zip_file.namelist():
-          continue
-        with zip_file.open(deps_file) as f:
-          base_hash[dep] = hash(f.read())
-    self.base_hash = base_hash
-
-  def is_valid_dependency(self, dependency_name):
-    """Check if dependency is valid."""
-    return not re.search(self._exclude_pattern, dependency_name)
+    return not re.search(re.compile('^/apex/'), dependency_name)
 
   def compare_build(self, adb):
     """Compare the difference of current build and base build with dEQP dependency.
@@ -134,7 +131,7 @@ class BuildHelper(object):
     # Get current build's hash.
     current_hash = dict()
     for dep in self._deqp_deps:
-      if not self.is_valid_dependency(dep):
+      if not self.is_deqp_dependency(dep):
         continue
       content = adb.run_shell_command('cat ' + dep)
       current_hash[dep] = hash(content)
@@ -218,6 +215,11 @@ class DeqpDependencyCollector(object):
     self._work_dir = work_dir
     self._test_dir = test_dir
     self._adb = adb
+    # dEQP dependency with pattern below are not an actual file:
+    # files has prefix /data/ are not system files, e.g. intermediate files.
+    # [vdso] is virtual dynamic shared object.
+    # /dmabuf is a temporary file.
+    self._exclude_deqp_pattern = re.compile('(^/data/|^\[vdso\]|^/dmabuf)')
 
   def check_test_log(self, test_file, log_file):
     """Check test's log to see if all tests are executed.
@@ -290,7 +292,9 @@ class DeqpDependencyCollector(object):
           correct_mmap = line.startswith('record mmap') and 'misc 1,' not in line
         # Get file name in memory map.
         if 'filename' in line and correct_mmap:
-          deps.add(line[line.find('filename') + 9:].strip())
+          deps_file = line[line.find('filename') + 9:].strip()
+          if not re.search(self._exclude_deqp_pattern, deps_file):
+            deps.add(deps_file)
 
 
   def get_test_binary_name(self, test_name):
@@ -424,6 +428,8 @@ def _get_parser():
                             'without comparing build.'))
   parser.add_argument('--ats_mode', action='store_true',
                       help=('Run incremental dEQP with Android Test Station.'))
+  parser.add_argument('--custom_handler', action='store_true',
+                      help='Use custome build file handler')
   return parser
 
 def _create_logger(log_file_name):
@@ -494,7 +500,7 @@ def _local_run(args, work_dir):
     return
 
   # Compare the build difference with dEQP dependency
-  build_helper = BuildHelper(args.base, deqp_deps)
+  build_helper = BuildHelper(args.base, deqp_deps, args.custom_handler)
   skip_dEQP = build_helper.compare_build(adb)
   if skip_dEQP:
     print('Congratulations, current build could skip dEQP test.\n'

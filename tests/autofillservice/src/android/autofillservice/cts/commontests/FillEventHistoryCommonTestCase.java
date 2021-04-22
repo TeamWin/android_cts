@@ -33,12 +33,12 @@ import static android.autofillservice.cts.testcore.Helper.assertFillEventForSave
 import static android.autofillservice.cts.testcore.Helper.assertNoDeprecatedClientState;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilConnected;
 import static android.autofillservice.cts.testcore.InstrumentedAutoFillService.waitUntilDisconnected;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_DATASET_MATCH;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_FIELD_VALIDATION_FAILED;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_HAS_EMPTY_REQUIRED;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_NO_SAVE_INFO;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_NO_VALUE_CHANGED;
-import static android.service.autofill.FillEventHistory.Event.NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_DATASET_MATCH;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_FIELD_VALIDATION_FAILED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_NO_SAVE_INFO;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_NO_VALUE_CHANGED;
+import static android.service.autofill.FillEventHistory.Event.NO_SAVE_UI_REASON_WITH_DELAY_SAVE_FLAG;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 
@@ -556,8 +556,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_NO_SAVE_INFO.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_NO_SAVE_INFO);
+        // NO_SAVE_UI_REASON_NO_SAVE_INFO.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_NO_SAVE_INFO);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -569,7 +569,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
         final Event event = verifyEvents.get(1);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_NO_SAVE_INFO);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_NO_SAVE_INFO);
     }
 
     /**
@@ -586,8 +586,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG);
+        // NO_SAVE_UI_REASON_WITH_DELAY_SAVE_FLAG.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_WITH_DELAY_SAVE_FLAG);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -599,7 +599,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
         final Event event = verifyEvents.get(1);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_WITH_DELAY_SAVE_FLAG);
     }
 
     /**
@@ -616,8 +616,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_HAS_EMPTY_REQUIRED.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_HAS_EMPTY_REQUIRED);
+        // NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -629,7 +629,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
         final Event event = verifyEvents.get(1);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_HAS_EMPTY_REQUIRED);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED);
     }
 
     /**
@@ -646,8 +646,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_HAS_EMPTY_REQUIRED.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_NO_VALUE_CHANGED);
+        // NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_NO_VALUE_CHANGED);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -659,7 +659,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(3);
         final Event event = verifyEvents.get(2);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_NO_VALUE_CHANGED);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_NO_VALUE_CHANGED);
     }
 
     /**
@@ -681,8 +681,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_FIELD_VALIDATION_FAILED.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_FIELD_VALIDATION_FAILED);
+        // NO_SAVE_UI_REASON_FIELD_VALIDATION_FAILED.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_FIELD_VALIDATION_FAILED);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -694,7 +694,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
         final Event event = verifyEvents.get(1);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_FIELD_VALIDATION_FAILED);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_FIELD_VALIDATION_FAILED);
     }
 
     /**
@@ -711,8 +711,8 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         sReplier.addResponse(builder.build());
 
         // Trigger autofill and set the save UI not show reason with
-        // NO_SAVE_REASON_DATASET_MATCH.
-        triggerAutofillForSaveUiCondition(NO_SAVE_REASON_DATASET_MATCH);
+        // NO_SAVE_UI_REASON_DATASET_MATCH.
+        triggerAutofillForSaveUiCondition(NO_SAVE_UI_REASON_DATASET_MATCH);
 
         // Finish the context by login in and it will trigger to check if the save UI should be
         // shown.
@@ -724,7 +724,7 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
         final List<Event> verifyEvents = InstrumentedAutoFillService.getFillEvents(2);
         final Event event = verifyEvents.get(1);
 
-        assertThat(event.getNoSaveReason()).isEqualTo(NO_SAVE_REASON_DATASET_MATCH);
+        assertThat(event.getNoSaveUiReason()).isEqualTo(NO_SAVE_UI_REASON_DATASET_MATCH);
     }
 
     private CannedFillResponse.Builder createTestResponseBuilder() {
@@ -750,21 +750,21 @@ public abstract class FillEventHistoryCommonTestCase extends AbstractLoginActivi
 
         mUiBot.assertDatasets("dataset1");
 
-        if (reason == NO_SAVE_REASON_HAS_EMPTY_REQUIRED) {
+        if (reason == NO_SAVE_UI_REASON_HAS_EMPTY_REQUIRED) {
             // Set empty value on password to meet that there was empty value for required ids.
             mActivity.onUsername((v) -> v.setText(BACKDOOR_USERNAME));
             mActivity.onPassword((v) -> v.setText(""));
-        } else if (reason == NO_SAVE_REASON_NO_VALUE_CHANGED) {
+        } else if (reason == NO_SAVE_UI_REASON_NO_VALUE_CHANGED) {
             // Select the suggestion to fill the data into username and password, then it will be
             // able to get the data from ViewState.getCurrentValue() and
             // ViewState.getAutofilledValue().
             mActivity.expectAutoFill(BACKDOOR_USERNAME, "whatever");
             mUiBot.selectDataset("dataset1");
             mActivity.assertAutoFilled();
-        } else if (reason == NO_SAVE_REASON_NO_SAVE_INFO
-                || reason == NO_SAVE_REASON_WITH_DELAY_SAVE_FLAG
-                || reason == NO_SAVE_REASON_FIELD_VALIDATION_FAILED
-                || reason == NO_SAVE_REASON_DATASET_MATCH) {
+        } else if (reason == NO_SAVE_UI_REASON_NO_SAVE_INFO
+                || reason == NO_SAVE_UI_REASON_WITH_DELAY_SAVE_FLAG
+                || reason == NO_SAVE_UI_REASON_FIELD_VALIDATION_FAILED
+                || reason == NO_SAVE_UI_REASON_DATASET_MATCH) {
             // Use the setText to fill the data into username and password, then it will only be
             // able to get the data from ViewState.getCurrentValue(), but get empty value from
             // ViewState.getAutofilledValue().

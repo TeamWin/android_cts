@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.icu.util.ULocale;
 import android.os.Parcel;
 import android.view.translation.TranslationCapability;
 import android.view.translation.TranslationContext;
@@ -34,9 +35,9 @@ import org.junit.runner.RunWith;
 public class TranslationCapabilityTest {
 
     private final TranslationSpec sourceSpec =
-            new TranslationSpec("en", TranslationSpec.DATA_FORMAT_TEXT);
+            new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT);
     private final TranslationSpec targetSpec =
-            new TranslationSpec("es", TranslationSpec.DATA_FORMAT_TEXT);
+            new TranslationSpec(ULocale.FRENCH, TranslationSpec.DATA_FORMAT_TEXT);
 
     @Test
     public void testCapability_nullSpecs() {
@@ -63,11 +64,11 @@ public class TranslationCapabilityTest {
                 .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
         assertThat(capability.isUiTranslationEnabled()).isTrue();
 
-        assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(capability.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(capability.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(capability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(capability.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
     }
@@ -85,11 +86,11 @@ public class TranslationCapabilityTest {
                 .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
         assertThat(capability.isUiTranslationEnabled()).isTrue();
 
-        assertThat(capability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(capability.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(capability.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(capability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(capability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(capability.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
@@ -106,11 +107,11 @@ public class TranslationCapabilityTest {
                 .isEqualTo(TranslationContext.FLAG_TRANSLITERATION);
         assertThat(parceledCapability.isUiTranslationEnabled()).isTrue();
 
-        assertThat(parceledCapability.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(parceledCapability.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(parceledCapability.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(parceledCapability.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(parceledCapability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(parceledCapability.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
     }
