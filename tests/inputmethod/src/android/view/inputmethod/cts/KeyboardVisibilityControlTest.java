@@ -36,9 +36,11 @@ import static com.android.cts.mockime.ImeEventStreamTestUtils.notExpectEvent;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.AlertDialog;
 import android.app.Instrumentation;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
@@ -270,6 +272,10 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Test
     public void testShowHideKeyboardOnWebView() throws Exception {
+        final PackageManager pm =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        assumeTrue(pm.hasSystemFeature("android.software.webview"));
+
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
