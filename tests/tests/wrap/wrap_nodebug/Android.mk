@@ -37,6 +37,8 @@ LOCAL_PREBUILT_JNI_LIBS_x86 := ../wrap.sh
 LOCAL_PREBUILT_JNI_LIBS_x86_64 := ../wrap.sh
 
 LOCAL_PACKAGE_NAME := CtsWrapWrapNoDebugTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
 
 # Jarjar to make WrapTest unique.
