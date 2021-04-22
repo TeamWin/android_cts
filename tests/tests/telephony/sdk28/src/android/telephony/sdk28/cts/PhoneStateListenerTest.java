@@ -15,6 +15,11 @@
  */
 package android.telephony.sdk28.cts;
 
+import static androidx.test.InstrumentationRegistry.getContext;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Looper;
@@ -23,16 +28,15 @@ import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import androidx.test.filters.FlakyTest;
+
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static androidx.test.InstrumentationRegistry.getContext;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+@FlakyTest
 public class PhoneStateListenerTest {
 
     public static final long WAIT_TIME = 1000;
