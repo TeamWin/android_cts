@@ -57,6 +57,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
@@ -919,6 +920,19 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         assertTrue(mDevicePolicyManager.revokeKeyPairFromWifiAuth(TEST_ALIAS));
 
         assertThat(mDevicePolicyManager.isKeyPairGrantedToWifiAuth(TEST_ALIAS)).isFalse();
+    }
+
+    public void testRevokeKeyPairFromApp_keyNotUsable() throws Exception {
+        mDevicePolicyManager.installKeyPair(getWho(), mFakePrivKey, new Certificate[] {mFakeCert},
+                TEST_ALIAS, /* requestAccess=*/ true);
+        // Key is requested from KeyChain prior to revoking the grant.
+        final PrivateKey key = KeyChain.getPrivateKey(mContext, TEST_ALIAS);
+        // Ensure the key is usable prior to being revoked.
+        signDataWithKey("SHA256withRSA", key);
+        mDevicePolicyManager.revokeKeyPairFromApp(getWho(), TEST_ALIAS, getWho().getPackageName());
+
+        // Key shouldn't be valid after the grant is revoked.
+        assertThrows(InvalidKeyException.class, () -> signDataWithKey("SHA256withRSA", key));
     }
 
     private void assertGranted(String alias, boolean expected)
