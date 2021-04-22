@@ -102,6 +102,20 @@ public class CarrierMessagingServiceWrapperTest {
         waitForServiceReady("Service " + packageName + " should be ready.");
     }
 
+    @Test
+    public void testCloseWrapper() {
+        testConnectToMessagingServiceWrapper();
+        mServiceWrapper.disconnect();
+        try {
+            mServiceWrapper.close();
+            fail("Should have throw an NPE on double-close");
+        } catch (NullPointerException e) {
+            // expected
+        } finally {
+            mServiceWrapper = null;
+        }
+    }
+
     /**
      * Tests that the device the all CarrierMessagingServices can receive sms and
      * triggers valid callback.
