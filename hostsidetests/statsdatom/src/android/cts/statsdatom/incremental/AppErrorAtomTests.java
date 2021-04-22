@@ -76,11 +76,8 @@ public class AppErrorAtomTests extends DeviceTestCase implements IBuildReceiver 
                         Paths.get(v4Signature.getAbsolutePath()))
                 .addExtraArgs("-g") // grant permissions
                 .setBlockFilter(block -> {
-                    if (block.getBlockIndex() > 3151 && block.getBlockIndex() < 3155) {
-                        // block some pages from res/raw, does not affect test run
-                        return false;
-                    }
-                    return true;
+                    // block a page from res/raw; does not affect test run
+                    return block.getBlockIndex() != 3152;
                 })
                 .build();
         mSession.start(Executors.newCachedThreadPool(),
