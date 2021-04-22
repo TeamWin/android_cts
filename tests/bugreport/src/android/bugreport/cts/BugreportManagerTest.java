@@ -131,6 +131,7 @@ public class BugreportManagerTest {
         }
     }
 
+    @LargeTest
     @Test
     public void testWifiBugreport() throws Exception {
         Pair<String, String> brFiles = triggerBugreport(BugreportParams.BUGREPORT_MODE_WIFI);

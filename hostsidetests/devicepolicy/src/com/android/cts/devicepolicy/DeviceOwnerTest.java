@@ -759,6 +759,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
                     .build());
     }
 
+    @TemporaryIgnoreOnHeadlessSystemUserMode(bugId = "185486201", reason = "need to change DPMS")
     @Test
     public void testDefaultSmsApplication() throws Exception {
         assumeHasTelephonyFeature();

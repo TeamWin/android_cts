@@ -61,4 +61,14 @@ public class TrafficDescriptorTest {
         TrafficDescriptor parcelTd = TrafficDescriptor.CREATOR.createFromParcel(parcel);
         assertThat(td).isEqualTo(parcelTd);
     }
+
+    @Test
+    public void testBuilder() {
+        TrafficDescriptor td = new TrafficDescriptor.Builder()
+                .setDataNetworkName(DNN)
+                .setOsAppId(OS_APP_ID)
+                .build();
+        assertThat(td.getDataNetworkName()).isEqualTo(DNN);
+        assertThat(td.getOsAppId()).isEqualTo(OS_APP_ID);
+    }
 }

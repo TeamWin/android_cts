@@ -1394,7 +1394,12 @@ public class TelephonyCallbackTest {
         public void onLinkCapacityEstimateChanged(
                 List<LinkCapacityEstimate> linkCapacityEstimateList) {
             synchronized (mLock) {
-                mOnLinkCapacityEstimateChangedCalled = true;
+                int lceType = linkCapacityEstimateList.get(0).getType();
+                if (lceType == LinkCapacityEstimate.LCE_TYPE_COMBINED
+                        || lceType == LinkCapacityEstimate.LCE_TYPE_PRIMARY
+                        || lceType == LinkCapacityEstimate.LCE_TYPE_SECONDARY) {
+                    mOnLinkCapacityEstimateChangedCalled = true;
+                }
                 mLock.notify();
             }
         }

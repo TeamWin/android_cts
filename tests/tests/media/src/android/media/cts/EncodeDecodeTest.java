@@ -28,6 +28,7 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import androidx.test.filters.FlakyTest;
 import androidx.test.filters.SmallTest;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -54,6 +55,8 @@ import javax.microedition.khronos.opengles.GL10;
 @Presubmit
 @SmallTest
 @RequiresDevice
+// TODO: b/186001256
+@FlakyTest
 public class EncodeDecodeTest extends AndroidTestCase {
     private static final String TAG = "EncodeDecodeTest";
     private static final boolean VERBOSE = false;           // lots of logging

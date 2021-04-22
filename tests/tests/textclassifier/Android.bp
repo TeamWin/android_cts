@@ -37,7 +37,7 @@ android_test {
         "truth-prebuilt",
         "androidx.test.espresso.core",
         "androidx.test.ext.junit",
-
+        "androidx.test.uiautomator",
     ],
     srcs: [
         "src/**/*.java",

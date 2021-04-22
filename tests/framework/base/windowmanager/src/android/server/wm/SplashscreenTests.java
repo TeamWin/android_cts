@@ -50,6 +50,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.UiModeManager;
@@ -153,26 +154,19 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         }
     }
 
-    private void assumeNewApisEnabled() {
-        // Temporary verify by shell command before new APIs enable.
-        final String enableTest =
-                executeShellCommand("getprop persist.debug.shell_starting_surface").trim();
-        assumeTrue(Boolean.parseBoolean(enableTest));
-    }
-
     @Test
     public void testHandleExitAnimationOnCreate() throws Exception {
-        assumeNewApisEnabled();
+        assumeFalse(isLeanBack());
         launchRuntimeHandleExitAnimationActivity(true, false, false, true);
     }
     @Test
     public void testHandleExitAnimationOnResume() throws Exception {
-        assumeNewApisEnabled();
+        assumeFalse(isLeanBack());
         launchRuntimeHandleExitAnimationActivity(false, true, false, true);
     }
     @Test
     public void testHandleExitAnimationCancel() throws Exception {
-        assumeNewApisEnabled();
+        assumeFalse(isLeanBack());
         launchRuntimeHandleExitAnimationActivity(true, false, true, false);
     }
 
@@ -198,7 +192,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetApplicationNightMode() throws Exception {
-        assumeNewApisEnabled();
         final UiModeManager uiModeManager = mContext.getSystemService(UiModeManager.class);
         assumeTrue(uiModeManager != null);
         final int systemNightMode = uiModeManager.getNightMode();
@@ -225,14 +218,13 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testSetBackgroundColorActivity() {
-        assumeNewApisEnabled();
         launchActivityNoWait(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, extraBool(DELAY_RESUME, true));
         testSplashScreenColor(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY, Color.BLUE, Color.BLACK);
     }
 
     @Test
     public void testHandleExitIconAnimatingActivity() throws Exception {
-        assumeNewApisEnabled();
+        assumeFalse(isLeanBack());
         TestJournalProvider.TestJournalContainer.start();
         launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
                 extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true));
@@ -252,7 +244,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testCancelHandleExitIconAnimatingActivity() {
-        assumeNewApisEnabled();
+        assumeFalse(isLeanBack());
         TestJournalProvider.TestJournalContainer.start();
         launchActivity(SPLASH_SCREEN_REPLACE_ICON_ACTIVITY,
                 extraBool(REQUEST_HANDLE_EXIT_ON_CREATE, true),
@@ -267,7 +259,6 @@ public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
     public void testShortcutChangeTheme() {
-        assumeNewApisEnabled();
         final LauncherApps launcherApps = mContext.getSystemService(LauncherApps.class);
         final ShortcutManager shortcutManager = mContext.getSystemService(ShortcutManager.class);
         assumeTrue(launcherApps != null && shortcutManager != null);
