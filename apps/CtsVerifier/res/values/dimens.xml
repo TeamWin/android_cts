@@ -43,4 +43,8 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
 
     <dimen name="display_cutout_test_button_size">25dp</dimen>
+
+    <!-- WaveformView -->
+    <dimen name="waveform_stroke_width">2.0dp</dimen>
+
 </resources>
