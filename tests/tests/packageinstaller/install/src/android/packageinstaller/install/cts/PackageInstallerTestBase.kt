@@ -40,6 +40,8 @@ import androidx.core.content.FileProvider
 import com.android.compatibility.common.util.FutureResultActivity
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assume.assumeFalse
+import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import java.io.File
@@ -214,5 +216,17 @@ open class PackageInstallerTestBase {
     @After
     fun uninstallTestPackage() {
         uiDevice.executeShellCommand("pm uninstall $TEST_APK_PACKAGE_NAME")
+    }
+
+    fun assumeWatch() {
+        assumeTrue("Test only valid for watch", hasFeatureWatch())
+    }
+
+    fun assumeNotWatch() {
+        assumeFalse("Installing APKs not supported on watch", hasFeatureWatch())
+    }
+
+    private fun hasFeatureWatch(): Boolean {
+        return pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
     }
 }
