@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.app.DownloadManager;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -42,6 +43,7 @@ import android.os.Process;
 import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.MediaStore;
+import android.support.test.uiautomator.UiDevice;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -90,9 +92,13 @@ public class DownloadManagerTestBase {
     private static final String EXTRA_CALLBACK = "callback";
     private static final String KEY_ERROR = "error";
     private static final String STORAGE_DELEGATOR_PACKAGE = "com.android.test.storagedelegator";
+    protected static final int REQUEST_CODE = 42;
 
     protected Context mContext;
     protected DownloadManager mDownloadManager;
+    protected UiDevice mDevice;
+    protected String mDocumentsUiPackageId;
+    protected Instrumentation mInstrumentation;
 
     private WifiManager mWifiManager;
     private ConnectivityManager mCm;
@@ -105,6 +111,8 @@ public class DownloadManagerTestBase {
         mWifiManager = mContext.getSystemService(WifiManager.class);
         mCm = mContext.getSystemService(ConnectivityManager.class);
         mWebServer = new CtsTestServer(mContext);
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mDevice = UiDevice.getInstance(mInstrumentation);
         clearDownloads();
         checkConnection();
     }
