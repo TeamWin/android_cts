@@ -41,6 +41,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
+import android.os.RemoteException;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -59,7 +60,9 @@ import androidx.test.core.app.ApplicationProvider;
 import androidx.test.espresso.ViewInteraction;
 import androidx.test.ext.junit.rules.ActivityScenarioRule;
 import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.UiDevice;
 
+import com.android.compatibility.common.util.ShellUtils;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AfterClass;
@@ -69,6 +72,7 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -86,11 +90,22 @@ public class TextViewIntegrationTest {
     private static float sOriginalTransitionAnimationDurationScale;
 
     @Before
-    public void setup() {
+    public void setup() throws RemoteException {
         Assume.assumeTrue(
                 ApplicationProvider.getApplicationContext().getPackageManager()
                         .hasSystemFeature(FEATURE_TOUCHSCREEN));
         mSimpleTextClassifier = new SimpleTextClassifier();
+        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation()).wakeUp();
+        dismissKeyguard();
+        closeSystemDialog();
+    }
+
+    private void dismissKeyguard() {
+        ShellUtils.runShellCommand("wm dismiss-keyguard");
+    }
+
+    private static void closeSystemDialog() {
+        ShellUtils.runShellCommand("am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS");
     }
 
     @BeforeClass

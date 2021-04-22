@@ -36,8 +36,9 @@ class IncrementalDeqpTest(unittest.TestCase):
     dump_file = 'testdata/perf_dump.txt'
     deps = set()
     self.dependency_collector.update_dependency(deps, dump_file)
-    self.assertEqual(len(deps),1)
+    self.assertEqual(len(deps),2)
     self.assertIn('file_2', deps)
+    self.assertIn('file_3', deps)
 
   def test_check_test_log_all_test_executed(self):
     """Test check_test_log returns true if all tests are executed."""
@@ -82,7 +83,8 @@ class IncrementalDeqpTest(unittest.TestCase):
     """Test BuilHelper could get hash from base build."""
     deqp_deps = ['/system/deqp_dependency_file_a.so', '/vendor/deqp_dependency_file_b.so',
                  '/vendor/file_not_exists.so']
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', deqp_deps)
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip',
+                                                deqp_deps)
 
     self.assertEqual(build_helper.base_hash['/system/deqp_dependency_file_a.so'],
                      hash(b'placeholder\nplaceholder\n'))
@@ -92,26 +94,25 @@ class IncrementalDeqpTest(unittest.TestCase):
 
   def test_build_helper_valid_dependency(self):
     """Test BuilHelper could check if dependency is valid."""
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', [])
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip', [])
 
-    self.assertTrue(build_helper.is_valid_dependency('/file/a.so'))
-    self.assertFalse(build_helper.is_valid_dependency('[vdso]'))
-    self.assertFalse(build_helper.is_valid_dependency('/apex/a.so'))
-    self.assertFalse(build_helper.is_valid_dependency('/data/a.so'))
-    self.assertFalse(build_helper.is_valid_dependency('/dmabuf'))
+    self.assertTrue(build_helper.is_deqp_dependency('/file/a.so'))
+    self.assertFalse(build_helper.is_deqp_dependency('/apex/a.so'))
 
   def test_build_helper_init_exclude_files(self):
     """Test BuilHelper doesn't get base build's hash for excluded dependencies."""
     deqp_deps = ['/apex/deqp_dependency_file_a.so', '/data/deqp_dependency_file_b.so',
                  '[vdso]', '/dmabuf']
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', deqp_deps)
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip',
+                                                deqp_deps)
 
     self.assertEqual(len(build_helper.base_hash), 0)
 
   def test_build_helper_compare_build_true(self):
     """Test BuildHelper.compare_build returns True when dependency is the same among builds."""
     deqp_deps = ['/system/deqp_dependency_file_a.so', '/vendor/deqp_dependency_file_b.so']
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', deqp_deps)
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip',
+                                                deqp_deps)
     def side_effect(command):
       if 'file_a.so' in command:
         return b'placeholder\nplaceholder\n'
@@ -125,7 +126,8 @@ class IncrementalDeqpTest(unittest.TestCase):
   def test_compare_build_different_content_false(self):
     """Test BuildHelper.compare_build returns False when dependency is different among builds."""
     deqp_deps = ['/system/deqp_dependency_file_a.so', '/vendor/deqp_dependency_file_b.so']
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', deqp_deps)
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip',
+                                                deqp_deps)
     def side_effect(command):
       if 'file_a.so' in command:
         return b'different text'
@@ -139,8 +141,8 @@ class IncrementalDeqpTest(unittest.TestCase):
   def test_build_helper_compare_build_exclude_prefix(self):
     """Test BuildHelper.compare_build doesn't get device build hash for excluded prefix."""
     deqp_deps = ['/system/deqp_dependency_file_a.so', '/vendor/deqp_dependency_file_b.so',
-                 '/apex/a.so', '/data/b.so', '[vdso]']
-    build_helper = incremental_deqp.BuildHelper('./testdata/base_barget_files.zip', deqp_deps)
+                 '/apex/a.so']
+    build_helper = incremental_deqp.BuildHelper('./testdata/base_build_target-files.zip', deqp_deps)
     def side_effect(command):
       if '/system/deqp_dependency_file_a.so' in command:
         return b'placeholder\nplaceholder\n'
@@ -183,7 +185,7 @@ class IncrementalDeqpTest(unittest.TestCase):
     args = self.parser.parse_args(['-b', 'base_build', '-t', self.testdata_dir])
     incremental_deqp._local_run(args, '')
     save_deps_mock.assert_called_once_with({'a.so', 'extra_a.so'}, 'dEQP-dependency.txt')
-    build_helper_mock.assert_called_once_with('base_build', {'a.so', 'extra_a.so'})
+    build_helper_mock.assert_called_once_with('base_build', {'a.so', 'extra_a.so'}, False)
 
 
 if __name__ == '__main__':

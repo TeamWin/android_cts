@@ -30,4 +30,7 @@ java_test_host {
         "tradefed",
         "compatibility-host-util",
     ],
+    required: [
+        "CtsPackageManagerMultiUserEmptyTestApp",
+    ],
 }

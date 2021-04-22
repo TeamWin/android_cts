@@ -388,7 +388,7 @@ def main():
   if not camera_id_combos:
     camera_id_combos = str(test_params_content['camera']).split(',')
   if not scenes:
-    scenes = test_params_content['scene'].split(',')
+    scenes = str(test_params_content['scene']).split(',')
 
   device_id = get_device_serial_number('dut', config_file_contents)
 

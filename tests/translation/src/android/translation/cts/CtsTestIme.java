@@ -31,6 +31,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.icu.util.ULocale;
 import android.inputmethodservice.InputMethodService;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -97,8 +98,8 @@ public final class CtsTestIme extends InputMethodService {
     }
 
     void assertOnStart(Intent intent) {
-        final String expectedSource = intent.getStringExtra(EXTRA_SOURCE_LOCALE);
-        final String expectedTarget = intent.getStringExtra(EXTRA_TARGET_LOCALE);
+        final ULocale expectedSource = (ULocale) intent.getSerializableExtra(EXTRA_SOURCE_LOCALE);
+        final ULocale expectedTarget = (ULocale) intent.getSerializableExtra(EXTRA_TARGET_LOCALE);
         final boolean result = mCallback.verifyOnStart(expectedSource, expectedTarget);
         notifyCommandDone(intent, /* inCludeResult= */ true, result);
     }

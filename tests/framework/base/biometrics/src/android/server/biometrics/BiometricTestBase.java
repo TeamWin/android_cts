@@ -50,6 +50,7 @@ import android.os.PowerManager;
 import android.server.wm.ActivityManagerTestBase;
 import android.server.wm.TestJournalProvider.TestJournal;
 import android.server.wm.UiDeviceUtils;
+import android.server.wm.WindowManagerState;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
@@ -77,6 +78,8 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
     private static final String TAG = "BiometricTestBase";
     private static final String DUMPSYS_BIOMETRIC = "dumpsys biometric --proto";
     private static final String FLAG_CLEAR_SCHEDULER_LOG = " --clear-scheduler-buffer";
+    private static final String DOWNGRADE_BIOMETRIC_STRENGTH =
+            "device_config put biometrics biometric_strengths ";
 
     // Negative-side (left) buttons
     protected static final String BUTTON_ID_NEGATIVE = "button_negative";
@@ -175,6 +178,20 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
             }
         }
         Log.d(TAG, "Timed out waiting for state to not equal: " + state);
+    }
+
+    private void waitForSensorToBecomeStrength(int sensorId, int targetStrength) throws Exception {
+        for (int i = 0; i < 20; i++) {
+            final int currentStrength = getCurrentStrength(sensorId);
+            if (currentStrength != targetStrength) {
+                Log.d(TAG, "Not become target strength yet, current: " + currentStrength);
+                Thread.sleep(300);
+            } else {
+                return;
+            }
+        }
+        Log.d(TAG, "Timed out waiting for sensorId " + sensorId + " to become target strength: "
+                + targetStrength);
     }
 
     private boolean anyEnrollmentsExist() throws Exception {
@@ -441,6 +458,44 @@ abstract class BiometricTestBase extends ActivityManagerTestBase {
                         Log.d(TAG, "onAuthenticationSucceeded");
                     }
                 });
+    }
+
+    protected void launchActivityAndWaitForResumed(@NonNull ActivitySession activitySession)
+            throws Exception {
+        activitySession.start();
+        mWmState.waitForActivityState(activitySession.getComponentName(),
+                WindowManagerState.STATE_RESUMED);
+        mInstrumentation.waitForIdleSync();
+    }
+
+    protected void closeActivity(@NonNull ActivitySession activitySession) throws Exception {
+        activitySession.close();
+        mInstrumentation.waitForIdleSync();
+    }
+
+    protected void updateStrength(int sensorId, int targetStrength) throws Exception {
+        Log.d(TAG, "updateStrength: update sensorId=" + sensorId + " to targetStrength="
+                + targetStrength);
+        final String shellCommand = DOWNGRADE_BIOMETRIC_STRENGTH +
+                String.format("%s:%s", sensorId, targetStrength);
+        Utils.executeShellCommand(shellCommand);
+        waitForSensorToBecomeStrength(sensorId, targetStrength);
+    }
+
+    protected int getCurrentStrength(int sensorId) throws Exception {
+        final BiometricServiceState serviceState = getCurrentState();
+        return serviceState.mSensorStates.sensorStates.get(sensorId).getCurrentStrength();
+    }
+
+    protected List<Integer> getSensorsOfTargetStrength(int targetStrength) {
+        final List<Integer> sensors = new ArrayList<>();
+        for (SensorProperties prop : mSensorProperties) {
+            if (prop.getSensorStrength() == targetStrength) {
+                sensors.add(prop.getSensorId());
+            }
+        }
+        Log.d(TAG, "getSensorsOfTargetStrength: num of target sensors=" + sensors.size());
+        return sensors;
     }
 
     @NonNull

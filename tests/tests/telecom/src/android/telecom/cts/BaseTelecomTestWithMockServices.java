@@ -289,8 +289,9 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
 
        // Register a call state listener.
         mTestCallStateListener = new TestCallStateListener();
+        CountDownLatch latch = mTestCallStateListener.getCountDownLatch();
         mTelephonyManager.registerTelephonyCallback(r -> r.run(), mTestCallStateListener);
-        mTestCallStateListener.getCountDownLatch().await(
+        latch.await(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S, TimeUnit.SECONDS);
         // Create a new thread for the telephony callback.
         mTelephonyCallbackThread = new HandlerThread("PhoneStateListenerThread");

@@ -69,6 +69,7 @@ class AppOpsTest {
     private lateinit var mContext: Context
     private lateinit var mOpPackageName: String
     private val mMyUid = Process.myUid()
+    private val SHELL_PACKAGE_NAME = "com.android.shell"
 
     companion object {
         // These permissions and opStrs must map to the same op codes.
@@ -236,7 +237,7 @@ class AppOpsTest {
 
             val activeWatcher =
                 AppOpsManager.OnOpActiveChangedListener { _, _, packageName, active ->
-                    if (packageName == mOpPackageName) {
+                    if (packageName == SHELL_PACKAGE_NAME) {
                         if (active) {
                             assertFalse(gotActive.isDone)
                             gotActive.complete(Unit)
@@ -252,26 +253,30 @@ class AppOpsTest {
             try {
                 mAppOps.startOp(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName, "firstAttribution",
                         null)
-                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, Process.SHELL_UID,
+                        SHELL_PACKAGE_NAME))
                 gotActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
                 mAppOps.startOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
                     "secondAttribution", null)
-                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, Process.SHELL_UID,
+                        SHELL_PACKAGE_NAME))
                 assertFalse(gotInActive.isDone)
 
-                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.SHELL_UID, SHELL_PACKAGE_NAME,
                     "firstAttribution")
 
                 // Allow some time for premature "watchingActive" callbacks to arrive
                 Thread.sleep(500)
 
-                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertTrue(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, Process.SHELL_UID,
+                        SHELL_PACKAGE_NAME))
                 assertFalse(gotInActive.isDone)
 
-                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.myUid(), mOpPackageName,
+                mAppOps.finishOp(OPSTR_WRITE_CALENDAR, Process.SHELL_UID, SHELL_PACKAGE_NAME,
                     "secondAttribution")
-                assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, mMyUid, mOpPackageName))
+                assertFalse(mAppOps.isOpActive(OPSTR_WRITE_CALENDAR, Process.SHELL_UID,
+                        SHELL_PACKAGE_NAME))
                 gotInActive.get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)
@@ -284,8 +289,9 @@ class AppOpsTest {
         runWithShellPermissionIdentity {
             val receivedActiveState = LinkedBlockingDeque<Boolean>()
             val activeWatcher =
-                    AppOpsManager.OnOpActiveChangedListener { _, _, packageName, active ->
-                        if (packageName == mOpPackageName) {
+                    AppOpsManager.OnOpActiveChangedListener { _, uid, packageName, active ->
+                        if (packageName == SHELL_PACKAGE_NAME
+                                && uid == Process.SHELL_UID) {
                             receivedActiveState.push(active)
                         }
                     }
@@ -296,13 +302,13 @@ class AppOpsTest {
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
                 assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
-                mAppOps.finishOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null)
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, Process.SHELL_UID, SHELL_PACKAGE_NAME, null)
                 assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
                 mAppOps.startOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null, null)
                 assertTrue(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
 
-                mAppOps.finishOp(OPSTR_WIFI_SCAN, mMyUid, mOpPackageName, null)
+                mAppOps.finishOp(OPSTR_WIFI_SCAN, Process.SHELL_UID, SHELL_PACKAGE_NAME, null)
                 assertFalse(receivedActiveState.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS)!!)
             } finally {
                 mAppOps.stopWatchingActive(activeWatcher)

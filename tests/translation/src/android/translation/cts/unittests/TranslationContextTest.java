@@ -20,6 +20,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
+import android.icu.util.ULocale;
 import android.os.Parcel;
 import android.view.translation.TranslationContext;
 import android.view.translation.TranslationSpec;
@@ -33,9 +34,9 @@ import org.junit.runner.RunWith;
 public class TranslationContextTest {
 
     private final TranslationSpec sourceSpec =
-            new TranslationSpec("en", TranslationSpec.DATA_FORMAT_TEXT);
+            new TranslationSpec(ULocale.ENGLISH, TranslationSpec.DATA_FORMAT_TEXT);
     private final TranslationSpec targetSpec =
-            new TranslationSpec("es", TranslationSpec.DATA_FORMAT_TEXT);
+            new TranslationSpec(ULocale.FRENCH, TranslationSpec.DATA_FORMAT_TEXT);
 
     @Test
     public void testContext_nullSpecs() {
@@ -55,11 +56,11 @@ public class TranslationContextTest {
         assertThat(context.getTranslationFlags())
                 .isEqualTo(TranslationContext.FLAG_DICTIONARY_DESCRIPTION);
 
-        assertThat(context.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(context.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(context.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(context.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(context.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(context.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
     }
@@ -71,11 +72,11 @@ public class TranslationContextTest {
 
         assertThat(context.getTranslationFlags()).isEqualTo(0);
 
-        assertThat(context.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(context.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(context.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(context.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(context.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(context.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
@@ -88,11 +89,11 @@ public class TranslationContextTest {
 
         assertThat(parceledContext.getTranslationFlags()).isEqualTo(0);
 
-        assertThat(parceledContext.getSourceSpec().getLanguage()).isEqualTo("en");
+        assertThat(parceledContext.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
         assertThat(parceledContext.getSourceSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
 
-        assertThat(parceledContext.getTargetSpec().getLanguage()).isEqualTo("es");
+        assertThat(parceledContext.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
         assertThat(parceledContext.getTargetSpec().getDataFormat())
                 .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
     }

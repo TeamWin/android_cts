@@ -17,42 +17,36 @@
 package com.android.cts.verifier.audio;
 
 import android.app.AlertDialog;
-
-import android.content.Context;
-
 import android.media.AudioDeviceCallback;
 import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaRecorder;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-
 import android.util.Log;
-
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
-
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
-import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
-
+import com.android.cts.verifier.CtsVerifierReportLog;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
+
+import static com.android.cts.verifier.TestListActivity.sCurrentDisplayMode;
+import static com.android.cts.verifier.TestListAdapter.setTestNameSuffix;
 
 /**
  * Base class for testing activitiees that require audio loopback hardware..
  */
 public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
-    private static final String TAG = "AudioLoopbackActivity";
+    private static final String TAG = "AudioLoopbackBaseActivity";
 
     protected AudioManager mAudioManager;
 
@@ -80,8 +74,15 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     // Loopback Logic
     NativeAnalyzerThread mNativeAnalyzerThread = null;
 
-    protected double mLatencyMillis = 0.0;
-    protected double mConfidence = 0.0;
+    protected static final int NUM_TEST_PHASES = 5;
+    protected int mTestPhase = 0;
+
+    protected double[] mLatencyMillis = new double[NUM_TEST_PHASES];
+    protected double[] mConfidence = new double[NUM_TEST_PHASES];
+
+    protected double mMeanLatencyMillis;
+    protected double mMeanAbsoluteDeviation;
+    protected double mMeanConfidence;
 
     protected static final double CONFIDENCE_THRESHOLD = 0.6;
     protected static final double PROAUDIO_LATENCY_MS_LIMIT = 20.0;
@@ -177,7 +178,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
 
         mIsPeripheralAttached = mOutputDevInfo != null || mInputDevInfo != null;
         showConnectedAudioPeripheral();
-
     }
 
     protected void handleDeviceConnection(AudioDeviceInfo deviceInfo) {
@@ -272,62 +272,119 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     //
     // Common loging
     //
+    // Schema
+    private static final String KEY_LATENCY = "latency";
+    private static final String KEY_CONFIDENCE = "confidence";
+    private static final String KEY_SAMPLE_RATE = "sample_rate";
+    private static final String KEY_IS_LOW_LATENCY = "is_low_latency";
+    private static final String KEY_IS_PERIPHERAL_ATTACHED = "is_peripheral_attached";
+    private static final String KEY_INPUT_PERIPHERAL_NAME = "input_peripheral";
+    private static final String KEY_OUTPUT_PERIPHERAL_NAME = "output_peripheral";
+
+    @Override
+    public String getTestId() {
+        return setTestNameSuffix(sCurrentDisplayMode, getClass().getName());
+    }
+
+    //
+    // Subclasses should call this explicitly. SubClasses should call submit() after their logs
+    //
     protected void recordTestResults() {
-        ReportLog reportLog = getReportLog();
+        CtsVerifierReportLog reportLog = getReportLog();
         reportLog.addValue(
-                "Estimated Latency",
-                mLatencyMillis,
+                KEY_LATENCY,
+                mMeanLatencyMillis,
                 ResultType.LOWER_BETTER,
                 ResultUnit.MS);
 
         reportLog.addValue(
-                "Confidence",
-                mConfidence,
+                KEY_CONFIDENCE,
+                mMeanConfidence,
                 ResultType.HIGHER_BETTER,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Sample Rate",
+                KEY_SAMPLE_RATE,
                 mNativeAnalyzerThread.getSampleRate(),
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         reportLog.addValue(
-                "Is Peripheral Attached",
+                KEY_IS_LOW_LATENCY,
+                mNativeAnalyzerThread.isLowLatencyStream(),
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+
+        reportLog.addValue(
+                KEY_IS_PERIPHERAL_ATTACHED,
                 mIsPeripheralAttached,
                 ResultType.NEUTRAL,
                 ResultUnit.NONE);
 
         if (mIsPeripheralAttached) {
             reportLog.addValue(
-                    "Input Device",
+                    KEY_INPUT_PERIPHERAL_NAME,
                     mInputDevInfo != null ? mInputDevInfo.getProductName().toString() : "None",
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
 
             reportLog.addValue(
-                    "Ouput Device",
+                    KEY_OUTPUT_PERIPHERAL_NAME,
                     mOutputDevInfo != null ? mOutputDevInfo.getProductName().toString() : "None",
                     ResultType.NEUTRAL,
                     ResultUnit.NONE);
         }
     }
 
+    private static final String KEY_LOOPBACK_AVAILABLE = "loopback_available";
+    private void recordLoopbackStatus(boolean has) {
+        getReportLog().addValue(
+                KEY_LOOPBACK_AVAILABLE,
+                has,
+                ResultType.NEUTRAL,
+                ResultUnit.NONE);
+    }
+
     //
     //  test logic
     //
+    private double calculateMeanAbsoluteDeviation(double mean, double[] values) {
+        double sum = 0.0;
+        for (double value : values) {
+            sum += Math.abs(value - mean);
+        }
+        return sum / values.length;
+    }
+
+    private double calculateMean(double[] values) {
+        double sum = 0.0;
+        for (double value : values) {
+            sum += value;
+        }
+        return sum / values.length;
+    }
+
     protected void startAudioTest(Handler messageHandler) {
         getPassButton().setEnabled(false);
-        mLatencyMillis = 0.0;
-        mConfidence = 0.0;
+
+        mTestPhase = 0;
+        java.util.Arrays.fill(mLatencyMillis, 0.0);
+        java.util.Arrays.fill(mConfidence, 0.0);
 
         mNativeAnalyzerThread = new NativeAnalyzerThread(this);
         if (mNativeAnalyzerThread != null) {
             mNativeAnalyzerThread.setMessageHandler(messageHandler);
             // This value matches AAUDIO_INPUT_PRESET_VOICE_RECOGNITION
             mNativeAnalyzerThread.setInputPreset(MediaRecorder.AudioSource.VOICE_RECOGNITION);
+            startTestPhase();
+        }
+    }
+
+    private void startTestPhase() {
+        if (mNativeAnalyzerThread != null) {
             mNativeAnalyzerThread.startTest();
 
+            // what is this for?
             try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
@@ -337,12 +394,61 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
     }
 
     protected void handleTestCompletion() {
+        Log.i(TAG, "handleTestCompletion() ...");
+
+        mMeanLatencyMillis = calculateMean(mLatencyMillis);
+        mMeanAbsoluteDeviation = calculateMeanAbsoluteDeviation(mMeanLatencyMillis, mLatencyMillis);
+        mMeanConfidence = calculateMean(mConfidence);
+
+        String result = String.format(
+            "Test Finished\nMean Latency:%.2f ms\nMean Absolute Deviation: %.2f\n" +
+                " Confidence: %.2f\n" +
+                " Low Latency Path: %s",
+            mMeanLatencyMillis,
+            mMeanAbsoluteDeviation,
+            mMeanConfidence,
+            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no"));
+
         // Make sure the test thread is finished. It should already be done.
         if (mNativeAnalyzerThread != null) {
             try {
                 mNativeAnalyzerThread.stopTest(STOP_TEST_TIMEOUT_MSEC);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+        }
+        Log.i(TAG, result);
+
+        mResultText.setText(result);
+
+        Log.i(TAG, "... Done");
+    }
+
+    protected void handleTestPhaseCompletion() {
+        if (mNativeAnalyzerThread != null && mTestPhase < NUM_TEST_PHASES) {
+            mLatencyMillis[mTestPhase] = mNativeAnalyzerThread.getLatencyMillis();
+            mConfidence[mTestPhase] = mNativeAnalyzerThread.getConfidence();
+
+            String result = String.format(
+                    "Test %d Finished\nLatency: %.2f ms\nConfidence: %.2f\n",
+                    mTestPhase,
+                    mLatencyMillis[mTestPhase],
+                    mConfidence[mTestPhase]);
+            Log.i(TAG, result);
+
+            mResultText.setText(result);
+            try {
+                mNativeAnalyzerThread.stopTest(STOP_TEST_TIMEOUT_MSEC);
+                // Thread.sleep(/*STOP_TEST_TIMEOUT_MSEC*/500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            mTestPhase++;
+            if (mTestPhase >= NUM_TEST_PHASES) {
+                handleTestCompletion();
+            } else {
+                startTestPhase();
             }
         }
     }
@@ -357,7 +463,9 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_STARTED:
                     Log.v(TAG,"got message native rec started!!");
                     showWait(true);
-                    mResultText.setText("Test Running...");
+                    mResultText.setText(String.format("Test Running (phase: %d, low-latency: %s)...",
+                            (mTestPhase + 1),
+                            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no")));
                     break;
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_OPEN_ERROR:
                     Log.v(TAG,"got message native rec can't start!!");
@@ -373,16 +481,15 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
                     mResultText.setText("Test FAILED due to errors.");
                     handleTestCompletion();
                     break;
+                case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_ANALYZING:
+                    Log.i(TAG, "NATIVE_AUDIO_THREAD_MESSAGE_ANALYZING");
+                    mResultText.setText(String.format("Analyzing (phase: %d, low-latency: %s)...",
+                            mTestPhase + 1,
+                            (mNativeAnalyzerThread.isLowLatencyStream() ? "yes" : "no")));
+                    break;
                 case NativeAnalyzerThread.NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE:
-                    if (mNativeAnalyzerThread != null) {
-                        mLatencyMillis = mNativeAnalyzerThread.getLatencyMillis();
-                        mConfidence = mNativeAnalyzerThread.getConfidence();
-                    }
-                    mResultText.setText(String.format(
-                            "Test Finished\nLatency:%.2f ms\nConfidence: %.2f",
-                            mLatencyMillis,
-                            mConfidence));
-                    handleTestCompletion();
+                    Log.i(TAG, "NATIVE_AUDIO_THREAD_MESSAGE_REC_COMPLETE");
+                    handleTestPhaseCompletion();
                     break;
                 default:
                     break;
@@ -399,14 +506,6 @@ public class AudioLoopbackBaseActivity extends PassFailButtons.Activity {
         mAudioManager.registerAudioDeviceCallback(new ConnectListener(), new Handler());
 
         connectLoopbackUI();
-    }
-
-    private void recordLoopbackStatus(boolean has) {
-        getReportLog().addValue(
-                "User reported loopback availability: ",
-                has ? 1.0 : 0,
-                ResultType.NEUTRAL,
-                ResultUnit.NONE);
     }
 
     //

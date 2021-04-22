@@ -71,16 +71,18 @@ public class SensorStates {
     public static class SensorState {
         private final SchedulerState mSchedulerState;
         private final int mModality;
+        private final int mCurrentStrength;
         @NonNull private final Map<Integer, UserState> mUserStates;
         private final boolean mResetLockoutRequiresHardwareAuthToken;
         private final boolean mResetLockoutRequiresChallenge;
 
         public SensorState(@NonNull SchedulerState schedulerState, int modality,
-                @NonNull Map<Integer, UserState> userStates,
+                int currentStrength, @NonNull Map<Integer, UserState> userStates,
                 boolean resetLockoutRequiresHardwareAuthToken,
                 boolean resetLockoutRequiresChallenge) {
             this.mSchedulerState = schedulerState;
             this.mModality = modality;
+            this.mCurrentStrength = currentStrength;
             this.mUserStates = userStates;
             this.mResetLockoutRequiresHardwareAuthToken = resetLockoutRequiresHardwareAuthToken;
             this.mResetLockoutRequiresChallenge = resetLockoutRequiresChallenge;
@@ -96,6 +98,10 @@ public class SensorStates {
 
         public int getModality() {
             return mModality;
+        }
+
+        public int getCurrentStrength() {
+            return mCurrentStrength;
         }
 
         @NonNull public Map<Integer, UserState> getUserStates() {
@@ -132,7 +138,7 @@ public class SensorStates {
             final SchedulerState schedulerState =
                     SchedulerState.parseFrom(sensorStateProto.scheduler);
             final SensorState sensorState = new SensorState(schedulerState,
-                    sensorStateProto.modality, userStates,
+                    sensorStateProto.modality, sensorStateProto.currentStrength, userStates,
                     sensorStateProto.resetLockoutRequiresHardwareAuthToken,
                     sensorStateProto.resetLockoutRequiresChallenge);
             sensorStates.put(sensorStateProto.sensorId, sensorState);

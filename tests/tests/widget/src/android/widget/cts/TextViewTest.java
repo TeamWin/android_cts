@@ -4340,6 +4340,9 @@ public class TextViewTest {
 
     @Test
     public void testHandleDrawable_canBeSet_whenInsertionHandleIsShown() throws Throwable {
+        if (isWatch()) {
+            return; // watch does not support overlay keyboard.
+        }
         initTextViewForTypingOnUiThread();
         mActivityRule.runOnUiThread(() -> {
             mTextView.setTextIsSelectable(true);
@@ -6711,18 +6714,7 @@ public class TextViewTest {
     public void testSetGetBreakStrategy() {
         TextView tv = new TextView(mActivity);
 
-        final PackageManager pm = mInstrumentation.getTargetContext().getPackageManager();
-
-        // The default value is from the theme, here the default is BREAK_STRATEGY_HIGH_QUALITY for
-        // TextView except for Android Wear. The default value for Android Wear is
-        // BREAK_STRATEGY_BALANCED.
-        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
-            // Android Wear
-            assertEquals(Layout.BREAK_STRATEGY_BALANCED, tv.getBreakStrategy());
-        } else {
-            // All other form factor.
-            assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY, tv.getBreakStrategy());
-        }
+        assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY, tv.getBreakStrategy());
 
         tv.setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE);
         assertEquals(Layout.BREAK_STRATEGY_SIMPLE, tv.getBreakStrategy());
