@@ -40,7 +40,7 @@ public final class HdmiCecRoutingControlTest extends BaseHdmiCecCtsTest {
 
     private static final int PHYSICAL_ADDRESS = 0x1000;
     private static final String POWER_CONTROL_MODE =
-            "send_standby_on_sleep";
+            "power_control_mode";
     private static final String POWER_CONTROL_MODE_NONE =
             "none";
 

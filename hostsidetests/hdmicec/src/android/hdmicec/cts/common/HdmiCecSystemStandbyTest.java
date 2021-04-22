@@ -45,9 +45,14 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
 
     private static final String HDMI_CONTROL_DEVICE_AUTO_OFF =
             "hdmi_control_auto_device_off_enabled";
+    private static final String POWER_CONTROL_MODE =
+            "power_control_mode";
+    private static final String POWER_CONTROL_MODE_NONE =
+            "none";
 
     public List<LogicalAddress> mLogicalAddresses = new ArrayList<>();
-    public boolean wasOn;
+    public boolean previousDeviceAutoOff;
+    public String previousPowerControlMode;
 
     @Rule
     public RuleChain ruleChain =
@@ -59,14 +64,16 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
     @Before
     public void initialTestSetup() throws Exception {
         defineLogicalAddressList();
-        wasOn = setHdmiControlDeviceAutoOff(false);
+        previousDeviceAutoOff = setHdmiControlDeviceAutoOff(false);
+        previousPowerControlMode = setPowerControlMode(POWER_CONTROL_MODE_NONE);
     }
 
     @After
     public void resetDutState() throws Exception {
         /* Wake up the device */
         getDevice().executeShellCommand("input keyevent KEYCODE_WAKEUP");
-        setHdmiControlDeviceAutoOff(wasOn);
+        setHdmiControlDeviceAutoOff(previousDeviceAutoOff);
+        setPowerControlMode(previousPowerControlMode);
     }
 
     /**
@@ -138,6 +145,12 @@ public final class HdmiCecSystemStandbyTest extends BaseHdmiCecCtsTest {
                 + HDMI_CONTROL_DEVICE_AUTO_OFF + " " + valToSet);
         device.executeShellCommand("settings get global " + HDMI_CONTROL_DEVICE_AUTO_OFF);
         return val.equals("1");
+    }
+
+    private String setPowerControlMode(String valToSet) throws Exception {
+        String val = getSettingsValue(POWER_CONTROL_MODE);
+        setSettingsValue(POWER_CONTROL_MODE, valToSet);
+        return val;
     }
 
     private void checkDeviceAsleepAfterStandbySent(LogicalAddress source,
