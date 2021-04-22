@@ -34,6 +34,12 @@ public abstract class AudioSource {
     public void reset() {}
 
     /**
+     * triggers some event in the AudioSource. Whatever that event is is up to the AudioSource
+     * subclass.
+     */
+    public void trigger() {}
+
+    /**
      * Process a request for audio data.
      * @param audioData The buffer to be filled.
      * @param numFrames The number of frames of audio to provide.

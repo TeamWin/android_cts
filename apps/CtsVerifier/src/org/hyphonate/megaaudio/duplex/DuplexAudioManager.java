@@ -24,7 +24,6 @@ import org.hyphonate.megaaudio.player.AudioSource;
 import org.hyphonate.megaaudio.player.AudioSourceProvider;
 import org.hyphonate.megaaudio.player.Player;
 import org.hyphonate.megaaudio.player.PlayerBuilder;
-import org.hyphonate.megaaudio.recorder.AudioSink;
 import org.hyphonate.megaaudio.recorder.AudioSinkProvider;
 import org.hyphonate.megaaudio.recorder.Recorder;
 import org.hyphonate.megaaudio.recorder.RecorderBuilder;
@@ -57,6 +56,18 @@ public class DuplexAudioManager {
         mSinkProvider = sinkProvider;
     }
 
+    public Player getPlayer() {
+        return mPlayer;
+    }
+
+    public Recorder getRecorder() {
+        return mRecorder;
+    }
+
+    public void setNumRecorderChannels(int numChannels) {
+        mNumRecorderChannels = numChannels;
+    }
+
     public void setInputPreset(int preset) { mInputPreset = preset; }
 
     public int setupStreams(int playerType, int recorderType) {
@@ -74,7 +85,7 @@ public class DuplexAudioManager {
                 int errorCode = mRecorder.setupStream(
                         mNumRecorderChannels, mRecorderSampleRate, mNumRecorderBufferFrames);
                 if (errorCode != StreamBase.OK) {
-                    Log.e(TAG, "Recorder setupStream() failed");
+                    Log.e(TAG, "Recorder setupStream() failed code: " + errorCode);
                     return errorCode;
                 }
                 mNumRecorderBufferFrames = mRecorder.getNumBufferFrames();
@@ -97,7 +108,7 @@ public class DuplexAudioManager {
                 int errorCode = mPlayer.setupStream(
                         mNumPlayerChannels, mPlayerSampleRate, mNumPlayerBufferFrames);
                 if (errorCode != StreamBase.OK) {
-                    Log.e(TAG, "Player - setupStream() failed");
+                    Log.e(TAG, "Player - setupStream() failed code: " + errorCode);
                     return errorCode;
                 }
             } catch (PlayerBuilder.BadStateException ex) {
@@ -146,5 +157,9 @@ public class DuplexAudioManager {
 
     public int getNumRecorderBufferFrames() {
         return mRecorder != null ? mRecorder.getNumBufferFrames() : 0;
+    }
+
+    public AudioSource getAudioSource() {
+        return mPlayer != null ? mPlayer.getAudioSource() : null;
     }
 }
