@@ -3189,6 +3189,15 @@ public class TelephonyManagerTest {
     }
 
     @Test
+    public void testModemActivityInfoException() {
+        TelephonyManager.ModemActivityInfoException exception =
+                new TelephonyManager.ModemActivityInfoException(
+                        TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE);
+        assertEquals(TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE,
+                exception.getErrorCode());
+    }
+
+    @Test
     public void testGetSupportedModemCount() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;
