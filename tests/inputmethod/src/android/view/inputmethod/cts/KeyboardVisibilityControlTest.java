@@ -47,6 +47,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
 import android.content.ComponentName;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -311,6 +312,10 @@ public class KeyboardVisibilityControlTest extends EndToEndImeTestBase {
 
     @Test
     public void testShowHideKeyboardOnWebView() throws Exception {
+        final PackageManager pm =
+                InstrumentationRegistry.getInstrumentation().getContext().getPackageManager();
+        assumeTrue(pm.hasSystemFeature("android.software.webview"));
+
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getInstrumentation().getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
