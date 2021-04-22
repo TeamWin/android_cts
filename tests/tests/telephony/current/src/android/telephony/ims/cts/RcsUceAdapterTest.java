@@ -933,7 +933,8 @@ public class RcsUceAdapterTest {
         TestRcsCapabilityExchangeImpl capabilityExchangeImpl = sServiceConnector
                 .getCarrierService().getRcsFeature().getRcsCapabilityExchangeImpl();
 
-        BlockingQueue<Long> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Integer> errorQueue = new LinkedBlockingQueue<>();
+        BlockingQueue<Long> errorRetryQueue = new LinkedBlockingQueue<>();
         BlockingQueue<Boolean> completeQueue = new LinkedBlockingQueue<>();
         BlockingQueue<RcsContactUceCapability> capabilityQueue = new LinkedBlockingQueue<>();
         RcsUceAdapter.CapabilitiesCallback callback = new RcsUceAdapter.CapabilitiesCallback() {
@@ -947,8 +948,8 @@ public class RcsUceAdapterTest {
             }
             @Override
             public void onError(int errorCode, long retryAfterMilliseconds) {
-                errorQueue.offer(new Long(errorCode));
-                errorQueue.offer(retryAfterMilliseconds);
+                errorQueue.offer(errorCode);
+                errorRetryQueue.offer(retryAfterMilliseconds);
             }
         };
 
@@ -995,6 +996,33 @@ public class RcsUceAdapterTest {
         waitForResult(completeQueue);
 
         errorQueue.clear();
+        errorRetryQueue.clear();
+        completeQueue.clear();
+        capabilityQueue.clear();
+        removeTestContactFromEab();
+
+        // Setup the callback that some of the contacts are terminated.
+        capabilityExchangeImpl.setSubscribeOperation((uris, cb) -> {
+            cb.onNetworkResponse(404, "NOT FOUND");
+        });
+
+        requestCapabilities(uceAdapter, contacts, callback);
+
+        // Verify the contacts are not found.
+        capability = waitForResult(capabilityQueue);
+        verifyCapabilityResult(capability, contact1, REQUEST_RESULT_NOT_FOUND, false, false);
+
+        capability = waitForResult(capabilityQueue);
+        verifyCapabilityResult(capability, contact2, REQUEST_RESULT_NOT_FOUND, false, false);
+
+        capability = waitForResult(capabilityQueue);
+        verifyCapabilityResult(capability, contact3, REQUEST_RESULT_NOT_FOUND, false, false);
+
+        int errorCode = waitForResult(errorQueue);
+        assertEquals(RcsUceAdapter.ERROR_NOT_FOUND, errorCode);
+
+        errorQueue.clear();
+        errorRetryQueue.clear();
         completeQueue.clear();
         capabilityQueue.clear();
         removeTestContactFromEab();
@@ -1623,7 +1651,7 @@ public class RcsUceAdapterTest {
 
         // Verify the request result is expected.
         final int requestResult = resultCapability.getRequestResult();
-        assertEquals(requestResult, expectedResult);
+        assertEquals(expectedResult, requestResult);
 
         // Return directly if the result is not found.
         if (requestResult == REQUEST_RESULT_NOT_FOUND) {
