@@ -16,11 +16,9 @@
 
 package android.sensorprivacy.cts
 
-import android.content.pm.PackageManager.FEATURE_MICROPHONE_TOGGLE
 import android.hardware.SensorPrivacyManager.Sensors.MICROPHONE
 
 class SensorPrivacyMicrophoneTest : SensorPrivacyBaseTest(
-        FEATURE_MICROPHONE_TOGGLE,
         MICROPHONE,
         USE_MIC_EXTRA
 )
