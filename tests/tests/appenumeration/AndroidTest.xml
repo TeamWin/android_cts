@@ -79,9 +79,13 @@
         <option name="run-command" value="mkdir -p /data/local/tmp/cts/appenumeration" />
         <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing" />
         <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing.haspermission" />
+        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.appenumeration.queries.pkg" />
+        <option name="run-command" value="am compat enable ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing.shareduid" />
         <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing" />
         <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing.haspermission" />
+        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.appenumeration.queries.pkg" />
+        <option name="teardown-command" value="am compat reset ALLOW_TEST_API_ACCESS android.appenumeration.queries.nothing.shareduid" />
     </target_preparer>
 
     <!-- Load additional APKs onto device -->
