@@ -36,11 +36,35 @@ public class GnssCapabilitiesTest {
 
     private static GnssCapabilities getTestGnssCapabilities() {
         GnssCapabilities.Builder builder = new GnssCapabilities.Builder();
+        builder.setHasAntennaInfo(true);
+        builder.setHasGeofencing(true);
+        builder.setHasLowPowerMode(true);
+        builder.setHasMeasurements(true);
+        builder.setHasMeasurementCorrections(true);
+        builder.setHasMeasurementCorrectionsExcessPathLength(true);
         builder.setHasMeasurementCorrectionsForDriving(true);
+        builder.setHasMeasurementCorrectionsLosSats(true);
+        builder.setHasMeasurementCorrectionsReflectingPlane(true);
+        builder.setHasMeasurementCorrelationVectors(true);
+        builder.setHasNavigationMessages(true);
+        builder.setHasSatelliteBlocklist(true);
+        builder.setHasSatellitePvt(true);
         return builder.build();
     }
 
     private static void verifyTestValues(GnssCapabilities gnssCapabilities) {
+        assertEquals(true, gnssCapabilities.hasAntennaInfo());
+        assertEquals(true, gnssCapabilities.hasGeofencing());
+        assertEquals(true, gnssCapabilities.hasLowPowerMode());
+        assertEquals(true, gnssCapabilities.hasMeasurements());
+        assertEquals(true, gnssCapabilities.hasMeasurementCorrections());
+        assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsExcessPathLength());
         assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsForDriving());
+        assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsLosSats());
+        assertEquals(true, gnssCapabilities.hasMeasurementCorrectionsReflectingPlane());
+        assertEquals(true, gnssCapabilities.hasMeasurementCorrelationVectors());
+        assertEquals(true, gnssCapabilities.hasNavigationMessages());
+        assertEquals(true, gnssCapabilities.hasSatelliteBlocklist());
+        assertEquals(true, gnssCapabilities.hasSatellitePvt());
     }
 }
