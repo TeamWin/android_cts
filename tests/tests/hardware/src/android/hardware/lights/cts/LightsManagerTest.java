@@ -125,8 +125,7 @@ public class LightsManagerTest {
     public void testControlLights_onlyEffectiveForLifetimeOfClient() {
         assumeTrue(mLights.size() >= 1);
 
-        // The light should begin by being off.
-        assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(0x00);
+        int initialColor = mManager.getLightState(mLights.get(0)).getColor();
 
         try (LightsManager.LightsSession session = mManager.openSession()) {
             // When a session commits changes:
@@ -136,8 +135,8 @@ public class LightsManagerTest {
 
             // When the session goes away:
             session.close();
-            // Then the light should turn off.
-            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(0x00);
+            // Then the light should return to its initial state.
+            assertThat(mManager.getLightState(mLights.get(0)).getColor()).isEqualTo(initialColor);
         }
     }
 
