@@ -543,9 +543,9 @@ public class MultiDisplaySystemDecorationTests extends MultiDisplayTestBase {
 
         // Expect onStartInput / showSoftInput would be executed when user tapping on the
         // non-system created display intentionally.
-        final Rect drawRect = new Rect();
-        imeTestActivitySession.getActivity().mEditText.getDrawingRect(drawRect);
-        tapOnDisplaySync(drawRect.left, drawRect.top, newDisplay.mId);
+        final int[] location = new int[2];
+        imeTestActivitySession.getActivity().mEditText.getLocationOnScreen(location);
+        tapOnDisplaySync(location[0], location[1], newDisplay.mId);
 
         // Verify the activity to show soft input on the default display.
         final ImeEventStream stream = mockImeSession.openEventStream();
