@@ -30,6 +30,8 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_ASSET_DIR := $(LOCAL_PATH)/intent_tests
 
 LOCAL_PACKAGE_NAME := CtsWindowManagerDeviceTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 
