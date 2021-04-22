@@ -23,13 +23,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import android.os.PersistableBundle;
 import android.telephony.ims.DelegateRegistrationState;
 import android.telephony.ims.DelegateRequest;
 import android.telephony.ims.FeatureTagState;
 import android.telephony.ims.ImsException;
+import android.telephony.ims.SipDelegateConfiguration;
 import android.telephony.ims.SipDelegateConnection;
-import android.telephony.ims.SipDelegateImsConfiguration;
 import android.telephony.ims.SipDelegateManager;
 import android.telephony.ims.SipMessage;
 import android.telephony.ims.stub.DelegateConnectionMessageCallback;
@@ -61,7 +60,7 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
     public SipDelegateConnection connection;
     public Set<FeatureTagState> deniedTags;
     public DelegateRegistrationState regState;
-    public SipDelegateImsConfiguration sipConfig;
+    public SipDelegateConfiguration sipConfig;
     public final DelegateRequest delegateRequest;
 
     private int mReceivedMessageErrorResponseReason = -1;
@@ -139,9 +138,9 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
     }
 
     @Override
-    public void onImsConfigurationChanged(
-            @NonNull SipDelegateImsConfiguration registeredSipConfig) {
-        if (ImsUtils.VDBG) Log.d(LOG_TAG, "onImsConfigurationChanged");
+    public void onConfigurationChanged(
+            @NonNull SipDelegateConfiguration registeredSipConfig) {
+        if (ImsUtils.VDBG) Log.d(LOG_TAG, "onConfigurationChanged");
         sipConfig = registeredSipConfig;
         mLatch.countDown();
     }
@@ -201,20 +200,11 @@ public class TestSipDelegateConnection implements DelegateConnectionStateCallbac
         assertNotNull("SipDelegate is null when it should have been created", connection);
     }
 
-    public void verifyConfigEquals(SipDelegateImsConfiguration config) {
+    public void verifyConfigEquals(SipDelegateConfiguration config) {
         assertNotNull("SIP configuration should not be null", sipConfig);
         assertEquals("IMS config version is not correct", config.getVersion(),
                 sipConfig.getVersion());
-        PersistableBundle b = config.copyBundle();
-        for (String key : b.keySet()) {
-            assertTrue("tracked sip config does not contain the key [" + key + "}",
-                    sipConfig.containsKey(key));
-            // Not a true equality check, but close enough for the purposes of this test.
-            assertEquals(config.getString(key), sipConfig.getString(key));
-            assertEquals(config.getInt(key, -1), sipConfig.getInt(key, -1));
-            assertEquals(config.getBoolean(key, false),
-                    sipConfig.getBoolean(key, false));
-        }
+        assertEquals(config, sipConfig);
     }
 
     public void verifyRegistrationStateRegistered() {
