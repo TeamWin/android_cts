@@ -20,6 +20,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSplitApp_arm64-v8a
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 
 LOCAL_JAVA_RESOURCE_DIRS := raw
@@ -35,6 +37,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSplitApp_revision12_arm64-v8a
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_SDK_VERSION := current
 
 LOCAL_JAVA_RESOURCE_DIRS := raw_revision

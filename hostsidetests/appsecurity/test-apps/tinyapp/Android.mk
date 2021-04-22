@@ -21,12 +21,16 @@ cert_dir := cts/hostsidetests/appsecurity/certs/pkgsigverify
 # This is the default test package signed with the default key.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := CtsPkgInstallTinyApp
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the test package v2 signed with the default key.
 include $(LOCAL_PATH)/base.mk
 LOCAL_MANIFEST_FILE := AndroidManifest-v2.xml
 LOCAL_PACKAGE_NAME := CtsPkgInstallTinyAppV2
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 # This is the test package signed using the V1/V2 signature schemes with
@@ -41,6 +45,8 @@ include $(LOCAL_PATH)/base.mk
 LOCAL_SDK_VERSION := 30
 LOCAL_MANIFEST_FILE := AndroidManifest-sandbox-v1.xml
 LOCAL_PACKAGE_NAME := v1v2-ec-p256-two-signers-targetSdk-30
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256_2
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -49,6 +55,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # with the previous key in the lineage and part of a sharedUid.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-1-sharedUid
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -57,6 +65,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # a rotated key and one signer in the lineage with default capabilities.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-default-caps
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
 LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
@@ -67,6 +77,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # grant access to the previous key in the lineage to join the sharedUid.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-default-caps-sharedUid
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -80,6 +92,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # ancestors are not allowed to be installed in the same sharedUserId.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-por_Y_1_2-default-caps-sharedUid
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/rsa-2048 $(cert_dir)/ec-p256
@@ -91,6 +105,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # prevent the previous key in the lineage from joining the sharedUid.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-no-shUid-cap-sharedUid
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -102,6 +118,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # grant access to the previous key in the lineage to join the sharedUid.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-default-caps-sharedUid-companion
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-companion-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -115,6 +133,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # ancestors are not allowed to be installed in the same sharedUserId.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-por_Z_1_2-default-caps-sharedUid-companion
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/dsa-2048 $(cert_dir)/ec-p256
@@ -127,6 +147,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # with the latest key in the lineage.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-2-sharedUid-companion
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-companion-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -135,6 +157,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # with the previous key in the lineage and part of a sharedUid.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-1-sharedUid-companion2
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-companion2-shareduid.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -144,6 +168,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # key but grants default capabilities to the second signing key.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_3-1-no-caps-2-default-declperm
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -156,6 +182,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # permission.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_3-no-caps-declperm
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -169,6 +197,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # to be granted a signature permission.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2_4-companion-usesperm
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-companion-usesperm.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_4
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -180,6 +210,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # signing key with the trusted certificates being ec-p256 and ec-p256_3.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-ec-p256-1-3
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner.xml
 LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -191,6 +223,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # and subsequently removes the flag from the permission declaration.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-rsa-2048-declperm
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-declperm.xml
 LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -200,6 +234,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # string-array resource for the trusted certs.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-str-res-ec-p256-1
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner-str-res.xml
 LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -209,6 +245,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # of the knownCerts attribute.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-rsa-2048-decl-knownSigner-str-const-ec-p256-1
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-decl-knownSigner-str-const.xml
 LOCAL_CERTIFICATE := $(cert_dir)/rsa-2048
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -219,6 +257,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # above.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256_3-companion-uses-knownSigner
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_3
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -229,6 +269,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # above.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256_2-companion-uses-knownSigner
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -242,6 +284,8 @@ include $(BUILD_CTS_SUPPORT_PACKAGE)
 # one of the declared digests.
 include $(LOCAL_PATH)/base.mk
 LOCAL_PACKAGE_NAME := v3-ec-p256-with-por_1_2-companion-uses-knownSigner
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 LOCAL_MANIFEST_FILE := AndroidManifest-uses-knownSigner.xml
 LOCAL_CERTIFICATE := $(cert_dir)/ec-p256_2
 LOCAL_ADDITIONAL_CERTIFICATES := $(cert_dir)/ec-p256
@@ -249,4 +293,3 @@ LOCAL_CERTIFICATE_LINEAGE := $(cert_dir)/ec-p256-por_1_2-default-caps
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 cert_dir :=
-

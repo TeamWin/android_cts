@@ -46,6 +46,8 @@ LOCAL_SRC_FILES := \
 LOCAL_COMPATIBILITY_SUITE := cts general-tests
 
 LOCAL_PACKAGE_NAME := CtsCameraTestCases
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 
 LOCAL_SDK_VERSION := test_current
 
