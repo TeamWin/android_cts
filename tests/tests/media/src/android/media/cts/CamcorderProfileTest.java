@@ -23,6 +23,9 @@ import android.hardware.Camera.Size;
 import android.hardware.cts.helpers.CameraUtils;
 import android.media.CamcorderProfile;
 import android.media.EncoderProfiles;
+import android.media.MediaCodecInfo;
+import android.media.MediaFormat;
+import android.media.MediaRecorder;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -132,8 +135,8 @@ public class CamcorderProfileTest extends AndroidTestCase {
             profile.audioSampleRate,
             profile.audioChannels));
         // generic fields must match the corresponding CamcorderProfile
-        assertEquals(profile.duration, allProfiles.getDurationSeconds());
-        assertEquals(profile.fileFormat, allProfiles.getFileFormat());
+        assertEquals(profile.duration, allProfiles.getDefaultDurationSeconds());
+        assertEquals(profile.fileFormat, allProfiles.getRecommendedFileFormat());
         boolean first = true;
         for (EncoderProfiles.VideoProfile videoProfile : allProfiles.getVideoProfiles()) {
             if (first) {
@@ -148,6 +151,26 @@ public class CamcorderProfileTest extends AndroidTestCase {
             assertEquals(profile.videoFrameWidth, videoProfile.getWidth());
             assertEquals(profile.videoFrameHeight, videoProfile.getHeight());
             assertTrue(videoProfile.getMediaType() != null);
+            switch (videoProfile.getCodec()) {
+              // don't validate profile for regular codecs as vendors may use vendor specific profile
+            case MediaRecorder.VideoEncoder.H263:
+                assertEquals(MediaFormat.MIMETYPE_VIDEO_H263, videoProfile.getMediaType());
+                break;
+            case MediaRecorder.VideoEncoder.H264:
+                assertEquals(MediaFormat.MIMETYPE_VIDEO_AVC, videoProfile.getMediaType());
+                break;
+            case MediaRecorder.VideoEncoder.MPEG_4_SP:
+                assertEquals(MediaFormat.MIMETYPE_VIDEO_MPEG4, videoProfile.getMediaType());
+                break;
+            case MediaRecorder.VideoEncoder.VP8:
+                assertEquals(MediaFormat.MIMETYPE_VIDEO_VP8, videoProfile.getMediaType());
+                break;
+            case MediaRecorder.VideoEncoder.HEVC:
+                  assertEquals(MediaFormat.MIMETYPE_VIDEO_HEVC, videoProfile.getMediaType());
+                  break;
+            }
+            // Cannot validate profile as vendors may use vendor specific profile. Just read it.
+            int codecProfile = videoProfile.getProfile();
         }
         first = true;
         for (EncoderProfiles.AudioProfile audioProfile : allProfiles.getAudioProfiles()) {
@@ -161,6 +184,37 @@ public class CamcorderProfileTest extends AndroidTestCase {
                 first = false;
             }
             assertTrue(audioProfile.getMediaType() != null);
+            switch (audioProfile.getCodec()) {
+            // don't validate profile for regular codecs as vendors may use vendor specific profile
+            case MediaRecorder.AudioEncoder.AMR_NB:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_AMR_NB, audioProfile.getMediaType());
+                break;
+            case MediaRecorder.AudioEncoder.AMR_WB:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_AMR_WB, audioProfile.getMediaType());
+                break;
+            case MediaRecorder.AudioEncoder.AAC:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_AAC, audioProfile.getMediaType());
+                break;
+            case MediaRecorder.AudioEncoder.HE_AAC:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_AAC, audioProfile.getMediaType());
+                assertEquals(MediaCodecInfo.CodecProfileLevel.AACObjectHE,
+                             audioProfile.getProfile());
+                break;
+            case MediaRecorder.AudioEncoder.AAC_ELD:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_AAC, audioProfile.getMediaType());
+                assertEquals(MediaCodecInfo.CodecProfileLevel.AACObjectELD,
+                             audioProfile.getProfile());
+                break;
+            case MediaRecorder.AudioEncoder.VORBIS:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_VORBIS, audioProfile.getMediaType());
+                break;
+            case MediaRecorder.AudioEncoder.OPUS:
+                assertEquals(MediaFormat.MIMETYPE_AUDIO_OPUS, audioProfile.getMediaType());
+                break;
+            default:
+                // there may be some extended profiles we don't know about and that's OK
+                break;
+            }
         }
     }
 
