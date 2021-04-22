@@ -194,6 +194,8 @@ public class Constants {
             PKG_BASE + "cts.action.AWAIT_PACKAGES_SUSPENDED";
     public static final String ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED =
             PKG_BASE + "cts.action.LAUNCHER_APPS_IS_ACTIVITY_ENABLED";
+    public static final String ACTION_AWAIT_LAUNCHER_APPS_CALLBACK =
+            PKG_BASE + "cts.action.AWAIT_LAUNCHER_APPS_CALLBACK";
 
     public static final String EXTRA_REMOTE_CALLBACK = "remoteCallback";
     public static final String EXTRA_REMOTE_READY_CALLBACK = "remoteReadyCallback";
@@ -202,4 +204,13 @@ public class Constants {
     public static final String EXTRA_DATA = "data";
     public static final String EXTRA_CERT = "cert";
     public static final String EXTRA_AUTHORITY = "authority";
+
+    public static final int CALLBACK_EVENT_INVALID = -1;
+    public static final int CALLBACK_EVENT_PACKAGE_ADDED = 0;
+    public static final int CALLBACK_EVENT_PACKAGE_REMOVED = 1;
+    public static final int CALLBACK_EVENT_PACKAGE_CHANGED = 2;
+    public static final int CALLBACK_EVENT_PACKAGES_AVAILABLE = 3;
+    public static final int CALLBACK_EVENT_PACKAGES_UNAVAILABLE = 4;
+    public static final int CALLBACK_EVENT_PACKAGES_SUSPENDED = 5;
+    public static final int CALLBACK_EVENT_PACKAGES_UNSUSPENDED = 6;
 }
