@@ -95,7 +95,7 @@ public final class UserManagerTest {
         final Context userContext = mContext.createPackageContextAsUser("system", 0,
                 userHandle);
         assertThat(userContext.getSystemService(
-                UserManager.class).sharesMediaWithParent()).isTrue();
+                UserManager.class).isMediaSharedWithParent()).isTrue();
 
         List<UserInfo> list = mUserManager.getUsers(true,
                 true, true);
