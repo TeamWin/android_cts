@@ -36,10 +36,10 @@ import android.net.ipsec.ike.ChildSaProposal;
 import android.net.ipsec.ike.IkeFqdnIdentification;
 import android.net.ipsec.ike.IkeSaProposal;
 import android.net.ipsec.ike.IkeSessionParams;
+import android.net.ipsec.ike.IkeTunnelConnectionParams;
 import android.net.ipsec.ike.SaProposal;
 import android.net.ipsec.ike.TunnelModeChildSessionParams;
 import android.net.vcn.VcnConfig;
-import android.net.vcn.VcnControlPlaneIkeConfig;
 import android.net.vcn.VcnGatewayConnectionConfig;
 import android.net.vcn.VcnManager;
 import android.os.ParcelUuid;
@@ -120,11 +120,11 @@ public class VcnManagerTest {
         final TunnelModeChildSessionParams childParams =
                 new TunnelModeChildSessionParams.Builder().addSaProposal(childProposal).build();
 
-        final VcnControlPlaneIkeConfig controlConfig =
-                new VcnControlPlaneIkeConfig(ikeParams, childParams);
+        final IkeTunnelConnectionParams tunnelParams =
+                new IkeTunnelConnectionParams(ikeParams, childParams);
 
         final VcnGatewayConnectionConfig gatewayConnConfig =
-                new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, controlConfig)
+                new VcnGatewayConnectionConfig.Builder(VCN_GATEWAY_CONNECTION_NAME, tunnelParams)
                         .addExposedCapability(NET_CAPABILITY_INTERNET)
                         .addRequiredUnderlyingCapability(NET_CAPABILITY_INTERNET)
                         .setRetryIntervalsMs(
