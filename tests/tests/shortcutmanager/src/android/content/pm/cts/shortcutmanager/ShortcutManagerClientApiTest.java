@@ -2192,8 +2192,6 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1"))));
-            getManager().updateShortcutVisibility(
-                    mPackageContext2.getPackageName(), new byte[] {100}, true);
         });
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
