@@ -24,6 +24,7 @@ import android.telephony.ims.DelegateRegistrationState;
 import android.telephony.ims.DelegateRequest;
 import android.telephony.ims.DelegateStateCallback;
 import android.telephony.ims.FeatureTagState;
+import android.telephony.ims.SipDelegateConfiguration;
 import android.telephony.ims.SipDelegateImsConfiguration;
 import android.telephony.ims.SipMessage;
 import android.telephony.ims.stub.SipDelegate;
@@ -126,6 +127,10 @@ public class TestSipDelegate implements SipDelegate {
 
     public void notifyImsRegistrationUpdate(DelegateRegistrationState state) {
         mStateCallback.onFeatureTagRegistrationChanged(state);
+    }
+
+    public void notifyConfigurationUpdate(SipDelegateConfiguration config) {
+        mStateCallback.onConfigurationChanged(config);
     }
 
     public void notifyImsConfigurationUpdate(SipDelegateImsConfiguration config) {
