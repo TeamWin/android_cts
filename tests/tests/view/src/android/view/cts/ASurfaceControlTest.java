@@ -18,11 +18,13 @@ package android.view.cts;
 
 import static android.server.wm.WindowManagerState.getLogicalDisplaySize;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.os.SystemClock;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
@@ -48,6 +50,7 @@ import org.junit.runner.RunWith;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @LargeTest
 @RunWith(AndroidJUnit4.class)
@@ -1947,6 +1950,181 @@ public class ASurfaceControlTest {
                 });
     }
 
+    static class TimedTransactionListener implements TransactionCompleteListener {
+        long mCallbackTime = -1;
+        long mLatchTime = -1;
+        CountDownLatch mLatch = new CountDownLatch(1);
+        @Override
+        public void onTransactionComplete(long inLatchTime) {
+            mCallbackTime = SystemClock.elapsedRealtime();
+            mLatchTime = inLatchTime;
+            mLatch.countDown();
+        }
+    }
+
+    @Test
+    public void testSurfaceTransactionOnCommitCallback_emptyTransaction()
+            throws InterruptedException {
+        // Create and send an empty transaction with onCommit and onComplete callbacks.
+        long surfaceTransaction = nSurfaceTransaction_create();
+        TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
+        nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction, onCompleteCallback);
+        TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+        nSurfaceTransaction_setOnCommitCallback(surfaceTransaction, onCommitCallback);
+        nSurfaceTransaction_apply(surfaceTransaction);
+        nSurfaceTransaction_delete(surfaceTransaction);
+
+        // Wait for callbacks to fire.
+        onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+        onCompleteCallback.mLatch.await(1, TimeUnit.SECONDS);
+
+        // Validate we got callbacks.
+        assertEquals(0, onCommitCallback.mLatch.getCount());
+        assertTrue(onCommitCallback.mCallbackTime > 0);
+        assertEquals(0, onCompleteCallback.mLatch.getCount());
+        assertTrue(onCompleteCallback.mCallbackTime > 0);
+
+        // Validate we received the callbacks in expected order.
+        assertTrue(onCommitCallback.mCallbackTime <= onCompleteCallback.mCallbackTime);
+    }
+
+    @Test
+    public void testSurfaceTransactionOnCommitCallback_bufferTransaction()
+            throws Throwable {
+        // Create and send a transaction with a buffer update and with onCommit and onComplete
+        // callbacks.
+        TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
+        TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceTransaction = nSurfaceTransaction_create();
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
+                                onCompleteCallback);
+                        nSurfaceTransaction_setOnCommitCallback(surfaceTransaction,
+                                onCommitCallback);
+                        nSurfaceTransaction_apply(surfaceTransaction);
+                        nSurfaceTransaction_delete(surfaceTransaction);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+
+        // Wait for callbacks to fire.
+        onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+        onCompleteCallback.mLatch.await(1, TimeUnit.SECONDS);
+
+        // Validate we got callbacks with a valid latch time.
+        assertEquals(0, onCommitCallback.mLatch.getCount());
+        assertTrue(onCommitCallback.mCallbackTime > 0);
+        assertTrue(onCommitCallback.mLatchTime > 0);
+        assertEquals(0, onCompleteCallback.mLatch.getCount());
+        assertTrue(onCompleteCallback.mCallbackTime > 0);
+        assertTrue(onCompleteCallback.mLatchTime > 0);
+
+        // Validate we received the callbacks in expected order and the latch times reported
+        // matches.
+        assertTrue(onCommitCallback.mCallbackTime <= onCompleteCallback.mCallbackTime);
+        assertEquals(onCommitCallback.mLatchTime, onCompleteCallback.mLatchTime);
+    }
+
+    @Test
+    public void testSurfaceTransactionOnCommitCallback_geometryTransaction()
+            throws Throwable {
+        // Create and send a transaction with a buffer update and with onCommit and onComplete
+        // callbacks.
+        TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
+        TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+        verifyTest(
+                new BasicSurfaceHolderCallback() {
+                    @Override
+                    public void surfaceCreated(SurfaceHolder holder) {
+                        long surfaceTransaction = nSurfaceTransaction_create();
+                        long surfaceControl = createFromWindow(holder.getSurface());
+                        setSolidBuffer(surfaceControl, surfaceTransaction, DEFAULT_LAYOUT_WIDTH,
+                                DEFAULT_LAYOUT_HEIGHT, PixelColor.RED);
+                        nSurfaceTransaction_apply(surfaceTransaction);
+                        nSurfaceTransaction_delete(surfaceTransaction);
+                        surfaceTransaction = nSurfaceTransaction_create();
+                        nSurfaceTransaction_setPosition(surfaceControl, surfaceTransaction, 1, 0);
+                        nSurfaceTransaction_setOnCompleteCallback(surfaceTransaction,
+                                onCompleteCallback);
+                        nSurfaceTransaction_setOnCommitCallback(surfaceTransaction,
+                                onCommitCallback);
+                        nSurfaceTransaction_apply(surfaceTransaction);
+                        nSurfaceTransaction_delete(surfaceTransaction);
+                    }
+                },
+                new PixelChecker(PixelColor.RED) { //10000
+                    @Override
+                    public boolean checkPixels(int pixelCount, int width, int height) {
+                        return pixelCount > 9000 && pixelCount < 11000;
+                    }
+                });
+
+        // Wait for callbacks to fire.
+        onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+        onCompleteCallback.mLatch.await(1, TimeUnit.SECONDS);
+
+        // Validate we got callbacks with a valid latch time.
+        assertTrue(onCommitCallback.mLatch.getCount() == 0);
+        assertTrue(onCommitCallback.mCallbackTime > 0);
+        assertTrue(onCommitCallback.mLatchTime > 0);
+        assertTrue(onCompleteCallback.mLatch.getCount() == 0);
+        assertTrue(onCompleteCallback.mCallbackTime > 0);
+        assertTrue(onCompleteCallback.mLatchTime > 0);
+
+        // Validate we received the callbacks in expected order and the latch times reported
+        // matches.
+        assertTrue(onCommitCallback.mCallbackTime <= onCompleteCallback.mCallbackTime);
+        assertTrue(onCommitCallback.mLatchTime == onCompleteCallback.mLatchTime);
+    }
+
+    @Test
+    public void testSurfaceTransactionOnCommitCallback_withoutContext()
+            throws InterruptedException {
+        // Create and send an empty transaction with onCommit callbacks without context.
+        long surfaceTransaction = nSurfaceTransaction_create();
+        TimedTransactionListener onCommitCallback = new TimedTransactionListener();
+        nSurfaceTransaction_setOnCommitCallbackWithoutContext(surfaceTransaction, onCommitCallback);
+        nSurfaceTransaction_apply(surfaceTransaction);
+        nSurfaceTransaction_delete(surfaceTransaction);
+
+        // Wait for callbacks to fire.
+        onCommitCallback.mLatch.await(1, TimeUnit.SECONDS);
+
+        // Validate we got callbacks.
+        assertEquals(0, onCommitCallback.mLatch.getCount());
+        assertTrue(onCommitCallback.mCallbackTime > 0);
+    }
+
+    @Test
+    public void testSurfaceTransactionOnCompleteCallback_withoutContext()
+            throws InterruptedException {
+        // Create and send an empty transaction with onComplete callbacks without context.
+        long surfaceTransaction = nSurfaceTransaction_create();
+        TimedTransactionListener onCompleteCallback = new TimedTransactionListener();
+        nSurfaceTransaction_setOnCompleteCallbackWithoutContext(surfaceTransaction,
+                onCompleteCallback);
+        nSurfaceTransaction_apply(surfaceTransaction);
+        nSurfaceTransaction_delete(surfaceTransaction);
+
+        // Wait for callbacks to fire.
+        onCompleteCallback.mLatch.await(1, TimeUnit.SECONDS);
+
+        // Validate we got callbacks.
+        assertEquals(0, onCompleteCallback.mLatch.getCount());
+        assertTrue(onCompleteCallback.mCallbackTime > 0);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Native function prototypes
     ///////////////////////////////////////////////////////////////////////////
@@ -2000,4 +2178,10 @@ public class ASurfaceControlTest {
             long surfaceTransaction, boolean enableBackPressure);
     private static native void nSurfaceTransaction_setOnCompleteCallback(long surfaceTransaction,
             TransactionCompleteListener listener);
+    private static native void nSurfaceTransaction_setOnCommitCallback(long surfaceTransaction,
+            TransactionCompleteListener listener);
+    private static native void nSurfaceTransaction_setOnCompleteCallbackWithoutContext(
+            long surfaceTransaction, TransactionCompleteListener listener);
+    private static native void nSurfaceTransaction_setOnCommitCallbackWithoutContext(
+            long surfaceTransaction, TransactionCompleteListener listener);
 }

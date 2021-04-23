@@ -31,6 +31,15 @@ import static android.appenumeration.cts.Constants.ACTION_SEND_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTION_START_SENDER_FOR_RESULT;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_INVALID;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_AVAILABLE;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_SUSPENDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNAVAILABLE;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUSPENDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
+import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
@@ -38,6 +47,7 @@ import static android.appenumeration.cts.Constants.EXTRA_FLAGS;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_CALLBACK;
 import static android.appenumeration.cts.Constants.EXTRA_REMOTE_READY_CALLBACK;
 import static android.content.Intent.EXTRA_COMPONENT_NAME;
+import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.Intent.EXTRA_RETURN_RESULT;
 import static android.content.pm.PackageManager.CERT_INPUT_RAW_X509;
 import static android.os.Process.INVALID_UID;
@@ -71,6 +81,7 @@ import android.os.Parcelable;
 import android.os.PatternMatcher;
 import android.os.Process;
 import android.os.RemoteCallback;
+import android.os.UserHandle;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
@@ -198,7 +209,7 @@ public class TestActivity extends Activity {
                 sendInstalledAppWidgetProviders(remoteCallback);
             } else if (Constants.ACTION_AWAIT_PACKAGES_SUSPENDED.equals(action)) {
                 final String[] awaitPackages = intent.getBundleExtra(EXTRA_DATA)
-                        .getStringArray(Intent.EXTRA_PACKAGES);
+                        .getStringArray(EXTRA_PACKAGES);
                 awaitSuspendedPackagesBroadcast(remoteCallback, Arrays.asList(awaitPackages),
                         Intent.ACTION_PACKAGES_SUSPENDED, TIMEOUT_MS);
             } else if (Constants.ACTION_LAUNCHER_APPS_IS_ACTIVITY_ENABLED.equals(action)) {
@@ -206,6 +217,16 @@ public class TestActivity extends Activity {
                         .getString(EXTRA_COMPONENT_NAME);
                 sendIsActivityEnabled(remoteCallback, ComponentName.unflattenFromString(
                         componentName));
+            } else if (Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY.equals(action)) {
+                final String authority = intent.getBundleExtra(EXTRA_DATA)
+                        .getString(EXTRA_AUTHORITY);
+                final int userId = intent.getBundleExtra(EXTRA_DATA)
+                        .getInt(Intent.EXTRA_USER);
+                sendSyncAdapterPackagesForAuthorityAsUser(remoteCallback, authority, userId);
+            } else if (Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK.equals(action)) {
+                final int expectedEventCode = intent.getBundleExtra(EXTRA_DATA)
+                        .getInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
+                awaitLauncherAppsCallback(remoteCallback, expectedEventCode, TIMEOUT_MS);
             } else {
                 sendError(remoteCallback, new Exception("unknown action " + action));
             }
@@ -250,7 +271,7 @@ public class TestActivity extends Activity {
         final Object token = new Object();
         final Runnable sendResult = () -> {
             final Bundle result = new Bundle();
-            result.putStringArray(Intent.EXTRA_PACKAGES, suspendedList.toArray(new String[] {}));
+            result.putStringArray(EXTRA_PACKAGES, suspendedList.toArray(new String[] {}));
             remoteCallback.sendResult(result);
             finish();
         };
@@ -269,6 +290,79 @@ public class TestActivity extends Activity {
             }
         }, filter);
         mainHandler.postDelayed(() -> sendResult.run(), token, timeoutMs);
+    }
+
+    private void awaitLauncherAppsCallback(RemoteCallback remoteCallback, int expectedEventCode,
+            long timeoutMs) {
+        final Object token = new Object();
+        final Bundle result = new Bundle();
+        final LauncherApps launcherApps = getSystemService(LauncherApps.class);
+        final LauncherApps.Callback launcherAppsCallback = new LauncherApps.Callback() {
+
+            private void onPackageStateUpdated(String[] packageNames, int resultCode) {
+                if (resultCode != expectedEventCode) {
+                    return;
+                }
+
+                mainHandler.removeCallbacksAndMessages(token);
+                result.putStringArray(EXTRA_PACKAGES, packageNames);
+                result.putInt(EXTRA_FLAGS, resultCode);
+                remoteCallback.sendResult(result);
+
+                launcherApps.unregisterCallback(this);
+                finish();
+            }
+
+            @Override
+            public void onPackageRemoved(String packageName, UserHandle user) {
+                onPackageStateUpdated(new String[]{packageName}, CALLBACK_EVENT_PACKAGE_REMOVED);
+            }
+
+            @Override
+            public void onPackageAdded(String packageName, UserHandle user) {
+                onPackageStateUpdated(new String[]{packageName}, CALLBACK_EVENT_PACKAGE_ADDED);
+            }
+
+            @Override
+            public void onPackageChanged(String packageName, UserHandle user) {
+                onPackageStateUpdated(new String[]{packageName}, CALLBACK_EVENT_PACKAGE_CHANGED);
+            }
+
+            @Override
+            public void onPackagesAvailable(String[] packageNames, UserHandle user,
+                    boolean replacing) {
+                onPackageStateUpdated(packageNames, CALLBACK_EVENT_PACKAGES_AVAILABLE);
+            }
+
+            @Override
+            public void onPackagesUnavailable(String[] packageNames, UserHandle user,
+                    boolean replacing) {
+                onPackageStateUpdated(packageNames, CALLBACK_EVENT_PACKAGES_UNAVAILABLE);
+            }
+
+            @Override
+            public void onPackagesSuspended(String[] packageNames, UserHandle user) {
+                onPackageStateUpdated(packageNames, CALLBACK_EVENT_PACKAGES_SUSPENDED);
+                super.onPackagesSuspended(packageNames, user);
+            }
+
+            @Override
+            public void onPackagesUnsuspended(String[] packageNames, UserHandle user) {
+                onPackageStateUpdated(packageNames, CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
+                super.onPackagesUnsuspended(packageNames, user);
+            }
+        };
+
+        launcherApps.registerCallback(launcherAppsCallback);
+
+        mainHandler.postDelayed(() -> {
+            result.putStringArray(EXTRA_PACKAGES, new String[]{});
+            result.putInt(EXTRA_FLAGS, CALLBACK_EVENT_INVALID);
+            remoteCallback.sendResult(result);
+
+            launcherApps.unregisterCallback(launcherAppsCallback);
+            finish();
+        }, token, timeoutMs);
     }
 
     private void sendGetInstalledPackages(RemoteCallback remoteCallback, int flags) {
@@ -444,6 +538,16 @@ public class TestActivity extends Activity {
         }
         final Bundle result = new Bundle();
         result.putParcelableArrayList(EXTRA_RETURN_RESULT, parcelables);
+        remoteCallback.sendResult(result);
+        finish();
+    }
+
+    private void sendSyncAdapterPackagesForAuthorityAsUser(RemoteCallback remoteCallback,
+            String authority, int userId) {
+        final String[] syncAdapterPackages = ContentResolver
+                .getSyncAdapterPackagesForAuthorityAsUser(authority, userId);
+        final Bundle result = new Bundle();
+        result.putStringArray(Intent.EXTRA_PACKAGES, syncAdapterPackages);
         remoteCallback.sendResult(result);
         finish();
     }

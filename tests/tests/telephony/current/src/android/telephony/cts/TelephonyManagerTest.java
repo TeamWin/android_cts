@@ -1329,10 +1329,12 @@ public class TelephonyManagerTest {
         // and then do a reset to move data to default.
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+                    TelephonyManager::resetSettings,
+                    "android.permission.NETWORK_SETTINGS",
+                    "android.permission.MODIFY_PHONE_STATE");
         } catch (SecurityException e) {
-            fail("TelephonyManager#resetSettings requires the"
-                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+            e.printStackTrace();
+            fail(e.toString());
         }
         // This may timeout because the default is equal to the initial data setting, but there is
         // no way to definitively check what the default should be, so assume the default will be
@@ -1352,10 +1354,12 @@ public class TelephonyManagerTest {
         // and then do a reset to move data to default again.
         try {
             ShellIdentityUtils.invokeMethodWithShellPermissionsNoReturn(mTelephonyManager,
-                    TelephonyManager::resetSettings, "android.permission.NETWORK_SETTINGS");
+                    TelephonyManager::resetSettings,
+                    "android.permission.NETWORK_SETTINGS",
+                    "android.permission.MODIFY_PHONE_STATE");
         } catch (SecurityException e) {
-            fail("TelephonyManager#resetSettings requires the"
-                    + " android.Manifest.permission.NETWORK_SETTINGS permission");
+            e.printStackTrace();
+            fail(e.toString());
         }
 
         assertTrue("resetSettings did not reset default data",
@@ -3202,6 +3206,15 @@ public class TelephonyManagerTest {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .dropShellPermissionIdentity();
         }
+    }
+
+    @Test
+    public void testModemActivityInfoException() {
+        TelephonyManager.ModemActivityInfoException exception =
+                new TelephonyManager.ModemActivityInfoException(
+                        TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE);
+        assertEquals(TelephonyManager.ModemActivityInfoException.ERROR_PHONE_NOT_AVAILABLE,
+                exception.getErrorCode());
     }
 
     @Test

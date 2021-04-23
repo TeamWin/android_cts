@@ -80,8 +80,7 @@ public class TelephonyRegistryManagerTest {
         Pair<Integer, String> result = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         assertNotNull("Timed out waiting for phone state change", result);
         assertEquals(TelephonyManager.CALL_STATE_IDLE, result.first.longValue());
-        // This test doesn't have READ_CALL_LOG, so we expect the second arg to be empty.
-        assertTrue(TextUtils.isEmpty(result.second));
+        assertTrue(!TextUtils.isEmpty(result.second));
     }
 
     @Test
@@ -112,8 +111,7 @@ public class TelephonyRegistryManagerTest {
         Pair<Integer, String> result = queue.poll(TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
         assertNotNull("Timed out waiting for phone state change", result);
         assertEquals(TelephonyManager.CALL_STATE_IDLE, result.first.longValue());
-        // This test doesn't have READ_CALL_LOG, so we expect the second arg to be empty.
-        assertTrue(TextUtils.isEmpty(result.second));
+        assertTrue(!TextUtils.isEmpty(result.second));
     }
 
     @Test

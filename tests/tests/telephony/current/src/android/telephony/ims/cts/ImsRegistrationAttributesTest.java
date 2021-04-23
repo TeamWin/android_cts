@@ -76,6 +76,19 @@ public class ImsRegistrationAttributesTest {
                         & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
         assertNotNull(attr.getFeatureTags());
         assertEquals(0, attr.getFeatureTags().size());
+
+        // NR
+        attr = new ImsRegistrationAttributes.Builder(
+                ImsRegistrationImplBase.REGISTRATION_TECH_NR).build();
+        assertEquals(ImsRegistrationImplBase.REGISTRATION_TECH_NR,
+                attr.getRegistrationTechnology());
+        assertEquals(AccessNetworkConstants.TRANSPORT_TYPE_WWAN,
+                attr.getTransportType());
+        assertEquals(0,
+                (attr.getAttributeFlags()
+                        & ImsRegistrationAttributes.ATTR_EPDG_OVER_CELL_INTERNET));
+        assertNotNull(attr.getFeatureTags());
+        assertEquals(0, attr.getFeatureTags().size());
     }
 
     @Test

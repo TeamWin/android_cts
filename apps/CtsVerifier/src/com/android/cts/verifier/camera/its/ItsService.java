@@ -22,10 +22,10 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
+import android.hardware.SensorPrivacyManager;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
@@ -232,7 +232,7 @@ public class ItsService extends Service implements SensorEventListener {
     private HandlerThread mSensorThread = null;
     private Handler mSensorHandler = null;
 
-    private PackageManager mPackageManager;
+    private SensorPrivacyManager mSensorPrivacyManager;
 
     private static final int SERIALIZER_SURFACES_ID = 2;
     private static final int SERIALIZER_PHYSICAL_METADATA_ID = 3;
@@ -316,7 +316,7 @@ public class ItsService extends Service implements SensorEventListener {
         mChannel.enableVibration(false);
         notificationManager.createNotificationChannel(mChannel);
 
-        mPackageManager = getPackageManager();
+        mSensorPrivacyManager = getSystemService(SensorPrivacyManager.class);
     }
 
     @Override
@@ -1046,8 +1046,8 @@ public class ItsService extends Service implements SensorEventListener {
     }
 
     private void doCheckCameraPrivacyModeSupport() throws ItsException {
-        boolean hasPrivacySupport = mPackageManager.hasSystemFeature(
-                PackageManager.FEATURE_CAMERA_TOGGLE);
+        boolean hasPrivacySupport = mSensorPrivacyManager
+                .supportsSensorToggle(SensorPrivacyManager.Sensors.CAMERA);
         mSocketRunnableObj.sendResponse("cameraPrivacyModeSupport",
                 hasPrivacySupport ? "true" : "false");
     }

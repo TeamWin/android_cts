@@ -101,6 +101,8 @@ public final class TestAppSystemServiceFactory {
     }
 
     private static void assertHasRequiredReceiver(Context context) {
+        if (!UserManager.isHeadlessSystemUserMode()) return;
+
         String packageName = context.getPackageName();
         Boolean hasIt = sHasRequiredReceiver.get(packageName);
         if (hasIt != null && hasIt) {

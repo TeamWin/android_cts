@@ -47,6 +47,7 @@ public class CloseSystemDialogsTestService extends Service {
     private static final String TAG = "CloseSystemDialogsTestService";
     private static final String NOTIFICATION_ACTION = TAG;
     private static final String NOTIFICATION_CHANNEL_ID = "cts/" + TAG;
+    private static final Intent INTENT_ACSD = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
 
     private final ICloseSystemDialogsTestsService mBinder = new Binder();
     private NotificationManager mNotificationManager;
@@ -82,19 +83,27 @@ public class CloseSystemDialogsTestService extends Service {
 
         @Override
         public void sendCloseSystemDialogsBroadcast() {
-            mContext.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
+            mContext.sendBroadcast(INTENT_ACSD);
         }
 
         @Override
-        public void postNotification(int notificationId, ResultReceiver receiver) {
+        public void postNotification(int notificationId, ResultReceiver receiver,
+                boolean usePendingIntent) {
             mNotificationReceiver = new BroadcastReceiver() {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     try {
-                        mContext.sendBroadcast(new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS));
+                        if (usePendingIntent) {
+                            PendingIntent.getBroadcast(mContext, /* requestCode */ 0, INTENT_ACSD,
+                                    FLAG_IMMUTABLE).send();
+                        } else {
+                            mContext.sendBroadcast(INTENT_ACSD);
+                        }
                         receiver.send(RESULT_OK, null);
                     } catch (SecurityException e) {
                         receiver.send(RESULT_SECURITY_EXCEPTION, null);
+                    } catch (PendingIntent.CanceledException e) {
+                        receiver.send(RESULT_ERROR, null);
                     }
                 }
             };

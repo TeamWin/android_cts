@@ -273,6 +273,10 @@ public class MockConnection extends Connection {
     public void onCallFilteringCompleted(
             Connection.CallFilteringCompletionInfo callFilteringCompletionInfo) {
         getInvokeCounter(ON_CALL_FILTERING_COMPLETED).invoke(callFilteringCompletionInfo);
+
+        if (mRemoteConnection != null) {
+            mRemoteConnection.onCallFilteringCompleted(callFilteringCompletionInfo);
+        }
     }
 
     public int getCurrentState()  {
