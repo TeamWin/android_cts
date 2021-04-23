@@ -482,6 +482,7 @@ public class SmsManagerTest {
 
     @Test
     public void testContentProviderAccessRestriction() throws Exception {
+        if (!mTelephonyManager.isSmsCapable()) return;
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
