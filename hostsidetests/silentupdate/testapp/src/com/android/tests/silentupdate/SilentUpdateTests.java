@@ -17,6 +17,7 @@
 package com.android.tests.silentupdate;
 
 import static android.app.PendingIntent.FLAG_MUTABLE;
+import static android.content.Context.MODE_PRIVATE;
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED;
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_REQUIRED;
 import static android.content.pm.PackageInstaller.SessionParams.USER_ACTION_UNSPECIFIED;
@@ -31,8 +32,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageInstaller.SessionParams;
+import android.content.pm.PackageManager;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -43,12 +47,15 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Supplier;
 
 /**
  * Tests for multi-package (a.k.a. atomic) installs.
@@ -63,67 +70,81 @@ public class SilentUpdateTests {
         return InstrumentationRegistry.getInstrumentation().getContext();
     }
 
-    @After
-    public void cleanUpSessions() {
-        final Context context = getContext();
-        final PackageInstaller installer = context.getPackageManager().getPackageInstaller();
-        installer.getMySessions().forEach(
-                (session) -> installer.abandonSession(session.getSessionId()));
-    }
-
     @Test
     public void newInstall_RequiresUserAction() throws Exception {
         Assert.assertEquals("New install should require user action",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(CURRENT_APK));
+                silentInstallResource(CURRENT_APK));
     }
 
     @Test
     public void updateWithUnknownSourcesDisabled_RequiresUserAction() throws Exception {
         Assert.assertEquals("Update with unknown sources disabled should require user action",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(CURRENT_APK));
+                silentInstallResource(CURRENT_APK));
     }
 
     @Test
     public void updateAsNonInstallerOfRecord_RequiresUserAction() throws Exception {
         Assert.assertEquals("Update when not installer of record should require user action",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(CURRENT_APK));
+                silentInstallResource(CURRENT_APK));
     }
 
     @Test
     public void updatedInstall_RequiresNoUserAction() throws Exception {
         Assert.assertEquals("Nominal silent update should not require user action",
                 PackageInstaller.STATUS_SUCCESS,
-                install(CURRENT_APK));
+                silentInstallResource(CURRENT_APK));
     }
 
     @Test
     public void updatedInstallWithoutCallSetUserAction_RequiresUserAction() throws Exception {
         Assert.assertEquals("Update should require action when setRequireUserAction not called",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(CURRENT_APK, null /*setRequireUserAction*/));
+                installResource(CURRENT_APK, null /*setRequireUserAction*/));
     }
 
     @Test
     public void updatedInstallForceUserAction_RequiresUserAction() throws Exception {
         Assert.assertEquals("Update should require action when setRequireUserAction true",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(CURRENT_APK, true /*setRequireUserAction*/));
+                installResource(CURRENT_APK, true /*setRequireUserAction*/));
     }
 
     @Test
     public void updatePreQApp_RequiresUserAction() throws Exception {
         Assert.assertEquals("Updating to a pre-Q app should require user action",
                 PackageInstaller.STATUS_PENDING_USER_ACTION,
-                install(P_APK));
+                silentInstallResource(P_APK));
     }
+
     @Test
     public void updateQApp_RequiresNoUserAction() throws Exception {
         Assert.assertEquals("Updating to a Q app should not require user action",
                 PackageInstaller.STATUS_SUCCESS,
-                install(Q_APK));
+                silentInstallResource(Q_APK));
+    }
+
+    @Test
+    public void selfUpdate_RequiresNoUserAction() throws Exception {
+        // persist the last update time to disk
+        final long lastUpdateTime = getLastUpdateTime();
+        getContext().getSharedPreferences("default", MODE_PRIVATE)
+                .edit()
+                .putLong("lastUpdateTime", lastUpdateTime)
+                .commit();
+        commit(fileSupplier(
+                "/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases.apk"), false);
+    }
+
+    @Test
+    public void selfUpdate_updateApplied() throws Exception {
+        // verify persisted last update time is no longer current
+        Assert.assertTrue("lastUpdateTime should be increased if install correctly applied",
+                getLastUpdateTime() > getContext().getSharedPreferences("default", MODE_PRIVATE)
+                .getLong("lastUpdateTime", 0));
+
     }
 
     @Test
@@ -146,10 +167,30 @@ public class SilentUpdateTests {
         }
     }
 
-    private int install(String apkName) throws Exception {
-        return install(apkName, false);
+    private int silentInstallResource(String resourceName) throws Exception {
+        return install(resourceSupplier(resourceName), false);
     }
-    private int install(String apkName, Boolean requireUserAction) throws Exception {
+
+    private int installResource(String resourceName, Boolean requireUserAction) throws Exception {
+        return install(resourceSupplier(resourceName), requireUserAction);
+    }
+
+    private int install(Supplier<InputStream> apkStreamSupplier, Boolean requireUserAction)
+            throws Exception {
+        InstallStatusListener isl = commit(apkStreamSupplier, requireUserAction);
+        final Intent statusUpdate = isl.getResult();
+        final int result =
+                statusUpdate.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+        if (result != PackageInstaller.STATUS_SUCCESS) {
+            final int sessionId =
+                    statusUpdate.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, Integer.MIN_VALUE);
+            getContext().getPackageManager().getPackageInstaller().abandonSession(sessionId);
+        }
+        return result;
+    }
+
+    private InstallStatusListener commit(Supplier<InputStream> apkStreamSupplier,
+            Boolean requireUserAction) throws IOException {
         final Context context = getContext();
         final PackageInstaller installer = context.getPackageManager().getPackageInstaller();
         SessionParams params = new SessionParams(SessionParams.MODE_FULL_INSTALL);
@@ -168,11 +209,8 @@ public class SilentUpdateTests {
                                 ? USER_ACTION_REQUIRED
                                 : SessionParams.USER_ACTION_NOT_REQUIRED);
         final PackageInstaller.Session session = installer.openSession(sessionId);
-        try(OutputStream os = session.openWrite(apkName, 0, -1)) {
-            try (InputStream is = getClass().getClassLoader().getResourceAsStream(apkName)) {
-                if (is == null) {
-                    throw new IOException("Resource " + apkName + " not found.");
-                }
+        try(OutputStream os = session.openWrite("apk", 0, -1)) {
+            try (InputStream is = apkStreamSupplier.get()) {
                 byte[] buffer = new byte[4096];
                 int n;
                 while ((n = is.read(buffer)) >= 0) {
@@ -182,8 +220,35 @@ public class SilentUpdateTests {
         }
         InstallStatusListener isl = new InstallStatusListener();
         session.commit(isl.getIntentSender());
-        final Intent statusUpdate = isl.getResult();
-        return statusUpdate.getIntExtra(PackageInstaller.EXTRA_STATUS, Integer.MIN_VALUE);
+        return isl;
+    }
+
+    private Supplier<InputStream> resourceSupplier(String resourceName) {
+        return () -> {
+            final InputStream resourceAsStream =
+                    getClass().getClassLoader().getResourceAsStream(resourceName);
+            if (resourceAsStream == null) {
+                throw new RuntimeException("Resource " + resourceName + " could not be found.");
+            }
+            return resourceAsStream;
+        };
+    }
+
+    private Supplier<InputStream> fileSupplier(String fileName) {
+        return () -> {
+            try {
+                return new FileInputStream(fileName);
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        };
+    }
+
+    private long getLastUpdateTime() throws PackageManager.NameNotFoundException {
+        final PackageInfo packageInfo = getContext().getPackageManager().getPackageInfo(
+                getContext().getPackageName(), 0);
+        final long lastUpdateTime = packageInfo.lastUpdateTime;
+        return lastUpdateTime;
     }
 
     public static class InstallStatusListener extends BroadcastReceiver {
