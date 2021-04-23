@@ -28,7 +28,6 @@ import android.hdmicec.cts.LogicalAddress;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
@@ -183,7 +182,6 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
      * Tests that a device comes out of the standby state when it receives a {@code <User Control
      * Pressed>} message with power related operands.
      */
-    @Ignore("b/178083922")
     @Test
     public void cect_hf4_6_8_userControlPressed_powerOn() throws Exception {
         ITestDevice device = getDevice();
