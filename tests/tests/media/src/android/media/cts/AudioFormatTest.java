@@ -182,7 +182,11 @@ public class AudioFormatTest extends CtsAndroidTestCase {
             AudioFormat.ENCODING_AAC_LC,
             AudioFormat.ENCODING_AAC_HE_V1,
             AudioFormat.ENCODING_AAC_HE_V2,
-            AudioFormat.ENCODING_OPUS
+            AudioFormat.ENCODING_OPUS,
+            AudioFormat.ENCODING_MPEGH_BL_L3,
+            AudioFormat.ENCODING_MPEGH_BL_L4,
+            AudioFormat.ENCODING_MPEGH_LC_L3,
+            AudioFormat.ENCODING_MPEGH_LC_L4,
         };
         for (int encoding : encodings) {
             final AudioFormat format = new AudioFormat.Builder()
