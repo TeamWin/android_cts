@@ -32,6 +32,12 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import java.util.List;
 
 public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver {
+    public static final String CMD_APP_HIBERNATION_SET_STATE_GLOBAL =
+            "cmd app_hibernation set-state --global ";
+    public static final String STATSD_CTS_FOREGROUND_ACTIVITY = "StatsdCtsForegroundActivity";
+    public static final int WAIT_TIME_MS = 3_500;
+    public static final String COMMAND_ENABLE_APP_HIBERNATION =
+            "device_config put app_hibernation app_hibernation_enabled true";
     private IBuildInfo mCtsBuild;
 
     @Override
@@ -64,7 +70,7 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
                 atomTag,  /*uidInAttributionChain=*/false);
 
         DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
-                "StatsdCtsForegroundActivity", "action", "action.sleep_top", 3_500);
+                STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
 
         // Sorted list of events in order in which they occurred.
         List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
@@ -77,5 +83,50 @@ public class AppStartStatsTests extends DeviceTestCase implements IBuildReceiver
         assertThat(atom.getIsInstantApp()).isFalse();
         assertThat(atom.getActivityStartMillis()).isGreaterThan(0L);
         assertThat(atom.getTransitionDelayMillis()).isGreaterThan(0);
+        assertThat(atom.getIsHibernating()).isFalse();
+    }
+
+    public void testHibernatingAppStartOccurred() throws Exception {
+        final int atomTag = AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER;
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
+        getDevice().executeShellCommand(COMMAND_ENABLE_APP_HIBERNATION);
+        getDevice().executeShellCommand(getGlobalHibernationCommand(
+                DeviceUtils.STATSD_ATOM_TEST_PKG, true));
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
+
+        // Sorted list of events in order in which they occurred.
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+        assertThat(data).hasSize(1);
+        AtomsProto.AppStartOccurred atom = data.get(0).getAtom().getAppStartOccurred();
+        assertThat(atom.getIsHibernating()).isTrue();
+    }
+
+    public void testHibernatingAppStartOccurredTwice_isHibernatingShouldBeFalseSecondTime()
+            throws Exception {
+        final int atomTag = AtomsProto.Atom.APP_START_OCCURRED_FIELD_NUMBER;
+        ConfigUtils.uploadConfigForPushedAtomWithUid(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                atomTag,  /*uidInAttributionChain=*/false);
+        getDevice().executeShellCommand(COMMAND_ENABLE_APP_HIBERNATION);
+        getDevice().executeShellCommand(getGlobalHibernationCommand(
+                DeviceUtils.STATSD_ATOM_TEST_PKG, true));
+
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
+        DeviceUtils.runActivity(getDevice(), DeviceUtils.STATSD_ATOM_TEST_PKG,
+                STATSD_CTS_FOREGROUND_ACTIVITY, "action", "action.sleep_top", WAIT_TIME_MS);
+
+        // Sorted list of events in order in which they occurred.
+        List<StatsLog.EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());
+
+        assertThat(data).hasSize(2);
+        AtomsProto.AppStartOccurred atom = data.get(1).getAtom().getAppStartOccurred();
+        assertThat(atom.getIsHibernating()).isFalse();
+    }
+
+    private static String getGlobalHibernationCommand(String packageName, boolean isHibernating) {
+        return CMD_APP_HIBERNATION_SET_STATE_GLOBAL + packageName + " " + isHibernating;
     }
 }
