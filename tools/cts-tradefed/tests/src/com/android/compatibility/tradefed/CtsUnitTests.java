@@ -17,7 +17,6 @@ package com.android.compatibility.tradefed;
 
 import com.android.compatibility.common.tradefed.presubmit.ApkPackageNameCheck;
 import com.android.compatibility.common.tradefed.presubmit.CtsConfigLoadingTest;
-import com.android.compatibility.common.tradefed.presubmit.DupFileTest;
 import com.android.compatibility.common.tradefed.presubmit.PresubmitSetupValidation;
 import com.android.compatibility.common.tradefed.presubmit.ValidateTestsAbi;
 
@@ -38,7 +37,6 @@ import org.junit.runners.Suite.SuiteClasses;
     // presubmit
     ApkPackageNameCheck.class,
     CtsConfigLoadingTest.class,
-    DupFileTest.class,
     PresubmitSetupValidation.class,
     ValidateTestsAbi.class,
 })
