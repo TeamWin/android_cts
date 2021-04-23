@@ -224,8 +224,8 @@ public class CameraExtensionCharacteristicsTest {
             for (Integer extension : supportedExtensions) {
                 List<Size> extensionSizes = chars.getExtensionSupportedSizes(extension, testFormat);
                 for (Size sz : extensionSizes) {
-                    Range<Long> latencyRange = chars.getEstimatedCaptureLatencyRange(extension, sz,
-                            testFormat);
+                    Range<Long> latencyRange = chars.getEstimatedCaptureLatencyRangeMillis(
+                            extension, sz, testFormat);
                     if (latencyRange != null) {
                         assertTrue("Negative range surface type", (latencyRange.getLower() > 0) &&
                                 (latencyRange.getUpper() > 0));
