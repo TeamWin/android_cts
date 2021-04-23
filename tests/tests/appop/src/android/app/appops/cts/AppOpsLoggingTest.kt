@@ -53,13 +53,18 @@ import android.content.ServiceConnection
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH
 import android.content.pm.PackageManager.FEATURE_BLUETOOTH_LE
 import android.content.pm.PackageManager.FEATURE_TELEPHONY
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.params.OutputConfiguration
+import android.hardware.camera2.params.SessionConfiguration
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.media.AudioAttributes
 import android.media.AudioRecord
+import android.media.ImageReader
 import android.media.MediaRecorder
 import android.net.wifi.WifiManager
 import android.os.Bundle
@@ -73,6 +78,7 @@ import android.provider.ContactsContract
 import android.telephony.SmsManager
 import android.telephony.TelephonyManager
 import android.util.Log
+import android.util.Size
 import androidx.test.platform.app.InstrumentationRegistry
 import com.google.common.truth.Truth.assertThat
 import org.junit.After
@@ -763,22 +769,52 @@ class AppOpsLoggingTest {
 
         assumeTrue(cameraManager.cameraIdList.isNotEmpty())
 
-        cameraManager.openCamera(cameraManager.cameraIdList[0], { it.run() },
-            object : CameraDevice.StateCallback() {
-                override fun onOpened(camera: CameraDevice) {
-                    openedCamera.complete(camera)
-                }
+        val cameraId = cameraManager!!.cameraIdList[0]
+        val config = cameraManager!!.getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val outputFormat = config!!.outputFormats[0]
+        val outputSize: Size = config!!.getOutputSizes(outputFormat)[0]
+        val handler = Handler(context.mainLooper)
 
-                override fun onDisconnected(camera: CameraDevice) {}
-                override fun onError(camera: CameraDevice, error: Int) {}
-            })
+        val cameraDeviceCallback = object : CameraDevice.StateCallback() {
+            override fun onOpened(cameraDevice: CameraDevice) {
+                val imageReader = ImageReader.newInstance(
+                        outputSize.width, outputSize.height, outputFormat, 2)
+
+                val builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                builder.addTarget(imageReader.surface)
+                val captureRequest = builder.build()
+                val sessionConfiguration = SessionConfiguration(
+                        SessionConfiguration.SESSION_REGULAR,
+                        listOf(OutputConfiguration(imageReader.surface)),
+                        context.mainExecutor,
+                        object : CameraCaptureSession.StateCallback() {
+                            override fun onConfigured(session: CameraCaptureSession) {
+                                session.capture(captureRequest, null, handler)
+                            }
+
+                            override fun onConfigureFailed(session: CameraCaptureSession) {}
+                        })
+
+                imageReader.setOnImageAvailableListener({
+                    cameraDevice.close()
+                    openedCamera.complete(cameraDevice)
+                }, handler)
+                cameraDevice.createCaptureSession(sessionConfiguration)
+            }
+
+            override fun onDisconnected(ameraDevice: CameraDevice) {}
+            override fun onError(cameraDevice: CameraDevice, i: Int) {}
+        }
+
+        cameraManager!!.openCamera(cameraId, context.mainExecutor, cameraDeviceCallback)
 
         openedCamera.get(TIMEOUT_MILLIS, MILLISECONDS).close()
 
         eventually {
             assertThat(asyncNoted[0].op).isEqualTo(OPSTR_CAMERA)
             assertThat(asyncNoted[0].attributionTag).isEqualTo(context.attributionTag)
-            assertThat(asyncNoted[0].message).contains(cameraManager.cameraIdList[0])
+            assertThat(asyncNoted[0].message).contains(cameraId)
         }
     }
 
