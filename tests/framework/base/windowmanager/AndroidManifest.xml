@@ -139,7 +139,8 @@
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$LaunchForResultActivity"/>
 
-        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
+        <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"
+        android:theme="@android:style/Theme.Dialog"/>
 
         <activity android:name="android.server.wm.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
                   android:launchMode="singleTop" />
