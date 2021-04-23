@@ -22,12 +22,12 @@ import android.app.admin.DevicePolicyManager;
 
 public class NearbyNotificationStreamingPolicyTest extends BaseDeviceAdminTest {
 
-    public void getNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault() {
+    public void testGetNearbyNotificationStreamingPolicy_getsNearbyStreamingDisabledAsDefault() {
         assertThat(mDevicePolicyManager.getNearbyNotificationStreamingPolicy())
                 .isEqualTo(DevicePolicyManager.NEARBY_STREAMING_DISABLED);
     }
 
-    public void setNearbyNotificationStreamingPolicy_changesPolicy() {
+    public void testSetNearbyNotificationStreamingPolicy_changesPolicy() {
         mDevicePolicyManager.setNearbyNotificationStreamingPolicy(
                 DevicePolicyManager.NEARBY_STREAMING_ENABLED);
 
