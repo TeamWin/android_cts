@@ -49,7 +49,7 @@ public final class PowerPolicyTestAnalyzer {
         String[] lines = shellOutput.split("\n");
         for (String line : lines) {
             String[] tokens = line.split(",");
-            if (tokens.length != 3 || tokens.length != 4) {
+            if (tokens.length != 3 && tokens.length != 4) {
                 CLog.w("Malformatted power policy test result: %s", line);
                 return null;
             }
@@ -96,7 +96,7 @@ public final class PowerPolicyTestAnalyzer {
     }
 
     public TestResultTable getTailDiff(TestResultTable result1, TestResultTable result2) {
-        TestResultTable diff = null;
+        TestResultTable diff;
 
         if (result1 != null && result2 != null) {
             TestResultTable longResult = result1;

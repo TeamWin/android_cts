@@ -16,6 +16,8 @@
 
 package android.car.cts.powerpolicy;
 
+import com.android.tradefed.log.LogUtil.CLog;
+
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.StringTokenizer;
@@ -43,10 +45,10 @@ public final class PowerPolicyDef {
 
     @Override
     public String toString() {
-        String[] enables = Arrays.stream(mEnables).map(c -> c.val).toArray(i -> new String[i]);
-        String[] disables = Arrays.stream(mDisables).map(c -> c.val).toArray(i -> new String[i]);
-        return mPolicyId + ' ' + "--enable " + String.join(",", enables)
-                + "--disable " + String.join(",", disables);
+        String[] enables = Arrays.stream(mEnables).map(c -> c.value).toArray(i -> new String[i]);
+        String[] disables = Arrays.stream(mDisables).map(c -> c.value).toArray(i -> new String[i]);
+        return mPolicyId + " --enable " + String.join(",", enables)
+                + " --disable " + String.join(",", disables);
     }
 
     @Override
@@ -72,6 +74,7 @@ public final class PowerPolicyDef {
         if (policyDefStr == null) {
             throw new IllegalArgumentException("null policyDefStr parameter");
         }
+        CLog.d("policyDefStr: " + policyDefStr);
 
         StringTokenizer tokens = new StringTokenizer(policyDefStr, "():");
         String policyId = hasPolicyId
@@ -85,11 +88,14 @@ public final class PowerPolicyDef {
         int idx = 0;
         String[] enables = null;
         String tmpStr = tokens.nextToken().trim();
+        CLog.d("enables: " + tmpStr);
         for (String hdr : DISABLED_HEADERS) {
             idx = tmpStr.indexOf(hdr);
             if (idx >= 0) {
                 tmpStr = tmpStr.substring(0, idx).trim();
-                enables = tmpStr.split(",\\s*");
+                if (!tmpStr.isEmpty()) {
+                    enables = tmpStr.split(",\\s*");
+                }
                 break;
             }
         }
@@ -97,25 +103,45 @@ public final class PowerPolicyDef {
             throw new IllegalArgumentException("malformatted disabled headers string: "
                     + policyDefStr);
         }
-
-        String[] disables = null;
-        if (hasPolicyId) {
-            disables = tokens.nextToken().trim().split(",\\s*");
-        } else {
-            tmpStr = tokens.nextToken().trim();
-            idx = tmpStr.indexOf("Monitoring HW state");
-            tmpStr = tmpStr.substring(0, idx).trim();
-            if (!tmpStr.isEmpty()) {
-                disables = tmpStr.split(",| ");
-            }
+        PowerComponent[] enabledComps = null;
+        if (enables != null) {
+            normalizeComponentName(enables);
+            enabledComps = Arrays.stream(enables)
+                    .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
         }
 
-        PowerComponent[] enabledComps = Arrays.stream(enables)
-                .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
-        PowerComponent[] disabledComps = Arrays.stream(disables)
-                .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
+        String[] disables = null;
+        tmpStr = tokens.nextToken().trim();
+        CLog.d("disables: " + tmpStr);
+        if (!tmpStr.isEmpty()) {
+            disables = tmpStr.split(",\\s*");
+        }
+        PowerComponent[] disabledComps = null;
+        if (disables != null) {
+            normalizeComponentName(disables);
+            disabledComps = Arrays.stream(disables)
+                    .map(e -> PowerComponent.valueOf(e)).toArray(n -> new PowerComponent[n]);
+        }
 
         return new PowerPolicyDef(policyId, enabledComps, disabledComps);
+    }
+
+    private static void normalizeComponentName(String[] comps) throws Exception {
+        for (int i = 0; i < comps.length; i++) {
+            try {
+                PowerComponent.valueOf(comps[i]);
+            } catch (Exception e) {
+                if (comps[i] == null || comps[i].isEmpty()) {
+                    throw new IllegalArgumentException("empty PowerComponent name at " + i);
+                }
+
+                if (comps[i].equals("none")) {
+                    comps[i] = "NONE";
+                } else {
+                    throw new IllegalArgumentException("unknown PowerComponent: " + comps[i]);
+                }
+            }
+        }
     }
 
     private static boolean search(String[] strList, String str) {
@@ -153,10 +179,10 @@ public final class PowerPolicyDef {
         MICROPHONE("MICROPHONE"),
         CPU("CPU");
 
-        public final String val;
+        public final String value;
 
         PowerComponent(String v) {
-            val = v;
+            value = v;
         }
     }
 
