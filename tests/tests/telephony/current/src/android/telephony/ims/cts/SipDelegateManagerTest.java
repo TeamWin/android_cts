@@ -30,6 +30,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.InetAddresses;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.PersistableBundle;
 import android.telephony.CarrierConfigManager;
@@ -41,6 +43,7 @@ import android.telephony.ims.FeatureTagState;
 import android.telephony.ims.ImsException;
 import android.telephony.ims.ImsManager;
 import android.telephony.ims.ImsService;
+import android.telephony.ims.SipDelegateConfiguration;
 import android.telephony.ims.SipDelegateImsConfiguration;
 import android.telephony.ims.SipDelegateManager;
 import android.telephony.ims.SipMessage;
@@ -61,6 +64,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -523,9 +527,12 @@ public class SipDelegateManagerTest {
         assertNotNull(delegate);
         verifyUpdateRegistrationCalled(regImpl);
 
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet(), c);
 
@@ -534,6 +541,34 @@ public class SipDelegateManagerTest {
 
         // Ensure requests to perform a full network re-registration work properly.
         verifyFullRegistrationTriggered(manager, regImpl, delegateConn);
+
+        destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
+                request.getFeatureTags());
+        assertEquals("There should be no more delegates", 0,
+                transportImpl.getDelegates().size());
+        verifyUpdateRegistrationCalled(regImpl);
+    }
+
+    @Test
+    public void testDeprecatedConfig() throws Exception {
+        if (!ImsUtils.shouldTestImsService()) {
+            return;
+        }
+        assertTrue(sServiceConnector.setDefaultSmsApp());
+        connectTestImsServiceWithSipTransportAndConfig();
+
+        TestSipTransport transportImpl = sServiceConnector.getCarrierService().getSipTransport();
+        TestImsRegistration regImpl = sServiceConnector.getCarrierService().getImsRegistration();
+        SipDelegateManager manager = getSipDelegateManager();
+        DelegateRequest request = getDefaultRequest();
+        TestSipDelegateConnection delegateConn = new TestSipDelegateConnection(request);
+
+        TestSipDelegate delegate = createSipDelegateConnectionAndVerify(manager, delegateConn,
+                transportImpl, Collections.emptySet(), 0);
+        assertNotNull(delegate);
+        verifyUpdateRegistrationCalled(regImpl);
+        verifyRegisteredAndSendOldSipConfig(delegateConn, delegate, request.getFeatureTags(),
+                Collections.emptySet());
 
         destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
                 request.getFeatureTags());
@@ -565,9 +600,12 @@ public class SipDelegateManagerTest {
                 transportImpl, deniedTags, 0);
         assertNotNull(delegate);
 
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, registeredTags, deniedTags, c);
 
         // TODO verify messages can be sent on registered tags, but generate error for denied tags.
@@ -610,9 +648,12 @@ public class SipDelegateManagerTest {
                 transportImpl, Collections.emptySet(), 0);
         assertNotNull(delegate1);
 
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn1, delegate1, registeredTags1,
                 Collections.emptySet(), c);
 
@@ -675,9 +716,12 @@ public class SipDelegateManagerTest {
                 ImsUtils.TEST_TIMEOUT_MS));
         TestSipDelegate delegate = getSipDelegate(transportImpl, Collections.emptySet(), 0);
         verifyUpdateRegistrationCalled(regImpl);
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet(), c);
         destroySipDelegateAndVerify(manager, transportImpl, delegateConn, delegate,
@@ -705,9 +749,12 @@ public class SipDelegateManagerTest {
         assertNotNull(delegate);
         verifyUpdateRegistrationCalled(regImpl);
 
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration c = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr).build();
         verifyRegisteredAndSendSipConfig(delegateConn, delegate, request.getFeatureTags(),
                 Collections.emptySet(), c);
 
@@ -787,29 +834,75 @@ public class SipDelegateManagerTest {
     }
 
     @Test
-    public void testParcelUnparcelImsConfiguration() {
-        SipDelegateImsConfiguration c = new SipDelegateImsConfiguration.Builder(1 /*version*/)
-                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_GRUU_ENABLED_BOOL, true)
-                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_MAX_PAYLOAD_SIZE_ON_UDP_INT, 1)
-                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "123")
-                .build();
+    public void testParcelUnparcelConfiguration() {
+        // Set everything to a non-default value
+        SipDelegateConfiguration c = generateNewTestConfig();
+        assertEquals(1, c.getVersion());
+        assertEquals(SipDelegateConfiguration.SIP_TRANSPORT_TCP, c.getTransportType());
+        assertEquals("1.1.1.1", c.getLocalAddress().getAddress().getHostAddress());
+        assertEquals(80, c.getLocalAddress().getPort());
+        assertEquals("2.2.2.2", c.getSipServerAddress().getAddress().getHostAddress());
+        assertEquals(81, c.getSipServerAddress().getPort());
+        assertTrue(c.isSipCompactFormEnabled());
+        assertTrue(c.isSipKeepaliveEnabled());
+        assertEquals(508, c.getMaxUdpPayloadSizeBytes());
+        assertEquals("test1", c.getPublicUserIdentifier());
+        assertEquals("test2", c.getPrivateUserIdentifier());
+        assertEquals("test.domain", c.getHomeDomain());
+        assertEquals("testImei", c.getImei());
+        assertEquals("sipauth", c.getSipAuthenticationHeader());
+        assertEquals("sipnonce", c.getSipAuthenticationNonce());
+        assertEquals("srvroute", c.getSipServiceRouteHeader());
+        assertEquals("path", c.getSipPathHeader());
+        assertEquals("ua", c.getSipUserAgentHeader());
+        assertEquals("user", c.getSipContactUserParameter());
+        assertEquals("pani", c.getSipPaniHeader());
+        assertEquals("plani", c.getSipPlaniHeader());
+        assertEquals("cni", c.getSipCniHeader());
+        assertEquals("uri", c.getSipAssociatedUriHeader());
+        Uri gruuUri = Uri.parse("sip:blah@gruu.net");
+        assertEquals(gruuUri, c.getPublicGruuUri());
+
         Parcel p = Parcel.obtain();
         c.writeToParcel(p, 0);
         p.setDataPosition(0);
-        SipDelegateImsConfiguration unparcel =
-                SipDelegateImsConfiguration.CREATOR.createFromParcel(p);
-        assertEquals(c.getVersion(), unparcel.getVersion());
-        assertEquals(c.getBoolean(
-                        SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_GRUU_ENABLED_BOOL, false),
-                unparcel.getBoolean(
-                        SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_GRUU_ENABLED_BOOL, false));
-        assertEquals(c.getInt(
-                SipDelegateImsConfiguration.KEY_SIP_CONFIG_MAX_PAYLOAD_SIZE_ON_UDP_INT, -1),
-                unparcel.getInt(
-                        SipDelegateImsConfiguration.KEY_SIP_CONFIG_MAX_PAYLOAD_SIZE_ON_UDP_INT,
-                        -1));
-        assertEquals(c.getString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING),
-                unparcel.getString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING));
+        SipDelegateConfiguration unparcelConfig =
+                SipDelegateConfiguration.CREATOR.createFromParcel(p);
+        assertEquals(c, unparcelConfig);
+    }
+
+    @Test
+    public void testCopyConfiguration() {
+        // Set everything to a non-default value
+        SipDelegateConfiguration c = generateNewTestConfig();
+        // The config should be exactly the same, but with an incremented version.
+        SipDelegateConfiguration configInc = new SipDelegateConfiguration.Builder(c).build();
+        assertEquals(2, configInc.getVersion());
+        assertEquals(SipDelegateConfiguration.SIP_TRANSPORT_TCP, configInc.getTransportType());
+        assertEquals("1.1.1.1", configInc.getLocalAddress().getAddress().getHostAddress());
+        assertEquals(80, configInc.getLocalAddress().getPort());
+        assertEquals("2.2.2.2",
+                configInc.getSipServerAddress().getAddress().getHostAddress());
+        assertEquals(81, configInc.getSipServerAddress().getPort());
+        assertTrue(configInc.isSipCompactFormEnabled());
+        assertTrue(configInc.isSipKeepaliveEnabled());
+        assertEquals(508, configInc.getMaxUdpPayloadSizeBytes());
+        assertEquals("test1", configInc.getPublicUserIdentifier());
+        assertEquals("test2", configInc.getPrivateUserIdentifier());
+        assertEquals("test.domain", configInc.getHomeDomain());
+        assertEquals("testImei", configInc.getImei());
+        assertEquals("sipauth", configInc.getSipAuthenticationHeader());
+        assertEquals("sipnonce", configInc.getSipAuthenticationNonce());
+        assertEquals("srvroute", configInc.getSipServiceRouteHeader());
+        assertEquals("path", configInc.getSipPathHeader());
+        assertEquals("ua", configInc.getSipUserAgentHeader());
+        assertEquals("user", configInc.getSipContactUserParameter());
+        assertEquals("pani", configInc.getSipPaniHeader());
+        assertEquals("plani", configInc.getSipPlaniHeader());
+        assertEquals("cni", configInc.getSipCniHeader());
+        assertEquals("uri", configInc.getSipAssociatedUriHeader());
+        Uri gruuUri = Uri.parse("sip:blah@gruu.net");
+        assertEquals(gruuUri, configInc.getPublicGruuUri());
     }
 
     @Test
@@ -1032,7 +1125,7 @@ public class SipDelegateManagerTest {
 
     private void verifyRegisteredAndSendSipConfig(TestSipDelegateConnection delegateConn,
             TestSipDelegate delegate, Set<String> registeredTags,
-            Set<FeatureTagState> deniedTags, SipDelegateImsConfiguration sipConfig) {
+            Set<FeatureTagState> deniedTags, SipDelegateConfiguration sipConfig) {
         // wait for reg change to be called
         delegateConn.setOperationCountDownLatch(1);
         DelegateRegistrationState s = getRegisteredRegistrationState(registeredTags);
@@ -1043,6 +1136,25 @@ public class SipDelegateManagerTest {
 
         // send config change as well.
         sendConfigChange(sipConfig, delegateConn, delegate);
+    }
+
+    private void verifyRegisteredAndSendOldSipConfig(TestSipDelegateConnection delegateConn,
+            TestSipDelegate delegate, Set<String> registeredTags,
+            Set<FeatureTagState> deniedTags) {
+        // wait for reg change to be called
+        delegateConn.setOperationCountDownLatch(1);
+        DelegateRegistrationState s = getRegisteredRegistrationState(registeredTags);
+        delegate.notifyImsRegistrationUpdate(s);
+        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        delegateConn.verifyRegistrationStateRegistered(registeredTags);
+        delegateConn.verifyDenied(deniedTags);
+
+        delegateConn.setOperationCountDownLatch(1);
+        // Use the old config here and ensure a equivalent version of the new config is received
+        // by app.
+        delegate.notifyImsConfigurationUpdate(generateOldConfig());
+        delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
+        delegateConn.verifyConfigEquals(generateNewTestConfig());
     }
 
     private Set<FeatureTagState> generateDeniedSetFromRequest(Set<String> grantedTags,
@@ -1100,12 +1212,131 @@ public class SipDelegateManagerTest {
                 SipDelegateManager.MESSAGE_FAILURE_REASON_INVALID_BODY_CONTENT);
     }
 
-    private void sendConfigChange(SipDelegateImsConfiguration c,
+    private void sendConfigChange(SipDelegateConfiguration c,
             TestSipDelegateConnection delegateConn, TestSipDelegate delegate) {
         delegateConn.setOperationCountDownLatch(1);
-        delegate.notifyImsConfigurationUpdate(c);
+        delegate.notifyConfigurationUpdate(c);
         delegateConn.waitForCountDown(ImsUtils.TEST_TIMEOUT_MS);
         delegateConn.verifyConfigEquals(c);
+    }
+
+    /**
+     * @return A new test SipDelegateConfiguration that has all fields populated.1
+     */
+    private SipDelegateConfiguration generateNewTestConfig() {
+        InetSocketAddress localAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("1.1.1.1"), 80);
+        InetSocketAddress serverAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("2.2.2.2"), 81);
+        SipDelegateConfiguration.Builder b = new SipDelegateConfiguration.Builder(1,
+                SipDelegateConfiguration.SIP_TRANSPORT_TCP, localAddr, serverAddr);
+        b.setSipCompactFormEnabled(true);
+        b.setSipKeepaliveEnabled(true);
+        b.setMaxUdpPayloadSizeBytes(508);
+        b.setPublicUserIdentifier("test1");
+        b.setPrivateUserIdentifier("test2");
+        b.setHomeDomain("test.domain");
+        b.setImei("testImei");
+        b.setSipAuthenticationHeader("sipauth");
+        b.setSipAuthenticationNonce("sipnonce");
+        b.setSipServiceRouteHeader("srvroute");
+        b.setSipPathHeader("path");
+        b.setSipUserAgentHeader("ua");
+        b.setSipContactUserParameter("user");
+        b.setSipPaniHeader("pani");
+        b.setSipPlaniHeader("plani");
+        b.setSipCniHeader("cni");
+        b.setSipAssociatedUriHeader("uri");
+        Uri gruuUri = Uri.parse("sip:blah@gruu.net");
+        b.setPublicGruuUri(gruuUri);
+        SipDelegateConfiguration.IpSecConfiguration ipSecConfig =
+                new SipDelegateConfiguration.IpSecConfiguration(123, 124,
+                        125, 126, 127, 128, "secverify");
+        assertEquals(123, ipSecConfig.getLocalTxPort());
+        assertEquals(124, ipSecConfig.getLocalRxPort());
+        assertEquals(125, ipSecConfig.getLastLocalTxPort());
+        assertEquals(126, ipSecConfig.getRemoteTxPort());
+        assertEquals(127, ipSecConfig.getRemoteRxPort());
+        assertEquals(128, ipSecConfig.getLastRemoteTxPort());
+        assertEquals("secverify", ipSecConfig.getSipSecurityVerifyHeader());
+        b.setIpSecConfiguration(ipSecConfig);
+        InetSocketAddress natAddr = new InetSocketAddress(
+                InetAddresses.parseNumericAddress("3.3.3.3"), 129);
+        b.setNatSocketAddress(natAddr);
+        assertEquals("3.3.3.3", natAddr.getAddress().getHostAddress());
+        assertEquals(129, natAddr.getPort());
+        return b.build();
+    }
+
+
+    /**
+     * @return A instance of the deprecated SipDelegateImConfiguration, which has the same
+     * equivalent configuration as {@link #generateNewTestConfig()}.
+     */
+    private SipDelegateImsConfiguration generateOldConfig() {
+        return new SipDelegateImsConfiguration.Builder(1)
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_TRANSPORT_TYPE_STRING,
+                        SipDelegateImsConfiguration.SIP_TRANSPORT_TCP)
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_DEFAULT_IPADDRESS_STRING,
+                        "1.1.1.1")
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_DEFAULT_PORT_INT, 80)
+                .addString(SipDelegateImsConfiguration
+                                .KEY_SIP_CONFIG_SERVER_DEFAULT_IPADDRESS_STRING,
+                        "2.2.2.2")
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SERVER_DEFAULT_PORT_INT, 81)
+                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_COMPACT_FORM_ENABLED_BOOL,
+                        true)
+                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_KEEPALIVE_ENABLED_BOOL,
+                        true)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_MAX_PAYLOAD_SIZE_ON_UDP_INT,
+                        508)
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_PUBLIC_USER_ID_STRING,
+                        "test1")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_PRIVATE_USER_ID_STRING,
+                        "test2")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_HOME_DOMAIN_STRING,
+                        "test.domain")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IMEI_STRING, "testImei")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_AUTHENTICATION_HEADER_STRING,
+                        "sipauth")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_AUTHENTICATION_NONCE_STRING,
+                        "sipnonce")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SERVICE_ROUTE_HEADER_STRING,
+                        "srvroute")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_PATH_HEADER_STRING, "path")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_USER_AGENT_HEADER_STRING,
+                        "ua")
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_URI_USER_PART_STRING, "user")
+                .addString(SipDelegateImsConfiguration
+                        .KEY_SIP_CONFIG_P_ACCESS_NETWORK_INFO_HEADER_STRING, "pani")
+                .addString(SipDelegateImsConfiguration
+                        .KEY_SIP_CONFIG_P_LAST_ACCESS_NETWORK_INFO_HEADER_STRING, "plani")
+                .addString(SipDelegateImsConfiguration
+                        .KEY_SIP_CONFIG_CELLULAR_NETWORK_INFO_HEADER_STRING, "cni")
+                .addString(
+                        SipDelegateImsConfiguration.KEY_SIP_CONFIG_P_ASSOCIATED_URI_HEADER_STRING,
+                        "uri")
+                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_GRUU_ENABLED_BOOL, true)
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_PUBLIC_GRUU_STRING,
+                        "sip:blah@gruu.net")
+                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_IPSEC_ENABLED_BOOL, true)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_IPSEC_CLIENT_PORT_INT, 123)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_IPSEC_SERVER_PORT_INT, 124)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_IPSEC_OLD_CLIENT_PORT_INT,
+                        125)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SERVER_IPSEC_CLIENT_PORT_INT,
+                        126)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SERVER_IPSEC_SERVER_PORT_INT,
+                        127)
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SERVER_IPSEC_OLD_CLIENT_PORT_INT,
+                        128)
+                .addString(SipDelegateImsConfiguration.KEY_SIP_CONFIG_SECURITY_VERIFY_HEADER_STRING,
+                        "secverify")
+                .addBoolean(SipDelegateImsConfiguration.KEY_SIP_CONFIG_IS_NAT_ENABLED_BOOL, true)
+                .addString(SipDelegateImsConfiguration
+                        .KEY_SIP_CONFIG_UE_PUBLIC_IPADDRESS_WITH_NAT_STRING, "3.3.3.3")
+                .addInt(SipDelegateImsConfiguration.KEY_SIP_CONFIG_UE_PUBLIC_PORT_WITH_NAT_INT, 129)
+                .build();
     }
 
     private DelegateRegistrationState getRegisteredRegistrationState(Set<String> registered) {

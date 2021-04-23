@@ -236,7 +236,7 @@ public class HostAtomTests extends DeviceTestCase implements IBuildReceiver {
         plugInWireless();
         Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
         DeviceUtils.unplugDevice(getDevice());
-        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT);
+        Thread.sleep(AtomTestUtils.WAIT_TIME_SHORT * 3);
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = ReportUtils.getEventMetricDataList(getDevice());

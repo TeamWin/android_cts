@@ -16,6 +16,7 @@
 
 package android.appenumeration.cts;
 
+import static android.appenumeration.cts.Constants.ACTION_AWAIT_LAUNCHER_APPS_CALLBACK;
 import static android.appenumeration.cts.Constants.ACTION_BIND_SERVICE;
 import static android.appenumeration.cts.Constants.ACTION_CHECK_SIGNATURES;
 import static android.appenumeration.cts.Constants.ACTION_GET_INSTALLED_APPWIDGET_PROVIDERS;
@@ -24,6 +25,7 @@ import static android.appenumeration.cts.Constants.ACTION_GET_NAMES_FOR_UIDS;
 import static android.appenumeration.cts.Constants.ACTION_GET_NAME_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGES_FOR_UID;
 import static android.appenumeration.cts.Constants.ACTION_GET_PACKAGE_INFO;
+import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY;
 import static android.appenumeration.cts.Constants.ACTION_GET_SYNCADAPTER_TYPES;
 import static android.appenumeration.cts.Constants.ACTION_HAS_SIGNING_CERTIFICATE;
 import static android.appenumeration.cts.Constants.ACTION_JUST_FINISH;
@@ -39,6 +41,13 @@ import static android.appenumeration.cts.Constants.ACTION_START_DIRECTLY;
 import static android.appenumeration.cts.Constants.ACTION_START_FOR_RESULT;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_DUMMY_ACTIVITY;
 import static android.appenumeration.cts.Constants.ACTIVITY_CLASS_TEST;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_INVALID;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_SUSPENDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGES_UNSUSPENDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_ADDED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_CHANGED;
+import static android.appenumeration.cts.Constants.CALLBACK_EVENT_PACKAGE_REMOVED;
+import static android.appenumeration.cts.Constants.EXTRA_AUTHORITY;
 import static android.appenumeration.cts.Constants.EXTRA_CERT;
 import static android.appenumeration.cts.Constants.EXTRA_DATA;
 import static android.appenumeration.cts.Constants.EXTRA_ERROR;
@@ -91,6 +100,7 @@ import static android.appenumeration.cts.Constants.TARGET_STUB_APK;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER;
 import static android.appenumeration.cts.Constants.TARGET_SYNCADAPTER_SHARED_USER;
 import static android.appenumeration.cts.Constants.TARGET_WEB;
+import static android.content.Intent.EXTRA_PACKAGES;
 import static android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES;
 import static android.content.pm.PackageManager.MATCH_SYSTEM_ONLY;
 import static android.content.pm.PackageManager.SIGNATURE_MATCH;
@@ -101,6 +111,8 @@ import static com.android.compatibility.common.util.ShellUtils.runShellCommand;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.arrayContainingInAnyOrder;
+import static org.hamcrest.Matchers.emptyArray;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItemInArray;
@@ -125,6 +137,7 @@ import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Parcelable;
+import android.os.Process;
 import android.os.RemoteCallback;
 
 import androidx.annotation.Nullable;
@@ -739,6 +752,147 @@ public class AppEnumerationTests {
     }
 
     @Test
+    public void launcherAppsCallback_added_notVisibleNotReceives() throws Exception {
+        ensurePackageIsNotInstalled(TARGET_STUB);
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
+                CALLBACK_EVENT_PACKAGE_ADDED);
+
+        runShellCommand("pm install " + TARGET_STUB_APK);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
+        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
+    }
+
+    @Test
+    public void launcherAppsCallback_added_visibleReceives() throws Exception {
+        ensurePackageIsNotInstalled(TARGET_STUB);
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
+                CALLBACK_EVENT_PACKAGE_ADDED);
+
+        runShellCommand("pm install " + TARGET_STUB_APK);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_ADDED));
+        assertThat(response.getStringArray(EXTRA_PACKAGES),
+                arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
+    }
+
+    @Test
+    public void launcherAppsCallback_removed_notVisibleNotReceives() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
+                CALLBACK_EVENT_PACKAGE_REMOVED);
+
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
+        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
+    }
+
+    @Test
+    public void launcherAppsCallback_removed_visibleReceives() throws Exception {
+        ensurePackageIsInstalled(TARGET_STUB, TARGET_STUB_APK);
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
+                CALLBACK_EVENT_PACKAGE_REMOVED);
+
+        runShellCommand("pm uninstall " + TARGET_STUB);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_REMOVED));
+        assertThat(response.getStringArray(EXTRA_PACKAGES),
+                arrayContainingInAnyOrder(new String[]{TARGET_STUB}));
+    }
+
+    @Test
+    public void launcherAppsCallback_changed_notVisibleNotReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
+                CALLBACK_EVENT_PACKAGE_CHANGED);
+
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
+        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
+    }
+
+    @Test
+    public void launcherAppsCallback_changed_visibleReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING_PERM,
+                CALLBACK_EVENT_PACKAGE_CHANGED);
+
+        runShellCommand("pm install " + TARGET_FILTERS_APK);
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGE_CHANGED));
+        assertThat(response.getStringArray(EXTRA_PACKAGES),
+                arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
+    }
+
+    @Test
+    public void launcherAppsCallback_suspended_notVisibleNotReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
+                CALLBACK_EVENT_PACKAGES_SUSPENDED);
+
+        try {
+            setPackagesSuspended(/* suspend */ true,
+                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+            final Bundle response = result.await();
+
+            assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
+            assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
+        } finally {
+            setPackagesSuspended(/* suspend */ false,
+                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+        }
+    }
+
+    @Test
+    public void launcherAppsCallback_suspended_visibleReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
+                CALLBACK_EVENT_PACKAGES_SUSPENDED);
+
+        try {
+            setPackagesSuspended(/* suspend */ true,
+                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+            final Bundle response = result.await();
+
+            assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGES_SUSPENDED));
+            assertThat(response.getStringArray(EXTRA_PACKAGES),
+                    arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
+        } finally {
+            setPackagesSuspended(/* suspend */ false,
+                    Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+        }
+    }
+
+    @Test
+    public void launcherAppsCallback_unsuspended_notVisibleNotReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_NOTHING,
+                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
+
+        setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_INVALID));
+        assertThat(response.getStringArray(EXTRA_PACKAGES), emptyArray());
+    }
+
+    @Test
+    public void launcherAppsCallback_unsuspended_visibleReceives() throws Exception {
+        final Result result = sendCommandAndWaitForLauncherAppsCallback(QUERIES_ACTIVITY_ACTION,
+                CALLBACK_EVENT_PACKAGES_UNSUSPENDED);
+
+        setPackagesSuspended(/* suspend */ false, Arrays.asList(TARGET_NO_API, TARGET_FILTERS));
+        final Bundle response = result.await();
+
+        assertThat(response.getInt(EXTRA_FLAGS), equalTo(CALLBACK_EVENT_PACKAGES_UNSUSPENDED));
+        assertThat(response.getStringArray(EXTRA_PACKAGES),
+                arrayContainingInAnyOrder(new String[]{TARGET_FILTERS}));
+    }
+
+    @Test
     public void queriesResolver_grantsVisibilityToProvider() throws Exception {
         assertNotVisible(QUERIES_NOTHING_PROVIDER, QUERIES_NOTHING_PERM);
 
@@ -764,21 +918,45 @@ public class AppEnumerationTests {
     }
 
     @Test
-    public void queriesPackage_canSeeSyncadapterTarget() throws Exception {
+    public void queriesPackage_getSyncAdapterTypes_canSeeSyncadapterTarget() throws Exception {
         assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
     }
 
     @Test
-    public void queriesNothing_cannotSeeSyncadapterTarget() throws Exception {
+    public void queriesNothing_getSyncAdapterTypes_cannotSeeSyncadapterTarget() throws Exception {
         assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER, this::getSyncAdapterTypes);
         assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
                 this::getSyncAdapterTypes);
     }
 
     @Test
-    public void queriesNothingSharedUser_canSeeSyncadapterSharedUserTarget() throws Exception {
+    public void queriesNothingSharedUser_getSyncAdapterTypes_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
         assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
                 this::getSyncAdapterTypes);
+    }
+
+    @Test
+    public void queriesPackage_getSyncAdapterPackages_canSeeSyncadapterTarget()
+            throws Exception {
+        assertVisible(QUERIES_PACKAGE, TARGET_SYNCADAPTER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+    }
+
+    @Test
+    public void queriesNothing_getSyncAdapterPackages_cannotSeeSyncadapterTarget()
+            throws Exception {
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+        assertNotVisible(QUERIES_NOTHING, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
+    }
+
+    @Test
+    public void queriesNothingSharedUser_getSyncAdapterPackages_canSeeSyncadapterSharedUserTarget()
+            throws Exception {
+        assertVisible(QUERIES_NOTHING_SHARED_USER, TARGET_SYNCADAPTER_SHARED_USER,
+                this::getSyncAdapterPackagesForAuthorityAsUser);
     }
 
     @Test
@@ -897,17 +1075,33 @@ public class AppEnumerationTests {
                 packageNames, not(hasItemInArray(targetPackageName)));
     }
 
+    private void assertVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
+        assertThat(sourcePackageName + " should be able to see " + targetPackageName,
+                packageNames, hasItemInArray(targetPackageName));
+    }
+
+    private void assertNotVisible(String sourcePackageName, String targetPackageName,
+            ThrowingBiFunction<String, String, String[]> commandMethod) throws Exception {
+        if (!sGlobalFeatureEnabled) return;
+        final String[] packageNames = commandMethod.apply(sourcePackageName, targetPackageName);
+        assertThat(sourcePackageName + " should not be able to see " + targetPackageName,
+                packageNames, not(hasItemInArray(targetPackageName)));
+    }
+
     private void assertBroadcastSuspendedVisible(String sourcePackageName,
             List<String> expectedVisiblePackages, List<String> packagesToSuspend)
             throws Exception {
         final Bundle extras = new Bundle();
-        extras.putStringArray(Intent.EXTRA_PACKAGES, packagesToSuspend.toArray(new String[] {}));
+        extras.putStringArray(EXTRA_PACKAGES, packagesToSuspend.toArray(new String[] {}));
         final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
                 /* targetUid */ INVALID_UID, extras, Constants.ACTION_AWAIT_PACKAGES_SUSPENDED,
                 /* waitForReady */ true);
         try {
             setPackagesSuspended(true, packagesToSuspend);
-            final String[] suspendedPackages = result.await().getStringArray(Intent.EXTRA_PACKAGES);
+            final String[] suspendedPackages = result.await().getStringArray(EXTRA_PACKAGES);
             assertThat(suspendedPackages, arrayContainingInAnyOrder(
                     expectedVisiblePackages.toArray()));
         } finally {
@@ -1065,6 +1259,16 @@ public class AppEnumerationTests {
                 .toArray(String[]::new);
     }
 
+    private String[] getSyncAdapterPackagesForAuthorityAsUser(String sourcePackageName,
+            String targetPackageName) throws Exception {
+        final Bundle extraData = new Bundle();
+        extraData.putString(EXTRA_AUTHORITY, targetPackageName + ".authority");
+        extraData.putInt(Intent.EXTRA_USER, Process.myUserHandle().getIdentifier());
+        final Bundle response = sendCommandBlocking(sourcePackageName, /* targetPackageName */ null,
+                extraData, ACTION_GET_SYNCADAPTER_PACKAGES_FOR_AUTHORITY);
+        return response.getStringArray(Intent.EXTRA_PACKAGES);
+    }
+
     private void setPackagesSuspended(boolean suspend, List<String> packages) {
         final StringBuilder cmd = new StringBuilder("pm ");
         if (suspend) {
@@ -1170,6 +1374,16 @@ public class AppEnumerationTests {
         return result.await();
     }
 
+    private Result sendCommandAndWaitForLauncherAppsCallback(String sourcePackageName,
+            int expectedEventCode) throws Exception {
+        final Bundle extra = new Bundle();
+        extra.putInt(EXTRA_FLAGS, expectedEventCode);
+        final Result result = sendCommand(sourcePackageName, /* targetPackageName */ null,
+                /* targetUid */ INVALID_UID, extra, ACTION_AWAIT_LAUNCHER_APPS_CALLBACK,
+                /* waitForReady */ true);
+        return result;
+    }
+
     private void ensurePackageIsInstalled(String packageName, String apkPath) {
         runShellCommand("pm install -R " + apkPath);
         PackageInfo info = null;
@@ -1179,5 +1393,16 @@ public class AppEnumerationTests {
             // Ignore
         }
         Assert.assertNotNull(packageName + " should be installed", info);
+    }
+
+    private void ensurePackageIsNotInstalled(String packageName) {
+        runShellCommand("pm uninstall " + packageName);
+        PackageInfo info = null;
+        try {
+            info = sPm.getPackageInfo(packageName, /* flags */ 0);
+        } catch (PackageManager.NameNotFoundException e) {
+            // Expected
+        }
+        Assert.assertNull(packageName + " shouldn't be installed", info);
     }
 }

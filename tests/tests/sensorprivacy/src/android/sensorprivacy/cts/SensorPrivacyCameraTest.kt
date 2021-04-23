@@ -16,7 +16,6 @@
 
 package android.sensorprivacy.cts
 
-import android.content.pm.PackageManager.FEATURE_CAMERA_TOGGLE
 import android.hardware.SensorPrivacyManager.Sensors.CAMERA
 
-class SensorPrivacyCameraTest : SensorPrivacyBaseTest(FEATURE_CAMERA_TOGGLE, CAMERA, USE_CAM_EXTRA)
+class SensorPrivacyCameraTest : SensorPrivacyBaseTest(CAMERA, USE_CAM_EXTRA)

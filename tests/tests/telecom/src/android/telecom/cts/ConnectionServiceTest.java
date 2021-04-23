@@ -354,6 +354,9 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
                             .build();
             MockCallScreeningService.setCallbacks(createCallbackForCsTest(response));
 
+            assertEquals(CallResponse.CALL_COMPOSER_ATTACHMENT_PRIORITY
+                    | CallResponse.CALL_COMPOSER_ATTACHMENT_SUBJECT,
+                    response.getCallComposerAttachmentsToShow());
             addAndVerifyNewIncomingCall(testNumber, null);
 
             MockConnection connection = verifyConnectionForIncomingCall();

@@ -59,9 +59,15 @@ public class JavaPlayer extends Player {
         mNumBufferFrames = -1;   // TODO need error defines
     }
 
+    @Override
+    public AudioSource getAudioSource() {
+        return mAudioSource;
+    }
+
     //
     // Status
     //
+    @Override
     public boolean isPlaying() {
         return mPlaying;
     }
@@ -117,6 +123,7 @@ public class JavaPlayer extends Player {
             int bufferSizeInBytes = mNumBufferFrames * mChannelCount
                     * sampleSizeInBytes(AudioFormat.ENCODING_PCM_FLOAT);
             mAudioTrack = new AudioTrack.Builder()
+                    .setPerformanceMode(AudioTrack.PERFORMANCE_MODE_LOW_LATENCY)
                     .setAudioFormat(new AudioFormat.Builder()
                             .setEncoding(AudioFormat.ENCODING_PCM_FLOAT)
                             .setSampleRate(mSampleRate)

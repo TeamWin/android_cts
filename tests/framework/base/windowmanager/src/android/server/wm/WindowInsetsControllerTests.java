@@ -17,6 +17,7 @@
 package android.server.wm;
 
 import static android.graphics.PixelFormat.TRANSLUCENT;
+import static android.provider.Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS;
 import static android.view.KeyEvent.ACTION_DOWN;
 import static android.view.KeyEvent.KEYCODE_BACK;
 import static android.view.View.SYSTEM_UI_FLAG_FULLSCREEN;
@@ -54,11 +55,13 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Instrumentation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.provider.Settings;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
@@ -77,6 +80,8 @@ import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ErrorCollector;
@@ -105,6 +110,34 @@ public class WindowInsetsControllerTests extends WindowManagerTestBase {
 
     @Rule
     public final ErrorCollector mErrorCollector = new ErrorCollector();
+
+    private String mImmersiveModeConfirmationValue;
+
+    @Before
+    public void setup() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // The immersive mode confirmation dialog will become the focused window which impacts
+            // the test. We need to disable it during the test.
+            final ContentResolver resolver = getInstrumentation().getContext().getContentResolver();
+            mImmersiveModeConfirmationValue =
+                    Settings.Secure.getString(resolver, IMMERSIVE_MODE_CONFIRMATIONS);
+            Settings.Secure.putString(
+                    resolver,
+                    IMMERSIVE_MODE_CONFIRMATIONS,
+                    "confirmed");
+        });
+    }
+
+    @After
+    public void tearDown() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // Restore the immersive mode confirmation state.
+            Settings.Secure.putString(
+                    getInstrumentation().getContext().getContentResolver(),
+                    IMMERSIVE_MODE_CONFIRMATIONS,
+                    mImmersiveModeConfirmationValue);
+        });
+    }
 
     @Test
     public void testHide() {

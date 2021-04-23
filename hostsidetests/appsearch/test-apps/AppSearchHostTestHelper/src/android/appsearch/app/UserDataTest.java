@@ -27,7 +27,7 @@ import android.app.appsearch.AppSearchResult;
 import android.app.appsearch.AppSearchSchema;
 import android.app.appsearch.AppSearchSessionShim;
 import android.app.appsearch.GenericDocument;
-import android.app.appsearch.GetByUriRequest;
+import android.app.appsearch.GetByDocumentIdRequest;
 import android.app.appsearch.PutDocumentsRequest;
 import android.app.appsearch.SetSchemaRequest;
 
@@ -47,7 +47,7 @@ public class UserDataTest {
 
     private static final String DB_NAME = "";
     private static final String NAMESPACE = "namespace";
-    private static final String URI = "uri";
+    private static final String ID = "id";
     private static final AppSearchSchema SCHEMA = new AppSearchSchema.Builder("testSchema")
             .addProperty(new AppSearchSchema.StringPropertyConfig.Builder("subject")
                     .setCardinality(AppSearchSchema.PropertyConfig.CARDINALITY_OPTIONAL)
@@ -57,7 +57,7 @@ public class UserDataTest {
                     .build())
             .build();
     private static final GenericDocument DOCUMENT =
-            new GenericDocument.Builder<>(NAMESPACE, URI, SCHEMA.getSchemaType())
+            new GenericDocument.Builder<>(NAMESPACE, ID, SCHEMA.getSchemaType())
                     .setPropertyString("subject", "testPut example1")
                     .setCreationTimestampMillis(12345L)
                     .build();
@@ -79,21 +79,21 @@ public class UserDataTest {
         // Index a document
         AppSearchBatchResult<String, Void> result = checkIsBatchResultSuccess(
                 mDb.put(new PutDocumentsRequest.Builder().addGenericDocuments(DOCUMENT).build()));
-        assertThat(result.getSuccesses()).containsExactly(URI, /*v0=*/null);
+        assertThat(result.getSuccesses()).containsExactly(ID, /*v0=*/null);
         assertThat(result.getFailures()).isEmpty();
     }
 
     @Test
     public void testGetDocuments_exist() throws Exception {
-        List<GenericDocument> outDocuments = doGet(mDb, NAMESPACE, URI);
+        List<GenericDocument> outDocuments = doGet(mDb, NAMESPACE, ID);
         assertThat(outDocuments).containsExactly(DOCUMENT);
     }
 
     @Test
     public void testGetDocuments_nonexist() throws Exception {
-        AppSearchBatchResult<String, GenericDocument> getResult = mDb.getByUri(
-                new GetByUriRequest.Builder(NAMESPACE).addUris(URI).build()).get();
-        assertThat(getResult.getFailures().get(URI).getResultCode())
+        AppSearchBatchResult<String, GenericDocument> getResult = mDb.getByDocumentId(
+                new GetByDocumentIdRequest.Builder(NAMESPACE).addIds(ID).build()).get();
+        assertThat(getResult.getFailures().get(ID).getResultCode())
                 .isEqualTo(AppSearchResult.RESULT_NOT_FOUND);
     }
 

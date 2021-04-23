@@ -96,4 +96,10 @@ public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
         install(Q_APK, TEST_PKG);
         runDeviceTests(TEST_PKG, TEST_CLS, "updateQApp_RequiresNoUserAction");
     }
+
+    @Test
+    public void setRequireUserAction_throwsOnIllegalArgument() throws Exception {
+        install(Q_APK, TEST_PKG);
+        runDeviceTests(TEST_PKG, TEST_CLS, "setRequireUserAction_throwsOnIllegalArgument");
+    }
 }

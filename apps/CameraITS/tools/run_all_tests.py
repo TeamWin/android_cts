@@ -23,6 +23,7 @@ import time
 import yaml
 
 import capture_request_utils
+import camera_properties_utils
 import image_processing_utils
 import its_session_utils
 
@@ -33,6 +34,7 @@ TEST_KEY_SENSOR_FUSION = 'sensor_fusion'
 LOAD_SCENE_DELAY = 1  # seconds
 ACTIVITY_START_WAIT = 1.5  # seconds
 
+NUM_TRIES = 2
 RESULT_PASS = 'PASS'
 RESULT_FAIL = 'FAIL'
 RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
@@ -230,13 +232,15 @@ def check_manual_scenes(device_id, camera_id, scene, out_path):
       device_id=device_id,
       camera_id=camera_id) as cam:
     props = cam.get_camera_properties()
+    props = cam.override_with_hidden_physical_camera_props(props)
 
     while True:
       input(f'\n Press <ENTER> after positioning camera {camera_id} with '
             f'{scene}.\n The scene setup should be: \n  {_SCENE_REQ[scene]}\n')
       # Converge 3A prior to capture
       if scene == 'scene5':
-        cam.do_3a(do_af=False, lock_ae=True, lock_awb=True)
+        cam.do_3a(do_af=False, lock_ae=camera_properties_utils.ae_lock(props),
+                  lock_awb=camera_properties_utils.awb_lock(props))
       else:
         cam.do_3a()
       req, fmt = capture_request_utils.get_fastest_auto_capture_settings(props)
@@ -528,44 +532,51 @@ def main():
               '-c',
               '%s' % new_yml_file_name
           ]
-        # pylint: disable=subprocess-run-check
-        with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'w') as fp:
-          output = subprocess.run(cmd, stdout=fp)
-        # pylint: enable=subprocess-run-check
+        for num_try in range(NUM_TRIES):
+          # pylint: disable=subprocess-run-check
+          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'w') as fp:
+            output = subprocess.run(cmd, stdout=fp)
+          # pylint: enable=subprocess-run-check
 
-        # Parse mobly info output logs to determine skip and not_yet_mandated
-        # tests.
-        with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
-          test_code = output.returncode
-          test_failed = False
-          test_skipped = False
-          test_not_yet_mandated = False
-          line = file.read()
-          if 'Test skipped' in line:
-            return_string = 'SKIP '
-            num_skip += 1
-            test_skipped = True
+          # Parse mobly logs to determine SKIP, NOT_YET_MANDATED, and
+          # socket FAILs.
+          with open(MOBLY_TEST_SUMMARY_TXT_FILE, 'r') as file:
+            test_code = output.returncode
+            test_failed = False
+            test_skipped = False
+            test_not_yet_mandated = False
+            line = file.read()
+            if 'Test skipped' in line:
+              return_string = 'SKIP '
+              num_skip += 1
+              test_skipped = True
+              break
 
-          if 'Not yet mandated test' in line:
-            return_string = 'FAIL*'
-            num_not_mandated_fail += 1
-            test_not_yet_mandated = True
+            if 'Not yet mandated test' in line:
+              return_string = 'FAIL*'
+              num_not_mandated_fail += 1
+              test_not_yet_mandated = True
+              break
 
-          if test_code == 0 and not test_skipped:
-            return_string = 'PASS '
-            num_pass += 1
+            if test_code == 0 and not test_skipped:
+              return_string = 'PASS '
+              num_pass += 1
+              break
 
-          if test_code == 1 and not test_not_yet_mandated:
-            return_string = 'FAIL '
-            num_fail += 1
-            test_failed = True
-
-          os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
-          logging.info('%s %s/%s', return_string, s, test)
-          test_name = test.split('/')[-1].split('.')[0]
-          results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
-          msg_short = '%s %s' % (return_string, test)
-          scene_test_summary += msg_short + '\n'
+            if test_code == 1 and not test_not_yet_mandated:
+              return_string = 'FAIL '
+              if 'Problem with socket' in line and num_try != NUM_TRIES-1:
+                logging.info('Retry %s/%s', s, test)
+              else:
+                num_fail += 1
+                test_failed = True
+                break
+            os.remove(MOBLY_TEST_SUMMARY_TXT_FILE)
+        logging.info('%s %s/%s', return_string, s, test)
+        test_name = test.split('/')[-1].split('.')[0]
+        results[s]['TEST_STATUS'].append({'test':test_name,'status':return_string.strip()})
+        msg_short = '%s %s' % (return_string, test)
+        scene_test_summary += msg_short + '\n'
 
       # unit is millisecond for execution time record in CtsVerifier
       scene_end_time = int(round(time.time() * 1000))
