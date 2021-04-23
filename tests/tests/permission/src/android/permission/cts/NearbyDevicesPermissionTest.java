@@ -100,16 +100,6 @@ public class NearbyDevicesPermissionTest {
     }
 
     @Test
-    public void testRequestBluetoothPermission30_GrantLocation_RevokeNearby() throws Throwable {
-        install(APK_BLUETOOTH_30);
-        grantPermission(TEST_APP_PKG, ACCESS_FINE_LOCATION);
-        grantPermission(TEST_APP_PKG, ACCESS_BACKGROUND_LOCATION);
-        revokePermission(TEST_APP_PKG, BLUETOOTH_CONNECT);
-        revokePermission(TEST_APP_PKG, BLUETOOTH_SCAN);
-        assertScanBluetoothResult(Result.EXCEPTION);
-    }
-
-    @Test
     public void testRequestBluetoothPermission31_Default() throws Throwable {
         install(APK_BLUETOOTH_31);
         assertScanBluetoothResult(Result.EXCEPTION);
