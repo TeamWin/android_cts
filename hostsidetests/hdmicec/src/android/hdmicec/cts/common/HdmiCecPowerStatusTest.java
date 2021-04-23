@@ -132,6 +132,9 @@ public final class HdmiCecPowerStatusTest extends BaseHdmiCecCtsTest {
         ITestDevice device = getDevice();
         /* Make sure the device is not booting up/in standby */
         device.waitForBootComplete(HdmiCecConstants.REBOOT_TIMEOUT);
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        TimeUnit.SECONDS.sleep(HdmiCecConstants.DEVICE_WAIT_TIME_SECONDS);
+
         LogicalAddress cecClientDevice = hdmiCecClient.getSelfDevice();
         hdmiCecClient.sendCecMessage(cecClientDevice, CecOperand.GIVE_POWER_STATUS);
         String message =
