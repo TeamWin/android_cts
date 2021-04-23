@@ -21,14 +21,20 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraDevice.StateCallback
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.params.OutputConfiguration
+import android.hardware.camera2.params.SessionConfiguration
 import android.media.AudioFormat
 import android.media.AudioRecord
+import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
+import android.util.Size
 
 private const val MIC = 1 shl 0
 private const val CAM = 1 shl 1
@@ -84,16 +90,41 @@ class UseMicCamera : Activity() {
 
     private fun openCam() {
         val cameraManager = getSystemService(CameraManager::class.java)!!
-        val cameraId = cameraManager.cameraIdList[0] ?: return
-        cameraManager.openCamera(cameraId, mainExecutor, object : StateCallback() {
-            override fun onOpened(camera: CameraDevice) {
+
+        val cameraId = cameraManager!!.cameraIdList[0]
+        val config = cameraManager!!.getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        val outputFormat = config!!.outputFormats[0]
+        val outputSize: Size = config!!.getOutputSizes(outputFormat)[0]
+        val handler = Handler(mainLooper)
+
+        val cameraDeviceCallback = object : CameraDevice.StateCallback() {
+            override fun onOpened(cameraDevice: CameraDevice) {
+                val imageReader = ImageReader.newInstance(
+                        outputSize.width, outputSize.height, outputFormat, 2)
+
+                val builder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                builder.addTarget(imageReader.surface)
+                val captureRequest = builder.build()
+                val sessionConfiguration = SessionConfiguration(
+                        SessionConfiguration.SESSION_REGULAR,
+                        listOf(OutputConfiguration(imageReader.surface)),
+                        mainExecutor,
+                        object : CameraCaptureSession.StateCallback() {
+                            override fun onConfigured(session: CameraCaptureSession) {
+                                session.capture(captureRequest, null, handler)
+                            }
+
+                            override fun onConfigureFailed(session: CameraCaptureSession) {}
+                        })
+
+                cameraDevice.createCaptureSession(sessionConfiguration)
             }
 
-            override fun onDisconnected(camera: CameraDevice) {
-            }
+            override fun onDisconnected(ameraDevice: CameraDevice) {}
+            override fun onError(cameraDevice: CameraDevice, i: Int) {}
+        }
 
-            override fun onError(camera: CameraDevice, error: Int) {
-            }
-        })
+        cameraManager!!.openCamera(cameraId, mainExecutor, cameraDeviceCallback)
     }
 }
