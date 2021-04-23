@@ -1862,7 +1862,7 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         // Register callback to get SoftApCapability
         mWifiManager.registerSoftApCallback(executor, callback);
         PollingCheck.check(
-                "SoftAp register failed!", 1_000,
+                "SoftAp register failed!", 2_000,
                 () -> {
                     executor.runAll();
                     // Verify callback is run on the supplied executor and called
