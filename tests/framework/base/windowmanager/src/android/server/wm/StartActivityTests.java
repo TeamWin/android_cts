@@ -17,7 +17,9 @@
 package android.server.wm;
 
 import static android.content.Intent.FLAG_ACTIVITY_NEW_DOCUMENT;
+import static android.server.wm.WindowManagerState.STATE_INITIALIZING;
 import static android.server.wm.WindowManagerState.STATE_STOPPED;
+import static android.server.wm.app.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.LAUNCHING_ACTIVITY;
 import static android.server.wm.app.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.wm.app.Components.TEST_ACTIVITY;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.app.WindowConfiguration;
 import android.content.ComponentName;
 import android.content.Intent;
@@ -50,6 +53,9 @@ import androidx.test.filters.FlakyTest;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Build/Install/Run:
@@ -272,6 +278,54 @@ public class StartActivityTests extends ActivityManagerTestBase {
         assertWithMessage("The last started activity should be in a different task because "
                 + SECOND_ACTIVITY + " has a different uid from the source caller")
                         .that(taskIds[2]).isNotIn(Arrays.asList(taskIds[0], taskIds[1]));
+    }
+
+    /**
+     * Test the activity launched with ActivityOptions#setTaskOverlay should remain on top of the
+     * task after start another activity.
+     */
+    @Test
+    public void testStartActivitiesTaskOverlayStayOnTop() {
+        final Intent baseIntent = new Intent(mContext, Activities.RegularActivity.class);
+        final String regularActivityName = Activities.RegularActivity.class.getName();
+        final TestActivitySession<Activities.RegularActivity> activitySession =
+                createManagedTestActivitySession();
+        activitySession.launchTestActivityOnDisplaySync(regularActivityName, baseIntent,
+                DEFAULT_DISPLAY);
+        mWmState.computeState(baseIntent.getComponent());
+        final int taskId = mWmState.getTaskByActivity(baseIntent.getComponent()).getTaskId();
+        final Activity baseActivity = activitySession.getActivity();
+
+        final ActivityOptions overlayOptions = ActivityOptions.makeBasic();
+        overlayOptions.setTaskOverlay(true, true);
+        overlayOptions.setLaunchTaskId(taskId);
+        final Intent taskOverlay = new Intent().setComponent(SECOND_ACTIVITY);
+        runWithShellPermission(() ->
+                baseActivity.startActivity(taskOverlay, overlayOptions.toBundle()));
+
+        waitAndAssertResumedActivity(taskOverlay.getComponent(),
+                "taskOverlay activity on top");
+        final Intent behindOverlay = new Intent().setComponent(TEST_ACTIVITY);
+        baseActivity.startActivity(behindOverlay);
+
+        waitAndAssertActivityState(TEST_ACTIVITY, STATE_INITIALIZING,
+                "Activity behind taskOverlay should not resumed");
+        // check order: SecondActivity(top) -> TestActivity -> RegularActivity(base)
+        final List<String> activitiesOrder = mWmState.getTaskByActivity(baseIntent.getComponent())
+                .mActivities
+                .stream()
+                .map(WindowManagerState.Activity::getName)
+                .collect(Collectors.toList());
+
+        final List<String> expectedOrder = Stream.of(
+                SECOND_ACTIVITY,
+                TEST_ACTIVITY,
+                baseIntent.getComponent())
+                .map(c -> c.flattenToShortString())
+                .collect(Collectors.toList());
+        assertEquals(activitiesOrder, expectedOrder);
+        mWmState.assertResumedActivity("TaskOverlay activity should be remained on top and "
+                        + "resumed", taskOverlay.getComponent());
     }
 
     /**
