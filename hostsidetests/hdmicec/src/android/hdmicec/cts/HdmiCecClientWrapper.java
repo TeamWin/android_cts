@@ -629,6 +629,10 @@ public final class HdmiCecClientWrapper extends ExternalResource {
         return physicalAddress;
     }
 
+    public void clearClientOutput() {
+        mInputConsole = new BufferedReader(new InputStreamReader(mCecClient.getInputStream()));
+    }
+
     /**
      * Kills the cec-client process that was created in init().
      */
