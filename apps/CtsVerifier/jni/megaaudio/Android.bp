@@ -23,6 +23,8 @@ cc_test_library {
     srcs: [
         "common/OboeStream.cpp",
         "common/StreamBase.cpp",
+        "player/BlipAudioSource.cpp",
+        "player/JavaSourceProxy.cpp",
         "player/NativeAudioSource.cpp",
         "player/NoiseAudioSource.cpp",
         "player/OboePlayer.cpp",

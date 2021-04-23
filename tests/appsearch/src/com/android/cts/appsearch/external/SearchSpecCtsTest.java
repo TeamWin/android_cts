@@ -18,20 +18,15 @@ package android.app.appsearch.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import static org.testng.Assert.expectThrows;
-
 import android.app.appsearch.SearchSpec;
 
 import org.junit.Test;
 
 public class SearchSpecCtsTest {
     @Test
-    public void buildSearchSpecWithoutTermMatchType() {
-        RuntimeException e =
-                expectThrows(
-                        RuntimeException.class,
-                        () -> new SearchSpec.Builder().addFilterSchemas("testSchemaType").build());
-        assertThat(e).hasMessageThat().contains("Missing termMatchType field");
+    public void testBuildSearchSpecWithoutTermMatch() {
+        SearchSpec searchSpec = new SearchSpec.Builder().addFilterSchemas("testSchemaType").build();
+        assertThat(searchSpec.getTermMatch()).isEqualTo(SearchSpec.TERM_MATCH_PREFIX);
     }
 
     @Test

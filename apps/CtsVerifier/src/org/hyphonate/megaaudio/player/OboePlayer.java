@@ -21,12 +21,21 @@ public class OboePlayer extends Player {
     private int mPlayerSubtype;
     private long mNativePlayer;
 
+    private AudioSource mAudioSource;
+
     public OboePlayer(AudioSourceProvider sourceProvider, int playerSubtype) {
         super(sourceProvider);
 
         mPlayerSubtype = playerSubtype;
-        mNativePlayer = allocNativePlayer(
-                mSourceProvider.getNativeSource().getNativeObject(), mPlayerSubtype);
+        NativeAudioSource nativeAudioSource = mSourceProvider.getNativeSource();
+        if (nativeAudioSource != null) {
+            mAudioSource = nativeAudioSource;
+            mNativePlayer = allocNativePlayer(nativeAudioSource.getNativeObject(), mPlayerSubtype);
+        } else {
+            mAudioSource = mSourceProvider.getJavaSource();
+            mNativePlayer = allocNativePlayer(
+                    JavaSourceProxy.allocNativeSource(mAudioSource), mPlayerSubtype);
+        }
     }
 
     @Override
@@ -37,6 +46,11 @@ public class OboePlayer extends Player {
     @Override
     public int getRoutedDeviceId() {
         return getRoutedDeviceIdN(mNativePlayer);
+    }
+
+    @Override
+    public AudioSource getAudioSource() {
+        return mAudioSource;
     }
 
     @Override

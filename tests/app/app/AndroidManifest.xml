@@ -73,6 +73,7 @@
              android:required="false"/>
 
         <activity android:name="android.app.stubs.ScreenOnActivity"/>
+        <activity android:name="android.app.stubs.GetResultActivity"/>
 
         <activity android:name="android.app.stubs.ActionBarActivity"/>
 

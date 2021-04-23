@@ -25,7 +25,7 @@
         <package android:name="android.appenumeration.appwidgetprovider" />
     </queries>
 
-    <application>
+    <application android:debuggable="true">
         <uses-library android:name="android.test.runner" />
         <activity android:name="android.appenumeration.cts.query.TestActivity"
                   android:exported="true" />
