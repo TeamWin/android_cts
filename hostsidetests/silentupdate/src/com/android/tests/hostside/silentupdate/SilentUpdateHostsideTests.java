@@ -17,6 +17,7 @@
 package com.android.tests.hostside.silentupdate;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -24,6 +25,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.TimeUnit;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
@@ -98,8 +101,31 @@ public class SilentUpdateHostsideTests extends BaseHostJUnit4Test {
     }
 
     @Test
+    public void selfUpdate_RequiresNoUserAction() throws Exception {
+        String originalCodePath = getCodePath(TEST_PKG);
+        runDeviceTests(TEST_PKG, TEST_CLS, "selfUpdate_RequiresNoUserAction");
+        // To avoid arbitrary wait, we'll monitor the code path change before we interrogate again
+        waitForPathChange(TEST_PKG, originalCodePath, TimeUnit.SECONDS.toMillis(20));
+        runDeviceTests(TEST_PKG, TEST_CLS, "selfUpdate_updateApplied");
+    }
+
+    @Test
     public void setRequireUserAction_throwsOnIllegalArgument() throws Exception {
         install(Q_APK, TEST_PKG);
         runDeviceTests(TEST_PKG, TEST_CLS, "setRequireUserAction_throwsOnIllegalArgument");
     }
+
+    private void waitForPathChange(String packageName, String originalCodePath, long timeout)
+            throws DeviceNotAvailableException, InterruptedException {
+                long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < timeout
+                && originalCodePath.equals(getCodePath(packageName))) {
+            Thread.sleep(100);
+        }
+    }
+
+    private String getCodePath(String packageName) throws DeviceNotAvailableException {
+        return getDevice().getAppPackageInfo(packageName).getCodePath();
+    }
+
 }
