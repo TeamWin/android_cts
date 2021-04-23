@@ -29,6 +29,8 @@ import android.test.MoreAsserts;
 
 import com.google.common.collect.ObjectArrays;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -44,11 +46,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.CipherInputStream;
+import javax.crypto.CipherOutputStream;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
@@ -490,6 +495,79 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
+    /*
+     * This test performs a round trip en/decryption using Cipher*Streams.
+     */
+    public void testEncryptsAndDecryptsUsingCipherStreams()
+            throws Exception {
+
+        Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
+        assertNotNull(provider);
+        final byte[] originalPlaintext = new byte[1024];
+        new Random().nextBytes(originalPlaintext);
+        for (String algorithm : EXPECTED_ALGORITHMS) {
+            for (ImportedKey key : importKatKeys(
+                    algorithm,
+                    KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                    false)) {
+                try {
+                    Key encryptionKey = key.getKeystoreBackedEncryptionKey();
+                    byte[] plaintext = truncatePlaintextIfNecessary(
+                            algorithm, encryptionKey, originalPlaintext);
+                    if (plaintext == null) {
+                        // Key is too short to encrypt anything using this transformation
+                        continue;
+                    }
+                    Cipher cipher = Cipher.getInstance(algorithm, provider);
+                    cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
+                    final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    final CipherOutputStream cipherOutputStream =
+                            new CipherOutputStream(byteArrayOutputStream, cipher);
+
+                    cipherOutputStream.write(plaintext);
+                    cipherOutputStream.close();
+                    AlgorithmParameters params = cipher.getParameters();
+                    byte[] expectedPlaintext = plaintext;
+                    if ("RSA/ECB/NoPadding".equalsIgnoreCase(algorithm)) {
+                        // RSA decryption without padding left-pads resulting plaintext with NUL
+                        // bytes to the length of RSA modulus.
+                        int modulusLengthBytes = (TestUtils.getKeySizeBits(encryptionKey) + 7) / 8;
+                        expectedPlaintext = TestUtils.leftPadWithZeroBytes(
+                                expectedPlaintext, modulusLengthBytes);
+                    }
+
+                    byte[] ciphertext = byteArrayOutputStream.toByteArray();
+                    assertNotNull(ciphertext);
+                    cipher = Cipher.getInstance(algorithm, provider);
+                    Key decryptionKey = key.getKeystoreBackedDecryptionKey();
+                    cipher.init(Cipher.DECRYPT_MODE, decryptionKey, params);
+
+                    final ByteArrayInputStream byteArrayInputStream =
+                            new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+                    final CipherInputStream cipherInputStream =
+                            new CipherInputStream(byteArrayInputStream, cipher);
+                    byte[] actualPlaintext = new byte[plaintext.length * 2];
+                    int total = 0;
+                    int count = 0;
+                    while((count = cipherInputStream.read(actualPlaintext, total,
+                            actualPlaintext.length - total)) != -1) {
+                        total += count;
+                    }
+                    actualPlaintext = Arrays.copyOf(actualPlaintext, total);
+                    cipherInputStream.close();
+                    assertTrue("expected(" + expectedPlaintext.length + "): "
+                            + HexEncoding.encode(expectedPlaintext)
+                            + "\nactual(" + actualPlaintext.length + "): "
+                            + HexEncoding.encode(actualPlaintext),
+                            Arrays.equals(expectedPlaintext, actualPlaintext));
+                } catch (Throwable e) {
+                    throw new RuntimeException(
+                            "Failed for " + algorithm + " with key " + key.getAlias(),
+                            e);
+                }
+            }
+        }
+    }
 
     private boolean isDecryptValid(byte[] expectedPlaintext, byte[] ciphertext, Cipher cipher,
             AlgorithmParameters params, ImportedKey key) {
