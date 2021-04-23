@@ -36,6 +36,7 @@ import com.android.compatibility.common.util.SystemUtil.eventually
 import com.android.compatibility.common.util.SystemUtil.runShellCommand
 import com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity
 import org.junit.After
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
@@ -152,6 +153,8 @@ class CameraMicIndicatorsPermissionTest {
 
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             assertTvIndicatorsShown(useMic, useCamera)
+        } else if (packageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            assertCarIndicatorsShown(useMic, useCamera)
         } else {
             uiDevice.openQuickSettings()
             assertPrivacyChipAndIndicatorsPresent(useMic, useCamera)
@@ -167,6 +170,26 @@ class CameraMicIndicatorsPermissionTest {
         }
         if (useCamera) {
             // There is no camera indicator on TVs.
+        }
+    }
+
+    private fun assertCarIndicatorsShown(useMic: Boolean, useCamera: Boolean) {
+        // Ensure the privacy chip is present
+        eventually {
+            val privacyChip = uiDevice.findObject(By.res(PRIVACY_CHIP_ID))
+            assertNotNull("view with id $PRIVACY_CHIP_ID not found", privacyChip)
+            privacyChip.click()
+        }
+        eventually {
+            if (useMic) {
+                val appView = uiDevice.findObject(UiSelector().textContains(micLabel))
+                assertTrue("View with text $APP_LABEL not found", appView.exists())
+            }
+            if (useCamera) {
+                // There is no camera indicator in Cars.
+            }
+            val appView = uiDevice.findObject(UiSelector().textContains(APP_LABEL))
+            assertTrue("View with text $APP_LABEL not found", appView.exists())
         }
     }
 
