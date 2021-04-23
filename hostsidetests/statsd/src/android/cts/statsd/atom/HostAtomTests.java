@@ -213,7 +213,7 @@ public class HostAtomTests extends AtomTestCase {
         plugInWireless();
         Thread.sleep(WAIT_TIME_SHORT);
         unplugDevice();
-        Thread.sleep(WAIT_TIME_SHORT);
+        Thread.sleep(WAIT_TIME_SHORT * 3);
 
         // Sorted list of events in order in which they occurred.
         List<EventMetricData> data = getEventMetricDataList();
