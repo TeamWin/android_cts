@@ -55,6 +55,8 @@ LOCAL_SIGNATURE_API_FILES := \
     system-current.api.gz \
     system-removed.api.gz \
 
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(LOCAL_PATH)/../build_signature_apk.mk
 
 all_system_api_files :=
