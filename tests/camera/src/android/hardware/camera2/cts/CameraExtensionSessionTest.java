@@ -444,12 +444,12 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             BlockingExtensionSessionCallback.SESSION_CLOSED,
                             SESSION_CLOSE_TIMEOUT_MS);
 
-                    assertEquals("The sum of all onProcessStarted and onCaptureFailed" +
-                                    " callback calls must match with the number of calls to " +
-                                    "onCaptureStarted!",
+                    assertTrue("The sum of onCaptureProcessStarted and onCaptureFailed" +
+                                    " callbacks must be greater or equal than the number of calls" +
+                                    " to onCaptureStarted!",
                             simpleCaptureCallback.getTotalFramesArrived() +
-                                    simpleCaptureCallback.getTotalFramesFailed(),
-                            simpleCaptureCallback.getTotalFramesStarted());
+                                    simpleCaptureCallback.getTotalFramesFailed() >=
+                                    simpleCaptureCallback.getTotalFramesStarted());
                     assertTrue(String.format("The last repeating request surface timestamp " +
                                     "%d must be less than or equal to the last " +
                                     "onCaptureStarted " +
@@ -726,11 +726,11 @@ public class CameraExtensionSessionTest extends Camera2ParameterizedTestCase {
                             BlockingExtensionSessionCallback.SESSION_CLOSED,
                             SESSION_CLOSE_TIMEOUT_MS);
 
-                    assertEquals("The sum of onCaptureProcessStarted and onCaptureFailed" +
-                                    " callbacks must match with the number of calls to " +
-                                    "onCaptureStarted!",
+                    assertTrue("The sum of onCaptureProcessStarted and onCaptureFailed" +
+                                    " callbacks must be greater or equal than the number of calls" +
+                                    " to onCaptureStarted!",
                             repeatingCaptureCallback.getTotalFramesArrived() +
-                                    repeatingCaptureCallback.getTotalFramesFailed(),
+                                    repeatingCaptureCallback.getTotalFramesFailed() >=
                             repeatingCaptureCallback.getTotalFramesStarted());
                     assertTrue(String.format("The last repeating request surface timestamp " +
                                     "%d must be less than or equal to the last " +
