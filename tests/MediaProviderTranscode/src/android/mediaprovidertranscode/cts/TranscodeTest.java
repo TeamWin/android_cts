@@ -29,6 +29,7 @@ import static android.mediaprovidertranscode.cts.TranscodeTestUtils.uninstallApp
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import android.Manifest;
@@ -50,6 +51,7 @@ import androidx.test.runner.AndroidJUnit4;
 import com.android.cts.install.lib.TestApp;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -844,11 +846,11 @@ public class TranscodeTest {
 
     /**
      * Tests that we return FD of original file from
-     * MediaStore#getOriginalMediaFormatFileDescriptor.
+     * {@link MediaStore#getOriginalMediaFormatFileDescriptor}.
      * @throws Exception
      */
     @Test
-    public void testGetOriginalMediaFormatFileDescriptor_returnsOriginalFileDescriptor()
+    public void testGetOriginalMediaFormatFileDescriptor_onSuccess_returnsOriginalFileDescriptor()
             throws Exception {
         File modernFile = new File(DIR_CAMERA, HEVC_FILE_NAME);
         try {
@@ -866,6 +868,27 @@ public class TranscodeTest {
             assertFileContent(modernFile, modernFile, pfdTranscoded, pfdOriginalMediaFormat, false);
         } finally {
             modernFile.delete();
+        }
+    }
+
+    /**
+     * Tests that IOException is thrown from {@link MediaStore#getOriginalMediaFormatFileDescriptor}
+     * to indicate failure.
+     * @throws Exception
+     */
+    @Test
+    public void testGetOriginalMediaFormatFileDescriptor_onFailure_throwsIOException()
+            throws Exception {
+        // Create file in internal storage instead of external storage so that
+        // getOriginalMediaFormatFileDescriptor fails for the fd of this file.
+        File file = new File(getContext().getFilesDir(), HEVC_FILE_NAME);
+        try {
+            TranscodeTestUtils.stageHEVCVideoFile(file);
+            ParcelFileDescriptor pfd = open(file, false);
+            assertThrows(IOException.class,
+                    () -> MediaStore.getOriginalMediaFormatFileDescriptor(getContext(), pfd));
+        } finally {
+            file.delete();
         }
     }
 

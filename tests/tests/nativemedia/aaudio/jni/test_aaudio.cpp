@@ -254,7 +254,9 @@ TEST_P(AAudioInputStreamTest, testReading) {
 TEST_P(AAudioInputStreamTest, testGetTimestamp) {
     if (!mSetupSuccessful) return;
 
-    testTimestamp(DEFAULT_READ_TIMEOUT);
+    // Disabling timestamp test for input stream due to timestamp will not be available on devices
+    // that don't support MMAP. This is caused by b/30557134.
+    // testTimestamp(DEFAULT_READ_TIMEOUT);
 }
 
 TEST_P(AAudioInputStreamTest, testStartReadStop) {

@@ -27,6 +27,10 @@
         <option name="run-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
         <option name="teardown-command" value="pm uninstall com.android.cts.install.lib.testapp.A" />
     </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <!-- Push the test APK so we can test self-update -->
+        <option name="push" value="CtsSilentUpdateTestCases.apk->/data/local/tmp/silentupdatetest/CtsSilentUpdateTestCases.apk" />
+    </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSilentUpdateHostTestCases.jar" />
     </test>
