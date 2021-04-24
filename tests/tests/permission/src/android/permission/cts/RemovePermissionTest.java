@@ -150,7 +150,7 @@ public class RemovePermissionTest {
                 pkg, permission);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2020-02")
     @Test
     public void runtimePermissionShouldBeRevokedIfRemoved() throws Throwable {
         installApp(ADVERSARIAL_PERMISSION_DEFINER_APK_NAME);
@@ -199,7 +199,7 @@ public class RemovePermissionTest {
         assertFalse(permissionGranted(ADVERSARIAL_PERMISSION_USER_PKG_NAME, TEST_PERMISSION));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2021-01")
     @Test
     public void installPermissionShouldBeRevokedIfRemoved() throws Throwable {
         installApp(INSTALL_PERMISSION_DEFINER_APK_NAME);

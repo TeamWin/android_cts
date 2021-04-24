@@ -54,6 +54,8 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         const val APP_APK_PATH_30 = "$APK_DIRECTORY/CtsUsePermissionApp30.apk"
         const val APP_APK_PATH_30_WITH_BACKGROUND =
                 "$APK_DIRECTORY/CtsUsePermissionApp30WithBackground.apk"
+        const val APP_APK_PATH_30_WITH_BLUETOOTH =
+                "$APK_DIRECTORY/CtsUsePermissionApp30WithBluetooth.apk"
         const val APP_APK_PATH_LATEST = "$APK_DIRECTORY/CtsUsePermissionAppLatest.apk"
         const val APP_APK_PATH_LATEST_NONE = "$APK_DIRECTORY/CtsUsePermissionAppLatestNone.apk"
         const val APP_APK_PATH_LOCATION_PROVIDER =
@@ -139,7 +141,12 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
             // Camera
             android.Manifest.permission.CAMERA to "@android:string/permgrouplab_camera",
             // Body sensors
-            android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors"
+            android.Manifest.permission.BODY_SENSORS to "@android:string/permgrouplab_sensors",
+            // Bluetooth
+            android.Manifest.permission.BLUETOOTH_CONNECT to
+                    "@android:string/permgrouplab_nearby_devices",
+            android.Manifest.permission.BLUETOOTH_SCAN to
+                    "@android:string/permgrouplab_nearby_devices"
     )
 
     @Before
@@ -418,8 +425,9 @@ abstract class BaseUsePermissionTest : BasePermissionTest() {
         for (permission in permissions) {
             // Find the permission screen
             val permissionLabel = getPermissionLabel(permission)
-            UiScrollable(UiSelector().scrollable(true)).scrollTextIntoView(permissionLabel)
+
             click(By.text(permissionLabel))
+
             val wasGranted = if (isAutomotive) {
                 // Automotive doesn't support one time permissions, and thus
                 // won't show an "Ask every time" message

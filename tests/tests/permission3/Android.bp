@@ -43,6 +43,7 @@ android_test {
         ":CtsUsePermissionApp29",
         ":CtsUsePermissionApp30",
         ":CtsUsePermissionApp30WithBackground",
+        ":CtsUsePermissionApp30WithBluetooth",
         ":CtsUsePermissionAppLatest",
         ":CtsUsePermissionAppLatestNone",
         ":CtsUsePermissionAppLocationProvider",

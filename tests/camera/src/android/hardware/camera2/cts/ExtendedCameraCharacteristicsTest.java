@@ -255,43 +255,6 @@ public class ExtendedCameraCharacteristicsTest extends Camera2AndroidTestCase {
                 }
             }
 
-            if (activeArrayWidth >= HD.getWidth() &&
-                    activeArrayHeight >= HD.getHeight()) {
-                assertArrayContains(String.format(
-                        "Required HD size not found for format %x for: ID %s",
-                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, HD);
-                if (supportHeic) {
-                    assertArrayContains(String.format(
-                            "Required HD size not found for format %x for: ID %s",
-                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, HD);
-                }
-            }
-
-            if (activeArrayWidth >= VGA.getWidth() &&
-                    activeArrayHeight >= VGA.getHeight()) {
-                assertArrayContains(String.format(
-                        "Required VGA size not found for format %x for: ID %s",
-                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, VGA);
-                if (supportHeic) {
-                    assertArrayContains(String.format(
-                            "Required VGA size not found for format %x for: ID %s",
-                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, VGA);
-                }
-            }
-
-            if (activeArrayWidth >= QVGA.getWidth() &&
-                    activeArrayHeight >= QVGA.getHeight()) {
-                assertArrayContains(String.format(
-                        "Required QVGA size not found for format %x for: ID %s",
-                        ImageFormat.JPEG, mAllCameraIds[i]), jpegSizes, QVGA);
-                if (supportHeic) {
-                    assertArrayContains(String.format(
-                            "Required QVGA size not found for format %x for: ID %s",
-                            ImageFormat.HEIC, mAllCameraIds[i]), heicSizes, QVGA);
-                }
-
-            }
-
             ArrayList<Size> jpegSizesList = new ArrayList<>(Arrays.asList(jpegSizes));
             ArrayList<Size> yuvSizesList = new ArrayList<>(Arrays.asList(yuvSizes));
             ArrayList<Size> privateSizesList = new ArrayList<>(Arrays.asList(privateSizes));

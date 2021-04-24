@@ -1124,15 +1124,26 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallV4Succeeds("v4-digest-v3-128bytes-additional-data.apk");
     }
 
+    public void testInstallV4With256BytesAdditionalDataFails() throws Exception {
+        // V4 is only enabled on devices with Incremental feature
+        if (!hasIncrementalFeature()) {
+            return;
+        }
+
+        // Editing apksigner to fill additional data of size 256 bytes.
+        assertInstallV4FailsWithError("v4-digest-v3-256bytes-additional-data.apk",
+                "additionalData has to be at most 128 bytes");
+    }
+
     public void testInstallV4With10MBytesAdditionalDataFails() throws Exception {
         // V4 is only enabled on devices with Incremental feature
         if (!hasIncrementalFeature()) {
             return;
         }
 
-        // Editing apksigner to fill additional data of size 10 * 1024 * 1024 bytes..
+        // Editing apksigner to fill additional data of size 10 * 1024 * 1024 bytes.
         assertInstallV4FailsWithError("v4-digest-v3-10mbytes-additional-data.apk",
-                "additionalData has to be at most 128 bytes");
+                "Failure");
     }
 
     public void testInstallV4WithWrongBlockSize() throws Exception {
