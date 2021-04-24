@@ -30,7 +30,10 @@ import android.net.Uri
 import android.platform.test.annotations.AppModeFull
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.BySelector
+import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.UiObject2
+import android.support.test.uiautomator.UiScrollable
+import android.support.test.uiautomator.UiSelector
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
 import android.widget.Switch
@@ -76,6 +79,7 @@ class AutoRevokeTest {
 
     private val context: Context = InstrumentationRegistry.getTargetContext()
     private val instrumentation: Instrumentation = InstrumentationRegistry.getInstrumentation()
+    private val uiDevice: UiDevice = UiDevice.getInstance(instrumentation)
 
     private val mPermissionControllerResources: Resources = context.createPackageContext(
             context.packageManager.permissionControllerPackageName, 0).resources
@@ -238,8 +242,10 @@ class AutoRevokeTest {
                 // Setup
                 goToPermissions()
                 click("Calendar")
-                click("Allow")
-                assertPermission(PERMISSION_GRANTED)
+                // Wear OS uses a switch and does not display a dialog
+                if (!hasFeatureWatch()) {
+                    click("Allow")
+                }
                 goBack()
                 goBack()
                 goBack()
@@ -346,12 +352,23 @@ class AutoRevokeTest {
                 .addFlags(FLAG_ACTIVITY_NEW_TASK))
 
         waitForIdle()
+
+        if (hasFeatureWatch()) {
+            // WearOS need to scroll down to find the Permission item to click
+            UiScrollable(UiSelector().scrollable(true))
+                    .getChildByText(UiSelector(), "Permissions")
+        }
+
         click("Permissions")
     }
 
     private fun click(label: String) {
         waitFindNode(hasTextThat(containsStringIgnoringCase(label))).click()
         waitForIdle()
+    }
+
+    private fun hasFeatureWatch(): Boolean {
+        return context.packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
     }
 
     private fun assertAllowlistState(state: Boolean) {

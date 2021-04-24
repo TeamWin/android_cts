@@ -18,12 +18,19 @@ package android.permission4.cts.appthataccessescameraandmic
 
 import android.app.Activity
 import android.hardware.camera2.CameraAccessException
+import android.hardware.camera2.CameraCaptureSession
+import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
+import android.hardware.camera2.params.OutputConfiguration
+import android.hardware.camera2.params.SessionConfiguration
 import android.media.AudioFormat.CHANNEL_IN_MONO
 import android.media.AudioFormat.ENCODING_PCM_16BIT
 import android.media.AudioRecord
+import android.media.ImageReader
 import android.media.MediaRecorder.AudioSource.MIC
+import android.os.Handler
+import android.util.Size
 import androidx.annotation.NonNull
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -39,6 +46,7 @@ private const val SAMPLE_RATE_HZ = 44100
  * or both.
  */
 class AccessCameraOrMicActivity : Activity() {
+    private lateinit var cameraManager: CameraManager
     private lateinit var cameraId: String
     private var cameraDevice: CameraDevice? = null
     private var recorder: AudioRecord? = null
@@ -71,13 +79,42 @@ class AccessCameraOrMicActivity : Activity() {
     private val stateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(@NonNull camDevice: CameraDevice) {
             cameraDevice = camDevice
-            GlobalScope.launch {
-                delay(USE_DURATION_MS)
-                cameraFinished = true
-                if (!runMic || micFinished) {
-                    finish()
+            val config = cameraManager!!.getCameraCharacteristics(cameraId)
+                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+            val outputFormat = config!!.outputFormats[0]
+            val outputSize: Size = config!!.getOutputSizes(outputFormat)[0]
+            val handler = Handler(mainLooper)
+
+            val imageReader = ImageReader.newInstance(
+                    outputSize.width, outputSize.height, outputFormat, 2)
+
+            val builder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+            builder.addTarget(imageReader.surface)
+            val captureRequest = builder.build()
+            val sessionConfiguration = SessionConfiguration(
+                    SessionConfiguration.SESSION_REGULAR,
+                    listOf(OutputConfiguration(imageReader.surface)),
+                    mainExecutor,
+                    object : CameraCaptureSession.StateCallback() {
+                        override fun onConfigured(session: CameraCaptureSession) {
+                            session.capture(captureRequest, null, handler)
+                        }
+
+                        override fun onConfigureFailed(session: CameraCaptureSession) {}
+
+                        override fun onReady(session: CameraCaptureSession) {}
+                    })
+
+            imageReader.setOnImageAvailableListener({
+                GlobalScope.launch {
+                    delay(USE_DURATION_MS)
+                    cameraFinished = true
+                    if (!runMic || micFinished) {
+                        finish()
+                    }
                 }
-            }
+            }, handler)
+            cameraDevice!!.createCaptureSession(sessionConfiguration)
         }
 
         override fun onDisconnected(@NonNull camDevice: CameraDevice) {
@@ -93,9 +130,9 @@ class AccessCameraOrMicActivity : Activity() {
 
     @Throws(CameraAccessException::class)
     private fun useCamera() {
-        val manager = getSystemService(CameraManager::class.java)!!
-        cameraId = manager.cameraIdList[0]
-        manager.openCamera(cameraId, mainExecutor, stateCallback)
+        cameraManager = getSystemService(CameraManager::class.java)!!
+        cameraId = cameraManager.cameraIdList[0]
+        cameraManager.openCamera(cameraId, mainExecutor, stateCallback)
     }
 
     private fun useMic() {
