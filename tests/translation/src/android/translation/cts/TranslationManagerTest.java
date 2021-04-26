@@ -16,6 +16,8 @@
 
 package android.translation.cts;
 
+import static android.view.translation.TranslationSpec.DATA_FORMAT_TEXT;
+
 import static com.android.compatibility.common.util.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 
 import static com.google.common.truth.Truth.assertThat;
@@ -24,7 +26,9 @@ import android.app.Application;
 import android.app.Instrumentation;
 import android.app.PendingIntent;
 import android.icu.util.ULocale;
+import android.content.Context;
 import android.os.CancellationSignal;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Log;
@@ -38,7 +42,6 @@ import android.view.translation.TranslationResponseValue;
 import android.view.translation.TranslationSpec;
 import android.view.translation.Translator;
 
-import androidx.test.InstrumentationRegistry;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -55,6 +58,9 @@ import org.junit.runner.RunWith;
 
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -80,13 +86,13 @@ public class TranslationManagerTest {
     private CtsTranslationService.ServiceWatcher mServiceWatcher;
     private ActivitiesWatcher mActivitiesWatcher;
 
-    private static Instrumentation sInstrumentation;
+    private static Context sContext;
     private static CtsTranslationService.TranslationReplier sTranslationReplier;
 
     @BeforeClass
     public static void oneTimeSetup() {
-        sInstrumentation = InstrumentationRegistry.getInstrumentation();
         sTranslationReplier = CtsTranslationService.getTranslationReplier();
+        sContext = ApplicationProvider.getApplicationContext();
     }
 
     @Before
@@ -104,11 +110,87 @@ public class TranslationManagerTest {
     }
 
     @Test
+    public void testTranslationCapabilityUpdateListener() throws Exception{
+        // enable cts translation service
+        enableCtsTranslationService();
+
+        final int FAKE_DATA_FORMAT_IMAGE = 2;
+        // text to text capability
+        final TranslationCapability updatedText2TextCapability =
+                new TranslationCapability(TranslationCapability.STATE_ON_DEVICE,
+                new TranslationSpec(ULocale.ENGLISH, DATA_FORMAT_TEXT),
+                new TranslationSpec(ULocale.FRENCH, DATA_FORMAT_TEXT),
+                true, 0);
+        // text to image capability
+        final TranslationCapability updatedText2ImageCapability =
+                new TranslationCapability(TranslationCapability.STATE_ON_DEVICE,
+                        new TranslationSpec(ULocale.ENGLISH, DATA_FORMAT_TEXT),
+                        new TranslationSpec(ULocale.FRENCH, FAKE_DATA_FORMAT_IMAGE),
+                        true, 0);
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
+
+        // register translation capability update listener
+        final AtomicReference<TranslationCapability> resultRef = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(3);
+        final Consumer<TranslationCapability> updateListener = capability -> {
+            Log.w(TAG, "text2textListener called. capability = " + capability);
+            resultRef.set(capability);
+            latch.countDown();
+        };
+        manager.addOnDeviceTranslationCapabilityUpdateListener(Executors.newSingleThreadExecutor(),
+                updateListener);
+
+        // wait service connected
+        try {
+            mServiceWatcher.waitOnConnected();
+        } catch (InterruptedException e) {
+            Log.w(TAG, "Exception waiting for onConnected");
+        }
+
+        final CtsTranslationService service = mServiceWatcher.getService();
+        // update text to text TranslationCapability
+        service.updateTranslationCapability(updatedText2TextCapability);
+
+        // Verify listener was called
+        SystemClock.sleep(1_000);
+        assertThat(latch.getCount()).isEqualTo(2);
+        TranslationCapability capabilityText2Text = resultRef.get();
+        assertTranslationCapability(capabilityText2Text, updatedText2TextCapability);
+
+        // update text to image TranslationCapability
+        service.updateTranslationCapability(updatedText2ImageCapability);
+
+        // Verify listener was called
+        SystemClock.sleep(1_000);
+        assertThat(latch.getCount()).isEqualTo(1);
+        TranslationCapability capabilityText2Image = resultRef.get();
+        assertTranslationCapability(capabilityText2Image, updatedText2ImageCapability);
+
+        // unregister listeners
+        manager.removeOnDeviceTranslationCapabilityUpdateListener(updateListener);
+
+        // update text to text TranslationCapability
+        service.updateTranslationCapability(updatedText2TextCapability);
+        // Verify listener was not called after unregister
+        SystemClock.sleep(1_000);
+        assertThat(latch.getCount()).isEqualTo(1);
+    }
+
+    private void assertTranslationCapability(TranslationCapability source,
+            TranslationCapability expected) {
+        assertThat(source.getState()).isEqualTo(expected.getState());
+        assertThat(source.getSourceSpec()).isEqualTo(expected.getSourceSpec());
+        assertThat(source.getTargetSpec()).isEqualTo(expected.getTargetSpec());
+        assertThat(source.isUiTranslationEnabled()).isEqualTo(expected.isUiTranslationEnabled());
+        assertThat(source.getSupportedTranslationFlags()).isEqualTo(
+                expected.getSupportedTranslationFlags());
+    }
+
+    @Test
     public void testSingleTranslation() throws Exception{
         enableCtsTranslationService();
 
-        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
-                TranslationManager.class);
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
 
         sTranslationReplier.addResponse(
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
@@ -182,8 +264,7 @@ public class TranslationManagerTest {
     public void testTranslationCancelled() throws Exception{
         enableCtsTranslationService();
 
-        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
-                TranslationManager.class);
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
 
         sTranslationReplier.addResponse(
                 new TranslationResponse.Builder(TranslationResponse.TRANSLATION_STATUS_SUCCESS)
@@ -243,16 +324,14 @@ public class TranslationManagerTest {
     public void testGetTranslationCapabilities() throws Exception{
         enableCtsTranslationService();
 
-        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
-                TranslationManager.class);
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicReference<Set<TranslationCapability>> resultRef =
                 new AtomicReference<>();
 
         final Thread th = new Thread(() -> {
             final Set<TranslationCapability> capabilities =
-                    manager.getOnDeviceTranslationCapabilities(TranslationSpec.DATA_FORMAT_TEXT,
-                            TranslationSpec.DATA_FORMAT_TEXT);
+                    manager.getOnDeviceTranslationCapabilities(DATA_FORMAT_TEXT, DATA_FORMAT_TEXT);
             resultRef.set(capabilities);
             latch.countDown();
         });
@@ -267,11 +346,9 @@ public class TranslationManagerTest {
             assertThat(capability.getSupportedTranslationFlags()).isEqualTo(0);
             assertThat(capability.isUiTranslationEnabled()).isTrue();
             assertThat(capability.getSourceSpec().getLocale()).isEqualTo(ULocale.ENGLISH);
-            assertThat(capability.getSourceSpec().getDataFormat())
-                    .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+            assertThat(capability.getSourceSpec().getDataFormat()).isEqualTo(DATA_FORMAT_TEXT);
             assertThat(capability.getTargetSpec().getLocale()).isEqualTo(ULocale.FRENCH);
-            assertThat(capability.getTargetSpec().getDataFormat())
-                    .isEqualTo(TranslationSpec.DATA_FORMAT_TEXT);
+            assertThat(capability.getSourceSpec().getDataFormat()).isEqualTo(DATA_FORMAT_TEXT);
         });
     }
 
@@ -279,8 +356,7 @@ public class TranslationManagerTest {
     public void testGetTranslationSettingsActivityIntent() throws Exception{
         enableCtsTranslationService();
 
-        final TranslationManager manager = sInstrumentation.getContext().getSystemService(
-                TranslationManager.class);
+        final TranslationManager manager = sContext.getSystemService(TranslationManager.class);
         final PendingIntent pendingIntent = manager.getOnDeviceTranslationSettingsActivityIntent();
 
         assertThat(pendingIntent).isNotNull();
