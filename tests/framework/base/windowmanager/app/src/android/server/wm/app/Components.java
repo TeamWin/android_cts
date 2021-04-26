@@ -236,6 +236,8 @@ public class Components extends ComponentsBase {
             component("HandleSplashScreenExitActivity");
     public static final ComponentName SPLASH_SCREEN_REPLACE_ICON_ACTIVITY =
             component("SplashScreenReplaceIconActivity");
+    public static final ComponentName SPLASH_SCREEN_REPLACE_THEME_ACTIVITY =
+            component("SplashScreenReplaceThemeActivity");
 
     public static final ComponentName TEST_DREAM_SERVICE =
             component("TestDream");
@@ -286,6 +288,10 @@ public class Components extends ComponentsBase {
         public static final String REQUEST_SET_NIGHT_MODE_ON_CREATE = "night_mode_onCreate";
         public static final String GET_NIGHT_MODE_ACTIVITY_CHANGED = "get_night_mode_activity";
         public static final String DELAY_RESUME = "delay_resume";
+        public static final String OVERRIDE_THEME_ENABLED = "override_theme_enabled";
+        public static final String OVERRIDE_THEME_COLOR = "override_theme_color";
+        public static final String OVERRIDE_THEME_COMPONENT = "override_theme_component";
+
     }
 
     /**

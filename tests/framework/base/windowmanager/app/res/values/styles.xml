@@ -86,4 +86,8 @@
         <item name="android:windowSplashScreenBrandingImage">@drawable/branding</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@drawable/blue</item>
     </style>
+
+    <style name="SplashScreenOverrideTheme" parent="ReplaceIconTheme">
+        <item name="android:windowSplashScreenBackground">@drawable/red</item>
+    </style>
 </resources>
