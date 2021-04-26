@@ -603,6 +603,9 @@
         <activity android:name=".SplashScreenReplaceIconActivity"
                   android:exported="true"
                   android:theme="@style/ReplaceIconTheme"/>
+        <activity android:name=".SplashScreenReplaceThemeActivity"
+                  android:exported="true"
+                  android:theme="@style/ReplaceIconTheme"/>
 
         <service android:name=".OverlayTestService"
                  android:exported="true" />
