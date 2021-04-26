@@ -119,7 +119,6 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
   """
 
   def test_dng_noise_model_generation(self):
-    logging.info('Starting %s', _NAME)
     with its_session_utils.ItsSession(
         device_id=self.dut.serial,
         camera_id=self.camera_id,
@@ -127,6 +126,11 @@ class DngNoiseModel(its_base_test.ItsBaseTest):
       props = cam.get_camera_properties()
       props = cam.override_with_hidden_physical_camera_props(props)
       log_path = self.log_path
+      if self.hidden_physical_id:
+        camera_name = f'{self.camera_id}.{self.hidden_physical_id}'
+      else:
+        camera_name = self.camera_id
+      logging.info('Starting %s for camera %s', _NAME, camera_name)
 
       # Get basic properties we need.
       sens_min, sens_max = props['android.sensor.info.sensitivityRange']
