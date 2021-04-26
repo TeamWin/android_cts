@@ -66,7 +66,9 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
 
     @After
     public void tearDown() throws Exception {
-        runDeviceTestAsUserInPkgA("clearTestData", mInitialUserId);
+        if (getDevice().getInstalledPackageNames().contains(TARGET_PKG_A)) {
+            runDeviceTestAsUserInPkgA("clearTestData", mInitialUserId);
+        }
         if (mSecondaryUserId > 0) {
             getDevice().removeUser(mSecondaryUserId);
         }
@@ -95,5 +97,18 @@ public class AppSearchMultiUserTest extends AppSearchHostTestBase {
         getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
         getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
         runDeviceTestAsUserInPkgA("testGetDocuments_exist", mSecondaryUserId);
+    }
+
+    @Test
+    public void testPackageUninstall_onLockedUser() throws Exception {
+        installPackageAsUser(TARGET_APK_B, /* grantPermission= */true, mSecondaryUserId);
+        // package A grants visibility to package B.
+        runDeviceTestAsUserInPkgA("testPutDocuments", mSecondaryUserId);
+        // query the document from another package.
+        runDeviceTestAsUserInPkgB("testGlobalGetDocuments_exist", mSecondaryUserId);
+        getDevice().stopUser(mSecondaryUserId, /*waitFlag=*/true, /*forceFlag=*/true);
+        uninstallPackage(TARGET_PKG_A);
+        getDevice().startUser(mSecondaryUserId, /*waitFlag=*/true);
+        runDeviceTestAsUserInPkgB("testGlobalGetDocuments_nonexist", mSecondaryUserId);
     }
 }
