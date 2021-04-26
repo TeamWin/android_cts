@@ -38,7 +38,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.ConnectivityManager;
-import android.net.LinkProperties;
 import android.net.MacAddress;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -88,11 +87,11 @@ import androidx.core.os.BuildCompat;
 import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.SystemUtil;
-import com.android.compatibility.common.util.FeatureUtil;
 import com.android.compatibility.common.util.ThrowingRunnable;
 import com.android.net.module.util.MacAddressUtils;
 
@@ -4283,5 +4282,20 @@ public class WifiManagerTest extends WifiJUnit3TestBase {
         } finally {
             uiAutomation.dropShellPermissionIdentity();
         }
+    }
+
+    /**
+     * Validate that the Passpoint feature is enabled on the device.
+     * TODO(b/167575586): Wait for S SDK finalization to determine the final minSdkVersion.
+     */
+    @SdkSuppress(minSdkVersion = 31, codeName = "S")
+    public void testPasspointCapability() {
+        if (!WifiFeature.isWifiSupported(getContext())) {
+            // skip the test if WiFi is not supported
+            return;
+        }
+        PackageManager packageManager = mContext.getPackageManager();
+        assertTrue("Passpoint must be supported",
+                packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI_PASSPOINT));
     }
 }
