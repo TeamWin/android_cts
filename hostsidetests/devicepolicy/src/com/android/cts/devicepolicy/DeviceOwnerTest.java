@@ -780,7 +780,7 @@ public class DeviceOwnerTest extends BaseDeviceOwnerTest {
             installAppAsUser(LAUNCHER_TESTS_HAS_LAUNCHER_ACTIVITY_APK, mPrimaryUserId);
 
             // Run test to check if launcher api shows hidden app
-            String mSerialNumber = Integer.toString(getUserSerialNumber(USER_SYSTEM));
+            String mSerialNumber = Integer.toString(getUserSerialNumber(mPrimaryUserId));
             runDeviceTestsAsUser(BaseLauncherAppsTest.LAUNCHER_TESTS_PKG,
                     BaseLauncherAppsTest.LAUNCHER_TESTS_CLASS,
                     "testDoPoNoTestAppInjectedActivityFound",
