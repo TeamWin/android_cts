@@ -615,8 +615,10 @@ def main():
       new_yaml_file_path = os.path.join(YAML_FILE_DIR, new_yml_file_name)
       os.remove(new_yaml_file_path)
 
-    logging.info('Reporting ITS result to CtsVerifier')
+    # Log results per camera
+    logging.info('Reporting camera %s ITS results to CtsVerifier', camera_id)
     report_result(device_id, camera_id, results)
+
   logging.info('Test execution completed.')
 
 if __name__ == '__main__':
