@@ -45,6 +45,7 @@ import android.app.AppOpsManager.OPSTR_FINE_LOCATION
 import android.app.AppOpsManager.OnOpChangedListener
 import android.content.Context
 import android.os.Process
+import android.platform.test.annotations.AppModeFull
 import androidx.test.runner.AndroidJUnit4
 import androidx.test.InstrumentationRegistry
 
@@ -230,6 +231,7 @@ class AppOpsTest {
     }
 
     @Test
+    @AppModeFull(reason="Instant app cannot query for the shell package")
     fun overlappingActiveAttributionOps() {
         runWithShellPermissionIdentity {
             val gotActive = CompletableFuture<Unit>()
