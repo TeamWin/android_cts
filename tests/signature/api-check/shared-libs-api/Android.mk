@@ -71,6 +71,8 @@ LOCAL_JAVA_RESOURCE_FILES := $(all_shared_libs_zip_file)
 
 LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-multilib-test
 
+LOCAL_LICENSE_KINDS := SPDX-license-identifier-Apache-2.0
+LOCAL_LICENSE_CONDITIONS := notice
 include $(LOCAL_PATH)/../build_signature_apk.mk
 
 LOCAL_JAVA_SDK_LIBRARIES :=
