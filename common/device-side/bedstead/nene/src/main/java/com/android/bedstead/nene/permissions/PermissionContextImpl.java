@@ -48,6 +48,7 @@ public final class PermissionContextImpl implements PermissionContext {
     public PermissionContextImpl withPermission(String... permissions) {
         for (String permission : permissions) {
             if (mDeniedPermissions.contains(permission)) {
+                mPermissions.clearPermissions();
                 throw new NeneException(
                         permission + " cannot be required to be both granted and denied");
             }
@@ -66,6 +67,7 @@ public final class PermissionContextImpl implements PermissionContext {
     public PermissionContextImpl withoutPermission(String... permissions) {
         for (String permission : permissions) {
             if (mGrantedPermissions.contains(permission)) {
+                mPermissions.clearPermissions();
                 throw new NeneException(
                         permission + " cannot be required to be both granted and denied");
             }
