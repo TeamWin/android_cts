@@ -977,7 +977,7 @@ public class FrameRateCtsActivity extends Activity {
             for (float frameRate : frameRates) {
                 int initialNumEvents = mModeChangedEvents.size();
                 surface.setFrameRate(frameRate, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT,
-                        Surface.CHANGE_FRAME_RATE_ONLY_IF_SEAMLESS);
+                        Surface.CHANGE_FRAME_RATE_ALWAYS);
 
                 verifyCompatibleAndStableFrameRate(frameRate, Arrays.asList(surface));
                 verifyModeSwitchesDontChangeResolution(initialNumEvents,
